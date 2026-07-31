@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2027年度課程企劃｜一貫道全真社青班</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700;900&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#17130f;
+    --ink-2:#241d17;
+    --paper:#f2ead9;
+    --paper-dim:#cfc3a8;
+    --cinnabar:#a5312c;
+    --cinnabar-bright:#c4433c;
+    --gold:#c9a24b;
+    --gold-dim:#8a7038;
+    --line: rgba(201,162,75,0.28);
+    --serif:'Noto Serif TC', serif;
+    --sans:'Noto Sans TC', sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:var(--sans);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+  }
+
+  a{color:inherit;}
+  ::selection{background:var(--cinnabar); color:var(--paper);}
+
+  /* texture */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      radial-gradient(ellipse at 20% -10%, rgba(197,67,60,0.14), transparent 55%),
+      radial-gradient(ellipse at 90% 10%, rgba(201,162,75,0.10), transparent 45%);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .wrap{max-width:920px; margin:0 auto; padding:0 28px; position:relative; z-index:1;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    min-height:92vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    position:relative;
+    padding:120px 0 80px;
+    overflow:hidden;
+  }
+  .hero-mark{
+    position:absolute;
+    top:-4vw; right:-4vw;
+    font-family:var(--serif);
+    font-size:min(46vw, 520px);
+    font-weight:900;
+    color:transparent;
+    -webkit-text-stroke:1px var(--line);
+    line-height:1;
+    user-select:none;
+    z-index:0;
+    opacity:0.55;
+  }
+  .eyebrow{
+    font-family:var(--sans);
+    font-size:13px;
+    letter-spacing:0.32em;
+    color:var(--gold);
+    text-transform:uppercase;
+    margin:0 0 22px;
+    display:flex; align-items:center; gap:14px;
+  }
+  .eyebrow::before{content:""; width:34px; height:1px; background:var(--gold-dim);}
+  h1.title{
+    font-family:var(--serif);
+    font-weight:700;
+    font-size:clamp(2.4rem, 6vw, 4.4rem);
+    line-height:1.18;
+    margin:0 0 20px;
+    color:var(--paper);
+    letter-spacing:0.01em;
+  }
+  h1.title em{
+    font-style:normal;
+    color:var(--cinnabar-bright);
+    display:block;
+    font-size:0.5em;
+    font-weight:500;
+    letter-spacing:0.06em;
+    margin-top:14px;
+    color:var(--gold);
+  }
+  .hero-desc{
+    max-width:520px;
+    color:var(--paper-dim);
+    font-size:16px;
+    margin:0 0 40px;
+  }
+  .hero-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:0;
+    border-top:1px solid var(--line);
+    margin-top:8px;
+  }
+  .hero-meta div{
+    padding:18px 26px 18px 0;
+    margin-right:26px;
+    border-right:1px solid var(--line);
+  }
+  .hero-meta div:last-child{border-right:none;}
+  .hero-meta .num{
+    font-family:var(--serif);
+    font-size:26px;
+    color:var(--gold);
+    display:block;
+  }
+  .hero-meta .lbl{
+    font-size:12px;
+    color:var(--paper-dim);
+    letter-spacing:0.08em;
+  }
+
+  /* ---------- SECTION SHELL ---------- */
+  section{position:relative; padding:96px 0;}
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    gap:18px;
+    margin-bottom:44px;
+  }
+  .section-head .sn{
+    font-family:var(--serif);
+    font-size:14px;
+    color:var(--gold-dim);
+    letter-spacing:0.1em;
+  }
+  .section-head h2{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:clamp(1.6rem, 3.4vw, 2.2rem);
+    margin:0;
+    color:var(--paper);
+  }
+  .section-head::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:var(--line);
+  }
+
+  .lede{
+    font-size:16.5px;
+    color:var(--paper-dim);
+    max-width:680px;
+  }
+  .lede + .lede{margin-top:16px;}
+
+  /* ---------- JOURNEY (4 stages, real sequence) ---------- */
+  .journey{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:0;
+    margin-top:56px;
+    position:relative;
+  }
+  .journey::before{
+    content:"";
+    position:absolute;
+    top:17px; left:0; right:0;
+    height:1px;
+    background:linear-gradient(90deg, transparent, var(--gold-dim) 8%, var(--gold-dim) 92%, transparent);
+  }
+  .stage{
+    position:relative;
+    padding:0 18px 0 0;
+  }
+  .stage .dot{
+    width:9px; height:9px;
+    border-radius:50%;
+    background:var(--ink);
+    border:2px solid var(--gold);
+    margin-bottom:22px;
+    position:relative; z-index:2;
+  }
+  .stage h3{
+    font-family:var(--serif);
+    font-size:17px;
+    color:var(--paper);
+    margin:0 0 8px;
+    font-weight:600;
+  }
+  .stage p{
+    font-size:13.5px;
+    color:var(--paper-dim);
+    margin:0;
+  }
+  .stage .range{
+    font-size:11px;
+    color:var(--gold-dim);
+    letter-spacing:0.06em;
+    margin-top:10px;
+  }
+
+  @media (max-width:760px){
+    .journey{grid-template-columns:1fr; gap:34px;}
+    .journey::before{display:none;}
+  }
+
+  /* ---------- PHILOSOPHY GRID ---------- */
+  .duo{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:48px;
+    margin-top:44px;
+  }
+  .duo h4{
+    font-family:var(--serif);
+    color:var(--gold);
+    font-size:14px;
+    letter-spacing:0.06em;
+    margin:0 0 12px;
+    font-weight:500;
+  }
+  .duo p{color:var(--paper-dim); font-size:15px; margin:0;}
+  @media (max-width:700px){.duo{grid-template-columns:1fr;}}
+
+  /* ---------- OUTLINE TABLE ---------- */
+  .outline{
+    margin-top:8px;
+    border-top:1px solid var(--line);
+  }
+  .outline-row{
+    display:grid;
+    grid-template-columns:52px 1fr 180px 100px;
+    gap:18px;
+    align-items:center;
+    padding:16px 0;
+    border-bottom:1px solid var(--line);
+    text-decoration:none;
+    transition:background 0.2s ease;
+  }
+  .outline-row:hover{background:rgba(201,162,75,0.06);}
+  .outline-row .idx{
+    font-family:var(--serif);
+    color:var(--gold-dim);
+    font-size:14px;
+  }
+  .outline-row .ot{
+    font-size:15px;
+    color:var(--paper);
+  }
+  .outline-row .oc{
+    font-size:12.5px;
+    color:var(--paper-dim);
+  }
+  .outline-row .stage-tag{
+    font-size:11px;
+    color:var(--cinnabar-bright);
+    text-align:right;
+    letter-spacing:0.04em;
+  }
+  @media (max-width:700px){
+    .outline-row{grid-template-columns:32px 1fr; grid-template-rows:auto auto;}
+    .outline-row .oc, .outline-row .stage-tag{grid-column:2; text-align:left;}
+  }
+
+  /* ---------- SESSION CARDS ---------- */
+  .sessions{margin-top:16px;}
+  .card{
+    border-top:1px solid var(--line);
+    padding:44px 0;
+    scroll-margin-top:24px;
+  }
+  .card:last-child{border-bottom:1px solid var(--line);}
+  .card-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:24px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .card-idx{
+    font-family:var(--serif);
+    font-size:13px;
+    color:var(--gold);
+    letter-spacing:0.1em;
+    display:block;
+    margin-bottom:10px;
+  }
+  .card h3{
+    font-family:var(--serif);
+    font-size:clamp(1.25rem, 2.6vw, 1.6rem);
+    font-weight:600;
+    color:var(--paper);
+    margin:0;
+    line-height:1.4;
+    max-width:560px;
+  }
+  .core-pill{
+    flex-shrink:0;
+    border:1px solid var(--gold-dim);
+    color:var(--gold);
+    font-size:12px;
+    letter-spacing:0.04em;
+    padding:6px 14px;
+    border-radius:2px;
+    white-space:nowrap;
+    font-family:var(--sans);
+  }
+  .card-desc{
+    color:var(--paper-dim);
+    font-size:15px;
+    max-width:660px;
+    margin:0 0 26px;
+  }
+  .phases{
+    display:grid;
+    gap:14px;
+  }
+  .phase{
+    display:grid;
+    grid-template-columns:130px 1fr;
+    gap:18px;
+    font-size:13.5px;
+    padding:14px 18px;
+    background:rgba(201,162,75,0.045);
+    border-left:2px solid var(--cinnabar);
+  }
+  .phase .ph-label{
+    color:var(--gold);
+    font-family:var(--serif);
+    font-weight:500;
+  }
+  .phase .ph-body{color:var(--paper-dim);}
+  @media (max-width:600px){
+    .phase{grid-template-columns:1fr;}
+    .phase .ph-label{margin-bottom:2px;}
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    padding:70px 0 60px;
+    border-top:1px solid var(--line);
+    text-align:center;
+  }
+  footer p{
+    color:var(--paper-dim);
+    font-size:13px;
+    letter-spacing:0.04em;
+    margin:0;
+  }
+
+  /* focus visibility */
+  a:focus-visible, .outline-row:focus-visible{
+    outline:2px solid var(--gold);
+    outline-offset:3px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap hero">
+  <span class="hero-mark" aria-hidden="true">道</span>
+  <p class="eyebrow">一貫道 全真社青班</p>
+  <h1 class="title">2027 年度課程企劃<em>從生活的痛點，走回本性的路</em></h1>
+  <p class="hero-desc">
+    十堂課，寫給26歲到45歲的你——不管是剛出社會、正拼事業、剛成家，還是已經上有老下有小。
+    每一堂都從一句你我都懂的煩惱開始，慢慢走回一貫道的修心功夫。
+  </p>
+  <div class="hero-meta">
+    <div><span class="num">10</span><span class="lbl">堂　全年課程</span></div>
+    <div><span class="num">90</span><span class="lbl">分鐘　每堂時長</span></div>
+    <div><span class="num">26–45</span><span class="lbl">歲　適用對象</span></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <section id="philosophy">
+    <div class="section-head"><span class="sn">01</span><h2>課程設計理念</h2></div>
+    <p class="lede">26-45歲橫跨了剛出社會、拼事業、成家、育兒、照顧父母等多種人生階段。每堂課從一個不分年齡都會有感的生活痛點切入，作為打開話題的鉤子，再逐步收回到一貫道的修心功夫與道學核心，避免流於純粹的時事討論或說教。</p>
+    <div class="duo">
+      <div>
+        <h4>對外・入口</h4>
+        <p>生活化的標題與情境引子，讓人一眼就想坐下來聽——這是招牌，負責把人請進門。</p>
+      </div>
+      <div>
+        <h4>對內・份量</h4>
+        <p>每堂的「引子、道學核心、實修討論」三段式結構，道學核心約佔全堂三分之一至二分之一時間——這是食譜，決定端出來的菜有沒有料。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="journey">
+    <div class="section-head"><span class="sn">02</span><h2>全年修行旅程</h2></div>
+    <p class="lede">十堂課不是十個獨立主題，而是一條從外到內的曲線。</p>
+    <div class="journey">
+      <div class="stage">
+        <div class="dot"></div>
+        <h3>拉近距離</h3>
+        <p>用最普遍有感的痛點把人拉進來，建立「這裡講的是真的」的信任。</p>
+        <div class="range">第一、二堂</div>
+      </div>
+      <div class="stage">
+        <div class="dot"></div>
+        <h3>深入探討</h3>
+        <p>觸碰家庭、財務、關係與社會期待，難度逐步提升。</p>
+        <div class="range">第三～六堂</div>
+      </div>
+      <div class="stage">
+        <div class="dot"></div>
+        <h3>收斂實修</h3>
+        <p>從外部資源轉向內在功夫，教具體可用的靜心與日常方法。</p>
+        <div class="range">第七～九堂</div>
+      </div>
+      <div class="stage">
+        <div class="dot"></div>
+        <h3>回顧立願</h3>
+        <p>梳理一整年的變化，說出收穫，許下明年想修的功課。</p>
+        <div class="range">第十堂</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="outline">
+    <div class="section-head"><span class="sn">03</span><h2>課程大綱</h2></div>
+    <div class="outline">
+      <div class="outline-row" style="border-top:1px solid var(--line);">
+        <span class="idx"></span><span class="ot" style="color:var(--gold-dim); font-size:12px; letter-spacing:0.08em;">標題</span><span class="oc" style="letter-spacing:0.08em;">道學核心</span><span class="stage-tag" style="color:var(--paper-dim);">階段</span>
+      </div>
+      <a class="outline-row" href="#s1"><span class="idx">01</span><span class="ot">「我很好」是這年代最大的謊言</span><span class="oc">誠意正心</span><span class="stage-tag">拉近距離</span></a>
+      <a class="outline-row" href="#s2"><span class="idx">02</span><span class="ot">拿不走的，才是真的</span><span class="oc">本性、良心、天命</span><span class="stage-tag">拉近距離</span></a>
+      <a class="outline-row" href="#s3"><span class="idx">03</span><span class="ot">照顧別人之前，先別丟了自己</span><span class="oc">孝道與量力而為</span><span class="stage-tag">深入探討</span></a>
+      <a class="outline-row" href="#s4"><span class="idx">04</span><span class="ot">知足，是解藥還是藉口？</span><span class="oc">知足惜福</span><span class="stage-tag">深入探討</span></a>
+      <a class="outline-row" href="#s5"><span class="idx">05</span><span class="ot">那些年，我們一起憋過的話</span><span class="oc">五倫中的誠與和</span><span class="stage-tag">深入探討</span></a>
+      <a class="outline-row" href="#s6"><span class="idx">06</span><span class="ot">我這樣算失敗嗎？</span><span class="oc">安身立命、盡本分</span><span class="stage-tag">深入探討</span></a>
+      <a class="outline-row" href="#s7"><span class="idx">07</span><span class="ot">情緒的急救包，你有自己的一份嗎？</span><span class="oc">靜心、內觀</span><span class="stage-tag">收斂實修</span></a>
+      <a class="outline-row" href="#s8"><span class="idx">08</span><span class="ot">跟自己相處，你及格嗎？</span><span class="oc">修身、獨處養性</span><span class="stage-tag">收斂實修</span></a>
+      <a class="outline-row" href="#s9"><span class="idx">09</span><span class="ot">洗碗也是修行，你信不信？</span><span class="oc">大隱於市、日常即修行</span><span class="stage-tag">收斂實修</span></a>
+      <a class="outline-row" href="#s10"><span class="idx">10</span><span class="ot">這一年，我修了什麼？</span><span class="oc">反省、懺悔、立願</span><span class="stage-tag">回顧立願</span></a>
+    </div>
+  </section>
+
+  <section id="sessions">
+    <div class="section-head"><span class="sn">04</span><h2>課程清單</h2></div>
+
+    <div class="sessions">
+
+      <article class="card" id="s1">
+        <div class="card-head">
+          <div><span class="card-idx">第一堂</span><h3>「我很好」是這年代最大的謊言</h3></div>
+          <span class="core-pill">誠意正心</span>
+        </div>
+        <p class="card-desc">為什麼我們總是報喜不報憂、笑著扛下別人的情緒？從職場到家庭的「假裝沒事」文化，一起拆解這個誠信面具，找回誠意正心的真功夫。</p>
+        <div class="phases">
+          <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">從職場情緒勞動、家庭裡的假裝沒事文化切入，帶出「我很好」背後的疲憊</span></div>
+          <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">誠意正心的意涵，用生活故事說明真誠面對自己與他人的重要</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">分組分享一次「假裝沒事」的經驗，練習說出真實感受</span></div>
+        </div>
+      </article>
+
+      <article class="card" id="s2">
+        <div class="card-head">
+          <div><span class="card-idx">第二堂</span><h3>拿不走的，才是真的</h3></div>
+          <span class="core-pill">本性、良心、天命</span>
+        </div>
+        <p class="card-desc">AI能寫報告、能畫圖，那人還剩下什麼不可取代？這堂課先花十分鐘聊聊AI帶來的職涯焦慮，但重點不在AI，而是回到一貫道講的本性、良心、天命——這些不是被淘汰、被取代的東西，才是真正決定一個人價值的核心。</p>
+        <div class="phases">
+          <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">AI衝擊職涯的現況與焦慮討論</span></div>
+          <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">本性、良心、天命的白話講解，說明何謂不可取代的價值</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">學員思考並分享「我身上什麼是AI搶不走的」</span></div>
+        </div>
+      </article>
+
+      <article class="card" id="s3">
+        <div class="card-head">
+          <div><span class="card-idx">第三堂</span><h3>照顧別人之前，先別丟了自己</h3></div>
+          <span class="core-pill">孝道與量力而為</span>
+        </div>
+        <p class="card-desc">顧父母、顧小孩、顧同事的情緒——當「照顧」變成一種義務，付出的界線在哪裡？這堂課聚焦在「付出」這個行為本身：怎麼拿捏該做多少，才不會在照顧別人的過程中，把自己燃燒殆盡。</p>
+        <div class="phases">
+          <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">照顧父母、小孩、同事情緒的普遍壓力</span></div>
+          <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">孝道的本質與量力而為，破除「照顧＝無限犧牲」的迷思</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">找出自己目前付出的界線，練習一句拒絕或求助的話</span></div>
+        </div>
+      </article>
+
+      <article class="card" id="s4">
+        <div class="card-head">
+          <div><span class="card-idx">第四堂</span><h3>知足，是解藥還是藉口？</h3></div>
+          <span class="core-pill">知足惜福</span>
+        </div>
+        <p class="card-desc">存不到錢的年代，長輩說「知足常樂」聽起來像風涼話。這堂課直球對決：知足到底是智慧，還是逃避現實的說法？</p>
+        <div class="phases">
+          <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">中年理財焦慮、存不到錢的現實壓力</span></div>
+          <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">知足惜福不等於躺平，說明知足與積極上進如何並存</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">討論「知足」跟「藉口」的界線在哪裡，分享個人經驗</span></div>
+        </div>
+      </article>
+
+      <article class="card" id="s5">
+        <div class="card-head">
+          <div><span class="card-idx">第五堂</span><h3>那些年，我們一起憋過的話</h3></div>
+          <span class="core-pill">五倫中的誠與和</span>
+        </div>
+        <p class="card-desc">用比較輕鬆、帶點懷舊感的分組活動開場，讓學員寫下（匿名也可以）一句「當年沒說出口的話」，現場抽出來討論。用遊戲感包裝，帶出委屈沒說出來會怎樣，怎麼講才不是壓抑、也不是爆炸。</p>
+        <div class="phases">
+          <div class="phase"><span class="ph-label">分組活動・25分鐘</span><span class="ph-body">匿名寫下「當年沒說出口的話」，現場抽出討論</span></div>
+          <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">五倫中的誠與和，說明如何不壓抑、不爆炸地表達</span></div>
+          <div class="phase"><span class="ph-label">實修討論・20分鐘</span><span class="ph-body">練習用「誠」的方式重新表達一句當初沒說出口的話</span></div>
+        </div>
+      </article>
+
+      <article class="card" id="s6">
+        <div class="card-head">
+          <div><span class="card-idx">第六堂</span><h3>我這樣算失敗嗎？</h3></div>
+          <span class="core-pill">安身立命、盡本分</span>
+        </div>
+        <p class="card-desc">沒結婚、沒買房、沒升遷……社會的時間表壓在每個人身上。開放討論場，讓學員先說出自己心裡「算不算失敗」的疑問，最後收回到一貫道對「成功」的定義——不是外在的房子、婚姻、職位，而是有沒有活出良心、盡了本分。討論結束前，每人寫下一句「對我來說，不算失敗的定義是____」，當場收回。</p>
+        <div class="phases">
+          <div class="phase"><span class="ph-label">開放討論・25分鐘</span><span class="ph-body">學員自由說出心裡「算不算失敗」的疑問與壓力</span></div>
+          <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">安身立命、盡本分，重新定義成功不在外在成就</span></div>
+          <div class="phase"><span class="ph-label">收斂寫下・20分鐘</span><span class="ph-body">每人寫下「對我來說，不算失敗的定義是____」，當場收回</span></div>
+        </div>
+      </article>
+
+      <article class="card" id="s7">
+        <div class="card-head">
+          <div><span class="card-idx">第七堂</span><h3>情緒的急救包，你有自己的一份嗎？</h3></div>
+          <span class="core-pill">靜心、內觀</span>
+        </div>
+        <p class="card-desc">不管是免費諮商還是找朋友訴苦，別人能幫你的都有限。這堂課教你打包一份「隨身可用」的急救工具——具體的靜心、內觀方法，遇到情緒卡關時，不用等別人來救，自己就能先穩住。</p>
+        <div class="phases">
+          <div class="phase"><span class="ph-label">引子・15分鐘</span><span class="ph-body">外部資源（免費諮商、朋友訴苦）的限制在哪裡</span></div>
+          <div class="phase"><span class="ph-label">道學核心・40分鐘</span><span class="ph-body">靜心、內觀的具體方法教學，現場帶做一次</span></div>
+          <div class="phase"><span class="ph-label">實修演練・25分鐘</span><span class="ph-body">每人整理一份專屬自己的「情緒急救包」步驟卡</span></div>
+        </div>
+      </article>
+
+      <article class="card" id="s8">
+        <div class="card-head">
+          <div><span class="card-idx">第八堂</span><h3>跟自己相處，你及格嗎？</h3></div>
+          <span class="core-pill">修身、獨處養性</span>
+        </div>
+        <p class="card-desc">不管單身、已婚還是有小孩，每個人都會有需要獨自面對自己的時刻。這堂課聊聊獨處的能力，怎麼把「跟自己相處」練成一種修行，而不是一種要逃避的空白。</p>
+        <div class="phases">
+          <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">獨處時刻對每個人（不分單身已婚）的普遍性</span></div>
+          <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">修身與獨處養性，說明獨處是修行而非逃避的空白</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">分享一次「跟自己好好相處」或「逃避自己」的經驗</span></div>
+        </div>
+      </article>
+
+      <article class="card" id="s9">
+        <div class="card-head">
+          <div><span class="card-idx">第九堂</span><h3>洗碗也是修行，你信不信？</h3></div>
+          <span class="core-pill">大隱於市、日常即修行</span>
+        </div>
+        <p class="card-desc">用一個小實驗開場：請學員回想今天做過最無聊的一件小事，然後現場翻轉——洗碗、通勤、回訊息，這些瑣碎日常其實都可以是修行現場。跟第七堂的「工具」概念呼應：工具學會了，還要會用在日常裡。</p>
+        <div class="phases">
+          <div class="phase"><span class="ph-label">小實驗開場・20分鐘</span><span class="ph-body">回想今天做過最無聊的一件小事</span></div>
+          <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">大隱於市、日常即修行，呼應第七堂學到的工具如何用進日常</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">選一件日常瑣事，設計自己的「修行版」做法</span></div>
+        </div>
+      </article>
+
+      <article class="card" id="s10">
+        <div class="card-head">
+          <div><span class="card-idx">第十堂</span><h3>這一年，我修了什麼？</h3></div>
+          <span class="core-pill">反省、懺悔、立願</span>
+        </div>
+        <p class="card-desc">年終回顧場，帶大家梳理這一年的變化，說出自己的收穫，順便許下明年想修的功課。</p>
+        <div class="phases">
+          <div class="phase"><span class="ph-label">回顧梳理・25分鐘</span><span class="ph-body">學員梳理這一年參與課程後的變化與收穫</span></div>
+          <div class="phase"><span class="ph-label">道學核心・30分鐘</span><span class="ph-body">反省、懺悔的意義，說明立願的精神</span></div>
+          <div class="phase"><span class="ph-label">立願分享・25分鐘</span><span class="ph-body">每人說出一句明年想修的功課</span></div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <footer>
+    <p>一貫道全真社青班　2027年度課程企劃</p>
+  </footer>
+
+</div>
+
+</body>
+</html>
