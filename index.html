@@ -373,6 +373,53 @@
     outline:2px solid var(--gold);
     outline-offset:3px;
   }
+
+  /* ---------- NARROW PHONE (iPhone 17 Pro ~402px and similar) ---------- */
+  @media (max-width:430px){
+    .wrap{padding:0 20px;}
+    .hero{padding:84px 0 56px; min-height:auto;}
+    .hero-mark{font-size:min(60vw, 320px); top:-6vw; right:-6vw;}
+    h1.title{font-size:2.15rem; line-height:1.25;}
+    h1.title em{font-size:0.52em; margin-top:12px;}
+    .hero-desc{font-size:15px;}
+    .hero-meta{
+      flex-direction:column;
+      border-top:1px solid var(--line);
+    }
+    .hero-meta div{
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+      width:100%;
+      padding:12px 0;
+      margin-right:0;
+      border-right:none;
+      border-bottom:1px solid var(--line);
+    }
+    .hero-meta div:last-child{border-bottom:none;}
+    .hero-meta .num{font-size:20px;}
+    section{padding:64px 0;}
+    .section-head{gap:12px; margin-bottom:32px;}
+    .section-head h2{font-size:1.4rem;}
+    .duo{gap:28px; margin-top:28px;}
+    .journey{gap:26px; margin-top:36px;}
+    .outline-row{
+      grid-template-columns:26px 1fr;
+      gap:6px 12px;
+      padding:14px 0;
+    }
+    .outline-row .oc, .outline-row .stage-tag{
+      grid-column:2;
+      text-align:left;
+    }
+    .outline-row .stage-tag{margin-top:2px;}
+    .card{padding:32px 0;}
+    .card h3{font-size:1.15rem; max-width:100%;}
+    .core-pill{font-size:11px; padding:5px 11px;}
+    .card-desc{font-size:14px;}
+    .phase{grid-template-columns:1fr; padding:12px 14px;}
+    .phase .ph-label{margin-bottom:4px; display:block;}
+  }
 </style>
 </head>
 <body>
