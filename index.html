@@ -85,8 +85,9 @@
     text-transform:uppercase;
     margin:0 0 22px;
     display:flex; align-items:center; gap:14px;
+    white-space:nowrap;
   }
-  .eyebrow::before{content:""; width:34px; height:1px; background:var(--gold-dim);}
+  .eyebrow::before{content:""; width:34px; height:1px; background:var(--gold-dim); flex-shrink:0;}
   h1.title{
     font-family:var(--serif);
     font-weight:700;
@@ -123,18 +124,22 @@
     padding:18px 26px 18px 0;
     margin-right:26px;
     border-right:1px solid var(--line);
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    white-space:nowrap;
   }
-  .hero-meta div:last-child{border-right:none;}
+  .hero-meta div:last-child{border-right:none; margin-right:0;}
   .hero-meta .num{
     font-family:var(--serif);
     font-size:26px;
     color:var(--gold);
-    display:block;
   }
   .hero-meta .lbl{
     font-size:12px;
     color:var(--paper-dim);
-    letter-spacing:0.08em;
+    letter-spacing:0.06em;
+    white-space:nowrap;
   }
 
   /* ---------- SECTION SHELL ---------- */
@@ -150,6 +155,7 @@
     font-size:14px;
     color:var(--gold-dim);
     letter-spacing:0.1em;
+    white-space:nowrap;
   }
   .section-head h2{
     font-family:var(--serif);
@@ -157,6 +163,7 @@
     font-size:clamp(1.6rem, 3.4vw, 2.2rem);
     margin:0;
     color:var(--paper);
+    white-space:nowrap;
   }
   .section-head::after{
     content:"";
@@ -205,6 +212,7 @@
     color:var(--paper);
     margin:0 0 8px;
     font-weight:600;
+    white-space:nowrap;
   }
   .stage p{
     font-size:13.5px;
@@ -216,6 +224,7 @@
     color:var(--gold-dim);
     letter-spacing:0.06em;
     margin-top:10px;
+    white-space:nowrap;
   }
 
   @media (max-width:760px){
@@ -237,6 +246,7 @@
     letter-spacing:0.06em;
     margin:0 0 12px;
     font-weight:500;
+    white-space:nowrap;
   }
   .duo p{color:var(--paper-dim); font-size:15px; margin:0;}
   @media (max-width:700px){.duo{grid-template-columns:1fr;}}
@@ -248,10 +258,10 @@
   }
   .outline-row{
     display:grid;
-    grid-template-columns:52px 1fr 180px 100px;
-    gap:18px;
+    grid-template-columns:44px 1fr 168px 92px;
+    gap:14px;
     align-items:center;
-    padding:16px 0;
+    padding:15px 0;
     border-bottom:1px solid var(--line);
     text-decoration:none;
     transition:background 0.2s ease;
@@ -263,21 +273,23 @@
     font-size:14px;
   }
   .outline-row .ot{
-    font-size:15px;
+    font-size:14.5px;
     color:var(--paper);
   }
   .outline-row .oc{
-    font-size:12.5px;
+    font-size:12px;
     color:var(--paper-dim);
+    white-space:nowrap;
   }
   .outline-row .stage-tag{
-    font-size:11px;
+    font-size:10.5px;
     color:var(--cinnabar-bright);
     text-align:right;
-    letter-spacing:0.04em;
+    letter-spacing:0.02em;
+    white-space:nowrap;
   }
   @media (max-width:700px){
-    .outline-row{grid-template-columns:32px 1fr; grid-template-rows:auto auto;}
+    .outline-row{grid-template-columns:28px 1fr; grid-template-rows:auto auto;}
     .outline-row .oc, .outline-row .stage-tag{grid-column:2; text-align:left;}
   }
 
@@ -293,7 +305,7 @@
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
-    gap:24px;
+    gap:16px;
     margin-bottom:18px;
     flex-wrap:wrap;
   }
@@ -304,10 +316,11 @@
     letter-spacing:0.1em;
     display:block;
     margin-bottom:10px;
+    white-space:nowrap;
   }
   .card h3{
     font-family:var(--serif);
-    font-size:clamp(1.25rem, 2.6vw, 1.6rem);
+    font-size:clamp(1.2rem, 2.6vw, 1.6rem);
     font-weight:600;
     color:var(--paper);
     margin:0;
@@ -319,8 +332,8 @@
     border:1px solid var(--gold-dim);
     color:var(--gold);
     font-size:12px;
-    letter-spacing:0.04em;
-    padding:6px 14px;
+    letter-spacing:0.02em;
+    padding:6px 13px;
     border-radius:2px;
     white-space:nowrap;
     font-family:var(--sans);
@@ -337,8 +350,8 @@
   }
   .phase{
     display:grid;
-    grid-template-columns:130px 1fr;
-    gap:18px;
+    grid-template-columns:124px 1fr;
+    gap:16px;
     font-size:13.5px;
     padding:14px 18px;
     background:rgba(201,162,75,0.045);
@@ -348,6 +361,7 @@
     color:var(--gold);
     font-family:var(--serif);
     font-weight:500;
+    white-space:nowrap;
   }
   .phase .ph-body{color:var(--paper-dim);}
   @media (max-width:600px){
@@ -376,49 +390,56 @@
 
   /* ---------- NARROW PHONE (iPhone 17 Pro ~402px and similar) ---------- */
   @media (max-width:430px){
-    .wrap{padding:0 20px;}
-    .hero{padding:84px 0 56px; min-height:auto;}
-    .hero-mark{font-size:min(60vw, 320px); top:-6vw; right:-6vw;}
-    h1.title{font-size:2.15rem; line-height:1.25;}
-    h1.title em{font-size:0.52em; margin-top:12px;}
-    .hero-desc{font-size:15px;}
+    .wrap{padding:0 18px;}
+    .hero{padding:80px 0 52px; min-height:auto;}
+    .hero-mark{font-size:min(58vw, 300px); top:-6vw; right:-6vw;}
+    .eyebrow{font-size:11px; letter-spacing:0.24em;}
+    h1.title{font-size:1.95rem; line-height:1.3;}
+    h1.title em{font-size:0.54em; margin-top:12px;}
+    .hero-desc{font-size:14.5px; margin-bottom:32px;}
     .hero-meta{
       flex-direction:column;
       border-top:1px solid var(--line);
     }
     .hero-meta div{
-      display:flex;
-      align-items:baseline;
-      gap:10px;
       width:100%;
       padding:12px 0;
       margin-right:0;
       border-right:none;
       border-bottom:1px solid var(--line);
+      gap:10px;
     }
     .hero-meta div:last-child{border-bottom:none;}
-    .hero-meta .num{font-size:20px;}
-    section{padding:64px 0;}
-    .section-head{gap:12px; margin-bottom:32px;}
-    .section-head h2{font-size:1.4rem;}
-    .duo{gap:28px; margin-top:28px;}
-    .journey{gap:26px; margin-top:36px;}
+    .hero-meta .num{font-size:19px;}
+    .hero-meta .lbl{font-size:11px;}
+    section{padding:56px 0;}
+    .section-head{gap:10px; margin-bottom:28px;}
+    .section-head .sn{font-size:12px;}
+    .section-head h2{font-size:1.3rem;}
+    .duo{gap:26px; margin-top:24px;}
+    .duo h4{font-size:13px;}
+    .journey{gap:24px; margin-top:32px;}
+    .stage h3{font-size:15.5px;}
+    .stage .range{font-size:10px;}
     .outline-row{
-      grid-template-columns:26px 1fr;
-      gap:6px 12px;
-      padding:14px 0;
+      grid-template-columns:22px 1fr;
+      gap:4px 10px;
+      padding:13px 0;
     }
+    .outline-row .ot{font-size:13.5px;}
     .outline-row .oc, .outline-row .stage-tag{
       grid-column:2;
       text-align:left;
+      font-size:10.5px;
     }
-    .outline-row .stage-tag{margin-top:2px;}
-    .card{padding:32px 0;}
-    .card h3{font-size:1.15rem; max-width:100%;}
-    .core-pill{font-size:11px; padding:5px 11px;}
-    .card-desc{font-size:14px;}
-    .phase{grid-template-columns:1fr; padding:12px 14px;}
-    .phase .ph-label{margin-bottom:4px; display:block;}
+    .outline-row .stage-tag{margin-top:1px;}
+    .card{padding:28px 0;}
+    .card-head{gap:10px;}
+    .card h3{font-size:1.08rem; max-width:100%;}
+    .core-pill{font-size:10.5px; padding:5px 10px; letter-spacing:0;}
+    .card-desc{font-size:13.5px;}
+    .phase{grid-template-columns:1fr; padding:11px 13px; font-size:12.5px;}
+    .phase .ph-label{margin-bottom:4px; display:block; white-space:normal;}
   }
 </style>
 </head>
@@ -429,11 +450,11 @@
   <p class="eyebrow">一貫道 全真社青班</p>
   <h1 class="title">2027 年度課程企劃<em>從生活的痛點，走回本性的路</em></h1>
   <p class="hero-desc">
-    十堂課，寫給26歲到45歲的你——不管是剛出社會、正拼事業、剛成家，還是已經上有老下有小。
+    十五堂課，寫給26歲到45歲的你——不管是剛出社會、正拼事業、剛成家，還是已經上有老下有小。
     每一堂都從一句你我都懂的煩惱開始，慢慢走回一貫道的修心功夫。
   </p>
   <div class="hero-meta">
-    <div><span class="num">10</span><span class="lbl">堂　全年課程</span></div>
+    <div><span class="num">15</span><span class="lbl">堂　全年課程</span></div>
     <div><span class="num">90</span><span class="lbl">分鐘　每堂時長</span></div>
     <div><span class="num">26–45</span><span class="lbl">歲　適用對象</span></div>
   </div>
@@ -458,31 +479,31 @@
 
   <section id="journey">
     <div class="section-head"><span class="sn">02</span><h2>全年修行旅程</h2></div>
-    <p class="lede">十堂課不是十個獨立主題，而是一條從外到內的曲線。</p>
+    <p class="lede">十五堂課不是十五個獨立主題，而是一條從外到內的曲線。</p>
     <div class="journey">
       <div class="stage">
         <div class="dot"></div>
         <h3>拉近距離</h3>
         <p>用最普遍有感的痛點把人拉進來，建立「這裡講的是真的」的信任。</p>
-        <div class="range">第一、二堂</div>
+        <div class="range">第一～三堂</div>
       </div>
       <div class="stage">
         <div class="dot"></div>
         <h3>深入探討</h3>
         <p>觸碰家庭、財務、關係與社會期待，難度逐步提升。</p>
-        <div class="range">第三～六堂</div>
+        <div class="range">第四～九堂</div>
       </div>
       <div class="stage">
         <div class="dot"></div>
         <h3>收斂實修</h3>
         <p>從外部資源轉向內在功夫，教具體可用的靜心與日常方法。</p>
-        <div class="range">第七～九堂</div>
+        <div class="range">第十～十三堂</div>
       </div>
       <div class="stage">
         <div class="dot"></div>
         <h3>回顧立願</h3>
-        <p>梳理一整年的變化，說出收穫，許下明年想修的功課。</p>
-        <div class="range">第十堂</div>
+        <p>正視無常、梳理一整年的變化，許下明年想修的功課。</p>
+        <div class="range">第十四～十五堂</div>
       </div>
     </div>
   </section>
@@ -495,14 +516,19 @@
       </div>
       <a class="outline-row" href="#s1"><span class="idx">01</span><span class="ot">「我很好」是這年代最大的謊言</span><span class="oc">誠意正心</span><span class="stage-tag">拉近距離</span></a>
       <a class="outline-row" href="#s2"><span class="idx">02</span><span class="ot">拿不走的，才是真的</span><span class="oc">本性、良心、天命</span><span class="stage-tag">拉近距離</span></a>
-      <a class="outline-row" href="#s3"><span class="idx">03</span><span class="ot">照顧別人之前，先別丟了自己</span><span class="oc">孝道與量力而為</span><span class="stage-tag">深入探討</span></a>
-      <a class="outline-row" href="#s4"><span class="idx">04</span><span class="ot">知足，是解藥還是藉口？</span><span class="oc">知足惜福</span><span class="stage-tag">深入探討</span></a>
-      <a class="outline-row" href="#s5"><span class="idx">05</span><span class="ot">那些年，我們一起憋過的話</span><span class="oc">五倫中的誠與和</span><span class="stage-tag">深入探討</span></a>
-      <a class="outline-row" href="#s6"><span class="idx">06</span><span class="ot">我這樣算失敗嗎？</span><span class="oc">安身立命、盡本分</span><span class="stage-tag">深入探討</span></a>
-      <a class="outline-row" href="#s7"><span class="idx">07</span><span class="ot">情緒的急救包，你有自己的一份嗎？</span><span class="oc">靜心、內觀</span><span class="stage-tag">收斂實修</span></a>
-      <a class="outline-row" href="#s8"><span class="idx">08</span><span class="ot">跟自己相處，你及格嗎？</span><span class="oc">修身、獨處養性</span><span class="stage-tag">收斂實修</span></a>
-      <a class="outline-row" href="#s9"><span class="idx">09</span><span class="ot">洗碗也是修行，你信不信？</span><span class="oc">大隱於市、日常即修行</span><span class="stage-tag">收斂實修</span></a>
-      <a class="outline-row" href="#s10"><span class="idx">10</span><span class="ot">這一年，我修了什麼？</span><span class="oc">反省、懺悔、立願</span><span class="stage-tag">回顧立願</span></a>
+      <a class="outline-row" href="#s3"><span class="idx">03</span><span class="ot">你也活成了父母的樣子？</span><span class="oc">反求諸己</span><span class="stage-tag">拉近距離</span></a>
+      <a class="outline-row" href="#s4"><span class="idx">04</span><span class="ot">照顧別人之前，先別丟了自己</span><span class="oc">孝道與量力而為</span><span class="stage-tag">深入探討</span></a>
+      <a class="outline-row" href="#s5"><span class="idx">05</span><span class="ot">知足，是解藥還是藉口？</span><span class="oc">知足惜福</span><span class="stage-tag">深入探討</span></a>
+      <a class="outline-row" href="#s6"><span class="idx">06</span><span class="ot">朋友圈變小了，是正常的嗎？</span><span class="oc">善緣與惜緣</span><span class="stage-tag">深入探討</span></a>
+      <a class="outline-row" href="#s7"><span class="idx">07</span><span class="ot">那些年，我們一起憋過的話</span><span class="oc">五倫中的誠與和</span><span class="stage-tag">深入探討</span></a>
+      <a class="outline-row" href="#s8"><span class="idx">08</span><span class="ot">我這樣算失敗嗎？</span><span class="oc">安身立命、盡本分</span><span class="stage-tag">深入探討</span></a>
+      <a class="outline-row" href="#s9"><span class="idx">09</span><span class="ot">手機滑不停，你到底在逃避什麼？</span><span class="oc">收放心猿意馬</span><span class="stage-tag">深入探討</span></a>
+      <a class="outline-row" href="#s10"><span class="idx">10</span><span class="ot">情緒的急救包，你有自己的一份嗎？</span><span class="oc">靜心、內觀</span><span class="stage-tag">收斂實修</span></a>
+      <a class="outline-row" href="#s11"><span class="idx">11</span><span class="ot">跟自己相處，你及格嗎？</span><span class="oc">修身、獨處養性</span><span class="stage-tag">收斂實修</span></a>
+      <a class="outline-row" href="#s12"><span class="idx">12</span><span class="ot">洗碗也是修行，你信不信？</span><span class="oc">大隱於市、日常即修行</span><span class="stage-tag">收斂實修</span></a>
+      <a class="outline-row" href="#s13"><span class="idx">13</span><span class="ot">你上一次真心感謝，是什麼時候？</span><span class="oc">知恩報恩</span><span class="stage-tag">收斂實修</span></a>
+      <a class="outline-row" href="#s14"><span class="idx">14</span><span class="ot">死亡教我們的事</span><span class="oc">生死大事、了脫生死</span><span class="stage-tag">回顧立願</span></a>
+      <a class="outline-row" href="#s15"><span class="idx">15</span><span class="ot">這一年，我修了什麼？</span><span class="oc">反省、懺悔、立願</span><span class="stage-tag">回顧立願</span></a>
     </div>
   </section>
 
@@ -539,7 +565,20 @@
 
       <article class="card" id="s3">
         <div class="card-head">
-          <div><span class="card-idx">第三堂</span><h3>照顧別人之前，先別丟了自己</h3></div>
+          <div><span class="card-idx">第三堂</span><h3>你也活成了父母的樣子？</h3></div>
+          <span class="core-pill">反求諸己</span>
+        </div>
+        <p class="card-desc">我們常常發誓不要變成父母那樣，卻在某個瞬間發現自己脫口而出一樣的話、做一樣的反應。這堂課帶大家誠實面對原生家庭留下的印記，哪些該留、哪些該放。</p>
+        <div class="phases">
+          <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">分享一次「我也變成爸媽的樣子」的瞬間</span></div>
+          <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">反求諸己的功夫，說明如何看清而不苛責自己或父母</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">練習分辨一個習慣是「該留的傳承」還是「該放的印記」</span></div>
+        </div>
+      </article>
+
+      <article class="card" id="s4">
+        <div class="card-head">
+          <div><span class="card-idx">第四堂</span><h3>照顧別人之前，先別丟了自己</h3></div>
           <span class="core-pill">孝道與量力而為</span>
         </div>
         <p class="card-desc">顧父母、顧小孩、顧同事的情緒——當「照顧」變成一種義務，付出的界線在哪裡？這堂課聚焦在「付出」這個行為本身：怎麼拿捏該做多少，才不會在照顧別人的過程中，把自己燃燒殆盡。</p>
@@ -550,9 +589,9 @@
         </div>
       </article>
 
-      <article class="card" id="s4">
+      <article class="card" id="s5">
         <div class="card-head">
-          <div><span class="card-idx">第四堂</span><h3>知足，是解藥還是藉口？</h3></div>
+          <div><span class="card-idx">第五堂</span><h3>知足，是解藥還是藉口？</h3></div>
           <span class="core-pill">知足惜福</span>
         </div>
         <p class="card-desc">存不到錢的年代，長輩說「知足常樂」聽起來像風涼話。這堂課直球對決：知足到底是智慧，還是逃避現實的說法？</p>
@@ -563,9 +602,22 @@
         </div>
       </article>
 
-      <article class="card" id="s5">
+      <article class="card" id="s6">
         <div class="card-head">
-          <div><span class="card-idx">第五堂</span><h3>那些年，我們一起憋過的話</h3></div>
+          <div><span class="card-idx">第六堂</span><h3>朋友圈變小了，是正常的嗎？</h3></div>
+          <span class="core-pill">善緣與惜緣</span>
+        </div>
+        <p class="card-desc">出社會後，聯絡人越來越多，真正見面的朋友卻越來越少。這是成長的必然，還是關係正在悄悄流失？</p>
+        <div class="phases">
+          <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">討論出社會後交友圈縮小的普遍現象</span></div>
+          <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">善緣與惜緣的觀念，說明緣分有深淺、不必強求也不能輕忽</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">列出目前最想重新聯絡的一個人，練習主動跨出第一步</span></div>
+        </div>
+      </article>
+
+      <article class="card" id="s7">
+        <div class="card-head">
+          <div><span class="card-idx">第七堂</span><h3>那些年，我們一起憋過的話</h3></div>
           <span class="core-pill">五倫中的誠與和</span>
         </div>
         <p class="card-desc">用比較輕鬆、帶點懷舊感的分組活動開場，讓學員寫下（匿名也可以）一句「當年沒說出口的話」，現場抽出來討論。用遊戲感包裝，帶出委屈沒說出來會怎樣，怎麼講才不是壓抑、也不是爆炸。</p>
@@ -576,9 +628,9 @@
         </div>
       </article>
 
-      <article class="card" id="s6">
+      <article class="card" id="s8">
         <div class="card-head">
-          <div><span class="card-idx">第六堂</span><h3>我這樣算失敗嗎？</h3></div>
+          <div><span class="card-idx">第八堂</span><h3>我這樣算失敗嗎？</h3></div>
           <span class="core-pill">安身立命、盡本分</span>
         </div>
         <p class="card-desc">沒結婚、沒買房、沒升遷……社會的時間表壓在每個人身上。開放討論場，讓學員先說出自己心裡「算不算失敗」的疑問，最後收回到一貫道對「成功」的定義——不是外在的房子、婚姻、職位，而是有沒有活出良心、盡了本分。討論結束前，每人寫下一句「對我來說，不算失敗的定義是____」，當場收回。</p>
@@ -589,9 +641,22 @@
         </div>
       </article>
 
-      <article class="card" id="s7">
+      <article class="card" id="s9">
         <div class="card-head">
-          <div><span class="card-idx">第七堂</span><h3>情緒的急救包，你有自己的一份嗎？</h3></div>
+          <div><span class="card-idx">第九堂</span><h3>手機滑不停，你到底在逃避什麼？</h3></div>
+          <span class="core-pill">收放心猿意馬</span>
+        </div>
+        <p class="card-desc">明明沒有要看什麼，手還是不自覺滑開手機。這個習慣背後，往往藏著一份不想面對的情緒或空虛。</p>
+        <div class="phases">
+          <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">覺察自己滑手機前的情緒狀態</span></div>
+          <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">收放心猿意馬的功夫，說明如何練習把浮動的心定下來</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">設計一個屬於自己的「放下手機前先做的小動作」</span></div>
+        </div>
+      </article>
+
+      <article class="card" id="s10">
+        <div class="card-head">
+          <div><span class="card-idx">第十堂</span><h3>情緒的急救包，你有自己的一份嗎？</h3></div>
           <span class="core-pill">靜心、內觀</span>
         </div>
         <p class="card-desc">不管是免費諮商還是找朋友訴苦，別人能幫你的都有限。這堂課教你打包一份「隨身可用」的急救工具——具體的靜心、內觀方法，遇到情緒卡關時，不用等別人來救，自己就能先穩住。</p>
@@ -602,9 +667,9 @@
         </div>
       </article>
 
-      <article class="card" id="s8">
+      <article class="card" id="s11">
         <div class="card-head">
-          <div><span class="card-idx">第八堂</span><h3>跟自己相處，你及格嗎？</h3></div>
+          <div><span class="card-idx">第十一堂</span><h3>跟自己相處，你及格嗎？</h3></div>
           <span class="core-pill">修身、獨處養性</span>
         </div>
         <p class="card-desc">不管單身、已婚還是有小孩，每個人都會有需要獨自面對自己的時刻。這堂課聊聊獨處的能力，怎麼把「跟自己相處」練成一種修行，而不是一種要逃避的空白。</p>
@@ -615,22 +680,48 @@
         </div>
       </article>
 
-      <article class="card" id="s9">
+      <article class="card" id="s12">
         <div class="card-head">
-          <div><span class="card-idx">第九堂</span><h3>洗碗也是修行，你信不信？</h3></div>
+          <div><span class="card-idx">第十二堂</span><h3>洗碗也是修行，你信不信？</h3></div>
           <span class="core-pill">大隱於市、日常即修行</span>
         </div>
-        <p class="card-desc">用一個小實驗開場：請學員回想今天做過最無聊的一件小事，然後現場翻轉——洗碗、通勤、回訊息，這些瑣碎日常其實都可以是修行現場。跟第七堂的「工具」概念呼應：工具學會了，還要會用在日常裡。</p>
+        <p class="card-desc">用一個小實驗開場：請學員回想今天做過最無聊的一件小事，然後現場翻轉——洗碗、通勤、回訊息，這些瑣碎日常其實都可以是修行現場。跟第十堂的「工具」概念呼應：工具學會了，還要會用在日常裡。</p>
         <div class="phases">
           <div class="phase"><span class="ph-label">小實驗開場・20分鐘</span><span class="ph-body">回想今天做過最無聊的一件小事</span></div>
-          <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">大隱於市、日常即修行，呼應第七堂學到的工具如何用進日常</span></div>
+          <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">大隱於市、日常即修行，呼應第十堂學到的工具如何用進日常</span></div>
           <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">選一件日常瑣事，設計自己的「修行版」做法</span></div>
         </div>
       </article>
 
-      <article class="card" id="s10">
+      <article class="card" id="s13">
         <div class="card-head">
-          <div><span class="card-idx">第十堂</span><h3>這一年，我修了什麼？</h3></div>
+          <div><span class="card-idx">第十三堂</span><h3>你上一次真心感謝，是什麼時候？</h3></div>
+          <span class="core-pill">知恩報恩</span>
+        </div>
+        <p class="card-desc">感謝常常變成一句順口的客套話，而不是真正說進心裡的話。這堂課帶大家把感謝說得具體、說得真心。</p>
+        <div class="phases">
+          <div class="phase"><span class="ph-label">實修暖身・20分鐘</span><span class="ph-body">寫下一位還沒好好感謝過的人</span></div>
+          <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">知恩報恩的意義，說明報恩不是還債而是修辦的起點</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">練習寫或說出一句具體的感謝，說明對方做了什麼、帶來什麼影響</span></div>
+        </div>
+      </article>
+
+      <article class="card" id="s14">
+        <div class="card-head">
+          <div><span class="card-idx">第十四堂</span><h3>死亡教我們的事</h3></div>
+          <span class="core-pill">生死大事、了脫生死</span>
+        </div>
+        <p class="card-desc">提到死亡，很多人直覺想迴避，但認真想過終點，才更知道怎麼過好剩下的日子。這堂課用平靜、不沉重的方式，一起聊聊無常這件事。</p>
+        <div class="phases">
+          <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">分享一次意識到生命有限的經驗（不必是重大事件）</span></div>
+          <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">生死大事與了脫生死的觀念，說明修辦與無常的關係</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">寫下「如果只剩一年，我最想完成的一件事」</span></div>
+        </div>
+      </article>
+
+      <article class="card" id="s15">
+        <div class="card-head">
+          <div><span class="card-idx">第十五堂</span><h3>這一年，我修了什麼？</h3></div>
           <span class="core-pill">反省、懺悔、立願</span>
         </div>
         <p class="card-desc">年終回顧場，帶大家梳理這一年的變化，說出自己的收穫，順便許下明年想修的功課。</p>
