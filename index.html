@@ -2,27 +2,49 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>2027年度課程企劃｜一貫道全真社青班</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700;900&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
+  /* 暗色主題：神隱少女 夜景 */
   :root{
-    --ink:#17130f;
-    --ink-2:#241d17;
-    --paper:#f2ead9;
-    --paper-dim:#cfc3a8;
-    --cinnabar:#a5312c;
-    --cinnabar-bright:#c4433c;
-    --gold:#c9a24b;
-    --gold-dim:#8a7038;
-    --line: rgba(201,162,75,0.28);
+    --ink:#0d1520;
+    --ink-2:#162032;
+    --paper:#f5e8c8;
+    --paper-dim:#a89878;
+    --cinnabar:#c45c3a;
+    --cinnabar-bright:#e07848;
+    --gold:#d4a030;
+    --gold-dim:#7a5e1a;
+    --sky:#4a8fa8;
+    --forest:#3a7a58;
+    --line: rgba(212,160,48,0.22);
     --serif:'Noto Serif TC', serif;
     --sans:'Noto Sans TC', sans-serif;
+    color-scheme: dark;
   }
 
-  *{box-sizing:border-box;}
+  /* 亮色主題：龍貓 草原白日 */
+  [data-theme="light"]{
+    --ink:#edf5e8;
+    --ink-2:#ddecd6;
+    --paper:#1a3010;
+    --paper-dim:#4a6838;
+    --cinnabar:#b83828;
+    --cinnabar-bright:#d04030;
+    --gold:#c89018;
+    --gold-dim:#906800;
+    --sky:#5aa8d8;
+    --forest:#3d8848;
+    --line: rgba(60,136,72,0.22);
+    color-scheme: light;
+  }
+
+  /* 主題切換過渡 */
+  *{box-sizing:border-box; transition: background-color 0.45s ease, color 0.45s ease, border-color 0.45s ease, box-shadow 0.45s ease;}
   html{scroll-behavior:smooth;}
   body{
     margin:0;
@@ -41,18 +63,47 @@
   a{color:inherit;}
   ::selection{background:var(--cinnabar); color:var(--paper);}
 
-  /* texture */
+  /* texture — Ghibli sky atmosphere (dark: 神隱少女) */
   body::before{
     content:"";
     position:fixed; inset:0;
     background-image:
-      radial-gradient(ellipse at 20% -10%, rgba(197,67,60,0.14), transparent 55%),
-      radial-gradient(ellipse at 90% 10%, rgba(201,162,75,0.10), transparent 45%);
+      radial-gradient(ellipse at 15% -5%,  rgba(74,143,168,0.18), transparent 50%),
+      radial-gradient(ellipse at 85% 5%,   rgba(212,160,48,0.13), transparent 45%),
+      radial-gradient(ellipse at 50% 100%, rgba(58,122,88,0.12),  transparent 55%);
     pointer-events:none;
     z-index:0;
+    transition: opacity 0.5s ease;
   }
+  /* starfield (dark only) */
+  body::after{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      radial-gradient(1px 1px at 12% 18%, rgba(245,232,200,0.55), transparent),
+      radial-gradient(1px 1px at 34% 8%,  rgba(245,232,200,0.40), transparent),
+      radial-gradient(1px 1px at 56% 22%, rgba(245,232,200,0.50), transparent),
+      radial-gradient(1px 1px at 78% 12%, rgba(245,232,200,0.35), transparent),
+      radial-gradient(1px 1px at 90% 35%, rgba(245,232,200,0.45), transparent),
+      radial-gradient(1.5px 1.5px at 23% 42%, rgba(212,160,48,0.50), transparent),
+      radial-gradient(1px 1px at 67% 38%, rgba(245,232,200,0.30), transparent),
+      radial-gradient(1.5px 1.5px at 45% 55%, rgba(212,160,48,0.40), transparent),
+      radial-gradient(1px 1px at 8%  65%, rgba(245,232,200,0.35), transparent),
+      radial-gradient(1px 1px at 82% 70%, rgba(245,232,200,0.30), transparent);
+    pointer-events:none;
+    z-index:0;
+    transition: opacity 0.5s ease;
+  }
+  /* 亮色：龍貓草原大氣光 */
+  [data-theme="light"] body::before{
+    background-image:
+      radial-gradient(ellipse at 20% -5%,  rgba(90,168,216,0.15), transparent 50%),
+      radial-gradient(ellipse at 80% 8%,   rgba(200,144,24,0.14), transparent 45%),
+      radial-gradient(ellipse at 50% 100%, rgba(61,136,72,0.18),  transparent 55%);
+  }
+  [data-theme="light"] body::after{ opacity:0; }
 
-  .wrap{max-width:920px; margin:0 auto; padding:0 28px; position:relative; z-index:1;}
+  .wrap{max-width:920px; margin:0 auto; padding:0 max(28px, env(safe-area-inset-left, 0px)); padding-right:max(28px, env(safe-area-inset-right, 0px)); position:relative; z-index:1;}
 
   /* ---------- HERO ---------- */
   .hero{
@@ -61,7 +112,8 @@
     flex-direction:column;
     justify-content:center;
     position:relative;
-    padding:120px 0 80px;
+    padding-top:120px;
+    padding-bottom:80px;
     overflow:hidden;
   }
   .hero-mark{
@@ -369,6 +421,62 @@
     .phase .ph-label{margin-bottom:2px;}
   }
 
+
+  /* ---------- REFS ---------- */
+  .refs{
+    margin-top:20px;
+    padding:14px 18px;
+    border-left:2px solid var(--gold-dim);
+    background:rgba(201,162,75,0.025);
+    font-size:13px;
+    line-height:1.6;
+  }
+  .refs-label{
+    display:block;
+    color:var(--gold);
+    font-family:var(--serif);
+    font-weight:500;
+    font-size:11.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  .refs ul{margin:0;padding:0;list-style:none;}
+  .refs li{color:var(--paper-dim);margin-bottom:7px;padding-left:14px;position:relative;}
+  .refs li::before{content:"▸";position:absolute;left:0;color:var(--gold-dim);font-size:10px;top:3px;}
+  .refs strong{color:var(--paper);font-weight:500;}
+
+
+  .activity-badge{
+    flex-shrink:0;
+    border:1px solid var(--sky);
+    color:var(--sky);
+    font-size:12px;
+    letter-spacing:0.02em;
+    padding:6px 13px;
+    border-radius:2px;
+    white-space:nowrap;
+  }
+  .card-date-label{
+    font-family:var(--serif);
+    font-size:12px;
+    color:var(--sky);
+    letter-spacing:0.06em;
+    margin-bottom:4px;
+    display:block;
+  }
+  .activity-sep{
+    border:none;
+    border-top:2px dashed var(--line);
+    margin:48px 0 8px;
+  }
+  .activity-note{
+    font-size:13px;
+    color:var(--paper-dim);
+    margin:0 0 12px;
+    font-style:italic;
+  }
+
   /* ---------- FOOTER ---------- */
   footer{
     padding:70px 0 60px;
@@ -382,6 +490,77 @@
     margin:0;
   }
 
+  /* ---------- SCHEDULE TABLE ---------- */
+  .sched-table{
+    margin-top:8px;
+    border-top:1px solid var(--line);
+  }
+  .sched-row{
+    display:grid;
+    grid-template-columns:110px 1fr;
+    gap:0;
+    border-bottom:1px solid var(--line);
+    padding:18px 0;
+    align-items:start;
+  }
+  .sched-row.sched-alt{
+    background:rgba(201,162,75,0.03);
+  }
+  .sched-header{
+    padding:10px 0;
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:var(--gold-dim);
+  }
+  .sched-date{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    padding-right:16px;
+  }
+  .sched-mo{
+    font-family:var(--serif);
+    font-size:17px;
+    color:var(--paper);
+    letter-spacing:0.04em;
+  }
+  .sched-type{
+    font-size:10px;
+    letter-spacing:0.08em;
+    color:var(--cinnabar-bright);
+    border:1px solid var(--cinnabar-bright);
+    padding:2px 7px;
+    border-radius:2px;
+    width:fit-content;
+    white-space:nowrap;
+  }
+  .sched-type.special{color:var(--gold); border-color:var(--gold-dim);}
+  .sched-type.outdoor{color:var(--paper-dim); border-color:rgba(207,195,168,0.35);}
+  .sched-type.dharma{color:var(--gold-dim); border-color:var(--gold-dim);}
+  .sched-slots{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .sched-item{
+    font-size:13.5px;
+    line-height:1.5;
+  }
+  .sched-item.session a{
+    color:var(--paper);
+    text-decoration:none;
+    transition:color 0.15s;
+  }
+  .sched-item.session a:hover{color:var(--gold);}
+  .sched-item.meta{
+    color:var(--paper-dim);
+    font-size:13px;
+  }
+  @media (max-width:600px){
+    .sched-row{grid-template-columns:1fr; gap:10px;}
+    .sched-date{flex-direction:row; align-items:center;}
+  }
+
   /* focus visibility */
   a:focus-visible, .outline-row:focus-visible{
     outline:2px solid var(--gold);
@@ -390,8 +569,8 @@
 
   /* ---------- NARROW PHONE (iPhone 17 Pro ~402px and similar) ---------- */
   @media (max-width:430px){
-    .wrap{padding:0 18px;}
-    .hero{padding:80px 0 52px; min-height:auto;}
+    .wrap{padding:0 max(28px, env(safe-area-inset-left, 0px)); padding-right:max(28px, env(safe-area-inset-right, 0px));}
+    .hero{padding-top:80px; padding-bottom:52px; min-height:auto;}
     .hero-mark{font-size:min(58vw, 300px); top:-6vw; right:-6vw;}
     .eyebrow{font-size:11px; letter-spacing:0.24em;}
     h1.title{font-size:1.95rem; line-height:1.3;}
@@ -441,9 +620,40 @@
     .phase{grid-template-columns:1fr; padding:11px 13px; font-size:12.5px;}
     .phase .ph-label{margin-bottom:4px; display:block; white-space:normal;}
   }
+
+  /* 日夜切換按鈕 */
+  #theme-toggle{
+    position:fixed;
+    top:18px; right:22px;
+    z-index:999;
+    width:44px; height:44px;
+    border-radius:50%;
+    border:2px solid var(--gold);
+    background:var(--ink-2);
+    color:var(--gold);
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.35);
+    transition: background 0.45s ease, border-color 0.45s ease, color 0.45s ease, box-shadow 0.45s ease;
+  }
+  #theme-toggle:hover{
+    background:var(--gold);
+    color:var(--ink);
+    box-shadow:0 4px 18px rgba(0,0,0,0.4);
+  }
+  /* 暗色顯示月亮，亮色顯示太陽 */
+  #icon-sun{ display:none; }
+  #icon-moon{ display:inline; }
+  [data-theme="light"] #icon-sun{ display:inline; }
+  [data-theme="light"] #icon-moon{ display:none; }
 </style>
 </head>
 <body>
+<button id="theme-toggle" aria-label="切換日夜主題">
+  <i class="ti ti-sun" id="icon-sun"></i>
+  <i class="ti ti-moon" id="icon-moon"></i>
+</button>
 
 <div class="wrap hero">
   <span class="hero-mark" aria-hidden="true">道</span>
@@ -508,8 +718,86 @@
     </div>
   </section>
 
+  <section id="schedule">
+    <div class="section-head"><span class="sn">03</span><h2>全年時程</h2></div>
+    <p class="lede">每月第四週六上課，全年共九個日期，戶外聯誼與法會另計。</p>
+    <div class="sched-table">
+      <div class="sched-row sched-header">
+        <span class="sched-date">日期</span>
+        <span class="sched-slots">課程安排</span>
+      </div>
+      <div class="sched-row">
+        <span class="sched-date"><span class="sched-mo">03/27</span><span class="sched-type special">開班</span></span>
+        <span class="sched-slots">
+          <span class="sched-item meta"><a href="#se-open">開班／幹部介紹</a></span>
+          <span class="sched-item meta"><a href="#se-open">迎新聯誼</a></span>
+          <span class="sched-item session"><a href="#s1">第1堂　「我很好」是這年代最大的謊言</a></span>
+        </span>
+      </div>
+      <div class="sched-row">
+        <span class="sched-date"><span class="sched-mo">04/24</span><span class="sched-type">專修</span></span>
+        <span class="sched-slots">
+          <span class="sched-item session"><a href="#s2">第2堂　拿不走的，才是真的</a></span>
+          <span class="sched-item session"><a href="#s3">第3堂　你也活成了父母的樣子？</a></span>
+          <span class="sched-item session"><a href="#s4">第4堂　照顧別人之前，先別丟了自己</a></span>
+        </span>
+      </div>
+      <div class="sched-row sched-alt">
+        <span class="sched-date"><span class="sched-mo">05/29</span><span class="sched-type outdoor">聯誼</span></span>
+        <span class="sched-slots">
+          <span class="sched-item meta"><a href="#se-outdoor">戶外聯誼活動</a></span>
+        </span>
+      </div>
+      <div class="sched-row">
+        <span class="sched-date"><span class="sched-mo">06/26</span><span class="sched-type">專修</span></span>
+        <span class="sched-slots">
+          <span class="sched-item session"><a href="#s5">第5堂　知足，是解藥還是藉口？</a></span>
+          <span class="sched-item session"><a href="#s6">第6堂　朋友圈變小了，是正常的嗎？</a></span>
+          <span class="sched-item session"><a href="#s7">第7堂　那些年，我們一起憋過的話</a></span>
+        </span>
+      </div>
+      <div class="sched-row sched-alt">
+        <span class="sched-date"><span class="sched-mo">08/28</span><span class="sched-type dharma">法會</span></span>
+        <span class="sched-slots">
+          <span class="sched-item meta"><a href="#se-dharma">新道親法會──見習與服務</a></span>
+        </span>
+      </div>
+      <div class="sched-row">
+        <span class="sched-date"><span class="sched-mo">10/02</span><span class="sched-type">專修</span></span>
+        <span class="sched-slots">
+          <span class="sched-item session"><a href="#s8">第8堂　我這樣算失敗嗎？</a></span>
+          <span class="sched-item session"><a href="#s9">第9堂　手機滑不停，你到底在逃避什麼？</a></span>
+          <span class="sched-item session"><a href="#s10">第10堂　情緒的急救包，你有自己的一份嗎？</a></span>
+        </span>
+      </div>
+      <div class="sched-row sched-alt">
+        <span class="sched-date"><span class="sched-mo">10/30</span><span class="sched-type outdoor">聯誼</span></span>
+        <span class="sched-slots">
+          <span class="sched-item meta"><a href="#se-outdoor">戶外聯誼活動</a></span>
+        </span>
+      </div>
+      <div class="sched-row">
+        <span class="sched-date"><span class="sched-mo">11/27</span><span class="sched-type">專修</span></span>
+        <span class="sched-slots">
+          <span class="sched-item session"><a href="#s11">第11堂　跟自己相處，你及格嗎？</a></span>
+          <span class="sched-item session"><a href="#s12">第12堂　洗碗也是修行，你信不信？</a></span>
+          <span class="sched-item session"><a href="#s13">第13堂　你上一次真心感謝，是什麼時候？</a></span>
+        </span>
+      </div>
+      <div class="sched-row special">
+        <span class="sched-date"><span class="sched-mo">12/25</span><span class="sched-type special">結班</span></span>
+        <span class="sched-slots">
+          <span class="sched-item session"><a href="#s14">第14堂　死亡教我們的事</a></span>
+          <span class="sched-item session"><a href="#s15">第15堂　這一年，我修了什麼？</a></span>
+          <span class="sched-item meta"><a href="#se-close">結班聯誼</a></span>
+        </span>
+      </div>
+    </div>
+  </section>
+
   <section id="outline">
-    <div class="section-head"><span class="sn">03</span><h2>課程大綱</h2></div>
+    <div class="section-head"><span class="sn">04</span><h2>課程大綱</h2></div>
+
     <div class="outline">
       <div class="outline-row" style="border-top:1px solid var(--line);">
         <span class="idx"></span><span class="ot" style="color:var(--gold-dim); font-size:12px; letter-spacing:0.08em;">標題</span><span class="oc" style="letter-spacing:0.08em;">道學核心</span><span class="stage-tag" style="color:var(--paper-dim);">階段</span>
@@ -533,7 +821,7 @@
   </section>
 
   <section id="sessions">
-    <div class="section-head"><span class="sn">04</span><h2>課程清單</h2></div>
+    <div class="section-head"><span class="sn">05</span><h2>課程清單</h2></div>
 
     <div class="sessions">
 
@@ -546,7 +834,15 @@
         <div class="phases">
           <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">從職場情緒勞動、家庭裡的假裝沒事文化切入，帶出「我很好」背後的疲憊</span></div>
           <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">誠意正心的意涵，用生活故事說明真誠面對自己與他人的重要</span></div>
-          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">分組分享一次「假裝沒事」的經驗，練習說出真實感受</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">【自介】以一句組員沒聽過的描述介紹自己（例：「我是一位曾在別人婚禮哭得比新娘還大聲的某某某」），再分享一次「假裝沒事」的具體經驗，練習說出今天真正的狀態</span></div>
+        </div>
+        <div class="refs">
+          <span class="refs-label">📚 講師參考</span>
+          <ul>
+            <li><strong>《敢於脆弱》Brené Brown</strong>：「脆弱不是軟弱，而是勇氣的起點」——直接解釋為何「我很好」是代價高昂的習慣</li>
+            <li><strong>《情緒勒索》周慕姿</strong>：台灣語境，社青高度共鳴，可節錄第一章作為引子素材</li>
+            <li>經典金句：<strong>《大學》「欲誠其意者，先致其知」</strong>——誠意從自知開始，不是從表演開始</li>
+          </ul>
         </div>
       </article>
 
@@ -559,7 +855,15 @@
         <div class="phases">
           <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">AI衝擊職涯的現況與焦慮討論</span></div>
           <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">本性、良心、天命的白話講解，說明何謂不可取代的價值</span></div>
-          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">學員思考並分享「我身上什麼是AI搶不走的」</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">【自介】以一句組員沒聽過的描述介紹自己（例：「我是一位高中立志當太空人、後來把志向改了七次以上的某某某」），再思考並分享：我身上什麼是 AI 搶不走的？如果說不出來，從哪裡開始找？</span></div>
+        </div>
+        <div class="refs">
+          <span class="refs-label">📚 講師參考</span>
+          <ul>
+            <li><strong>《活出意義來》Viktor Frankl</strong>：在集中營裡支撐人活下去的從來不是技能，而是「為何而活」的意義感——本性與天命的西方版詮釋</li>
+            <li>經典金句：<strong>《論語》「知之者不如好之者，好之者不如樂之者」</strong>——AI 可以「知道」，但無法「喜愛」，更無法從中得到快樂</li>
+            <li>經典金句：<strong>《中庸》「天命之謂性，率性之謂道」</strong>——天命不是命運，是你活出本性的那條路</li>
+          </ul>
         </div>
       </article>
 
@@ -572,7 +876,15 @@
         <div class="phases">
           <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">分享一次「我也變成爸媽的樣子」的瞬間</span></div>
           <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">反求諸己的功夫，說明如何看清而不苛責自己或父母</span></div>
-          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">練習分辨一個習慣是「該留的傳承」還是「該放的印記」</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">【自介】以一句組員沒聽過的描述介紹自己（例：「我是一位跟媽媽大吵後、隔天趁她睡著偷在枕頭下放道歉紙條的某某某」），再找出一個具體習慣，分辨它是該留的傳承還是可以鬆開的印記</span></div>
+        </div>
+        <div class="refs">
+          <span class="refs-label">📚 講師參考</span>
+          <ul>
+            <li><strong>《原生家庭療癒》Susan Forward</strong>：系統梳理家庭留下的模式，不是要仇親，而是看清楚才能選擇</li>
+            <li><strong>《薩提爾的對話練習》</strong>：探討家庭溝通姿態（討好型、指責型、超理智型）如何在孩子身上複製，是反求諸己的實務版本</li>
+            <li>經典金句：<strong>《論語》「見賢思齊焉，見不賢而內自省也」</strong>——看見父母的不足，不是判罪，是自省的起點</li>
+          </ul>
         </div>
       </article>
 
@@ -585,7 +897,15 @@
         <div class="phases">
           <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">照顧父母、小孩、同事情緒的普遍壓力</span></div>
           <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">孝道的本質與量力而為，破除「照顧＝無限犧牲」的迷思</span></div>
-          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">找出自己目前付出的界線，練習一句拒絕或求助的話</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">【自介】以一句組員沒聽過的描述介紹自己（例：「我是一位曾同時照顧兩隻生病老狗、知道什麼叫做心疼到捨不得睡的某某某」），再找出目前付出中超過自己容量的一件事，練習說出一句拒絕或求助的話</span></div>
+        </div>
+        <div class="refs">
+          <span class="refs-label">📚 講師參考</span>
+          <ul>
+            <li>經典金句：<strong>《孝經》「身體髮膚，受之父母，不敢毀傷」</strong>——把自己燃燒殆盡，也是對父母賜予的一種毀傷</li>
+            <li><strong>《Set Boundaries, Find Peace》Nedra Tawwab</strong>：界線不是牆，是讓關係能持續的護欄</li>
+            <li>經典金句：<strong>《論語》「躬自厚而薄責於人，則遠怨矣」</strong>——「厚」的前提是你還站得住，不是站著燃燒</li>
+          </ul>
         </div>
       </article>
 
@@ -598,7 +918,15 @@
         <div class="phases">
           <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">中年理財焦慮、存不到錢的現實壓力</span></div>
           <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">知足惜福不等於躺平，說明知足與積極上進如何並存</span></div>
-          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">討論「知足」跟「藉口」的界線在哪裡，分享個人經驗</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">【自介】以一句組員沒聽過的描述介紹自己（例：「我是一位帳戶只剩三位數那個月、還是硬請朋友吃了一頓飯的某某某」），再討論：你生命裡知足與藉口的分界線在哪裡？</span></div>
+        </div>
+        <div class="refs">
+          <span class="refs-label">📚 講師參考</span>
+          <ul>
+            <li>經典金句：<strong>《道德經》「知足者富」</strong>——真正的富有不在擁有多少，而在對自己所有的東西有多清醒</li>
+            <li><strong>《少，但是更好》Greg McKeown（Essentialism）</strong>：用取捨取代貪多，把精力集中在最重要那件事——知足的現代商業版</li>
+            <li><strong>《被討厭的勇氣》</strong>：阿德勒指出「自卑感來自比較」，知足的修練其實是停止用別人的尺量自己</li>
+          </ul>
         </div>
       </article>
 
@@ -611,7 +939,15 @@
         <div class="phases">
           <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">討論出社會後交友圈縮小的普遍現象</span></div>
           <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">善緣與惜緣的觀念，說明緣分有深淺、不必強求也不能輕忽</span></div>
-          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">列出目前最想重新聯絡的一個人，練習主動跨出第一步</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">【自介】以一句組員沒聽過的描述介紹自己（例：「我是一位在捷運撿到夾著便條紙的二手書、然後花兩個月試著找到原本主人的某某某」），再列出一個一直想聯絡但沒聯絡的人，討論是什麼阻礙了你</span></div>
+        </div>
+        <div class="refs">
+          <span class="refs-label">📚 講師參考</span>
+          <ul>
+            <li>經典金句：<strong>《論語》「益者三友，損者三友。友直、友諒、友多聞，益矣」</strong>——你留下來的那幾個朋友，是哪一種？</li>
+            <li><strong>《關係黑洞》</strong>：探討現代人如何陷入表淺聯繫的假社交，而真正的緣在疏忽中流失</li>
+            <li>民間諺語：<strong>「有緣千里來相會，無緣對面不相識」</strong>——緣不是被動等待，是主動珍惜</li>
+          </ul>
         </div>
       </article>
 
@@ -624,7 +960,15 @@
         <div class="phases">
           <div class="phase"><span class="ph-label">分組活動・25分鐘</span><span class="ph-body">匿名寫下「當年沒說出口的話」，現場抽出討論</span></div>
           <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">五倫中的誠與和，說明如何不壓抑、不爆炸地表達</span></div>
-          <div class="phase"><span class="ph-label">實修討論・20分鐘</span><span class="ph-body">練習用「誠」的方式重新表達一句當初沒說出口的話</span></div>
+          <div class="phase"><span class="ph-label">實修討論・20分鐘</span><span class="ph-body">【自介】以一句組員沒聽過的描述介紹自己（例：「我是一位有一封寫好卻從來沒寄出去的信、在抽屜裡靜靜放了好幾年的某某某」），再練習用誠而和的方式重新說出那句當初憋住的話</span></div>
+        </div>
+        <div class="refs">
+          <span class="refs-label">📚 講師參考</span>
+          <ul>
+            <li><strong>《非暴力溝通》Marshall Rosenberg</strong>：四步驟框架（觀察→感受→需要→請求）正是「有溫度地說真話」的具體操作，可直接帶進演練</li>
+            <li>經典金句：<strong>《論語》「巧言令色，鮮矣仁」</strong>——一味討好、說人想聽的話，反而離仁最遠</li>
+            <li>經典金句：<strong>《禮記》「情欲信，辭欲巧」</strong>——情感要誠實，表達要有方法，誠與和的並存不是矛盾，是功夫</li>
+          </ul>
         </div>
       </article>
 
@@ -637,7 +981,15 @@
         <div class="phases">
           <div class="phase"><span class="ph-label">開放討論・25分鐘</span><span class="ph-body">學員自由說出心裡「算不算失敗」的疑問與壓力</span></div>
           <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">安身立命、盡本分，重新定義成功不在外在成就</span></div>
-          <div class="phase"><span class="ph-label">收斂寫下・20分鐘</span><span class="ph-body">每人寫下「對我來說，不算失敗的定義是____」，當場收回</span></div>
+          <div class="phase"><span class="ph-label">收斂寫下・20分鐘</span><span class="ph-body">【自介】以一句組員沒聽過的描述介紹自己（例：「我是一位曾同時收到五個城市的工作機會、最後選了薪水最低但覺得最對的那個的某某某」），再寫下：對我來說，不算失敗的定義是＿＿＿＿</span></div>
+        </div>
+        <div class="refs">
+          <span class="refs-label">📚 講師參考</span>
+          <ul>
+            <li><strong>《活出意義來》Viktor Frankl</strong>：「人可以忍受任何一種怎麼活，只要他知道為什麼而活」——盡本分讓自己活得有方向感</li>
+            <li>經典金句：<strong>《論語》「吾日三省吾身：為人謀而不忠乎？與朋友交而不信乎？傳不習乎？」</strong>——儒家的「成功」是每天的自省，不是年終排行榜</li>
+            <li>經典金句：<strong>《孟子》「窮則獨善其身，達則兼善天下」</strong>——安身立命的基礎是先把「獨善其身」做好，這不是退讓，是修行的根基</li>
+          </ul>
         </div>
       </article>
 
@@ -650,7 +1002,15 @@
         <div class="phases">
           <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">覺察自己滑手機前的情緒狀態</span></div>
           <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">收放心猿意馬的功夫，說明如何練習把浮動的心定下來</span></div>
-          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">設計一個屬於自己的「放下手機前先做的小動作」</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">【自介】以一句組員沒聽過的描述介紹自己（例：「我是一位試過連續七天只在早晚各看一次手機、然後第八天就宣告失敗的某某某」），再設計一個屬於自己的「放下手機前的小動作」，並分享：你最常在逃避什麼？</span></div>
+        </div>
+        <div class="refs">
+          <span class="refs-label">📚 講師參考</span>
+          <ul>
+            <li><strong>《深度工作力》Cal Newport（Deep Work）</strong>：注意力被設計成分散的，這不只是個人意志力問題，也是環境設計問題</li>
+            <li>經典金句：<strong>《壇經》六祖惠能「本來無一物，何處惹塵埃」</strong>——心的本質是清淨的，滑手機是塵埃附著的過程</li>
+            <li>經典金句：<strong>《大學》「心不在焉，視而不見，聽而不聞，食而不知其味」</strong>——一千年前就在說滑手機的狀態，只是那時滑的是別的東西</li>
+          </ul>
         </div>
       </article>
 
@@ -663,7 +1023,15 @@
         <div class="phases">
           <div class="phase"><span class="ph-label">引子・15分鐘</span><span class="ph-body">外部資源（免費諮商、朋友訴苦）的限制在哪裡</span></div>
           <div class="phase"><span class="ph-label">道學核心・40分鐘</span><span class="ph-body">靜心、內觀的具體方法教學，現場帶做一次</span></div>
-          <div class="phase"><span class="ph-label">實修演練・25分鐘</span><span class="ph-body">每人整理一份專屬自己的「情緒急救包」步驟卡</span></div>
+          <div class="phase"><span class="ph-label">實修演練・25分鐘</span><span class="ph-body">【自介】以一句組員沒聽過的描述介紹自己（例：「我是一位曾獨自坐在海邊從日落等到天黑、那是我人生第一次覺得什麼都不做也沒關係的某某某」），再整理屬於自己的情緒急救包步驟卡（3–5個具體動作），並分享過去在情緒危機時如何撐過去的</span></div>
+        </div>
+        <div class="refs">
+          <span class="refs-label">📚 講師參考</span>
+          <ul>
+            <li><strong>《正念的奇蹟》一行禪師</strong>：洗碗、呼吸、走路都可以是靜心——讀起來像詩，適合課後推薦學員慢慢翻</li>
+            <li><strong>《情緒》Lisa Feldman Barrett</strong>：情緒不是「發生在你身上」，而是「你建構出來的」——理解這點，就懂為何標記情緒可讓強度下降</li>
+            <li>經典金句：<strong>《中庸》「喜怒哀樂之未發，謂之中；發而皆中節，謂之和」</strong>——靜心不是壓制情緒，是找到那個「未發」的穩定中心</li>
+          </ul>
         </div>
       </article>
 
@@ -676,7 +1044,15 @@
         <div class="phases">
           <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">獨處時刻對每個人（不分單身已婚）的普遍性</span></div>
           <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">修身與獨處養性，說明獨處是修行而非逃避的空白</span></div>
-          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">分享一次「跟自己好好相處」或「逃避自己」的經驗</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">【自介】以一句組員沒聽過的描述介紹自己（例：「我是一位曾連續一個月每週六獨自去不同咖啡館、只帶筆記本不帶手機的某某某」），再分享一次跟自己好好相處或逃避自己的經驗，並設計一個本週的獨處練習</span></div>
+        </div>
+        <div class="refs">
+          <span class="refs-label">📚 講師參考</span>
+          <ul>
+            <li><strong>《孤獨：回歸自我》Anthony Storr</strong>：獨處不是人際失敗的後果，而是創造力與自我整合的必要條件</li>
+            <li><strong>《瓦爾登湖》梭羅</strong>：「我到林中去，是因為我想過一種深思熟慮的生活」——問學員：你最後一次深思熟慮地過一天是什麼時候？</li>
+            <li>經典金句：<strong>《論語》「君子求諸己，小人求諸人」</strong>——與自己相處的能力，正是「求諸己」的起點</li>
+          </ul>
         </div>
       </article>
 
@@ -689,7 +1065,15 @@
         <div class="phases">
           <div class="phase"><span class="ph-label">小實驗開場・20分鐘</span><span class="ph-body">回想今天做過最無聊的一件小事</span></div>
           <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">大隱於市、日常即修行，呼應第十堂學到的工具如何用進日常</span></div>
-          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">選一件日常瑣事，設計自己的「修行版」做法</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">【自介】以一句組員沒聽過的描述介紹自己（例：「我是一位太專心洗碗、發現用了十年的碗原來有條細小裂縫、然後莫名感動了一下的某某某」），再選一件本週會做的日常瑣事，設計帶著什麼意識去做它的「修行版」做法</span></div>
+        </div>
+        <div class="refs">
+          <span class="refs-label">📚 講師參考</span>
+          <ul>
+            <li><strong>《禪者的初心》鈴木俊隆</strong>：「初學者的心有無限可能，專家的心可能性很少」——每次洗碗都帶著「初心」去洗，才是日常修行的精髓</li>
+            <li>經典金句：<strong>《道德經》「為學日益，為道日損。損之又損，以至於無為」</strong>——修行不是加法，是在日常的減法裡找回最本質的專注</li>
+            <li>禪宗公案：<strong>「砍柴挑水，無非妙道」</strong>——洗碗如果沒有這句話撐腰，直接引用它，讓日常即修行不只是口號，而是有根的道理</li>
+          </ul>
         </div>
       </article>
 
@@ -702,7 +1086,15 @@
         <div class="phases">
           <div class="phase"><span class="ph-label">實修暖身・20分鐘</span><span class="ph-body">寫下一位還沒好好感謝過的人</span></div>
           <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">知恩報恩的意義，說明報恩不是還債而是修辦的起點</span></div>
-          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">練習寫或說出一句具體的感謝，說明對方做了什麼、帶來什麼影響</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">【自介】以一句組員沒聽過的描述介紹自己（例：「我是一位有一張想給某人的卡片、放在錢包裡帶了將近三年還沒拿出來的某某某」），再練習說出一句完整的感謝：對方做了什麼、帶來什麼改變、所以我感謝你</span></div>
+        </div>
+        <div class="refs">
+          <span class="refs-label">📚 講師參考</span>
+          <ul>
+            <li><strong>《感謝的力量》Robert Emmons（Thanks!）</strong>：研究顯示練習感恩的人在幸福感、睡眠品質、人際關係上都有顯著提升</li>
+            <li>經典金句：<strong>《孟子》「老吾老以及人之老，幼吾幼以及人之幼」</strong>——把感謝的範圍從自己的恩人擴展到所有對世界有恩的人，是知恩報恩的最高境界</li>
+            <li>經典金句：<strong>《詩經》「投我以木桃，報之以瓊瑤。匪報也，永以為好也」</strong>——報恩不是等值交換，是把那份情誼的溫度繼續傳遞下去</li>
+          </ul>
         </div>
       </article>
 
@@ -715,7 +1107,15 @@
         <div class="phases">
           <div class="phase"><span class="ph-label">引子・20分鐘</span><span class="ph-body">分享一次意識到生命有限的經驗（不必是重大事件）</span></div>
           <div class="phase"><span class="ph-label">道學核心・35分鐘</span><span class="ph-body">生死大事與了脫生死的觀念，說明修辦與無常的關係</span></div>
-          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">寫下「如果只剩一年，我最想完成的一件事」</span></div>
+          <div class="phase"><span class="ph-label">實修討論・25分鐘</span><span class="ph-body">【自介】以一句組員沒聽過的描述介紹自己（例：「我是一位曾陪家人走完生命最後一段路、從那之後開始喜歡早起看第一道光的某某某」），再寫下：如果只剩一年，我最想完成的一件事——並討論那件事現在為什麼還沒做</span></div>
+        </div>
+        <div class="refs">
+          <span class="refs-label">📚 講師參考</span>
+          <ul>
+            <li><strong>《當呼吸化為空氣》Paul Kalanithi</strong>：腦神經外科醫師得知罹癌後的回憶錄，直視死亡之後反而更清楚真正想要的生命是什麼</li>
+            <li><strong>《最後的演講》Randy Pausch</strong>：知道自己剩下多少時間，反而活出了最充實的樣子，適合引子階段帶動討論</li>
+            <li>經典金句：<strong>《論語》「未知生，焉知死？」</strong>——孔子的回答看似迴避，實則是說：好好活，才是面對死亡的正解</li>
+          </ul>
         </div>
       </article>
 
@@ -728,8 +1128,64 @@
         <div class="phases">
           <div class="phase"><span class="ph-label">回顧梳理・25分鐘</span><span class="ph-body">學員梳理這一年參與課程後的變化與收穫</span></div>
           <div class="phase"><span class="ph-label">道學核心・30分鐘</span><span class="ph-body">反省、懺悔的意義，說明立願的精神</span></div>
-          <div class="phase"><span class="ph-label">立願分享・25分鐘</span><span class="ph-body">每人說出一句明年想修的功課</span></div>
+          <div class="phase"><span class="ph-label">立願分享・25分鐘</span><span class="ph-body">【自介】以一句組員沒聽過的描述介紹自己（例：「我是一位曾在除夕夜翻出前一年願望清單、赫然發現三件事真的做到了然後嚇了自己一跳的某某某」），再說出：這一年我感謝＿＿；明年我想修的功課是＿＿</span></div>
         </div>
+        <div class="refs">
+          <span class="refs-label">📚 講師參考</span>
+          <ul>
+            <li><strong>《原子習慣》James Clear</strong>：改變不靠意志力，靠系統設計——立願之後，怎麼讓願景落地成一個小到做得到的習慣</li>
+            <li>經典金句：<strong>《論語》「過而不改，是謂過矣」</strong>——反省的意義不在知道錯了，而在知道了之後有沒有動作</li>
+            <li>經典金句：<strong>《論語》「吾日三省吾身」</strong>——修行是每天的事，不是年度總結，第十五堂不是終點，是下一個起點</li>
+          </ul>
+        </div>
+      </article>
+
+
+      <hr class="activity-sep">
+      <p class="activity-note">以下為全年特別活動規劃，非正式課程，但同屬社青班年度行事曆。</p>
+
+      <article class="card" id="se-open">
+        <div class="card-head">
+          <div>
+            <span class="card-date-label">03 / 27　開班日</span>
+            <h3>開班、幹部介紹、迎新聯誼</h3>
+          </div>
+          <span class="activity-badge">開班活動</span>
+        </div>
+        <p class="card-desc">（活動內容待規劃）</p>
+      </article>
+
+      <article class="card" id="se-outdoor">
+        <div class="card-head">
+          <div>
+            <span class="card-date-label">05 / 29 &amp; 10 / 30　全年兩次</span>
+            <h3>戶外聯誼活動</h3>
+          </div>
+          <span class="activity-badge">聯誼活動</span>
+        </div>
+        <p class="card-desc">（活動內容待規劃）</p>
+      </article>
+
+      <article class="card" id="se-dharma">
+        <div class="card-head">
+          <div>
+            <span class="card-date-label">08 / 28　法會日</span>
+            <h3>新道親法會──見習與服務</h3>
+          </div>
+          <span class="activity-badge">法會見習</span>
+        </div>
+        <p class="card-desc">（活動內容待規劃）</p>
+      </article>
+
+      <article class="card" id="se-close">
+        <div class="card-head">
+          <div>
+            <span class="card-date-label">12 / 25　結班日</span>
+            <h3>結班聯誼</h3>
+          </div>
+          <span class="activity-badge">結班活動</span>
+        </div>
+        <p class="card-desc">（活動內容待規劃）</p>
       </article>
 
     </div>
@@ -741,5 +1197,24 @@
 
 </div>
 
+<script>
+  (function(){
+    var root = document.documentElement;
+    var btn  = document.getElementById('theme-toggle');
+    var saved = localStorage.getItem('theme');
+    if(saved === 'light') root.setAttribute('data-theme','light');
+
+    btn.addEventListener('click', function(){
+      var current = root.getAttribute('data-theme');
+      if(current === 'light'){
+        root.removeAttribute('data-theme');
+        localStorage.setItem('theme','dark');
+      } else {
+        root.setAttribute('data-theme','light');
+        localStorage.setItem('theme','light');
+      }
+    });
+  })();
+</script>
 </body>
 </html>
