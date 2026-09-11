@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>116年全真社青班｜組織架構圖・課程表</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700;900&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#17130f;
+    --paper:#f2ead9;
+    --paper-dim:#cfc3a8;
+    --cinnabar:#a5312c;
+    --cinnabar-bright:#c4433c;
+    --gold:#c9a24b;
+    --gold-dim:#8a7038;
+    --line: rgba(201,162,75,0.28);
+    --serif:'Noto Serif TC', serif;
+    --sans:'Noto Sans TC', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:var(--sans);
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;}
+  .wrap{max-width:1200px; margin:0 auto; padding:0 24px;}
+
+  header.hero{
+    padding:70px 0 44px;
+    text-align:center;
+    border-bottom:1px solid var(--line);
+  }
+  header.hero .eyebrow{
+    font-size:13px;
+    letter-spacing:0.3em;
+    color:var(--gold);
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  header.hero h1{
+    font-family:var(--serif);
+    font-weight:700;
+    font-size:clamp(1.9rem, 5vw, 3rem);
+    margin:0;
+    color:var(--paper);
+  }
+  header.hero p{
+    color:var(--paper-dim);
+    margin-top:10px;
+    font-size:15px;
+  }
+
+  nav.tabs{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    padding:24px 0 0;
+    flex-wrap:wrap;
+  }
+  nav.tabs a{
+    text-decoration:none;
+    font-size:13.5px;
+    letter-spacing:0.04em;
+    color:var(--paper-dim);
+    border:1px solid var(--line);
+    padding:8px 18px;
+    border-radius:999px;
+    transition:all .2s ease;
+  }
+  nav.tabs a:hover{color:var(--gold); border-color:var(--gold-dim);}
+
+  section{padding:64px 0;}
+  section + section{border-top:1px solid var(--line);}
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    gap:16px;
+    margin-bottom:36px;
+  }
+  .section-head h2{
+    font-family:var(--serif);
+    font-size:clamp(1.4rem,3vw,1.9rem);
+    margin:0;
+    color:var(--paper);
+    white-space:nowrap;
+  }
+  .section-head .sub{
+    color:var(--paper-dim);
+    font-size:13.5px;
+  }
+  .section-head::after{content:""; flex:1; height:1px; background:var(--line);}
+
+  /* ---------- ORG CHART (exact grid table layout) ---------- */
+  .org-wide{
+    max-width:1180px;
+    margin:0 auto;
+  }
+  .org-grid{
+    display:grid;
+    grid-template-columns:repeat(8, 1fr);
+    gap:10px;
+    width:100%;
+  }
+  .org-cell{
+    background:rgba(201,162,75,0.06);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:14px 10px;
+    text-align:center;
+  }
+  .org-cell .role{
+    font-family:var(--serif);
+    font-size:15px;
+    font-weight:600;
+    color:var(--gold);
+    letter-spacing:0.04em;
+  }
+  .org-cell .names{
+    font-size:13px;
+    color:var(--paper-dim);
+    margin-top:4px;
+  }
+  .org-cell.top{grid-column:2 / span 6;}
+
+  /* 班長 hierarchy: 班長 on top, two deputies subordinate below-left/below-right */
+  .chief-block{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .chief-node{
+    background:rgba(201,162,75,0.14);
+    border:1px solid var(--gold-dim);
+    border-radius:4px;
+    padding:16px 40px;
+    text-align:center;
+  }
+  .chief-node .role{
+    font-family:var(--serif);
+    font-size:16px;
+    font-weight:600;
+    color:var(--gold);
+    letter-spacing:0.06em;
+  }
+  .chief-node .names{font-size:14px; color:var(--paper-dim); margin-top:4px;}
+
+  .vline{width:1px; height:18px; background:var(--gold-dim); margin:0 auto;}
+  .hline{
+    height:1px;
+    width:420px;
+    max-width:80vw;
+    background:var(--gold-dim);
+    margin:0 auto;
+  }
+  .deputy-row{
+    display:flex;
+    justify-content:space-between;
+    width:420px;
+    max-width:80vw;
+  }
+  .deputy-col{display:flex; flex-direction:column; align-items:center;}
+  .deputy-node{
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:10px 22px;
+    text-align:center;
+    margin-top:0;
+  }
+  .deputy-node.kun{background:rgba(165,49,44,0.10);}
+  .deputy-node.qian{background:rgba(201,162,75,0.05); color:var(--paper-dim);}
+  .deputy-node .role{
+    font-family:var(--serif);
+    font-size:13.5px;
+    font-weight:600;
+    letter-spacing:0.03em;
+  }
+  .deputy-node .names{font-size:12.5px; color:var(--paper-dim); margin-top:3px;}
+
+  @media (max-width:500px){
+    .hline, .deputy-row{width:100%;}
+    .chief-node{padding:14px 26px;}
+  }
+
+  .org-cell.group{
+    grid-column:span 1;
+    border-top:3px solid var(--cinnabar);
+    background:rgba(255,255,255,0.02);
+    padding:14px 8px;
+  }
+  .org-cell.group h4{
+    font-family:var(--serif);
+    font-size:14px;
+    margin:0 0 8px;
+    color:var(--paper);
+  }
+  .org-cell.group .line{
+    font-size:11.5px;
+    color:var(--paper-dim);
+    margin:2px 0;
+    line-height:1.5;
+  }
+  .org-cell.group .line b{color:var(--gold); font-weight:500;}
+
+  .org-spacer{height:18px;}
+
+  .org-note{
+    margin-top:28px;
+    font-size:12.5px;
+    color:var(--paper-dim);
+    border-left:2px solid var(--gold-dim);
+    padding:10px 16px;
+    background:rgba(201,162,75,0.04);
+  }
+
+  .org-grid.groups-grid{grid-template-columns:repeat(7, 1fr);}
+
+  @media (max-width:900px){
+    .org-grid.groups-grid{grid-template-columns:repeat(4, 1fr);}
+    .org-grid{grid-template-columns:repeat(4, 1fr);}
+    .org-cell.top{grid-column:1 / span 4;}
+  }
+  @media (max-width:600px){
+    .org-grid{grid-template-columns:repeat(2, 1fr);}
+    .org-grid.groups-grid{grid-template-columns:repeat(2, 1fr);}
+    .org-cell.top{grid-column:1 / span 2;}
+  }
+
+  /* ---------- SCHEDULE ---------- */
+  .day-flow{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-bottom:36px;
+    padding:20px 22px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:rgba(201,162,75,0.035);
+  }
+  .day-flow-title{
+    font-family:var(--serif);
+    font-size:14px;
+    color:var(--gold);
+    letter-spacing:0.06em;
+    margin-bottom:4px;
+  }
+  .flow-item{
+    font-size:12.5px;
+    color:var(--paper-dim);
+    display:flex;
+    gap:8px;
+    align-items:baseline;
+  }
+  .flow-item .time{
+    font-family:var(--serif);
+    color:var(--paper);
+    white-space:nowrap;
+    font-size:13px;
+  }
+  .schedule{display:flex; flex-direction:column; gap:10px;}
+  .sched-row{
+    display:grid;
+    grid-template-columns:90px 1fr 130px;
+    gap:18px;
+    align-items:center;
+    border:1px solid var(--line);
+    border-left:3px solid var(--gold-dim);
+    border-radius:3px;
+    padding:16px 20px;
+  }
+  .sched-row.special{
+    border-left-color:var(--cinnabar);
+    justify-content:center;
+  }
+  .sched-row.special .date{color:var(--cinnabar-bright);}
+  .sched-row.special .special-label{
+    grid-column:2 / span 2;
+    font-family:var(--serif);
+    font-size:15px;
+    letter-spacing:0.12em;
+    color:var(--paper-dim);
+    text-align:center;
+  }
+  .sched-row .date{
+    font-family:var(--serif);
+    font-size:16px;
+    color:var(--gold);
+    white-space:nowrap;
+  }
+  .sched-row .main .teacher{
+    font-family:var(--serif);
+    font-size:14px;
+    color:var(--paper);
+    margin-bottom:3px;
+  }
+  .sched-row .main .teacher .who{
+    font-size:11.5px;
+    color:var(--paper-dim);
+    font-family:var(--sans);
+    margin-left:6px;
+  }
+  .sched-row .main .theme{
+    font-size:14px;
+    color:var(--paper-dim);
+  }
+  .sched-row .main .theme b{color:var(--paper); font-weight:600;}
+  .sched-row .main .theme-speaker{
+    font-size:12px;
+    color:var(--gold-dim);
+    margin-top:4px;
+  }
+  .sched-row .tag{
+    text-align:right;
+    font-size:12.5px;
+    color:var(--gold);
+    white-space:nowrap;
+  }
+  .sched-row .tag .who{
+    display:block;
+    font-size:10.5px;
+    color:var(--paper-dim);
+    margin-top:2px;
+  }
+
+  @media (max-width:600px){
+    .sched-row{grid-template-columns:64px 1fr; grid-template-rows:auto auto;}
+    .sched-row .tag{grid-column:2; text-align:left; margin-top:4px;}
+    .sched-row.special .special-label{grid-column:2; text-align:left;}
+  }
+
+  footer{
+    padding:50px 0;
+    text-align:center;
+    border-top:1px solid var(--line);
+    color:var(--paper-dim);
+    font-size:12.5px;
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">一貫道 全真社青班</p>
+    <h1>116年 組織架構圖・課程表</h1>
+    <p>幹部分工一覽，與全年度課程時間表</p>
+  </div>
+  <nav class="tabs">
+    <a href="#org">組織架構圖</a>
+    <a href="#schedule">課程表</a>
+  </nav>
+</header>
+
+<div class="wrap">
+
+  <section id="org">
+    <div class="section-head"><h2>組織架構圖</h2><span class="sub">116年度幹部分工</span></div>
+
+    <div class="org org-wide">
+      <div class="org-grid">
+        <div class="org-cell top">
+          <div class="role">主班點傳師</div>
+          <div class="names">林明山・張碧雲・蕭仁德</div>
+        </div>
+      </div>
+      <div class="org-spacer"></div>
+
+      <div class="org-grid">
+        <div class="org-cell top">
+          <div class="role">帶班助理</div>
+          <div class="names">賴錦坤</div>
+        </div>
+      </div>
+      <div class="org-spacer"></div>
+
+      <div class="chief-block">
+        <div class="chief-node">
+          <div class="role">班長</div>
+          <div class="names">周逸翔</div>
+        </div>
+        <div class="vline"></div>
+        <div class="hline"></div>
+        <div class="deputy-row">
+          <div class="deputy-col">
+            <div class="vline"></div>
+            <div class="deputy-node kun">
+              <div class="role">坤道副班長</div>
+              <div class="names">林淑梅</div>
+            </div>
+          </div>
+          <div class="deputy-col">
+            <div class="vline"></div>
+            <div class="deputy-node qian">
+              <div class="role">乾道副班長</div>
+              <div class="names">羅健洲</div>
+            </div>
+          </div>
+        </div>
+        <div class="vline" style="height:26px;"></div>
+      </div>
+      <div class="org-spacer"></div>
+
+      <div class="org-grid groups-grid">
+        <div class="org-cell group">
+          <h4>人事組</h4>
+          <p class="line"><b>組長</b>：賴美芸</p>
+          <p class="line"><b>成員</b>：林鈺蓉、楊舒涵</p>
+        </div>
+        <div class="org-cell group">
+          <h4>公關禮節組</h4>
+          <p class="line"><b>組長</b>：林詩涵</p>
+          <p class="line"><b>成員</b>：陳曉璇、林淑真</p>
+        </div>
+        <div class="org-cell group">
+          <h4>學術組</h4>
+          <p class="line"><b>組長</b>：楊雅雲（待確認）</p>
+          <p class="line"><b>成員</b>：陳幸梅、王冠博、鄭燕玲</p>
+        </div>
+        <div class="org-cell group">
+          <h4>輔導組</h4>
+          <p class="line"><b>成員</b>：陳彥名</p>
+        </div>
+        <div class="org-cell group">
+          <h4>總務組</h4>
+          <p class="line"><b>組長</b>：張立人</p>
+          <p class="line"><b>成員</b>：許麗娟、張馨予、張如靈、張懿文、王志賢、李書承</p>
+        </div>
+        <div class="org-cell group">
+          <h4>影音組</h4>
+          <p class="line"><b>組長</b>：王冠博</p>
+          <p class="line"><b>成員</b>：卓子翔、陳熙宗</p>
+        </div>
+        <div class="org-cell group">
+          <h4>活動組</h4>
+          <p class="line"><b>組長</b>：周能安</p>
+          <p class="line"><b>成員</b>：何珈貞、許瀚升、張哲瑋、王欣渝、林禹青</p>
+        </div>
+      </div>
+
+      <div class="org-note">
+        ＊人事組／學術組／總務組／活動組人員維持115年名單；林詩涵、陳彥名、王冠博、林淑真同時掛名原組與新組，如需從原組名單移除請告知。公關組與禮節組於116年合併為公關禮節組，組長林詩涵。
+      </div>
+    </div>
+  </section>
+
+  <section id="schedule">
+    <div class="section-head"><h2>課程表</h2><span class="sub">116年全真社青班</span></div>
+
+    <div class="day-flow">
+      <div class="day-flow-title">每日上課流程</div>
+      <div class="flow-item"><span class="time">09:30–10:00</span><span>（30）瑜伽</span></div>
+      <div class="flow-item"><span class="time">10:00–10:20</span><span>（20）休息＆早午餐</span></div>
+      <div class="flow-item"><span class="time">10:20–10:30</span><span>（10）點傳師開班賜導</span></div>
+      <div class="flow-item"><span class="time">10:30–12:00</span><span>（90）專題</span></div>
+      <div class="flow-item"><span class="time">12:00–13:00</span><span>（60）午餐＆小敘</span></div>
+      <div class="flow-item"><span class="time">13:00–14:20</span><span>（80）聯誼／桌遊／手作／讀書會</span></div>
+      <div class="flow-item"><span class="time">14:20–14:30</span><span>（10）點傳師結班賜導</span></div>
+    </div>
+
+    <div class="schedule">
+      <div class="sched-row">
+        <div class="date">03/27</div>
+        <div class="main">
+          <div class="teacher">開班／幹部介紹<span class="who">★班長</span></div>
+          <div class="theme"><b>好好玩</b>｜重新找回生活的樂趣</div>
+          <div class="theme-speaker">專題主講：瑞周天定 鄭名翔 講師</div>
+        </div>
+        <div class="tag">迎新聯誼<span class="who">★活動組</span></div>
+      </div>
+
+      <div class="sched-row">
+        <div class="date">04/24</div>
+        <div class="main">
+          <div class="teacher">瑜伽<span class="who">★鄔明清講師</span></div>
+          <div class="theme"><b>好好賺</b>｜不一定要有錢，先學會理財</div>
+          <div class="theme-speaker">專題主講：楊峰誌 助理</div>
+        </div>
+        <div class="tag">藝術DIY氣球<span class="who">林鈺蓉（待邀約）</span></div>
+      </div>
+
+      <div class="sched-row special">
+        <div class="date">05/29</div>
+        <div class="special-label">戶外聯誼活動</div>
+      </div>
+
+      <div class="sched-row">
+        <div class="date">06/26</div>
+        <div class="main">
+          <div class="teacher">瑜伽<span class="who">★鄔明清講師</span></div>
+          <div class="theme"><b>好好愛</b>｜喜歡別人之前，先搞懂自己</div>
+          <div class="theme-speaker">專題主講：瑞周天曉 李寶莉 講師</div>
+        </div>
+        <div class="tag">生命靈數<span class="who">全真天隆 朱宸慧</span></div>
+      </div>
+
+      <div class="sched-row special">
+        <div class="date">08/28</div>
+        <div class="special-label">新道親法會－見習與服務</div>
+      </div>
+
+      <div class="sched-row">
+        <div class="date">10/02</div>
+        <div class="main">
+          <div class="teacher">瑜伽<span class="who">★鄔明清講師</span></div>
+          <div class="theme"><b>人生重開機</b>｜人生卡關的時候，你會怎麼辦</div>
+          <div class="theme-speaker">專題主講：何珈貞 講師</div>
+        </div>
+        <div class="tag">人生大富翁<span class="who">天曉 林信宏（待邀約）</span></div>
+      </div>
+
+      <div class="sched-row special">
+        <div class="date">10/30</div>
+        <div class="special-label">戶外聯誼活動</div>
+      </div>
+
+      <div class="sched-row">
+        <div class="date">11/27</div>
+        <div class="main">
+          <div class="teacher">瑜伽<span class="who">★鄔明清講師</span></div>
+          <div class="theme"><b>出去走走</b>｜世界這麼大，別只活在自己的日常</div>
+          <div class="theme-speaker">專題主講：何思諺 講師</div>
+        </div>
+        <div class="tag">蔬食料理王<span class="who">啟化 蘇毓婷（待邀約）</span></div>
+      </div>
+
+      <div class="sched-row">
+        <div class="date">12/25</div>
+        <div class="main">
+          <div class="teacher">瑜伽<span class="who">★鄔明清講師</span></div>
+          <div class="theme"><b>活成自己喜歡的樣子</b>｜人生不是交作業</div>
+          <div class="theme-speaker">專題主講：鄔明清 講師</div>
+        </div>
+        <div class="tag">結班聯誼<span class="who">★班長</span></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>一貫道全真社青班　116年度</footer>
+
+</body>
+</html>
