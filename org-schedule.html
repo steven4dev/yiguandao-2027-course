@@ -9,15 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700;900&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#17130f;
-    --ink-2:#241d17;
-    --paper:#f2ead9;
-    --paper-dim:#cfc3a8;
-    --cinnabar:#a5312c;
-    --cinnabar-bright:#c4433c;
-    --gold:#c9a24b;
-    --gold-dim:#8a7038;
-    --line: rgba(201,162,75,0.28);
+    --ink:#132420;
+    --ink-2:#1a2f28;
+    --paper:#f8ecd3;
+    --paper-dim:#d9c79c;
+    --cinnabar:#e0562a;
+    --cinnabar-bright:#f47a3c;
+    --gold:#f2b705;
+    --gold-dim:#c98f1f;
+    --teal:#2f8f7a;
+    --line: rgba(242,183,5,0.28);
     --serif:'Noto Serif TC', serif;
     --sans:'Noto Sans TC', sans-serif;
   }
@@ -46,8 +47,8 @@
     content:"";
     position:fixed; inset:0;
     background-image:
-      radial-gradient(ellipse at 20% -10%, rgba(197,67,60,0.14), transparent 55%),
-      radial-gradient(ellipse at 90% 10%, rgba(201,162,75,0.10), transparent 45%);
+      radial-gradient(ellipse at 20% -10%, rgba(224,86,42,0.22), transparent 55%),
+      radial-gradient(ellipse at 90% 10%, rgba(47,143,122,0.20), transparent 45%);
     pointer-events:none;
     z-index:0;
   }
@@ -266,7 +267,7 @@
     text-decoration:none;
     transition:background 0.2s ease;
   }
-  .outline-row:hover{background:rgba(201,162,75,0.06);}
+  .outline-row:hover{background:rgba(242,183,5,0.06);}
   .outline-row .idx{
     font-family:var(--serif);
     color:var(--gold-dim);
@@ -354,7 +355,7 @@
     gap:16px;
     font-size:13.5px;
     padding:14px 18px;
-    background:rgba(201,162,75,0.045);
+    background:rgba(242,183,5,0.045);
     border-left:2px solid var(--cinnabar);
   }
   .phase .ph-label{
@@ -411,11 +412,16 @@
     }
     .hero-meta div:last-child{border-bottom:none;}
     .hero-meta .num{font-size:19px;}
+    .hero-meta .lbl{font-size:11px;}
     section{padding:56px 0;}
     .section-head{gap:10px; margin-bottom:28px;}
+    .section-head .sn{font-size:12px;}
     .section-head h2{font-size:1.3rem;}
     .duo{gap:26px; margin-top:24px;}
+    .duo h4{font-size:13px;}
     .journey{gap:24px; margin-top:32px;}
+    .stage h3{font-size:15.5px;}
+    .stage .range{font-size:10px;}
     .outline-row{
       grid-template-columns:22px 1fr;
       gap:4px 10px;
