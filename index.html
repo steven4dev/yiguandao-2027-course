@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>給生活的一頁私藏時光｜2027 全真社青 Life Design 探索地圖</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* 宮崎駿明亮天空與草原清新配色 (Ghibli Sky & Meadow) */
+    --bg-main: #EEF7F2;          /* 輕柔清新綠意基底 */
+    --bg-card: #FFFFFF;          /* 純白實色卡片 */
+    --bg-card-sub: #F0FDF4;      /* 嫩芽綠微調底色 */
+    --bg-sky: #E0F2FE;           /* 霍爾藍天微調 */
+    --bg-sun: #FFFBEB;           /* 暖陽香草黃 */
+
+    --text-primary: #1E293B;     /* 沉穩藍灰石墨黑 */
+    --text-secondary: #475569;   /* 質感藍灰 */
+    --text-muted: #64748B;
+
+    /* 主題亮色彩 - 以藍綠金為主 */
+    --accent-blue: #0284C7;      /* 晴空天藍 */
+    --accent-blue-light: #E0F2FE;
+    --accent-green: #059669;     /* 龍貓草地綠 */
+    --accent-green-light: #D1FAE5;
+    --accent-gold: #D97706;      /* 暖陽金黃 */
+    --accent-gold-light: #FEF3C7;
+    --accent-teal: #0D9488;      /* 湖水藍綠 */
+    --accent-teal-light: #CCFBF1;
+
+    --accent-kun: #0D9488;       /* 坤道湖綠 */
+    --accent-kun-bg: #F0FDFA;
+    --accent-qian: #2563EB;      /* 乾道寶藍 */
+    --accent-qian-bg: #EFF6FF;
+
+    --border-color: rgba(2, 132, 199, 0.18);
+    --border-gold: rgba(217, 119, 6, 0.25);
+    --line-color: rgba(71, 85, 105, 0.12);
+
+    --shadow-soft: 0 10px 25px -5px rgba(2, 132, 199, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    --shadow-hover: 0 20px 35px -10px rgba(2, 132, 199, 0.16);
+
+    --serif: 'Noto Serif TC', serif;
+    --sans: 'Noto Sans TC', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: var(--sans);
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    background-image: 
+      radial-gradient(circle at 12% 10%, rgba(56, 189, 248, 0.15) 0%, transparent 40%),
+      radial-gradient(circle at 88% 25%, rgba(52, 211, 153, 0.15) 0%, transparent 45%),
+      radial-gradient(circle at 50% 75%, rgba(251, 191, 36, 0.12) 0%, transparent 50%),
+      radial-gradient(circle at 15% 85%, rgba(14, 165, 233, 0.12) 0%, transparent 45%);
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .wrap {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* 導覽列 - 標題置中與結構優化 */
+  nav.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(238, 247, 242, 0.92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 2px solid rgba(2, 132, 199, 0.15);
+    padding: 16px 0;
+  }
+  nav.navbar .nav-wrap {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    position: relative;
+  }
+  .nav-logo {
+    font-family: var(--serif);
+    font-weight: 900;
+    font-size: 1.3rem;
+    color: var(--accent-blue);
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+  }
+  .nav-logo::before {
+    content: "🍃";
+    font-size: 1.1rem;
+  }
+  .nav-links {
+    position: absolute;
+    right: 0;
+    display: flex;
+    gap: 12px;
+  }
+  .nav-links a {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    padding: 7px 20px;
+    border-radius: 99px;
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+    transition: all 0.25s ease;
+    font-weight: 500;
+  }
+  .nav-links a:hover {
+    color: var(--accent-blue);
+    background: var(--accent-blue-light);
+    border-color: var(--accent-blue);
+    transform: translateY(-2px);
+  }
+
+  /* 頁首區塊 */
+  header.hero {
+    padding: 85px 0 55px;
+    text-align: center;
+    position: relative;
+  }
+  header.hero h1 {
+    font-family: var(--serif);
+    font-weight: 900;
+    font-size: clamp(2.1rem, 5.2vw, 3.4rem);
+    color: var(--text-primary);
+    line-height: 1.35;
+    margin-bottom: 18px;
+    letter-spacing: 0.02em;
+  }
+  header.hero h1 span.highlight {
+    background: #FFFFFF;
+    color: var(--accent-blue);
+    padding: 4px 24px;
+    border-radius: 20px;
+    display: inline-block;
+    box-shadow: 0 6px 20px rgba(2, 132, 199, 0.12);
+    border: 2px solid rgba(2, 132, 199, 0.22);
+    margin-top: 6px;
+  }
+  header.hero p {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    max-width: 620px;
+    margin: 0 auto;
+    font-weight: 500;
+  }
+
+  /* 通用區塊標題 */
+  section {
+    padding: 80px 0;
+  }
+  section + section {
+    border-top: 2px dashed rgba(2, 132, 199, 0.15);
+  }
+  .section-head {
+    display: block;
+    margin-bottom: 48px;
+    position: relative;
+  }
+  .section-head h2 {
+    font-family: var(--serif);
+    font-size: clamp(1.65rem, 3.6vw, 2.3rem);
+    color: var(--text-primary);
+    font-weight: 900;
+    white-space: nowrap;
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .section-head h2 .en {
+    font-family: var(--sans);
+    font-size: 0.5em;
+    font-weight: 700;
+    color: var(--accent-teal);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .section-head .sub {
+    display: block;
+    margin-top: 6px;
+    color: var(--accent-blue);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .section-head::after {
+    content: "";
+    display: block;
+    height: 2px;
+    margin-top: 18px;
+    background: linear-gradient(90deg, var(--border-color) 0%, transparent 100%);
+  }
+
+  /* 關於這裡 3 張圖卡樣式 */
+  .phil-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 28px;
+  }
+  .phil-card {
+    background: #FFFFFF;
+    border-radius: 22px;
+    padding: 40px 34px;
+    border: 1.5px solid var(--border-color);
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .phil-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: var(--accent-teal);
+  }
+  .phil-card.highlight::before {
+    background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-green) 100%);
+  }
+  .phil-card.card-sun::before {
+    background: linear-gradient(90deg, var(--accent-gold) 0%, #F59E0B 100%);
+  }
+  .phil-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-hover);
+  }
+  .phil-card h3.phil-lead {
+    font-family: var(--serif);
+    font-size: 1.35rem;
+    color: var(--accent-blue);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+  }
+  .phil-card p.lede {
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    margin-bottom: 16px;
+    text-align: justify;
+    line-height: 1.85;
+  }
+  .phil-card p.lede:last-child { margin-bottom: 0; }
+  .phil-card p.lede b {
+    color: var(--text-primary);
+    background: linear-gradient(120deg, var(--accent-gold-light) 0%, var(--accent-gold-light) 100%);
+    padding: 1px 6px;
+    border-radius: 6px;
+    font-weight: 700;
+  }
+
+  /* 組織架構區塊 */
+  .org-container {
+    background: #FFFFFF;
+    border-radius: 26px;
+    padding: 48px 36px;
+    border: 1.5px solid var(--border-color);
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .org-tree {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .node-main {
+    background: var(--bg-sky);
+    border: 2px solid var(--accent-blue);
+    border-radius: 16px;
+    padding: 18px 44px;
+    text-align: center;
+    min-width: 290px;
+    box-shadow: 0 6px 16px rgba(2, 132, 199, 0.12);
+  }
+  .node-main .role {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--accent-blue);
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .node-main .names {
+    font-size: 1.05rem;
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-top: 4px;
+  }
+
+  .node-sub {
+    background: var(--bg-card-sub);
+    border: 1.5px solid var(--accent-green);
+    border-radius: 14px;
+    padding: 14px 38px;
+    text-align: center;
+    min-width: 250px;
+  }
+  .node-sub .role {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--accent-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .node-sub .names { font-size: 1rem; color: var(--text-primary); margin-top: 2px; font-weight: 600; }
+
+  .tree-line {
+    width: 2px;
+    height: 20px;
+    background: var(--accent-blue);
+  }
+
+  .chief-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto 40px;
+  }
+  .chief-card {
+    background: var(--bg-sun);
+    border: 2px solid var(--accent-gold);
+    border-radius: 16px;
+    padding: 18px 48px;
+    text-align: center;
+    min-width: 260px;
+    box-shadow: 0 6px 16px rgba(217, 119, 6, 0.12);
+  }
+  .chief-card .role {
+    font-family: var(--serif);
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: var(--accent-gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .chief-card .names { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-top: 4px; }
+
+  .deputy-connector {
+    width: 72%;
+    height: 18px;
+    border-left: 2px solid var(--accent-gold);
+    border-right: 2px solid var(--accent-gold);
+    border-top: 2px solid var(--accent-gold);
+    margin-top: 14px;
+  }
+
+  .deputy-row {
+    display: flex;
+    justify-content: space-between;
+    width: 88%;
+    gap: 20px;
+  }
+  .deputy-card {
+    flex: 1;
+    border-radius: 14px;
+    padding: 15px 22px;
+    text-align: center;
+    border: 1.5px solid var(--border-color);
+  }
+  .deputy-card.kun {
+    background: var(--accent-kun-bg);
+    border-color: rgba(13, 148, 136, 0.35);
+  }
+  .deputy-card.kun .role { color: var(--accent-kun); }
+  
+  .deputy-card.qian {
+    background: var(--accent-qian-bg);
+    border-color: rgba(37, 99, 235, 0.35);
+  }
+  .deputy-card.qian .role { color: var(--accent-qian); }
+
+  .deputy-card .role {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .deputy-card .names { font-size: 1rem; color: var(--text-primary); margin-top: 3px; font-weight: 600;}
+
+  /* 幕後團隊折疊按鈕與區域 */
+  .team-toggle-box {
+    text-align: center;
+    margin-top: 10px;
+  }
+  .team-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent-green);
+    background: var(--bg-card-sub);
+    border: 1.5px solid var(--accent-green);
+    border-radius: 99px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.08);
+  }
+  .team-toggle-btn:hover {
+    background: var(--accent-green);
+    color: #FFFFFF;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.22);
+  }
+  .groups-grid-container {
+    display: none;
+    margin-top: 28px;
+  }
+  .groups-grid-container.open {
+    display: block;
+    animation: fadeIn 0.35s ease-out;
+  }
+
+  .groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .group-card {
+    background: #FFFFFF;
+    border: 1.5px solid var(--border-color);
+    border-top: 4px solid var(--accent-blue);
+    border-radius: 16px;
+    padding: 22px 24px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .group-card:hover { 
+    transform: translateY(-4px); 
+    box-shadow: var(--shadow-hover);
+  }
+  .group-card h4 {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border-color);
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .group-card p.line {
+    font-size: 0.96rem;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    line-height: 1.65;
+  }
+  .group-card p.line:last-child { margin-bottom: 0; }
+  .group-card p.line b {
+    color: var(--accent-blue);
+    font-weight: 700;
+  }
+
+  /* 一日充能流程與課程表 */
+  .flow-box {
+    background: #FFFFFF;
+    border: 1.5px solid rgba(56, 189, 248, 0.35);
+    border-radius: 20px;
+    padding: 28px 24px;
+    margin-bottom: 48px;
+    box-shadow: var(--shadow-soft);
+  }
+  .flow-title {
+    font-family: var(--serif);
+    font-size: 1.25rem;
+    color: var(--accent-blue);
+    font-weight: 900;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .flow-items {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px 20px;
+  }
+  .flow-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    word-break: break-word;
+  }
+  .flow-item .time {
+    font-family: var(--serif);
+    font-weight: 800;
+    color: var(--accent-blue);
+    background: var(--bg-sky);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    flex-shrink: 0;
+  }
+  .flow-item span:last-child {
+    overflow-wrap: break-word;
+    word-break: break-all;
+  }
+
+  .schedule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .sched-card {
+    background: #FFFFFF;
+    border-radius: 20px;
+    border: 1.5px solid var(--border-color);
+    border-left: 6px solid var(--accent-blue);
+    padding: 26px 32px;
+    display: grid;
+    grid-template-columns: 135px 1fr 260px;
+    align-items: center;
+    gap: 28px;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease;
+  }
+  .sched-card:hover {
+    transform: translateX(6px);
+    box-shadow: var(--shadow-hover);
+  }
+  
+  /* 特別活動卡片 */
+  .sched-card.special {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFF1F2 100%);
+    border-left-color: #FB7185;
+    border-color: rgba(251, 113, 133, 0.35);
+    grid-template-columns: 135px 1fr;
+    box-shadow: 0 8px 20px -4px rgba(251, 113, 133, 0.12);
+  }
+  .sched-card.special .sched-date {
+    color: #F43F5E;
+  }
+  .sched-card.special .special-label {
+    font-family: var(--serif);
+    font-size: clamp(1rem, 2.4vw, 1.18rem);
+    font-weight: 800;
+    color: #E11D48;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  /* 「展開更多」按鈕靠右與手機大點擊區優化 */
+  .more-btn-box {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
+  }
+  .more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent-blue);
+    background: var(--accent-blue-light);
+    border: 1.5px solid var(--border-color);
+    border-radius: 99px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.08);
+  }
+  .more-btn:hover {
+    background: var(--accent-blue);
+    color: #FFFFFF;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.2);
+  }
+  .expandable-content {
+    display: none;
+    margin-top: 14px;
+  }
+  .expandable-content.open {
+    display: block;
+    animation: fadeIn 0.35s ease-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .sched-date {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--accent-blue);
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+  .sched-date .year {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-family: var(--sans);
+    font-weight: 600;
+    margin-bottom: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  .sched-main .teacher {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    flex-wrap: wrap;
+  }
+  .sched-main .teacher .who {
+    background: var(--accent-blue-light);
+    color: var(--accent-blue);
+    padding: 3px 12px;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    font-weight: 700;
+  }
+  .sched-main .theme {
+    font-family: var(--serif);
+    font-size: 1.22rem;
+    color: var(--text-primary);
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .sched-main .theme b {
+    color: var(--accent-blue);
+    margin-right: 6px;
+  }
+  .sched-main .theme-speaker {
+    font-size: 0.94rem;
+    color: var(--accent-green);
+    font-weight: 600;
+  }
+
+  .sched-tag {
+    background: var(--bg-sun);
+    border: 1.5px solid rgba(217, 119, 6, 0.3);
+    border-radius: 14px;
+    padding: 14px 20px;
+    text-align: right;
+  }
+  .sched-tag-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--accent-gold);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+  .sched-tag .who {
+    display: block;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    margin-top: 3px;
+    font-weight: 500;
+  }
+
+  footer {
+    background: #FFFFFF;
+    border-top: 2px solid var(--border-color);
+    padding: 50px 0;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  footer p.copyright {
+    font-family: var(--serif);
+    letter-spacing: 0.08em;
+  }
+
+  @media (max-width: 900px) {
+    .sched-card {
+      grid-template-columns: 120px 1fr;
+      gap: 20px;
+      padding: 24px;
+    }
+    .sched-tag {
+      grid-column: 1 / -1;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sched-tag-title { justify-content: flex-start; }
+    .deputy-row { width: 100%; }
+  }
+
+  @media (max-width: 600px) {
+    nav.navbar .nav-links { display: none; }
+    header.hero { padding: 60px 0 42px; }
+    section { padding: 60px 0; }
+    .section-head h2 { white-space: normal; flex-wrap: wrap; }
+    
+    .sched-card {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .sched-card.special {
+      grid-template-columns: 1fr;
+    }
+    .sched-date {
+      flex-direction: row;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .flow-items {
+      grid-template-columns: 1fr;
+    }
+    .more-btn-box {
+      justify-content: center;
+    }
+    .more-btn {
+      width: auto;
+      justify-content: center;
+      padding: 8px 24px;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="wrap nav-wrap">
+      <div class="nav-logo">全真社青</div>
+      <div class="nav-links">
+        <a href="#philosophy">🌿 關於這裡</a>
+        <a href="#flow">🔋 每日流程</a>
+        <a href="#schedule">📅 年度企劃</a>
+        <a href="#org">🤝 同行夥伴</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <h1>給生活的一頁私藏時光<br><span class="highlight">2027 Life Design 探索地圖</span></h1>
+      <p>每月給自己一天，把日子過成喜歡的樣子</p>
+    </div>
+  </header>
+
+  <div class="wrap">
+
+    <section id="philosophy">
+      <div class="section-head">
+        <h2>🌿 關於這裡｜<span class="en">About</span></h2>
+        <span class="sub">在忙碌的世界裡，為自己留一片小休息區</span>
+      </div>
+      
+      <div class="phil-grid">
+        <div class="phil-card highlight">
+          <div>
+            <h3 class="phil-lead">🌱 這些內容，是為你準備的</h3>
+            <p class="lede">2027一整年，六場專題課程，搭配聯誼與各種下午活動——但每一場背後，都藏著一個更深的問題：<b>在忙碌的生活裡，你有沒有機會停下來，好好問問自己過得好不好？</b></p>
+            
+            <div class="more-btn-box">
+              <button class="more-btn" id="toggleMoreBtn" onclick="toggleMore()">
+                <span>展開閱讀更多</span> <span id="moreArrow">▼</span>
+              </button>
+            </div>
+
+            <div class="expandable-content" id="moreContent">
+              <p class="lede">出社會後，我們很少再有一個固定的時間，跟一群人一起放慢腳步、聊聊心裡話。工作要衝、家庭要顧、人際要維持，「修行」兩個字聽起來離生活好遙遠。</p>
+              <p class="lede">所以我們把六場專題設計成「好好玩、好好賺、好好愛」這些你我都會遇到的生活關卡，用瑜伽舒展身體、用專題打開話題——再慢慢地，把這些日常的煩惱，接回一貫道的修心功夫。專題之外，也安排了戶外聯誼，還有新道親法會的見習與服務，讓修行不只是為了自己，也在陪伴、幫助他人的過程中真正長進。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="phil-card card-sun">
+          <div>
+            <h3 class="phil-lead">🎈 下午，才是驚喜的開始。</h3>
+            <p class="lede">生命靈數、人生大富翁、蔬食料理王、藝術氣球……每個月的下午場都不一樣，用好玩的方式，讓你在笑聲裡認識自己、也認識身邊的人。這不是額外的餘興節目，而是我們特別設計的——讓修行不只是坐著聽，更是動手做、開心玩。</p>
+          </div>
+        </div>
+
+        <div class="phil-card">
+          <div>
+            <h3 class="phil-lead">☕️ 你不需要準備什麼，只需要每個月給自己一天。</h3>
+            <p class="lede">來這裡，你會遇到一群和你一樣，在生活裡努力著、也願意花時間讓自己更好的人。這一年，我們一起把日子過成修行，把修行過成日子。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="flow">
+      <div class="section-head">
+        <h2>🔋 每日流程｜<span class="en">Daily Flow</span></h2>
+        <span class="sub">每一次的節奏安排</span>
+      </div>
+
+      <!-- Flow Bar -->
+      <div class="flow-box">
+        <div class="flow-items">
+          <div class="flow-item"><span class="time">09:30–10:00</span><span>🧘‍♀️ （30分）古典哈達瑜伽</span></div>
+          <div class="flow-item"><span class="time">10:00–10:20</span><span>🥐 （20分）休息＆早午餐</span></div>
+          <div class="flow-item"><span class="time">10:20–10:30</span><span>💡 （10分）智慧寄語・點亮心靈</span></div>
+          <div class="flow-item"><span class="time">10:30–12:00</span><span>💬 （90分）觀點分享</span></div>
+          <div class="flow-item"><span class="time">12:00–13:00</span><span>🍱 （60分）午餐＆小敘</span></div>
+          <div class="flow-item"><span class="time">13:00–14:20</span><span>🎲 （80分）聯誼／手作／桌遊／主題體驗</span></div>
+          <div class="flow-item"><span class="time">14:20–14:30</span><span>✨ （10分）溫暖結語</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="schedule">
+      <div class="section-head">
+        <h2>📅 年度企劃｜<span class="en">Calendar</span></h2>
+        <span class="sub">時光體驗一覽</span>
+      </div>
+
+      <!-- Schedule List -->
+      <div class="schedule-list">
+        
+        <!-- 03/27 -->
+        <div class="sched-card">
+          <div class="sched-date">
+            <span class="year">2027.03.27</span>03/27
+          </div>
+          <div class="sched-main">
+            <div class="teacher">開班／幹部介紹<span class="who">★班長</span></div>
+            <div class="theme"><b>好好玩</b>｜重新找回生活的樂趣</div>
+            <div class="theme-speaker">觀點分享：瑞周天定 鄭名翔 講師</div>
+          </div>
+          <div class="sched-tag">
+            <div class="sched-tag-title">迎新聯誼 🥳</div>
+            <span class="who">★活動組</span>
+          </div>
+        </div>
+
+        <!-- 04/24 -->
+        <div class="sched-card">
+          <div class="sched-date">
+            <span class="year">2027.04.24</span>04/24
+          </div>
+          <div class="sched-main">
+            <div class="teacher">🧘‍♀️ 古典哈達瑜伽<span class="who">★鄔明清講師</span></div>
+            <div class="theme"><b>好好賺</b>｜不一定要有錢，先學會理財</div>
+            <div class="theme-speaker">觀點分享：楊峰誌 助理</div>
+          </div>
+          <div class="sched-tag">
+            <div class="sched-tag-title">藝術氣球 🎈</div>
+            <span class="who">全真天龍 林鈺蓉（待邀約）</span>
+          </div>
+        </div>
+
+        <!-- 05/29 SPECIAL -->
+        <div class="sched-card special">
+          <div class="sched-date">
+            <span class="year">2027.05.29</span>05/29
+          </div>
+          <div class="special-label">
+            🎈 戶外聯誼活動
+          </div>
+        </div>
+
+        <!-- 06/26 -->
+        <div class="sched-card">
+          <div class="sched-date">
+            <span class="year">2027.06.26</span>06/26
+          </div>
+          <div class="sched-main">
+            <div class="teacher">🧘‍♀️ 古典哈達瑜伽<span class="who">★鄔明清講師</span></div>
+            <div class="theme"><b>好好愛</b>｜喜歡別人之前，先搞懂自己</div>
+            <div class="theme-speaker">觀點分享：瑞周天曉 李寶莉 講師</div>
+          </div>
+          <div class="sched-tag">
+            <div class="sched-tag-title">生命靈數 🔮</div>
+            <span class="who">全真天隆 朱宸慧</span>
+          </div>
+        </div>
+
+        <!-- 08/28 SPECIAL -->
+        <div class="sched-card special">
+          <div class="sched-date">
+            <span class="year">2027.08.28</span>08/28
+          </div>
+          <div class="special-label">
+            🌱 新道親法會－志工陪伴體驗
+          </div>
+        </div>
+
+        <!-- 10/02 -->
+        <div class="sched-card">
+          <div class="sched-date">
+            <span class="year">2027.10.02</span>10/02
+          </div>
+          <div class="sched-main">
+            <div class="teacher">🧘‍♀️ 古典哈達瑜伽<span class="who">★鄔明清講師</span></div>
+            <div class="theme"><b>人生重開機</b>｜人生卡關的時候，你會怎麼辦</div>
+            <div class="theme-speaker">觀點分享：何珈貞 講師</div>
+          </div>
+          <div class="sched-tag">
+            <div class="sched-tag-title">人生大富翁 🎲</div>
+            <span class="who">瑞周天曉 林信宏（待邀約）</span>
+          </div>
+        </div>
+
+        <!-- 10/30 SPECIAL -->
+        <div class="sched-card special">
+          <div class="sched-date">
+            <span class="year">2027.10.30</span>10/30
+          </div>
+          <div class="special-label">
+            🚲 戶外聯誼活動
+          </div>
+        </div>
+
+        <!-- 11/27 -->
+        <div class="sched-card">
+          <div class="sched-date">
+            <span class="year">2027.11.27</span>11/27
+          </div>
+          <div class="sched-main">
+            <div class="teacher">🧘‍♀️ 古典哈達瑜伽<span class="who">★鄔明清講師</span></div>
+            <div class="theme"><b>出去走走</b>｜世界這麼大，別只活在自己的日常</div>
+            <div class="theme-speaker">觀點分享：何思諺 講師</div>
+          </div>
+          <div class="sched-tag">
+            <div class="sched-tag-title">蔬食料理王 🥗</div>
+            <span class="who">啟化 蘇毓婷（待邀約）</span>
+          </div>
+        </div>
+
+        <!-- 12/25 -->
+        <div class="sched-card">
+          <div class="sched-date">
+            <span class="year">2027.12.25</span>12/25
+          </div>
+          <div class="sched-main">
+            <div class="teacher">🧘‍♀️ 古典哈達瑜伽<span class="who">★鄔明清講師</span></div>
+            <div class="theme"><b>活成自己喜歡的樣子</b>｜人生不是交作業</div>
+            <div class="theme-speaker">觀點分享：鄔明清 講師</div>
+          </div>
+          <div class="sched-tag">
+            <div class="sched-tag-title">結班聯誼 🥂</div>
+            <span class="who">★班長</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="org">
+      <div class="section-head">
+        <h2>🤝 同行夥伴｜<span class="en">Our Team</span></h2>
+        <span class="sub">2027年度陪伴你一起成長的幕後團隊</span>
+      </div>
+
+      <div class="org-container">
+        
+        <!-- Team Toggle Button -->
+        <div class="team-toggle-box" style="margin-top: 0;">
+          <button class="team-toggle-btn" id="toggleTeamBtn" onclick="toggleTeam()">
+            <span>展開同行夥伴團隊名單</span> <span id="teamArrow">▼</span>
+          </button>
+        </div>
+
+        <!-- Full Organization Content (Initially Hidden) -->
+        <div class="groups-grid-container" id="teamContent">
+          
+          <!-- Top Leadership -->
+          <div class="org-tree">
+            <div class="node-main">
+              <div class="role">👑 主班點傳師</div>
+              <div class="names">林明山・張碧雲・蕭仁德</div>
+            </div>
+            <div class="tree-line"></div>
+            <div class="node-sub">
+              <div class="role">🌿 帶班助理</div>
+              <div class="names">賴錦坤</div>
+            </div>
+            <div class="tree-line"></div>
+          </div>
+
+          <!-- Chief & Deputies -->
+          <div class="chief-section">
+            <div class="chief-card">
+              <div class="role">⭐ 班長</div>
+              <div class="names">周逸翔</div>
+            </div>
+            <div class="deputy-connector"></div>
+            <div class="deputy-row">
+              <div class="deputy-card kun">
+                <div class="role">🌿 坤道副班長</div>
+                <div class="names">何珈貞</div>
+              </div>
+              <div class="deputy-card qian">
+                <div class="role">🔹 乾道副班長</div>
+                <div class="names">羅健洲</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Functional Groups Grid -->
+          <div class="groups-grid">
+            <div class="group-card">
+              <h4>🏷️ 人事組</h4>
+              <p class="line"><b>組長</b>：賴美芸</p>
+              <p class="line"><b>成員</b>：林鈺蓉、楊舒涵</p>
+            </div>
+            <div class="group-card">
+              <h4>💌 公關禮節組</h4>
+              <p class="line"><b>組長</b>：林詩涵</p>
+              <p class="line"><b>成員</b>：陳曉璇、林淑真</p>
+            </div>
+            <div class="group-card">
+              <h4>📚 學術組</h4>
+              <p class="line"><b>組長</b>：楊雅雲（待確認）</p>
+              <p class="line"><b>成員</b>：陳幸梅、王冠博、鄭燕玲</p>
+            </div>
+            <div class="group-card">
+              <h4>🤝 輔導組</h4>
+              <p class="line"><b>成員</b>：陳彥名</p>
+            </div>
+            <div class="group-card">
+              <h4>📦 總務組</h4>
+              <p class="line"><b>組長</b>：張立人</p>
+              <p class="line"><b>成員</b>：林淑梅、許麗娟、張馨予、張如靈、張懿文、王志賢、李書承</p>
+            </div>
+            <div class="group-card">
+              <h4>🎬 影音組</h4>
+              <p class="line"><b>組長</b>：王冠博</p>
+              <p class="line"><b>成員</b>：卓子翔、陳熙宗</p>
+            </div>
+            <div class="group-card">
+              <h4>🎪 活動組</h4>
+              <p class="line"><b>組長</b>：周能安</p>
+              <p class="line"><b>成員</b>：何珈貞、許瀚升、張哲瑋、王欣渝、林禹青</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    <div class="wrap">
+      <p class="copyright">一貫道基礎忠恕瑞周全真道院 全真社青班　2027年度 Life Design</p>
+    </div>
+  </footer>
+
+  <script>
+    function toggleMore() {
+      const content = document.getElementById('moreContent');
+      const btn = document.getElementById('toggleMoreBtn');
+      const arrow = document.getElementById('moreArrow');
+      if (content.classList.contains('open')) {
+        content.classList.remove('open');
+        btn.querySelector('span').textContent = '展開閱讀更多';
+        arrow.textContent = '▼';
+      } else {
+        content.classList.add('open');
+        btn.querySelector('span').textContent = '收起內容';
+        arrow.textContent = '▲';
+      }
+    }
+
+    function toggleTeam() {
+      const content = document.getElementById('teamContent');
+      const btn = document.getElementById('toggleTeamBtn');
+      const arrow = document.getElementById('teamArrow');
+      if (content.classList.contains('open')) {
+        content.classList.remove('open');
+        btn.querySelector('span').textContent = '展開同行夥伴團隊名單';
+        arrow.textContent = '▼';
+      } else {
+        content.classList.add('open');
+        btn.querySelector('span').textContent = '收合同行夥伴團隊名單';
+        arrow.textContent = '▲';
+      }
+    }
+  </script>
+
+</body>
+</html>
