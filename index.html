@@ -132,35 +132,60 @@
 
   /* 頁首區塊 */
   header.hero {
-    padding: 85px 0 55px;
-    text-align: center;
     position: relative;
+    aspect-ratio: 1086 / 709;
+    background-image:
+      linear-gradient(180deg, rgba(238, 247, 242, 0) 78%, rgba(238, 247, 242, 0.95) 100%),
+      url("img/Life Design.png");
+    background-size: cover;
+    background-position: top center;
+    background-repeat: no-repeat;
   }
-  header.hero h1 {
+  header.hero .hero-caption {
+    position: absolute;
+    top: 7%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 0 24px;
+  }
+  header.hero .hero-caption h1 {
     font-family: var(--serif);
     font-weight: 900;
-    font-size: clamp(2.1rem, 5.2vw, 3.4rem);
+    font-size: clamp(1.5rem, 3.6vw, 2.5rem);
     color: var(--text-primary);
-    line-height: 1.35;
-    margin-bottom: 18px;
+    line-height: 1.45;
     letter-spacing: 0.02em;
+    margin-bottom: 8px;
+    text-shadow:
+      0 0 14px rgba(255, 255, 255, 0.95),
+      0 0 28px rgba(255, 255, 255, 0.85),
+      0 0 46px rgba(255, 255, 255, 0.6);
   }
-  header.hero h1 span.highlight {
-    background: #FFFFFF;
+  header.hero .hero-caption .hero-sub {
+    font-size: 1.05rem;
+    font-weight: 700;
     color: var(--accent-blue);
-    padding: 4px 24px;
-    border-radius: 20px;
-    display: inline-block;
-    box-shadow: 0 6px 20px rgba(2, 132, 199, 0.12);
-    border: 2px solid rgba(2, 132, 199, 0.22);
-    margin-top: 6px;
+    text-shadow:
+      0 0 10px rgba(255, 255, 255, 0.95),
+      0 0 20px rgba(255, 255, 255, 0.85);
+    margin-bottom: 6px;
   }
-  header.hero p {
+  header.hero .hero-caption-bottom {
+    position: absolute;
+    bottom: 4%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 0 24px;
+  }
+  header.hero .hero-tagline {
+    font-size: 0.9rem;
+    font-weight: 600;
     color: var(--text-secondary);
-    font-size: 1.2rem;
-    max-width: 620px;
-    margin: 0 auto;
-    font-weight: 500;
+    text-shadow:
+      0 0 10px rgba(255, 255, 255, 0.95),
+      0 0 20px rgba(255, 255, 255, 0.85);
   }
 
   /* 通用區塊標題 */
@@ -743,7 +768,6 @@
 
   @media (max-width: 600px) {
     nav.navbar .nav-links { display: none; }
-    header.hero { padding: 60px 0 42px; }
     section { padding: 60px 0; }
     .section-head h2 { white-space: normal; flex-wrap: wrap; }
     
@@ -788,9 +812,12 @@
   </nav>
 
   <header class="hero">
-    <div class="wrap">
-      <h1>給生活的一頁私藏時光<br><span class="highlight">2027 Life Design 探索地圖</span></h1>
-      <p>每月給自己一天，把日子過成喜歡的樣子</p>
+    <div class="hero-caption">
+      <h1>給生活的一頁私藏時光</h1>
+      <p class="hero-sub">2027 Life Design 探索地圖</p>
+    </div>
+    <div class="hero-caption-bottom">
+      <p class="hero-tagline">每月給自己一天，把日子過成喜歡的樣子</p>
     </div>
   </header>
 
@@ -851,7 +878,7 @@
           <div class="flow-item"><span class="time">10:20–10:30</span><span>💡 10min 智慧寄語・點亮心靈</span></div>
           <div class="flow-item"><span class="time">10:30–12:00</span><span>💬 90min 觀點分享</span></div>
           <div class="flow-item"><span class="time">12:00–13:00</span><span>🍱 60min 午餐＆小敘</span></div>
-          <div class="flow-item"><span class="time">13:00–14:20</span><span>🎲 80min 聯誼／手作／桌遊／主題體驗</span></div>
+          <div class="flow-item"><span class="time">13:00–14:20</span><span>🎲 80min 聯誼／手作／體驗／料理</span></div>
           <div class="flow-item"><span class="time">14:20–14:30</span><span>✨ 10min 溫暖結語</span></div>
         </div>
       </div>
@@ -965,12 +992,14 @@
           <div class="sched-date">
             <span class="year">2027.11.27</span>11/27
           </div>
-          <div class="theme"><b>出去走走</b>｜世界這麼大，別只活在自己的日常</div>
+          <div class="sched-main">
+            <div class="teacher">🧘‍♀️ 古典哈達瑜伽<span class="who">瑞周全真 鄔明清講師</span></div>
+            <div class="theme"><b>出去走走</b>｜世界這麼大，別只活在自己的日常</div>
             <div class="theme-speaker">觀點分享：瑞周全真 何思諺 講師</div>
           </div>
           <div class="sched-tag">
             <div class="sched-tag-title">蔬食料理王 🥗</div>
-            <span class="who">啟化 蘇毓婷（待邀約）</span>
+            <span class="who">啟化 蘇毓婷</span>
           </div>
         </div>
 
