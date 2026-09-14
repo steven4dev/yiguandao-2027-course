@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>給生活的一頁私藏時光｜2027 全真社青 Life Design 探索地圖</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +13,7 @@
     /* 宮崎駿明亮天空與草原清新配色 (Ghibli Sky & Meadow) */
     --bg-main: #EEF7F2;          /* 輕柔清新綠意基底 */
     --bg-card: #FFFFFF;          /* 純白實色卡片 */
+    --bg-panel: #F1F5F9;         /* 中性灰藍底，區隔一般組別卡與白色容器 */
     --bg-card-sub: #F0FDF4;      /* 嫩芽綠微調底色 */
     --bg-sky: #E0F2FE;           /* 霍爾藍天微調 */
     --bg-sun: #FFFBEB;           /* 暖陽香草黃 */
@@ -343,11 +344,12 @@
 
   .node-sub {
     background: var(--bg-card-sub);
-    border: 1.5px solid var(--accent-green);
+    border: 2px solid var(--accent-green);
     border-radius: 14px;
     padding: 14px 38px;
     text-align: center;
     min-width: 250px;
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.10);
   }
   .node-sub .role {
     font-family: var(--serif);
@@ -359,7 +361,7 @@
     justify-content: center;
     gap: 6px;
   }
-  .node-sub .names { font-size: 1rem; color: var(--text-primary); margin-top: 2px; font-weight: 600; }
+  .node-sub .names { font-size: 1rem; color: var(--text-primary); margin-top: 4px; font-weight: 600; }
 
   .tree-line {
     width: 2px;
@@ -417,17 +419,19 @@
     border-radius: 14px;
     padding: 15px 22px;
     text-align: center;
-    border: 1.5px solid var(--border-color);
+    border: 2px solid var(--border-color);
   }
   .deputy-card.kun {
     background: var(--accent-kun-bg);
-    border-color: rgba(13, 148, 136, 0.35);
+    border-color: rgba(13, 148, 136, 0.4);
+    box-shadow: 0 6px 16px rgba(13, 148, 136, 0.10);
   }
   .deputy-card.kun .role { color: var(--accent-kun); }
-  
+
   .deputy-card.qian {
     background: var(--accent-qian-bg);
-    border-color: rgba(37, 99, 235, 0.35);
+    border-color: rgba(37, 99, 235, 0.4);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.10);
   }
   .deputy-card.qian .role { color: var(--accent-qian); }
 
@@ -440,7 +444,7 @@
     justify-content: center;
     gap: 6px;
   }
-  .deputy-card .names { font-size: 1rem; color: var(--text-primary); margin-top: 3px; font-weight: 600;}
+  .deputy-card .names { font-size: 1rem; color: var(--text-primary); margin-top: 4px; font-weight: 600;}
 
   /* 幕後團隊折疊按鈕與區域 */
   .team-toggle-box {
@@ -483,16 +487,16 @@
     gap: 20px;
   }
   .group-card {
-    background: #FFFFFF;
+    background: var(--bg-panel);
     border: 1.5px solid var(--border-color);
-    border-top: 4px solid var(--accent-blue);
+    border-top: 3px solid var(--accent-blue);
     border-radius: 16px;
     padding: 22px 24px;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
     transition: transform 0.25s ease, box-shadow 0.25s ease;
   }
-  .group-card:hover { 
-    transform: translateY(-4px); 
+  .group-card:hover {
+    transform: translateY(-4px);
     box-shadow: var(--shadow-hover);
   }
   .group-card h4 {
@@ -502,13 +506,14 @@
     margin-bottom: 12px;
     padding-bottom: 8px;
     border-bottom: 1px dashed var(--border-color);
-    font-weight: 800;
+    font-weight: 900;
     display: flex;
     align-items: center;
     gap: 6px;
   }
   .group-card p.line {
-    font-size: 0.96rem;
+    font-size: 1rem;
+    font-weight: 500;
     color: var(--text-secondary);
     margin-bottom: 6px;
     line-height: 1.65;
@@ -733,6 +738,127 @@
     color: var(--text-secondary);
     margin-top: 3px;
     font-weight: 500;
+  }
+
+  /* 漂浮報名按鈕 */
+  .fab-signup {
+    position: fixed;
+    right: max(20px, env(safe-area-inset-right));
+    bottom: max(20px, env(safe-area-inset-bottom));
+    z-index: 200;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 15px 26px;
+    border: none;
+    border-radius: 99px;
+    background: #FEDC56;
+    color: #FFFFFF;
+    text-shadow:
+      -1px 0 0 #000,
+      1px 0 0 #000,
+      0 -1px 0 #000,
+      0 1px 0 #000,
+      -1px -1px 0 #000,
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+      1px 1px 0 #000;
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    box-shadow: 0 10px 24px -6px rgba(200, 168, 40, 0.5);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .fab-signup::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: inherit;
+    animation: fabPulse 2.4s ease-out infinite;
+  }
+  .fab-signup:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px -6px rgba(200, 168, 40, 0.6);
+  }
+  .fab-signup:active { transform: translateY(-1px); }
+  @keyframes fabPulse {
+    0% { opacity: 0.5; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.35); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fab-signup::after { animation: none; }
+  }
+  @media (max-width: 600px) {
+    .fab-signup {
+      right: max(14px, env(safe-area-inset-right));
+      bottom: max(14px, env(safe-area-inset-bottom));
+      padding: 13px 20px;
+      font-size: 0.92rem;
+    }
+  }
+
+  /* 報名尚未開放彈窗 */
+  .signup-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .signup-modal-overlay.open {
+    display: flex;
+    animation: fadeIn 0.25s ease-out;
+  }
+  .signup-modal {
+    background: #FFFFFF;
+    border-radius: 24px;
+    padding: 40px 32px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+    box-shadow: var(--shadow-hover);
+    border: 1.5px solid var(--border-color);
+  }
+  .signup-modal-icon { font-size: 2.6rem; margin-bottom: 14px; }
+  .signup-modal h3 {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+  }
+  .signup-modal p {
+    font-size: 0.98rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 26px;
+  }
+  .signup-modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 34px;
+    border: none;
+    border-radius: 99px;
+    background: var(--accent-blue);
+    color: #FFFFFF;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+  .signup-modal-close:hover {
+    background: #0369A1;
+    transform: translateY(-2px);
   }
 
   footer {
@@ -1134,6 +1260,19 @@
     <p class="copyright">一貫道基礎忠恕瑞周全真道院｜全真社青班</p>
   </footer>
 
+  <button class="fab-signup" onclick="openSignupModal()">
+    <span>點我報名</span>
+  </button>
+
+  <div class="signup-modal-overlay" id="signupModalOverlay" onclick="if(event.target===this) closeSignupModal()">
+    <div class="signup-modal">
+      <div class="signup-modal-icon">🚧</div>
+      <h3>報名尚未開放</h3>
+      <p>報名通道準備中，請留意後續公告，敬請期待！</p>
+      <button class="signup-modal-close" onclick="closeSignupModal()">我知道了</button>
+    </div>
+  </div>
+
   <script>
     function toggleMore() {
       const content = document.getElementById('moreContent');
@@ -1164,6 +1303,20 @@
         arrow.textContent = '▲';
       }
     }
+
+    function openSignupModal() {
+      document.getElementById('signupModalOverlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSignupModal() {
+      document.getElementById('signupModalOverlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeSignupModal();
+    });
   </script>
 
 </body>
