@@ -736,17 +736,29 @@
   }
 
   footer {
-    background: #FFFFFF;
+    position: relative;
     border-top: 2px solid var(--border-color);
-    padding: 50px 0;
-    text-align: center;
-    color: var(--text-secondary);
-    font-size: 1rem;
-    font-weight: 600;
+    aspect-ratio: 1086 / 738;
+    background-image: url("img/Life Design.png");
+    background-size: cover;
+    background-position: bottom center;
+    background-repeat: no-repeat;
   }
   footer p.copyright {
+    position: absolute;
+    bottom: 5%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 0 24px;
     font-family: var(--serif);
     letter-spacing: 0.08em;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-shadow:
+      0 0 10px rgba(255, 255, 255, 0.95),
+      0 0 20px rgba(255, 255, 255, 0.85);
   }
 
   @media (max-width: 900px) {
@@ -878,7 +890,7 @@
           <div class="flow-item"><span class="time">10:20–10:30</span><span>💡 10min 智慧寄語・點亮心靈</span></div>
           <div class="flow-item"><span class="time">10:30–12:00</span><span>💬 90min 觀點分享</span></div>
           <div class="flow-item"><span class="time">12:00–13:00</span><span>🍱 60min 午餐＆小敘</span></div>
-          <div class="flow-item"><span class="time">13:00–14:20</span><span>🎲 80min 聯誼／手作／體驗／料理</span></div>
+          <div class="flow-item"><span class="time">13:00–14:20</span><span>🎲 80min 聯誼×手作×體驗×料理</span></div>
           <div class="flow-item"><span class="time">14:20–14:30</span><span>✨ 10min 溫暖結語</span></div>
         </div>
       </div>
@@ -1119,9 +1131,7 @@
   </div>
 
   <footer>
-    <div class="wrap">
-      <p class="copyright">一貫道基礎忠恕瑞周全真道院 全真社青班　2027年度 Life Design</p>
-    </div>
+    <p class="copyright">一貫道基礎忠恕瑞周全真道院｜全真社青班</p>
   </footer>
 
   <script>
