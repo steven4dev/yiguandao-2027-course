@@ -131,6 +131,36 @@
     transform: translateY(-2px);
   }
 
+  /* 手機版漢堡選單按鈕（預設桌機隱藏） */
+  .nav-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    position: absolute;
+    top: 50%;
+    right: 24px;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+  }
+  .nav-toggle span {
+    display: block;
+    width: 22px;
+    height: 2.5px;
+    border-radius: 2px;
+    background: var(--accent-blue);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  .nav-toggle.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .nav-toggle.open span:nth-child(2) { opacity: 0; }
+  .nav-toggle.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
   /* 頁首區塊 */
   header.hero {
     position: relative;
@@ -530,7 +560,6 @@
     border: 1.5px solid rgba(56, 189, 248, 0.35);
     border-radius: 20px;
     padding: 28px 24px;
-    margin-bottom: 48px;
     box-shadow: var(--shadow-soft);
   }
   .flow-title {
@@ -593,6 +622,7 @@
     gap: 28px;
     box-shadow: var(--shadow-soft);
     transition: all 0.3s ease;
+    min-width: 0;
   }
   .sched-card:hover {
     transform: translateX(6px);
@@ -713,7 +743,7 @@
   .sched-main .theme-speaker {
     font-size: 0.94rem;
     color: var(--accent-green);
-    font-weight: 600;
+    font-weight: 500;
   }
 
   .sched-tag {
@@ -739,6 +769,75 @@
     margin-top: 3px;
     font-weight: 500;
   }
+  .tag-more-btn {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 0.88rem;
+    line-height: inherit;
+    font-weight: 700;
+    color: var(--accent-gold);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    transition: color 0.25s ease;
+  }
+  .tag-more-btn:hover {
+    color: #B45309;
+  }
+  .sched-card-more {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+  .sched-card-more .lede {
+    max-width: none;
+    font-size: 0.98rem;
+    line-height: 1.75;
+    background: var(--bg-sun);
+    border: 1.5px solid rgba(217, 119, 6, 0.25);
+    border-radius: 14px;
+    padding: 16px 20px;
+  }
+  .recipe-gallery {
+    margin-top: 14px;
+    min-width: 0;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  }
+  .recipe-gallery-track {
+    display: flex;
+    width: max-content;
+    gap: 14px;
+    animation: recipeScroll 32s linear infinite;
+  }
+  .recipe-gallery:hover .recipe-gallery-track {
+    animation-play-state: paused;
+  }
+  .recipe-gallery-track img {
+    width: 170px;
+    height: 170px;
+    object-fit: cover;
+    border-radius: 14px;
+    border: 1.5px solid rgba(217, 119, 6, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    flex-shrink: 0;
+  }
+  @keyframes recipeScroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .recipe-gallery-track { animation: none; }
+    .recipe-gallery { overflow-x: auto; }
+  }
+  @media (max-width: 600px) {
+    .recipe-gallery-track img { width: 130px; height: 130px; }
+  }
 
   /* 漂浮報名按鈕 */
   .fab-signup {
@@ -749,7 +848,7 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 15px 26px;
+    padding: 22px 26px;
     border: none;
     border-radius: 99px;
     background: #FEDC56;
@@ -796,7 +895,7 @@
     .fab-signup {
       right: max(14px, env(safe-area-inset-right));
       bottom: max(14px, env(safe-area-inset-bottom));
-      padding: 13px 20px;
+      padding: 19px 20px;
       font-size: 0.92rem;
     }
   }
@@ -897,15 +996,39 @@
       grid-column: 1 / -1;
       text-align: left;
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
-      align-items: center;
+      align-items: baseline;
     }
     .sched-tag-title { justify-content: flex-start; }
     .deputy-row { width: 100%; }
   }
 
   @media (max-width: 600px) {
-    nav.navbar .nav-links { display: none; }
+    .nav-toggle { display: flex; }
+    nav.navbar .nav-links {
+      display: none;
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--bg-panel);
+      border: 1.5px solid var(--border-color);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: var(--shadow-hover);
+    }
+    nav.navbar .nav-links.open {
+      display: flex;
+      animation: fadeIn 0.25s ease-out;
+    }
+    nav.navbar .nav-links a {
+      width: 100%;
+      text-align: center;
+      padding: 12px 20px;
+    }
     section { padding: 60px 0; }
     .section-head h2 { white-space: normal; flex-wrap: wrap; }
     
@@ -940,12 +1063,15 @@
   <nav class="navbar">
     <div class="wrap nav-wrap">
       <div class="nav-logo">全真社青</div>
-      <div class="nav-links">
+      <div class="nav-links" id="navLinks">
         <a href="#philosophy">🌿 關於這裡</a>
         <a href="#flow">🔋 每日流程</a>
         <a href="#schedule">📅 年度企劃</a>
         <a href="#org">🤝 同行夥伴</a>
       </div>
+      <button class="nav-toggle" id="navToggle" aria-label="開啟選單" aria-expanded="false" aria-controls="navLinks" onclick="toggleNav()">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </nav>
 
@@ -1138,6 +1264,34 @@
           <div class="sched-tag">
             <div class="sched-tag-title">蔬食料理王 🥗</div>
             <span class="who">啟化 蘇毓婷</span>
+            <button class="tag-more-btn" id="recipeMoreBtn" onclick="toggleRecipeMore()">
+              <span>✨ 會很難嗎？</span> <span id="recipeMoreArrow">▼</span>
+            </button>
+          </div>
+          <div class="expandable-content sched-card-more" id="recipeMoreContent">
+            <p class="lede">蔬食料理王蘇毓婷講師（Joanne Su）深藏不露——會煮又會拍，堪稱名副其實的「蘇式料理王」！這堂課不只手把手帶你做出一道好吃的蔬食料理，完成之後，Joanne 還會傳授幾個超簡單的手機攝影技巧：擺盤怎麼擺、光線怎麼抓、一鍵修圖有訣竅，讓餐桌秒變攝影棚，拍出雜誌、美食節目等級的高質感照片。煮完、拍完，記得大方分享到 FB、IG、LINE 群組，順手標記朋友，一起收穫這份美味與成就感！</p>
+            <div class="recipe-gallery">
+              <div class="recipe-gallery-track">
+                <img src="img/Vegetarian Cooking Champion/S__193650747.jpg" alt="蔬食料理王作品照片">
+                <img src="img/Vegetarian Cooking Champion/S__193650749_0.jpg" alt="蔬食料理王作品照片">
+                <img src="img/Vegetarian Cooking Champion/S__193650750_0.jpg" alt="蔬食料理王作品照片">
+                <img src="img/Vegetarian Cooking Champion/S__193650751_0.jpg" alt="蔬食料理王作品照片">
+                <img src="img/Vegetarian Cooking Champion/S__193650752_0.jpg" alt="蔬食料理王作品照片">
+                <img src="img/Vegetarian Cooking Champion/S__193650753_0.jpg" alt="蔬食料理王作品照片">
+                <img src="img/Vegetarian Cooking Champion/S__193650754_0.jpg" alt="蔬食料理王作品照片">
+                <img src="img/Vegetarian Cooking Champion/S__193650755_0.jpg" alt="蔬食料理王作品照片">
+                <img src="img/Vegetarian Cooking Champion/S__193650756_0.jpg" alt="蔬食料理王作品照片">
+                <img src="img/Vegetarian Cooking Champion/S__193650747.jpg" alt="" aria-hidden="true">
+                <img src="img/Vegetarian Cooking Champion/S__193650749_0.jpg" alt="" aria-hidden="true">
+                <img src="img/Vegetarian Cooking Champion/S__193650750_0.jpg" alt="" aria-hidden="true">
+                <img src="img/Vegetarian Cooking Champion/S__193650751_0.jpg" alt="" aria-hidden="true">
+                <img src="img/Vegetarian Cooking Champion/S__193650752_0.jpg" alt="" aria-hidden="true">
+                <img src="img/Vegetarian Cooking Champion/S__193650753_0.jpg" alt="" aria-hidden="true">
+                <img src="img/Vegetarian Cooking Champion/S__193650754_0.jpg" alt="" aria-hidden="true">
+                <img src="img/Vegetarian Cooking Champion/S__193650755_0.jpg" alt="" aria-hidden="true">
+                <img src="img/Vegetarian Cooking Champion/S__193650756_0.jpg" alt="" aria-hidden="true">
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1289,6 +1443,21 @@
       }
     }
 
+    function toggleRecipeMore() {
+      const content = document.getElementById('recipeMoreContent');
+      const btn = document.getElementById('recipeMoreBtn');
+      const arrow = document.getElementById('recipeMoreArrow');
+      if (content.classList.contains('open')) {
+        content.classList.remove('open');
+        btn.querySelector('span').textContent = '✨ 會很難嗎？';
+        arrow.textContent = '▼';
+      } else {
+        content.classList.add('open');
+        btn.querySelector('span').textContent = '收起內容';
+        arrow.textContent = '▲';
+      }
+    }
+
     function toggleTeam() {
       const content = document.getElementById('teamContent');
       const btn = document.getElementById('toggleTeamBtn');
@@ -1315,7 +1484,32 @@
     }
 
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') closeSignupModal();
+      if (e.key === 'Escape') {
+        closeSignupModal();
+        closeNav();
+      }
+    });
+
+    function toggleNav() {
+      const links = document.getElementById('navLinks');
+      const btn = document.getElementById('navToggle');
+      const isOpen = links.classList.toggle('open');
+      btn.classList.toggle('open', isOpen);
+      btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    function closeNav() {
+      document.getElementById('navLinks').classList.remove('open');
+      document.getElementById('navToggle').classList.remove('open');
+      document.getElementById('navToggle').setAttribute('aria-expanded', 'false');
+    }
+
+    document.querySelectorAll('#navLinks a').forEach(function (a) {
+      a.addEventListener('click', closeNav);
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('nav.navbar')) closeNav();
     });
   </script>
 
