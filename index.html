@@ -1265,32 +1265,32 @@
             <div class="sched-tag-title">蔬食料理王 🥗</div>
             <span class="who">啟化 蘇毓婷</span>
             <button class="tag-more-btn" id="recipeMoreBtn" onclick="toggleRecipeMore()">
-              <span>✨ 會很難嗎？</span> <span id="recipeMoreArrow">▼</span>
+              <span>會很難嗎</span> <span id="recipeMoreArrow">▼</span>
             </button>
           </div>
           <div class="expandable-content sched-card-more" id="recipeMoreContent">
             <p class="lede">蔬食料理王蘇毓婷講師（Joanne Su）深藏不露——會煮又會拍，堪稱名副其實的「蘇式料理王」！這堂課不只手把手帶你做出一道好吃的蔬食料理，完成之後，Joanne 還會傳授幾個超簡單的手機攝影技巧：擺盤怎麼擺、光線怎麼抓、一鍵修圖有訣竅，讓餐桌秒變攝影棚，拍出雜誌、美食節目等級的高質感照片。煮完、拍完，記得大方分享到 FB、IG、LINE 群組，順手標記朋友，一起收穫這份美味與成就感！</p>
-            <div class="recipe-gallery">
-              <div class="recipe-gallery-track">
-                <img src="img/Vegetarian Cooking Champion/S__193650747.jpg" alt="蔬食料理王作品照片">
-                <img src="img/Vegetarian Cooking Champion/S__193650749_0.jpg" alt="蔬食料理王作品照片">
-                <img src="img/Vegetarian Cooking Champion/S__193650750_0.jpg" alt="蔬食料理王作品照片">
-                <img src="img/Vegetarian Cooking Champion/S__193650751_0.jpg" alt="蔬食料理王作品照片">
-                <img src="img/Vegetarian Cooking Champion/S__193650752_0.jpg" alt="蔬食料理王作品照片">
-                <img src="img/Vegetarian Cooking Champion/S__193650753_0.jpg" alt="蔬食料理王作品照片">
-                <img src="img/Vegetarian Cooking Champion/S__193650754_0.jpg" alt="蔬食料理王作品照片">
-                <img src="img/Vegetarian Cooking Champion/S__193650755_0.jpg" alt="蔬食料理王作品照片">
-                <img src="img/Vegetarian Cooking Champion/S__193650756_0.jpg" alt="蔬食料理王作品照片">
-                <img src="img/Vegetarian Cooking Champion/S__193650747.jpg" alt="" aria-hidden="true">
-                <img src="img/Vegetarian Cooking Champion/S__193650749_0.jpg" alt="" aria-hidden="true">
-                <img src="img/Vegetarian Cooking Champion/S__193650750_0.jpg" alt="" aria-hidden="true">
-                <img src="img/Vegetarian Cooking Champion/S__193650751_0.jpg" alt="" aria-hidden="true">
-                <img src="img/Vegetarian Cooking Champion/S__193650752_0.jpg" alt="" aria-hidden="true">
-                <img src="img/Vegetarian Cooking Champion/S__193650753_0.jpg" alt="" aria-hidden="true">
-                <img src="img/Vegetarian Cooking Champion/S__193650754_0.jpg" alt="" aria-hidden="true">
-                <img src="img/Vegetarian Cooking Champion/S__193650755_0.jpg" alt="" aria-hidden="true">
-                <img src="img/Vegetarian Cooking Champion/S__193650756_0.jpg" alt="" aria-hidden="true">
-              </div>
+          </div>
+          <div class="recipe-gallery sched-card-more">
+            <div class="recipe-gallery-track">
+              <img src="img/Vegetarian Cooking Champion/S__193650747.jpg" alt="蔬食料理王作品照片">
+              <img src="img/Vegetarian Cooking Champion/S__193650749_0.jpg" alt="蔬食料理王作品照片">
+              <img src="img/Vegetarian Cooking Champion/S__193650750_0.jpg" alt="蔬食料理王作品照片">
+              <img src="img/Vegetarian Cooking Champion/S__193650751_0.jpg" alt="蔬食料理王作品照片">
+              <img src="img/Vegetarian Cooking Champion/S__193650752_0.jpg" alt="蔬食料理王作品照片">
+              <img src="img/Vegetarian Cooking Champion/S__193650753_0.jpg" alt="蔬食料理王作品照片">
+              <img src="img/Vegetarian Cooking Champion/S__193650754_0.jpg" alt="蔬食料理王作品照片">
+              <img src="img/Vegetarian Cooking Champion/S__193650755_0.jpg" alt="蔬食料理王作品照片">
+              <img src="img/Vegetarian Cooking Champion/S__193650756_0.jpg" alt="蔬食料理王作品照片">
+              <img src="img/Vegetarian Cooking Champion/S__193650747.jpg" alt="" aria-hidden="true">
+              <img src="img/Vegetarian Cooking Champion/S__193650749_0.jpg" alt="" aria-hidden="true">
+              <img src="img/Vegetarian Cooking Champion/S__193650750_0.jpg" alt="" aria-hidden="true">
+              <img src="img/Vegetarian Cooking Champion/S__193650751_0.jpg" alt="" aria-hidden="true">
+              <img src="img/Vegetarian Cooking Champion/S__193650752_0.jpg" alt="" aria-hidden="true">
+              <img src="img/Vegetarian Cooking Champion/S__193650753_0.jpg" alt="" aria-hidden="true">
+              <img src="img/Vegetarian Cooking Champion/S__193650754_0.jpg" alt="" aria-hidden="true">
+              <img src="img/Vegetarian Cooking Champion/S__193650755_0.jpg" alt="" aria-hidden="true">
+              <img src="img/Vegetarian Cooking Champion/S__193650756_0.jpg" alt="" aria-hidden="true">
             </div>
           </div>
         </div>
@@ -1449,7 +1449,7 @@
       const arrow = document.getElementById('recipeMoreArrow');
       if (content.classList.contains('open')) {
         content.classList.remove('open');
-        btn.querySelector('span').textContent = '✨ 會很難嗎？';
+        btn.querySelector('span').textContent = '會很難嗎';
         arrow.textContent = '▼';
       } else {
         content.classList.add('open');
