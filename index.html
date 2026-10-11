@@ -1182,7 +1182,7 @@
       <div class="section-head">
         <h2>📅 年度企劃｜<span class="en">Calendar</span></h2>
         <span class="sub">六場專題課程與特別活動的完整一覽</span>
-        <a class="cal-subscribe-btn" href="https://calendar.google.com/calendar/r?cid=webcal://steven4dev.github.io/yiguandao-2027-course/2027.ics" target="_blank" rel="noopener">📅 訂閱至 Google 行事曆</a>
+        <a class="cal-subscribe-btn" id="calSubscribeBtn" href="https://calendar.google.com/calendar/r?cid=webcal://steven4dev.github.io/yiguandao-2027-course/2027.ics" target="_blank" rel="noopener">📅 訂閱行事曆</a>
       </div>
 
       <!-- Schedule List -->
@@ -1503,6 +1503,16 @@
         arrow.textContent = '▲';
       }
     }
+
+    (function () {
+      const ua = navigator.userAgent;
+      const isApple = /iPhone|iPad|iPod|Macintosh/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if (isApple) {
+        const btn = document.getElementById('calSubscribeBtn');
+        btn.href = 'webcal://steven4dev.github.io/yiguandao-2027-course/2027.ics';
+        btn.removeAttribute('target');
+      }
+    })();
 
     function openSignupModal() {
       document.getElementById('signupModalOverlay').classList.add('open');
