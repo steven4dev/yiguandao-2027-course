@@ -1,0 +1,81 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//yiguandao-2027-course//ZH
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:全真社青班 2027
+X-WR-TIMEZONE:Asia/Taipei
+X-WR-CALDESC:給生活的一頁私藏時光｜2027 Life Design 年度企劃
+BEGIN:VEVENT
+UID:20270327-class@yiguandao-2027-course
+DTSTAMP:20260101T000000Z
+DTSTART;TZID=Asia/Taipei:20270327T093000
+DTEND;TZID=Asia/Taipei:20270327T143000
+SUMMARY:全真社青｜好好玩｜重新找回生活的樂趣
+DESCRIPTION:開班／幹部介紹\n觀點分享：天定 鄭名翔 講師\n下午活動：迎新聯誼（活動組）\n\n詳情：https://steven4dev.github.io/yiguandao-2027-course/
+END:VEVENT
+BEGIN:VEVENT
+UID:20270424-class@yiguandao-2027-course
+DTSTAMP:20260101T000000Z
+DTSTART;TZID=Asia/Taipei:20270424T093000
+DTEND;TZID=Asia/Taipei:20270424T143000
+SUMMARY:全真社青｜好好賺｜不一定要有錢，先學會理財
+DESCRIPTION:古典哈達瑜伽：全真 鄔明清 講師\n觀點分享：全真 楊峰誌 助理\n下午活動：藝術氣球（全真 林鈺蓉 講師）\n\n詳情：https://steven4dev.github.io/yiguandao-2027-course/
+END:VEVENT
+BEGIN:VEVENT
+UID:20270626-class@yiguandao-2027-course
+DTSTAMP:20260101T000000Z
+DTSTART;TZID=Asia/Taipei:20270626T093000
+DTEND;TZID=Asia/Taipei:20270626T143000
+SUMMARY:全真社青｜好好愛｜喜歡別人之前，先搞懂自己
+DESCRIPTION:古典哈達瑜伽：全真 鄔明清 講師\n觀點分享：天曉 李寶莉 講師\n下午活動：生命靈數（全真 朱宸慧 講師）\n\n詳情：https://steven4dev.github.io/yiguandao-2027-course/
+END:VEVENT
+BEGIN:VEVENT
+UID:20271002-class@yiguandao-2027-course
+DTSTAMP:20260101T000000Z
+DTSTART;TZID=Asia/Taipei:20271002T093000
+DTEND;TZID=Asia/Taipei:20271002T143000
+SUMMARY:全真社青｜人生重開機｜人生卡關的時候，你會怎麼辦
+DESCRIPTION:古典哈達瑜伽：全真 鄔明清 講師\n觀點分享：全真 何珈貞 講師\n下午活動：V·翻轉後的人生（天曉 林信宏 講師）\n\n詳情：https://steven4dev.github.io/yiguandao-2027-course/
+END:VEVENT
+BEGIN:VEVENT
+UID:20271127-class@yiguandao-2027-course
+DTSTAMP:20260101T000000Z
+DTSTART;TZID=Asia/Taipei:20271127T093000
+DTEND;TZID=Asia/Taipei:20271127T143000
+SUMMARY:全真社青｜出去走走｜世界這麼大，別只活在自己的日常
+DESCRIPTION:古典哈達瑜伽：全真 鄔明清 講師\n觀點分享：全真 何思諺 講師\n下午活動：蔬食料理王（啟化 蘇毓婷 講師）\n\n詳情：https://steven4dev.github.io/yiguandao-2027-course/
+END:VEVENT
+BEGIN:VEVENT
+UID:20271225-class@yiguandao-2027-course
+DTSTAMP:20260101T000000Z
+DTSTART;TZID=Asia/Taipei:20271225T093000
+DTEND;TZID=Asia/Taipei:20271225T143000
+SUMMARY:全真社青｜活成自己喜歡的樣子｜人生不是交作業
+DESCRIPTION:古典哈達瑜伽：全真 鄔明清 講師\n觀點分享：全真 鄔明清 講師\n下午活動：結班聯誼\n\n詳情：https://steven4dev.github.io/yiguandao-2027-course/
+END:VEVENT
+BEGIN:VEVENT
+UID:20270529-special@yiguandao-2027-course
+DTSTAMP:20260101T000000Z
+DTSTART;VALUE=DATE:20270529
+DTEND;VALUE=DATE:20270530
+SUMMARY:全真社青｜戶外聯誼活動
+DESCRIPTION:詳情：https://steven4dev.github.io/yiguandao-2027-course/
+END:VEVENT
+BEGIN:VEVENT
+UID:20270828-special@yiguandao-2027-course
+DTSTAMP:20260101T000000Z
+DTSTART;VALUE=DATE:20270828
+DTEND;VALUE=DATE:20270829
+SUMMARY:全真社青｜新道親法會－志工陪伴體驗
+DESCRIPTION:詳情：https://steven4dev.github.io/yiguandao-2027-course/
+END:VEVENT
+BEGIN:VEVENT
+UID:20271030-special@yiguandao-2027-course
+DTSTAMP:20260101T000000Z
+DTSTART;VALUE=DATE:20271030
+DTEND;VALUE=DATE:20271031
+SUMMARY:全真社青｜戶外聯誼活動
+DESCRIPTION:詳情：https://steven4dev.github.io/yiguandao-2027-course/
+END:VEVENT
+END:VCALENDAR
