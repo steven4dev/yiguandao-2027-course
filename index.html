@@ -551,6 +551,43 @@
     line-height: 1.65;
   }
   .group-card p.line:last-child { margin-bottom: 0; }
+  .groups-grid { align-items: start; }
+  .duty-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid var(--accent-blue);
+    background: #FFFFFF;
+    color: var(--accent-blue);
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+  .duty-btn:hover,
+  .duty-btn[aria-expanded="true"] {
+    background: var(--accent-blue);
+    color: #FFFFFF;
+  }
+  .duty-content {
+    display: none;
+    margin: 12px 0 0;
+    padding: 12px 0 0 18px;
+    border-top: 1px dashed var(--border-color);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    line-height: 1.65;
+  }
+  .duty-content.open {
+    display: block;
+    animation: fadeIn 0.35s ease-out;
+  }
+  .duty-content li + li { margin-top: 4px; }
   .group-card p.line b {
     color: var(--accent-blue);
     font-weight: 700;
@@ -1434,38 +1471,45 @@
           <!-- Functional Groups Grid -->
           <div class="groups-grid">
             <div class="group-card">
-              <h4>🏷️ 人事組</h4>
+              <h4>🏷️ 人事組<button class="duty-btn" type="button" aria-label="人事組職掌" aria-expanded="false" title="點我看職掌" onclick="toggleDuty(this)">?</button></h4>
               <p class="line"><b>組長</b>：賴美芸</p>
               <p class="line"><b>成員</b>：林鈺蓉、楊舒涵</p>
+              <ul class="duty-content"><li>報名收件、名冊與出席紀錄</li><li>每堂簽到、請假統計</li><li>結班全勤與結業名單</li></ul>
             </div>
             <div class="group-card">
-              <h4>💌 公關禮節組</h4>
+              <h4>💌 公關禮節組<button class="duty-btn" type="button" aria-label="公關禮節組職掌" aria-expanded="false" title="點我看職掌" onclick="toggleDuty(this)">?</button></h4>
               <p class="line"><b>組長</b>：林詩涵</p>
-              <p class="line"><b>成員</b>：陳曉璇、林淑真</p>
+              <p class="line"><b>成員</b>：陳幸梅、陳曉璇、林淑真</p>
+              <ul class="duty-content"><li>迎賓接待、引導入座</li><li>講師邀約聯繫與致謝</li><li>場內禮儀提醒、對外聯繫</li></ul>
             </div>
             <div class="group-card">
-              <h4>📚 學術組</h4>
+              <h4>📚 學術組<button class="duty-btn" type="button" aria-label="學術組職掌" aria-expanded="false" title="點我看職掌" onclick="toggleDuty(this)">?</button></h4>
               <p class="line"><b>組長</b>：楊雅雲</p>
-              <p class="line"><b>成員</b>：陳幸梅、王冠博、鄭燕玲</p>
+              <p class="line"><b>成員</b>：王冠博、鄭燕玲</p>
+              <ul class="duty-content"><li>年度主題與每堂課綱規劃</li><li>與講師對接內容、整理講義</li><li>觀點分享與課後心得整理</li><li>講義、簡報與課程視覺美編</li></ul>
             </div>
             <div class="group-card">
-              <h4>🤝 輔導組</h4>
+              <h4>🤝 輔導組<button class="duty-btn" type="button" aria-label="輔導組職掌" aria-expanded="false" title="點我看職掌" onclick="toggleDuty(this)">?</button></h4>
               <p class="line"><b>成員</b>：陳彥名</p>
+              <ul class="duty-content"><li>新學員適應與關懷陪伴</li><li>缺席或低落學員的聯繫</li><li>課後追蹤與疑問轉介</li></ul>
             </div>
             <div class="group-card">
-              <h4>📦 總務組</h4>
+              <h4>📦 總務組<button class="duty-btn" type="button" aria-label="總務組職掌" aria-expanded="false" title="點我看職掌" onclick="toggleDuty(this)">?</button></h4>
               <p class="line"><b>組長</b>：張立人</p>
               <p class="line"><b>成員</b>：林淑梅、許麗娟、張馨予、張如靈、張懿文、王志賢、李書承</p>
+              <ul class="duty-content"><li>場地佈置與復原、音響桌椅</li><li>早午餐、午餐採買與備餐</li><li>收支帳務與物資盤點</li></ul>
             </div>
             <div class="group-card">
-              <h4>🎬 影音組</h4>
+              <h4>🎬 影音組<button class="duty-btn" type="button" aria-label="影音組職掌" aria-expanded="false" title="點我看職掌" onclick="toggleDuty(this)">?</button></h4>
               <p class="line"><b>組長</b>：王冠博</p>
               <p class="line"><b>成員</b>：卓子翔、陳熙宗</p>
+              <ul class="duty-content"><li>現場拍照、攝影與音響投影</li><li>活動花絮與年度回顧影片</li><li>海報、社群與網站素材</li></ul>
             </div>
             <div class="group-card">
-              <h4>🎪 活動組</h4>
+              <h4>🎪 活動組<button class="duty-btn" type="button" aria-label="活動組職掌" aria-expanded="false" title="點我看職掌" onclick="toggleDuty(this)">?</button></h4>
               <p class="line"><b>組長</b>：周能安</p>
-              <p class="line"><b>成員</b>：何珈貞、許瀚升、張哲瑋、王欣渝、林禹青</p>
+              <p class="line"><b>成員</b>：許瀚升、張哲瑋、王欣渝、林禹青</p>
+              <ul class="duty-content"><li>迎新、戶外、結班聯誼與法會流程</li><li>下午活動場地、器材與時間掌控</li><li>暖場、破冰與遊戲主持</li></ul>
             </div>
           </div>
 
@@ -1506,6 +1550,19 @@
         content.classList.add('open');
         btn.querySelector('span').textContent = '收起內容';
         arrow.textContent = '▲';
+      }
+    }
+
+    function toggleDuty(btn) {
+      const content = btn.closest('.group-card').querySelector('.duty-content');
+      const opening = !content.classList.contains('open');
+      document.querySelectorAll('.duty-content.open').forEach(function (c) {
+        c.classList.remove('open');
+        c.closest('.group-card').querySelector('.duty-btn').setAttribute('aria-expanded', 'false');
+      });
+      if (opening) {
+        content.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
       }
     }
 
