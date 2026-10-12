@@ -774,28 +774,47 @@
   .tag-more-btn {
     display: flex;
     justify-content: center;
-    align-items: baseline;
-    gap: 3px;
+    align-items: center;
+    gap: 6px;
     width: fit-content;
-    margin: 10px auto 0;
-    padding: 0;
-    border: none;
-    background: transparent;
+    margin: 12px auto 0;
+    padding: 6px 18px;
+    border: 1.5px solid rgba(217, 119, 6, 0.4);
+    border-radius: 99px;
+    background: #FFFFFF;
     font-size: 0.88rem;
-    line-height: inherit;
     font-weight: 700;
     color: var(--accent-gold);
-    text-decoration: underline;
-    text-underline-offset: 3px;
     cursor: pointer;
-    transition: color 0.25s ease;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 6px rgba(217, 119, 6, 0.1);
   }
   .tag-more-btn:hover {
-    color: #B45309;
+    background: var(--accent-gold);
+    color: #FFFFFF;
+    transform: translateY(-2px);
   }
   .sched-card-more {
     grid-column: 1 / -1;
     min-width: 0;
+  }
+  .sched-tag.expanded {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+  .sched-tag.expanded .sched-tag-title { justify-content: flex-start; }
+  .tag-more-content {
+    width: 100%;
+    flex-basis: 100%;
+    text-align: left;
+  }
+  .tag-more-content .lede {
+    max-width: none;
+    font-size: 0.98rem;
+    line-height: 1.75;
+    padding-top: 12px;
+    margin-top: 12px;
+    border-top: 1px dashed rgba(217, 119, 6, 0.35);
   }
   .sched-card-more .lede {
     max-width: none;
@@ -1250,9 +1269,9 @@
             <button class="tag-more-btn" data-target="numerologyMoreContent" data-label="你了解自己嗎" onclick="toggleTagMore(this)">
               <span>你了解自己嗎</span> <span>▼</span>
             </button>
-          </div>
-          <div class="expandable-content sched-card-more" id="numerologyMoreContent">
+          <div class="expandable-content tag-more-content" id="numerologyMoreContent">
             <p class="lede">你真的了解自己嗎？朱宸慧 講師要用一組再熟悉不過的數字——生日，帶你解開藏在裡面的性格密碼：天生的優勢、偶爾冒出來的小固執、那些說不上來的偏好。除了算出自己的生命靈數，也可以把最在意的家人、朋友、另一半一起算進來！接著透過解析、連線分析，看看你們之間為什麼特別合拍、又為什麼老是卡在同一個地方，再搭配真實案例分享，保證聽到忍不住說：「欸，這真的有點準！」玩完不只更認識自己，也更懂身邊重要的人，回家還多了好多聊天的話題！</p>
+          </div>
           </div>
         </div>
 
@@ -1282,9 +1301,9 @@
             <button class="tag-more-btn" data-target="likeMoreContent" data-label="人生怎 V 轉" onclick="toggleTagMore(this)">
               <span>人生怎 V 轉</span> <span>▼</span>
             </button>
-          </div>
-          <div class="expandable-content sched-card-more" id="likeMoreContent">
+          <div class="expandable-content tag-more-content" id="likeMoreContent">
             <p class="lede">想翻轉人生，其實不用等奇蹟。這堂是一場歡樂滿點的互動遊戲，主題只有一個字：「讚」！在笑聲中輕鬆破冰、拉近彼此的距離，你會發現，原來在夥伴眼中的你，藏著這麼多連自己都沒留意的閃光點。現場會發生什麼事？保留一點神秘感，保證有驚喜！更重要的是：你想成為什麼樣的人，就用相對的付出與行動去實踐；來道場學習、付出、充電，人生自然一路往好的方向前進。一起來 V 出翻轉後的人生吧！</p>
+          </div>
           </div>
         </div>
 
@@ -1314,9 +1333,9 @@
             <button class="tag-more-btn" data-target="recipeMoreContent" data-label="會很難嗎" onclick="toggleTagMore(this)">
               <span>會很難嗎</span> <span>▼</span>
             </button>
-          </div>
-          <div class="expandable-content sched-card-more" id="recipeMoreContent">
+          <div class="expandable-content tag-more-content" id="recipeMoreContent">
             <p class="lede">蔬食料理王蘇毓婷 講師（Joanne Su）深藏不露——會煮又會拍，堪稱名副其實的「蘇式料理王」！這堂課不只手把手帶你做出一道好吃的蔬食料理，完成之後，Joanne 還會傳授幾個超簡單的手機攝影技巧：擺盤怎麼擺、光線怎麼抓、一鍵修圖有訣竅，讓餐桌秒變攝影棚，拍出雜誌、美食節目等級的高質感照片。煮完、拍完，記得大方分享到 FB、IG、LINE 群組，順手標記朋友，一起收穫這份美味與成就感！</p>
+          </div>
           </div>
           <div class="recipe-gallery sched-card-more">
             <div class="recipe-gallery-track">
@@ -1495,6 +1514,7 @@
       const [label, arrow] = btn.querySelectorAll('span');
       const opening = !content.classList.contains('open');
       content.classList.toggle('open', opening);
+      btn.closest('.sched-tag').classList.toggle('expanded', opening);
       label.textContent = opening ? '收起內容' : btn.dataset.label;
       arrow.textContent = opening ? '▲' : '▼';
     }
