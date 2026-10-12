@@ -1245,6 +1245,12 @@
           <div class="sched-tag">
             <div class="sched-tag-title">生命靈數 🔮</div>
             <span class="who">全真 朱宸慧 講師</span>
+            <button class="tag-more-btn" data-target="numerologyMoreContent" data-label="你了解自己嗎" onclick="toggleTagMore(this)">
+              <span>你了解自己嗎</span> <span>▼</span>
+            </button>
+          </div>
+          <div class="expandable-content sched-card-more" id="numerologyMoreContent">
+            <p class="lede">你真的了解自己嗎？朱宸慧 講師要用一組再熟悉不過的數字——你的生日，帶你解開藏在裡面的性格密碼：天生的優勢、偶爾冒出來的小固執、那些說不上來的偏好。不用任何基礎，簡單算一算，就會忍不住說：「欸，這真的有點準！」玩完不只更認識自己，還多了一個跟朋友聊天的好話題：你是幾號人？快找身邊的同伴對照看看，說不定一拍即合，也可能大笑到停不下來！</p>
           </div>
         </div>
 
@@ -1297,8 +1303,8 @@
           <div class="sched-tag">
             <div class="sched-tag-title">蔬食料理王 🥗</div>
             <span class="who">啟化 蘇毓婷 講師</span>
-            <button class="tag-more-btn" id="recipeMoreBtn" onclick="toggleRecipeMore()">
-              <span>會很難嗎</span> <span id="recipeMoreArrow">▼</span>
+            <button class="tag-more-btn" data-target="recipeMoreContent" data-label="會很難嗎" onclick="toggleTagMore(this)">
+              <span>會很難嗎</span> <span>▼</span>
             </button>
           </div>
           <div class="expandable-content sched-card-more" id="recipeMoreContent">
@@ -1476,19 +1482,13 @@
       }
     }
 
-    function toggleRecipeMore() {
-      const content = document.getElementById('recipeMoreContent');
-      const btn = document.getElementById('recipeMoreBtn');
-      const arrow = document.getElementById('recipeMoreArrow');
-      if (content.classList.contains('open')) {
-        content.classList.remove('open');
-        btn.querySelector('span').textContent = '會很難嗎';
-        arrow.textContent = '▼';
-      } else {
-        content.classList.add('open');
-        btn.querySelector('span').textContent = '收起內容';
-        arrow.textContent = '▲';
-      }
+    function toggleTagMore(btn) {
+      const content = document.getElementById(btn.dataset.target);
+      const [label, arrow] = btn.querySelectorAll('span');
+      const opening = !content.classList.contains('open');
+      content.classList.toggle('open', opening);
+      label.textContent = opening ? '收起內容' : btn.dataset.label;
+      arrow.textContent = opening ? '▲' : '▼';
     }
 
     function toggleTeam() {
