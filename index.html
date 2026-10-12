@@ -658,7 +658,7 @@
   /* 「展開更多」按鈕靠右與手機大點擊區優化 */
   .more-btn-box {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     margin-top: 14px;
   }
   .more-btn {
@@ -772,10 +772,12 @@
     font-weight: 500;
   }
   .tag-more-btn {
-    display: inline-flex;
+    display: flex;
+    justify-content: center;
     align-items: baseline;
     gap: 3px;
-    margin: 0;
+    width: fit-content;
+    margin: 10px auto 0;
     padding: 0;
     border: none;
     background: transparent;
@@ -1033,6 +1035,7 @@
       align-items: baseline;
     }
     .sched-tag-title { justify-content: flex-start; }
+    .tag-more-btn { flex-basis: 100%; width: auto; margin-top: 10px; }
     .deputy-row { width: 100%; }
   }
 
