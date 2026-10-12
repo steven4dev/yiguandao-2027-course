@@ -476,6 +476,9 @@
     justify-content: center;
     gap: 6px;
   }
+  .deputy-card .duty-btn { margin-left: 4px; }
+  .deputy-card .duty-content { text-align: left; }
+  .deputy-row { align-items: flex-start; }
   .deputy-card .names { font-size: 1rem; color: var(--text-primary); margin-top: 4px; font-weight: 600;}
 
   /* 幕後團隊折疊按鈕與區域 */
@@ -1458,12 +1461,14 @@
             <div class="deputy-connector"></div>
             <div class="deputy-row">
               <div class="deputy-card kun">
-                <div class="role">🌿 坤道副班長</div>
+                <div class="role">🌿 坤道副班長<button class="duty-btn" type="button" aria-label="坤道副班長職掌" aria-expanded="false" title="點我看職掌" onclick="toggleDuty(this)">?</button></div>
                 <div class="names">何珈貞</div>
+                <ul class="duty-content"><li>協助班長統籌班務，串聯各組運作</li><li>關懷坤道學員，凝聚坤道班員向心力</li><li>班長不在時代理主持與臨場協調</li><li>支援法會與活動中的坤道人力調度</li></ul>
               </div>
               <div class="deputy-card qian">
-                <div class="role">🔹 乾道副班長</div>
+                <div class="role">🔹 乾道副班長<button class="duty-btn" type="button" aria-label="乾道副班長職掌" aria-expanded="false" title="點我看職掌" onclick="toggleDuty(this)">?</button></div>
                 <div class="names">羅健洲</div>
+                <ul class="duty-content"><li>協助班長統籌班務，串聯各組運作</li><li>關懷乾道學員，凝聚乾道班員向心力</li><li>班長不在時代理主持與臨場協調</li><li>支援法會與活動中的乾道人力調度</li></ul>
               </div>
             </div>
           </div>
@@ -1554,11 +1559,12 @@
     }
 
     function toggleDuty(btn) {
-      const content = btn.closest('.group-card').querySelector('.duty-content');
+      const card = btn.closest('.group-card, .deputy-card');
+      const content = card.querySelector('.duty-content');
       const opening = !content.classList.contains('open');
       document.querySelectorAll('.duty-content.open').forEach(function (c) {
         c.classList.remove('open');
-        c.closest('.group-card').querySelector('.duty-btn').setAttribute('aria-expanded', 'false');
+        c.closest('.group-card, .deputy-card').querySelector('.duty-btn').setAttribute('aria-expanded', 'false');
       });
       if (opening) {
         content.classList.add('open');
