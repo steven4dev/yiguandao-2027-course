@@ -933,7 +933,7 @@
   .fab-signup {
     position: fixed;
     right: max(20px, env(safe-area-inset-right));
-    bottom: max(20px, env(safe-area-inset-bottom));
+    bottom: calc(max(20px, env(safe-area-inset-bottom)) + 62px);
     z-index: 200;
     display: inline-flex;
     align-items: center;
@@ -984,7 +984,7 @@
   @media (max-width: 600px) {
     .fab-signup {
       right: max(14px, env(safe-area-inset-right));
-      bottom: max(14px, env(safe-area-inset-bottom));
+      bottom: calc(max(14px, env(safe-area-inset-bottom)) + 55px);
       padding: 19px 20px;
       font-size: 0.92rem;
     }
