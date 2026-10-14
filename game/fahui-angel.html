@@ -193,6 +193,14 @@
   .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .modes .btn { display: grid; gap: 2px; justify-items: center; padding: 12px 8px; }
   .modes small { font-size: .72rem; font-weight: 500; opacity: .85; }
+  .overlay.save { z-index: 20; background: rgba(30,41,59,.55); place-items: start center; }
+  .save .card { gap: 10px; }
+  .save h2 { font-size: 1.3rem; }
+  #saveImg { width: min(240px, 100%); justify-self: center; border-radius: 14px; box-shadow: 0 10px 24px rgba(30,41,59,.25); -webkit-touch-callout: default; }
+  .steps { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; font-size: .9rem; line-height: 1.55; }
+  .card .steps li { display: list-item; }
+  #shareTextBox { width: 100%; box-sizing: border-box; font: inherit; font-size: .82rem; line-height: 1.5; padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); resize: none; }
+  .save .actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
   .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
   .confetti span { position: absolute; top: -40px; font-size: 22px; animation: fall 3.2s ease-in forwards; opacity: 0; }
   @keyframes fall {
@@ -262,6 +270,24 @@
         <button id="relaxBtn" class="btn" type="button">🌿 輕鬆模式<small>不限時，慢慢照顧</small></button>
       </div>
       <a class="back-home" href="https://steven4dev.github.io/yiguandao-2027-course/">← 回到社青班首頁，看看 2027 Life Design 探索地圖</a>
+    </div>
+  </div>
+
+  <div id="saveSheet" class="overlay save" hidden>
+    <div class="card">
+      <h2>把小天使卡分享出去</h2>
+      <p class="tiny" id="saveWhy"></p>
+      <img id="saveImg" alt="你的法會小天使卡（長按儲存）">
+      <ol class="steps">
+        <li><b>長按上面的卡片</b> → 選「儲存圖片」或「加入照片」</li>
+        <li>打開臉書 → <b>新增貼文</b> → 附上剛存的卡片</li>
+        <li><b>貼上下面的文字</b>（含遊戲連結），朋友點了就能玩</li>
+      </ol>
+      <textarea id="shareTextBox" rows="3" readonly></textarea>
+      <div class="actions">
+        <button id="copyShareText" class="btn primary" type="button">📋 複製文字和連結</button>
+        <button id="saveClose" class="btn ghost" type="button">關閉</button>
+      </div>
     </div>
   </div>
 
@@ -446,9 +472,9 @@
     w3.push({ need: 'bento', at: pick(SPOTS.hiddens), hidden: true, ask: '（小聲）我…還沒拿到便當，不好意思開口…' });
     w3.push(...extras(['latte', 'water', 'tea', 'coffee'], desk ? 3 : 2, 8, 28));
     return [
-      { name: '報到時間', intro: '新朋友陸續報到了！剛到的朋友記得先打聲招呼。', npcs: w1 },
-      { name: '課間休息', intro: '下課了！飲料吧可以泡咖啡、調拿鐵；備品區上鎖了，記得找總務組。', lock: true, npcs: w2 },
-      { name: '用餐時間', intro: '開飯囉！早上認識的朋友又有新需要了，也看看角落。', npcs: w3 },
+      { name: '報到時間', intro: '新朋友陸續報到了！剛到的朋友記得先打聲招呼。備品區鎖著，要用先找總務組拿鑰匙。', lock: true, npcs: w1 },
+      { name: '課間休息', intro: '下課了！飲料吧可以泡咖啡、調拿鐵。備品區又鎖上了，記得找總務組。', lock: true, npcs: w2 },
+      { name: '用餐時間', intro: '開飯囉！早上認識的朋友又有新需要了，也看看角落。備品區再次上鎖。', lock: true, npcs: w3 },
     ];
   }
   // 挑戰模式：每個需求能等幾秒（越複雜給越久）
@@ -739,7 +765,7 @@
   function startWave(i) {
     S.wave = i; S.waveT = 0; S.nextWaveAt = null; S.hiddenHinted = false;
     const w = S.waves[i];
-    if (w.lock) S.locked = true;
+    if (w.lock) { S.locked = true; if (i > 0) setTimeout(() => S.running && say(STAFF[1], '🔒 新的時段開始，我先把備品區鎖上囉！'), 1700); }
     for (const d of w.npcs) {
       if (d.delay) { if (S.mode === 'challenge') S.queue.push({ at: S.time + d.delay, d, wave: i }); continue; }
       if (!spawnNpc(d, i)) S.total--;
@@ -811,7 +837,9 @@
     $('#fbShare').href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(GAME_URL);
     $('#lineShare').href = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(GAME_URL) + '&text=' + encodeURIComponent(shareText);
     $('#shareTip').className = 'tiny';
-    $('#shareTip').textContent = '分享出去的連結點開就能直接玩，邀朋友一起來當小天使。';
+    $('#shareTip').textContent = IN_APP
+      ? `你正在${APP_NAME}的內建瀏覽器：按「分享我的小天使卡」會教你長按儲存；或點右上角「⋯」選「用瀏覽器開啟」分享更順。`
+      : '分享出去的連結點開就能直接玩，邀朋友一起來當小天使。';
     $('#resultImg').removeAttribute('src');
     shareFile = null;
     $('#end').hidden = false;
@@ -950,22 +978,49 @@
   function copyText(text) {
     try { return navigator.clipboard.writeText(text).then(() => true, () => false); } catch (e) { return Promise.resolve(false); }
   }
+  // 臉書、IG、LINE 的內建瀏覽器擋掉系統分享、下載與開新分頁，改用「長按儲存」的方式
+  const UA = navigator.userAgent || '';
+  const IN_APP = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\//i.test(UA);
+  const APP_NAME = /Line\//i.test(UA) ? 'LINE' : /Instagram/i.test(UA) ? 'Instagram' : '臉書';
+  function openSaveSheet(reason) {
+    $('#saveImg').src = resultUrl;
+    $('#shareTextBox').value = shareText;
+    $('#saveWhy').textContent = reason || '';
+    $('#saveSheet').hidden = false;
+  }
+  $('#saveClose').addEventListener('click', () => { $('#saveSheet').hidden = true; });
+  $('#copyShareText').addEventListener('click', () => {
+    const box = $('#shareTextBox');
+    copyText(shareText).then(ok => {
+      if (!ok) { box.focus(); box.select(); }
+      $('#copyShareText').textContent = ok ? '✅ 已複製' : '已選取，請按「拷貝」';
+    });
+  });
   $('#shareImg').addEventListener('click', () => {
     if (!resultUrl) return tip('卡片還在準備中，再按一次試試。');
-    const canFiles = shareFile && navigator.canShare && navigator.canShare({ files: [shareFile] });
     copyText(shareText);
+    if (IN_APP) return openSaveSheet(`你正在${APP_NAME}的內建瀏覽器，沒辦法直接分享圖片，照下面三步驟就可以。`);
+    const canFiles = shareFile && navigator.canShare && navigator.canShare({ files: [shareFile] });
     if (canFiles) {
       navigator.share({ files: [shareFile], title: '法會小天使', text: shareText })
         .then(() => tip('分享成功！臉書不會自動帶入文字，貼文時長按「貼上」就有連結了。'))
-        .catch(e => { if (e && e.name !== 'AbortError') tip('這個瀏覽器不支援直接分享，請長按上方卡片儲存後再分享。'); });
+        .catch(e => { if (!e || e.name !== 'AbortError') openSaveSheet('這次沒有成功叫出分享選單，改用下面的方式。'); });
       return;
     }
+    if (window.matchMedia('(pointer: coarse)').matches) return openSaveSheet('');
     const a = document.createElement('a');
     a.href = resultUrl; a.download = 'fahui-angel.png';
     document.body.appendChild(a); a.click(); a.remove();
-    tip('已下載小天使卡，文字和連結也複製好了：到臉書新增貼文、附上圖片、貼上文字就完成。沒看到下載的話，長按上方卡片儲存。');
+    tip('已下載小天使卡，文字和連結也複製好了：到臉書新增貼文、附上圖片、貼上文字就完成。');
   });
-  $('#fbShare').addEventListener('click', () => { copyText(shareText); tip('已開啟臉書分享，貼文會帶入遊戲連結和預覽圖；想加上成績文字，直接貼上就好（已複製）。'); });
+  if (IN_APP) {
+    // 內建瀏覽器常常擋掉新分頁，改在同一頁開啟
+    ['#fbShare', '#lineShare'].forEach(sel => $(sel).removeAttribute('target'));
+  }
+  $('#fbShare').addEventListener('click', () => {
+    copyText(shareText);
+    tip('已開啟臉書分享，貼文會帶入遊戲連結和預覽圖；想附上成績卡，請用上方「分享我的小天使卡」。');
+  });
   $('#lineShare').addEventListener('click', () => tip('已開啟 LINE 分享，選好聊天室就能送出。'));
   $('#copyLink').addEventListener('click', () => {
     copyText(shareText).then(ok => tip(ok ? '已複製成績文字和遊戲連結，貼到任何地方都可以。' : '複製失敗，網址是：' + GAME_URL));
