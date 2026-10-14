@@ -695,6 +695,36 @@
     word-break: break-word;
   }
 
+  /* 08/28 法會小天使試玩連結 */
+  .sched-card.special .special-body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    min-width: 0;
+  }
+  .game-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border-radius: 99px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    background: #E11D48;
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);
+    transition: all 0.25s ease;
+  }
+  .game-link:hover {
+    background: #BE123C;
+    transform: translateY(-1px);
+  }
+  .game-link:focus-visible {
+    outline: 3px solid #0284C7;
+    outline-offset: 2px;
+  }
+
   /* 「展開更多」按鈕靠右與手機大點擊區優化 */
   .more-btn-box {
     display: flex;
@@ -1382,8 +1412,11 @@
           <div class="sched-date">
             <span class="year">2027</span>08/28
           </div>
-          <div class="special-label">
-            🌱 新道親法會－志工陪伴體驗
+          <div class="special-body">
+            <div class="special-label">
+              🌱 新道親法會－志工陪伴體驗
+            </div>
+            <a class="game-link" href="game/fahui-angel.html">🎮 先玩玩看：法會小天使 <span aria-hidden="true">→</span></a>
           </div>
         </div>
 
