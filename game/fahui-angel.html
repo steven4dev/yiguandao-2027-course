@@ -185,7 +185,11 @@
   .end-wrap .event b { color: var(--gold); }
   .end-wrap .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .end-wrap .actions .btn { text-align: center; text-decoration: none; }
-  #switchBtn { grid-column: 1 / -1; }
+  #switchBtn { grid-column: auto; }
+  .end-wrap .actions .home { grid-column: 1 / -1; font-size: 1.05rem; padding: 13px 14px; }
+  .event-link { display: inline-block; margin-top: 6px; font-weight: 700; color: var(--gold); text-decoration: none; }
+  .event-link:hover, .back-home:hover { text-decoration: underline; }
+  .back-home { justify-self: center; font-size: .85rem; font-weight: 700; color: var(--green); text-decoration: none; text-align: center; }
   .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .modes .btn { display: grid; gap: 2px; justify-items: center; padding: 12px 8px; }
   .modes small { font-size: .72rem; font-weight: 500; opacity: .85; }
@@ -246,7 +250,7 @@
         <li><span>👆</span><span>點地板走路；點人或櫃子，會自己走過去互動。電腦也可以用方向鍵。</span></li>
         <li><span>💬</span><span>泡泡就是需求：拿對的物資送過去，或待在身邊陪他一下。</span></li>
         <li><span>✋</span><span>手上一次只能拿一樣；直接去拿別的，舊的會自動放回去。</span></li>
-        <li><span>⏱</span><span>挑戰模式：泡泡下方的時間條跑完前要完成，來不及的話學長姊會先接手。</span></li>
+        <li><span>⏱</span><span>挑戰模式：泡泡上方的時間條跑完前要完成，來不及的話學長姊會先接手。</span></li>
         <li><span>👋</span><span>剛到的朋友先打聲招呼，關心一下吃過早餐沒。</span></li>
         <li><span>☕</span><span>飲料吧：紙杯＋咖啡機＝美式，美式＋鮮奶＝拿鐵。</span></li>
         <li><span>🧑‍💼</span><span>卡關了？穿綠背心的公關、總務、輔導組學長姊都會幫你。</span></li>
@@ -257,6 +261,7 @@
         <button id="startBtn" class="btn primary" type="button">⏱ 挑戰模式<small>限時＋同時多人需要幫忙</small></button>
         <button id="relaxBtn" class="btn" type="button">🌿 輕鬆模式<small>不限時，慢慢照顧</small></button>
       </div>
+      <a class="back-home" href="https://steven4dev.github.io/yiguandao-2027-course/">← 回到社青班首頁，看看 2027 Life Design 探索地圖</a>
     </div>
   </div>
 
@@ -283,11 +288,12 @@
       <div class="event">
         <b>2027／08／28（六）新道親法會・志工陪伴體驗</b><br>
         這一天，我們一起當新朋友身邊的那雙手。修行不只是為了自己，也在陪伴裡慢慢長進。
+        <a class="event-link" href="https://steven4dev.github.io/yiguandao-2027-course/#schedule">📅 看 2027 全年課程與活動 →</a>
       </div>
       <div class="actions">
-        <button id="againBtn" class="btn" type="button">再玩一次</button>
-        <a class="btn primary" href="https://steven4dev.github.io/yiguandao-2027-course/#schedule" target="_blank" rel="noopener">看年度企劃</a>
-        <button id="switchBtn" class="btn ghost" type="button">換成輕鬆模式</button>
+        <a class="btn primary home" href="https://steven4dev.github.io/yiguandao-2027-course/">🏠 回到社青班首頁</a>
+        <button id="againBtn" class="btn" type="button">🔁 再玩一次</button>
+        <button id="switchBtn" class="btn ghost" type="button">🌿 改玩輕鬆</button>
       </div>
     </div>
   </div>
@@ -692,7 +698,7 @@
     $('#wave').textContent = `第 ${i + 1}／${WAVES.length} 波・${w.name}`;
     banner(`第 ${i + 1} 波`, w.name);
     if (i > 0) sfx('wave');
-    setHint(w.intro + (S.mode === 'challenge' && i === 0 ? ' 泡泡下的時間條跑完前要完成喔！' : ''));
+    setHint(w.intro + (S.mode === 'challenge' && i === 0 ? ' 泡泡上的時間條跑完前要完成喔！' : ''));
   }
   function checkWaveEnd() {
     const settled = waveNpcs().every(m => m.state === 'done' || m.state === 'missed');
@@ -751,7 +757,7 @@
     const starTxt = `（${LV.name}）` + (r.stars ? `挑戰模式 ${'★'.repeat(r.stars)}${'☆'.repeat(3 - r.stars)}，` : '輕鬆模式，');
     shareText = `我在「法會小天使」${starTxt}成為了${title.e}${title.name}！用 ${timeText(sec)}，陪伴了 ${helped} 位新朋友。你也來當一天新朋友身邊的那雙手吧 👉 ${GAME_URL}`;
     $('#endHead').textContent = `你是今天的${title.name}`;
-    $('#switchBtn').textContent = S.mode === 'challenge' ? '換成輕鬆模式' : '試試挑戰模式（限時）';
+    $('#switchBtn').textContent = S.mode === 'challenge' ? '🌿 改玩輕鬆' : '⏱ 改玩挑戰';
     $('#fbShare').href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(GAME_URL);
     $('#lineShare').href = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(GAME_URL) + '&text=' + encodeURIComponent(shareText);
     $('#shareTip').className = 'tiny';
