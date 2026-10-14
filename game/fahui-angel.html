@@ -184,6 +184,10 @@
   .end-wrap .event b { color: var(--gold); }
   .end-wrap .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .end-wrap .actions .btn { text-align: center; text-decoration: none; }
+  #switchBtn { grid-column: 1 / -1; }
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .modes .btn { display: grid; gap: 2px; justify-items: center; padding: 12px 8px; }
+  .modes small { font-size: .72rem; font-weight: 500; opacity: .85; }
   .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
   .confetti span { position: absolute; top: -40px; font-size: 22px; animation: fall 3.2s ease-in forwards; opacity: 0; }
   @keyframes fall {
@@ -241,12 +245,16 @@
         <li><span>👆</span><span>點地板走路；點人或櫃子，會自己走過去互動。電腦也可以用方向鍵。</span></li>
         <li><span>💬</span><span>泡泡就是需求：拿對的物資送過去，或待在身邊陪他一下。</span></li>
         <li><span>✋</span><span>手上一次只能拿一樣；直接去拿別的，舊的會自動放回去。</span></li>
+        <li><span>⏱</span><span>挑戰模式：泡泡下方的時間條跑完前要完成，來不及的話學長姊會先接手。</span></li>
         <li><span>👋</span><span>剛到的朋友先打聲招呼，關心一下吃過早餐沒。</span></li>
         <li><span>☕</span><span>飲料吧：紙杯＋咖啡機＝美式，美式＋鮮奶＝拿鐵。</span></li>
         <li><span>🧑‍💼</span><span>卡關了？穿綠背心的公關、總務、輔導組學長姊都會幫你。</span></li>
         <li><span>🎵</span><span>有背景音樂，右下角 🔊 可以開關（電腦按 M）。</span></li>
       </ul>
-      <div class="actions"><button id="startBtn" class="btn primary" type="button">開始服務</button></div>
+      <div class="modes">
+        <button id="startBtn" class="btn primary" type="button">⏱ 挑戰模式<small>限時＋同時多人需要幫忙</small></button>
+        <button id="relaxBtn" class="btn" type="button">🌿 輕鬆模式<small>不限時，慢慢照顧</small></button>
+      </div>
     </div>
   </div>
 
@@ -277,6 +285,7 @@
       <div class="actions">
         <button id="againBtn" class="btn" type="button">再玩一次</button>
         <a class="btn primary" href="https://steven4dev.github.io/yiguandao-2027-course/#schedule" target="_blank" rel="noopener">看年度企劃</a>
+        <button id="switchBtn" class="btn ghost" type="button">換成輕鬆模式</button>
       </div>
     </div>
   </div>
@@ -334,6 +343,7 @@
     latte:   { e: '☕🥛', item: 'latte', ask: '好想喝一杯熱拿鐵～', hint: '拿鐵＝美式＋鮮奶：備品區拿紙杯，咖啡機裝美式，再到冰箱加鮮奶（順序反過來也可以）。' },
     sleepy:  { e: '😪', items: ['candy', 'americano'], ask: '昨晚加班到好晚…好想睡…', hint: '幫他提神：備品區有咖啡糖，或是泡一杯美式咖啡給他。' },
     greet:   { e: '👋', ask: '（剛到會場，有點不知所措…）', hint: '剛到的朋友，先走過去打聲招呼、關心一下。' },
+    coffee:  { e: '☕', item: 'americano', ask: '想來杯美式咖啡～', hint: '美式：備品區拿紙杯，再到咖啡機裝。' },
     bao:     { e: '🥟', item: 'bao', qty: 2, ask: '還沒吃早餐，肚子有點餓…', hint: '左下角餐點區有水煎包，拿兩顆給他（點兩次）。' },
     comfort: { e: '😟', ask: '第一次來，有點緊張…', hint: '走到休息區那位朋友身邊，靜靜陪他一下就好。' },
     bento:   { e: '🍱', item: 'bento', ask: '午餐在哪裡拿呢？', hint: '便當在左下角的餐點區。' },
@@ -343,21 +353,30 @@
     coat: '不冷了，連心都暖了。', tea: '這杯熱茶，我會記很久。', comfort: '有你陪著，我不緊張了。',
     bento: '吃飽了，覺得被好好照顧。', hidden: '謝謝你走過來，我以為沒人會發現我。',
     latte: '這杯拿鐵剛剛好，你好會調！', bao: '熱騰騰的水煎包，好幸福！',
-    candy: '咖啡糖好有效，醒了醒了！', americano: '一杯美式，精神都回來了！',
+    coffee: '好香的美式，謝謝你！', candy: '咖啡糖好有效，醒了醒了！', americano: '一杯美式，精神都回來了！',
   };
   const GAME_URL = 'https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html';
   const SHORT_URL = 'steven4dev.github.io/yiguandao-2027-course';
   const FACES = ['👩', '🧑', '👨‍🦱', '👩‍🦰', '🧔', '👱‍♀️', '👨', '🧑‍🦱'];
+  // delay：挑戰模式才會在這一波進行中插進來的需求（輕鬆模式略過）
   const WAVES = [
     { name: '報到時間', intro: '新朋友陸續報到了！剛到的朋友記得先打聲招呼。',
-      npcs: [{ need: 'guide', at: [4, 1] }, { need: 'greet', at: [6, 1] }, { need: 'note', seat: true }, { need: 'water', seat: true }] },
+      npcs: [{ need: 'guide', at: [4, 1] }, { need: 'greet', at: [6, 1] }, { need: 'note', seat: true }, { need: 'water', seat: true },
+             { need: 'water', renew: true, delay: 14, ask: '可以再給我一杯水嗎？' }] },
     { name: '課間休息', intro: '下課了！飲料吧可以泡咖啡、調拿鐵；備品區上鎖了，記得找總務組。', lock: true,
-      npcs: [{ need: 'coat', seat: true }, { need: 'latte', seat: true }, { need: 'sleepy', seat: true }, { need: 'comfort', at: [6, 10] }] },
+      npcs: [{ need: 'coat', seat: true }, { need: 'latte', seat: true }, { need: 'sleepy', seat: true }, { need: 'comfort', at: [6, 10] },
+             { need: 'note', renew: true, delay: 10, ask: '筆記本寫滿了，可以再一本嗎？' },
+             { need: 'coffee', renew: true, delay: 22 }] },
     { name: '用餐時間', intro: '開飯囉！早上認識的朋友又有新需要了，也看看角落。',
       npcs: [{ need: 'bento', renew: true, ask: '肚子餓了，午餐在哪裡拿呢？' }, { need: 'tea', renew: true, ask: '飯後想喝杯熱茶。' },
-             { need: 'bento', at: [7, 11], hidden: true, ask: '（小聲）我…還沒拿到便當，不好意思開口…' }] },
+             { need: 'bento', at: [7, 11], hidden: true, ask: '（小聲）我…還沒拿到便當，不好意思開口…' },
+             { need: 'latte', renew: true, delay: 9, ask: '飯後想來杯拿鐵～' },
+             { need: 'water', renew: true, delay: 18, ask: '吃完有點渴，可以給我一杯水嗎？' }] },
   ];
-  const TOTAL = WAVES.reduce((s, w) => s + w.npcs.length, 0);
+  // 挑戰模式：每個需求能等幾秒（越複雜給越久）
+  const PATIENCE = { guide: 24, greet: 20, bao: 32, note: 20, water: 20, coat: 36, latte: 40, sleepy: 28,
+                     comfort: 24, bento: 28, tea: 32, coffee: 32, hidden: 45 };
+  const totalFor = mode => WAVES.reduce((s, w) => s + w.npcs.filter(d => mode === 'challenge' || !d.delay).length, 0);
   const STAFF = [
     { id: 'pr',   label: '公關', name: '公關禮節組', face: '👩‍💼', x: 2, y: 1 },
     { id: 'gen',  label: '總務', name: '總務組',     face: '🧑‍🔧', x: 6, y: 8 },
@@ -487,7 +506,7 @@
     S = { wave: -1, npcs: [], hand: null, locked: false, hearts: 0, player: ent(4, 7), follower: null,
           path: [], pending: null, particles: [], ripple: null, time: 0, waveT: 0, running: false,
           nextWaveAt: null, hi: null, faceIdx: 0, hiddenHinted: false, finished: false,
-          qty: 0, steps: 0, hints: 0, wrong: 0, items: 0, hiddenEarly: false, careHint: false, thanks: [] };
+          qty: 0, mode: 'challenge', total: 0, missed: 0, queue: [], steps: 0, hints: 0, wrong: 0, items: 0, hiddenEarly: false, careHint: false, thanks: [] };
     renderHearts(); renderHand();
   }
 
@@ -549,7 +568,7 @@
   const setHint = t => ($('#hint').textContent = t);
   function renderHearts() {
     const h = $('#hearts'), n = S ? S.hearts : 0;
-    h.innerHTML = `❤️ <span class="on">${n}</span><small>／${TOTAL}</small>`;
+    h.innerHTML = `❤️ <span class="on">${n}</span><small>／${S ? S.total : totalFor('challenge')}</small>`;
     if (n && !RM) { h.classList.remove('bump'); void h.offsetWidth; h.classList.add('bump'); }
   }
   function renderHand() {
@@ -574,30 +593,55 @@
     }
     return [x, y];
   }
+  const limitFor = (need, hidden) => S.mode === 'challenge' ? PATIENCE[hidden ? 'hidden' : need] : 0;
+  function spawnNpc(d, i) {
+    if (d.renew) {
+      const pool = S.npcs.filter(n => (n.state === 'done' || n.state === 'missed') && !n.hidden && tileAt(n.x, n.y) === 'c');
+      if (pool.length) {
+        const n = pool[Math.floor(Math.random() * pool.length)];
+        const limit = limitFor(d.need);
+        Object.assign(n, { need: d.need, state: 'wait', wave: i, ask: d.ask || NEEDS[d.need].ask, born: S.time, prog: 0,
+                           renewed: true, limit, left: limit });
+        return true;
+      }
+      if (d.delay) return false;
+    }
+    let pos;
+    if (d.seat || d.renew) { const fs = freeSeats(); if (!fs.length) return false; pos = fs[Math.floor(Math.random() * fs.length)]; }
+    else pos = freeNear(...d.at);
+    const limit = limitFor(d.need, d.hidden);
+    S.npcs.push(Object.assign(ent(pos[0], pos[1]), {
+      need: d.need, face: FACES[S.faceIdx++ % FACES.length], state: 'wait', wave: i,
+      hidden: !!d.hidden, revealed: !d.hidden, ask: d.ask || NEEDS[d.need].ask, born: S.time, spawn: S.time, prog: 0,
+      limit, left: limit,
+    }));
+    return true;
+  }
   function startWave(i) {
     S.wave = i; S.waveT = 0; S.nextWaveAt = null; S.hiddenHinted = false;
     const w = WAVES[i];
     if (w.lock) S.locked = true;
-    const renewable = S.npcs.filter(n => n.state === 'done' && !n.hidden && tileAt(n.x, n.y) === 'c');
     for (const d of w.npcs) {
-      if (d.renew && renewable.length) {
-        const n = renewable.splice(Math.floor(Math.random() * renewable.length), 1)[0];
-        Object.assign(n, { need: d.need, state: 'wait', wave: i, ask: d.ask || NEEDS[d.need].ask, born: S.time, prog: 0, renewed: true });
-        continue;
-      }
-      let pos;
-      if (d.seat || d.renew) { const fs = freeSeats(); pos = fs[Math.floor(Math.random() * fs.length)]; }
-      else pos = freeNear(...d.at);
-      const n = Object.assign(ent(pos[0], pos[1]), {
-        need: d.need, face: FACES[S.faceIdx++ % FACES.length], state: 'wait', wave: i,
-        hidden: !!d.hidden, revealed: !d.hidden, ask: d.ask || NEEDS[d.need].ask, born: S.time, spawn: S.time, prog: 0,
-      });
-      S.npcs.push(n);
+      if (d.delay) { if (S.mode === 'challenge') S.queue.push({ at: S.time + d.delay, d, wave: i }); continue; }
+      spawnNpc(d, i);
     }
     $('#wave').textContent = `第 ${i + 1}／${WAVES.length} 波・${w.name}`;
     banner(`第 ${i + 1} 波`, w.name);
     if (i > 0) sfx('wave');
-    setHint(w.intro);
+    setHint(w.intro + (S.mode === 'challenge' && i === 0 ? ' 泡泡下的時間條跑完前要完成喔！' : ''));
+  }
+  function checkWaveEnd() {
+    const settled = waveNpcs().every(m => m.state === 'done' || m.state === 'missed');
+    if (settled && !S.queue.some(q => q.wave === S.wave)) { S.nextWaveAt = S.time + 1.3; return true; }
+    return false;
+  }
+  function miss(n) {
+    n.state = 'missed'; S.missed++;
+    if (S.follower === n) S.follower = null;
+    sfx('no');
+    say(STAFF[0], '這位朋友我先接手照顧，你去幫其他人吧！');
+    setHint('沒關係，學長姊先接手了。一起繼續照顧其他人！');
+    checkWaveEnd();
   }
   const waveNpcs = () => S.npcs.filter(n => n.wave === S.wave);
   function complete(n, used) {
@@ -605,19 +649,20 @@
     S.hearts++; renderHearts(); sfx('yay');
     for (let k = 0; k < 5; k++) S.particles.push({ x: n.x + .5 + (Math.random() - .5) * .6, y: n.y + .2, vy: -(.8 + Math.random() * .8), life: 1 });
     const line = n.hidden ? THANKS.hidden : (n.need === 'sleepy' ? THANKS[used] : THANKS[n.need]);
-    S.thanks.push({ face: n.face, line, hidden: n.hidden });
+    S.thanks.push({ face: n.face, line, hidden: n.hidden }); n.helped = true;
     if (used) S.items++;
     say(n, line);
-    if (waveNpcs().every(m => m.state === 'done')) S.nextWaveAt = S.time + 1.3;
-    else {
-      const left = waveNpcs().filter(m => m.state !== 'done' && m.revealed);
+    if (!checkWaveEnd()) {
+      const left = waveNpcs().filter(m => m.state === 'wait' && m.revealed);
       setHint(left.length ? '還有人需要幫忙，看看誰頭上有泡泡。' : '泡泡都處理完了…真的每個人都照顧到了嗎？');
     }
   }
   function noteReveal() { if (!S.hiddenHinted && !S.careHint) S.hiddenEarly = true; }
 
   // 稱號看的是「怎麼玩」，不是快慢：每一種玩法都值得被肯定
+  const starsOf = () => S.mode !== 'challenge' ? 0 : S.missed === 0 ? 3 : S.missed <= 3 ? 2 : 1;
   function angelTitle(sec) {
+    if (S.mode === 'challenge' && S.missed === 0) return { e: '🏆', name: '全能小天使', desc: '同時照顧好每一個人，你是會場的定心丸。' };
     if (S.hiddenEarly) return { e: '🔍', name: '細心小天使', desc: '你看見了那個沒說出口的需要。' };
     if (sec <= 100) return { e: '🍃', name: '疾風小天使', desc: '需要出現的那一刻，你已經在路上。' };
     if (S.hints >= 3) return { e: '🤝', name: '同行小天使', desc: '懂得請教夥伴，一群人走得更遠。' };
@@ -635,10 +680,14 @@
     Sound.stopMusic(1.2); setTimeout(() => sfx('end'), 300);
     const sec = Math.max(1, Math.round(S.time));
     const title = angelTitle(sec);
-    const pick = [...S.thanks].sort((a, b) => (b.hidden - a.hidden) || (Math.random() - .5)).slice(0, 2);
-    const r = { sec, title, pick, hearts: S.hearts, people: S.npcs.length, steps: S.steps, items: S.items };
-    shareText = `我在「法會小天使」成為了${title.e}${title.name}！用 ${timeText(sec)}，讓 ${S.npcs.length} 位新朋友的第一次不再陌生。你也來當一天新朋友身邊的那雙手吧 👉 ${GAME_URL}`;
+    const helped = S.npcs.filter(n => n.helped).length;
+    let pick = [...S.thanks].sort((a, b) => (b.hidden - a.hidden) || (Math.random() - .5)).slice(0, 2);
+    if (!pick.length) pick = [{ face: '👩‍💼', line: '謝謝你今天一起來服務！' }];
+    const r = { sec, title, pick, hearts: S.hearts, total: S.total, people: helped, steps: S.steps, items: S.items, stars: starsOf(), mode: S.mode };
+    const starTxt = r.stars ? `挑戰模式 ${'★'.repeat(r.stars)}${'☆'.repeat(3 - r.stars)}，` : '';
+    shareText = `我在「法會小天使」${starTxt}成為了${title.e}${title.name}！用 ${timeText(sec)}，陪伴了 ${helped} 位新朋友。你也來當一天新朋友身邊的那雙手吧 👉 ${GAME_URL}`;
     $('#endHead').textContent = `你是今天的${title.name}`;
+    $('#switchBtn').textContent = S.mode === 'challenge' ? '換成輕鬆模式' : '試試挑戰模式（限時）';
     $('#fbShare').href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(GAME_URL);
     $('#lineShare').href = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(GAME_URL) + '&text=' + encodeURIComponent(shareText);
     $('#shareTip').className = 'tiny';
@@ -651,7 +700,7 @@
     renderCard(r).then(cv2 => {
       resultUrl = cv2.toDataURL('image/png');
       $('#resultImg').src = resultUrl;
-      $('#resultImg').alt = `法會小天使卡：${title.name}，${timeText(sec)}照顧了 ${S.npcs.length} 位新朋友`;
+      $('#resultImg').alt = `法會小天使卡：${title.name}，${timeText(sec)}陪伴了 ${helped} 位新朋友`;
       cv2.toBlob(b => { if (b) shareFile = new File([b], 'fahui-angel.png', { type: 'image/png' }); }, 'image/png');
     });
     $('#shareImg').focus({ preventScroll: true });
@@ -703,7 +752,14 @@
     for (const [ch, x, y, px] of [['❤️', 150, 420, 40], ['✨', 930, 380, 46], ['🌸', 110, 600, 36], ['💛', 975, 520, 34], ['🍃', 880, 250, 40], ['✨', 210, 260, 34]]) em(ch, x, y, px);
     g.globalAlpha = 1;
 
-    font(700, 28); center('2027 全真社青・新道親法會 志工陪伴', 78, '#059669');
+    font(700, 28); center('2027 全真社青・新道親法會 志工陪伴', 50, '#059669');
+    if (r.stars) {
+      font(700, 26); g.font = `700 26px ${SANS}`;
+      const lab = `挑戰模式  ${'★'.repeat(r.stars)}${'☆'.repeat(3 - r.stars)}`;
+      const lw = g.measureText(lab).width + 44;
+      g.fillStyle = '#D97706'; round((W - lw) / 2, 74, lw, 40, 20); g.fill();
+      center(lab, 95, '#fff');
+    }
 
     // 徽章
     const halo = g.createRadialGradient(540, 250, 60, 540, 250, 200);
@@ -724,9 +780,9 @@
     g.save(); g.shadowColor = 'rgba(5,150,105,.16)'; g.shadowBlur = 30; g.shadowOffsetY = 10;
     g.fillStyle = '#fff'; round(90, 640, 900, 300, 36); g.fill(); g.restore();
     font(900, 40, SERIF); center(`你花了 ${timeText(r.sec)}`, 700, '#059669');
-    font(500, 32); center(`讓 ${r.people} 位新朋友的第一次不再陌生`, 752, '#1E293B');
+    font(500, 32); center(r.people ? `陪伴了 ${r.people} 位新朋友，讓他們的第一次不再陌生` : '你的到來，就是今天最好的陪伴', 752, '#1E293B');
     g.strokeStyle = '#E2EEE7'; g.lineWidth = 2; g.beginPath(); g.moveTo(150, 795); g.lineTo(930, 795); g.stroke();
-    const cols = [['❤️', r.hearts, '份心意'], ['👣', r.steps, '步的陪伴'], ['🎁', r.items, '份物資']];
+    const cols = [['❤️', r.mode === 'challenge' ? `${r.hearts}/${r.total}` : r.hearts, '份心意'], ['👣', r.steps, '步的陪伴'], ['🎁', r.items, '份物資']];
     cols.forEach(([ch, n, lab], i) => {
       const x = 240 + i * 300;
       g.font = `900 54px ${SANS}`;
@@ -871,6 +927,7 @@
   }
   function touchNpc(n) {
     if (n.state === 'done') return say(n, '今天收穫好多，謝謝你～');
+    if (n.state === 'missed') return say(n, '學長姊已經照顧我了，謝謝你～');
     if (!n.revealed) { n.revealed = true; noteReveal(); sfx('pop'); return say(n, n.ask); }
     const nd = NEEDS[n.need];
     if (n.need === 'guide') {
@@ -882,7 +939,7 @@
     if (n.need === 'comfort') { say(n, n.ask); return setHint('站在他身邊別走開，陪他一下下。'); }
     if (n.need === 'greet') {
       say(null, '你：早安，歡迎你來！吃過早餐了嗎？');
-      n.need = 'bao'; n.ask = '還沒耶…早上趕著出門。'; n.born = S.time; n.talking = true;
+      n.need = 'bao'; n.ask = '還沒耶…早上趕著出門。'; n.born = S.time; n.talking = true; n.limit = n.left = limitFor('bao');
       setTimeout(() => { if (S.running) { n.talking = false; say(n, n.ask); setHint(NEEDS.bao.hint); } }, 1500);
       return;
     }
@@ -949,8 +1006,10 @@
     closeChoice();
     if (b.dataset.item) give(b.dataset.item);
   });
-  function start() {
+  function start(mode) {
     reset();
+    S.mode = mode === 'relax' ? 'relax' : 'challenge';
+    S.total = totalFor(S.mode); renderHearts();
     $('#intro').hidden = true; $('#end').hidden = true;
     S.running = true;
     Sound.startMusic();
@@ -958,8 +1017,10 @@
   }
   $('#sound').addEventListener('click', () => Sound.setOn(!Sound.on, S.running));
   Sound.setOn(Sound.on, false);
-  $('#startBtn').addEventListener('click', start);
-  $('#againBtn').addEventListener('click', start);
+  $('#startBtn').addEventListener('click', () => start('challenge'));
+  $('#relaxBtn').addEventListener('click', () => start('relax'));
+  $('#againBtn').addEventListener('click', () => start(S.mode));
+  $('#switchBtn').addEventListener('click', () => start(S.mode === 'challenge' ? 'relax' : 'challenge'));
 
   // ---------- update ----------
   function update(dt) {
@@ -986,12 +1047,23 @@
       if (n.t < 1 && n !== S.follower) n.t = Math.min(1, n.t + dt * SPEED * .8);
       if (n.state !== 'wait') continue;
       if (!n.revealed && Math.abs(n.x - p.x) + Math.abs(n.y - p.y) <= 2) { n.revealed = true; n.born = S.time; noteReveal(); sfx('pop'); say(n, n.ask); }
+      if (n.limit && n.wave === S.wave && !n.talking) {
+        n.left -= dt;
+        if (n.left <= 0) { miss(n); continue; }
+      }
       if (n.need === 'comfort') {
         if (idle && adjacent(p, n)) n.prog += dt / 2;
         else n.prog = Math.max(0, n.prog - dt * .6);
         if (n.prog >= 1) complete(n);
       }
     }
+    for (const q of S.queue) {
+      if (q.wave !== S.wave || S.time < q.at) continue;
+      if (spawnNpc(q.d, q.wave)) { q.done = true; sfx('pop'); setHint('又有人需要幫忙了！同時照顧好幾位，先挑快來不及的。'); }
+      else if (waveNpcs().every(m => m.state === 'done' || m.state === 'missed')) { q.done = true; S.total--; renderHearts(); checkWaveEnd(); }
+      else q.at = S.time + 2;
+    }
+    S.queue = S.queue.filter(q => !q.done);
     if (S.wave === 2 && !S.hiddenHinted && S.waveT > 20 && waveNpcs().some(n => !n.revealed)) {
       S.hiddenHinted = true;
       setHint('角落好像有一位朋友一直沒開口…去右下角看看？也可以問問輔導組。');
@@ -1049,7 +1121,7 @@
     ctx.globalAlpha = 1;
     if (opts.tag) label(opts.tag, cx, cy + r + T * .1, Math.max(8, T * .2), '#fff', opts.tagBg);
   }
-  function drawBubble(cx, cy, ch, age, warn) {
+  function drawBubble(cx, cy, ch, age, warn, frac = -1) {
     const two = Array.from(ch).length > 1;
     const T = tile, w = T * (two ? .9 : .66), h = T * .56;
     const bob = RM ? 0 : Math.sin(age * 3) * T * .03;
@@ -1064,6 +1136,13 @@
     ctx.lineWidth = 1.6; ctx.strokeStyle = warn ? '#D97706' : '#0284C7';
     rr(-w / 2, -h / 2, w, h, h * .45); ctx.stroke();
     emoji(ch, 0, 0, T * (two ? .3 : .36));
+    if (frac >= 0) {
+      const bw = Math.max(w, T * .8), bh = Math.max(5, T * .13), bx = -bw / 2, byy = -h / 2 - bh - 3;
+      ctx.fillStyle = '#fff'; rr(bx - 2, byy - 2, bw + 4, bh + 4, (bh + 4) / 2); ctx.fill();
+      ctx.fillStyle = '#E2E8F0'; rr(bx, byy, bw, bh, bh / 2); ctx.fill();
+      ctx.fillStyle = frac > .5 ? '#10B981' : frac > .3 ? '#F59E0B' : '#E11D48';
+      if (frac > 0) { rr(bx, byy, Math.max(bh, bw * frac), bh, bh / 2); ctx.fill(); }
+    }
     ctx.restore();
   }
 
@@ -1126,8 +1205,9 @@
         const cx = (nx + .5) * T, cy = (ny + .5) * T;
         const appear = RM ? 1 : Math.min(1, (S.time - n.spawn) * 4);
         ctx.save(); ctx.translate(cx, cy); ctx.scale(appear, appear); ctx.translate(-cx, -cy);
-        const done = n.state === 'done';
-        drawPerson(cx, cy, n.face, { bg: done ? '#FFFBEB' : '#fff', ring: done ? '#F59E0B' : '#94A3B8', alpha: n.revealed ? 1 : .8 });
+        const done = n.state === 'done', missed = n.state === 'missed';
+        drawPerson(cx, cy, n.face, { bg: done ? '#FFFBEB' : '#fff', ring: done ? '#F59E0B' : missed ? '#059669' : '#94A3B8', alpha: n.revealed ? 1 : .8 });
+        if (missed) emoji('🤝', cx + T * .32, cy - T * .3, T * .24);
         ctx.restore();
         if (S.hi && S.hi.n === n && S.time < S.hi.until) {
           ctx.strokeStyle = `rgba(217,119,6,${.4 + pulse * .6})`; ctx.lineWidth = 3;
@@ -1139,7 +1219,10 @@
           ctx.lineCap = 'butt';
         }
         if (done && S.time - n.doneAt < 2.5) emoji('✨', cx + T * .32, cy - T * .3, T * .28);
-        if (n.state === 'wait' && n.revealed && !n.talking) drawBubble(cx, cy, NEEDS[n.need].e, S.time - n.born, S.time - n.born > 18);
+        if (n.state === 'wait' && n.revealed && !n.talking) {
+          const frac = n.limit ? Math.max(0, n.left / n.limit) : -1;
+          drawBubble(cx, cy, NEEDS[n.need].e, S.time - n.born, frac >= 0 ? frac < .3 : S.time - n.born > 18, frac);
+        }
         if (n.state === 'following') emoji('💛', cx + T * .3, cy - T * .32, T * .24);
       } });
     }
@@ -1170,7 +1253,7 @@
   }
   reset();
   resize();
-  if (location.hash === '#debug') window.__idle = () => S.player.t >= 1 && !S.path.length && !S.pending;
+  if (location.hash === '#debug') { window.__idle = () => S.player.t >= 1 && !S.path.length && !S.pending; window.__S = () => S; }
   requestAnimationFrame(loop);
 })();
 </script>
