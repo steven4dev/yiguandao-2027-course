@@ -197,10 +197,14 @@
   .save .card { gap: 10px; }
   .save h2 { font-size: 1.3rem; }
   #saveImg { width: min(240px, 100%); justify-self: center; border-radius: 14px; box-shadow: 0 10px 24px rgba(30,41,59,.25); -webkit-touch-callout: default; }
-  .steps { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; font-size: .9rem; line-height: 1.55; }
-  .card .steps li { display: list-item; }
+  .step { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; align-items: center; }
+  .step[hidden] { display: none; }
+  .step .num { width: 30px; height: 30px; border-radius: 50%; background: var(--green); color: #fff; font-weight: 900; display: grid; place-items: center; }
+  .step b { display: block; font-size: .95rem; line-height: 1.4; }
+  .step small { display: block; font-size: .75rem; color: var(--muted); line-height: 1.5; }
+  .step .btn { padding: 9px 14px; white-space: nowrap; }
+  .step.done .num { background: var(--gold); }
   #shareTextBox { width: 100%; box-sizing: border-box; font: inherit; font-size: .82rem; line-height: 1.5; padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); resize: none; }
-  .save .actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
   .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
   .confetti span { position: absolute; top: -40px; font-size: 22px; animation: fall 3.2s ease-in forwards; opacity: 0; }
   @keyframes fall {
@@ -275,19 +279,29 @@
 
   <div id="saveSheet" class="overlay save" hidden>
     <div class="card">
-      <h2>把小天使卡分享出去</h2>
+      <h2>分享到臉書，三個步驟</h2>
       <p class="tiny" id="saveWhy"></p>
-      <img id="saveImg" alt="你的法會小天使卡（長按儲存）">
-      <ol class="steps">
-        <li><b>長按上面的卡片</b> → 選「儲存圖片」或「加入照片」</li>
-        <li>打開臉書 → <b>新增貼文</b> → 附上剛存的卡片</li>
-        <li><b>貼上下面的文字</b>（含遊戲連結），朋友點了就能玩</li>
-      </ol>
-      <textarea id="shareTextBox" rows="3" readonly></textarea>
-      <div class="actions">
-        <button id="copyShareText" class="btn primary" type="button">📋 複製文字和連結</button>
-        <button id="saveClose" class="btn ghost" type="button">關閉</button>
+      <img id="saveImg" alt="你的法會小天使卡（長按可儲存）">
+      <div class="step">
+        <span class="num">1</span>
+        <div><b>先複製貼文文字</b><small>臉書不允許網站自動填入文字，所以要自己貼上</small></div>
+        <button id="copyShareText" class="btn" type="button">📋 複製</button>
       </div>
+      <textarea id="shareTextBox" rows="3" readonly aria-label="要貼到臉書的文字"></textarea>
+      <div class="step" id="stepNative">
+        <span class="num">2</span>
+        <div><b>分享卡片圖片</b><small>在選單裡選「Facebook」，卡片會直接附成相片</small></div>
+        <button id="shareFileBtn" class="btn primary" type="button">📤 分享</button>
+      </div>
+      <div class="step" id="stepManual" hidden>
+        <span class="num">2</span>
+        <div><b>長按上面的卡片 → 儲存圖片</b><small>再打開臉書 → 新增貼文 → 附上剛存的卡片</small></div>
+      </div>
+      <div class="step">
+        <span class="num">3</span>
+        <div><b>在臉書貼文框長按 →「貼上」</b><small>文字和遊戲連結就會出現，朋友點了就能玩</small></div>
+      </div>
+      <button id="saveClose" class="btn ghost" type="button">完成，關閉</button>
     </div>
   </div>
 
@@ -822,6 +836,7 @@
   let shareFile = null, shareText = '', resultUrl = '';
 
   function finish() {
+    if (S.finished) return;
     S.running = false; S.finished = true;
     Sound.stopMusic(1.2); setTimeout(() => sfx('end'), 300);
     const sec = Math.max(1, Math.round(S.time));
@@ -982,32 +997,41 @@
   const UA = navigator.userAgent || '';
   const IN_APP = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\//i.test(UA);
   const APP_NAME = /Line\//i.test(UA) ? 'LINE' : /Instagram/i.test(UA) ? 'Instagram' : '臉書';
-  function openSaveSheet(reason) {
+  // 分享拆成兩次點擊：先複製文字、再只送圖片給系統分享選單。
+  // 圖片和連結一起送時，臉書 App 常只抓連結預覽而丟掉圖片；文字則一律會被臉書忽略。
+  function openSaveSheet(reason, native) {
     $('#saveImg').src = resultUrl;
     $('#shareTextBox').value = shareText;
     $('#saveWhy').textContent = reason || '';
+    $('#stepNative').hidden = !native;
+    $('#stepManual').hidden = !!native;
+    $('#copyShareText').textContent = '📋 複製';
+    document.querySelectorAll('#saveSheet .step').forEach(el => el.classList.remove('done'));
     $('#saveSheet').hidden = false;
+    $('#saveSheet').scrollTop = 0;
   }
   $('#saveClose').addEventListener('click', () => { $('#saveSheet').hidden = true; });
   $('#copyShareText').addEventListener('click', () => {
     const box = $('#shareTextBox');
     copyText(shareText).then(ok => {
       if (!ok) { box.focus(); box.select(); }
-      $('#copyShareText').textContent = ok ? '✅ 已複製' : '已選取，請按「拷貝」';
+      $('#copyShareText').textContent = ok ? '✅ 已複製' : '已選取，按拷貝';
+      if (ok) $('#copyShareText').closest('.step').classList.add('done');
     });
   });
+  $('#shareFileBtn').addEventListener('click', () => {
+    if (!shareFile) return;
+    navigator.share({ files: [shareFile] })
+      .then(() => $('#shareFileBtn').closest('.step').classList.add('done'))
+      .catch(e => { if (!e || e.name !== 'AbortError') openSaveSheet('這次沒有成功叫出分享選單，改用長按儲存的方式。', false); });
+  });
+  const canShareFiles = () => !!(shareFile && navigator.canShare && navigator.canShare({ files: [shareFile] }));
   $('#shareImg').addEventListener('click', () => {
     if (!resultUrl) return tip('卡片還在準備中，再按一次試試。');
+    if (IN_APP) return openSaveSheet(`你正在${APP_NAME}的內建瀏覽器，沒辦法叫出分享選單，改用長按儲存。`, false);
+    if (canShareFiles()) return openSaveSheet('', true);
+    if (window.matchMedia('(pointer: coarse)').matches) return openSaveSheet('', false);
     copyText(shareText);
-    if (IN_APP) return openSaveSheet(`你正在${APP_NAME}的內建瀏覽器，沒辦法直接分享圖片，照下面三步驟就可以。`);
-    const canFiles = shareFile && navigator.canShare && navigator.canShare({ files: [shareFile] });
-    if (canFiles) {
-      navigator.share({ files: [shareFile], title: '法會小天使', text: shareText })
-        .then(() => tip('分享成功！臉書不會自動帶入文字，貼文時長按「貼上」就有連結了。'))
-        .catch(e => { if (!e || e.name !== 'AbortError') openSaveSheet('這次沒有成功叫出分享選單，改用下面的方式。'); });
-      return;
-    }
-    if (window.matchMedia('(pointer: coarse)').matches) return openSaveSheet('');
     const a = document.createElement('a');
     a.href = resultUrl; a.download = 'fahui-angel.png';
     document.body.appendChild(a); a.click(); a.remove();
