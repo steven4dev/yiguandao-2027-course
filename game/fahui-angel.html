@@ -3,11 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="新朋友第一次來法會，頭上冒出了需求泡泡……你能照顧到每一個人嗎？一起來當一天新朋友身邊的那雙手。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="2027 全真社青 Life Design 探索地圖">
+<meta property="og:title" content="法會小天使｜一起當新朋友身邊的那雙手">
+<meta property="og:description" content="新朋友頭上冒出了需求泡泡……你能照顧到每一個人嗎？手機、電腦點開就能玩，約 2 分鐘。">
+<meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html">
+<meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-fahui-angel.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="法會小天使：在法會會場幫助頭上冒出需求泡泡的新朋友">
+<meta property="og:locale" content="zh_TW">
+<meta name="twitter:card" content="summary_large_image">
 <title>法會小天使</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap">
+<script src="qrcode.js"></script>
 <style>
   /* Layout: one-screen portrait game — HUD on top, tiled hall in the middle, hand slot + hint at the bottom. Single light theme on purpose (matches the course site's meadow palette). */
   :root {
@@ -139,7 +152,45 @@
   .stat { font-size: 2rem; font-weight: 900; color: var(--green); font-variant-numeric: tabular-nums; }
   .quote { font-family: var(--serif); font-size: 1.1rem; line-height: 1.7; margin: 0; }
   .tiny { font-size: .75rem; color: var(--muted); margin: 0; }
-  @media (prefers-reduced-motion: reduce) { #banner div { animation: none; } }
+  /* 結算畫面 */
+  .overlay.end { place-items: start center; background: rgba(238,247,242,.94); }
+  .end-wrap { width: min(440px, 100%); display: grid; gap: 14px; position: relative; z-index: 1; padding-bottom: 8px; }
+  .end-head { text-align: center; display: grid; gap: 4px; }
+  .end-head h2 { margin: 0; font-family: var(--serif); font-size: 1.45rem; font-weight: 900; text-wrap: balance; line-height: 1.4; }
+  .end-head .eyebrow { color: var(--gold); }
+  .result { margin: 0; display: grid; gap: 6px; justify-items: center; }
+  .result img {
+    width: 100%; max-width: 100%; aspect-ratio: 4 / 5; border-radius: 18px; display: block;
+    background: linear-gradient(180deg, #DCEFFB, #EEF7F2 55%, #FDF3D8);
+    box-shadow: 0 18px 40px rgba(5,150,105,.2), 0 0 0 1px var(--line);
+    animation: rise .7s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes rise { from { transform: translateY(18px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+  .share { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 10px; }
+  .share .btn { width: 100%; }
+  .share-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .sbtn {
+    display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 8px 6px;
+    border-radius: 12px; font: inherit; font-size: .88rem; font-weight: 700; cursor: pointer; text-decoration: none;
+    border: 2px solid var(--line); background: var(--card); color: var(--ink);
+  }
+  .sbtn.fb { background: #1877F2; border-color: #1877F2; color: #fff; }
+  .sbtn.line { background: #06C755; border-color: #06C755; color: #fff; }
+  .sbtn b { font-family: Arial, sans-serif; font-size: 1.05rem; }
+  #shareTip { line-height: 1.6; }
+  #shareTip.ok { color: var(--green); font-weight: 700; }
+  .end-wrap .event { background: var(--gold-soft); border-radius: 14px; padding: 12px 14px; font-size: .88rem; line-height: 1.65; }
+  .end-wrap .event b { color: var(--gold); }
+  .end-wrap .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .end-wrap .actions .btn { text-align: center; text-decoration: none; }
+  .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+  .confetti span { position: absolute; top: -40px; font-size: 22px; animation: fall 3.2s ease-in forwards; opacity: 0; }
+  @keyframes fall {
+    0% { transform: translateY(0) rotate(0); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translateY(105vh) rotate(260deg); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { #banner div, .result img { animation: none; } .confetti { display: none; } }
 </style>
 </head>
 <body>
@@ -195,19 +246,33 @@
     </div>
   </div>
 
-  <div id="end" class="overlay" hidden>
-    <div class="card">
-      <div class="eyebrow">服務圓滿</div>
-      <div><span class="stat" id="endCount">8</span> <span>位新朋友都被照顧到了</span></div>
-      <p class="tiny" id="endTime"></p>
-      <p class="quote">原來陪伴別人的時候，<br>自己也被充滿了。</p>
+  <div id="end" class="overlay end" hidden>
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+    <div class="end-wrap">
+      <div class="end-head">
+        <div class="eyebrow">✨ 服務圓滿</div>
+        <h2 id="endHead">謝謝你，今天的小天使</h2>
+      </div>
+      <figure class="result">
+        <img id="resultImg" alt="你的法會小天使卡">
+        <figcaption class="tiny">長按或按右鍵，就能把這張卡片存下來</figcaption>
+      </figure>
+      <div class="share">
+        <button id="shareImg" class="btn primary" type="button">📤 分享我的小天使卡</button>
+        <div class="share-row">
+          <a id="fbShare" class="sbtn fb" href="#" target="_blank" rel="noopener"><b>f</b> 臉書</a>
+          <a id="lineShare" class="sbtn line" href="#" target="_blank" rel="noopener">LINE</a>
+          <button id="copyLink" class="sbtn" type="button">🔗 複製連結</button>
+        </div>
+        <p class="tiny" id="shareTip">分享出去的連結點開就能直接玩，邀朋友一起來當小天使。</p>
+      </div>
       <div class="event">
         <b>2027／08／28（六）新道親法會・志工陪伴體驗</b><br>
         這一天，我們一起當新朋友身邊的那雙手。修行不只是為了自己，也在陪伴裡慢慢長進。
       </div>
       <div class="actions">
-        <a class="btn primary" href="https://steven4dev.github.io/yiguandao-2027-course/#schedule" target="_blank" rel="noopener">看 2027 年度企劃</a>
         <button id="againBtn" class="btn" type="button">再玩一次</button>
+        <a class="btn primary" href="https://steven4dev.github.io/yiguandao-2027-course/#schedule" target="_blank" rel="noopener">看年度企劃</a>
       </div>
     </div>
   </div>
@@ -261,7 +326,13 @@
     comfort: { e: '😟', ask: '第一次來，有點緊張…', hint: '走到休息區那位朋友身邊，靜靜陪他一下就好。' },
     bento:   { e: '🍱', item: 'bento', ask: '午餐在哪裡拿呢？', hint: '便當在左下角的餐點區。' },
   };
-  const THANKS = ['謝謝你！', '好溫暖，謝謝～', '有你在真好！', '感恩！', '心安多了，謝謝你。', '你人真好！'];
+  const THANKS = {
+    guide: '有你帶路，我就不慌了。', note: '我會把今天的感動都記下來！', water: '這杯水好暖，謝謝你注意到我。',
+    coat: '不冷了，連心都暖了。', tea: '這杯熱茶，我會記很久。', comfort: '有你陪著，我不緊張了。',
+    bento: '吃飽了，覺得被好好照顧。', hidden: '謝謝你走過來，我以為沒人會發現我。',
+  };
+  const GAME_URL = 'https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html';
+  const SHORT_URL = 'steven4dev.github.io/yiguandao-2027-course';
   const FACES = ['👩', '🧑', '👨‍🦱', '👩‍🦰', '🧔', '👱‍♀️', '👨', '🧑‍🦱'];
   const WAVES = [
     { name: '報到時間', intro: '新朋友陸續報到了！看看誰頭上冒出泡泡。',
@@ -401,7 +472,8 @@
   function reset() {
     S = { wave: -1, npcs: [], hand: null, locked: false, hearts: 0, player: ent(4, 7), follower: null,
           path: [], pending: null, particles: [], ripple: null, time: 0, waveT: 0, running: false,
-          nextWaveAt: null, hi: null, faceIdx: 0, hiddenHinted: false, finished: false };
+          nextWaveAt: null, hi: null, faceIdx: 0, hiddenHinted: false, finished: false,
+          steps: 0, hints: 0, wrong: 0, items: 0, hiddenEarly: false, careHint: false, thanks: [] };
     renderHearts(); renderHand();
   }
 
@@ -510,22 +582,196 @@
     n.state = 'done'; n.doneAt = S.time;
     S.hearts++; renderHearts(); sfx('yay');
     for (let k = 0; k < 5; k++) S.particles.push({ x: n.x + .5 + (Math.random() - .5) * .6, y: n.y + .2, vy: -(.8 + Math.random() * .8), life: 1 });
-    say(n, THANKS[Math.floor(Math.random() * THANKS.length)]);
+    const line = n.hidden ? THANKS.hidden : THANKS[n.need];
+    S.thanks.push({ face: n.face, line, hidden: n.hidden });
+    if (NEEDS[n.need].item) S.items++;
+    say(n, line);
     if (waveNpcs().every(m => m.state === 'done')) S.nextWaveAt = S.time + 1.3;
     else {
       const left = waveNpcs().filter(m => m.state !== 'done' && m.revealed);
       setHint(left.length ? '還有人需要幫忙，看看誰頭上有泡泡。' : '泡泡都處理完了…真的每個人都照顧到了嗎？');
     }
   }
+  function noteReveal() { if (!S.hiddenHinted && !S.careHint) S.hiddenEarly = true; }
+
+  // 稱號看的是「怎麼玩」，不是快慢：每一種玩法都值得被肯定
+  function angelTitle(sec) {
+    if (S.hiddenEarly) return { e: '🔍', name: '細心小天使', desc: '你看見了那個沒說出口的需要。' };
+    if (sec <= 60) return { e: '🍃', name: '疾風小天使', desc: '需要出現的那一刻，你已經在路上。' };
+    if (S.hints >= 3) return { e: '🤝', name: '同行小天使', desc: '懂得請教夥伴，一群人走得更遠。' };
+    if (sec >= 150) return { e: '🌿', name: '從容小天使', desc: '不疾不徐，把每份心意都送得穩穩的。' };
+    return { e: '☀️', name: '溫暖小天使', desc: '你的每一步，都讓會場更暖一點。' };
+  }
+  function timeText(sec) {
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return m ? `${m} 分 ${s} 秒` : `${s} 秒`;
+  }
+  let shareFile = null, shareText = '', resultUrl = '';
+
   function finish() {
     S.running = false; S.finished = true;
     Sound.stopMusic(1.2); setTimeout(() => sfx('end'), 300);
-    const sec = Math.round(S.time), m = Math.floor(sec / 60), s = String(sec % 60).padStart(2, '0');
-    $('#endCount').textContent = S.hearts;
-    $('#endTime').textContent = `服務時間 ${m}:${s}`;
+    const sec = Math.max(1, Math.round(S.time));
+    const title = angelTitle(sec);
+    const pick = [...S.thanks].sort((a, b) => (b.hidden - a.hidden) || (Math.random() - .5)).slice(0, 2);
+    const r = { sec, title, pick, hearts: S.hearts, steps: S.steps, items: S.items };
+    shareText = `我在「法會小天使」成為了${title.e}${title.name}！用 ${timeText(sec)}，讓 ${S.hearts} 位新朋友的第一次不再陌生。你也來當一天新朋友身邊的那雙手吧 👉 ${GAME_URL}`;
+    $('#endHead').textContent = `你是今天的${title.name}`;
+    $('#fbShare').href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(GAME_URL);
+    $('#lineShare').href = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(GAME_URL) + '&text=' + encodeURIComponent(shareText);
+    $('#shareTip').className = 'tiny';
+    $('#shareTip').textContent = '分享出去的連結點開就能直接玩，邀朋友一起來當小天使。';
+    $('#resultImg').removeAttribute('src');
+    shareFile = null;
     $('#end').hidden = false;
-    $('#againBtn').focus();
+    $('#end').scrollTop = 0;
+    confetti();
+    renderCard(r).then(cv2 => {
+      resultUrl = cv2.toDataURL('image/png');
+      $('#resultImg').src = resultUrl;
+      $('#resultImg').alt = `法會小天使卡：${title.name}，${timeText(sec)}照顧了 ${S.hearts} 位新朋友`;
+      cv2.toBlob(b => { if (b) shareFile = new File([b], 'fahui-angel.png', { type: 'image/png' }); }, 'image/png');
+    });
+    $('#shareImg').focus({ preventScroll: true });
   }
+  function confetti() {
+    const box = $('#confetti'); box.innerHTML = '';
+    if (RM) return;
+    const bits = ['❤️', '✨', '💛', '🌸', '🍃', '💚'];
+    for (let i = 0; i < 22; i++) {
+      const sp = document.createElement('span');
+      sp.textContent = bits[i % bits.length];
+      sp.style.left = (Math.random() * 100) + '%';
+      sp.style.animationDelay = (Math.random() * 1.2) + 's';
+      sp.style.fontSize = (16 + Math.random() * 16) + 'px';
+      box.appendChild(sp);
+    }
+  }
+
+  // ---------- 小天使卡（1080×1350，臉書/IG 動態 4:5） ----------
+  async function renderCard(r) {
+    const W = 1080, H = 1350;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    const SERIF = '"Noto Serif TC","Songti TC","PMingLiU",serif';
+    const allText = '我是' + r.title.name + r.title.desc + '你花了分秒讓位新朋友的第一次不再陌生被照顧步陪伴份物資新朋友想對你說也來當一天小天使掃描或輸入網址一起玩全真社青新道親法會志工陪伴' + r.pick.map(p => p.line).join('') + '0123456789';
+    try {
+      await Promise.race([
+        Promise.all([
+          document.fonts.load(`900 80px "Noto Serif TC"`, allText),
+          document.fonts.load(`700 30px "Noto Sans TC"`, allText),
+          document.fonts.load(`400 30px "Noto Sans TC"`, allText),
+        ]),
+        new Promise(res => setTimeout(res, 2500)),
+      ]);
+    } catch (e) {}
+    const font = (w, px, fam = SANS) => (g.font = `${w} ${px}px ${fam}`);
+    const center = (t, y, color) => { g.fillStyle = color; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, W / 2, y); };
+    const em = (ch, x, y, px) => { g.font = `${px}px ${EMOJI}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, x, y + px * .05); };
+    const round = (x, y, w, h, rad) => { g.beginPath(); g.roundRect(x, y, w, h, rad); };
+    if (!g.roundRect) g.roundRect = ctx.roundRect;
+
+    // 天空到草原的背景
+    const bg = g.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#D6ECFA'); bg.addColorStop(.5, '#EEF7F2'); bg.addColorStop(1, '#FDF0CF');
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    g.fillStyle = 'rgba(255,255,255,.55)';
+    for (const [x, y, rr] of [[120, 160, 120], [960, 120, 90], [1000, 620, 150], [60, 760, 110]]) { g.beginPath(); g.arc(x, y, rr, 0, Math.PI * 2); g.fill(); }
+    g.globalAlpha = .5;
+    for (const [ch, x, y, px] of [['❤️', 150, 420, 40], ['✨', 930, 380, 46], ['🌸', 110, 600, 36], ['💛', 975, 520, 34], ['🍃', 880, 250, 40], ['✨', 210, 260, 34]]) em(ch, x, y, px);
+    g.globalAlpha = 1;
+
+    font(700, 28); center('2027 全真社青・新道親法會 志工陪伴', 78, '#059669');
+
+    // 徽章
+    const halo = g.createRadialGradient(540, 250, 60, 540, 250, 200);
+    halo.addColorStop(0, 'rgba(251,191,36,.45)'); halo.addColorStop(1, 'rgba(251,191,36,0)');
+    g.fillStyle = halo; g.beginPath(); g.arc(540, 250, 200, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(540, 250, 118, 0, Math.PI * 2); g.fill();
+    g.lineWidth = 12; g.strokeStyle = '#F59E0B'; g.stroke();
+    g.lineWidth = 3; g.strokeStyle = '#FDE68A'; g.beginPath(); g.arc(540, 250, 98, 0, Math.PI * 2); g.stroke();
+    em(r.title.e, 540, 250, 120);
+    g.fillStyle = '#D97706'; round(440, 352, 200, 44, 22); g.fill();
+    font(700, 24); center('法會小天使', 375, '#fff');
+
+    font(400, 34); center('我是', 448, '#475569');
+    font(900, 92, SERIF); center(r.title.name, 520, '#1E293B');
+    font(500, 34); center(r.title.desc, 590, '#475569');
+
+    // 成績面板
+    g.save(); g.shadowColor = 'rgba(5,150,105,.16)'; g.shadowBlur = 30; g.shadowOffsetY = 10;
+    g.fillStyle = '#fff'; round(90, 640, 900, 300, 36); g.fill(); g.restore();
+    font(900, 40, SERIF); center(`你花了 ${timeText(r.sec)}`, 700, '#059669');
+    font(500, 32); center(`讓 ${r.hearts} 位新朋友的第一次不再陌生`, 752, '#1E293B');
+    g.strokeStyle = '#E2EEE7'; g.lineWidth = 2; g.beginPath(); g.moveTo(150, 795); g.lineTo(930, 795); g.stroke();
+    const cols = [['❤️', r.hearts, '位被照顧'], ['👣', r.steps, '步的陪伴'], ['🎁', r.items, '份物資']];
+    cols.forEach(([ch, n, lab], i) => {
+      const x = 240 + i * 300;
+      g.font = `900 54px ${SANS}`;
+      const nw = g.measureText(String(n)).width, gx = x - (52 + nw) / 2;
+      em(ch, gx + 22, 850, 44);
+      g.font = `900 54px ${SANS}`; g.fillStyle = '#1E293B'; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText(String(n), gx + 52, 852);
+      g.font = `500 26px ${SANS}`; g.fillStyle = '#64748B'; g.textAlign = 'center'; g.fillText(lab, x, 905);
+    });
+
+    // 新朋友的感謝
+    font(700, 28); center('新朋友想對你說', 990, '#64748B');
+    r.pick.forEach((p, i) => {
+      const y = 1030 + i * 74;
+      g.font = `500 30px ${SANS}`;
+      const tw = g.measureText(`「${p.line}」`).width, bw = tw + 110, bx = (W - bw) / 2;
+      g.fillStyle = 'rgba(255,255,255,.92)'; round(bx, y - 4, bw, 62, 31); g.fill();
+      g.lineWidth = 2; g.strokeStyle = '#BAE6FD'; g.stroke();
+      em(p.face, bx + 40, y + 27, 38);
+      g.font = `500 30px ${SANS}`;
+      g.fillStyle = '#1E293B'; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText(`「${p.line}」`, bx + 72, y + 28);
+    });
+
+    // 邀請區：網址 + QR Code
+    g.fillStyle = '#059669'; g.fillRect(0, 1190, W, H - 1190);
+    const hasQR = typeof window.qrcode === 'function';
+    const tx = hasQR ? 80 : W / 2, align = hasQR ? 'left' : 'center';
+    g.textAlign = align; g.textBaseline = 'middle'; g.fillStyle = '#fff';
+    g.font = `900 46px ${SERIF}`; g.fillText('你也來當一天小天使 →', tx, 1245);
+    g.font = `500 26px ${SANS}`; g.fillStyle = '#D1FAE5'; g.fillText(hasQR ? '掃描 QR Code 或輸入網址一起玩' : '輸入網址一起玩', tx, 1292);
+    g.font = `700 25px ${SANS}`; g.fillStyle = '#fff'; g.fillText(SHORT_URL, tx, 1326);
+    if (hasQR) {
+      try {
+        const qr = window.qrcode(0, 'M'); qr.addData(GAME_URL); qr.make();
+        const n = qr.getModuleCount(), box = 124, cell = box / n, qx = 896, qy = 1208;
+        g.fillStyle = '#fff'; round(qx - 10, qy - 10, box + 20, box + 20, 12); g.fill();
+        g.fillStyle = '#065F46';
+        for (let rr = 0; rr < n; rr++) for (let cc = 0; cc < n; cc++) if (qr.isDark(rr, cc)) g.fillRect(qx + cc * cell, qy + rr * cell, Math.ceil(cell), Math.ceil(cell));
+      } catch (e) {}
+    }
+    return c;
+  }
+
+  // ---------- 分享 ----------
+  function tip(text) { const t = $('#shareTip'); t.textContent = text; t.className = 'tiny ok'; }
+  function copyText(text) {
+    try { return navigator.clipboard.writeText(text).then(() => true, () => false); } catch (e) { return Promise.resolve(false); }
+  }
+  $('#shareImg').addEventListener('click', () => {
+    if (!resultUrl) return tip('卡片還在準備中，再按一次試試。');
+    const canFiles = shareFile && navigator.canShare && navigator.canShare({ files: [shareFile] });
+    copyText(shareText);
+    if (canFiles) {
+      navigator.share({ files: [shareFile], title: '法會小天使', text: shareText })
+        .then(() => tip('分享成功！臉書不會自動帶入文字，貼文時長按「貼上」就有連結了。'))
+        .catch(e => { if (e && e.name !== 'AbortError') tip('這個瀏覽器不支援直接分享，請長按上方卡片儲存後再分享。'); });
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = resultUrl; a.download = 'fahui-angel.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    tip('已下載小天使卡，文字和連結也複製好了：到臉書新增貼文、附上圖片、貼上文字就完成。沒看到下載的話，長按上方卡片儲存。');
+  });
+  $('#fbShare').addEventListener('click', () => { copyText(shareText); tip('已開啟臉書分享，貼文會帶入遊戲連結和預覽圖；想加上成績文字，直接貼上就好（已複製）。'); });
+  $('#lineShare').addEventListener('click', () => tip('已開啟 LINE 分享，選好聊天室就能送出。'));
+  $('#copyLink').addEventListener('click', () => {
+    copyText(shareText).then(ok => tip(ok ? '已複製成績文字和遊戲連結，貼到任何地方都可以。' : '複製失敗，網址是：' + GAME_URL));
+  });
 
   // ---------- interactions ----------
   function give(item) {
@@ -562,11 +808,12 @@
     return waveNpcs().filter(n => n.state !== 'done' && n.revealed).sort((a, b) => a.born - b.born)[0];
   }
   function talkStaff(st) {
+    if (st.id !== 'gen') S.hints++;
     if (st.id === 'pr') {
       const n = firstUnmet();
       if (n) { S.hi = { n, until: S.time + 3 }; return say(st, NEEDS[n.need].hint); }
       const hidden = waveNpcs().find(m => !m.revealed);
-      if (hidden) return say(st, '再看看四周，是不是還有人沒被照顧到？輔導組可能知道喔。');
+      if (hidden) { S.careHint = true; return say(st, '再看看四周，是不是還有人沒被照顧到？輔導組可能知道喔。'); }
       return say(st, '大家都照顧到了，辛苦了！');
     }
     if (st.id === 'gen') {
@@ -579,13 +826,13 @@
     }
     if (st.id === 'care') {
       const hidden = waveNpcs().find(m => !m.revealed);
-      if (hidden) { S.hi = { n: hidden, until: S.time + 4 }; return say(st, '右下角那位朋友，好像一直沒開口…去關心一下吧。'); }
+      if (hidden) { S.careHint = true; S.hi = { n: hidden, until: S.time + 4 }; return say(st, '右下角那位朋友，好像一直沒開口…去關心一下吧。'); }
       return say(st, '有人緊張的話，陪在身邊就好。主動關心，是輔導組的日常～');
     }
   }
   function touchNpc(n) {
     if (n.state === 'done') return say(n, '今天收穫好多，謝謝你～');
-    if (!n.revealed) { n.revealed = true; sfx('pop'); return say(n, n.ask); }
+    if (!n.revealed) { n.revealed = true; noteReveal(); sfx('pop'); return say(n, n.ask); }
     const nd = NEEDS[n.need];
     if (n.need === 'guide') {
       if (S.follower) return;
@@ -595,7 +842,7 @@
     }
     if (n.need === 'comfort') { say(n, n.ask); return setHint('站在他身邊別走開，陪他一下下。'); }
     if (S.hand === nd.item) { S.hand = null; renderHand(); return complete(n); }
-    if (S.hand) { sfx('no'); return say(n, `這是${ITEMS[S.hand].n}…我需要的是${ITEMS[nd.item].e}${ITEMS[nd.item].n}。`); }
+    if (S.hand) { sfx('no'); S.wrong++; return say(n, `這是${ITEMS[S.hand].n}…我需要的是${ITEMS[nd.item].e}${ITEMS[nd.item].n}。`); }
     say(n, n.ask); setHint(nd.hint);
   }
   function seatFollower(x, y) {
@@ -679,7 +926,7 @@
         else {
           S.path.shift();
           if (S.follower) { const f = S.follower; f.fx = f.x; f.fy = f.y; f.x = p.x; f.y = p.y; f.t = 0; }
-          p.fx = p.x; p.fy = p.y; p.x = nx; p.y = ny; p.t = 0;
+          p.fx = p.x; p.fy = p.y; p.x = nx; p.y = ny; p.t = 0; S.steps++;
         }
       } else if (S.pending) { const cb = S.pending; S.pending = null; cb(); }
     }
@@ -687,7 +934,7 @@
     for (const n of S.npcs) {
       if (n.t < 1 && n !== S.follower) n.t = Math.min(1, n.t + dt * SPEED * .8);
       if (n.state !== 'wait') continue;
-      if (!n.revealed && Math.abs(n.x - p.x) + Math.abs(n.y - p.y) <= 2) { n.revealed = true; n.born = S.time; sfx('pop'); say(n, n.ask); }
+      if (!n.revealed && Math.abs(n.x - p.x) + Math.abs(n.y - p.y) <= 2) { n.revealed = true; n.born = S.time; noteReveal(); sfx('pop'); say(n, n.ask); }
       if (n.need === 'comfort') {
         if (idle && adjacent(p, n)) n.prog += dt / 2;
         else n.prog = Math.max(0, n.prog - dt * .6);
