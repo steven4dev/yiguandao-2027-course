@@ -96,7 +96,12 @@
   }
   #hand .em { font-size: 1.35rem; line-height: 1.2; min-height: 1.35em; }
   #hand:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
-  #hint { margin: 0; font-size: .85rem; line-height: 1.55; color: var(--ink-soft); min-width: 0; }
+  #sound {
+    flex: none; width: 44px; height: 44px; border-radius: 50%; margin-left: auto;
+    border: 2px solid var(--line); background: var(--card); font-size: 1.2rem; cursor: pointer;
+  }
+  #sound[aria-pressed="false"] { opacity: .55; }
+  #hint { margin: 0; flex: 1; font-size: .85rem; line-height: 1.55; color: var(--ink-soft); min-width: 0; }
 
   .sheet {
     position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); bottom: 74px;
@@ -162,6 +167,7 @@
       <span class="em" id="handEm"></span><span id="handName">空空的</span>
     </button>
     <p id="hint" aria-live="polite">點「開始服務」進入會場。</p>
+    <button id="sound" type="button" aria-pressed="true" aria-label="背景音樂：開">🔊</button>
   </footer>
 
   <div id="choice" class="sheet" hidden>
@@ -183,6 +189,7 @@
         <li><span>💬</span><span>泡泡就是需求：拿對的物資送過去，或待在身邊陪他一下。</span></li>
         <li><span>✋</span><span>手上一次只能拿一樣，點下方「手上」可以放下。</span></li>
         <li><span>🧑‍💼</span><span>卡關了？穿綠背心的公關、總務、輔導組學長姊都會幫你。</span></li>
+        <li><span>🎵</span><span>有背景音樂，右下角 🔊 可以開關（電腦按 M）。</span></li>
       </ul>
       <div class="actions"><button id="startBtn" class="btn primary" type="button">開始服務</button></div>
     </div>
@@ -277,6 +284,117 @@
     this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r);
     this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath();
   };
+  // ---------- sound: synthesized with Web Audio, no audio files ----------
+  const Sound = (() => {
+    let ac = null, master, music, sfxBus, timer = null, oldTimer = null, nextTime = 0, step = 0;
+    let on = true;
+    try { on = localStorage.getItem('fahui-sound') !== 'off'; } catch (e) {}
+    const EIGHTH = 60 / 84 / 2;
+    const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+    // F – Am – B♭ – C – F – Dm – B♭ – C，五聲音階旋律
+    const CHORDS = [[53,57,60],[57,60,64],[58,62,65],[55,60,64],[53,57,60],[50,53,57],[58,62,65],[55,60,64]];
+    const BASS = [41, 45, 46, 48, 41, 38, 46, 48];
+    const BARS = [
+      [[81,2],[84,2],[81,1],[79,1],[77,2]],
+      [[81,3],[84,1],[86,2],[84,2]],
+      [[86,2],[84,1],[81,1],[79,2],[77,2]],
+      [[79,3],[81,1],[79,4]],
+      [[77,2],[81,2],[84,2],[86,2]],
+      [[86,3],[84,1],[81,2],[77,2]],
+      [[79,2],[81,2],[86,2],[84,2]],
+      [[84,3],[81,1],[79,2],[0,2]],
+    ];
+    const MELODY = {};
+    BARS.forEach((bar, b) => { let pos = b * 8; for (const [m, len] of bar) { if (m) MELODY[pos] = [m, len]; pos += len; } });
+
+    function init() {
+      if (ac) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      ac = new AC();
+      master = ac.createGain(); master.gain.value = .7; master.connect(ac.destination);
+      music = ac.createGain(); music.gain.value = 0; music.connect(master);
+      sfxBus = ac.createGain(); sfxBus.gain.value = .9; sfxBus.connect(master);
+      const delay = ac.createDelay(); delay.delayTime.value = EIGHTH * 3;
+      const fb = ac.createGain(); fb.gain.value = .28;
+      const wet = ac.createGain(); wet.gain.value = .35;
+      delay.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(music);
+      music.echo = delay;
+      document.addEventListener('visibilitychange', () => {
+        if (!ac) return;
+        if (document.hidden) ac.suspend(); else if (on) ac.resume();
+      });
+    }
+    function tone(dest, m, t, dur, { type = 'sine', vol = .1, attack = .01, cutoff = 0, echo = false } = {}) {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.value = hz(m);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vol, t + attack);
+      g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      let node = o;
+      if (cutoff) { const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; o.connect(f); node = f; }
+      node.connect(g); g.connect(dest);
+      if (echo) g.connect(music.echo);
+      o.start(t); o.stop(t + dur + .05);
+    }
+    function schedule() {
+      while (nextTime < ac.currentTime + .25) {
+        const i = step % 64, bar = Math.floor(i / 8), pos = i % 8, t = nextTime;
+        if (pos === 0) for (const m of CHORDS[bar]) tone(music, m, t, EIGHTH * 8.5, { type: 'triangle', vol: .03, attack: .5, cutoff: 1100 });
+        if (pos === 0 || pos === 4) tone(music, BASS[bar], t, EIGHTH * 3.5, { vol: .09, attack: .02, cutoff: 500 });
+        if (pos === 2 || pos === 6) tone(music, CHORDS[bar][2] + 12, t, EIGHTH * 1.2, { type: 'triangle', vol: .018 });
+        const mel = MELODY[i];
+        if (mel) {
+          tone(music, mel[0], t, EIGHTH * mel[1] * 1.8, { vol: .07, echo: true });
+          tone(music, mel[0] + 12, t, EIGHTH * 1.2, { vol: .012 });
+        }
+        step++; nextTime += EIGHTH;
+      }
+    }
+    function startMusic() {
+      init(); if (!ac || !on) return;
+      ac.resume();
+      if (oldTimer) { clearInterval(oldTimer); oldTimer = null; }
+      if (!timer) { step = 0; nextTime = ac.currentTime + .1; timer = setInterval(schedule, 50); }
+      music.gain.cancelScheduledValues(ac.currentTime);
+      music.gain.setTargetAtTime(1, ac.currentTime, .4);
+    }
+    function stopMusic(fade = .3) {
+      if (!ac) return;
+      music.gain.cancelScheduledValues(ac.currentTime);
+      music.gain.setTargetAtTime(0, ac.currentTime, fade);
+      if (!timer) return;
+      const tm = oldTimer = timer; timer = null;
+      setTimeout(() => { clearInterval(tm); if (oldTimer === tm) oldTimer = null; }, fade * 3000);
+    }
+    const SFX = {
+      pick:   [[84, 0], [91, .07]],
+      drop:   [[79, 0], [72, .08]],
+      yay:    [[84, 0], [88, .08], [91, .16], [96, .24]],
+      wave:   [[77, 0], [81, .12], [84, .24]],
+      unlock: [[86, 0], [93, .1], [98, .2]],
+      pop:    [[88, 0]],
+      end:    [[77, 0], [81, .15], [84, .3], [89, .45], [93, .6], [96, .8]],
+    };
+    function sfx(name) {
+      if (!ac || !on) return;
+      const t = ac.currentTime + .01;
+      if (name === 'no') { tone(sfxBus, 55, t, .22, { type: 'triangle', vol: .12, cutoff: 600 }); tone(sfxBus, 52, t + .1, .25, { type: 'triangle', vol: .1, cutoff: 600 }); return; }
+      for (const [m, dt] of SFX[name] || []) tone(sfxBus, m, t + dt, name === 'end' ? 1.2 : .45, { vol: .09 });
+    }
+    function setOn(v, playing) {
+      on = v;
+      try { localStorage.setItem('fahui-sound', v ? 'on' : 'off'); } catch (e) {}
+      const b = document.querySelector('#sound');
+      b.textContent = v ? '🔊' : '🔇';
+      b.setAttribute('aria-pressed', String(v));
+      b.setAttribute('aria-label', v ? '背景音樂：開' : '背景音樂：關');
+      if (v && playing) startMusic(); else if (!v) stopMusic(.1);
+    }
+    return { startMusic, stopMusic, sfx, setOn, get on() { return on; } };
+  })();
+  const sfx = n => Sound.sfx(n);
+
   const ent = (x, y) => ({ x, y, fx: x, fy: y, t: 1 });
   let S, tile = 40, dpr = 1, last = 0;
 
@@ -384,12 +502,13 @@
     }
     $('#wave').textContent = `第 ${i + 1}／${WAVES.length} 波・${w.name}`;
     banner(`第 ${i + 1} 波`, w.name);
+    if (i > 0) sfx('wave');
     setHint(w.intro);
   }
   const waveNpcs = () => S.npcs.filter(n => n.wave === S.wave);
   function complete(n) {
     n.state = 'done'; n.doneAt = S.time;
-    S.hearts++; renderHearts();
+    S.hearts++; renderHearts(); sfx('yay');
     for (let k = 0; k < 5; k++) S.particles.push({ x: n.x + .5 + (Math.random() - .5) * .6, y: n.y + .2, vy: -(.8 + Math.random() * .8), life: 1 });
     say(n, THANKS[Math.floor(Math.random() * THANKS.length)]);
     if (waveNpcs().every(m => m.state === 'done')) S.nextWaveAt = S.time + 1.3;
@@ -400,6 +519,7 @@
   }
   function finish() {
     S.running = false; S.finished = true;
+    Sound.stopMusic(1.2); setTimeout(() => sfx('end'), 300);
     const sec = Math.round(S.time), m = Math.floor(sec / 60), s = String(sec % 60).padStart(2, '0');
     $('#endCount').textContent = S.hearts;
     $('#endTime').textContent = `服務時間 ${m}:${s}`;
@@ -411,7 +531,7 @@
   function give(item) {
     if (S.hand === item) return say(null, `手上已經有${ITEMS[item].n}了。`);
     if (S.hand) return say(null, `手上拿著${ITEMS[S.hand].e}${ITEMS[S.hand].n}，先點下方「手上」放下吧。`);
-    S.hand = item; renderHand();
+    S.hand = item; renderHand(); sfx('pick');
     say(null, `拿到 ${ITEMS[item].e} ${ITEMS[item].n}`);
   }
   function openChoice() { $('#choice').hidden = false; $('#choice .btn').focus(); }
@@ -422,12 +542,12 @@
       case 'R': return talkStaff(STAFF[0]);
       case 'S': return give('note');
       case 'T':
-        if (S.hand === 'cup') { S.hand = 'tea'; renderHand(); return say(null, '🍵 熱茶裝好了，小心燙！'); }
+        if (S.hand === 'cup') { S.hand = 'tea'; renderHand(); sfx('pick'); return say(null, '🍵 熱茶裝好了，小心燙！'); }
         return give('water');
       case 'B':
         if (S.locked) {
-          if (S.hand === 'key') { S.locked = false; S.hand = null; renderHand(); say(null, '🔓 備品區打開了！'); return openChoice(); }
-          return say(null, '🔒 備品區鎖住了，去找總務組拿鑰匙。');
+          if (S.hand === 'key') { S.locked = false; S.hand = null; renderHand(); sfx('unlock'); say(null, '🔓 備品區打開了！'); return openChoice(); }
+          sfx('no'); return say(null, '🔒 備品區鎖住了，去找總務組拿鑰匙。');
         }
         return openChoice();
       case 'F':
@@ -450,7 +570,7 @@
     if (st.id === 'gen') {
       if (S.locked && S.hand !== 'key') {
         if (S.hand) return say(st, '先把手上的東西放下，我再把鑰匙給你。');
-        S.hand = 'key'; renderHand();
+        S.hand = 'key'; renderHand(); sfx('pick');
         return say(st, '🔑 備品區鑰匙給你，用完櫃子就開著囉！');
       }
       return say(st, '物資不夠隨時跟我說！');
@@ -463,7 +583,7 @@
   }
   function touchNpc(n) {
     if (n.state === 'done') return say(n, '今天收穫好多，謝謝你～');
-    if (!n.revealed) { n.revealed = true; return say(n, n.ask); }
+    if (!n.revealed) { n.revealed = true; sfx('pop'); return say(n, n.ask); }
     const nd = NEEDS[n.need];
     if (n.need === 'guide') {
       if (S.follower) return;
@@ -473,7 +593,7 @@
     }
     if (n.need === 'comfort') { say(n, n.ask); return setHint('站在他身邊別走開，陪他一下下。'); }
     if (S.hand === nd.item) { S.hand = null; renderHand(); return complete(n); }
-    if (S.hand) return say(n, `這是${ITEMS[S.hand].n}…我需要的是${ITEMS[nd.item].e}${ITEMS[nd.item].n}。`);
+    if (S.hand) { sfx('no'); return say(n, `這是${ITEMS[S.hand].n}…我需要的是${ITEMS[nd.item].e}${ITEMS[nd.item].n}。`); }
     say(n, n.ask); setHint(nd.hint);
   }
   function seatFollower(x, y) {
@@ -507,6 +627,7 @@
     handleTile(x, y, false);
   });
   window.addEventListener('keydown', e => {
+    if (e.key === 'm' || e.key === 'M') return Sound.setOn(!Sound.on, S.running);
     if (!S.running) return;
     const d = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] }[e.key];
     if (!d) return;
@@ -521,7 +642,7 @@
   $('#hand').addEventListener('click', () => {
     if (!S.hand) return say(null, '手上空空的，去櫃子拿點東西吧。');
     say(null, `${ITEMS[S.hand].e}${ITEMS[S.hand].n}放回去了。`);
-    S.hand = null; renderHand();
+    S.hand = null; renderHand(); sfx('drop');
   });
   $('#choice').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
@@ -532,8 +653,11 @@
     reset();
     $('#intro').hidden = true; $('#end').hidden = true;
     S.running = true;
+    Sound.startMusic();
     startWave(0);
   }
+  $('#sound').addEventListener('click', () => Sound.setOn(!Sound.on, S.running));
+  Sound.setOn(Sound.on, false);
   $('#startBtn').addEventListener('click', start);
   $('#againBtn').addEventListener('click', start);
 
@@ -561,7 +685,7 @@
     for (const n of S.npcs) {
       if (n.t < 1 && n !== S.follower) n.t = Math.min(1, n.t + dt * SPEED * .8);
       if (n.state !== 'wait') continue;
-      if (!n.revealed && Math.abs(n.x - p.x) + Math.abs(n.y - p.y) <= 2) { n.revealed = true; n.born = S.time; say(n, n.ask); }
+      if (!n.revealed && Math.abs(n.x - p.x) + Math.abs(n.y - p.y) <= 2) { n.revealed = true; n.born = S.time; sfx('pop'); say(n, n.ask); }
       if (n.need === 'comfort') {
         if (idle && adjacent(p, n)) n.prog += dt / 2;
         else n.prog = Math.max(0, n.prog - dt * .6);
