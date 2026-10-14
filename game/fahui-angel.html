@@ -187,7 +187,7 @@
       <ul>
         <li><span>👆</span><span>點地板走路；點人或櫃子，會自己走過去互動。電腦也可以用方向鍵。</span></li>
         <li><span>💬</span><span>泡泡就是需求：拿對的物資送過去，或待在身邊陪他一下。</span></li>
-        <li><span>✋</span><span>手上一次只能拿一樣，點下方「手上」可以放下。</span></li>
+        <li><span>✋</span><span>手上一次只能拿一樣；直接去拿別的，舊的會自動放回去。</span></li>
         <li><span>🧑‍💼</span><span>卡關了？穿綠背心的公關、總務、輔導組學長姊都會幫你。</span></li>
         <li><span>🎵</span><span>有背景音樂，右下角 🔊 可以開關（電腦按 M）。</span></li>
       </ul>
@@ -530,9 +530,10 @@
   // ---------- interactions ----------
   function give(item) {
     if (S.hand === item) return say(null, `手上已經有${ITEMS[item].n}了。`);
-    if (S.hand) return say(null, `手上拿著${ITEMS[S.hand].e}${ITEMS[S.hand].n}，先點下方「手上」放下吧。`);
+    const old = S.hand;
     S.hand = item; renderHand(); sfx('pick');
-    say(null, `拿到 ${ITEMS[item].e} ${ITEMS[item].n}`);
+    if (old) say(null, `${ITEMS[old].e}${ITEMS[old].n}${old === 'key' ? '先還給總務組' : '放回去'}，換成 ${ITEMS[item].e} ${ITEMS[item].n}`);
+    else say(null, `拿到 ${ITEMS[item].e} ${ITEMS[item].n}`);
   }
   function openChoice() { $('#choice').hidden = false; $('#choice .btn').focus(); }
   function closeChoice() { $('#choice').hidden = true; }
@@ -542,6 +543,7 @@
       case 'R': return talkStaff(STAFF[0]);
       case 'S': return give('note');
       case 'T':
+        if (S.hand === 'tea') return say(null, '熱茶已經裝好了，快送過去吧！');
         if (S.hand === 'cup') { S.hand = 'tea'; renderHand(); sfx('pick'); return say(null, '🍵 熱茶裝好了，小心燙！'); }
         return give('water');
       case 'B':
@@ -569,9 +571,9 @@
     }
     if (st.id === 'gen') {
       if (S.locked && S.hand !== 'key') {
-        if (S.hand) return say(st, '先把手上的東西放下，我再把鑰匙給你。');
+        const old = S.hand;
         S.hand = 'key'; renderHand(); sfx('pick');
-        return say(st, '🔑 備品區鑰匙給你，用完櫃子就開著囉！');
+        return say(st, old ? `${ITEMS[old].n}我幫你放回去，🔑 鑰匙給你！` : '🔑 備品區鑰匙給你，用完櫃子就開著囉！');
       }
       return say(st, '物資不夠隨時跟我說！');
     }
