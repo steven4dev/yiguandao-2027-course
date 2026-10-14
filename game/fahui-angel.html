@@ -7,7 +7,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="2027 全真社青 Life Design 探索地圖">
 <meta property="og:title" content="法會小天使｜一起當新朋友身邊的那雙手">
-<meta property="og:description" content="新朋友頭上冒出了需求泡泡……你能照顧到每一個人嗎？手機、電腦點開就能玩，約 2 分鐘。">
+<meta property="og:description" content="新朋友頭上冒出了需求泡泡……你能照顧到每一個人嗎？手機、電腦點開就能玩，約 3 分鐘。">
 <meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html">
 <meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-fahui-angel.png">
 <meta property="og:image:width" content="1200">
@@ -72,9 +72,10 @@
   .stats { text-align: right; display: grid; gap: 4px; flex: none; white-space: nowrap; }
   #wave { font-size: .8rem; font-weight: 700; color: var(--blue); }
   .warm { display: flex; align-items: center; gap: 6px; justify-content: flex-end; font-size: .72rem; color: var(--muted); font-weight: 700; }
-  #hearts { display: flex; gap: 1px; font-size: .82rem; line-height: 1; }
-  #hearts span { color: #E2E8F0; transition: color .3s, transform .3s; }
-  #hearts span.on { color: var(--pink); transform: scale(1.15); }
+  #hearts { display: inline-flex; align-items: center; gap: 4px; font-size: .95rem; font-weight: 900; color: var(--pink); font-variant-numeric: tabular-nums; line-height: 1; }
+  #hearts small { font-size: .72rem; color: var(--muted); font-weight: 700; }
+  #hearts.bump { animation: bump .45s ease-out; }
+  @keyframes bump { 40% { transform: scale(1.3); } }
 
   #stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; }
   canvas { display: block; border-radius: 14px; box-shadow: 0 10px 30px rgba(5,150,105,.12), 0 0 0 1px var(--line); touch-action: none; cursor: pointer; max-width: 100%; }
@@ -225,7 +226,8 @@
     <p>🧺 備品區：要拿哪一樣？</p>
     <div class="row">
       <button class="btn" type="button" data-item="coat">🧥 薄外套</button>
-      <button class="btn" type="button" data-item="cup">☕ 空杯子</button>
+      <button class="btn" type="button" data-item="cup">🥤 空紙杯</button>
+      <button class="btn" type="button" data-item="candy">🍬 咖啡糖</button>
       <button class="btn ghost" type="button" data-item="">先不用</button>
     </div>
   </div>
@@ -239,6 +241,8 @@
         <li><span>👆</span><span>點地板走路；點人或櫃子，會自己走過去互動。電腦也可以用方向鍵。</span></li>
         <li><span>💬</span><span>泡泡就是需求：拿對的物資送過去，或待在身邊陪他一下。</span></li>
         <li><span>✋</span><span>手上一次只能拿一樣；直接去拿別的，舊的會自動放回去。</span></li>
+        <li><span>👋</span><span>剛到的朋友先打聲招呼，關心一下吃過早餐沒。</span></li>
+        <li><span>☕</span><span>飲料吧：紙杯＋咖啡機＝美式，美式＋鮮奶＝拿鐵。</span></li>
         <li><span>🧑‍💼</span><span>卡關了？穿綠背心的公關、總務、輔導組學長姊都會幫你。</span></li>
         <li><span>🎵</span><span>有背景音樂，右下角 🔊 可以開關（電腦按 M）。</span></li>
       </ul>
@@ -286,7 +290,7 @@
   const EMOJI = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
   const SANS = '"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
 
-  // R 報到台  S 文具櫃  T 茶水區  B 備品區  F 餐點區  L 休息區  c 座位  E 入口
+  // R 報到台  S 文具櫃  T 茶水區  K 咖啡機  M 冰箱  B 備品區  F 餐點區  L 休息區  c 座位  E 入口
   const MAP = [
     '#########',
     '#R..E..S#',
@@ -296,7 +300,7 @@
     '#.c.c.c.#',
     '#.......#',
     '#T.....B#',
-    '#.......#',
+    '#K.....M#',
     '#.......#',
     '#F.....L#',
     '#.......#',
@@ -309,20 +313,28 @@
     R: { name: '報到台', icon: '🖊️', color: '#D97706' },
     S: { name: '文具櫃', icon: '📚', color: '#0284C7' },
     T: { name: '茶水區', icon: '🫖', color: '#0D9488' },
+    K: { name: '咖啡機', icon: '☕', color: '#92400E' },
+    M: { name: '冰箱', icon: '🥛', color: '#0EA5E9' },
     B: { name: '備品區', icon: '🧺', color: '#059669' },
     F: { name: '餐點區', icon: '🍱', color: '#EA580C' },
     L: { name: '休息區', icon: '🛋️', color: '#7C3AED' },
   };
   const ITEMS = {
     note: { e: '📝', n: '筆記本' }, water: { e: '💧', n: '溫開水' }, coat: { e: '🧥', n: '薄外套' },
-    cup: { e: '☕', n: '空杯子' }, tea: { e: '🍵', n: '熱茶' }, bento: { e: '🍱', n: '素便當' }, key: { e: '🔑', n: '鑰匙' },
+    cup: { e: '🥤', n: '空紙杯' }, tea: { e: '🍵', n: '熱茶' }, bento: { e: '🍱', n: '素便當' }, key: { e: '🔑', n: '鑰匙' },
+    americano: { e: '☕', n: '美式咖啡' }, milk: { e: '🥛', n: '鮮奶' }, latte: { e: '☕🥛', n: '拿鐵' },
+    candy: { e: '🍬', n: '咖啡糖' }, bao: { e: '🥟', n: '水煎包' },
   };
   const NEEDS = {
     guide:   { e: '🧭', ask: '請問…我的座位在哪裡？', hint: '先走到他身邊讓他跟著你，再點一張發亮的空椅子。' },
     note:    { e: '📝', item: 'note', ask: '我想抄重點，有筆記本嗎？', hint: '筆記本在右上角的文具櫃。' },
     water:   { e: '💧', item: 'water', ask: '有點口渴，可以給我一杯水嗎？', hint: '左邊的茶水區有溫開水。' },
     coat:    { e: '🧥', item: 'coat', ask: '冷氣好強，有點冷…', hint: '薄外套在右邊備品區；櫃子鎖著的話，找總務組拿鑰匙。' },
-    tea:     { e: '🍵', item: 'tea', ask: '想喝杯熱茶暖暖身子。', hint: '先到備品區拿空杯子，再到茶水區裝熱茶。' },
+    tea:     { e: '🍵', item: 'tea', ask: '想喝杯熱茶暖暖身子。', hint: '先到備品區拿空紙杯，再到茶水區裝熱茶。' },
+    latte:   { e: '☕🥛', item: 'latte', ask: '好想喝一杯熱拿鐵～', hint: '拿鐵＝美式＋鮮奶：備品區拿紙杯，咖啡機裝美式，再到冰箱加鮮奶（順序反過來也可以）。' },
+    sleepy:  { e: '😪', items: ['candy', 'americano'], ask: '昨晚加班到好晚…好想睡…', hint: '幫他提神：備品區有咖啡糖，或是泡一杯美式咖啡給他。' },
+    greet:   { e: '👋', ask: '（剛到會場，有點不知所措…）', hint: '剛到的朋友，先走過去打聲招呼、關心一下。' },
+    bao:     { e: '🥟', item: 'bao', qty: 2, ask: '還沒吃早餐，肚子有點餓…', hint: '左下角餐點區有水煎包，拿兩顆給他（點兩次）。' },
     comfort: { e: '😟', ask: '第一次來，有點緊張…', hint: '走到休息區那位朋友身邊，靜靜陪他一下就好。' },
     bento:   { e: '🍱', item: 'bento', ask: '午餐在哪裡拿呢？', hint: '便當在左下角的餐點區。' },
   };
@@ -330,23 +342,25 @@
     guide: '有你帶路，我就不慌了。', note: '我會把今天的感動都記下來！', water: '這杯水好暖，謝謝你注意到我。',
     coat: '不冷了，連心都暖了。', tea: '這杯熱茶，我會記很久。', comfort: '有你陪著，我不緊張了。',
     bento: '吃飽了，覺得被好好照顧。', hidden: '謝謝你走過來，我以為沒人會發現我。',
+    latte: '這杯拿鐵剛剛好，你好會調！', bao: '熱騰騰的水煎包，好幸福！',
+    candy: '咖啡糖好有效，醒了醒了！', americano: '一杯美式，精神都回來了！',
   };
   const GAME_URL = 'https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html';
   const SHORT_URL = 'steven4dev.github.io/yiguandao-2027-course';
   const FACES = ['👩', '🧑', '👨‍🦱', '👩‍🦰', '🧔', '👱‍♀️', '👨', '🧑‍🦱'];
   const WAVES = [
-    { name: '報到時間', intro: '新朋友陸續報到了！看看誰頭上冒出泡泡。',
-      npcs: [{ need: 'guide', at: [4, 1] }, { need: 'note', seat: true }, { need: 'water', seat: true }] },
-    { name: '課間休息', intro: '下課了，冷氣有點強。備品區上鎖了，記得找總務組。', lock: true,
-      npcs: [{ need: 'coat', seat: true }, { need: 'tea', seat: true }, { need: 'comfort', at: [6, 10] }] },
-    { name: '用餐時間', intro: '開飯囉！也看看角落，有人可能不好意思開口。',
-      npcs: [{ need: 'bento', seat: true }, { need: 'bento', at: [7, 11], hidden: true,
-               ask: '（小聲）我…還沒拿到便當，不好意思開口…' }] },
+    { name: '報到時間', intro: '新朋友陸續報到了！剛到的朋友記得先打聲招呼。',
+      npcs: [{ need: 'guide', at: [4, 1] }, { need: 'greet', at: [6, 1] }, { need: 'note', seat: true }, { need: 'water', seat: true }] },
+    { name: '課間休息', intro: '下課了！飲料吧可以泡咖啡、調拿鐵；備品區上鎖了，記得找總務組。', lock: true,
+      npcs: [{ need: 'coat', seat: true }, { need: 'latte', seat: true }, { need: 'sleepy', seat: true }, { need: 'comfort', at: [6, 10] }] },
+    { name: '用餐時間', intro: '開飯囉！早上認識的朋友又有新需要了，也看看角落。',
+      npcs: [{ need: 'bento', renew: true, ask: '肚子餓了，午餐在哪裡拿呢？' }, { need: 'tea', renew: true, ask: '飯後想喝杯熱茶。' },
+             { need: 'bento', at: [7, 11], hidden: true, ask: '（小聲）我…還沒拿到便當，不好意思開口…' }] },
   ];
   const TOTAL = WAVES.reduce((s, w) => s + w.npcs.length, 0);
   const STAFF = [
     { id: 'pr',   label: '公關', name: '公關禮節組', face: '👩‍💼', x: 2, y: 1 },
-    { id: 'gen',  label: '總務', name: '總務組',     face: '🧑‍🔧', x: 7, y: 8 },
+    { id: 'gen',  label: '總務', name: '總務組',     face: '🧑‍🔧', x: 6, y: 8 },
     { id: 'care', label: '輔導', name: '輔導組',     face: '🧑‍🏫', x: 4, y: 11 },
   ];
 
@@ -473,7 +487,7 @@
     S = { wave: -1, npcs: [], hand: null, locked: false, hearts: 0, player: ent(4, 7), follower: null,
           path: [], pending: null, particles: [], ripple: null, time: 0, waveT: 0, running: false,
           nextWaveAt: null, hi: null, faceIdx: 0, hiddenHinted: false, finished: false,
-          steps: 0, hints: 0, wrong: 0, items: 0, hiddenEarly: false, careHint: false, thanks: [] };
+          qty: 0, steps: 0, hints: 0, wrong: 0, items: 0, hiddenEarly: false, careHint: false, thanks: [] };
     renderHearts(); renderHand();
   }
 
@@ -534,12 +548,14 @@
   }
   const setHint = t => ($('#hint').textContent = t);
   function renderHearts() {
-    $('#hearts').innerHTML = Array.from({ length: TOTAL }, (_, i) => `<span class="${i < (S ? S.hearts : 0) ? 'on' : ''}">♥</span>`).join('');
+    const h = $('#hearts'), n = S ? S.hearts : 0;
+    h.innerHTML = `❤️ <span class="on">${n}</span><small>／${TOTAL}</small>`;
+    if (n && !RM) { h.classList.remove('bump'); void h.offsetWidth; h.classList.add('bump'); }
   }
   function renderHand() {
     const it = S && S.hand ? ITEMS[S.hand] : null;
     $('#handEm').textContent = it ? it.e : '✋';
-    $('#handName').textContent = it ? it.n : '空空的';
+    $('#handName').textContent = it ? it.n + (S.hand === 'bao' ? ` ×${S.qty}` : '') : '空空的';
   }
   function banner(sub, title) {
     const b = $('#banner');
@@ -562,9 +578,15 @@
     S.wave = i; S.waveT = 0; S.nextWaveAt = null; S.hiddenHinted = false;
     const w = WAVES[i];
     if (w.lock) S.locked = true;
+    const renewable = S.npcs.filter(n => n.state === 'done' && !n.hidden && tileAt(n.x, n.y) === 'c');
     for (const d of w.npcs) {
+      if (d.renew && renewable.length) {
+        const n = renewable.splice(Math.floor(Math.random() * renewable.length), 1)[0];
+        Object.assign(n, { need: d.need, state: 'wait', wave: i, ask: d.ask || NEEDS[d.need].ask, born: S.time, prog: 0, renewed: true });
+        continue;
+      }
       let pos;
-      if (d.seat) { const fs = freeSeats(); pos = fs[Math.floor(Math.random() * fs.length)]; }
+      if (d.seat || d.renew) { const fs = freeSeats(); pos = fs[Math.floor(Math.random() * fs.length)]; }
       else pos = freeNear(...d.at);
       const n = Object.assign(ent(pos[0], pos[1]), {
         need: d.need, face: FACES[S.faceIdx++ % FACES.length], state: 'wait', wave: i,
@@ -578,13 +600,13 @@
     setHint(w.intro);
   }
   const waveNpcs = () => S.npcs.filter(n => n.wave === S.wave);
-  function complete(n) {
+  function complete(n, used) {
     n.state = 'done'; n.doneAt = S.time;
     S.hearts++; renderHearts(); sfx('yay');
     for (let k = 0; k < 5; k++) S.particles.push({ x: n.x + .5 + (Math.random() - .5) * .6, y: n.y + .2, vy: -(.8 + Math.random() * .8), life: 1 });
-    const line = n.hidden ? THANKS.hidden : THANKS[n.need];
+    const line = n.hidden ? THANKS.hidden : (n.need === 'sleepy' ? THANKS[used] : THANKS[n.need]);
     S.thanks.push({ face: n.face, line, hidden: n.hidden });
-    if (NEEDS[n.need].item) S.items++;
+    if (used) S.items++;
     say(n, line);
     if (waveNpcs().every(m => m.state === 'done')) S.nextWaveAt = S.time + 1.3;
     else {
@@ -597,9 +619,9 @@
   // 稱號看的是「怎麼玩」，不是快慢：每一種玩法都值得被肯定
   function angelTitle(sec) {
     if (S.hiddenEarly) return { e: '🔍', name: '細心小天使', desc: '你看見了那個沒說出口的需要。' };
-    if (sec <= 60) return { e: '🍃', name: '疾風小天使', desc: '需要出現的那一刻，你已經在路上。' };
+    if (sec <= 100) return { e: '🍃', name: '疾風小天使', desc: '需要出現的那一刻，你已經在路上。' };
     if (S.hints >= 3) return { e: '🤝', name: '同行小天使', desc: '懂得請教夥伴，一群人走得更遠。' };
-    if (sec >= 150) return { e: '🌿', name: '從容小天使', desc: '不疾不徐，把每份心意都送得穩穩的。' };
+    if (sec >= 240) return { e: '🌿', name: '從容小天使', desc: '不疾不徐，把每份心意都送得穩穩的。' };
     return { e: '☀️', name: '溫暖小天使', desc: '你的每一步，都讓會場更暖一點。' };
   }
   function timeText(sec) {
@@ -614,8 +636,8 @@
     const sec = Math.max(1, Math.round(S.time));
     const title = angelTitle(sec);
     const pick = [...S.thanks].sort((a, b) => (b.hidden - a.hidden) || (Math.random() - .5)).slice(0, 2);
-    const r = { sec, title, pick, hearts: S.hearts, steps: S.steps, items: S.items };
-    shareText = `我在「法會小天使」成為了${title.e}${title.name}！用 ${timeText(sec)}，讓 ${S.hearts} 位新朋友的第一次不再陌生。你也來當一天新朋友身邊的那雙手吧 👉 ${GAME_URL}`;
+    const r = { sec, title, pick, hearts: S.hearts, people: S.npcs.length, steps: S.steps, items: S.items };
+    shareText = `我在「法會小天使」成為了${title.e}${title.name}！用 ${timeText(sec)}，讓 ${S.npcs.length} 位新朋友的第一次不再陌生。你也來當一天新朋友身邊的那雙手吧 👉 ${GAME_URL}`;
     $('#endHead').textContent = `你是今天的${title.name}`;
     $('#fbShare').href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(GAME_URL);
     $('#lineShare').href = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(GAME_URL) + '&text=' + encodeURIComponent(shareText);
@@ -629,7 +651,7 @@
     renderCard(r).then(cv2 => {
       resultUrl = cv2.toDataURL('image/png');
       $('#resultImg').src = resultUrl;
-      $('#resultImg').alt = `法會小天使卡：${title.name}，${timeText(sec)}照顧了 ${S.hearts} 位新朋友`;
+      $('#resultImg').alt = `法會小天使卡：${title.name}，${timeText(sec)}照顧了 ${S.npcs.length} 位新朋友`;
       cv2.toBlob(b => { if (b) shareFile = new File([b], 'fahui-angel.png', { type: 'image/png' }); }, 'image/png');
     });
     $('#shareImg').focus({ preventScroll: true });
@@ -702,9 +724,9 @@
     g.save(); g.shadowColor = 'rgba(5,150,105,.16)'; g.shadowBlur = 30; g.shadowOffsetY = 10;
     g.fillStyle = '#fff'; round(90, 640, 900, 300, 36); g.fill(); g.restore();
     font(900, 40, SERIF); center(`你花了 ${timeText(r.sec)}`, 700, '#059669');
-    font(500, 32); center(`讓 ${r.hearts} 位新朋友的第一次不再陌生`, 752, '#1E293B');
+    font(500, 32); center(`讓 ${r.people} 位新朋友的第一次不再陌生`, 752, '#1E293B');
     g.strokeStyle = '#E2EEE7'; g.lineWidth = 2; g.beginPath(); g.moveTo(150, 795); g.lineTo(930, 795); g.stroke();
-    const cols = [['❤️', r.hearts, '位被照顧'], ['👣', r.steps, '步的陪伴'], ['🎁', r.items, '份物資']];
+    const cols = [['❤️', r.hearts, '份心意'], ['👣', r.steps, '步的陪伴'], ['🎁', r.items, '份物資']];
     cols.forEach(([ch, n, lab], i) => {
       const x = 240 + i * 300;
       g.font = `900 54px ${SANS}`;
@@ -775,12 +797,19 @@
 
   // ---------- interactions ----------
   function give(item) {
+    if (item === 'bao' && S.hand === 'bao') {
+      if (S.qty >= 2) return say(null, '兩顆水煎包剛剛好，快送過去吧！');
+      S.qty = 2; renderHand(); sfx('pick');
+      return say(null, '再拿一顆！🥟 水煎包 ×2');
+    }
     if (S.hand === item) return say(null, `手上已經有${ITEMS[item].n}了。`);
     const old = S.hand;
-    S.hand = item; renderHand(); sfx('pick');
+    S.hand = item; S.qty = 1; renderHand(); sfx('pick');
     if (old) say(null, `${ITEMS[old].e}${ITEMS[old].n}${old === 'key' ? '先還給總務組' : '放回去'}，換成 ${ITEMS[item].e} ${ITEMS[item].n}`);
+    else if (item === 'bao') say(null, '拿到 🥟 水煎包 ×1（再點一次可以多拿一顆）');
     else say(null, `拿到 ${ITEMS[item].e} ${ITEMS[item].n}`);
   }
+  function brew(to, msg) { S.hand = to; S.qty = 1; renderHand(); sfx('unlock'); say(null, msg); }
   function openChoice() { $('#choice').hidden = false; $('#choice .btn').focus(); }
   function closeChoice() { $('#choice').hidden = true; }
 
@@ -790,7 +819,7 @@
       case 'S': return give('note');
       case 'T':
         if (S.hand === 'tea') return say(null, '熱茶已經裝好了，快送過去吧！');
-        if (S.hand === 'cup') { S.hand = 'tea'; renderHand(); sfx('pick'); return say(null, '🍵 熱茶裝好了，小心燙！'); }
+        if (S.hand === 'cup') return brew('tea', '🍵 熱茶裝好了，小心燙！');
         return give('water');
       case 'B':
         if (S.locked) {
@@ -799,8 +828,18 @@
         }
         return openChoice();
       case 'F':
-        if (S.wave < 2) return say(null, '午餐時間還沒到喔～');
-        return give('bento');
+        return give(S.wave < 2 ? 'bao' : 'bento');
+      case 'K':
+        if (S.hand === 'cup') return brew('americano', '☕ 美式咖啡好了，香！');
+        if (S.hand === 'milk') return brew('latte', '☕🥛 鮮奶加美式，拿鐵完成！');
+        if (S.hand === 'americano') return say(null, '已經是美式了。想做拿鐵，到冰箱加鮮奶。');
+        if (S.hand === 'latte') return say(null, '拿鐵已經好了，快送過去吧！');
+        sfx('no'); return say(null, '咖啡機：先到備品區拿一個空紙杯來裝。');
+      case 'M':
+        if (S.hand === 'americano') return brew('latte', '☕🥛 美式加鮮奶，拿鐵完成！');
+        if (S.hand === 'cup') return brew('milk', '🥛 裝了一杯鮮奶。再去咖啡機加美式，就是拿鐵。');
+        if (S.hand === 'milk' || S.hand === 'latte') return say(null, '已經加過鮮奶了。');
+        sfx('no'); return say(null, '冰箱裡有鮮奶：拿紙杯或美式咖啡過來裝。');
       case 'L': return say(null, '休息區：累了可以來這裡坐一下。');
     }
   }
@@ -841,8 +880,20 @@
       return setHint('點一張發亮的空椅子，帶他入座。');
     }
     if (n.need === 'comfort') { say(n, n.ask); return setHint('站在他身邊別走開，陪他一下下。'); }
-    if (S.hand === nd.item) { S.hand = null; renderHand(); return complete(n); }
-    if (S.hand) { sfx('no'); S.wrong++; return say(n, `這是${ITEMS[S.hand].n}…我需要的是${ITEMS[nd.item].e}${ITEMS[nd.item].n}。`); }
+    if (n.need === 'greet') {
+      say(null, '你：早安，歡迎你來！吃過早餐了嗎？');
+      n.need = 'bao'; n.ask = '還沒耶…早上趕著出門。'; n.born = S.time; n.talking = true;
+      setTimeout(() => { if (S.running) { n.talking = false; say(n, n.ask); setHint(NEEDS.bao.hint); } }, 1500);
+      return;
+    }
+    const ok = nd.items || [nd.item];
+    if (ok.includes(S.hand)) {
+      if (nd.qty && S.qty < nd.qty) return say(n, '謝謝！不過一顆好像不太夠…可以再一顆嗎？');
+      const used = S.hand;
+      S.hand = null; S.qty = 0; renderHand(); return complete(n, used);
+    }
+    const want = ok.map(k => ITEMS[k].e + ITEMS[k].n).join('或');
+    if (S.hand) { sfx('no'); S.wrong++; return say(n, `這是${ITEMS[S.hand].n}…我需要的是${want}。`); }
     say(n, n.ask); setHint(nd.hint);
   }
   function seatFollower(x, y) {
@@ -984,7 +1035,7 @@
   const ZONES = [
     { y0: 1, y1: 1, a: '#FFF8E6', b: '#FCF1D8', name: '' },
     { y0: 2, y1: 6, a: '#EAF4FB', b: '#E1EEF8', name: '教室' },
-    { y0: 7, y1: 8, a: '#ECF7F0', b: '#E2F2E8', name: '茶水・備品' },
+    { y0: 7, y1: 8, a: '#ECF7F0', b: '#E2F2E8', name: '飲料吧・備品' },
     { y0: 9, y1: 11, a: '#FDF3EA', b: '#F8EADC', name: '用餐・休息' },
   ];
   function drawPerson(cx, cy, face, opts) {
@@ -999,7 +1050,8 @@
     if (opts.tag) label(opts.tag, cx, cy + r + T * .1, Math.max(8, T * .2), '#fff', opts.tagBg);
   }
   function drawBubble(cx, cy, ch, age, warn) {
-    const T = tile, w = T * .66, h = T * .56;
+    const two = Array.from(ch).length > 1;
+    const T = tile, w = T * (two ? .9 : .66), h = T * .56;
     const bob = RM ? 0 : Math.sin(age * 3) * T * .03;
     const by = cy - T * .78 + bob;
     ctx.save();
@@ -1011,7 +1063,7 @@
     ctx.beginPath(); ctx.moveTo(-T * .07, h / 2 - 1); ctx.lineTo(0, h / 2 + T * .1); ctx.lineTo(T * .07, h / 2 - 1); ctx.closePath(); ctx.fill();
     ctx.lineWidth = 1.6; ctx.strokeStyle = warn ? '#D97706' : '#0284C7';
     rr(-w / 2, -h / 2, w, h, h * .45); ctx.stroke();
-    emoji(ch, 0, 0, T * .36);
+    emoji(ch, 0, 0, T * (two ? .3 : .36));
     ctx.restore();
   }
 
@@ -1051,10 +1103,9 @@
       if (st) {
         ctx.fillStyle = '#fff'; rr(px + 3, py + 3, T - 6, T - 6, T * .18); ctx.fill();
         ctx.lineWidth = 2; ctx.strokeStyle = st.color; ctx.stroke();
-        emoji(st.icon, px + T / 2, py + T * .42, T * .42);
+        emoji(c === 'F' ? (S.wave < 2 ? '🥟' : '🍱') : st.icon, px + T / 2, py + T * .42, T * .42);
         label(st.name, px + T / 2, py + T * .8, Math.max(7, T * .17), st.color);
         if (c === 'B' && S.locked) emoji('🔒', px + T * .8, py + T * .2, T * .26);
-        if (c === 'F' && S.wave < 2) { ctx.fillStyle = 'rgba(255,255,255,.55)'; rr(px + 3, py + 3, T - 6, T - 6, T * .18); ctx.fill(); }
       }
     }
 
@@ -1088,7 +1139,7 @@
           ctx.lineCap = 'butt';
         }
         if (done && S.time - n.doneAt < 2.5) emoji('✨', cx + T * .32, cy - T * .3, T * .28);
-        if (n.state === 'wait' && n.revealed) drawBubble(cx, cy, NEEDS[n.need].e, S.time - n.born, S.time - n.born > 18);
+        if (n.state === 'wait' && n.revealed && !n.talking) drawBubble(cx, cy, NEEDS[n.need].e, S.time - n.born, S.time - n.born > 18);
         if (n.state === 'following') emoji('💛', cx + T * .3, cy - T * .32, T * .24);
       } });
     }
@@ -1099,7 +1150,9 @@
       if (S.hand) {
         ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx + T * .34, cy - T * .3, T * .2, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = '#D97706'; ctx.lineWidth = 1.5; ctx.stroke();
-        emoji(ITEMS[S.hand].e, cx + T * .34, cy - T * .3, T * .26);
+        const he = ITEMS[S.hand].e;
+        emoji(he, cx + T * .34, cy - T * .3, T * (Array.from(he).length > 1 ? .17 : .26));
+        if (S.hand === 'bao' && S.qty > 1) label('×2', cx + T * .58, cy - T * .12, Math.max(8, T * .2), '#fff', '#EA580C');
       }
     } });
     people.sort((a, b) => a.y - b.y).forEach(p => p.draw());
@@ -1117,6 +1170,7 @@
   }
   reset();
   resize();
+  if (location.hash === '#debug') window.__idle = () => S.player.t >= 1 && !S.path.length && !S.pending;
   requestAnimationFrame(loop);
 })();
 </script>
