@@ -328,7 +328,7 @@
         '#########',
       ],
       staff: [[2, 1], [6, 8], [4, 11]],
-      spots: { start: [4, 7], entrance: [4, 1], greet: [6, 1], comfort: [6, 10], hidden: [7, 11] },
+      spots: { start: [4, 7], entrance: [4, 1], greet: [6, 1], comfort: [6, 10], hiddens: [[7, 11], [1, 11]] },
       zones: [
         { x0: 1, x1: 7, y0: 1, y1: 1, a: '#FFF8E6', b: '#FCF1D8' },
         { x0: 1, x1: 7, y0: 2, y1: 6, a: '#EAF4FB', b: '#E1EEF8', name: '教室', lx: 4.5, ly: 2.5 },
@@ -353,7 +353,7 @@
         '################',
       ],
       staff: [[2, 1], [13, 5], [10, 10]],
-      spots: { start: [5, 6], entrance: [5, 1], greet: [7, 1], greet2: [9, 1], comfort: [13, 8], hidden: [14, 7] },
+      spots: { start: [5, 6], entrance: [5, 1], greet: [7, 1], greet2: [9, 1], comfort: [13, 8], hiddens: [[14, 7], [14, 10], [1, 9]] },
       zones: [
         { x0: 1, x1: 11, y0: 1, y1: 1, a: '#FFF8E6', b: '#FCF1D8' },
         { x0: 1, x1: 11, y0: 2, y1: 6, a: '#EAF4FB', b: '#E1EEF8', name: '教室', lx: 6.5, ly: 6.5 },
@@ -411,34 +411,54 @@
   const GAME_URL = 'https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html';
   const SHORT_URL = 'steven4dev.github.io/yiguandao-2027-course';
   const FACES = ['👩', '🧑', '👨‍🦱', '👩‍🦰', '🧔', '👱‍♀️', '👨', '👱'];
+  // 每一局隨機出題：保留「報到 → 課間 → 午餐」的劇情，需求、人數、台詞、插單時間、隱藏角落都隨機
   // delay：挑戰模式才會在這一波進行中插進來的需求（輕鬆模式略過）
-  const WAVES = [
-    { name: '報到時間', intro: '新朋友陸續報到了！剛到的朋友記得先打聲招呼。',
-      npcs: [{ need: 'guide', at: 'entrance' }, { need: 'greet', at: 'greet' }, { need: 'note', seat: true }, { need: 'water', seat: true },
-             { need: 'greet', at: 'greet2', only: 'desktop' }, { need: 'water', seat: true, only: 'desktop' },
-             { need: 'water', renew: true, delay: 14, ask: '可以再給我一杯水嗎？' }] },
-    { name: '課間休息', intro: '下課了！飲料吧可以泡咖啡、調拿鐵；備品區上鎖了，記得找總務組。', lock: true,
-      npcs: [{ need: 'coat', seat: true }, { need: 'latte', seat: true }, { need: 'sleepy', seat: true }, { need: 'comfort', at: 'comfort' },
-             { need: 'tea', seat: true, only: 'desktop' }, { need: 'coffee', seat: true, only: 'desktop' },
-             { need: 'note', renew: true, delay: 10, ask: '筆記本寫滿了，可以再一本嗎？' },
-             { need: 'coffee', renew: true, delay: 22 }] },
-    { name: '用餐時間', intro: '開飯囉！早上認識的朋友又有新需要了，也看看角落。',
-      npcs: [{ need: 'bento', renew: true, ask: '肚子餓了，午餐在哪裡拿呢？' }, { need: 'tea', renew: true, ask: '飯後想喝杯熱茶。' },
-             { need: 'bento', renew: true, only: 'desktop', ask: '午餐想吃便當～' },
-             { need: 'coffee', renew: true, delay: 26, only: 'desktop', ask: '下午想來杯美式提神。' },
-             { need: 'bento', at: 'hidden', hidden: true, ask: '（小聲）我…還沒拿到便當，不好意思開口…' },
-             { need: 'latte', renew: true, delay: 9, ask: '飯後想來杯拿鐵～' },
-             { need: 'water', renew: true, delay: 18, ask: '吃完有點渴，可以給我一杯水嗎？' }] },
-  ];
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const shuffle = arr => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const ASKS = {
+    water:  ['有點口渴，可以給我一杯水嗎？', '講了好多話，喉嚨好乾…', '可以幫我倒杯溫開水嗎？'],
+    note:   ['我想抄重點，有筆記本嗎？', '有紙可以寫嗎？想記下來。', '筆記本可以借我一本嗎？'],
+    tea:    ['想喝杯熱茶暖暖身子。', '有熱茶嗎？想暖暖胃。'],
+    coffee: ['想來杯美式咖啡～', '有黑咖啡嗎？提提神。'],
+    latte:  ['好想喝一杯熱拿鐵～', '可以幫我做杯拿鐵嗎？'],
+    coat:   ['冷氣好強，有點冷…', '好冷喔，有外套可以借嗎？'],
+    sleepy: ['昨晚加班到好晚…好想睡…', '眼皮好重…撐不住了…'],
+    bento:  ['肚子餓了，午餐在哪裡拿呢？', '午餐時間到了嗎？好餓～'],
+  };
+  const askFor = need => ASKS[need] ? pick(ASKS[need]) : NEEDS[need].ask;
+  function buildWaves(mode) {
+    const desk = LEVEL === 'desktop', ch = mode === 'challenge';
+    const extras = (pool, n, from, to) => ch
+      ? Array.from({ length: n }, () => ({ need: pick(pool), renew: true, delay: rnd(from, to) })).sort((a, b) => a.delay - b.delay) : [];
+    const w1 = [{ need: 'guide', at: 'entrance' }, { need: 'greet', at: 'greet' }];
+    if (desk) w1.push({ need: 'greet', at: 'greet2' });
+    shuffle(['note', 'water', 'tea', 'coffee', 'note', 'water']).slice(0, desk ? 3 : 2).forEach(need => w1.push({ need, seat: true }));
+    w1.push(...extras(['water', 'note', 'coffee'], 1, 10, 20));
+    const mustB = pick(['coat', 'latte', 'sleepy']);
+    const w2 = [mustB, ...shuffle(['coat', 'latte', 'sleepy', 'tea', 'coffee', 'note', 'water'].filter(n => n !== mustB)).slice(0, desk ? 4 : 2)]
+      .map(need => ({ need, seat: true }));
+    w2.push(Math.random() < .75 ? { need: 'comfort', at: 'comfort' } : { need: pick(['water', 'note', 'coffee']), renew: true });
+    w2.push(...extras(['note', 'coffee', 'water', 'tea', 'latte'], 2, 8, 26));
+    const w3 = [{ need: 'bento', renew: true }];
+    if (desk) w3.push({ need: 'bento', renew: true });
+    w3.push({ need: pick(['tea', 'latte', 'coffee', 'water']), renew: true });
+    w3.push({ need: 'bento', at: pick(SPOTS.hiddens), hidden: true, ask: '（小聲）我…還沒拿到便當，不好意思開口…' });
+    w3.push(...extras(['latte', 'water', 'tea', 'coffee'], desk ? 3 : 2, 8, 28));
+    return [
+      { name: '報到時間', intro: '新朋友陸續報到了！剛到的朋友記得先打聲招呼。', npcs: w1 },
+      { name: '課間休息', intro: '下課了！飲料吧可以泡咖啡、調拿鐵；備品區上鎖了，記得找總務組。', lock: true, npcs: w2 },
+      { name: '用餐時間', intro: '開飯囉！早上認識的朋友又有新需要了，也看看角落。', npcs: w3 },
+    ];
+  }
   // 挑戰模式：每個需求能等幾秒（越複雜給越久）
   const PATIENCE = { guide: 24, greet: 20, bao: 32, note: 20, water: 20, coat: 36, latte: 40, sleepy: 28,
                      comfort: 24, bento: 28, tea: 32, coffee: 32, hidden: 45 };
-  const inLevel = d => !d.only || d.only === LEVEL;
-  const totalFor = mode => WAVES.reduce((s, w) => s + w.npcs.filter(d => inLevel(d) && (mode === 'challenge' || !d.delay)).length, 0);
+  const totalFor = waves => waves.reduce((s, w) => s + w.npcs.length, 0);
   function setLevel(name) {
     LEVEL = name; LV = LEVELS[name];
     MAP = LV.map; COLS = MAP[0].length; ROWS = MAP.length; SPOTS = LV.spots; ZONES = LV.zones;
-    STAFF.forEach((st, i) => { st.x = LV.staff[i][0]; st.y = LV.staff[i][1]; });
+    STAFF.forEach((st, i) => { st.x = st.fx = st.hx = LV.staff[i][0]; st.y = st.fy = st.hy = LV.staff[i][1]; st.t = 1; st.next = 1 + Math.random() * 2; });
     seats = []; MAP.forEach((r, y) => [...r].forEach((c, x) => c === 'c' && seats.push([x, y])));
     document.body.classList.toggle('wide', name === 'desktop');
     const note = document.querySelector('#levelNote');
@@ -615,7 +635,37 @@
     const goals = new Set(list.map(([x, y]) => key(x, y)));
     const path = bfs(goals);
     if (!path) { say(null, '那邊過不去耶，換條路試試。'); return; }
-    S.path = path; S.pending = cb || null;
+    S.path = path; S.pending = cb || null; S.goal = goals;
+  }
+  // 學長姊會在自己負責的區域附近走動；不站門口、走道等窄處，也不擋住預留給新朋友的位置
+  const openCount = (x, y) => DIRS.filter(([dx, dy]) => !solid(x + dx, y + dy)).length;
+  function reserved(x, y) {
+    const list = [SPOTS.entrance, SPOTS.greet, SPOTS.greet2, SPOTS.comfort, ...SPOTS.hiddens].filter(Boolean);
+    return list.some(([a, b]) => a === x && b === y);
+  }
+  function wanderStaff(dt) {
+    const p = S.player, nextStep = S.path[0];
+    for (const st of STAFF) {
+      if (st.t < 1) { st.t = Math.min(1, st.t + dt * SPEED * .4); continue; }
+      if (S.time < st.next) continue;
+      st.next = S.time + rnd(1.5, 4);
+      if (S.chasing === st || adjacent(p, st)) continue;
+      const opts = DIRS.map(([dx, dy]) => [st.x + dx, st.y + dy]).filter(([x, y]) =>
+        walkable(x, y) && Math.abs(x - st.hx) + Math.abs(y - st.hy) <= 2 && openCount(x, y) >= 3 && !reserved(x, y) &&
+        !(x === p.x && y === p.y) && !(nextStep && nextStep[0] === x && nextStep[1] === y) &&
+        !(S.follower && S.follower.x === x && S.follower.y === y));
+      if (!opts.length) continue;
+      const [nx, ny] = pick(opts);
+      st.fx = st.x; st.fy = st.y; st.x = nx; st.y = ny; st.t = 0;
+    }
+  }
+  function chaseStaff(st, tries = 0) {
+    S.chasing = st;
+    goAdjacent(st.x, st.y, () => {
+      if (adjacent(S.player, st)) { S.chasing = null; talkStaff(st); }
+      else if (tries < 3) chaseStaff(st, tries + 1);
+      else S.chasing = null;
+    });
   }
   function goAdjacent(x, y, cb) {
     const p = S.player;
@@ -637,7 +687,7 @@
   const setHint = t => ($('#hint').textContent = t);
   function renderHearts() {
     const h = $('#hearts'), n = S ? S.hearts : 0;
-    h.innerHTML = `❤️ <span class="on">${n}</span><small>／${S ? S.total : totalFor('challenge')}</small>`;
+    h.innerHTML = `❤️ <span class="on">${n}</span><small>／${S && S.total ? S.total : '—'}</small>`;
     if (n && !RM) { h.classList.remove('bump'); void h.offsetWidth; h.classList.add('bump'); }
   }
   function renderHand() {
@@ -669,7 +719,7 @@
       if (pool.length) {
         const n = pool[Math.floor(Math.random() * pool.length)];
         const limit = limitFor(d.need);
-        Object.assign(n, { need: d.need, state: 'wait', wave: i, ask: d.ask || NEEDS[d.need].ask, born: S.time, prog: 0,
+        Object.assign(n, { need: d.need, state: 'wait', wave: i, ask: d.ask || askFor(d.need), born: S.time, prog: 0,
                            renewed: true, limit, left: limit });
         return true;
       }
@@ -677,25 +727,25 @@
     }
     let pos;
     if (d.seat || d.renew) { const fs = freeSeats(); if (!fs.length) return false; pos = fs[Math.floor(Math.random() * fs.length)]; }
-    else { const sp = SPOTS[d.at]; if (!sp) return true; pos = freeNear(...sp); }
+    else { const sp = Array.isArray(d.at) ? d.at : SPOTS[d.at]; if (!sp) return false; pos = freeNear(...sp); }
     const limit = limitFor(d.need, d.hidden);
     S.npcs.push(Object.assign(ent(pos[0], pos[1]), {
       need: d.need, face: FACES[S.faceIdx++ % FACES.length], state: 'wait', wave: i,
-      hidden: !!d.hidden, revealed: !d.hidden, ask: d.ask || NEEDS[d.need].ask, born: S.time, spawn: S.time, prog: 0,
+      hidden: !!d.hidden, revealed: !d.hidden, ask: d.ask || askFor(d.need), born: S.time, spawn: S.time, prog: 0,
       limit, left: limit,
     }));
     return true;
   }
   function startWave(i) {
     S.wave = i; S.waveT = 0; S.nextWaveAt = null; S.hiddenHinted = false;
-    const w = WAVES[i];
+    const w = S.waves[i];
     if (w.lock) S.locked = true;
     for (const d of w.npcs) {
-      if (!inLevel(d)) continue;
       if (d.delay) { if (S.mode === 'challenge') S.queue.push({ at: S.time + d.delay, d, wave: i }); continue; }
-      spawnNpc(d, i);
+      if (!spawnNpc(d, i)) S.total--;
     }
-    $('#wave').textContent = `第 ${i + 1}／${WAVES.length} 波・${w.name}`;
+    renderHearts();
+    $('#wave').textContent = `第 ${i + 1}／${S.waves.length} 波・${w.name}`;
     banner(`第 ${i + 1} 波`, w.name);
     if (i > 0) sfx('wave');
     setHint(w.intro + (S.mode === 'challenge' && i === 0 ? ' 泡泡上的時間條跑完前要完成喔！' : ''));
@@ -991,7 +1041,7 @@
     }
     if (st.id === 'care') {
       const hidden = waveNpcs().find(m => !m.revealed);
-      if (hidden) { S.careHint = true; S.hi = { n: hidden, until: S.time + 4 }; return say(st, '休息區角落那位朋友，好像一直沒開口…去關心一下吧。'); }
+      if (hidden) { S.careHint = true; S.hi = { n: hidden, until: S.time + 4 }; return say(st, '角落那位朋友，好像一直沒開口…我幫你標出來了，去關心一下吧。'); }
       return say(st, '有人緊張的話，陪在身邊就好。主動關心，是輔導組的日常～');
     }
   }
@@ -1009,8 +1059,11 @@
     if (n.need === 'comfort') { say(n, n.ask); return setHint('站在他身邊別走開，陪他一下下。'); }
     if (n.need === 'greet') {
       say(null, '你：早安，歡迎你來！吃過早餐了嗎？');
-      n.need = 'bao'; n.ask = '還沒耶…早上趕著出門。'; n.born = S.time; n.talking = true; n.limit = n.left = limitFor('bao');
-      setTimeout(() => { if (S.running) { n.talking = false; say(n, n.ask); setHint(NEEDS.bao.hint); } }, 1500);
+      const r = Math.random();
+      const [need, ask] = r < .6 ? ['bao', pick(['還沒耶…早上趕著出門。', '還沒，肚子正在叫…'])]
+        : r < .8 ? ['water', '吃過了！不過一路趕來有點渴…'] : ['coffee', '吃過了～不過好想來杯咖啡！'];
+      n.need = need; n.ask = ask; n.born = S.time; n.talking = true; n.limit = n.left = limitFor(need);
+      setTimeout(() => { if (S.running) { n.talking = false; say(n, n.ask); setHint(NEEDS[need].hint); } }, 1500);
       return;
     }
     const ok = nd.items || [nd.item];
@@ -1032,7 +1085,8 @@
   }
   function handleTile(x, y, direct) {
     const act = fn => (direct ? fn() : goAdjacent(x, y, fn));
-    const st = staffAt(x, y); if (st) return act(() => talkStaff(st));
+    S.chasing = null;
+    const st = staffAt(x, y); if (st) return direct ? talkStaff(st) : chaseStaff(st);
     const n = npcAt(x, y); if (n) return act(() => touchNpc(n));
     const c = tileAt(x, y);
     if (STATIONS[c]) return act(() => useStation(c));
@@ -1049,8 +1103,15 @@
     if (!S.running) return;
     closeChoice();
     const r = cv.getBoundingClientRect();
-    const x = Math.floor((e.clientX - r.left) / r.width * COLS), y = Math.floor((e.clientY - r.top) / r.height * ROWS);
+    const fx = (e.clientX - r.left) / r.width * COLS, fy = (e.clientY - r.top) / r.height * ROWS;
+    const x = Math.floor(fx), y = Math.floor(fy);
     S.ripple = { x, y, t: 0 };
+    // 走動中的學長姊：點在他畫面上的位置附近（或剛離開的那格）也算點到
+    const near = STAFF.find(st => {
+      const [sx, sy] = posOf(st);
+      return Math.hypot(sx + .5 - fx, sy + .5 - fy) < .75 || (st.t < 1 && st.fx === x && st.fy === y);
+    });
+    if (near) { S.chasing = null; return chaseStaff(near); }
     handleTile(x, y, false);
   });
   window.addEventListener('keydown', e => {
@@ -1080,7 +1141,7 @@
     setLevel(detectLevel());
     reset();
     S.mode = mode === 'relax' ? 'relax' : 'challenge';
-    S.total = totalFor(S.mode); renderHearts();
+    S.waves = buildWaves(S.mode); S.total = totalFor(S.waves); renderHearts();
     $('#intro').hidden = true; $('#end').hidden = true;
     S.running = true;
     Sound.startMusic();
@@ -1105,7 +1166,7 @@
     if (p.t >= 1) {
       if (S.path.length) {
         const [nx, ny] = S.path[0];
-        if (!walkable(nx, ny)) { S.path = []; S.pending = null; }
+        if (!walkable(nx, ny)) { const np = S.goal && bfs(S.goal); if (np && np.length) S.path = np; else if (np) S.path = []; else { S.path = []; S.pending = null; } }
         else {
           S.path.shift();
           if (S.follower) { const f = S.follower; f.fx = f.x; f.fy = f.y; f.x = p.x; f.y = p.y; f.t = 0; }
@@ -1113,6 +1174,7 @@
         }
       } else if (S.pending) { const cb = S.pending; S.pending = null; cb(); }
     }
+    wanderStaff(dt);
     const idle = p.t >= 1 && !S.path.length;
     for (const n of S.npcs) {
       if (n.t < 1 && n !== S.follower) n.t = Math.min(1, n.t + dt * SPEED * .8);
@@ -1137,11 +1199,11 @@
     S.queue = S.queue.filter(q => !q.done);
     if (S.wave === 2 && !S.hiddenHinted && S.waveT > 20 && waveNpcs().some(n => !n.revealed)) {
       S.hiddenHinted = true;
-      setHint('休息區角落好像有一位朋友一直沒開口…去看看？也可以問問輔導組。');
+      setHint('好像有一位朋友躲在角落一直沒開口…四處看看？也可以問問輔導組。');
     }
     if (S.nextWaveAt !== null && S.time >= S.nextWaveAt) {
       S.nextWaveAt = null;
-      if (S.wave + 1 < WAVES.length) startWave(S.wave + 1);
+      if (S.wave + 1 < S.waves.length) startWave(S.wave + 1);
       else setTimeout(finish, 600);
     }
     for (const q of S.particles) { q.y += q.vy * dt; q.life -= dt * .9; }
@@ -1272,9 +1334,9 @@
 
     // people, drawn back to front
     const people = [];
-    for (const s of STAFF) people.push({ y: s.y, draw: () => {
-      drawPerson((s.x + .5) * T, (s.y + .5) * T, s.face, { bg: '#D1FAE5', ring: '#059669', ringW: 3, tag: s.label, tagBg: '#059669' });
-    } });
+    for (const s of STAFF) { const [sx, sy] = posOf(s); people.push({ y: sy, draw: () => {
+      drawPerson((sx + .5) * T, (sy + .5) * T, s.face, { bg: '#D1FAE5', ring: '#059669', ringW: 3, tag: s.label, tagBg: '#059669' });
+    } }); }
     for (const n of S.npcs) {
       const [nx, ny] = posOf(n);
       people.push({ y: ny, draw: () => {
@@ -1330,7 +1392,7 @@
   setLevel(detectLevel());
   reset();
   resize();
-  if (location.hash === '#debug') { window.__idle = () => S.player.t >= 1 && !S.path.length && !S.pending; window.__S = () => S; window.__L = () => ({ LEVEL, MAP, STAFF, seats }); }
+  if (location.hash === '#debug') { window.__idle = () => S.player.t >= 1 && !S.path.length && !S.pending; window.__S = () => S; window.__L = () => ({ LEVEL, MAP, STAFF: STAFF.map(s => ({ id: s.id, x: s.x, y: s.y })), seats }); }
   requestAnimationFrame(loop);
 })();
 </script>
