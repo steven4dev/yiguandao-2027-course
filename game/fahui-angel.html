@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>法會小天使</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap">
+<style>
+  /* Layout: one-screen portrait game — HUD on top, tiled hall in the middle, hand slot + hint at the bottom. Single light theme on purpose (matches the course site's meadow palette). */
+  :root {
+    --bg: #EEF7F2;
+    --ink: #1E293B;
+    --ink-soft: #475569;
+    --muted: #64748B;
+    --card: #FFFFFF;
+    --green: #059669;
+    --green-soft: #D1FAE5;
+    --blue: #0284C7;
+    --gold: #D97706;
+    --gold-soft: #FEF3C7;
+    --pink: #E11D74;
+    --line: #CFE3D8;
+    --serif: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+    --sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+    color-scheme: light;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 10% 0%, rgba(56,189,248,.16), transparent 45%),
+      radial-gradient(circle at 95% 100%, rgba(251,191,36,.14), transparent 50%);
+    color: var(--ink);
+    font-family: var(--sans);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    overflow: hidden;
+  }
+  #app {
+    position: relative;
+    height: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 10px;
+    box-sizing: border-box;
+  }
+  .hud { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+  .eyebrow { font-size: .72rem; font-weight: 700; letter-spacing: .08em; color: var(--green); }
+  h1 { margin: 0; font-family: var(--serif); font-weight: 900; font-size: 1.45rem; line-height: 1.2; letter-spacing: .04em; text-wrap: balance; }
+  .stats { text-align: right; display: grid; gap: 4px; flex: none; white-space: nowrap; }
+  #wave { font-size: .8rem; font-weight: 700; color: var(--blue); }
+  .warm { display: flex; align-items: center; gap: 6px; justify-content: flex-end; font-size: .72rem; color: var(--muted); font-weight: 700; }
+  #hearts { display: flex; gap: 1px; font-size: .82rem; line-height: 1; }
+  #hearts span { color: #E2E8F0; transition: color .3s, transform .3s; }
+  #hearts span.on { color: var(--pink); transform: scale(1.15); }
+
+  #stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; }
+  canvas { display: block; border-radius: 14px; box-shadow: 0 10px 30px rgba(5,150,105,.12), 0 0 0 1px var(--line); touch-action: none; cursor: pointer; max-width: 100%; }
+  #say {
+    position: absolute; left: 50%; top: 10px; transform: translateX(-50%);
+    width: max-content; max-width: calc(100% - 24px);
+    background: var(--card); color: var(--ink);
+    border: 1.5px solid var(--green); border-radius: 12px;
+    padding: 8px 12px; font-size: .88rem; line-height: 1.5;
+    box-shadow: 0 6px 18px rgba(30,41,59,.14);
+    pointer-events: none;
+  }
+  #say b { color: var(--green); margin-right: 6px; }
+  #banner {
+    position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
+  }
+  #banner div {
+    background: rgba(255,255,255,.95); border-radius: 16px; padding: 14px 22px; text-align: center;
+    box-shadow: 0 12px 30px rgba(30,41,59,.18); border: 2px solid var(--gold);
+    animation: pop .35s ease-out;
+  }
+  #banner small { display: block; font-size: .75rem; font-weight: 700; color: var(--gold); letter-spacing: .1em; }
+  #banner strong { font-family: var(--serif); font-size: 1.4rem; }
+  @keyframes pop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .bar { display: flex; align-items: center; gap: 10px; min-height: 52px; }
+  #hand {
+    flex: none; display: grid; justify-items: center; gap: 0;
+    width: 64px; padding: 6px 4px; border-radius: 12px;
+    background: var(--gold-soft); border: 2px solid var(--gold); color: var(--ink);
+    font: inherit; font-size: .68rem; font-weight: 700; cursor: pointer;
+  }
+  #hand .em { font-size: 1.35rem; line-height: 1.2; min-height: 1.35em; }
+  #hand:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  #hint { margin: 0; font-size: .85rem; line-height: 1.55; color: var(--ink-soft); min-width: 0; }
+
+  .sheet {
+    position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); bottom: 74px;
+    background: var(--card); border-radius: 16px; padding: 14px; border: 2px solid var(--green);
+    box-shadow: 0 14px 34px rgba(30,41,59,.2); display: grid; gap: 10px; z-index: 5;
+  }
+  .sheet p { margin: 0; font-weight: 700; }
+  .sheet .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    font: inherit; font-weight: 700; font-size: .95rem; border-radius: 12px; padding: 10px 14px; cursor: pointer;
+    border: 2px solid var(--green); background: var(--green-soft); color: var(--ink);
+  }
+  .btn.primary { background: var(--green); color: #fff; }
+  .btn.ghost { background: transparent; border-color: var(--line); color: var(--muted); }
+
+  .overlay {
+    position: fixed; inset: 0; z-index: 10; display: grid; place-items: center;
+    background: rgba(238,247,242,.86); backdrop-filter: blur(4px);
+    padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    overflow-y: auto;
+  }
+  .card {
+    width: min(440px, 100%); background: var(--card); border-radius: 20px; padding: 22px 20px;
+    box-shadow: 0 20px 50px rgba(5,150,105,.18); border: 1px solid var(--line);
+    display: grid; gap: 14px;
+  }
+  .card h2 { margin: 0; font-family: var(--serif); font-size: 1.6rem; font-weight: 900; text-wrap: balance; }
+  .card .lead { margin: 0; color: var(--ink-soft); line-height: 1.7; }
+  .card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .card li { display: grid; grid-template-columns: 1.8em 1fr; gap: 6px; line-height: 1.55; font-size: .92rem; }
+  .card .event { background: var(--gold-soft); border-radius: 12px; padding: 10px 12px; font-size: .88rem; line-height: 1.6; }
+  .card .event b { color: var(--gold); }
+  .card .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .card .actions a { text-decoration: none; display: inline-block; }
+  .stat { font-size: 2rem; font-weight: 900; color: var(--green); font-variant-numeric: tabular-nums; }
+  .quote { font-family: var(--serif); font-size: 1.1rem; line-height: 1.7; margin: 0; }
+  .tiny { font-size: .75rem; color: var(--muted); margin: 0; }
+  @media (prefers-reduced-motion: reduce) { #banner div { animation: none; } }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header class="hud">
+    <div>
+      <div class="eyebrow">08／28 新道親法會・志工陪伴</div>
+      <h1>法會小天使</h1>
+    </div>
+    <div class="stats">
+      <div id="wave">準備中</div>
+      <div class="warm">溫暖值 <div id="hearts" aria-live="polite"></div></div>
+    </div>
+  </header>
+
+  <div id="stage">
+    <canvas id="cv" aria-label="法會會場地圖，點地板移動，點人物或櫃子互動"></canvas>
+    <div id="say" hidden></div>
+    <div id="banner" hidden></div>
+  </div>
+
+  <footer class="bar">
+    <button id="hand" type="button" aria-label="手上的物品，點一下放下">
+      <span class="em" id="handEm"></span><span id="handName">空空的</span>
+    </button>
+    <p id="hint" aria-live="polite">點「開始服務」進入會場。</p>
+  </footer>
+
+  <div id="choice" class="sheet" hidden>
+    <p>🧺 備品區：要拿哪一樣？</p>
+    <div class="row">
+      <button class="btn" type="button" data-item="coat">🧥 薄外套</button>
+      <button class="btn" type="button" data-item="cup">☕ 空杯子</button>
+      <button class="btn ghost" type="button" data-item="">先不用</button>
+    </div>
+  </div>
+
+  <div id="intro" class="overlay">
+    <div class="card">
+      <div class="eyebrow">全真社青・年度探索地圖 試玩站</div>
+      <h2>今天，我們一起當法會小天使</h2>
+      <p class="lead">新朋友第一次來參加法會，難免會有點陌生。看到誰頭上冒出泡泡，就走過去幫他一把吧！</p>
+      <ul>
+        <li><span>👆</span><span>點地板走路；點人或櫃子，會自己走過去互動。電腦也可以用方向鍵。</span></li>
+        <li><span>💬</span><span>泡泡就是需求：拿對的物資送過去，或待在身邊陪他一下。</span></li>
+        <li><span>✋</span><span>手上一次只能拿一樣，點下方「手上」可以放下。</span></li>
+        <li><span>🧑‍💼</span><span>卡關了？穿綠背心的公關、總務、輔導組學長姊都會幫你。</span></li>
+      </ul>
+      <div class="actions"><button id="startBtn" class="btn primary" type="button">開始服務</button></div>
+    </div>
+  </div>
+
+  <div id="end" class="overlay" hidden>
+    <div class="card">
+      <div class="eyebrow">服務圓滿</div>
+      <div><span class="stat" id="endCount">8</span> <span>位新朋友都被照顧到了</span></div>
+      <p class="tiny" id="endTime"></p>
+      <p class="quote">原來陪伴別人的時候，<br>自己也被充滿了。</p>
+      <div class="event">
+        <b>2027／08／28（六）新道親法會・志工陪伴體驗</b><br>
+        這一天，我們一起當新朋友身邊的那雙手。修行不只是為了自己，也在陪伴裡慢慢長進。
+      </div>
+      <div class="actions">
+        <a class="btn primary" href="https://steven4dev.github.io/yiguandao-2027-course/#schedule" target="_blank" rel="noopener">看 2027 年度企劃</a>
+        <button id="againBtn" class="btn" type="button">再玩一次</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const cv = $('#cv'), ctx = cv.getContext('2d');
+  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const EMOJI = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+  const SANS = '"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
+
+  // R 報到台  S 文具櫃  T 茶水區  B 備品區  F 餐點區  L 休息區  c 座位  E 入口
+  const MAP = [
+    '#########',
+    '#R..E..S#',
+    '#.......#',
+    '#.c.c.c.#',
+    '#.......#',
+    '#.c.c.c.#',
+    '#.......#',
+    '#T.....B#',
+    '#.......#',
+    '#.......#',
+    '#F.....L#',
+    '#.......#',
+    '#########',
+  ];
+  const COLS = 9, ROWS = 13, SPEED = 7;
+  const DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
+
+  const STATIONS = {
+    R: { name: '報到台', icon: '🖊️', color: '#D97706' },
+    S: { name: '文具櫃', icon: '📚', color: '#0284C7' },
+    T: { name: '茶水區', icon: '🫖', color: '#0D9488' },
+    B: { name: '備品區', icon: '🧺', color: '#059669' },
+    F: { name: '餐點區', icon: '🍱', color: '#EA580C' },
+    L: { name: '休息區', icon: '🛋️', color: '#7C3AED' },
+  };
+  const ITEMS = {
+    note: { e: '📝', n: '筆記本' }, water: { e: '💧', n: '溫開水' }, coat: { e: '🧥', n: '薄外套' },
+    cup: { e: '☕', n: '空杯子' }, tea: { e: '🍵', n: '熱茶' }, bento: { e: '🍱', n: '素便當' }, key: { e: '🔑', n: '鑰匙' },
+  };
+  const NEEDS = {
+    guide:   { e: '🧭', ask: '請問…我的座位在哪裡？', hint: '先走到他身邊讓他跟著你，再點一張發亮的空椅子。' },
+    note:    { e: '📝', item: 'note', ask: '我想抄重點，有筆記本嗎？', hint: '筆記本在右上角的文具櫃。' },
+    water:   { e: '💧', item: 'water', ask: '有點口渴，可以給我一杯水嗎？', hint: '左邊的茶水區有溫開水。' },
+    coat:    { e: '🧥', item: 'coat', ask: '冷氣好強，有點冷…', hint: '薄外套在右邊備品區；櫃子鎖著的話，找總務組拿鑰匙。' },
+    tea:     { e: '🍵', item: 'tea', ask: '想喝杯熱茶暖暖身子。', hint: '先到備品區拿空杯子，再到茶水區裝熱茶。' },
+    comfort: { e: '😟', ask: '第一次來，有點緊張…', hint: '走到休息區那位朋友身邊，靜靜陪他一下就好。' },
+    bento:   { e: '🍱', item: 'bento', ask: '午餐在哪裡拿呢？', hint: '便當在左下角的餐點區。' },
+  };
+  const THANKS = ['謝謝你！', '好溫暖，謝謝～', '有你在真好！', '感恩！', '心安多了，謝謝你。', '你人真好！'];
+  const FACES = ['👩', '🧑', '👨‍🦱', '👩‍🦰', '🧔', '👱‍♀️', '👨', '🧑‍🦱'];
+  const WAVES = [
+    { name: '報到時間', intro: '新朋友陸續報到了！看看誰頭上冒出泡泡。',
+      npcs: [{ need: 'guide', at: [4, 1] }, { need: 'note', seat: true }, { need: 'water', seat: true }] },
+    { name: '課間休息', intro: '下課了，冷氣有點強。備品區上鎖了，記得找總務組。', lock: true,
+      npcs: [{ need: 'coat', seat: true }, { need: 'tea', seat: true }, { need: 'comfort', at: [6, 10] }] },
+    { name: '用餐時間', intro: '開飯囉！也看看角落，有人可能不好意思開口。',
+      npcs: [{ need: 'bento', seat: true }, { need: 'bento', at: [7, 11], hidden: true,
+               ask: '（小聲）我…還沒拿到便當，不好意思開口…' }] },
+  ];
+  const TOTAL = WAVES.reduce((s, w) => s + w.npcs.length, 0);
+  const STAFF = [
+    { id: 'pr',   label: '公關', name: '公關禮節組', face: '👩‍💼', x: 2, y: 1 },
+    { id: 'gen',  label: '總務', name: '總務組',     face: '🧑‍🔧', x: 7, y: 8 },
+    { id: 'care', label: '輔導', name: '輔導組',     face: '🧑‍🏫', x: 4, y: 11 },
+  ];
+
+  if (!ctx.roundRect) ctx.roundRect = function (x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath();
+  };
+  const ent = (x, y) => ({ x, y, fx: x, fy: y, t: 1 });
+  let S, tile = 40, dpr = 1, last = 0;
+
+  function reset() {
+    S = { wave: -1, npcs: [], hand: null, locked: false, hearts: 0, player: ent(4, 7), follower: null,
+          path: [], pending: null, particles: [], ripple: null, time: 0, waveT: 0, running: false,
+          nextWaveAt: null, hi: null, faceIdx: 0, hiddenHinted: false, finished: false };
+    renderHearts(); renderHand();
+  }
+
+  // ---------- map helpers ----------
+  const tileAt = (x, y) => (MAP[y] || '')[x] || '#';
+  const solid = (x, y) => { const c = tileAt(x, y); return c !== '.' && c !== 'E'; };
+  const staffAt = (x, y) => STAFF.find(s => s.x === x && s.y === y);
+  const npcAt = (x, y) => S.npcs.find(n => n.state !== 'following' && n.x === x && n.y === y);
+  const walkable = (x, y) => !solid(x, y) && !staffAt(x, y) && !npcAt(x, y);
+  const key = (x, y) => x + ',' + y;
+  const adjacent = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1;
+  const seats = []; MAP.forEach((r, y) => [...r].forEach((c, x) => c === 'c' && seats.push([x, y])));
+  const freeSeats = () => seats.filter(([x, y]) => !npcAt(x, y));
+
+  function bfs(goals) {
+    const p = S.player, sk = key(p.x, p.y);
+    if (goals.has(sk)) return [];
+    const prev = new Map([[sk, null]]), q = [[p.x, p.y]];
+    while (q.length) {
+      const [x, y] = q.shift();
+      for (const [dx, dy] of DIRS) {
+        const nx = x + dx, ny = y + dy, k = key(nx, ny);
+        if (prev.has(k) || !walkable(nx, ny)) continue;
+        prev.set(k, [x, y]);
+        if (goals.has(k)) {
+          const path = [[nx, ny]];
+          let c = [x, y];
+          while (c && key(...c) !== sk) { path.unshift(c); c = prev.get(key(...c)); }
+          return path;
+        }
+        q.push([nx, ny]);
+      }
+    }
+    return null;
+  }
+  function goTo(list, cb) {
+    const goals = new Set(list.map(([x, y]) => key(x, y)));
+    const path = bfs(goals);
+    if (!path) { say(null, '那邊過不去耶，換條路試試。'); return; }
+    S.path = path; S.pending = cb || null;
+  }
+  function goAdjacent(x, y, cb) {
+    const p = S.player;
+    const list = DIRS.map(([dx, dy]) => [x + dx, y + dy])
+      .filter(([nx, ny]) => walkable(nx, ny) || (nx === p.x && ny === p.y));
+    goTo(list, cb);
+  }
+
+  // ---------- speech, hint, HUD ----------
+  let sayTimer = 0;
+  function say(who, text) {
+    const el = $('#say');
+    const name = !who ? '' : who.name || '新朋友';
+    el.innerHTML = (name ? `<b>${name}</b>` : '') + text;
+    el.hidden = false;
+    clearTimeout(sayTimer);
+    sayTimer = setTimeout(() => (el.hidden = true), 2800);
+  }
+  const setHint = t => ($('#hint').textContent = t);
+  function renderHearts() {
+    $('#hearts').innerHTML = Array.from({ length: TOTAL }, (_, i) => `<span class="${i < (S ? S.hearts : 0) ? 'on' : ''}">♥</span>`).join('');
+  }
+  function renderHand() {
+    const it = S && S.hand ? ITEMS[S.hand] : null;
+    $('#handEm').textContent = it ? it.e : '✋';
+    $('#handName').textContent = it ? it.n : '空空的';
+  }
+  function banner(sub, title) {
+    const b = $('#banner');
+    b.innerHTML = `<div><small>${sub}</small><strong>${title}</strong></div>`;
+    b.hidden = false;
+    setTimeout(() => (b.hidden = true), 1600);
+  }
+
+  // ---------- waves ----------
+  function freeNear(x, y) {
+    const p = S.player;
+    if (!(p.x === x && p.y === y) && walkable(x, y)) return [x, y];
+    for (let r = 1; r < 4; r++) for (const [dx, dy] of DIRS) {
+      const nx = x + dx * r, ny = y + dy * r;
+      if (walkable(nx, ny) && !(p.x === nx && p.y === ny)) return [nx, ny];
+    }
+    return [x, y];
+  }
+  function startWave(i) {
+    S.wave = i; S.waveT = 0; S.nextWaveAt = null; S.hiddenHinted = false;
+    const w = WAVES[i];
+    if (w.lock) S.locked = true;
+    for (const d of w.npcs) {
+      let pos;
+      if (d.seat) { const fs = freeSeats(); pos = fs[Math.floor(Math.random() * fs.length)]; }
+      else pos = freeNear(...d.at);
+      const n = Object.assign(ent(pos[0], pos[1]), {
+        need: d.need, face: FACES[S.faceIdx++ % FACES.length], state: 'wait', wave: i,
+        hidden: !!d.hidden, revealed: !d.hidden, ask: d.ask || NEEDS[d.need].ask, born: S.time, spawn: S.time, prog: 0,
+      });
+      S.npcs.push(n);
+    }
+    $('#wave').textContent = `第 ${i + 1}／${WAVES.length} 波・${w.name}`;
+    banner(`第 ${i + 1} 波`, w.name);
+    setHint(w.intro);
+  }
+  const waveNpcs = () => S.npcs.filter(n => n.wave === S.wave);
+  function complete(n) {
+    n.state = 'done'; n.doneAt = S.time;
+    S.hearts++; renderHearts();
+    for (let k = 0; k < 5; k++) S.particles.push({ x: n.x + .5 + (Math.random() - .5) * .6, y: n.y + .2, vy: -(.8 + Math.random() * .8), life: 1 });
+    say(n, THANKS[Math.floor(Math.random() * THANKS.length)]);
+    if (waveNpcs().every(m => m.state === 'done')) S.nextWaveAt = S.time + 1.3;
+    else {
+      const left = waveNpcs().filter(m => m.state !== 'done' && m.revealed);
+      setHint(left.length ? '還有人需要幫忙，看看誰頭上有泡泡。' : '泡泡都處理完了…真的每個人都照顧到了嗎？');
+    }
+  }
+  function finish() {
+    S.running = false; S.finished = true;
+    const sec = Math.round(S.time), m = Math.floor(sec / 60), s = String(sec % 60).padStart(2, '0');
+    $('#endCount').textContent = S.hearts;
+    $('#endTime').textContent = `服務時間 ${m}:${s}`;
+    $('#end').hidden = false;
+    $('#againBtn').focus();
+  }
+
+  // ---------- interactions ----------
+  function give(item) {
+    if (S.hand === item) return say(null, `手上已經有${ITEMS[item].n}了。`);
+    if (S.hand) return say(null, `手上拿著${ITEMS[S.hand].e}${ITEMS[S.hand].n}，先點下方「手上」放下吧。`);
+    S.hand = item; renderHand();
+    say(null, `拿到 ${ITEMS[item].e} ${ITEMS[item].n}`);
+  }
+  function openChoice() { $('#choice').hidden = false; $('#choice .btn').focus(); }
+  function closeChoice() { $('#choice').hidden = true; }
+
+  function useStation(c) {
+    switch (c) {
+      case 'R': return talkStaff(STAFF[0]);
+      case 'S': return give('note');
+      case 'T':
+        if (S.hand === 'cup') { S.hand = 'tea'; renderHand(); return say(null, '🍵 熱茶裝好了，小心燙！'); }
+        return give('water');
+      case 'B':
+        if (S.locked) {
+          if (S.hand === 'key') { S.locked = false; S.hand = null; renderHand(); say(null, '🔓 備品區打開了！'); return openChoice(); }
+          return say(null, '🔒 備品區鎖住了，去找總務組拿鑰匙。');
+        }
+        return openChoice();
+      case 'F':
+        if (S.wave < 2) return say(null, '午餐時間還沒到喔～');
+        return give('bento');
+      case 'L': return say(null, '休息區：累了可以來這裡坐一下。');
+    }
+  }
+  function firstUnmet() {
+    return waveNpcs().filter(n => n.state !== 'done' && n.revealed).sort((a, b) => a.born - b.born)[0];
+  }
+  function talkStaff(st) {
+    if (st.id === 'pr') {
+      const n = firstUnmet();
+      if (n) { S.hi = { n, until: S.time + 3 }; return say(st, NEEDS[n.need].hint); }
+      const hidden = waveNpcs().find(m => !m.revealed);
+      if (hidden) return say(st, '再看看四周，是不是還有人沒被照顧到？輔導組可能知道喔。');
+      return say(st, '大家都照顧到了，辛苦了！');
+    }
+    if (st.id === 'gen') {
+      if (S.locked && S.hand !== 'key') {
+        if (S.hand) return say(st, '先把手上的東西放下，我再把鑰匙給你。');
+        S.hand = 'key'; renderHand();
+        return say(st, '🔑 備品區鑰匙給你，用完櫃子就開著囉！');
+      }
+      return say(st, '物資不夠隨時跟我說！');
+    }
+    if (st.id === 'care') {
+      const hidden = waveNpcs().find(m => !m.revealed);
+      if (hidden) { S.hi = { n: hidden, until: S.time + 4 }; return say(st, '右下角那位朋友，好像一直沒開口…去關心一下吧。'); }
+      return say(st, '有人緊張的話，陪在身邊就好。主動關心，是輔導組的日常～');
+    }
+  }
+  function touchNpc(n) {
+    if (n.state === 'done') return say(n, '今天收穫好多，謝謝你～');
+    if (!n.revealed) { n.revealed = true; return say(n, n.ask); }
+    const nd = NEEDS[n.need];
+    if (n.need === 'guide') {
+      if (S.follower) return;
+      n.state = 'following'; S.follower = n;
+      say(n, '謝謝！我跟著你走～');
+      return setHint('點一張發亮的空椅子，帶他入座。');
+    }
+    if (n.need === 'comfort') { say(n, n.ask); return setHint('站在他身邊別走開，陪他一下下。'); }
+    if (S.hand === nd.item) { S.hand = null; renderHand(); return complete(n); }
+    if (S.hand) return say(n, `這是${ITEMS[S.hand].n}…我需要的是${ITEMS[nd.item].e}${ITEMS[nd.item].n}。`);
+    say(n, n.ask); setHint(nd.hint);
+  }
+  function seatFollower(x, y) {
+    const n = S.follower;
+    if (!n || npcAt(x, y)) return;
+    n.fx = n.x; n.fy = n.y; n.x = x; n.y = y; n.t = 0;
+    S.follower = null;
+    complete(n);
+  }
+  function handleTile(x, y, direct) {
+    const act = fn => (direct ? fn() : goAdjacent(x, y, fn));
+    const st = staffAt(x, y); if (st) return act(() => talkStaff(st));
+    const n = npcAt(x, y); if (n) return act(() => touchNpc(n));
+    const c = tileAt(x, y);
+    if (STATIONS[c]) return act(() => useStation(c));
+    if (c === 'c') {
+      if (S.follower) return act(() => seatFollower(x, y));
+      return say(null, '這是空位，帶找座位的朋友來坐吧。');
+    }
+    if (c === '#' || direct) return;
+    goTo([[x, y]], null);
+  }
+
+  // ---------- input ----------
+  cv.addEventListener('pointerdown', e => {
+    if (!S.running) return;
+    closeChoice();
+    const r = cv.getBoundingClientRect();
+    const x = Math.floor((e.clientX - r.left) / r.width * COLS), y = Math.floor((e.clientY - r.top) / r.height * ROWS);
+    S.ripple = { x, y, t: 0 };
+    handleTile(x, y, false);
+  });
+  window.addEventListener('keydown', e => {
+    if (!S.running) return;
+    const d = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] }[e.key];
+    if (!d) return;
+    e.preventDefault();
+    const p = S.player;
+    if (p.t < 1 || S.path.length) return;
+    closeChoice();
+    const nx = p.x + d[0], ny = p.y + d[1];
+    if (walkable(nx, ny)) { S.path = [[nx, ny]]; S.pending = null; }
+    else handleTile(nx, ny, true);
+  });
+  $('#hand').addEventListener('click', () => {
+    if (!S.hand) return say(null, '手上空空的，去櫃子拿點東西吧。');
+    say(null, `${ITEMS[S.hand].e}${ITEMS[S.hand].n}放回去了。`);
+    S.hand = null; renderHand();
+  });
+  $('#choice').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    closeChoice();
+    if (b.dataset.item) give(b.dataset.item);
+  });
+  function start() {
+    reset();
+    $('#intro').hidden = true; $('#end').hidden = true;
+    S.running = true;
+    startWave(0);
+  }
+  $('#startBtn').addEventListener('click', start);
+  $('#againBtn').addEventListener('click', start);
+
+  // ---------- update ----------
+  function update(dt) {
+    if (!S.running) return;
+    S.time += dt; S.waveT += dt;
+    const p = S.player;
+    if (p.t < 1) {
+      p.t = Math.min(1, p.t + dt * SPEED);
+      if (S.follower) S.follower.t = p.t;
+    }
+    if (p.t >= 1) {
+      if (S.path.length) {
+        const [nx, ny] = S.path[0];
+        if (!walkable(nx, ny)) { S.path = []; S.pending = null; }
+        else {
+          S.path.shift();
+          if (S.follower) { const f = S.follower; f.fx = f.x; f.fy = f.y; f.x = p.x; f.y = p.y; f.t = 0; }
+          p.fx = p.x; p.fy = p.y; p.x = nx; p.y = ny; p.t = 0;
+        }
+      } else if (S.pending) { const cb = S.pending; S.pending = null; cb(); }
+    }
+    const idle = p.t >= 1 && !S.path.length;
+    for (const n of S.npcs) {
+      if (n.t < 1 && n !== S.follower) n.t = Math.min(1, n.t + dt * SPEED * .8);
+      if (n.state !== 'wait') continue;
+      if (!n.revealed && Math.abs(n.x - p.x) + Math.abs(n.y - p.y) <= 2) { n.revealed = true; n.born = S.time; say(n, n.ask); }
+      if (n.need === 'comfort') {
+        if (idle && adjacent(p, n)) n.prog += dt / 2;
+        else n.prog = Math.max(0, n.prog - dt * .6);
+        if (n.prog >= 1) complete(n);
+      }
+    }
+    if (S.wave === 2 && !S.hiddenHinted && S.waveT > 20 && waveNpcs().some(n => !n.revealed)) {
+      S.hiddenHinted = true;
+      setHint('角落好像有一位朋友一直沒開口…去右下角看看？也可以問問輔導組。');
+    }
+    if (S.nextWaveAt !== null && S.time >= S.nextWaveAt) {
+      S.nextWaveAt = null;
+      if (S.wave + 1 < WAVES.length) startWave(S.wave + 1);
+      else setTimeout(finish, 600);
+    }
+    for (const q of S.particles) { q.y += q.vy * dt; q.life -= dt * .9; }
+    S.particles = S.particles.filter(q => q.life > 0);
+    if (S.ripple) { S.ripple.t += dt * 2.5; if (S.ripple.t > 1) S.ripple = null; }
+  }
+
+  // ---------- drawing ----------
+  function resize() {
+    const st = $('#stage');
+    const w = st.clientWidth, h = st.clientHeight;
+    tile = Math.max(24, Math.floor(Math.min(w / COLS, h / ROWS)));
+    dpr = Math.min(window.devicePixelRatio || 1, 3);
+    cv.style.width = tile * COLS + 'px'; cv.style.height = tile * ROWS + 'px';
+    cv.width = Math.round(tile * COLS * dpr); cv.height = Math.round(tile * ROWS * dpr);
+  }
+  new ResizeObserver(resize).observe($('#stage'));
+
+  const ease = t => t * t * (3 - 2 * t);
+  const posOf = e => { const k = ease(e.t); return [e.fx + (e.x - e.fx) * k, e.fy + (e.y - e.fy) * k]; };
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+  function emoji(ch, cx, cy, size) {
+    ctx.font = `${size}px ${EMOJI}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(ch, cx, cy + size * .06);
+  }
+  function label(text, cx, cy, size, fg, bg) {
+    ctx.font = `700 ${size}px ${SANS}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (bg) {
+      const w = ctx.measureText(text).width + size * .9, h = size * 1.45;
+      ctx.fillStyle = bg; rr(cx - w / 2, cy - h / 2, w, h, h / 2); ctx.fill();
+    }
+    ctx.fillStyle = fg; ctx.fillText(text, cx, cy + size * .04);
+  }
+  const ZONES = [
+    { y0: 1, y1: 1, a: '#FFF8E6', b: '#FCF1D8', name: '' },
+    { y0: 2, y1: 6, a: '#EAF4FB', b: '#E1EEF8', name: '教室' },
+    { y0: 7, y1: 8, a: '#ECF7F0', b: '#E2F2E8', name: '茶水・備品' },
+    { y0: 9, y1: 11, a: '#FDF3EA', b: '#F8EADC', name: '用餐・休息' },
+  ];
+  function drawPerson(cx, cy, face, opts) {
+    const T = tile, r = T * .36;
+    ctx.fillStyle = 'rgba(30,41,59,.12)';
+    ctx.beginPath(); ctx.ellipse(cx, cy + r * .95, r * .8, r * .25, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = opts.bg; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = opts.ringW || 2; ctx.strokeStyle = opts.ring; ctx.stroke();
+    if (opts.alpha) ctx.globalAlpha = opts.alpha;
+    emoji(face, cx, cy, T * .5);
+    ctx.globalAlpha = 1;
+    if (opts.tag) label(opts.tag, cx, cy + r + T * .1, Math.max(8, T * .2), '#fff', opts.tagBg);
+  }
+  function drawBubble(cx, cy, ch, age, warn) {
+    const T = tile, w = T * .66, h = T * .56;
+    const bob = RM ? 0 : Math.sin(age * 3) * T * .03;
+    const by = cy - T * .78 + bob;
+    ctx.save();
+    ctx.translate(cx, by);
+    if (warn && !RM) ctx.rotate(Math.sin(age * 14) * .12);
+    ctx.shadowColor = 'rgba(30,41,59,.18)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2;
+    ctx.fillStyle = '#fff'; rr(-w / 2, -h / 2, w, h, h * .45); ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.beginPath(); ctx.moveTo(-T * .07, h / 2 - 1); ctx.lineTo(0, h / 2 + T * .1); ctx.lineTo(T * .07, h / 2 - 1); ctx.closePath(); ctx.fill();
+    ctx.lineWidth = 1.6; ctx.strokeStyle = warn ? '#D97706' : '#0284C7';
+    rr(-w / 2, -h / 2, w, h, h * .45); ctx.stroke();
+    emoji(ch, 0, 0, T * .36);
+    ctx.restore();
+  }
+
+  function draw(now) {
+    const T = tile;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, T * COLS, T * ROWS);
+    const pulse = RM ? .6 : (Math.sin(now / 260) + 1) / 2;
+
+    // floor and walls
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      if (tileAt(x, y) === '#') { ctx.fillStyle = '#BFD9CB'; ctx.fillRect(x * T, y * T, T, T); continue; }
+      const z = ZONES.find(z => y >= z.y0 && y <= z.y1);
+      ctx.fillStyle = (x + y) % 2 ? z.a : z.b; ctx.fillRect(x * T, y * T, T, T);
+    }
+    ctx.strokeStyle = '#9CC3AE'; ctx.lineWidth = 2;
+    ctx.strokeRect(T - 1, T - 1, T * (COLS - 2) + 2, T * (ROWS - 2) + 2);
+    ctx.fillStyle = '#F6E7C1'; ctx.fillRect(4 * T + 3, T * .35, T - 6, T * .65 + 1);
+    label('入口', 4.5 * T, T * .62, Math.max(8, T * .2), '#92400E');
+    ctx.globalAlpha = .5;
+    for (const z of ZONES) if (z.name) label(z.name, 4.5 * T, (z.y0 === 2 ? 2 : z.y0) * T + T * .5, Math.max(9, T * .24), '#64748B');
+    ctx.globalAlpha = 1;
+    label('新道親法會・服務區', 4.5 * T, (ROWS - .5) * T, Math.max(8, T * .2), '#3F6B57');
+
+    // seats and stations
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      const c = tileAt(x, y), px = x * T, py = y * T;
+      if (c === 'c') {
+        if (S.follower && !npcAt(x, y)) {
+          ctx.fillStyle = `rgba(52,211,153,${.25 + pulse * .35})`;
+          rr(px + 2, py + 2, T - 4, T - 4, T * .2); ctx.fill();
+        }
+        ctx.fillStyle = '#E3C7A8'; rr(px + T * .2, py + T * .22, T * .6, T * .6, T * .12); ctx.fill();
+        ctx.fillStyle = '#C49A72'; rr(px + T * .2, py + T * .14, T * .6, T * .16, T * .06); ctx.fill();
+      }
+      const st = STATIONS[c];
+      if (st) {
+        ctx.fillStyle = '#fff'; rr(px + 3, py + 3, T - 6, T - 6, T * .18); ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = st.color; ctx.stroke();
+        emoji(st.icon, px + T / 2, py + T * .42, T * .42);
+        label(st.name, px + T / 2, py + T * .8, Math.max(7, T * .17), st.color);
+        if (c === 'B' && S.locked) emoji('🔒', px + T * .8, py + T * .2, T * .26);
+        if (c === 'F' && S.wave < 2) { ctx.fillStyle = 'rgba(255,255,255,.55)'; rr(px + 3, py + 3, T - 6, T - 6, T * .18); ctx.fill(); }
+      }
+    }
+
+    // tap ripple
+    if (S.ripple) {
+      ctx.strokeStyle = `rgba(2,132,199,${1 - S.ripple.t})`; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc((S.ripple.x + .5) * T, (S.ripple.y + .5) * T, T * (.15 + S.ripple.t * .35), 0, Math.PI * 2); ctx.stroke();
+    }
+
+    // people, drawn back to front
+    const people = [];
+    for (const s of STAFF) people.push({ y: s.y, draw: () => {
+      drawPerson((s.x + .5) * T, (s.y + .5) * T, s.face, { bg: '#D1FAE5', ring: '#059669', ringW: 3, tag: s.label, tagBg: '#059669' });
+    } });
+    for (const n of S.npcs) {
+      const [nx, ny] = posOf(n);
+      people.push({ y: ny, draw: () => {
+        const cx = (nx + .5) * T, cy = (ny + .5) * T;
+        const appear = RM ? 1 : Math.min(1, (S.time - n.spawn) * 4);
+        ctx.save(); ctx.translate(cx, cy); ctx.scale(appear, appear); ctx.translate(-cx, -cy);
+        const done = n.state === 'done';
+        drawPerson(cx, cy, n.face, { bg: done ? '#FFFBEB' : '#fff', ring: done ? '#F59E0B' : '#94A3B8', alpha: n.revealed ? 1 : .8 });
+        ctx.restore();
+        if (S.hi && S.hi.n === n && S.time < S.hi.until) {
+          ctx.strokeStyle = `rgba(217,119,6,${.4 + pulse * .6})`; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(cx, cy, T * .5, 0, Math.PI * 2); ctx.stroke();
+        }
+        if (n.need === 'comfort' && n.prog > 0 && !done) {
+          ctx.strokeStyle = '#E11D74'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.arc(cx, cy, T * .46, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * n.prog); ctx.stroke();
+          ctx.lineCap = 'butt';
+        }
+        if (done && S.time - n.doneAt < 2.5) emoji('✨', cx + T * .32, cy - T * .3, T * .28);
+        if (n.state === 'wait' && n.revealed) drawBubble(cx, cy, NEEDS[n.need].e, S.time - n.born, S.time - n.born > 18);
+        if (n.state === 'following') emoji('💛', cx + T * .3, cy - T * .32, T * .24);
+      } });
+    }
+    const [px, py] = posOf(S.player);
+    people.push({ y: py + .01, draw: () => {
+      const cx = (px + .5) * T, cy = (py + .5) * T;
+      drawPerson(cx, cy, '🙋', { bg: '#FEF3C7', ring: '#D97706', ringW: 3, tag: '你', tagBg: '#D97706' });
+      if (S.hand) {
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx + T * .34, cy - T * .3, T * .2, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#D97706'; ctx.lineWidth = 1.5; ctx.stroke();
+        emoji(ITEMS[S.hand].e, cx + T * .34, cy - T * .3, T * .26);
+      }
+    } });
+    people.sort((a, b) => a.y - b.y).forEach(p => p.draw());
+
+    for (const q of S.particles) { ctx.globalAlpha = Math.max(0, q.life); emoji('❤️', q.x * T, q.y * T, T * .3); }
+    ctx.globalAlpha = 1;
+  }
+
+  function loop(now) {
+    const dt = Math.min(.05, (now - (last || now)) / 1000);
+    last = now;
+    update(dt);
+    draw(now);
+    requestAnimationFrame(loop);
+  }
+  reset();
+  resize();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
