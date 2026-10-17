@@ -169,6 +169,7 @@
     animation: rise .7s cubic-bezier(.2,.8,.2,1);
   }
   @keyframes rise { from { transform: translateY(18px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (pointer: coarse) { .card li.keys { display: none; } }
   .played { margin: 0; font-size: .85rem; font-weight: 700; color: var(--gold); }
   .thanks { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; }
   .thanks h3 { margin: 0; font-family: var(--serif); font-size: 1.05rem; }
@@ -269,15 +270,16 @@
       <h2>今天，我們一起當法會小天使</h2>
       <p class="lead">新朋友第一次來參加法會，難免會有點陌生。看到誰頭上冒出泡泡，就走過去幫他一把吧！</p>
       <ul>
-        <li><span>👆</span><span>點地板走路；點人或櫃子，會自己走過去互動。電腦也可以用方向鍵。</span></li>
+        <li><span>👆</span><span>點地板走路；點人或櫃子，會自己走過去互動。</span></li>
         <li><span>💬</span><span>泡泡就是需求：拿對的物資送過去，或待在身邊陪他一下。</span></li>
         <li><span>✋</span><span>手上一次只能拿一樣；直接去拿別的，舊的會自動放回去。</span></li>
-        <li><span>⏱</span><span>挑戰模式：泡泡上方的時間條跑完前要完成，來不及的話學長姊會先接手。</span></li>
+        <li><span>⏱</span><span>挑戰模式：泡泡上方的時間條跑完前要完成，來不及的話學長會先接手。</span></li>
         <li><span>👋</span><span>剛到的朋友先打聲招呼，關心一下吃過早餐沒。</span></li>
         <li><span>🥤</span><span>每種飲料都要先到備品區拿紙杯：飲水機有溫水、熱水、熱茶；咖啡機做美式，加鮮奶變拿鐵。</span></li>
         <li><span>🚻</span><span>想上洗手間的朋友，要帶到對的那一間：左下角女廁 🚺、右下角男廁 🚹。</span></li>
-        <li><span>🧑‍💼</span><span>卡關了？穿綠背心的公關、總務、輔導組學長姊都會幫你。</span></li>
-        <li><span>🎵</span><span>有背景音樂，右下角 🔊 可以開關（電腦按 M）。電腦用方向鍵或 WASD 也能走。</span></li>
+        <li><span>🧑‍💼</span><span>卡關了？穿綠背心的公關、總務、輔導組學長都會幫你。</span></li>
+        <li class="keys"><span>⌨️</span><span>電腦：方向鍵或 WASD 走路（可按住），撞到人或櫃子就會互動；空白鍵和面前的人互動；選單按數字鍵選；M 開關音樂。</span></li>
+        <li><span>🎵</span><span>有背景音樂，右下角 🔊 可以開關。</span></li>
       </ul>
       <p class="tiny" id="levelNote"></p>
       <p class="played" id="playedIntro" hidden></p>
@@ -767,7 +769,7 @@
     if (!path) { say(null, '那邊過不去耶，換條路試試。'); return; }
     S.path = path; S.pending = cb || null; S.goal = goals;
   }
-  // 學長姊會在自己負責的區域附近走動；不站門口、走道等窄處，也不擋住預留給新朋友的位置
+  // 學長會在自己負責的區域附近走動；不站門口、走道等窄處，也不擋住預留給新朋友的位置
   const openCount = (x, y) => DIRS.filter(([dx, dy]) => !solid(x + dx, y + dy)).length;
   function reserved(x, y) {
     const list = [SPOTS.entrance, SPOTS.greet, SPOTS.greet2, SPOTS.comfort, ...SPOTS.hiddens].filter(Boolean);
@@ -890,7 +892,7 @@
     if (S.follower === n) S.follower = null;
     sfx('no');
     say(STAFF[0], '這位朋友我先接手照顧，你去幫其他人吧！');
-    setHint('沒關係，學長姊先接手了。一起繼續照顧其他人！');
+    setHint('沒關係，學長先接手了。一起繼續照顧其他人！');
     checkWaveEnd();
   }
   const waveNpcs = () => S.npcs.filter(n => n.wave === S.wave);
@@ -1279,7 +1281,7 @@
   }
   function touchNpc(n) {
     if (n.state === 'done') return say(n, '今天收穫好多，謝謝你～');
-    if (n.state === 'missed') return say(n, '學長姊已經照顧我了，謝謝你～');
+    if (n.state === 'missed') return say(n, '學長已經照顧我了，謝謝你～');
     if (!n.revealed) { n.revealed = true; noteReveal(); sfx('pop'); return say(n, n.ask); }
     const nd = NEEDS[n.need];
     if (n.need === 'guide') {
@@ -1346,7 +1348,7 @@
     const fx = (e.clientX - r.left) / r.width * COLS, fy = (e.clientY - r.top) / r.height * ROWS;
     const x = Math.floor(fx), y = Math.floor(fy);
     S.ripple = { x, y, t: 0 };
-    // 走動中的學長姊：點在他畫面上的位置附近（或剛離開的那格）也算點到
+    // 走動中的學長：點在他畫面上的位置附近（或剛離開的那格）也算點到
     const near = STAFF.find(st => {
       const [sx, sy] = posOf(st);
       return Math.hypot(sx + .5 - fx, sy + .5 - fy) < .75 || (st.t < 1 && st.fx === x && st.fy === y);
@@ -1354,19 +1356,46 @@
     if (near) { S.chasing = null; return chaseStaff(near); }
     handleTile(x, y, false);
   });
-  window.addEventListener('keydown', e => {
-    if (e.key === 'm' || e.key === 'M') return Sound.setOn(!Sound.on, S.running);
-    if (!S.running) return;
-    const d = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] }[e.key];
-    if (!d) return;
-    e.preventDefault();
+  // 鍵盤：看實體按鍵（e.code），開著注音輸入法、大寫鎖定或按住 Shift 都能用
+  const KEY_DIRS = {
+    ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1],
+    ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0],
+  };
+  const held = [];              // 目前按住的方向鍵，最後按的優先
+  let facing = [0, 1];
+  function keyStep(d, bump) {
     const p = S.player;
-    if (p.t < 1 || S.path.length) return;
-    closeChoice();
+    S.path = []; S.pending = null; S.chasing = null; facing = d;
     const nx = p.x + d[0], ny = p.y + d[1];
-    if (walkable(nx, ny)) { S.path = [[nx, ny]]; S.pending = null; }
-    else handleTile(nx, ny, true);
+    if (walkable(nx, ny)) S.path = [[nx, ny]];
+    else if (bump) handleTile(nx, ny, true);   // 撞到人或櫃子＝互動（只在剛按下時，按住不會一直觸發）
+  }
+  window.addEventListener('keydown', e => {
+    if (e.code === 'KeyM') { if (!e.repeat) Sound.setOn(!Sound.on, S.running); return; }
+    if (!S.running) return;
+    if (!$('#choice').hidden) {
+      const btns = [...document.querySelectorAll('#choiceRow .btn')];
+      const k = e.code.match(/^(?:Digit|Numpad)([1-9])$/);
+      if (k && btns[k[1] - 1]) { e.preventDefault(); btns[k[1] - 1].click(); return; }
+      if (e.code === 'Escape') { e.preventDefault(); closeChoice(); return; }
+    }
+    const d = KEY_DIRS[e.code];
+    if (d) {
+      e.preventDefault();
+      closeChoice();
+      const i = held.indexOf(e.code); if (i >= 0) held.splice(i, 1);
+      held.push(e.code);
+      if (!e.repeat && S.player.t >= 1) keyStep(d, true);
+      return;
+    }
+    // 空白鍵／Enter：和面前那一格的人或櫃子互動（焦點在按鈕上時讓按鈕自己處理）
+    if ((e.code === 'Space' || e.code === 'Enter') && !e.target.closest('button, a, input, textarea')) {
+      e.preventDefault();
+      if (S.player.t >= 1) handleTile(S.player.x + facing[0], S.player.y + facing[1], true);
+    }
   });
+  window.addEventListener('keyup', e => { const i = held.indexOf(e.code); if (i >= 0) held.splice(i, 1); });
+  window.addEventListener('blur', () => { held.length = 0; });
   $('#hand').addEventListener('click', () => {
     if (!S.hand) return say(null, '手上空空的，去櫃子拿點東西吧。');
     say(null, `${ITEMS[S.hand].e}${ITEMS[S.hand].n}放回去了。`);
@@ -1415,6 +1444,7 @@
         }
       } else if (S.pending) { const cb = S.pending; S.pending = null; cb(); }
     }
+    if (held.length && p.t >= 1 && !S.path.length && !S.pending) keyStep(KEY_DIRS[held[held.length - 1]], false);
     wanderStaff(dt);
     const idle = p.t >= 1 && !S.path.length;
     for (const n of S.npcs) {
