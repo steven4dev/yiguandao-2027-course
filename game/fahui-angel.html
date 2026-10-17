@@ -80,12 +80,13 @@
 
   #stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; }
   canvas { display: block; border-radius: 14px; box-shadow: 0 10px 30px rgba(5,150,105,.12), 0 0 0 1px var(--line); touch-action: none; cursor: pointer; max-width: 100%; }
+  /* 對話框固定在地圖上方的獨立一欄，不會蓋住入口或任何新朋友 */
+  #sayBar { flex: none; height: 66px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
   #say {
-    position: absolute; left: 50%; top: 10px; transform: translateX(-50%);
-    width: max-content; max-width: calc(100% - 24px);
+    width: max-content; max-width: 100%; box-sizing: border-box;
     background: var(--card); color: var(--ink);
     border: 1.5px solid var(--green); border-radius: 12px;
-    padding: 8px 12px; font-size: .88rem; line-height: 1.5;
+    padding: 6px 12px; font-size: .84rem; line-height: 1.45; max-height: 62px; overflow: hidden;
     box-shadow: 0 6px 18px rgba(30,41,59,.14);
     pointer-events: none;
   }
@@ -242,9 +243,10 @@
     </div>
   </header>
 
+  <div id="sayBar" aria-live="polite"><div id="say" hidden></div></div>
+
   <div id="stage">
     <canvas id="cv" aria-label="法會會場地圖，點地板移動，點人物或櫃子互動"></canvas>
-    <div id="say" hidden></div>
     <div id="banner" hidden></div>
   </div>
 
@@ -273,7 +275,7 @@
         <li><span>⏱</span><span>挑戰模式：泡泡上方的時間條跑完前要完成，來不及的話學長姊會先接手。</span></li>
         <li><span>👋</span><span>剛到的朋友先打聲招呼，關心一下吃過早餐沒。</span></li>
         <li><span>🥤</span><span>每種飲料都要先到備品區拿紙杯：飲水機有溫水、熱水、熱茶；咖啡機做美式，加鮮奶變拿鐵。</span></li>
-        <li><span>🚻</span><span>想上洗手間的朋友，要帶到對的那一間：左下角男廁 🚹、右下角女廁 🚺。</span></li>
+        <li><span>🚻</span><span>想上洗手間的朋友，要帶到對的那一間：左下角女廁 🚺、右下角男廁 🚹。</span></li>
         <li><span>🧑‍💼</span><span>卡關了？穿綠背心的公關、總務、輔導組學長姊都會幫你。</span></li>
         <li><span>🎵</span><span>有背景音樂，右下角 🔊 可以開關（電腦按 M）。電腦用方向鍵或 WASD 也能走。</span></li>
       </ul>
@@ -388,7 +390,7 @@
         '#F...M...L#',
         '#.........#',
         '#.........#',
-        '#U.......V#',
+        '#V.......U#',
         '###########',
       ],
       staff: [[3, 2], [7, 11], [5, 15]],
@@ -416,7 +418,7 @@
         '#T...K..M.............L#',
         '#......................#',
         '#..............x..x....#',
-        '#U..........F.........V#',
+        '#V..........F.........U#',
         '########################',
       ],
       staff: [[3, 2], [19, 3], [13, 12]],
@@ -461,7 +463,7 @@
     note:    { e: '📝', item: 'note', ask: '我想抄重點，有筆記本嗎？', hint: '筆記本在文具櫃（右上方）。' },
     water:   { e: '💧', item: 'warm', ask: '有點口渴，可以給我一杯水嗎？', hint: '溫開水：備品區拿紙杯 → 飲水機選「溫水」。', wrong: { hot: '太燙了！我想喝溫的就好。' } },
     hotwater:{ e: '♨️', item: 'hot', ask: '胃有點不舒服，想喝杯熱開水。', hint: '熱開水：備品區拿紙杯 → 飲水機選「熱水」。', wrong: { warm: '溫的不夠暖…想要熱一點的。' } },
-    toilet:  { e: '🚻', ask: '請問洗手間在哪裡？', hint: '讓他跟著你，帶到對的洗手間：左下角男廁 🚹、右下角女廁 🚺。' },
+    toilet:  { e: '🚻', ask: '請問洗手間在哪裡？', hint: '讓他跟著你，帶到對的洗手間：左下角女廁 🚺、右下角男廁 🚹。' },
     coat:    { e: '🧥', item: 'coat', ask: '冷氣好強，有點冷…', hint: '薄外套在備品區（右邊）；櫃子鎖著的話，找總務組拿鑰匙。' },
     tea:     { e: '🍵', item: 'tea', ask: '想喝杯熱茶暖暖身子。', hint: '熱茶：備品區拿紙杯 → 飲水機選「熱茶」。' },
     latte:   { e: '☕🥛', item: 'latte', ask: '好想喝一杯熱拿鐵～', hint: '拿鐵＝美式＋鮮奶：備品區拿紙杯，咖啡機裝美式，再到冰箱加鮮奶（順序反過來也可以）。' },
@@ -1291,7 +1293,7 @@
       if (S.follower) return say(n, '你正在帶另一位朋友，等等再麻煩你～');
       n.home = [n.x, n.y]; n.state = 'following'; S.follower = n;
       say(n, n.gender === 'm' ? '謝謝！麻煩帶我去男廁 🚹' : '謝謝！麻煩帶我去女廁 🚺');
-      return setHint(n.gender === 'm' ? '帶他到左下角的男廁 🚹，點一下廁所。' : '帶她到右下角的女廁 🚺，點一下廁所。');
+      return setHint(n.gender === 'm' ? '帶他到右下角的男廁 🚹，點一下廁所。' : '帶她到左下角的女廁 🚺，點一下廁所。');
     }
     if (n.need === 'greet') {
       say(null, '你：早安，歡迎你來！吃過早餐了嗎？');
