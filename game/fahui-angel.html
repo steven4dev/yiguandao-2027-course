@@ -161,6 +161,8 @@
   .end-head { text-align: center; display: grid; gap: 4px; }
   .end-head h2 { margin: 0; font-family: var(--serif); font-size: 1.45rem; font-weight: 900; text-wrap: balance; line-height: 1.4; }
   .end-head .eyebrow { color: var(--gold); }
+  .end-title { margin: 0; font-weight: 900; color: var(--gold); letter-spacing: .04em; }
+  .end-steps { margin: 0; font-size: .85rem; line-height: 1.6; color: var(--ink-soft); }
   .result { margin: 0; display: grid; gap: 6px; justify-items: center; }
   .result img {
     width: 100%; max-width: 100%; aspect-ratio: 4 / 5; border-radius: 18px; display: block;
@@ -199,6 +201,7 @@
   .tile small { position: absolute; bottom: 2px; left: 0; right: 0; text-align: center; font-size: 9.5px; font-weight: 700; color: var(--c); white-space: nowrap; }
   .arr { color: var(--muted); font-weight: 700; font-size: 1rem; }
   .chip { background: #fff; border: 1.5px solid var(--line); border-radius: 99px; padding: 3px 9px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+  .stars5 { color: var(--gold); font-size: 1.05rem; letter-spacing: 1px; }
   .stack { flex-direction: column; gap: 4px !important; }
   .pair { width: 100%; }
   .floor { width: 34px; height: 34px; border-radius: 8px; background: #E1EEF8; box-shadow: inset 0 0 0 2px #0284C7; }
@@ -383,9 +386,9 @@
           <p class="tip">公關學長就在報到台旁邊，點報到台也能問他。</p>
         </section>
         <section class="tpage">
-          <div class="ill" aria-hidden="true"><span class="who ">👨<span class="bub"><span class="tbar"></span>💧</span></span><span class="arr" aria-hidden="true">→</span><span class="chip">⏱ 時間條跑完前完成</span><span class="arr" aria-hidden="true">→</span>★★★</div>
+          <div class="ill" aria-hidden="true"><span class="who ">👨<span class="bub"><span class="tbar"></span>💧</span></span><span class="arr" aria-hidden="true">→</span><span class="chip">⏱ 時間條跑完前完成</span><span class="arr" aria-hidden="true">→</span><span class="stars5">★★★★★</span></div>
           <h2>選一個模式開始</h2>
-          <p class="lead"><b>挑戰模式</b>：泡泡上方有時間條，好幾位朋友會同時需要幫忙；來不及的話學長會先接手。零失誤就是「全能小天使」🏆</p>
+          <p class="lead"><b>挑戰模式</b>：泡泡上方有時間條，好幾位朋友會同時需要幫忙；來不及的話學長會先接手。完成越多星星越多，最高 ★★★★★，零失誤就是「全能小天使」🏆</p>
           <p class="tiny" id="levelNote"></p>
           <p class="played" id="playedIntro" hidden></p>
           <div class="modes">
@@ -443,6 +446,8 @@
         <p class="played" id="playedEnd" hidden></p>
         <div class="eyebrow">✨ 服務圓滿</div>
         <h2 id="endHead">謝謝你，今天的小天使</h2>
+        <p class="end-title" id="endTitle"></p>
+        <p class="end-steps" id="endSteps"></p>
       </div>
       <figure class="result">
         <img id="resultImg" alt="你的法會小天使卡">
@@ -487,7 +492,7 @@
   // 依裝置出地圖：手機用直式小地圖，電腦用有隔間、餐桌的大地圖，需求也比較多
   const LEVELS = {
     mobile: {
-      name: '手機版', patience: 1.35, timeScale: 1.4,
+      name: '手機版', patience: 1.35, timeScale: 1.4, stepBase: 19,
       map: [
         '###########',
         '#R...E...S#',
@@ -518,7 +523,7 @@
       ],
     },
     desktop: {
-      name: '電腦版', patience: 2.5, timeScale: 2.2,
+      name: '電腦版', patience: 2.5, timeScale: 2.2, stepBase: 37,
       map: [
         '########################',
         '#R...E........#...S....#',
@@ -1127,12 +1132,40 @@
   function noteReveal() { if (!S.hiddenHinted && !S.careHint) S.hiddenEarly = true; }
 
   // 稱號看的是「怎麼玩」，不是快慢：每一種玩法都值得被肯定
-  const starsOf = () => S.mode !== 'challenge' ? 0 : S.missed === 0 ? 3 : S.missed <= Math.round(S.total * .2) ? 2 : 1;
+  // 星等（只有挑戰模式）：看心意完成的比例，最少一顆星
+  const STAR_WORDS = { 5: '每一位都被你照顧到了！🏆', 4: '幾乎沒有漏掉任何人，好厲害！', 3: '大家都感受到你的用心了。',
+                       2: '你已經幫到一半以上的人，很棒！', 1: '願意走進來幫忙，就是最好的開始。' };
+  const doneRatio = () => S.hearts / Math.max(1, S.total);
+  function starsOf() {
+    if (S.mode !== 'challenge') return 0;
+    if (S.missed === 0) return 5;
+    const r = doneRatio();
+    return r >= .9 ? 4 : r >= .75 ? 3 : r >= .5 ? 2 : 1;
+  }
+  const starStr = n => '★'.repeat(n) + '☆'.repeat(5 - n);
+  // 步數效率：每份心意平均走幾步，和這張地圖的基準相比（1.0＝和有效率的路線一樣）
+  const stepEff = () => (S.steps / Math.max(1, S.hearts)) / LV.stepBase;
+  const STEP_WORDS = {
+    precise: ['每一步都走在刀口上，路線規劃得超漂亮！', '繞路？不存在的。', '走最少的路，幫最多的人。'],
+    steady:  ['步伐穩穩的，該去的地方都到了。', '走得剛剛好，不急也不亂。', '一步一步，把心意送到每個人手上。'],
+    roam:    ['你走遍了整個會場，到處都有你的腳印！', '這麼勤快，會場每個角落都認得你了。', '多走的每一步，都是多一分關心。'],
+  };
+  function stepWord() {
+    const e = stepEff();
+    return pick(STEP_WORDS[e <= 1.15 ? 'precise' : e <= 1.6 ? 'steady' : 'roam']);
+  }
+  function distanceText(steps) {
+    const m = Math.round(steps * .6), laps = Math.floor(m / 400);
+    return `走了 ${steps} 步，約 ${m} 公尺` + (laps === 1 ? '，差不多繞操場一圈了！' : laps > 1 ? `，差不多繞操場 ${laps} 圈了！` : '');
+  }
+  // 頭銜由上往下比對，符合第一個就是它
   function angelTitle(sec) {
-    if (S.mode === 'challenge' && S.missed === 0) return { e: '🏆', name: '全能小天使', desc: '同時照顧好每一個人，你是會場的定心丸。' };
+    if (starsOf() === 5) return { e: '🏆', name: '全能小天使', desc: '同時照顧好每一個人，你是會場的定心丸。' };
     if (S.hiddenEarly) return { e: '🔍', name: '細心小天使', desc: '你看見了那個沒說出口的需要。' };
+    if (S.hearts && stepEff() <= 1.15 && doneRatio() >= .9) return { e: '🗺️', name: '路線小天使', desc: '最短的路，送出最暖的心意。' };
     if (sec <= 100 * LV.timeScale) return { e: '🍃', name: '疾風小天使', desc: '需要出現的那一刻，你已經在路上。' };
     if (S.hints >= 3) return { e: '🤝', name: '同行小天使', desc: '懂得請教夥伴，一群人走得更遠。' };
+    if (S.hearts && stepEff() >= 1.6) return { e: '👟', name: '勤走小天使', desc: '哪裡需要你，你就走到哪裡。' };
     if (sec >= 240 * LV.timeScale) return { e: '🌿', name: '從容小天使', desc: '不疾不徐，把每份心意都送得穩穩的。' };
     return { e: '☀️', name: '溫暖小天使', desc: '你的每一步，都讓會場更暖一點。' };
   }
@@ -1156,10 +1189,14 @@
       .filter(t => !seen.has(t.line) && seen.add(t.line)).slice(0, 3);
     renderThanks();
     if (!pick.length) pick = [{ face: '👩‍💼', line: '謝謝你今天一起來服務！' }];
-    const r = { sec, title, pick, hearts: S.hearts, total: S.total, people: helped, steps: S.steps, items: S.items, stars: starsOf(), mode: S.mode, level: LV.name };
-    const starTxt = `（${LV.name}）` + (r.stars ? `挑戰模式 ${'★'.repeat(r.stars)}${'☆'.repeat(3 - r.stars)}，` : '輕鬆模式，');
-    shareText = `我在「法會小天使」${starTxt}成為了${title.e}${title.name}！用 ${timeText(sec)}，陪伴了 ${helped} 位新朋友。你也來當一天新朋友身邊的那雙手吧 👉 ${GAME_URL}`;
-    $('#endHead').textContent = `你是今天的${title.name}`;
+    const stars = starsOf(), sw = stepWord(), dist = distanceText(S.steps);
+    const r = { sec, title, pick, hearts: S.hearts, total: S.total, people: helped, steps: S.steps, items: S.items, stars, mode: S.mode, level: LV.name,
+                stepWord: sw, meters: Math.round(S.steps * .6) };
+    const starTxt = `（${LV.name}）` + (stars ? `挑戰模式 ${starStr(stars)}，` : '輕鬆模式，');
+    shareText = `我在「法會小天使」${starTxt}成為了${title.e}${title.name}！${dist.replace(/[！。]$/, '')}，陪伴了 ${helped} 位新朋友。你也來當一天新朋友身邊的那雙手吧 👉 ${GAME_URL}`;
+    $('#endHead').textContent = stars ? STAR_WORDS[stars] : `你是今天的${title.name}`;
+    $('#endTitle').textContent = `${stars ? starStr(stars) + '　' : ''}${title.e} ${title.name}`;
+    $('#endSteps').textContent = `👣 ${sw}${dist}${/[！。]$/.test(dist) ? '' : '。'}`;
     $('#switchBtn').textContent = S.mode === 'challenge' ? '🌿 改玩輕鬆' : '⏱ 改玩挑戰';
     $('#lineShare').href = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(GAME_URL) + '&text=' + encodeURIComponent(shareText);
     $('#shareTip').className = 'tiny';
@@ -1238,7 +1275,7 @@
     font(700, 28); center('2027 全真社青・新道親法會 志工陪伴', 50, '#059669');
     {
       g.font = `700 26px ${SANS}`;
-      const lab = `${r.level}・` + (r.stars ? `挑戰模式  ${'★'.repeat(r.stars)}${'☆'.repeat(3 - r.stars)}` : '輕鬆模式');
+      const lab = `${r.level}・` + (r.stars ? `挑戰模式  ${starStr(r.stars)}` : '輕鬆模式');
       const lw = g.measureText(lab).width + 44;
       g.fillStyle = '#D97706'; round((W - lw) / 2, 74, lw, 40, 20); g.fill();
       center(lab, 95, '#fff');
@@ -1263,9 +1300,9 @@
     g.save(); g.shadowColor = 'rgba(5,150,105,.16)'; g.shadowBlur = 30; g.shadowOffsetY = 10;
     g.fillStyle = '#fff'; round(90, 640, 900, 300, 36); g.fill(); g.restore();
     font(900, 40, SERIF); center(`你花了 ${timeText(r.sec)}`, 700, '#059669');
-    font(500, 32); center(r.people ? `陪伴了 ${r.people} 位新朋友，讓他們的第一次不再陌生` : '你的到來，就是今天最好的陪伴', 752, '#1E293B');
+    font(500, 30); center(r.hearts ? `👣 ${r.stepWord}` : '你的到來，就是今天最好的陪伴', 752, '#1E293B');
     g.strokeStyle = '#E2EEE7'; g.lineWidth = 2; g.beginPath(); g.moveTo(150, 795); g.lineTo(930, 795); g.stroke();
-    const cols = [['❤️', r.mode === 'challenge' ? `${r.hearts}/${r.total}` : r.hearts, '份心意'], ['👣', r.steps, '步的陪伴'], ['🎁', r.items, '份物資']];
+    const cols = [['❤️', r.mode === 'challenge' ? `${r.hearts}/${r.total}` : r.hearts, '份心意'], ['👣', r.steps, `步・約 ${r.meters} 公尺`], ['🎁', r.items, '份物資']];
     cols.forEach(([ch, n, lab], i) => {
       const x = 240 + i * 300;
       g.font = `900 54px ${SANS}`;

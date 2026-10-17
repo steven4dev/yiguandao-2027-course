@@ -5,7 +5,7 @@
  * 部署成「網頁應用程式」（執行身分：我；誰可以存取：所有人），
  * 再把部署網址填到 game/stats-config.json 的 endpoint。
  *
- * 只記錄匿名事件：時間、事件（開始／完成／分享）、版本、模式、星等，不收集任何個人資料。
+ * 只記錄匿名事件：時間、事件（開始／完成／分享）、版本、模式、星等（1～5），不收集任何個人資料。
  */
 
 const SHEET_NAME = '紀錄';
@@ -26,7 +26,7 @@ function hit_(p) {
   if (EVENTS.indexOf(ev) < 0) return { ok: false };
   const level = LEVELS.indexOf(p.level) >= 0 ? p.level : '';
   const mode = MODES.indexOf(p.mode) >= 0 ? p.mode : '';
-  const stars = /^[0-3]$/.test(String(p.stars || '')) ? Number(p.stars) : '';
+  const stars = /^[0-5]$/.test(String(p.stars || '')) ? Number(p.stars) : '';
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
