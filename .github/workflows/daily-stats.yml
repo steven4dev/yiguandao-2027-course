@@ -1,0 +1,44 @@
+# 每天台灣時間 00:05，把 Google 試算表的遊戲人次總數備份到 game/stats.json
+# 用 GitHub 內建權限提交，不需要把任何金鑰放在網頁上
+name: 每日備份遊戲人次
+
+on:
+  schedule:
+    - cron: '5 16 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 讀取 Google 試算表統計
+        run: |
+          URL=$(jq -r '.endpoint // ""' game/stats-config.json)
+          if [ -z "$URL" ]; then
+            echo "game/stats-config.json 還沒有填 endpoint，略過"
+            exit 0
+          fi
+          curl -fsSL "$URL" -o /tmp/now.json
+          jq -e '.finish | numbers' /tmp/now.json > /dev/null
+          TODAY=$(TZ=Asia/Taipei date +%F)
+          jq --slurpfile now /tmp/now.json --arg d "$TODAY" '
+            ($now[0]) as $n
+            | .start = $n.start | .finish = $n.finish | .share = $n.share | .updated = $d
+            | .history = ((.history // []) | map(select(.date != $d)))
+                + [{ date: $d, start: $n.start, finish: $n.finish, share: $n.share }]
+          ' game/stats.json > /tmp/stats.json
+          mv /tmp/stats.json game/stats.json
+
+      - name: 提交備份
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add game/stats.json
+          if git diff --cached --quiet; then echo "數字沒有變化"; exit 0; fi
+          git commit -m "每日備份遊戲人次 $(TZ=Asia/Taipei date +%F)"
+          git push

@@ -496,27 +496,40 @@
     return pick(fresh.length ? fresh : opts);
   }
   const GAME_URL = 'https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html';
-  // ---------- 體驗人次計數器（GoatCounter，免費、不用 cookie、不收集個資） ----------
-  // 到 https://www.goatcounter.com 註冊後，把站台代號填在這裡就會開始計數，例如 'fahui2027'
-  // 想在畫面上顯示人次，要在 GoatCounter 的 Settings 勾選「Allow adding visitor counts on your website」
-  const GC_CODE = '';
+  // ---------- 體驗人次計數器（Google 試算表 + Apps Script） ----------
+  // 網址只設定在 game/stats-config.json 一個地方；還沒填就不計數、不顯示
+  // 只送匿名事件（開始／完成／分享、版本、模式、星等），不收集任何個人資料
   const Counter = (() => {
-    if (!GC_CODE || !/^[a-z0-9-]+$/.test(GC_CODE)) return { hit() {}, show() {} };
-    const sc = document.createElement('script');
-    sc.async = true; sc.src = 'https://gc.zgo.at/count.js';
-    sc.dataset.goatcounter = `https://${GC_CODE}.goatcounter.com/count`;
-    document.head.appendChild(sc);
-    const queue = [];
-    const flush = () => { while (queue.length && window.goatcounter && window.goatcounter.count) window.goatcounter.count(queue.shift()); };
-    sc.addEventListener('load', flush);
+    let endpoint = '';
+    const ready = fetch('stats-config.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : {}))
+      .then(c => {
+        const u = String((c && c.endpoint) || '').trim();
+        if (/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u)) endpoint = u;
+      })
+      .catch(() => {});
+    const showNum = (sel, n) => {
+      if (!n) return;
+      const el = document.querySelector(sel);
+      el.textContent = `🙌 已經有 ${Number(n).toLocaleString('zh-TW')} 人次完成服務`;
+      el.hidden = false;
+    };
+    // 每日備份的 stats.json 當備援：Google 暫時連不上時也能顯示
+    const fromBackup = sel => fetch('stats.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null)).then(d => d && showNum(sel, d.finish)).catch(() => {});
     return {
-      // 事件：開始、完成、分享，各自分開計數
-      hit(name, title) { queue.push({ path: 'fahui-angel/' + name, title, event: true }); flush(); },
+      hit(ev, extra) {
+        ready.then(() => {
+          if (!endpoint) return;
+          const q = new URLSearchParams(Object.assign({ action: 'hit', ev }, extra || {}));
+          fetch(`${endpoint}?${q}`, { mode: 'no-cors', keepalive: true }).catch(() => {});
+        });
+      },
       show(sel) {
-        fetch(`https://${GC_CODE}.goatcounter.com/counter/${encodeURIComponent('fahui-angel/finish')}.json`)
-          .then(r => r.ok ? r.json() : null)
-          .then(d => { if (d && d.count) { const el = document.querySelector(sel); el.textContent = `🙌 已經有 ${d.count} 人次完成服務`; el.hidden = false; } })
-          .catch(() => {});
+        ready.then(() => {
+          if (!endpoint) return fromBackup(sel);
+          fetch(endpoint).then(r => r.json()).then(d => showNum(sel, d.finish)).catch(() => fromBackup(sel));
+        });
       },
     };
   })();
@@ -913,7 +926,7 @@
   function finish() {
     if (S.finished) return;
     S.running = false; S.finished = true;
-    Counter.hit('finish', '完成服務'); setTimeout(() => Counter.show('#playedEnd'), 1500);
+    Counter.hit('finish', { level: LEVEL, mode: S.mode, stars: starsOf() }); setTimeout(() => Counter.show('#playedEnd'), 1500);
     Sound.stopMusic(1.2); setTimeout(() => sfx('end'), 300);
     const sec = Math.max(1, Math.round(S.time));
     const title = angelTitle(sec);
@@ -1145,7 +1158,7 @@
   $('#shareFileBtn').addEventListener('click', () => {
     const file = curFile();
     if (!file) return;
-    Counter.hit('share', '分享小天使卡');
+    Counter.hit('share', { level: LEVEL, mode: S.mode });
     navigator.share({ files: [file] })
       .then(() => $('#shareFileBtn').closest('.step').classList.add('done'))
       .catch(e => { if (!e || e.name !== 'AbortError') openSaveSheet('這次沒有成功叫出分享選單，改用長按儲存的方式。', false); });
@@ -1370,7 +1383,7 @@
     $('#intro').hidden = true; $('#end').hidden = true;
     S.running = true;
     Sound.startMusic();
-    Counter.hit(`start-${S.mode}-${LEVEL}`, `開始遊戲（${LV.name}・${S.mode === 'challenge' ? '挑戰' : '輕鬆'}）`);
+    Counter.hit('start', { level: LEVEL, mode: S.mode });
     startWave(0);
   }
   $('#sound').addEventListener('click', () => Sound.setOn(!Sound.on, S.running));
