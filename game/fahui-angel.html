@@ -591,21 +591,117 @@
   };
   // 每種需求有好幾句心聲，同一局不重複，讓玩家看見每一次幫忙都不一樣
   const THANKS = {
-    guide:    ['有你帶路，我就不慌了。', '第一次來找不到位子，還好有你。'],
-    note:     ['我會把今天的感動都記下來！', '有筆記本，重點都抄下來了！', '回家要好好再讀一遍，謝謝你。'],
-    water:    ['這杯溫水好暖，謝謝你注意到我。', '喉嚨舒服多了，溫度剛剛好！', '你怎麼知道我正口渴，謝謝！'],
-    coat:     ['不冷了，連心都暖了。', '外套好暖，謝謝你的細心。'],
-    tea:      ['這杯熱茶，我會記很久。', '熱茶的香氣，讓我放鬆下來了。', '暖暖一杯茶，整個人都舒服了。'],
-    comfort:  ['有你陪著，我不緊張了。', '原來有人陪，就不那麼害怕了。'],
-    bento:    ['吃飽了，覺得被好好照顧。', '素便當好好吃，謝謝你幫我拿！', '肚子飽飽，心也滿滿的。'],
-    hidden:   ['謝謝你走過來，我以為沒人會發現我。'],
-    hotwater: ['熱熱的喝下去，胃舒服多了。', '一杯熱開水，整個人暖起來了。'],
-    toilet:   ['呼～得救了，謝謝你帶路！', '還好有你，不然我真的找不到。', '謝謝你，差點就來不及了！'],
-    latte:    ['這杯拿鐵剛剛好，你好會調！', '奶泡香香的，好療癒～'],
-    bao:      ['熱騰騰的水煎包，好幸福！', '兩顆剛剛好，終於有力氣了！'],
-    coffee:   ['好香的美式，謝謝你！', '一口美式，腦袋都清醒了。'],
-    candy:    ['咖啡糖好有效，醒了醒了！'],
-    americano:['一杯美式，精神都回來了！'],
+    guide: [
+      '有你帶路，我就不慌了。',
+      '第一次來找不到位子，還好有你。',
+      '這個位子看得好清楚，謝謝你幫我找。',
+      '一進門就有人帶，覺得被歡迎了。',
+    ],
+    note: [
+      '我會把今天的感動都記下來！',
+      '有筆記本，重點都抄下來了！',
+      '回家要好好再讀一遍，謝謝你。',
+      '剛剛那段話好感動，幸好來得及寫下來。',
+      '連筆記本都幫我準備，好貼心。',
+      '有地方寫字，聽課更專心了。',
+      '這本筆記，要拿來記今天的收穫。',
+    ],
+    water: [
+      '這杯溫水好暖，謝謝你注意到我。',
+      '喉嚨舒服多了，溫度剛剛好！',
+      '你怎麼知道我正口渴，謝謝！',
+      '剛剛講到一半就渴了，這杯水來得正好。',
+      '不冷不燙，喝起來好舒服。',
+      '一路趕過來都沒喝水，終於解渴了。',
+      '你倒的水溫溫的，好像家人倒的一樣。',
+      '本來不好意思麻煩人，謝謝你先想到。',
+      '喝了水，聲音都回來了，等等可以大聲念了。',
+    ],
+    coat: [
+      '不冷了，連心都暖了。',
+      '外套好暖，謝謝你的細心。',
+      '剛剛一直在發抖，現在好多了。',
+      '你連冷氣太強都注意到，好細心。',
+    ],
+    tea: [
+      '這杯熱茶，我會記很久。',
+      '熱茶的香氣，讓我放鬆下來了。',
+      '暖暖一杯茶，整個人都舒服了。',
+      '捧著熱茶，手都暖起來了。',
+      '泡得剛剛好，不會太濃。',
+      '喝一口茶，心也跟著靜下來了。',
+      '這個茶香，讓我想起阿嬤家。',
+    ],
+    comfort: [
+      '有你陪著，我不緊張了。',
+      '原來有人陪，就不那麼害怕了。',
+      '謝謝你沒有多問，只是陪著我。',
+      '心跳慢下來了，好像可以放心待下來。',
+    ],
+    bento: [
+      '吃飽了，覺得被好好照顧。',
+      '素便當好好吃，謝謝你幫我拿！',
+      '肚子飽飽，心也滿滿的。',
+      '沒想到素食這麼好吃，下次還想來。',
+      '有人幫忙拿便當，好像回到家一樣。',
+      '菜色好豐富，每一口都吃得到用心。',
+    ],
+    hidden: [
+      '謝謝你走過來，我以為沒人會發現我。',
+      '我不好意思開口，還好你看見我了。',
+      '你主動來問我，我好感動。',
+      '一個人坐在角落有點孤單，謝謝你過來。',
+    ],
+    hotwater: [
+      '熱熱的喝下去，胃舒服多了。',
+      '一杯熱開水，整個人暖起來了。',
+      '就是要這麼熱才舒服，謝謝你。',
+      '胃不再悶悶的了，好險有你。',
+      '小口小口喝，整個人慢慢放鬆了。',
+      '肚子暖了，終於可以專心聽課了。',
+    ],
+    toilet: [
+      '呼～得救了，謝謝你帶路！',
+      '還好有你，不然我真的找不到。',
+      '謝謝你，差點就來不及了！',
+      '原來在這裡，我剛剛繞了好久。',
+      '你帶得好快，太感謝了！',
+      '幸好有人帶，不然我不好意思問。',
+      '找到了！謝謝你陪我走一趟。',
+    ],
+    latte: [
+      '這杯拿鐵剛剛好，你好會調！',
+      '奶泡香香的，好療癒～',
+      '比外面買的還好喝耶！',
+      '咖啡加牛奶的比例剛好，好順口。',
+      '有拿鐵陪著，下午也有精神了。',
+      '溫溫的拿鐵，喝起來好安心。',
+    ],
+    bao: [
+      '熱騰騰的水煎包，好幸福！',
+      '兩顆剛剛好，終於有力氣了！',
+      '早上沒吃就出門，這兩顆救了我。',
+      '外皮好酥，吃了整個人都醒了。',
+    ],
+    coffee: [
+      '好香的美式，謝謝你！',
+      '一口美式，腦袋都清醒了。',
+      '黑咖啡就是我要的味道。',
+      '香氣好濃，聞著就有精神。',
+      '有這杯咖啡，下一堂課沒問題了。',
+      '剛好需要一點咖啡因，你懂我！',
+      '溫度剛好，一口氣喝了半杯。',
+    ],
+    candy: [
+      '咖啡糖好有效，醒了醒了！',
+      '一顆咖啡糖，眼睛都亮起來了。',
+      '甜甜的又提神，這個好！',
+    ],
+    americano: [
+      '一杯美式，精神都回來了！',
+      '喝完美式，瞌睡蟲都跑掉了。',
+      '苦苦的剛好把我叫醒，謝謝你。',
+    ],
   };
   function thankLine(key) {
     const opts = THANKS[key] || ['謝謝你！'];
@@ -673,21 +769,27 @@
   const askFor = need => ASKS[need] ? pick(ASKS[need]) : NEEDS[need].ask;
   function buildWaves(mode) {
     const desk = LEVEL === 'desktop', ch = mode === 'challenge';
+    // 同一種需求一局最多出現 3 次，題目更多樣，心聲也不會重複
+    const used = {}, CAP = 3;
+    const ok = n => (used[n] || 0) < CAP;
+    const mark = n => { used[n] = (used[n] || 0) + 1; return n; };
+    const take = pool => { const c = pool.filter(ok); return mark(pick(c.length ? c : pool)); };
+    const takeMany = (pool, k) => { const out = []; for (const n of shuffle(pool)) { if (out.length >= k) break; if (ok(n)) out.push(mark(n)); } return out; };
     const extras = (pool, n, from, to) => ch
-      ? Array.from({ length: n }, () => ({ need: pick(pool), renew: true, delay: rnd(from, to) })).sort((a, b) => a.delay - b.delay) : [];
+      ? Array.from({ length: n }, () => ({ need: take(pool), renew: true, delay: rnd(from, to) })).sort((a, b) => a.delay - b.delay) : [];
     const w1 = [{ need: 'guide', at: 'entrance' }, { need: 'greet', at: 'greet' }];
     if (desk) w1.push({ need: 'greet', at: 'greet2' });
-    shuffle(['note', 'water', 'tea', 'coffee', 'hotwater', 'note', 'water']).slice(0, desk ? 3 : 2).forEach(need => w1.push({ need, seat: true }));
+    takeMany(['note', 'water', 'tea', 'coffee', 'hotwater', 'note', 'water'], desk ? 3 : 2).forEach(need => w1.push({ need, seat: true }));
     w1.push(...extras(['water', 'toilet', 'hotwater', 'note'], 1, 10, 20));
-    const mustB = pick(['coat', 'latte', 'sleepy']);
-    const w2 = [mustB, ...shuffle(['coat', 'latte', 'sleepy', 'tea', 'coffee', 'note', 'water', 'hotwater'].filter(n => n !== mustB)).slice(0, desk ? 3 : 2)]
+    const mustB = take(['coat', 'latte', 'sleepy']);
+    const w2 = [mustB, ...takeMany(['coat', 'latte', 'sleepy', 'tea', 'coffee', 'note', 'water', 'hotwater'].filter(n => n !== mustB), desk ? 3 : 2)]
       .map(need => ({ need, seat: true }));
-    w2.push(Math.random() < .75 ? { need: 'comfort', at: 'comfort' } : { need: pick(['water', 'note', 'coffee']), renew: true });
-    w2.push({ need: 'toilet', renew: true });
+    w2.push(Math.random() < .75 ? { need: 'comfort', at: 'comfort' } : { need: take(['water', 'note', 'coffee']), renew: true });
+    w2.push({ need: mark('toilet'), renew: true });
     w2.push(...extras(['note', 'coffee', 'water', 'tea', 'latte', 'toilet', 'hotwater'], 2, 8, 26));
     const w3 = [{ need: 'bento', renew: true }];
     if (desk) w3.push({ need: 'bento', renew: true });
-    w3.push({ need: pick(['tea', 'latte', 'coffee', 'water', 'hotwater', 'toilet']), renew: true });
+    w3.push({ need: take(['tea', 'latte', 'coffee', 'water', 'hotwater', 'toilet']), renew: true });
     w3.push({ need: 'bento', at: pick(SPOTS.hiddens), hidden: true, ask: '（小聲）我…還沒拿到便當，不好意思開口…' });
     w3.push(...extras(['latte', 'water', 'tea', 'coffee', 'toilet', 'hotwater'], desk ? 3 : 2, 8, 28));
     return [
