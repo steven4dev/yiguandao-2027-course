@@ -1711,9 +1711,8 @@
     const dx = e.clientX - swipeX; swipeX = null;
     if (Math.abs(dx) > 45) tourGo(tourAt + (dx < 0 ? 1 : -1));
   });
-  let seenTour = false;
-  try { seenTour = localStorage.getItem(TOUR_KEY) === '1'; } catch (e) {}
-  tourGo(seenTour ? tourPages.length - 1 : 0);
+  // 每次進入都從第 1 頁開始（想跳過可按「略過」）；不再因為玩過就直接跳到最後一頁
+  tourGo(0);
   $('#startBtn').addEventListener('click', () => start('challenge'));
   $('#relaxBtn').addEventListener('click', () => start('relax'));
   $('#againBtn').addEventListener('click', () => start(S.mode));
