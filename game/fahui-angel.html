@@ -169,7 +169,56 @@
     animation: rise .7s cubic-bezier(.2,.8,.2,1);
   }
   @keyframes rise { from { transform: translateY(18px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
-  @media (pointer: coarse) { .card li.keys { display: none; } }
+  /* 翻頁式說明：一頁一件事 */
+  .tour { gap: 12px; padding: 16px 18px 14px; width: min(460px, 100%); }
+  @media (pointer: fine) and (hover: hover) { .tour { width: min(520px, 100%); } }
+  .tour-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .linkbtn { font: inherit; font-size: .82rem; font-weight: 700; color: var(--muted); background: none; border: 0; padding: 6px 2px; cursor: pointer; }
+  .linkbtn:hover { color: var(--green); }
+  .tour-view { overflow: hidden; margin: 0 -18px; touch-action: pan-y; }
+  .tour-track { display: flex; transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+  .tpage { flex: 0 0 100%; box-sizing: border-box; padding: 0 18px; display: grid; gap: 10px; align-content: start; }
+  .tpage h2 { font-size: 1.35rem; }
+  .tpage .lead { font-size: .95rem; }
+  .tip { margin: 0; font-size: .82rem; line-height: 1.6; color: var(--ink-soft); background: var(--bg); border-radius: 10px; padding: 8px 10px; }
+  .ill { min-height: 132px; border-radius: 16px; padding: 30px 10px 14px; box-sizing: border-box;
+    background: linear-gradient(160deg, #EAF4FB, #ECF7F0 60%, #FDF3EA);
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 6px; }
+  .ill > span, .ill .only-touch, .ill .only-desk { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .who { position: relative; width: 46px; height: 46px; border-radius: 50%; background: #fff; border: 2px solid #94A3B8; display: inline-grid !important; place-items: center; font-size: 24px; flex: none; }
+  .who.me { border-color: var(--gold); background: var(--gold-soft); border-width: 3px; }
+  .who.staff { border-color: var(--green); background: var(--green-soft); border-width: 3px; }
+  .who.ring { box-shadow: 0 0 0 4px rgba(225,29,116,.35); }
+  .who.hide { opacity: .7; }
+  .who .bub { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #fff; border: 1.6px solid var(--blue); border-radius: 10px; padding: 1px 6px; font-size: 15px; line-height: 1.3; white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; animation: bob 2.4s ease-in-out infinite; }
+  .who .bub .tbar { display: inline-block; width: 22px; height: 5px; border-radius: 3px; background: linear-gradient(90deg, #10B981 60%, #E2E8F0 60%); }
+  .who .tag { position: absolute; top: calc(100% - 6px); left: 50%; transform: translateX(-50%); background: var(--gold); color: #fff; font-size: 10px; font-weight: 700; padding: 0 6px; border-radius: 99px; white-space: nowrap; line-height: 1.5; }
+  .who.staff .tag { background: var(--green); }
+  @keyframes bob { 50% { transform: translate(-50%, -3px); } }
+  .tile { position: relative; width: 52px; height: 52px; border-radius: 12px; background: #fff; border: 2px solid var(--c); display: inline-grid !important; place-items: center; font-size: 22px; padding-bottom: 10px; box-sizing: border-box; flex: none; }
+  .tile small { position: absolute; bottom: 2px; left: 0; right: 0; text-align: center; font-size: 9.5px; font-weight: 700; color: var(--c); white-space: nowrap; }
+  .arr { color: var(--muted); font-weight: 700; font-size: 1rem; }
+  .chip { background: #fff; border: 1.5px solid var(--line); border-radius: 99px; padding: 3px 9px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+  .stack { flex-direction: column; gap: 4px !important; }
+  .pair { width: 100%; }
+  .floor { width: 34px; height: 34px; border-radius: 8px; background: #E1EEF8; box-shadow: inset 0 0 0 2px #0284C7; }
+  .seat { width: 30px; height: 30px; border-radius: 6px; background: #E3C7A8; box-shadow: 0 0 0 4px rgba(52,211,153,.55); }
+  .wc-or { font-size: .72rem; color: var(--muted); font-weight: 700; }
+  .keys { display: inline-flex; gap: 4px; }
+  kbd { display: inline-grid; place-items: center; min-width: 30px; height: 30px; padding: 0 6px; border-radius: 7px; background: #fff; border: 1.5px solid #CBD5E1; border-bottom-width: 3px; font: 700 .85rem var(--sans); color: var(--ink); box-sizing: border-box; }
+  .or { font-size: .8rem; color: var(--muted); font-weight: 700; }
+  .only-desk { display: none !important; }
+  @media (pointer: fine) and (hover: hover) { .only-desk { display: inline-flex !important; } .only-touch { display: none !important; } }
+  .lead .only-desk, .tip .only-desk { display: none !important; }
+  @media (pointer: fine) and (hover: hover) { .lead .only-desk, .tip .only-desk { display: inline !important; } }
+  .lead .only-touch, .tip .only-touch { display: inline; }
+  .tour-nav { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; }
+  .tour-nav .btn { padding: 9px 14px; }
+  .tour-nav .btn[disabled] { visibility: hidden; }
+  .dots { display: flex; justify-content: center; flex-wrap: nowrap; gap: 4px; min-width: 0; }
+  .dots button { flex: none; width: 6px; height: 6px; padding: 0; border-radius: 50%; border: 0; background: #CBD5E1; cursor: pointer; }
+  .dots button[aria-selected="true"] { background: var(--green); width: 14px; border-radius: 99px; }
+  @media (prefers-reduced-motion: reduce) { .tour-track { transition: none; } .who .bub { animation: none; } }
   .played { margin: 0; font-size: .85rem; font-weight: 700; color: var(--gold); }
   .thanks { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; }
   .thanks h3 { margin: 0; font-family: var(--serif); font-size: 1.05rem; }
@@ -265,29 +314,93 @@
   </div>
 
   <div id="intro" class="overlay">
-    <div class="card">
-      <div class="eyebrow">全真社青・年度探索地圖 試玩站</div>
-      <h2>今天，我們一起當法會小天使</h2>
-      <p class="lead">新朋友第一次來參加法會，難免會有點陌生。看到誰頭上冒出泡泡，就走過去幫他一把吧！</p>
-      <ul>
-        <li><span>👆</span><span>點地板走路；點人或櫃子，會自己走過去互動。</span></li>
-        <li><span>💬</span><span>泡泡就是需求：拿對的物資送過去，或待在身邊陪他一下。</span></li>
-        <li><span>✋</span><span>手上一次只能拿一樣；直接去拿別的，舊的會自動放回去。</span></li>
-        <li><span>⏱</span><span>挑戰模式：泡泡上方的時間條跑完前要完成，來不及的話學長會先接手。</span></li>
-        <li><span>👋</span><span>剛到的朋友先打聲招呼，關心一下吃過早餐沒。</span></li>
-        <li><span>🥤</span><span>每種飲料都要先到備品區拿紙杯：飲水機有溫水、熱水、熱茶；咖啡機做美式，加鮮奶變拿鐵。</span></li>
-        <li><span>🚻</span><span>想上洗手間的朋友，要帶到對的那一間：左下角女廁 🚺、右下角男廁 🚹。</span></li>
-        <li><span>🧑‍💼</span><span>卡關了？穿綠背心的公關、總務、輔導組學長都會幫你。</span></li>
-        <li class="keys"><span>⌨️</span><span>電腦：方向鍵或 WASD 走路（可按住），撞到人或櫃子就會互動；空白鍵和面前的人互動；選單按數字鍵選；M 開關音樂。</span></li>
-        <li><span>🎵</span><span>有背景音樂，右下角 🔊 可以開關。</span></li>
-      </ul>
-      <p class="tiny" id="levelNote"></p>
-      <p class="played" id="playedIntro" hidden></p>
-      <div class="modes">
-        <button id="startBtn" class="btn primary" type="button">⏱ 挑戰模式<small>限時＋同時多人需要幫忙</small></button>
-        <button id="relaxBtn" class="btn" type="button">🌿 輕鬆模式<small>不限時，慢慢照顧</small></button>
+    <div class="card tour" role="region" aria-roledescription="說明" aria-label="遊戲說明">
+      <div class="tour-top">
+        <span class="eyebrow">全真社青・法會小天使</span>
+        <button id="tourSkip" class="linkbtn" type="button">跳過說明 ›</button>
+        <button id="tourAgain" class="linkbtn" type="button" hidden>📖 重看說明</button>
       </div>
-      <a class="back-home" href="https://steven4dev.github.io/yiguandao-2027-course/">← 回到社青班首頁，看看 2027 Life Design 探索地圖</a>
+      <div class="tour-view">
+        <div class="tour-track" id="tourTrack">
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="who ">👩<span class="bub">🧭</span></span><span class="who ">👨<span class="bub">👋</span></span><span class="who me">🙋<span class="tag">你</span></span><span class="who ">🧑<span class="bub">📝</span></span></div>
+          <h2>今天，我們一起當法會小天使</h2>
+          <p class="lead">新朋友第一次來參加法會，難免有點陌生。看到誰頭上冒出泡泡，就走過去幫他一把吧！</p>
+          <p class="tip">⏱ 一局約 3 分鐘　📱 手機、🖥 電腦都能玩</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="only-touch">👆 <span class="arr" aria-hidden="true">→</span><span class="floor"></span><span class="arr" aria-hidden="true">→</span><span class="who me">🙋<span class="tag">你</span></span></span><span class="only-desk"><span class="keys"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span><span class="or">或</span><span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></span></div>
+          <h2>怎麼走路</h2>
+          <p class="lead"><span class="only-touch">點一下地板，角色會自己走過去；點人或櫃子，走到旁邊就會互動。</span><span class="only-desk">用方向鍵或 WASD 走路，按住可以一直走；撞到人或櫃子就會互動，空白鍵也能和面前的人互動。</span></p>
+          <p class="tip"><span class="only-touch">也可以點畫面下方「手上」把東西放下。</span><span class="only-desk">選單可以按數字鍵選，M 開關音樂。</span></p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="who ">👨<span class="bub">📝</span></span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#0284C7">📚<small>文具櫃</small></span><span class="arr" aria-hidden="true">→</span><span class="who me">🙋📝<span class="tag">你</span></span><span class="arr" aria-hidden="true">→</span>❤️</div>
+          <h2>頭上的泡泡＝他需要的東西</h2>
+          <p class="lead">到對的櫃子拿東西，再送到他身邊，就完成一份心意 ❤️。</p>
+          <p class="tip">✋ 手上一次只能拿一樣；直接去拿別的，舊的會自動放回去。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="tile" style="--c:#059669">🧺<small>備品區 🔒</small></span><span class="arr back" aria-hidden="true">←</span><span class="chip">🔑</span><span class="arr back" aria-hidden="true">←</span><span class="who staff">👷<span class="tag">總務</span></span></div>
+          <h2>備品區要先拿鑰匙</h2>
+          <p class="lead">每一段時間開始，備品區都會重新上鎖。先找穿綠背心的<b>總務組學長</b>拿 🔑，再去打開備品區。</p>
+          <p class="tip">總務學長會在附近走動；點他一下，他會停下來等你。備品區有 🧥 外套、🥤 紙杯、🍬 咖啡糖。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="tile" style="--c:#059669">🥤<small>紙杯</small></span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#0D9488">🚰<small>飲水機</small></span><span class="arr" aria-hidden="true">→</span><span class="stack"><span class="chip">💧 溫水</span><span class="chip">♨️ 熱水</span><span class="chip">🍵 熱茶</span></span></div>
+          <h2>每種飲料都要先拿紙杯</h2>
+          <p class="lead">拿著紙杯到飲水機，可以選溫水、熱水或熱茶。</p>
+          <p class="tip">💧 口渴的人要<b>溫</b>的，給熱水會太燙；♨️ 胃不舒服的人要<b>熱</b>的，給溫水不夠暖。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="tile" style="--c:#059669">🥤<small>紙杯</small></span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#92400E">☕<small>咖啡機</small></span><span class="arr" aria-hidden="true">→</span><span class="chip">☕ 美式</span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#0EA5E9">🥛<small>冰箱</small></span><span class="arr" aria-hidden="true">→</span><span class="chip">☕🥛 拿鐵</span></div>
+          <h2>咖啡吧：美式和拿鐵</h2>
+          <p class="lead">紙杯到咖啡機就是美式；美式再到冰箱加鮮奶，就變成拿鐵（先裝鮮奶再加咖啡也可以）。</p>
+          <p class="tip">😪 想睡的朋友：給一杯美式，或備品區的 🍬 咖啡糖都可以。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="pair"><span class="who ">👩<span class="bub">🧭</span></span><span class="arr" aria-hidden="true">→</span><span class="who me">🙋<span class="tag">你</span></span><span class="arr" aria-hidden="true">→</span><span class="seat"></span></span><span class="pair"><span class="tile" style="--c:#DB2777">🚺<small>女廁</small></span><span class="wc-or">左下｜右下</span><span class="tile" style="--c:#2563EB">🚹<small>男廁</small></span></span></div>
+          <h2>帶路：找座位、去洗手間</h2>
+          <p class="lead">🧭 找座位、🚺🚹 想上洗手間的人，先走到他身邊讓他跟著你，再點發亮的空椅子或對的廁所。</p>
+          <p class="tip">女廁在<b>左下角</b>（粉色）、男廁在<b>右下角</b>（藍色），帶錯了他會提醒你。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="who ">👨<span class="bub">👋</span></span><span class="arr" aria-hidden="true">→</span><span class="chip">💬 吃過早餐了嗎？</span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#EA580C">🥟<small>餐點區</small></span><span class="chip">×2</span></div>
+          <h2>剛到的朋友，先打招呼</h2>
+          <p class="lead">走過去就會主動問候。如果他還沒吃早餐，到餐點區拿<b>兩顆</b>水煎包（點兩次）。</p>
+          <p class="tip">有人已經吃過了，會改成想喝溫水或喝咖啡，聽他怎麼說就好。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="pair"><span class="who ">🧑<span class="bub">😟</span></span><span class="who me ring">🙋<span class="tag">你</span></span></span><span class="pair"><span class="who hide">👤</span><span class="chip">角落…</span></span></div>
+          <h2>陪伴，和主動關心</h2>
+          <p class="lead">😟 緊張的人不用拿東西，站在他身邊<b>兩秒</b>陪他就好。有一位朋友會躲在角落、不會冒泡泡，要主動走近才會發現他。</p>
+          <p class="tip">每一次幫忙，結算時都會收到新朋友的心聲。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="who staff">👩‍💼<span class="tag">公關</span></span><span class="who staff">👷<span class="tag">總務</span></span><span class="who staff">👨‍🏫<span class="tag">輔導</span></span></div>
+          <h2>卡關了？找學長</h2>
+          <p class="lead"><b>公關組</b>告訴你現在最需要幫的是誰、怎麼做；<b>總務組</b>保管備品區鑰匙；<b>輔導組</b>知道角落的朋友在哪裡。</p>
+          <p class="tip">公關學長就在報到台旁邊，點報到台也能問他。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="who ">👨<span class="bub"><span class="tbar"></span>💧</span></span><span class="arr" aria-hidden="true">→</span><span class="chip">⏱ 時間條跑完前完成</span><span class="arr" aria-hidden="true">→</span>★★★</div>
+          <h2>選一個模式開始</h2>
+          <p class="lead"><b>挑戰模式</b>：泡泡上方有時間條，好幾位朋友會同時需要幫忙；來不及的話學長會先接手。零失誤就是「全能小天使」🏆</p>
+          <p class="tiny" id="levelNote"></p>
+          <p class="played" id="playedIntro" hidden></p>
+          <div class="modes">
+            <button id="startBtn" class="btn primary" type="button">⏱ 挑戰模式<small>限時＋同時多人需要幫忙</small></button>
+            <button id="relaxBtn" class="btn" type="button">🌿 輕鬆模式<small>不限時，慢慢照顧</small></button>
+          </div>
+          <a class="back-home" href="https://steven4dev.github.io/yiguandao-2027-course/">← 回到社青班首頁，看看 2027 Life Design 探索地圖</a>
+        </section>
+        </div>
+      </div>
+      <div class="tour-nav">
+        <button id="tourPrev" class="btn ghost" type="button">‹ 上一步</button>
+        <div class="dots" id="tourDots" role="tablist" aria-label="說明頁"></div>
+        <button id="tourNext" class="btn primary" type="button">下一步 ›</button>
+      </div>
     </div>
   </div>
 
@@ -1372,6 +1485,12 @@
   }
   window.addEventListener('keydown', e => {
     if (e.code === 'KeyM') { if (!e.repeat) Sound.setOn(!Sound.on, S.running); return; }
+    if (!$('#intro').hidden) {
+      const onBtn = !!e.target.closest('button, a');
+      if (e.code === 'ArrowRight' || (e.code === 'Enter' && !onBtn)) { e.preventDefault(); tourGo(tourAt + 1); }
+      if (e.code === 'ArrowLeft') { e.preventDefault(); tourGo(tourAt - 1); }
+      return;
+    }
     if (!S.running) return;
     if (!$('#choice').hidden) {
       const btns = [...document.querySelectorAll('#choiceRow .btn')];
@@ -1412,6 +1531,7 @@
     S.mode = mode === 'relax' ? 'relax' : 'challenge';
     S.waves = buildWaves(S.mode); S.total = totalFor(S.waves); renderHearts();
     $('#intro').hidden = true; $('#end').hidden = true;
+    try { localStorage.setItem(TOUR_KEY, '1'); } catch (e) {}
     S.running = true;
     Sound.startMusic();
     Counter.hit('start', { level: LEVEL, mode: S.mode });
@@ -1419,6 +1539,42 @@
   }
   $('#sound').addEventListener('click', () => Sound.setOn(!Sound.on, S.running));
   Sound.setOn(Sound.on, false);
+  // ---------- 翻頁式說明 ----------
+  const TOUR_KEY = 'fahui-tour-seen';
+  const tourPages = [...document.querySelectorAll('.tpage')];
+  let tourAt = 0;
+  tourPages.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.type = 'button'; d.setAttribute('role', 'tab'); d.setAttribute('aria-label', `第 ${i + 1} 頁`);
+    d.addEventListener('click', () => tourGo(i));
+    $('#tourDots').appendChild(d);
+  });
+  function tourGo(i) {
+    tourAt = Math.max(0, Math.min(tourPages.length - 1, i));
+    $('#tourTrack').style.transform = `translateX(${-tourAt * 100}%)`;
+    tourPages.forEach((pg, k) => { pg.setAttribute('aria-hidden', String(k !== tourAt)); pg.inert = k !== tourAt; });
+    [...$('#tourDots').children].forEach((d, k) => d.setAttribute('aria-selected', String(k === tourAt)));
+    const lastPage = tourAt === tourPages.length - 1;
+    $('#tourPrev').disabled = tourAt === 0;
+    $('#tourNext').hidden = lastPage;
+    $('#tourSkip').hidden = lastPage;
+    $('#tourAgain').hidden = !lastPage;
+  }
+  $('#tourPrev').addEventListener('click', () => tourGo(tourAt - 1));
+  $('#tourNext').addEventListener('click', () => tourGo(tourAt + 1));
+  $('#tourSkip').addEventListener('click', () => tourGo(tourPages.length - 1));
+  $('#tourAgain').addEventListener('click', () => tourGo(0));
+  // 手機左右滑動翻頁
+  let swipeX = null;
+  $('.tour-view').addEventListener('pointerdown', e => { swipeX = e.clientX; });
+  $('.tour-view').addEventListener('pointerup', e => {
+    if (swipeX === null) return;
+    const dx = e.clientX - swipeX; swipeX = null;
+    if (Math.abs(dx) > 45) tourGo(tourAt + (dx < 0 ? 1 : -1));
+  });
+  let seenTour = false;
+  try { seenTour = localStorage.getItem(TOUR_KEY) === '1'; } catch (e) {}
+  tourGo(seenTour ? tourPages.length - 1 : 0);
   $('#startBtn').addEventListener('click', () => start('challenge'));
   $('#relaxBtn').addEventListener('click', () => start('relax'));
   $('#againBtn').addEventListener('click', () => start(S.mode));
