@@ -1016,6 +1016,8 @@
   .cal-chooser-box p { margin: 0 0 16px; font-size: 0.88rem; color: #6b7280; }
   .cal-chooser-box a { display: block; padding: 12px; margin-bottom: 10px; border-radius: 12px; font-weight: 700; text-decoration: none; border: 1.5px solid var(--accent-blue); color: var(--accent-blue); }
   .cal-chooser-box a.primary { background: var(--accent-blue); color: #FFFFFF; }
+  .cal-chooser-box p.cal-hint { display: none; margin: -2px 0 12px; padding: 8px 10px; font-size: 0.8rem; line-height: 1.55; text-align: left; color: #92400e; background: #FFFBEB; border-radius: 10px; }
+  .cal-chooser-box p.cal-hint.show { display: block; }
   .cal-chooser-box button { background: none; border: none; color: #6b7280; font-size: 0.9rem; padding: 6px; cursor: pointer; }
   /* 漂浮報名按鈕 */
   .fab-signup {
@@ -1643,6 +1645,7 @@
       <h3>📅 訂閱全真社青 2027</h3>
       <p>請選擇你平常使用的行事曆，活動有更新時會自動同步</p>
       <a class="primary" href="https://calendar.google.com/calendar/u/0?cid=NWMyYTEyNmIwYzFiOWIzMzQ4ZmM5MzM5NTFkZDNiNzQ5ZmY5ZjM5Zjc1MDkzMzE3N2Q5MDgzNDNiMTY4ZjRmY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t" target="_blank" rel="noopener">Google 日曆</a>
+      <p class="cal-hint" id="calHint">💡 手機若只看到一般行事曆畫面、沒有出現「新增日曆」的確認：請點 Safari 網址列左邊的「aA」→「切換為電腦版網站」，再按一次上面的「Google 日曆」，登入後按「新增」即可。</p>
       <a href="webcal://calendar.google.com/calendar/ical/5c2a126b0c1b9b3348fc933951dd3b749ff9f39f750933177d908343b168f4fc%40group.calendar.google.com/public/basic.ics">iPhone／Mac 內建行事曆</a>
       <button type="button" onclick="document.getElementById('calChooser').classList.remove('open')">取消</button>
     </div>
@@ -1721,6 +1724,9 @@
         btn.addEventListener('click', function (e) {
           e.preventDefault();
           document.getElementById('calChooser').classList.add('open');
+          if (/iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+            document.getElementById('calHint').classList.add('show');
+          }
         });
       }
     })();
