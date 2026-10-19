@@ -1700,6 +1700,13 @@
         const btn = document.getElementById('calSubscribeBtn');
         btn.href = 'webcal://steven4dev.github.io/yiguandao-2027-course/2027.ics';
         btn.removeAttribute('target');
+      } else if (/Android/i.test(ua)) {
+        // Android 的 Google 日曆 App 會把 cid 參數當成「編碼過的日曆 ID」解碼，網址會變亂碼。
+        // 改為直接開啟 .ics 檔，由日曆 App 匯入所有活動。
+        const btn = document.getElementById('calSubscribeBtn');
+        btn.href = 'https://steven4dev.github.io/yiguandao-2027-course/2027.ics';
+        btn.removeAttribute('target');
+        btn.textContent = '📅 加入行事曆';
       }
     })();
 
