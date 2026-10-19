@@ -1007,6 +1007,16 @@
     }
   }
 
+
+  /* 訂閱行事曆選擇視窗（Apple 裝置） */
+  .cal-chooser { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.45); padding: 16px; }
+  .cal-chooser.open { display: flex; }
+  .cal-chooser-box { background: #FFFFFF; color: #1f2937; border-radius: 18px; padding: 22px 20px 16px; width: 100%; max-width: 360px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; }
+  .cal-chooser-box h3 { margin: 0 0 6px; font-size: 1.1rem; }
+  .cal-chooser-box p { margin: 0 0 16px; font-size: 0.88rem; color: #6b7280; }
+  .cal-chooser-box a { display: block; padding: 12px; margin-bottom: 10px; border-radius: 12px; font-weight: 700; text-decoration: none; border: 1.5px solid var(--accent-blue); color: var(--accent-blue); }
+  .cal-chooser-box a.primary { background: var(--accent-blue); color: #FFFFFF; }
+  .cal-chooser-box button { background: none; border: none; color: #6b7280; font-size: 0.9rem; padding: 6px; cursor: pointer; }
   /* 漂浮報名按鈕 */
   .fab-signup {
     position: fixed;
@@ -1320,7 +1330,7 @@
       <div class="section-head">
         <h2>📅 年度企劃｜<span class="en">Calendar</span></h2>
         <span class="sub">六場專題課程與特別活動的完整一覽</span>
-        <a class="cal-subscribe-btn" id="calSubscribeBtn" href="https://calendar.google.com/calendar/r?cid=webcal://steven4dev.github.io/yiguandao-2027-course/2027.ics" target="_blank" rel="noopener">📅 點我訂閱行事曆</a>
+        <a class="cal-subscribe-btn" id="calSubscribeBtn" href="https://calendar.google.com/calendar/u/0?cid=NWMyYTEyNmIwYzFiOWIzMzQ4ZmM5MzM5NTFkZDNiNzQ5ZmY5ZjM5Zjc1MDkzMzE3N2Q5MDgzNDNiMTY4ZjRmY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t" target="_blank" rel="noopener">📅 點我訂閱行事曆</a>
       </div>
 
       <!-- Schedule List -->
@@ -1628,6 +1638,15 @@
     <span>點我報名</span>
   </button>
 
+  <div class="cal-chooser" id="calChooser" onclick="if(event.target===this) this.classList.remove('open')">
+    <div class="cal-chooser-box">
+      <h3>📅 訂閱全真社青 2027</h3>
+      <p>請選擇你平常使用的行事曆，活動有更新時會自動同步</p>
+      <a class="primary" href="https://calendar.google.com/calendar/u/0?cid=NWMyYTEyNmIwYzFiOWIzMzQ4ZmM5MzM5NTFkZDNiNzQ5ZmY5ZjM5Zjc1MDkzMzE3N2Q5MDgzNDNiMTY4ZjRmY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t" target="_blank" rel="noopener">Google 日曆</a>
+      <a href="webcal://calendar.google.com/calendar/ical/5c2a126b0c1b9b3348fc933951dd3b749ff9f39f750933177d908343b168f4fc%40group.calendar.google.com/public/basic.ics">iPhone／Mac 內建行事曆</a>
+      <button type="button" onclick="document.getElementById('calChooser').classList.remove('open')">取消</button>
+    </div>
+  </div>
   <div class="signup-modal-overlay" id="signupModalOverlay" onclick="if(event.target===this) closeSignupModal()">
     <div class="signup-modal">
       <div class="signup-modal-icon">🚧</div>
@@ -1697,16 +1716,12 @@
       const ua = navigator.userAgent;
       const isApple = /iPhone|iPad|iPod|Macintosh/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       if (isApple) {
+        // Apple 裝置：讓使用者選 Google 日曆或內建行事曆（兩者都訂閱同一個公開 Google 日曆）
         const btn = document.getElementById('calSubscribeBtn');
-        btn.href = 'webcal://steven4dev.github.io/yiguandao-2027-course/2027.ics';
-        btn.removeAttribute('target');
-      } else if (/Android/i.test(ua)) {
-        // Android 的 Google 日曆 App 會把 cid 參數當成「編碼過的日曆 ID」解碼，網址會變亂碼。
-        // 改為直接開啟 .ics 檔，由日曆 App 匯入所有活動。
-        const btn = document.getElementById('calSubscribeBtn');
-        btn.href = 'https://steven4dev.github.io/yiguandao-2027-course/2027.ics';
-        btn.removeAttribute('target');
-        btn.textContent = '📅 加入行事曆';
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          document.getElementById('calChooser').classList.add('open');
+        });
       }
     })();
 
