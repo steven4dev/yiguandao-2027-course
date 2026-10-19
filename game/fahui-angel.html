@@ -298,7 +298,8 @@
   .step .btn { padding: 9px 14px; white-space: nowrap; }
   .step.done .num { background: var(--gold); }
   #shareTextBox { width: 100%; box-sizing: border-box; font: inherit; font-size: .82rem; line-height: 1.5; padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); resize: none; }
-  .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+  /* 愛心從卡片前面飄下來（點不到，不會擋住按鈕） */
+  .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
   .confetti span { position: absolute; top: -40px; font-size: 22px; animation: fall 3.2s ease-in forwards; opacity: 0; }
   @keyframes fall {
     0% { transform: translateY(0) rotate(0); opacity: 0; }
@@ -1179,6 +1180,7 @@
     roam:    ['你走遍了整個會場，到處都有你的腳印！', '這麼勤快，會場每個角落都認得你了。', '多走的每一步，都是多一分關心。'],
   };
   function stepWord() {
+    if (!S.hearts) return '下次一起走進會場，看看誰需要幫忙吧！';
     const e = stepEff();
     return pick(STEP_WORDS[e <= 1.15 ? 'precise' : e <= 1.6 ? 'steady' : 'roam']);
   }
