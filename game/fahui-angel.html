@@ -67,6 +67,10 @@
     box-sizing: border-box;
   }
   body.wide #app { max-width: 1200px; }
+  @media (max-width: 520px) {
+    #app { padding-left: max(10px, env(safe-area-inset-left, 0px)); padding-right: max(10px, env(safe-area-inset-right, 0px)); gap: 6px; padding-block: 8px; }
+    canvas { border-radius: 10px; }
+  }
   .hud { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
   .eyebrow { font-size: .72rem; font-weight: 700; letter-spacing: .08em; color: var(--green); }
   h1 { margin: 0; font-family: var(--serif); font-weight: 900; font-size: 1.45rem; line-height: 1.2; letter-spacing: .04em; text-wrap: balance; }
@@ -80,16 +84,17 @@
 
   #stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; }
   canvas { display: block; border-radius: 14px; box-shadow: 0 10px 30px rgba(5,150,105,.12), 0 0 0 1px var(--line); touch-action: none; cursor: pointer; max-width: 100%; }
-  /* 對話框固定在地圖上方的獨立一欄，不會蓋住入口或任何新朋友 */
-  #sayBar { flex: none; height: 66px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  /* 對話出現在下方提示列（暫時蓋住提示），不佔地圖空間、也不會擋住入口 */
+  .msg { position: relative; flex: 1; min-width: 0; height: 66px; display: flex; align-items: center; }
   #say {
-    width: max-content; max-width: 100%; box-sizing: border-box;
+    position: absolute; inset: 0; display: flex; align-items: center; box-sizing: border-box;
     background: var(--card); color: var(--ink);
     border: 1.5px solid var(--green); border-radius: 12px;
-    padding: 6px 12px; font-size: .84rem; line-height: 1.45; max-height: 62px; overflow: hidden;
-    box-shadow: 0 6px 18px rgba(30,41,59,.14);
-    pointer-events: none;
+    padding: 4px 10px; font-size: .84rem; line-height: 1.45; overflow: hidden;
+    pointer-events: none; animation: sayIn .18s ease-out;
   }
+  #say > span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  @keyframes sayIn { from { transform: translateY(4px); opacity: 0; } to { transform: none; opacity: 1; } }
   #say b { color: var(--green); margin-right: 6px; }
   #banner {
     position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
@@ -117,7 +122,7 @@
     border: 2px solid var(--line); background: var(--card); font-size: 1.2rem; cursor: pointer;
   }
   #sound[aria-pressed="false"] { opacity: .55; }
-  #hint { margin: 0; flex: 1; font-size: .85rem; line-height: 1.55; color: var(--ink-soft); min-width: 0; }
+  #hint { margin: 0; flex: 1; font-size: .85rem; line-height: 1.5; color: var(--ink-soft); min-width: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
   .sheet {
     position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); bottom: 74px;
@@ -317,8 +322,6 @@
     </div>
   </header>
 
-  <div id="sayBar" aria-live="polite"><div id="say" hidden></div></div>
-
   <div id="stage">
     <canvas id="cv" aria-label="法會會場地圖，點地板移動，點人物或櫃子互動"></canvas>
     <div id="banner" hidden></div>
@@ -328,7 +331,10 @@
     <button id="hand" type="button" aria-label="手上的物品，點一下放下">
       <span class="em" id="handEm"></span><span id="handName">空空的</span>
     </button>
-    <p id="hint" aria-live="polite">點「開始服務」進入會場。</p>
+    <div class="msg">
+      <p id="hint" aria-live="polite">點「開始服務」進入會場。</p>
+      <div id="say" aria-live="polite" hidden></div>
+    </div>
     <button id="sound" type="button" aria-pressed="true" aria-label="背景音樂：開">🔊</button>
   </footer>
 
@@ -1052,10 +1058,11 @@
   function say(who, text) {
     const el = $('#say');
     const name = !who ? '' : who.name || '新朋友';
-    el.innerHTML = (name ? `<b>${name}</b>` : '') + text;
+    el.innerHTML = '<span>' + (name ? `<b>${name}</b>` : '') + text + '</span>';
     el.hidden = false;
+    $('#hint').style.visibility = 'hidden';   // 說話時先藏起提示，避免兩段字疊在一起
     clearTimeout(sayTimer);
-    sayTimer = setTimeout(() => (el.hidden = true), 2800);
+    sayTimer = setTimeout(() => { el.hidden = true; $('#hint').style.visibility = ''; }, 2800);
   }
   const setHint = t => ($('#hint').textContent = t);
   function renderHearts() {
@@ -1618,7 +1625,7 @@
     if (!S.running) return;
     closeChoice();
     const r = cv.getBoundingClientRect();
-    const fx = (e.clientX - r.left) / r.width * COLS, fy = (e.clientY - r.top) / r.height * ROWS;
+    const fx = (e.clientX - r.left - offX * r.width / cssW) / (tile * r.width / cssW) + 1, fy = (e.clientY - r.top) / r.height * viewH() + (1 - TOP);
     const x = Math.floor(fx), y = Math.floor(fy);
     S.ripple = { x, y, t: 0 };
     // 走動中的學長：點在他畫面上的位置附近（或剛離開的那格）也算點到
@@ -1798,13 +1805,36 @@
   }
 
   // ---------- drawing ----------
+  // 外圈牆不畫出來，地圖可以放大；上方保留 0.7 格，放入口標示和第一排新朋友頭上的泡泡
+  // 地圖兩側多出來的空間畫成戶外庭園，畫面看起來是滿版、不會有空白條
+  const TOP = .7;
+  const viewW = () => COLS - 2, viewH = () => ROWS - 2 + TOP;
+  let offX = 0, cssW = 0, cssH = 0;
   function resize() {
     const st = $('#stage');
     const w = st.clientWidth, h = st.clientHeight;
-    tile = Math.max(24, Math.floor(Math.min(w / COLS, h / ROWS)));
+    tile = Math.max(22, Math.floor(Math.min(w / viewW(), h / viewH())));
     dpr = Math.min(window.devicePixelRatio || 1, 3);
-    cv.style.width = tile * COLS + 'px'; cv.style.height = tile * ROWS + 'px';
-    cv.width = Math.round(tile * COLS * dpr); cv.height = Math.round(tile * ROWS * dpr);
+    cssW = Math.floor(w); cssH = Math.round(tile * viewH());
+    offX = Math.floor((cssW - tile * viewW()) / 2);
+    cv.style.width = cssW + 'px'; cv.style.height = cssH + 'px';
+    cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
+  }
+  // 庭園裝飾：固定位置的樹和花，每次重畫都一樣
+  const GARDEN = Array.from({ length: 40 }, (_, i) => ({ y: ((i * 37) % 97) / 97, side: i % 2, k: (i * 53) % 100 / 100, e: ['🌳', '🌸', '🌿', '🌼', '🌳', '🪴'][i % 6] }));
+  function drawGarden() {
+    if (offX < 6) return;
+    ctx.fillStyle = '#D9EEDF'; ctx.fillRect(0, 0, offX, cssH); ctx.fillRect(cssW - offX, 0, offX, cssH);
+    ctx.fillStyle = '#CDE7D4';
+    for (let y = 0; y < cssH; y += 18) { ctx.fillRect(0, y, offX, 9); ctx.fillRect(cssW - offX, y + 9, offX, 9); }
+    const size = Math.min(tile * .55, offX * .8);
+    if (size < 12) return;
+    ctx.globalAlpha = .85;
+    for (const g of GARDEN) {
+      const x = g.side ? cssW - offX + offX * (.25 + g.k * .5) : offX * (.25 + g.k * .5);
+      emoji(g.e, x, size * .6 + g.y * (cssH - size * 1.2), size);
+    }
+    ctx.globalAlpha = 1;
   }
   new ResizeObserver(resize).observe($('#stage'));
 
@@ -1862,8 +1892,13 @@
 
   function draw(now) {
     const T = tile;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, T * COLS, T * ROWS);
+    drawGarden();
+    ctx.save();
+    ctx.beginPath(); ctx.rect(offX, 0, T * viewW(), cssH); ctx.clip();   // 只畫可走的範圍，外圈牆不蓋到庭園
+    ctx.setTransform(dpr, 0, 0, dpr, (offX - T) * dpr, -(1 - TOP) * T * dpr);
     const pulse = RM ? .6 : (Math.sin(now / 260) + 1) / 2;
 
     // floor and walls
@@ -1968,6 +2003,7 @@
 
     for (const q of S.particles) { ctx.globalAlpha = Math.max(0, q.life); emoji('❤️', q.x * T, q.y * T, T * .3); }
     ctx.globalAlpha = 1;
+    ctx.restore();
   }
 
   function loop(now) {
