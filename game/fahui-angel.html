@@ -177,6 +177,27 @@
   .tour-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .linkbtn { font: inherit; font-size: .82rem; font-weight: 700; color: var(--muted); background: none; border: 0; padding: 6px 2px; cursor: pointer; }
   .linkbtn:hover { color: var(--green); }
+  /* 跳過說明：跳動＋光暈閃爍，讓玩家一眼看出可以直接開始 */
+  .skip-btn {
+    font: inherit; font-size: .84rem; font-weight: 900; color: #fff; cursor: pointer; white-space: nowrap;
+    background: linear-gradient(135deg, #F59E0B, #EA580C); border: 0; border-radius: 99px; padding: 7px 14px;
+    box-shadow: 0 0 0 0 rgba(245,158,11,.7);
+    animation: skipHop 1.6s ease-in-out infinite, skipGlow 1.6s ease-out infinite;
+  }
+  .skip-btn:hover, .skip-btn:focus-visible { animation-play-state: paused; filter: brightness(1.08); }
+  .skip-btn:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  @keyframes skipHop {
+    0%, 55%, 100% { transform: translateY(0) scale(1); }
+    15% { transform: translateY(-6px) scale(1.06); }
+    30% { transform: translateY(0) scale(.98); }
+    42% { transform: translateY(-3px) scale(1.03); }
+  }
+  @keyframes skipGlow {
+    0% { box-shadow: 0 0 0 0 rgba(245,158,11,.75); }
+    70% { box-shadow: 0 0 0 12px rgba(245,158,11,0); }
+    100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .skip-btn { animation: skipGlow 2.4s ease-out infinite; } }
   .tour-view { overflow: hidden; margin: 0 -18px; touch-action: pan-y; }
   .tour-track { display: flex; transition: transform .35s cubic-bezier(.2,.8,.2,1); }
   .tpage { flex: 0 0 100%; box-sizing: border-box; padding: 0 18px; display: grid; gap: 10px; align-content: start; }
@@ -320,7 +341,7 @@
     <div class="card tour" role="region" aria-roledescription="說明" aria-label="遊戲說明">
       <div class="tour-top">
         <span class="eyebrow">全真社青・法會小天使</span>
-        <button id="tourSkip" class="linkbtn" type="button">跳過說明 ›</button>
+        <button id="tourSkip" class="skip-btn" type="button">⏩ 跳過說明，直接開始</button>
         <button id="tourAgain" class="linkbtn" type="button" hidden>📖 重看說明</button>
       </div>
       <div class="tour-view">
