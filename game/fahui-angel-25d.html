@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="description" content="法會小天使 2.5D 試玩版：教室與入口。">
+<title>法會小天使 2.5D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap">
+<style>
+  /* 2.5D 試玩版：教室＋入口。與原版同一套草地色系，單一亮色主題。 */
+  :root {
+    --bg: #EEF7F2;
+    --ink: #1E293B;
+    --muted: #64748B;
+    --card: #FFFFFF;
+    --green: #059669;
+    --green-soft: #D1FAE5;
+    --gold: #D97706;
+    --gold-soft: #FEF3C7;
+    --pink: #E11D74;
+    --line: #CFE3D8;
+    --serif: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+    --sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+    color-scheme: light;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--sans);
+    display: flex; flex-direction: column; height: 100dvh; overflow: hidden;
+    -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
+  }
+  .hud {
+    display: flex; align-items: center; gap: 10px; padding: calc(8px + env(safe-area-inset-top)) 14px 8px;
+  }
+  .hud h1 { margin: 0; font-family: var(--serif); font-weight: 900; font-size: 1.15rem; flex: 1; line-height: 1.2; }
+  .hud h1 small { display: block; font-family: var(--sans); font-weight: 500; font-size: .72rem; color: var(--muted); letter-spacing: .04em; }
+  .pill {
+    background: var(--card); border: 2px solid var(--line); border-radius: 999px; padding: 4px 12px;
+    font-weight: 700; font-size: .95rem; white-space: nowrap; font-variant-numeric: tabular-nums;
+  }
+  #wrap { flex: 1; position: relative; min-height: 0; overflow: hidden; }
+  #cv { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+  .msg {
+    margin: 0 10px calc(10px + env(safe-area-inset-bottom)); background: var(--card); border: 2px solid var(--line);
+    border-radius: 14px; padding: 10px 14px; min-height: 2.9em; display: flex; align-items: center; gap: 10px;
+  }
+  .msg p { margin: 0; font-size: .95rem; line-height: 1.45; flex: 1; }
+  #hand { font-size: 1.5rem; width: 2.2rem; height: 2.2rem; display: grid; place-items: center; border-radius: 10px; background: var(--gold-soft); border: 2px dashed var(--gold); flex: none; }
+  .overlay {
+    position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; z-index: 10;
+    background: rgba(238,247,242,.86); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  }
+  .card {
+    width: min(420px, 100%); background: var(--card); border-radius: 20px; padding: 22px 20px;
+    box-shadow: 0 12px 40px rgba(5,150,105,.18); border: 2px solid var(--green-soft); text-align: center;
+  }
+  .card h2 { font-family: var(--serif); font-weight: 900; margin: 0 0 6px; font-size: 1.5rem; }
+  .card .tag { display: inline-block; background: var(--gold-soft); color: var(--gold); font-weight: 700; font-size: .8rem; border-radius: 999px; padding: 2px 10px; margin-bottom: 10px; }
+  .card ul { text-align: left; padding-left: 1.2em; margin: 10px 0 16px; line-height: 1.7; }
+  .card p { line-height: 1.6; }
+  .btn {
+    display: block; width: 100%; box-sizing: border-box; margin-top: 10px; padding: 12px; border-radius: 14px;
+    border: 2px solid var(--green); background: var(--green-soft); color: var(--ink); font: 700 1rem var(--sans);
+    cursor: pointer; text-decoration: none;
+  }
+  .btn.primary { background: var(--green); color: #fff; }
+  .btn.ghost { background: transparent; border-color: var(--line); color: var(--muted); }
+  .big { font-size: 2.6rem; margin: 4px 0; }
+  @media (max-width: 520px) { .hud { padding-left: 10px; padding-right: 10px; } .hud h1 { font-size: 1.02rem; } }
+</style>
+</head>
+<body>
+
+<header class="hud">
+  <h1>法會小天使<small>2.5D 試玩版・教室＋入口</small></h1>
+  <span class="pill" id="hearts">❤️ 0／4</span>
+</header>
+<div id="wrap"><canvas id="cv" aria-label="2.5D 會場：教室與入口"></canvas></div>
+<div class="msg">
+  <div id="hand" title="手上的東西">✋</div>
+  <p id="say" aria-live="polite">按「開始」走進會場。</p>
+</div>
+
+<div class="overlay" id="intro">
+  <div class="card">
+    <span class="tag">試玩版</span>
+    <h2>走進 2.5D 的會場</h2>
+    <p>新朋友頭上冒出需求泡泡，一起照顧好他們，收集 4 顆愛心 ❤️</p>
+    <ul>
+      <li>點地板走路，點人或櫃子互動</li>
+      <li>電腦可用方向鍵／WASD 走、空白鍵互動</li>
+      <li>不知道下一步？點「公關學長」問問看</li>
+    </ul>
+    <button class="btn primary" id="startBtn">開始</button>
+    <a class="btn ghost" id="origLink" href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html">玩原版完整遊戲</a>
+  </div>
+</div>
+
+<div class="overlay" id="win" hidden>
+  <div class="card">
+    <div class="big">😇</div>
+    <h2>四顆愛心都收到了！</h2>
+    <p id="winText"></p>
+    <p style="color:var(--muted);font-size:.9rem">這是 2.5D 試玩版，只有教室和入口。<br>喜歡這個視角嗎？一起把整個會場蓋起來吧！</p>
+    <button class="btn primary" id="againBtn">再玩一次</button>
+    <a class="btn" id="origLink2" href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html">玩原版完整遊戲</a>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ── 地圖：原版手機地圖的教室＋入口（上方一排是大廳，門開在後牆正中央）
+const MAP = ['###########','#R...E...S#','#.........#','#.........#','#.c..c..c.#','#.........#','#.........#','#.c..c..c.#','#.........#','###########'];
+const C = 11, R = 10;
+const ORIG = 'https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html';
+const EMO = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+const TXT = '"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
+
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), wrap = document.getElementById('wrap');
+const $ = id => document.getElementById(id);
+
+// ── 投影：前面（畫面下方）的格子比較大、後面比較小，越往後越扁 → 有景深的俯視
+const S0 = .8, K = (1 - S0) / 20, WALL = 2.2;
+let W = 0, H = 0, TW = 40, TD = 40, CX = 0, TOPY = 0;
+const sc = gy => S0 + (1 - S0) * gy / 10;
+const dep = gy => S0 * gy + K * gy * gy;
+const P = (gx, gy, h = 0) => { const s = sc(gy); return [CX + (gx - 5.5) * TW * s, TOPY + TD * dep(gy) - h * TW * .9 * s]; };
+function unP(px, py) {
+  const t = (py - TOPY) / TD, d = S0 * S0 + 4 * K * t;
+  if (d < 0) return null;
+  const gy = (-S0 + Math.sqrt(d)) / (2 * K);
+  return [(px - CX) / (TW * sc(gy)) + 5.5, gy];
+}
+function resize() {
+  const r = wrap.getBoundingClientRect(); W = r.width; H = r.height;
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const span = dep(9.4) - dep(.6), up = WALL * .9 * sc(.6), pad = 12;
+  let tw = (W - 8) / 10.2, ratio;
+  ratio = ((H - pad) / tw - up) / span;
+  if (ratio < .72) { ratio = .72; tw = (H - pad) / (ratio * span + up); }
+  ratio = Math.min(ratio, 1.6);
+  TW = tw; TD = ratio * tw; CX = W / 2;
+  const used = TW * up + TD * span;
+  TOPY = (H - used) / 2 + TW * up - TD * dep(.6);
+}
+
+// ── 小工具
+const solid = (x, y) => {
+  if (x < 0 || y < 0 || x >= C || y >= R) return true;
+  if (x === 5 && y === 0) return false;
+  const ch = MAP[y][x]; return ch === '#' || ch === 'R' || ch === 'S' || ch === 'c';
+};
+const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+function bfs(sx, sy, isGoal, pass) {
+  if (isGoal(sx, sy)) return [];
+  const prev = new Map([[sy * C + sx, null]]), q = [[sx, sy]];
+  while (q.length) {
+    const [x, y] = q.shift();
+    for (const [dx, dy] of DIRS) {
+      const nx = x + dx, ny = y + dy, k = ny * C + nx;
+      if (prev.has(k) || nx < 0 || ny < 0 || nx >= C || ny >= R) continue;
+      const g = isGoal(nx, ny);
+      if (!g && !pass(nx, ny)) continue;
+      prev.set(k, [x, y]);
+      if (g) {
+        const path = [[nx, ny]]; let c = [x, y];
+        while (!(c[0] === sx && c[1] === sy)) { path.unshift(c); c = prev.get(c[1] * C + c[0]); }
+        return path;
+      }
+      q.push([nx, ny]);
+    }
+  }
+  return null;
+}
+function shade(hex, f) {
+  const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = n >> 8 & 255, b = n & 255;
+  const t = f > 0 ? 255 : 0, a = Math.abs(f);
+  r = Math.round(r + (t - r) * a); g = Math.round(g + (t - g) * a); b = Math.round(b + (t - b) * a);
+  return `rgb(${r},${g},${b})`;
+}
+function poly(pts, fill, stroke) {
+  ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
+  ctx.fillStyle = fill; ctx.fill();
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+}
+// 方塊：先畫朝向中間的側面，再畫正面、頂面
+function box(x0, x1, y0, y1, h, col, h0 = 0) {
+  const cx = (x0 + x1) / 2, line = 'rgba(60,40,20,.18)';
+  if (cx < 5.49) poly([P(x1, y0, h0), P(x1, y1, h0), P(x1, y1, h), P(x1, y0, h)], shade(col, -.25), line);
+  else if (cx > 5.51) poly([P(x0, y0, h0), P(x0, y1, h0), P(x0, y1, h), P(x0, y0, h)], shade(col, -.25), line);
+  poly([P(x0, y1, h0), P(x1, y1, h0), P(x1, y1, h), P(x0, y1, h)], col, line);
+  poly([P(x0, y0, h), P(x1, y0, h), P(x1, y1, h), P(x0, y1, h)], shade(col, .22), line);
+}
+function emoji(ch, x, y, size) {
+  ctx.font = `${size}px ${EMO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ch, x, y);
+}
+function label(text, x, y, size, color, bg) {
+  ctx.font = `700 ${size}px ${TXT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (bg) {
+    const w = ctx.measureText(text).width + size * .9, h = size * 1.5;
+    ctx.fillStyle = bg; rrect(x - w / 2, y - h / 2, w, h, h / 2); ctx.fill();
+  }
+  ctx.fillStyle = color; ctx.fillText(text, x, y);
+}
+function rrect(x, y, w, h, r) {
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
+  else { ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+}
+
+// ── 遊戲狀態
+const CHAIRS = [];
+MAP.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === 'c') CHAIRS.push({ x, y, by: null }); }));
+const NEED_ICON = { guide: '🧭', greet: '👋', note: '📝', comfort: '😟' };
+const THANKS = {
+  guide: ['謝謝你帶我入座，第一次來還好有你！', '有人陪著走進來，心就安定多了。', '原來位子在這裡，謝謝你耐心帶路～'],
+  greet: ['被你這樣熱情招呼，緊張全不見了！', '謝謝你的微笑，我覺得好受歡迎～', '一進門就有人打招呼，好溫暖！'],
+  note: ['有筆記本就能把今天的感動記下來了！', '你怎麼知道我正需要這個，謝謝！', '等一下聽課就用它來寫筆記～'],
+  comfort: ['謝謝你陪我，我現在比較不緊張了。', '有你在旁邊，覺得好溫暖。', '跟你聊一聊，心情輕鬆多了。'],
+};
+const pick = a => a[Math.floor(Math.random() * a.length)];
+let S;
+function person(o) { return Object.assign({ path: [], spd: 3, alpha: 1, need: null, state: 'idle', seated: false, born: S ? S.t : 0, walkT: 0 }, o, { fx: o.x, fy: o.y }); }
+function reset() {
+  CHAIRS.forEach(c => c.by = null);
+  S = { t: 0, started: false, done: false, hearts: 0, goal: 4, steps: 0, fx: [], tap: null, target: null, comfort: null, hold: null, events: {}, keys: new Set() };
+  S.player = person({ id: 'me', emoji: '😇', col: '#FBBF24', x: 5, y: 3, spd: 4.6, tag: '你' });
+  S.staff = person({ id: 'pr', emoji: '🧑‍💼', col: '#60A5FA', x: 3, y: 6, spd: 2, tag: '公關學長', wait: 2 });
+  const c = CHAIRS.find(c => c.x === 8 && c.y === 7);
+  const cNpc = person({ id: 'c', emoji: '👨', col: '#C4B5FD', x: 8, y: 7, seated: true, state: 'sit' }); c.by = cNpc;
+  S.npcs = [cNpc];
+  updateHud(); setHand();
+}
+function people() { return [S.player, S.staff, ...S.npcs]; }
+function occupied(x, y, except) { return people().some(p => p !== except && !p.seated && p.x === x && p.y === y); }
+
+function say(t) { $('say').textContent = t; }
+function setHand() { $('hand').textContent = S.hold ? '📝' : '✋'; }
+function updateHud() { $('hearts').textContent = `❤️ ${S.hearts}／${S.goal}`; }
+
+// ── 音效（點「開始」後才啟用）
+let ac = null;
+function beep(notes) {
+  if (!ac) return;
+  const t0 = ac.currentTime;
+  notes.forEach(([f, d], i) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'triangle'; o.frequency.value = f; o.connect(g); g.connect(ac.destination);
+    const s = t0 + i * .09; g.gain.setValueAtTime(.0001, s); g.gain.exponentialRampToValueAtTime(.18, s + .02); g.gain.exponentialRampToValueAtTime(.0001, s + d);
+    o.start(s); o.stop(s + d + .02);
+  });
+}
+
+// ── 劇本：A 要帶位、B 要打招呼、A 入座後要筆記本、C 有點緊張
+function spawn(id, emoji, col, need, path) {
+  const n = person({ id, emoji, col, x: 5, y: 0, alpha: 0, state: 'arrive', want: need });
+  n.path = path; S.npcs.push(n); return n;
+}
+function script() {
+  const E = S.events;
+  if (!E.a && S.t > 1) { E.a = 1; spawn('a', '🧑', '#6EE7B7', 'guide', [[5, 1]]); say('門口來了一位新朋友，看看他需要什麼？'); }
+  if (!E.b && S.t > 9) { E.b = 1; spawn('b', '👩', '#FDA4AF', 'greet', [[5, 1], [6, 1], [7, 1]]); }
+  const a = S.npcs.find(n => n.id === 'a');
+  if (a && a.seated && !E.note) { E.note = S.t + 2; }
+  if (E.note && E.note !== true && S.t > E.note) { E.note = true; a.need = 'note'; }
+  if (!E.c && S.hearts >= 2) E.c = S.t + 1.5;
+  if (E.c && E.c !== true && S.t > E.c) { E.c = true; S.npcs.find(n => n.id === 'c').need = 'comfort'; }
+}
+function hintText() {
+  const ns = S.npcs.filter(n => n.need);
+  const has = k => ns.some(n => n.need === k);
+  const f = S.npcs.find(n => n.state === 'follow');
+  if (f) return '公關學長：帶他走到空椅子旁邊，他就會坐下囉！';
+  if (has('guide')) return '公關學長：門口有新朋友在找位子，點他一下，帶他入座吧！';
+  if (has('greet')) return '公關學長：有人在門口揮手 👋，過去跟他打聲招呼～';
+  if (has('note')) return S.hold ? '公關學長：筆記本拿好了，送去給需要的人吧！' : '公關學長：有人需要筆記本，右上角的文具櫃有 📝！';
+  if (has('comfort')) return '公關學長：右邊那位看起來有點緊張 😟，到他身邊陪他一下。';
+  return '公關學長：目前大家都很好，在會場走走，留意門口喔～';
+}
+
+// ── 互動
+function heart(n, key) {
+  n.need = null; S.hearts++; updateHud();
+  S.fx.push({ n, t: S.t });
+  say(`新朋友：「${pick(THANKS[key])}」`);
+  beep([[660, .18], [880, .18], [1175, .3]]);
+  if (S.hearts >= S.goal && !S.done) { S.done = true; setTimeout(win, 1400); }
+}
+function interact(p) {
+  if (p === S.staff) { say(hintText()); beep([[520, .12]]); return; }
+  if (p.state === 'arrive') return;
+  switch (p.need) {
+    case 'guide':
+      p.need = null; p.state = 'follow'; p.path = []; p.spd = S.player.spd;
+      say('你：「歡迎！我帶你找位子，跟我來～」'); beep([[600, .12], [760, .14]]); break;
+    case 'greet': {
+      heart(p, 'greet');
+      const c = freeChair(p);
+      if (c) setTimeout(() => sitDown(p, c), 900);
+      break;
+    }
+    case 'note':
+      if (S.hold === 'note') { S.hold = null; setHand(); heart(p, 'note'); }
+      else say('他需要一本筆記本 📝，去右上角的文具櫃拿吧！');
+      break;
+    case 'comfort':
+      S.comfort = { n: p, t: 0 }; say('你在他身邊坐了下來，陪他聊一聊……'); break;
+    default:
+      say(p.state === 'follow' ? '新朋友：「我跟著你走～」' : pick(['新朋友：「謝謝你，我先坐一下～」', '新朋友：「這裡氣氛好好喔。」']));
+  }
+}
+function useStation(ch) {
+  if (ch === 'S') {
+    if (S.hold) { say('手上已經有筆記本囉，送去給需要的人吧！'); return; }
+    S.hold = 'note'; setHand(); say('從文具櫃拿了一本筆記本 📝'); beep([[700, .1], [940, .14]]);
+  } else say('報到台：新朋友的名牌和簽到單都在這裡。');
+}
+function freeChair(from) {
+  let best = null, bd = 1e9;
+  for (const c of CHAIRS) if (!c.by) { const d = Math.abs(c.x - from.x) + Math.abs(c.y - from.y); if (d < bd) { bd = d; best = c; } }
+  return best;
+}
+function sitDown(n, c) {
+  const path = bfs(n.x, n.y, (x, y) => x === c.x && y === c.y, (x, y) => !solid(x, y));
+  if (!path) return false;
+  c.by = n; n.path = path; n.state = 'toSeat'; n.spd = 3; n.chair = c; return true;
+}
+
+// ── 玩家移動
+function walkTo(isGoal) {
+  const me = S.player;
+  const sx = me.x, sy = me.y;
+  let path = bfs(sx, sy, isGoal, (x, y) => !solid(x, y) && !occupied(x, y, me));
+  if (!path) path = bfs(sx, sy, isGoal, (x, y) => !solid(x, y));
+  if (path) me.path = path;
+  return !!path;
+}
+const adjGoal = t => (x, y) => !solid(x, y) && !(x === 5 && y === 0) && Math.max(Math.abs(x - t.x), Math.abs(y - t.y)) <= 1 && !(x === t.x && y === t.y);
+function setTarget(t) {
+  S.target = t; S.comfort = null;
+  if (t.kind === 'tile') { walkTo((x, y) => x === t.x && y === t.y); S.target = null; return; }
+  if (cheb(S.player, t.p || t) <= 1 && !(S.player.x === (t.p || t).x && S.player.y === (t.p || t).y)) { S.player.path = []; arriveCheck(); return; }
+  walkTo(adjGoal(t.p || t));
+}
+function arriveCheck() {
+  const t = S.target, me = S.player;
+  if (!t) return;
+  const tt = t.p || t;
+  if (cheb(me, tt) <= 1) { S.target = null; t.kind === 'person' ? interact(t.p) : useStation(t.ch); }
+  else if ((t.tries = (t.tries || 0) + 1) < 8) walkTo(adjGoal(tt));
+  else S.target = null;
+}
+function onPlayerStep(prev) {
+  S.steps++;
+  const f = S.npcs.find(n => n.state === 'follow');
+  if (f) {
+    f.path.push(prev);
+    const c = CHAIRS.find(c => !c.by && cheb(c, S.player) <= 1);
+    if (c) {
+      f.path = [];
+      setTimeout(() => {
+        if (sitDown(f, c)) say('你：「這裡有位子，請坐～」');
+        else f.state = 'follow';
+      }, 120);
+      f.state = 'pause';
+    }
+  }
+  if (S.comfort && cheb(S.player, S.comfort.n) > 1) { S.comfort = null; say('陪伴要待在他身邊一下喔，再回去陪陪他吧。'); }
+}
+
+function move(p, dt) {
+  if (p.fx === p.x && p.fy === p.y) {
+    if (!p.path.length) return false;
+    const prev = [p.x, p.y], n = p.path.shift();
+    if (p === S.player && occupied(n[0], n[1], p) && p.path.length === 0) { arriveCheck(); return false; }
+    p.x = n[0]; p.y = n[1];
+    if (p === S.player) onPlayerStep(prev);
+  }
+  const dx = p.x - p.fx, dy = p.y - p.fy, d = Math.hypot(dx, dy), st = p.spd * dt;
+  p.walkT += dt;
+  if (d <= st) {
+    p.fx = p.x; p.fy = p.y;
+    if (!p.path.length) arrived(p);
+  } else { p.fx += dx / d * st; p.fy += dy / d * st; }
+  return true;
+}
+function arrived(p) {
+  if (p === S.player) { arriveCheck(); return; }
+  if (p.state === 'arrive') { p.state = 'wait'; p.need = p.want; }
+  else if (p.state === 'toSeat') {
+    p.seated = true; p.state = 'sit';
+    if (p.id === 'a' && !S.events.guided) { S.events.guided = 1; heart(p, 'guide'); }
+  }
+}
+
+function update(dt) {
+  S.t += dt;
+  script();
+  const me = S.player;
+  // 鍵盤：按住方向鍵一格一格走
+  if (!me.path.length && me.fx === me.x && me.fy === me.y) {
+    const k = S.keys, d = k.has('L') ? [-1, 0] : k.has('R') ? [1, 0] : k.has('U') ? [0, -1] : k.has('D') ? [0, 1] : null;
+    if (d) { const nx = me.x + d[0], ny = me.y + d[1]; if (!solid(nx, ny) && !(nx === 5 && ny === 0) && !occupied(nx, ny, me)) { S.target = null; me.path = [[nx, ny]]; } }
+  }
+  people().forEach(p => {
+    const moving = move(p, dt);
+    if (!moving) p.walkT = 0;
+    if (p.alpha < 1) p.alpha = Math.min(1, p.alpha + dt * 2.5);
+  });
+  // 公關學長隨機走動
+  const pr = S.staff;
+  if (!pr.path.length && pr.fx === pr.x && pr.fy === pr.y && (pr.wait -= dt) < 0) {
+    pr.wait = 2 + Math.random() * 2.5;
+    const opts = [];
+    for (let y = 2; y < 9; y++) for (let x = 1; x < 10; x++) if (!solid(x, y) && !occupied(x, y, pr) && Math.abs(x - pr.x) + Math.abs(y - pr.y) <= 4) opts.push([x, y]);
+    const g = opts.length && pick(opts);
+    if (g) pr.path = bfs(pr.x, pr.y, (x, y) => x === g[0] && y === g[1], (x, y) => !solid(x, y) && !occupied(x, y, pr) && y > 1) || [];
+  }
+  if (S.comfort) {
+    const cm = S.comfort;
+    if (me.fx === me.x && me.fy === me.y && cheb(me, cm.n) <= 1) cm.t += dt;
+    if (cm.t >= 2) { S.comfort = null; heart(cm.n, 'comfort'); }
+  }
+  S.fx = S.fx.filter(f => S.t - f.t < 1.6);
+}
+
+// ── 繪圖
+function footOf(p) {
+  const h = p.seated ? .42 : 0;
+  const [x, y] = P(p.fx + .5, p.fy + .55, h);
+  return { x, y, u: TW * sc(p.fy + .55) };
+}
+function drawBg() {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#D7EEF8'); g.addColorStop(.25, '#E6F4EA'); g.addColorStop(1, '#CFE9D6');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // 兩側草地上的小花
+  ctx.globalAlpha = .55;
+  for (let i = 0; i < 26; i++) {
+    const side = i % 2 ? 1 : -1, gy = 1 + (i * 7 % 26) / 3, gx = side > 0 ? 10.6 + (i * 3 % 5) * .5 : .4 - (i * 3 % 5) * .5;
+    const [x, y] = P(gx, gy); if (x < -20 || x > W + 20) continue;
+    emoji(i % 3 ? '🌿' : '🌼', x, y, TW * sc(gy) * .42);
+  }
+  ctx.globalAlpha = 1;
+}
+function drawFloor() {
+  for (let y = 1; y < 9; y++) for (let x = 1; x < 10; x++) {
+    const pts = [P(x, y), P(x + 1, y), P(x + 1, y + 1), P(x, y + 1)];
+    let col;
+    if (y === 1) col = (x + y) % 2 ? '#F1EDE4' : '#E6E0D3';
+    else col = ['#E9C89B', '#E2BE8E', '#EDCDA3'][(x * 7 + y * 3) % 3];
+    poly(pts, col, y === 1 ? 'rgba(120,100,70,.18)' : 'rgba(150,100,50,.16)');
+  }
+  // 大廳與教室的分界線
+  ctx.strokeStyle = 'rgba(150,110,60,.45)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(...P(1, 2)); ctx.lineTo(...P(10, 2)); ctx.stroke();
+  // 迎賓地墊
+  poly([P(5.12, 1.12), P(5.88, 1.12), P(5.88, 1.9), P(5.12, 1.9)], '#E11D74');
+  poly([P(5.2, 1.2), P(5.8, 1.2), P(5.8, 1.82), P(5.2, 1.82)], '#F472B6');
+  // 門口灑進來的光
+  const [lx, ly] = P(5.5, 1.6);
+  const rg = ctx.createRadialGradient(lx, ly, 0, lx, ly, TW * 2.6);
+  rg.addColorStop(0, 'rgba(255,248,220,.55)'); rg.addColorStop(1, 'rgba(255,248,220,0)');
+  ctx.fillStyle = rg; ctx.fillRect(lx - TW * 3, ly - TW * 3, TW * 6, TW * 6);
+  // 走道地毯（中央）
+  poly([P(4.15, 2.1), P(4.85, 2.1), P(4.85, 8.9), P(4.15, 8.9)], 'rgba(5,150,105,.12)');
+  poly([P(6.15, 2.1), P(6.85, 2.1), P(6.85, 8.9), P(6.15, 8.9)], 'rgba(5,150,105,.12)');
+}
+function wallRect(x0, x1, h0, h1, fill) {
+  const a = P(x0, 1, h1), b = P(x1, 1, h0);
+  ctx.fillStyle = fill; ctx.fillRect(a[0], a[1], b[0] - a[0], b[1] - a[1]);
+  return [a[0], a[1], b[0] - a[0], b[1] - a[1]];
+}
+function drawWalls() {
+  const wall = '#FBF3E4';
+  box(.6, 5, .6, 1, WALL, wall);
+  box(6, 10.4, .6, 1, WALL, wall);
+  box(5, 6, .6, 1, WALL, wall, 1.2);
+  // 門洞：外面的光
+  const [dx, dy, dw, dh] = wallRect(5, 6, 0, 1.2, '#FFF8DC');
+  const dg = ctx.createLinearGradient(0, dy, 0, dy + dh); dg.addColorStop(0, '#BFE3F5'); dg.addColorStop(1, '#E8F6D8');
+  ctx.fillStyle = dg; ctx.fillRect(dx, dy, dw, dh);
+  emoji('🌳', dx + dw * .25, dy + dh * .45, dw * .42); emoji('🌸', dx + dw * .78, dy + dh * .7, dw * .26);
+  ctx.strokeStyle = '#B45309'; ctx.lineWidth = Math.max(2, TW * .06); ctx.strokeRect(dx, dy, dw, dh);
+  // 牆裙
+  wallRect(.98, 5, 0, .42, '#D9C4A3'); wallRect(6, 10.02, 0, .42, '#D9C4A3');
+  // 窗戶
+  for (const [a, b] of [[1.6, 3.6], [7.4, 9.4]]) {
+    const [x, y, w, h] = wallRect(a, b, .8, 1.7, '#BAE6FD');
+    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = Math.max(2, TW * .07); ctx.strokeRect(x, y, w, h);
+    ctx.beginPath(); ctx.moveTo(x + w / 2, y); ctx.lineTo(x + w / 2, y + h); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.moveTo(x + w * .1, y + h * .85); ctx.lineTo(x + w * .3, y + h * .15); ctx.lineTo(x + w * .38, y + h * .15); ctx.lineTo(x + w * .18, y + h * .85); ctx.fill();
+  }
+  // 入口招牌
+  const [sx, sy] = P(5.5, 1, 1.98);
+  label('入口・歡迎光臨', sx, sy, Math.max(10, TW * .3), '#FFFFFF', '#059669');
+  // 側牆
+  box(.6, 1, .6, 9.4, WALL, '#F4E8D2');
+  box(10, 10.4, .6, 9.4, WALL, '#F4E8D2');
+}
+function drawChair(c) {
+  const { x, y } = c;
+  box(x + .22, x + .78, y + .22, y + .34, 1.0, '#B45309', .42);
+  box(x + .2, x + .8, y + .25, y + .82, .42, '#D97706');
+}
+function drawStation(ch, x, y) {
+  if (ch === 'R') {
+    box(x + .06, x + .94, y + .3, y + .92, .82, '#0EA5E9');
+    const [ex, ey] = P(x + .5, y + .6, .82); emoji('📋', ex, ey - TW * .12, TW * .42);
+    const [lx, ly] = P(x + .5, y + .92, .42); label('報到台', lx, ly, Math.max(9, TW * .22), '#fff');
+  } else {
+    box(x + .1, x + .9, y + .18, y + .72, 1.5, '#A16207');
+    const [ex, ey] = P(x + .5, y + .72, 1.0); emoji('📝', ex, ey, TW * .42);
+    const [lx, ly] = P(x + .5, y + .72, .45); label('文具櫃', lx, ly, Math.max(9, TW * .22), '#fff');
+    if (S.npcs.some(n => n.need === 'note') && !S.hold) {
+      const [sx, sy] = P(x + .5, y + .45, 1.5); emoji('✨', sx, sy - TW * .3 - Math.sin(S.t * 5) * TW * .06, TW * .4);
+    }
+  }
+}
+function drawPerson(p) {
+  const { x, y, u } = footOf(p);
+  ctx.globalAlpha = p.alpha;
+  if (!p.seated) {
+    ctx.fillStyle = 'rgba(30,41,59,.18)'; ctx.beginPath(); ctx.ellipse(x, y, u * .3, u * .11, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  const bob = p.walkT ? Math.abs(Math.sin(p.walkT * 12)) * u * .07 : Math.sin(S.t * 2 + p.x) * u * .015;
+  const bh = p.seated ? u * .36 : u * .5, bw = u * .46;
+  ctx.fillStyle = p.col; rrect(x - bw / 2, y - bh - bob, bw, bh, bw * .42); ctx.fill();
+  ctx.strokeStyle = 'rgba(30,41,59,.25)'; ctx.lineWidth = 1; ctx.stroke();
+  emoji(p.emoji, x, y - bh - bob - u * .22, u * .62);
+  if (p === S.player && S.hold) emoji('📝', x + u * .3, y - bh * .55 - bob, u * .3);
+  ctx.globalAlpha = 1;
+}
+function drawTag(p) {
+  if (!p.tag) return;
+  const { x, y, u } = footOf(p);
+  label(p.tag, x, y + u * .2, Math.max(9, u * .22), '#fff', p === S.player ? 'rgba(217,119,6,.92)' : 'rgba(2,132,199,.9)');
+}
+function drawBubble(p) {
+  const icon = p.need ? NEED_ICON[p.need] : p.state === 'follow' || p.state === 'pause' ? '💺' : null;
+  if (!icon || p.alpha < 1) return;
+  const { x, y, u } = footOf(p);
+  const bh = p.seated ? u * .36 : u * .5;
+  const pulse = 1 + Math.sin(S.t * 5) * .05, r = u * .36 * pulse, cy = y - bh - u * 1.05;
+  ctx.fillStyle = '#fff'; ctx.strokeStyle = p.need ? '#D97706' : '#94A3B8'; ctx.lineWidth = Math.max(2, u * .05);
+  ctx.beginPath(); ctx.arc(x, cy, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x - r * .3, cy + r * .9); ctx.lineTo(x, cy + r * 1.35); ctx.lineTo(x + r * .3, cy + r * .9); ctx.fill();
+  emoji(icon, x, cy + 1, r * 1.15);
+  if (S.comfort && S.comfort.n === p) {
+    ctx.strokeStyle = '#E11D74'; ctx.lineWidth = Math.max(3, u * .08);
+    ctx.beginPath(); ctx.arc(x, cy, r + u * .1, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, S.comfort.t / 2)); ctx.stroke();
+  }
+}
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBg(); drawFloor(); drawWalls();
+  if (S.tap && S.t - S.tap.t < .6) {
+    const k = (S.t - S.tap.t) / .6, { x, y } = S.tap;
+    ctx.globalAlpha = 1 - k; poly([P(x + .1, y + .1), P(x + .9, y + .1), P(x + .9, y + .9), P(x + .1, y + .9)], 'rgba(5,150,105,.35)'); ctx.globalAlpha = 1;
+  }
+  const items = [];
+  CHAIRS.forEach(c => items.push({ k: c.y + .5, f: () => drawChair(c) }));
+  items.push({ k: 1.92, f: () => drawStation('R', 1, 1) }, { k: 1.72, f: () => drawStation('S', 9, 1) });
+  people().forEach(p => items.push({ k: p.seated ? p.fy + .9 : p.fy + .62, f: () => drawPerson(p) }));
+  items.sort((a, b) => a.k - b.k).forEach(i => i.f());
+  box(.6, 10.4, 9, 9.35, .32, '#E7D7BC');
+  people().forEach(drawTag);
+  people().forEach(drawBubble);
+  for (const f of S.fx) {
+    const k = (S.t - f.t) / 1.6, { x, y, u } = footOf(f.n);
+    ctx.globalAlpha = 1 - k * k; emoji('❤️', x, y - u * (1.4 + k * 1.2), u * (.5 + k * .3)); ctx.globalAlpha = 1;
+  }
+}
+
+// ── 點擊
+function hitPerson(px, py) {
+  let best = null, bk = -1;
+  for (const p of people()) {
+    if (p === S.player || p.alpha < 1) continue;
+    const { x, y, u } = footOf(p), k = p.fy + (p.seated ? .9 : .62);
+    if (Math.abs(px - x) < u * .42 && py < y + u * .15 && py > y - u * 1.45 && k > bk) { best = p; bk = k; }
+  }
+  return best;
+}
+function onTap(px, py) {
+  if (!S.started || S.done) return;
+  const p = hitPerson(px, py);
+  if (p) { setTarget({ kind: 'person', p }); return; }
+  const g = unP(px, py); if (!g) return;
+  // 點櫃子／報到台（含高度，往上一點也算）
+  for (const [ch, x, y, h] of [['R', 1, 1, .82], ['S', 9, 1, 1.5]]) {
+    const a = P(x, y + 1), b = P(x + 1, y + 1, h);
+    if (px > a[0] && px < P(x + 1, y + 1)[0] && py < a[1] && py > b[1] - TW * .2) { setTarget({ kind: 'station', ch, x, y }); return; }
+  }
+  const tx = Math.floor(g[0]), ty = Math.floor(g[1]);
+  if (tx < 1 || tx > 9 || ty < 1 || ty > 8) return;
+  const seat = CHAIRS.find(c => c.x === tx && c.y === ty);
+  if (seat && seat.by && seat.by.seated) { setTarget({ kind: 'person', p: seat.by }); return; }
+  if (solid(tx, ty)) return;
+  S.tap = { x: tx, y: ty, t: S.t };
+  setTarget({ kind: 'tile', x: tx, y: ty });
+}
+cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(); onTap(e.clientX - r.left, e.clientY - r.top); });
+const KEYMAP = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', ArrowDown: 'D', KeyS: 'D' };
+addEventListener('keydown', e => {
+  if (!S.started || S.done) { if ((e.code === 'Enter' || e.code === 'Space') && !$('intro').hidden) { e.preventDefault(); start(); } return; }
+  if (KEYMAP[e.code]) { e.preventDefault(); S.keys.add(KEYMAP[e.code]); }
+  else if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); interactNearest(); }
+});
+addEventListener('keyup', e => { if (KEYMAP[e.code] && S) S.keys.delete(KEYMAP[e.code]); });
+function interactNearest() {
+  const me = S.player;
+  const near = [...S.npcs, S.staff].filter(p => cheb(me, p) <= 1 && p.alpha >= 1);
+  const p = near.find(n => n.need) || near.find(n => n.state === 'follow') || near.find(n => n === S.staff) || near[0];
+  if (p) { interact(p); return; }
+  if (cheb(me, { x: 9, y: 1 }) <= 1) useStation('S');
+  else if (cheb(me, { x: 1, y: 1 }) <= 1) useStation('R');
+  else say('身邊沒有人喔，走到新朋友旁邊再按空白鍵。');
+}
+
+function win() {
+  $('winText').textContent = `你走了 ${S.steps} 步、花了 ${Math.round(S.t)} 秒，照顧好 4 位新朋友。`;
+  $('win').hidden = false;
+  beep([[523, .2], [659, .2], [784, .2], [1047, .4]]);
+}
+function start() {
+  $('intro').hidden = true; S.started = true;
+  try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume(); } catch (e) { ac = null; }
+  say('會場準備好了，留意門口的新朋友！');
+}
+$('startBtn').onclick = start;
+$('againBtn').onclick = () => { $('win').hidden = true; reset(); start(); };
+
+let last = 0;
+function frame(ts) {
+  const dt = Math.min(.05, (ts - last) / 1000 || 0); last = ts;
+  if (S.started && !S.done) update(dt); else if (S.done) { S.t += dt; S.fx = S.fx.filter(f => S.t - f.t < 1.6); }
+  draw();
+  requestAnimationFrame(frame);
+}
+reset(); resize();
+addEventListener('resize', resize);
+if (location.hash === '#debug') Object.assign(window, { __S: () => S, __P: P, __foot: footOf });
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
