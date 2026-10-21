@@ -301,6 +301,9 @@
   .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .modes .btn { display: grid; gap: 2px; justify-items: center; padding: 12px 8px; }
   .modes small { font-size: .72rem; font-weight: 500; opacity: .85; }
+  .overlay.welcome { z-index: 25; background: rgba(30,41,59,.4); }
+  .welcome .card { text-align: center; justify-items: center; }
+  .welcome p { margin: 0; line-height: 1.7; color: var(--muted); }
   .overlay.save { z-index: 20; background: rgba(30,41,59,.55); place-items: start center; }
   .save .card { gap: 10px; }
   .save h2 { font-size: 1.3rem; }
@@ -446,6 +449,14 @@
         <div class="dots" id="tourDots" role="tablist" aria-label="說明頁"></div>
         <button id="tourNext" class="btn primary" type="button">下一步 ›</button>
       </div>
+    </div>
+  </div>
+
+  <div id="welcome" class="overlay welcome" hidden>
+    <div class="card" role="dialog" aria-labelledby="welcomeHead">
+      <h2 id="welcomeHead">👋 歡迎回來！</h2>
+      <p>剛剛先幫你把遊戲暫停了，<br>新朋友都還在原地等你。</p>
+      <button id="welcomeBtn" class="btn primary" type="button">▶ 繼續當小天使</button>
     </div>
   </div>
 
@@ -901,22 +912,28 @@
     });
     window.addEventListener('pageshow', e => { if (e.persisted) stale = true; });
     // 回到遊戲後的第一次點擊／按鍵：把聲音救回來（點擊才算使用者允許播放）
+    let revivedAt = 0;
     function revive() {
-      if (!ac || !on || (!stale && ac.state === 'running')) return;
-      stale = false;
+      if (!ac || !on || document.hidden || (!stale && ac.state === 'running')) return;
+      if (Date.now() - revivedAt < 1500) return;   // 一次點擊會連續觸發 touchend、click，只處理一次
+      revivedAt = Date.now(); stale = false;
       if (IOS || ac.state !== 'suspended') return rebuild();
       // 其他手機先試著恢復；恢復不了就換新的
       const cur = ac;
       cur.resume().then(() => { if (ac === cur && cur.state !== 'running') rebuild(); }, () => { if (ac === cur) rebuild(); });
+      unlock();
     }
+    // 在點擊當下播一段無聲的音訊，iOS 才會真正解鎖
+    function unlock() { try { const src = ac.createBufferSource(); src.buffer = ac.createBuffer(1, 1, 22050); src.connect(ac.destination); src.start(0); } catch (e) {} }
     function rebuild() {
       clearInterval(timer); clearInterval(oldTimer); timer = oldTimer = null;
       const old = ac; ac = null; try { old.close(); } catch (e) {}
       init(); if (!ac) return;
       ac.resume().catch(() => {});
+      unlock();
       if (want) startMusic();
     }
-    for (const ev of ['pointerdown', 'touchend', 'keydown', 'click']) document.addEventListener(ev, revive, { capture: true, passive: true });
+    for (const ev of ['touchend', 'keydown', 'click']) document.addEventListener(ev, revive, { capture: true, passive: true });
     function tone(dest, m, t, dur, { type = 'sine', vol = .1, attack = .01, cutoff = 0, echo = false } = {}) {
       const o = ac.createOscillator(), g = ac.createGain();
       o.type = type; o.frequency.value = hz(m);
@@ -985,7 +1002,7 @@
       b.setAttribute('aria-label', v ? '背景音樂：開' : '背景音樂：關');
       if (v && playing) startMusic(); else if (!v) stopMusic(.1);
     }
-    return { startMusic, stopMusic, sfx, setOn, get on() { return on; } };
+    return { startMusic, stopMusic, sfx, setOn, revive, get on() { return on; } };
   })();
   const sfx = n => Sound.sfx(n);
 
@@ -1438,6 +1455,21 @@
     tip('成績卡已下載，也開啟了 LINE 分享頁：送出文字和連結後，把下載的成績卡拖進同一個聊天室就完成。');
   });
 
+  // ---------- 切到其他 App：自動暫停 ----------
+  // 回來按「繼續」才接著玩（時間、新朋友的耐心都不會偷偷流逝），這一下點擊也把聲音一起救回來
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden || !S || !S.running || S.finished || S.paused) return;
+    S.paused = true;
+    $('#welcome').hidden = false;
+  });
+  function resumeGame() {
+    if (!S.paused) return;
+    Sound.revive();
+    S.paused = false; last = 0;
+    $('#welcome').hidden = true;
+  }
+  $('#welcome').addEventListener('click', resumeGame);
+
   // ---------- interactions ----------
   function give(item) {
     if (item === 'bao' && S.hand === 'bao') {
@@ -1622,6 +1654,7 @@
   }
   window.addEventListener('keydown', e => {
     if (e.code === 'KeyM') { if (!e.repeat) Sound.setOn(!Sound.on, S.running); return; }
+    if (S && S.paused) { if (!e.repeat) resumeGame(); return; }
     if (!$('#intro').hidden) {
       const onBtn = !!e.target.closest('button, a');
       if (e.code === 'ArrowRight' || (e.code === 'Enter' && !onBtn)) { e.preventDefault(); tourGo(tourAt + 1); }
@@ -1753,7 +1786,7 @@
 
   // ---------- update ----------
   function update(dt) {
-    if (!S.running) return;
+    if (!S.running || S.paused) return;
     S.time += dt; S.waveT += dt;
     const p = S.player;
     if (p.t < 1) {
