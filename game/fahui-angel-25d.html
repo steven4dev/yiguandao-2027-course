@@ -2284,15 +2284,25 @@
         break;
       }
       case 'sweep': {
-        const R = ROWS, amp = R * .22, ph = RM ? 0 : t * .18;
-        const gy = R * .38 + Math.sin(ph) * amp, dir = Math.cos(ph) >= 0 ? -1 : 1;
-        const [x, y] = iso(d.gx, gy);
-        const top = chibi(x, y, TW * 1.05, { hair: 'short', hairCol: '#4B3A33', shirt: '#B5DEC6', pants: '#7D8B6A', cap: '#5FAF84', walk: !RM, face: dir, ph: 9 }, t);
-        const sw = RM ? 0 : Math.sin(t * 6) * .25, s = TW * 1.05;
-        const hx = x + s * .22, hy = y - s * .35, ex = x + s * (.3 + sw * .4), ey = y + s * .02;
-        ctx.strokeStyle = '#A0703F'; ctx.lineWidth = Math.max(1.5, s * .035); ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke();
+        // 有人朝他走過來、或正在跟他說話時，學長會停下腳步、轉身面向小天使
+        const held = S.time < (d.hold || 0) || (d.goal && S.goal === d.goal && (S.path.length > 0 || !!S.pending));
+        const dt = Math.min(.1, Math.max(0, t - (d.lastT || t))); d.lastT = t;
+        if (!held && !RM) d.ph = (d.ph || 0) + dt * .18;
+        const R = ROWS, amp = R * .22, ph = d.ph || 0;
+        d.gy = R * .38 + Math.sin(ph) * amp;
+        const [x, y] = iso(d.gx, d.gy);
+        let dir = Math.cos(ph) >= 0 ? -1 : 1;
+        if (held) { const [pxw] = iso(...posOf(S.player).map(v => v + .5)); dir = pxw < x ? -1 : 1; }
+        const sweeping = !held && !RM, s = TW * 1.05, sw = sweeping ? Math.sin(t * 6) * .25 : 0;
+        const top = chibi(x, y, s, { hair: 'short', hairCol: '#4B3A33', shirt: '#B5DEC6', pants: '#7D8B6A', cap: '#5FAF84', walk: sweeping, face: dir, ph: 9, grip: held ? -.15 : -.35 - sw * .5 }, t);
+        // 掃把握在右手上：竹柄穿過手掌，下端是掃把頭；停下來說話時掃把直立在身旁
+        const [hx, hy] = chibi.hand, ex = held ? hx + s * .03 : x + s * (.34 + sw * .4), ey = y + s * .02;
+        const ux = hx - ex, uy = hy - ey;
+        ctx.strokeStyle = '#A0703F'; ctx.lineWidth = Math.max(1.5, s * .035); ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(hx + ux * .3, hy + uy * .3); ctx.lineTo(ex, ey); ctx.stroke(); ctx.lineCap = 'butt';
         poly([[ex - s * .08, ey + s * .02], [ex + s * .08, ey + s * .02], [ex + s * .04, ey - s * .08], [ex - s * .04, ey - s * .08]], '#E9C79C', INK, lw);
-        if (!RM && Math.sin(t * 6) > .8) { ctx.globalAlpha = .5; ell(ex - s * .12, ey - s * .02, s * .05, s * .03, '#D8C8B0'); ctx.globalAlpha = 1; }
+        ell(hx, hy, s * .04, s * .04, '#FFE2CC', INK, lw);
+        if (sweeping && Math.sin(t * 6) > .8) { ctx.globalAlpha = .5; ell(ex - s * .12, ey - s * .02, s * .05, s * .03, '#D8C8B0'); ctx.globalAlpha = 1; }
         L_TAG.push(() => headTag('掃地學長', x, top, '#4E8F4D', Math.max(9, TW * .17)));
         decoBox(d, x - s * .35, top, x + s * .45, y + s * .12);
         break;
@@ -2339,8 +2349,8 @@
   function visitDeco(d) {
     const near = [];
     for (let y = 1; y <= ROWS + 1; y++) for (let x = -3; x <= COLS + 2; x++)
-      if (Math.max(Math.abs(x + .5 - d.gx), Math.abs(y + .5 - d.gy)) <= 1.6 && (walkable(x, y) || (x === S.player.x && y === S.player.y))) near.push([x, y]);
-    if (near.length) return goTo(near, () => talkDeco(d));
+      if (Math.max(Math.abs(x + .5 - d.gx), Math.abs(y + .5 - d.gy)) <= 1.6 && !(d.walker && Math.max(Math.abs(x + .5 - d.gx), Math.abs(y + .5 - d.gy)) < .8) && (walkable(x, y) || (x === S.player.x && y === S.player.y))) near.push([x, y]);
+    if (near.length) { goTo(near, () => talkDeco(d)); d.goal = S.goal; return; }
     const tx = Math.min(COLS - 2, Math.max(1, Math.floor(d.gx))), ty = Math.min(ROWS - 2, Math.max(1, Math.floor(d.gy)));
     const goals = [];
     for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) if (Math.abs(x - tx) + Math.abs(y - ty) <= 2 && (walkable(x, y) || (x === S.player.x && y === S.player.y))) goals.push([x, y]);
@@ -2361,6 +2371,7 @@
     if (S.mode === 'challenge' && S.npcs.some(n => n.state === 'wait' && n.revealed) && Math.random() < .5) line += ' ' + pick(REMIND);
     say({ name: d.name }, line);
     if (d.id === 'cat') d.awake = S.time + 2.5;
+    if (d.id === 'sweep') { d.hold = S.time + 4.5; d.goal = null; }
     if (d.id === 'fly') d.scared = S.time + 2.5;
     if (d.id === 'dove') d.gone = S.time + 4.2;
     if (d.id === 'bike') { d.ring = S.time + .5; sfx('unlock'); } else sfx('pop');
@@ -2823,10 +2834,12 @@
     }
     const wave = o.wave && !RM ? Math.sin(t * 9) * .5 : 0;
     for (const d of [-1, 1]) {
-      const holding = d === 1 && o.hold;
-      ctx.save(); ctx.translate(x + d * s * .15, top + s * .05); ctx.rotate(holding ? -.9 : d * .35 + (d === 1 && o.wave ? -2.4 + wave : 0));
+      const holding = d === 1 && o.hold, ang = holding ? -.9 : d === 1 && o.grip != null ? o.grip : d * .35 + (d === 1 && o.wave ? -2.4 + wave : 0);
+      ctx.save(); ctx.translate(x + d * s * .15, top + s * .05); ctx.rotate(ang);
       ctx.fillStyle = o.shirt; rr(-s * .04, 0, s * .08, s * .17, s * .04); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
       ell(0, s * .18, s * .04, s * .04, '#FFE2CC', INK, lw); ctx.restore();
+      // 右手手掌的位置（拿掃把等道具時，從這裡接上去）
+      if (d === 1) chibi.hand = [x + s * .15 - Math.sin(ang) * s * .18, top + s * .05 + Math.cos(ang) * s * .18];
     }
     // 手上拿的東西：畫在抬起的右手上
     if (o.hold) {
