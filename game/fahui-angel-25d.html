@@ -313,17 +313,9 @@
   .thanks li .what { font-size: .95rem; opacity: .85; }
   .share { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 10px; }
   .share .btn { width: 100%; }
-  .share-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .share-main { display: grid; gap: 2px; justify-items: center; }
   .share-main small { font-size: .74rem; font-weight: 500; opacity: .9; }
-  .sbtn {
-    display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 8px 6px;
-    border-radius: 12px; font: inherit; font-size: .88rem; font-weight: 700; cursor: pointer; text-decoration: none;
-    border: 2px solid var(--line); background: var(--card); color: var(--ink);
-  }
-  .sbtn.fb { background: #1877F2; border-color: #1877F2; color: #fff; }
-  .sbtn.line { background: #06C755; border-color: #06C755; color: #fff; }
-  .sbtn b { font-family: Arial, sans-serif; font-size: 1.05rem; }
+  .btn.line { background: #06C755; color: #fff; text-decoration: none; text-align: center; }
   #shareTip { line-height: 1.6; }
   #shareTip.ok { color: var(--green); font-weight: 700; }
   .end-wrap .event { background: var(--gold-soft); border-radius: 14px; padding: 12px 14px; font-size: .88rem; line-height: 1.65; }
@@ -342,10 +334,6 @@
   .save .card { gap: 10px; }
   .save h2 { font-size: 1.3rem; }
   #saveImg { width: min(240px, 100%); max-height: 46vh; object-fit: contain; justify-self: center; border-radius: 14px; box-shadow: 0 10px 24px rgba(30,41,59,.25); -webkit-touch-callout: default; }
-  .fmt { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--bg); padding: 4px; border-radius: 12px; }
-  .fmt button { font: inherit; font-weight: 700; font-size: .9rem; border: 0; border-radius: 9px; padding: 8px 6px; background: transparent; color: var(--muted); cursor: pointer; display: grid; gap: 1px; }
-  .fmt button small { font-size: .7rem; font-weight: 500; }
-  .fmt button.on { background: var(--card); color: var(--ink); box-shadow: 0 2px 6px rgba(30,41,59,.12); }
   .step { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; align-items: center; }
   .step[hidden] { display: none; }
   .step .num { width: 30px; height: 30px; border-radius: 50%; background: var(--green); color: #fff; font-weight: 900; display: grid; place-items: center; }
@@ -353,7 +341,6 @@
   .step small { display: block; font-size: .75rem; color: var(--muted); line-height: 1.5; }
   .step .btn { padding: 9px 14px; white-space: nowrap; }
   .step.done .num { background: var(--gold); }
-  #shareTextBox { width: 100%; box-sizing: border-box; font: inherit; font-size: .82rem; line-height: 1.5; padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); resize: none; }
   /* 愛心從卡片前面飄下來（點不到，不會擋住按鈕） */
   .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
   .confetti span { position: absolute; top: -40px; font-size: 22px; animation: fall 3.2s ease-in forwards; opacity: 0; }
@@ -576,31 +563,17 @@
 
   <div id="saveSheet" class="overlay save" hidden>
     <div class="card">
-      <h2>分享小天使卡，三個步驟</h2>
+      <h2>分享到 LINE，兩個步驟</h2>
       <p class="tiny" id="saveWhy"></p>
-      <div class="fmt" role="group" aria-label="卡片格式">
-        <button id="fmtPost" class="on" type="button" aria-pressed="true">動態貼文<small>FB・IG・LINE</small></button>
-        <button id="fmtStory" type="button" aria-pressed="false">限時動態<small>IG・FB 限動</small></button>
-      </div>
-      <img id="saveImg" alt="你的法會小天使卡（長按可儲存）">
+      <img id="saveImg" alt="你的法會小天使成績卡（長按可以分享或儲存）">
       <div class="step">
         <span class="num">1</span>
-        <div><b>先複製貼文文字</b><small>臉書、IG 都不允許網站自動填入文字，要自己貼上</small></div>
-        <button id="copyShareText" class="btn" type="button">📋 複製</button>
-      </div>
-      <textarea id="shareTextBox" rows="3" readonly aria-label="要貼到臉書的文字"></textarea>
-      <div class="step" id="stepNative">
-        <span class="num">2</span>
-        <div><b>分享卡片圖片</b><small>在選單裡選 Facebook、Instagram 或 LINE，卡片會直接附上</small></div>
-        <button id="shareFileBtn" class="btn primary" type="button">📤 分享</button>
-      </div>
-      <div class="step" id="stepManual" hidden>
-        <span class="num">2</span>
-        <div><b>長按上面的卡片 → 儲存圖片</b><small>再打開臉書或 IG → 新增貼文／限動 → 附上剛存的卡片</small></div>
+        <div><b>長按上面的成績卡 →「分享」選 LINE</b><small>也可以先「儲存圖片」，再到 LINE 聊天室附上這張成績卡</small></div>
       </div>
       <div class="step">
-        <span class="num">3</span>
-        <div><b>長按文字框 →「貼上」</b><small>IG 限動可以加「連結」貼紙貼上網址；卡片上也有 QR Code，朋友掃了就能玩</small></div>
+        <span class="num">2</span>
+        <div><b>再傳遊戲連結</b><small>朋友點開就能一起來當小天使</small></div>
+        <a id="lineText" class="btn line" href="#" target="_blank" rel="noopener">💬 傳連結</a>
       </div>
       <button id="saveClose" class="btn ghost" type="button">完成，關閉</button>
     </div>
@@ -625,11 +598,7 @@
         <ul id="thanksList"></ul>
       </section>
       <div class="share">
-        <button id="shareImg" class="btn primary share-main" type="button">📤 分享我的小天使卡<small>Facebook・Instagram・LINE 都可以</small></button>
-        <div class="share-row">
-          <a id="lineShare" class="sbtn line" href="#" target="_blank" rel="noopener">LINE 傳連結</a>
-          <button id="copyLink" class="sbtn" type="button">🔗 複製連結</button>
-        </div>
+        <button id="shareImg" class="btn line share-main" type="button">💬 分享至 LINE<small>成績卡和遊戲連結一起送出</small></button>
         <p class="tiny" id="shareTip">分享出去的連結點開就能直接玩，邀朋友一起來當小天使。</p>
       </div>
       <div class="event">
@@ -1346,7 +1315,7 @@
     const m = Math.floor(sec / 60), s = sec % 60;
     return m ? `${m} 分 ${s} 秒` : `${s} 秒`;
   }
-  let shareFile = null, shareText = '', resultUrl = '', storyFile = null, storyUrl = '', fmt = 'post';
+  let shareFile = null, shareText = '', resultUrl = '', lineUrl = '';
 
   function finish() {
     if (S.finished) return;
@@ -1371,13 +1340,15 @@
     $('#endTitle').textContent = `${stars ? starStr(stars) + '　' : ''}${title.e} ${title.name}`;
     $('#endSteps').textContent = `👣 ${sw}${dist}${/[！。]$/.test(dist) ? '' : '。'}` + (S.distract ? ` 途中被會場外的小驚喜吸引了 ${S.distract} 次 😆` : '');
     $('#switchBtn').textContent = S.mode === 'challenge' ? '🌿 改玩輕鬆' : '⏱ 改玩挑戰';
-    $('#lineShare').href = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(GAME_URL) + '&text=' + encodeURIComponent(shareText);
+    // 手機直接開 LINE App；電腦開 LINE 的網頁分享頁
+    lineUrl = window.matchMedia('(pointer: coarse)').matches ? 'https://line.me/R/share?text=' + encodeURIComponent(shareText)
+      : 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(GAME_URL) + '&text=' + encodeURIComponent(shareText);
     $('#shareTip').className = 'tiny';
     $('#shareTip').textContent = IN_APP
-      ? `你正在${APP_NAME}的內建瀏覽器：按「分享我的小天使卡」會教你長按儲存；或點右上角「⋯」選「用瀏覽器開啟」分享更順。`
-      : '分享出去的連結點開就能直接玩，邀朋友一起來當小天使。';
+      ? `你正在${APP_NAME}的內建瀏覽器：按「分享至 LINE」會教你用長按分享成績卡。`
+      : '成績卡和遊戲連結會一起送出，朋友點開就能直接玩。';
     $('#resultImg').removeAttribute('src');
-    shareFile = storyFile = null; resultUrl = storyUrl = ''; fmt = 'post';
+    shareFile = null; resultUrl = '';
     $('#end').hidden = false;
     $('#end').scrollTop = 0;
     confetti();
@@ -1386,9 +1357,6 @@
       $('#resultImg').src = resultUrl;
       $('#resultImg').alt = `法會小天使卡：${title.name}，${timeText(sec)}陪伴了 ${helped} 位新朋友`;
       cv2.toBlob(b => { if (b) shareFile = new File([b], 'fahui-angel.png', { type: 'image/png' }); }, 'image/png');
-      const st = renderStory(cv2);
-      storyUrl = st.toDataURL('image/png');
-      st.toBlob(b => { if (b) storyFile = new File([b], 'fahui-angel-story.png', { type: 'image/png' }); }, 'image/png');
     });
     $('#shareImg').focus({ preventScroll: true });
   }
@@ -1412,7 +1380,7 @@
     }
   }
 
-  // ---------- 小天使卡（1080×1350，臉書/IG 動態 4:5） ----------
+  // ---------- 小天使成績卡（1080×1350） ----------
   async function renderCard(r) {
     const W = 1080, H = 1350;
     const c = document.createElement('canvas'); c.width = W; c.height = H;
@@ -1518,99 +1486,48 @@
     return c;
   }
 
-  // IG 限時動態用的 9:16 版本：把 4:5 小天使卡放在全螢幕背景中間
-  function renderStory(card) {
-    const W = 1080, H = 1920, c = document.createElement('canvas'); c.width = W; c.height = H;
-    const g = c.getContext('2d');
-    if (!g.roundRect) g.roundRect = ctx.roundRect;
-    const SERIF = '"Noto Serif TC","Songti TC","PMingLiU",serif';
-    const bg = g.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#BFE3F7'); bg.addColorStop(.55, '#E3F4EA'); bg.addColorStop(1, '#FBE7B5');
-    g.fillStyle = bg; g.fillRect(0, 0, W, H);
-    g.fillStyle = 'rgba(255,255,255,.5)';
-    for (const [x, y, r] of [[130, 140, 150], [960, 260, 110], [80, 1720, 140], [1000, 1800, 170]]) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); }
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillStyle = '#059669'; g.font = `700 34px ${SANS}`; g.fillText('2027 全真社青', W / 2, 150);
-    g.fillStyle = '#1E293B'; g.font = `900 76px ${SERIF}`; g.fillText('我是今天的法會小天使', W / 2, 235);
-    const cw = 920, ch = 1150, cx = (W - cw) / 2, cy = 330;
-    g.save(); g.shadowColor = 'rgba(5,150,105,.28)'; g.shadowBlur = 50; g.shadowOffsetY = 18;
-    g.fillStyle = '#fff'; g.beginPath(); g.roundRect(cx, cy, cw, ch, 40); g.fill(); g.restore();
-    g.save(); g.beginPath(); g.roundRect(cx, cy, cw, ch, 40); g.clip(); g.drawImage(card, cx, cy, cw, ch); g.restore();
-    g.fillStyle = '#1E293B'; g.font = `900 54px ${SERIF}`; g.fillText('你也來當一天小天使', W / 2, 1600);
-    g.fillStyle = '#475569'; g.font = `500 32px ${SANS}`; g.fillText('掃描卡片上的 QR Code，或點限動上的連結', W / 2, 1668);
-    g.fillStyle = '#059669'; g.font = `700 30px ${SANS}`; g.fillText(SHORT_URL, W / 2, 1724);
-    return c;
-  }
-
   // ---------- 分享 ----------
   function tip(text) { const t = $('#shareTip'); t.textContent = text; t.className = 'tiny ok'; }
   function copyText(text) {
     try { return navigator.clipboard.writeText(text).then(() => true, () => false); } catch (e) { return Promise.resolve(false); }
   }
-  // 臉書、IG、LINE 的內建瀏覽器擋掉系統分享、下載與開新分頁，改用「長按儲存」的方式
+  // 臉書、IG、LINE 的內建瀏覽器擋掉系統分享、下載與開新分頁，改用「長按分享」的方式
   const UA = navigator.userAgent || '';
   const IN_APP = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\//i.test(UA);
   const APP_NAME = /Line\//i.test(UA) ? 'LINE' : /Instagram/i.test(UA) ? 'Instagram' : '臉書';
-  // 分享拆成兩次點擊：先複製文字、再只送圖片給系統分享選單。
-  // 圖片和連結一起送時，臉書 App 常只抓連結預覽而丟掉圖片；文字則一律會被臉書忽略。
-  const curUrl = () => (fmt === 'story' && storyUrl) || resultUrl;
-  const curFile = () => (fmt === 'story' && storyFile) || shareFile;
-  function setFmt(f) {
-    fmt = f;
-    $('#fmtPost').classList.toggle('on', f === 'post'); $('#fmtPost').setAttribute('aria-pressed', String(f === 'post'));
-    $('#fmtStory').classList.toggle('on', f === 'story'); $('#fmtStory').setAttribute('aria-pressed', String(f === 'story'));
-    $('#saveImg').src = curUrl();
-    $('#shareFileBtn').closest('.step').classList.remove('done');
-  }
-  $('#fmtPost').addEventListener('click', () => setFmt('post'));
-  $('#fmtStory').addEventListener('click', () => setFmt('story'));
-  function openSaveSheet(reason, native) {
-    $('#saveImg').src = curUrl();
-    $('#shareTextBox').value = shareText;
+  // 只分享到 LINE：手機叫出系統分享選單（選 LINE），成績卡圖片和文字連結一起送出。
+  // 文字同時複製一份：萬一 LINE 只收下圖片，在聊天室貼上就能補上連結；成績卡上也有 QR Code。
+  function openSaveSheet(reason) {
+    $('#saveImg').src = resultUrl;
     $('#saveWhy').textContent = reason || '';
-    $('#stepNative').hidden = !native;
-    $('#stepManual').hidden = !!native;
-    $('#copyShareText').textContent = '📋 複製';
+    $('#lineText').href = lineUrl;
     document.querySelectorAll('#saveSheet .step').forEach(el => el.classList.remove('done'));
     $('#saveSheet').hidden = false;
     $('#saveSheet').scrollTop = 0;
   }
   $('#saveClose').addEventListener('click', () => { $('#saveSheet').hidden = true; });
-  $('#copyShareText').addEventListener('click', () => {
-    const box = $('#shareTextBox');
-    copyText(shareText).then(ok => {
-      if (!ok) { box.focus(); box.select(); }
-      $('#copyShareText').textContent = ok ? '✅ 已複製' : '已選取，按拷貝';
-      if (ok) $('#copyShareText').closest('.step').classList.add('done');
-    });
-  });
-  $('#shareFileBtn').addEventListener('click', () => {
-    const file = curFile();
-    if (!file) return;
-    Counter.hit('share', { level: LEVEL, mode: S.mode });
-    navigator.share({ files: [file] })
-      .then(() => $('#shareFileBtn').closest('.step').classList.add('done'))
-      .catch(e => { if (!e || e.name !== 'AbortError') openSaveSheet('這次沒有成功叫出分享選單，改用長按儲存的方式。', false); });
-  });
-  const canShareFiles = () => !!(shareFile && navigator.canShare && navigator.canShare({ files: [shareFile] }));
+  $('#lineText').addEventListener('click', () => $('#lineText').closest('.step').classList.add('done'));
+  // 內建瀏覽器常常擋掉新分頁，改在同一頁開啟
+  if (IN_APP) $('#lineText').removeAttribute('target');
+  const canShareFiles = () => { try { return !!(shareFile && navigator.canShare && navigator.canShare({ files: [shareFile], text: shareText })); } catch (e) { return false; } };
   $('#shareImg').addEventListener('click', () => {
-    if (!resultUrl) return tip('卡片還在準備中，再按一次試試。');
-    if (IN_APP) return openSaveSheet(`你正在${APP_NAME}的內建瀏覽器，沒辦法叫出分享選單，改用長按儲存。`, false);
-    if (canShareFiles()) return openSaveSheet('', true);
-    if (window.matchMedia('(pointer: coarse)').matches) return openSaveSheet('', false);
+    if (!resultUrl || !shareFile) return tip('成績卡還在準備中，再按一次試試。');
+    Counter.hit('share', { level: LEVEL, mode: S.mode });
     copyText(shareText);
+    if (!IN_APP && canShareFiles()) {
+      navigator.share({ files: [shareFile], text: shareText })
+        .then(() => tip('分享好了 🎉 如果朋友只收到圖片，在聊天室長按「貼上」就能補上遊戲連結（已經幫你複製好了）。'))
+        .catch(e => { if (!e || e.name !== 'AbortError') openSaveSheet('這次沒有成功叫出分享選單，改用長按分享。'); });
+      return;
+    }
+    if (IN_APP || window.matchMedia('(pointer: coarse)').matches)
+      return openSaveSheet(IN_APP ? `你正在${APP_NAME}的內建瀏覽器，沒辦法直接叫出分享選單，改用長按分享。` : '');
+    // 電腦：下載成績卡，並開啟 LINE 分享頁送出文字和連結
     const a = document.createElement('a');
     a.href = resultUrl; a.download = 'fahui-angel.png';
     document.body.appendChild(a); a.click(); a.remove();
-    tip('已下載小天使卡，文字和連結也複製好了：到臉書新增貼文、附上圖片、貼上文字就完成。');
-  });
-  if (IN_APP) {
-    // 內建瀏覽器常常擋掉新分頁，改在同一頁開啟
-    $('#lineShare').removeAttribute('target');
-  }
-  $('#lineShare').addEventListener('click', () => tip('已開啟 LINE 分享，選好聊天室就能送出。'));
-  $('#copyLink').addEventListener('click', () => {
-    copyText(shareText).then(ok => tip(ok ? '已複製成績文字和遊戲連結，貼到任何地方都可以。' : '複製失敗，網址是：' + GAME_URL));
+    window.open(lineUrl, '_blank', 'noopener');
+    tip('成績卡已下載，也開啟了 LINE 分享頁：送出文字和連結後，把下載的成績卡拖進同一個聊天室就完成。');
   });
 
   // ---------- interactions ----------
