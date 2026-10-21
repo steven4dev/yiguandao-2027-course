@@ -8,8 +8,10 @@
 <meta property="og:site_name" content="2027 全真社青 Life Design 探索地圖">
 <meta property="og:title" content="褪下仙衣：八十億分之一">
 <meta property="og:description" content="下凡抽籤、快速走完一生。金幣帶不走，天幣帶得走——這一生，你活成什麼樣？約 8 分鐘。">
-<meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/game/xianyi.html">
-<meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png">
+<meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/game/xianyi.html?v=2">
+<meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png?v=2">
+<meta property="og:image:secure_url" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png?v=2">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="褪下仙衣：八十億分之一——下凡抽籤、快速走完一生的人生模擬遊戲">
@@ -1247,7 +1249,7 @@
       <div class="sec stack">
         <button class="btn ghost" type="button" id="againBtn">🔁 再下凡一次</button>
         <a class="btn ghost" href="${SONG}" target="_blank" rel="noopener">🎧 聽主題曲〈回來佛堂〉</a>
-        <a class="btn ghost" href="fahui-angel-25d.html">🎮 也玩玩看：法會小天使</a>
+        <a class="btn ghost" href="fahui-angel-25d.html?v=2">🎮 也玩玩看：法會小天使</a>
       </div>`;
     el.hidden = false;
     el.scrollTop = 0;
@@ -1263,7 +1265,7 @@
     el.querySelector('#againBtn').onclick = start;
     el.querySelector('#shareBtn').onclick = async () => {
       const text = `我在《褪下仙衣：八十億分之一》抽到「${S.persona.name}」，活成了「${E.title}」。你呢？夥伴們快跟上！`;
-      const url = SITE + 'game/xianyi.html';
+      const url = SITE + 'game/xianyi.html?v=2';   // 帶 ?v=2 讓 LINE、臉書重新抓預覽圖
       try {
         if (navigator.share) return await navigator.share({ title: '褪下仙衣：八十億分之一', text, url });
       } catch (e) { if (e.name === 'AbortError') return; }
