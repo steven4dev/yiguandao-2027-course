@@ -493,9 +493,9 @@
           <p class="tip"><span class="only-touch">也可以點畫面下方「手上」把東西放下。</span><span class="only-desk">選單可以按數字鍵選，M 開關音樂。</span></p>
         </section>
         <section class="tpage">
-          <div class="ill ill25" aria-hidden="true"><canvas class="illcv" data-scene="lens"></canvas><div class="illrow"><span class="chip">.5　×1　×2</span><span class="chip">🤏 兩指縮放</span></div></div>
+          <div class="ill ill25" aria-hidden="true"><canvas class="illcv" data-scene="lens"></canvas><div class="illrow"><span class="chip">.5　×1　×2</span><span class="chip">👆 拖曳看四周</span><span class="chip">🤏 兩指縮放</span></div></div>
           <h2>2.5D 會場的小幫手</h2>
-          <p class="lead">地圖下方的鏡頭圓鈕和 iPhone 相機一樣：<b>.5</b> 看整個會場、<b>×1</b> 標準近拍、<b>×2</b> 特寫。手機也能用兩指縮放，電腦可以用滑鼠滾輪；放大後鏡頭會平穩地跟著你走，倍數會記住。</p>
+          <p class="lead">地圖下方的鏡頭圓鈕和 iPhone 相機一樣：<b>.5</b> 看整個會場、<b>×1</b> 標準近拍、<b>×2</b> 特寫。手機可以<b>單指拖曳</b>四處看、兩指縮放，電腦可以用滑鼠滾輪；小天使一走路，鏡頭就會回來跟著你。</p>
           <p class="tip">畫面外有人需要幫忙時，螢幕邊緣會出現圓鈕，箭頭指向他的方向；該去的地方（空椅子、對的廁所、拿到鑰匙後的備品區）會發金光。</p>
         </section>
         <section class="tpage">
@@ -1963,7 +1963,7 @@
   // zoom 以「全景」為 1 倍；近拍倍數用想要的格子大小（像素）記住，手機轉向後看起來一樣大
   // 鏡頭倍數：.5＝看整個會場（zoom 1）、×1＝標準近拍（格子約 52px）、×2＝特寫；lens 記的是相對 ×1 的倍數，0 代表全景
   let zoom = 1, zoomTo = 1, NEAR = 1, STD = 1.4, ZMAX = 3, lens = null, view = { z: 1, ex: 0, ey: 0 };
-  let camX = null, camY = null, camT = 0;
+  let camX = null, camY = null, camT = 0, freeLook = false;   // freeLook：手指拖曳看別處時，鏡頭先不跟小天使
   try { const v = localStorage.getItem('fahui25-lens'); if (v !== null && v !== '') lens = +v; } catch (e) {}
   const iso = (gx, gy, h = 0) => [OX + (gx - gy) * TW / 2, OY + (gx + gy) * TW / 4 - h * HU * TW];
   function resize() {
@@ -2907,13 +2907,17 @@
     const p = S.player, [px, py] = iso(p.fx + (p.x - p.fx) * p.t + .5, p.fy + (p.y - p.fy) * p.t + .5, .7);
     const hw = W / 2 / zoom, hh = H / 2 / zoom, b = ISL;
     if (camX === null) { camX = px; camY = py; }
+    // 小天使一開始走路，就結束拖曳看別處，鏡頭平滑地回來跟著他
+    if (freeLook && (p.t < 1 || S.path.length)) freeLook = false;
     const dzx = hw * .28, dzy = hh * .22;
     let tx = camX, ty = camY;
-    if (px > camX + dzx) tx = px - dzx; else if (px < camX - dzx) tx = px + dzx;
-    if (py > camY + dzy) ty = py - dzy; else if (py < camY - dzy) ty = py + dzy;
+    if (!freeLook) {
+      if (px > camX + dzx) tx = px - dzx; else if (px < camX - dzx) tx = px + dzx;
+      if (py > camY + dzy) ty = py - dzy; else if (py < camY - dzy) ty = py + dzy;
+    }
     // 小天使不要走到左上狀態列、右下操作區或鏡頭圓鈕底下：會擋到就把鏡頭推開
     const u = TW * zoom;
-    for (const r of uiRects()) {
+    for (const r of freeLook ? [] : uiRects()) {
       const sx = (px - tx) * zoom + W / 2, sy = (py - ty) * zoom + H / 2;
       const bb = [sx - u * .45, sy - u * 1.1, sx + u * .45, sy + u * .45];
       if (bb[2] < r.l - 8 || bb[0] > r.r + 8 || bb[3] < r.t - 8 || bb[1] > r.b + 8) continue;
@@ -3137,11 +3141,16 @@
   });
   cv.addEventListener('pointermove', e => {
     const t = touches.get(e.pointerId); if (!t) return;
+    const lx = t.x, ly = t.y;
     t.x = e.clientX; t.y = e.clientY;
     if (Math.hypot(t.x - t.x0, t.y - t.y0) > 12) gesture = true;
     if (pinch && touches.size >= 2) {
       const [a, b] = [...touches.values()];
       setZoom(pinch.z * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d);
+    } else if (gesture && touches.size === 1 && camX !== null) {
+      // 單指拖曳：畫面跟著手指移動，可以四處看（點一下仍然是走路）
+      freeLook = true;
+      camX -= (t.x - lx) / view.z; camY -= (t.y - ly) / view.z;
     }
   });
   const endTouch = e => {
