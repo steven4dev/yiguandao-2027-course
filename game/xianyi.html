@@ -258,6 +258,9 @@
   .ingr button { border: 1.5px solid var(--line); background: #fff; border-radius: 12px; padding: 8px 2px; font-size: .78rem; }
   .ingr button.sel { border-color: var(--green); background: var(--green-soft); }
   .ingr button span { display: block; font-size: 1.5rem; }
+  .dish { display: block; width: min(260px, 100%); margin: 6px auto; border-radius: 16px; box-shadow: 0 10px 22px rgba(30,41,59,.2); -webkit-touch-callout: default; }
+  .real { display: flex; gap: 10px; align-items: center; text-align: left; background: #F8FAFC; border: 1px solid var(--line); border-radius: 14px; padding: 8px; margin-top: 10px; font-size: .82rem; color: var(--ink-soft); line-height: 1.5; }
+  .real img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; flex: none; }
   .likes { display: grid; gap: 8px; margin: 12px 0; text-align: left; }
   .likes button { border: 1.5px solid var(--line); background: #fff; border-radius: 12px; padding: 10px 12px; text-align: left; line-height: 1.5; }
   .likes button.got { border-color: var(--pink); background: #FFF1F7; }
@@ -984,9 +987,46 @@
     });
   }
 
+  // 依玩家選的食材與料理風格，畫一張俯拍擺盤照
+  const SAUCE = { '三杯': '#7C2D12', '塔香': '#4D7C0F', '日式照燒': '#92400E', '義式焗烤': '#F4C542', '泰式酸辣': '#EA580C', '古早味滷': '#57340F' };
+  function drawDish(parts, style) {
+    const W = 600, c = document.createElement('canvas'); c.width = c.height = W;
+    const g = c.getContext('2d');
+    // 木桌
+    g.fillStyle = '#B7845A'; g.fillRect(0, 0, W, W);
+    for (let i = 0; i < 9; i++) { g.fillStyle = i % 2 ? 'rgba(120,74,40,.18)' : 'rgba(255,240,220,.08)'; g.fillRect(0, i * 70 + (i % 3) * 6, W, 34 + (i % 4) * 6); }
+    // 盤子與陰影
+    g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(W / 2 + 10, W / 2 + 16, 238, 238, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#F8FAFC'; g.beginPath(); g.arc(W / 2, W / 2, 238, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#E2E8F0'; g.lineWidth = 3; g.beginPath(); g.arc(W / 2, W / 2, 196, 0, Math.PI * 2); g.stroke();
+    // 醬汁：不規則的一攤，顏色依風格
+    g.fillStyle = SAUCE[style] || '#92400E'; g.globalAlpha = .85; g.beginPath();
+    for (let a = 0; a <= 72; a++) { const t = a / 72 * Math.PI * 2, r = 150 + Math.sin(t * 5) * 12 + Math.cos(t * 3) * 8; g.lineTo(W / 2 + Math.cos(t) * r, W / 2 + Math.sin(t) * r); }
+    g.closePath(); g.fill(); g.globalAlpha = 1;
+    if (style === '義式焗烤') { g.fillStyle = 'rgba(180,83,9,.35)'; for (let i = 0; i < 14; i++) { g.beginPath(); g.arc(W / 2 + Math.cos(i) * 100, W / 2 + Math.sin(i * 1.7) * 100, 10 + (i % 3) * 4, 0, Math.PI * 2); g.fill(); } }
+    // 三樣食材圍成一圈，中間再放一份主食材
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    const spots = [[0, -85, 110, -.2], [-80, 55, 104, .3], [82, 52, 104, -.4], [0, 4, 86, .1]];
+    spots.forEach(([dx, dy, size, rot], i) => {
+      g.save(); g.translate(W / 2 + dx, W / 2 + dy); g.rotate(rot);
+      g.font = `${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+      g.fillText(parts[i % 3][0], 0, 0); g.restore();
+    });
+    // 香草與芝麻點綴
+    g.font = '40px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    [[-120, -40, .5], [118, -60, -.6], [10, 130, .2]].forEach(([dx, dy, rot]) => { g.save(); g.translate(W / 2 + dx, W / 2 + dy); g.rotate(rot); g.fillText('🌿', 0, 0); g.restore(); });
+    g.fillStyle = '#FFFBEB';
+    for (let i = 0; i < 26; i++) { g.beginPath(); g.ellipse(W / 2 + Math.cos(i * 2.4) * (40 + i * 5), W / 2 + Math.sin(i * 2.4) * (40 + i * 5), 4, 2, i, 0, Math.PI * 2); g.fill(); }
+    // 熱氣
+    g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 7; g.lineCap = 'round';
+    [-50, 0, 50].forEach(x => { g.beginPath(); g.moveTo(W / 2 + x, 150); g.bezierCurveTo(W / 2 + x - 22, 120, W / 2 + x + 22, 95, W / 2 + x, 60); g.stroke(); });
+    return c.toDataURL('image/jpeg', .9);
+  }
+  const REAL = ['S__193650747.webp', 'S__193650749_0.webp', 'S__193650750_0.webp', 'S__193650751_0.webp', 'S__193650752_0.webp', 'S__193650753_0.webp', 'S__193650754_0.webp', 'S__193650755_0.webp', 'S__193650756_0.webp'];
+
   // 11/27 蔬食料理王：挑三樣食材
   function cooking() {
-    const ING = [['🍄', '香菇'], ['🥦', '花椰菜'], ['🍅', '番茄'], ['🥕', '紅蘿蔔'], ['🧈', '豆腐'], ['🌽', '玉米'], ['🍆', '茄子'], ['🥑', '酪梨']];
+    const ING = [['🥬', '青江菜'], ['🥦', '花椰菜'], ['🍅', '番茄'], ['🥕', '紅蘿蔔'], ['🥔', '馬鈴薯'], ['🌽', '玉米'], ['🍆', '茄子'], ['🥑', '酪梨']];
     const STYLE = ['三杯', '塔香', '日式照燒', '義式焗烤', '泰式酸辣', '古早味滷'];
     return card(`<h2>🥗 蔬食料理王</h2><p>挑三樣食材，做一道你的招牌菜！</p><div class="ingr">${ING.map(([e, n], i) => `<button type="button" data-i="${i}"><span>${e}</span>${n}</button>`).join('')}</div><button class="btn primary" type="button" id="cook" disabled>下鍋！</button>`, (el, done) => {
       const sel = new Set();
@@ -1001,9 +1041,13 @@
       cook.onclick = () => {
         sfx('win');
         const parts = [...sel].map(i => ING[i]);
-        const dish = `${pick(STYLE)}${parts[0][1]}佐${parts[1][1]}${parts[2][1]}`;
+        const style = pick(STYLE);
+        const dish = `${style}${parts[0][1]}佐${parts[1][1]}${parts[2][1]}`;
         remember(`做了一道蔬食料理「${dish}」。`);
-        el.innerHTML = `<div style="font-size:3rem">${parts.map(p => p[0]).join('')}</div><h2>${dish}</h2><p>擺盤、找光、一鍵修圖⋯⋯<br>上傳群組 3 分鐘，收到 ${rand(21, 68)} 個讚。</p><p class="hint">家族群組有長輩問：「這哪裡買的？」</p><button class="btn primary" type="button">繼續</button>`;
+        el.innerHTML = `<h2>${dish}</h2><img class="dish" src="${drawDish(parts, style)}" alt="${dish}的擺盤照（長按可儲存）"><p>擺盤、找光、一鍵修圖⋯⋯<br>上傳群組 3 分鐘，收到 ${rand(21, 68)} 個讚。</p><p class="hint">家族群組有長輩問：「這哪裡買的？」</p>
+          <div class="real"><img src="../img/Vegetarian%20Cooking%20Champion/thumb/${pick(REAL)}" alt="社青班蔬食料理課的真實作品"><span>📸 這是真實社青班「蔬食料理王」課堂上的作品，11/27 一起來做做看！</span></div>
+          <button class="btn primary" type="button">繼續</button>`;
+        el.scrollTop = 0;
         el.querySelector('.btn').onclick = () => { sfx('tap'); done(); apply({ fam: 6, tian: 4, hp: 3 }, `你的招牌菜：${dish}`); };
       };
     });
@@ -1316,7 +1360,7 @@
       : 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(GAME_URL) + '&text=' + encodeURIComponent(text);
     if (/Line\//i.test(navigator.userAgent || '')) lineBtn.removeAttribute('target');
     lineBtn.onclick = () => sfx('tap');
-    renderCard(E).then(cv => { const img = el.querySelector('#endCard'); img.src = cv.toDataURL('image/png'); img.hidden = false; });
+    renderCard(E, key).then(cv => { const img = el.querySelector('#endCard'); img.src = cv.toDataURL('image/png'); img.hidden = false; });
 
     el.querySelector('#againBtn').onclick = start;
     el.querySelector('#allMemo').onclick = () => { sfx('tap'); renderMemoirs(); $('memoirs').hidden = false; };
@@ -1329,52 +1373,118 @@
     g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
     g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
   }
+  // 成績卡依結局換主題色：[上方漸層, 中段, 下方, 強調色]
+  const THEME = {
+    true: ['#FEF3C7', '#FFF7E0', '#FEF9E7', '#D97706'],
+    temple: ['#D1FAE5', '#EEF7F2', '#F0FDF4', '#059669'],
+    gate: ['#EDE9FE', '#F5F3FF', '#FDF2F8', '#7C3AED'],
+    tycoon: ['#E0F2FE', '#EFF6FF', '#F8FAFC', '#0284C7'],
+    drift: ['#CFFAFE', '#E0F2FE', '#F0F9FF', '#0E7490'],
+  };
+  const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
+  // 從回憶錄挑出三個代表時刻：人生劇本、一個關鍵選擇、後半生的一件事
+  function highlights() {
+    const L = S.log.filter(([, t]) => !/^解鎖人生成就|^下凡抽籤|^享年/.test(t));
+    const out = [];
+    const take = f => { const i = L.findIndex(f); if (i >= 0) out.push(L.splice(i, 1)[0]); };
+    take(([, t]) => t.includes('人生劇本'));
+    const choices = L.filter(([a, t]) => t.includes('：') && a < 38);
+    if (choices.length) { const c = pick(choices); out.push(c); L.splice(L.indexOf(c), 1); }
+    const late = L.filter(([a]) => a >= 38);
+    if (late.length) out.push(pick(late)); else if (L.length) out.push(L[L.length - 1]);
+    return out.slice(0, 3).sort((x, y) => x[0] - y[0]);
+  }
+  // 依寬度把中文斷行
+  function wrap(g, text, maxW, maxLines) {
+    const lines = []; let cur = '';
+    for (const ch of text) {
+      if (g.measureText(cur + ch).width > maxW) { lines.push(cur); cur = ch; if (lines.length === maxLines) break; }
+      else cur += ch;
+    }
+    if (lines.length < maxLines && cur) lines.push(cur);
+    else if (lines.length === maxLines && cur) lines[maxLines - 1] = lines[maxLines - 1].slice(0, -1) + '…';
+    return lines;
+  }
   // 1080×1350 直式成績卡（適合 LINE 傳圖）
-  async function renderCard(E) {
-    const W = 1080, H = 1350;
+  async function renderCard(E, key) {
+    const W = 1080, H = 1350, [c1, c2, c3, ac] = THEME[key] || THEME.true;
+    const EMOJI = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
     try {
-      await Promise.all([`900 80px ${SERIF}`, `700 40px ${SERIF}`, `700 40px ${SANS}`, `500 30px ${SANS}`].map(f => document.fonts.load(f, '褪下仙衣八十億分之一' + E.title + E.line)));
+      await Promise.all([`900 72px ${SERIF}`, `700 40px ${SERIF}`, `700 40px ${SANS}`, `500 30px ${SANS}`].map(f => document.fonts.load(f, '褪下仙衣八十億分之一人生三句話健康工作金幣家人夥伴天幣' + E.title + E.line)));
     } catch (e) {}
     const c = document.createElement('canvas'); c.width = W; c.height = H;
     const g = c.getContext('2d');
     const bg = g.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#E0F2FE'); bg.addColorStop(.55, '#EEF7F2'); bg.addColorStop(1, '#FEF9E7');
+    bg.addColorStop(0, c1); bg.addColorStop(.5, c2); bg.addColorStop(1, c3);
     g.fillStyle = bg; g.fillRect(0, 0, W, H);
-    const glow = g.createRadialGradient(W / 2, 250, 10, W / 2, 250, 300);
-    glow.addColorStop(0, 'rgba(253,230,138,.85)'); glow.addColorStop(1, 'rgba(253,230,138,0)');
-    g.fillStyle = glow; g.fillRect(0, 0, W, 600);
-    rr(g, 50, 50, W - 100, H - 100, 44); g.fillStyle = 'rgba(255,255,255,.9)'; g.fill();
-    g.lineWidth = 6; g.strokeStyle = '#D97706'; g.stroke();
+    const glow = g.createRadialGradient(W / 2, 220, 10, W / 2, 220, 320);
+    glow.addColorStop(0, 'rgba(255,255,255,.9)'); glow.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = glow; g.fillRect(0, 0, W, 560);
+    rr(g, 50, 50, W - 100, H - 100, 44); g.fillStyle = 'rgba(255,255,255,.82)'; g.fill();
+    g.lineWidth = 6; g.strokeStyle = ac; g.stroke();
     g.textAlign = 'center'; g.textBaseline = 'alphabetic';
-    g.fillStyle = '#059669'; g.font = `700 40px ${SERIF}`; g.fillText('褪下仙衣・八十億分之一', W / 2, 140);
-    g.font = `116px ${SANS}`; g.fillText(E.em, W / 2, 280);
-    g.fillStyle = '#1E293B'; g.font = `900 80px ${SERIF}`; g.fillText(E.title, W / 2, 400);
-    g.fillStyle = '#64748B'; g.font = `500 32px ${SANS}`;
-    g.fillText(`${moodOf()} ${S.persona.em} ${S.persona.name}・享年 ${S.age} 歲・去社青班 ${S.visits} 次`, W / 2, 455);
-    rr(g, 130, 485, W - 260, 100, 26); g.fillStyle = '#FEF3C7'; g.fill();
-    g.fillStyle = '#D97706'; g.font = `700 40px ${SERIF}`; g.fillText(E.line, W / 2, 549);
-    const top = 616;
-    const cells = [['💪 健康', S.hp], ['💼 工作', S.work], ['🪙 金幣', `${S.gold}→0`], ['❤️ 家人', S.fam], ['🤝 夥伴', S.pal], ['✨ 天幣', S.tian]];
-    const cw = 280, ch = 120, gap = 24, x0 = (W - cw * 3 - gap * 2) / 2;
-    cells.forEach(([k, v], i) => {
-      const x = x0 + (i % 3) * (cw + gap), y = top + Math.floor(i / 3) * (ch + gap);
-      rr(g, x, y, cw, ch, 22); g.fillStyle = '#F1F5F9'; g.fill();
-      g.fillStyle = '#1E293B'; g.font = `700 50px ${SANS}`; g.fillText(String(v), x + cw / 2, y + 62);
-      g.fillStyle = '#64748B'; g.font = `500 28px ${SANS}`; g.fillText(k, x + cw / 2, y + 102);
+    g.fillStyle = ac; g.font = `700 38px ${SERIF}`; g.fillText('褪下仙衣・八十億分之一', W / 2, 130);
+    g.font = `100px ${EMOJI}`; g.fillText(E.em, W / 2, 245);
+    g.fillStyle = '#1E293B'; g.font = `900 72px ${SERIF}`; g.fillText(E.title, W / 2, 345);
+    g.fillStyle = '#64748B'; g.font = `500 30px ${SANS}`;
+    g.fillText(`${moodOf()} ${S.persona.em} ${S.persona.name}・享年 ${S.age} 歲・去社青班 ${S.visits} 次`, W / 2, 398);
+    rr(g, 130, 425, W - 260, 84, 24); g.fillStyle = hexA(ac, .12); g.fill();
+    g.fillStyle = ac; g.font = `700 36px ${SERIF}`; g.fillText(E.line, W / 2, 480);
+
+    // 六角能力圖
+    const cx = 285, cy = 730, R0 = 122;
+    const labels = [['💪', '健康', S.hp], ['💼', '工作', S.work], ['🪙', '金幣', S.gold], ['❤️', '家人', S.fam], ['🤝', '夥伴', S.pal], ['✨', '天幣', S.tian]];
+    const pt = (i, r) => [cx + Math.cos(-Math.PI / 2 + i * Math.PI / 3) * r, cy + Math.sin(-Math.PI / 2 + i * Math.PI / 3) * r];
+    g.lineWidth = 2;
+    [.25, .5, .75, 1].forEach(f => {
+      g.beginPath(); for (let i = 0; i < 6; i++) { const [x, y] = pt(i, R0 * f); i ? g.lineTo(x, y) : g.moveTo(x, y); } g.closePath();
+      g.strokeStyle = f === 1 ? hexA(ac, .5) : 'rgba(100,116,139,.18)'; g.stroke();
     });
-    const by = top + ch * 2 + gap + 70;
-    g.fillStyle = '#D97706'; g.font = `700 32px ${SANS}`;
-    g.fillText(`🏆 人生成就 ${S.badges.size} / 8　・　金幣帶不走，天幣留下`, W / 2, by);
-    // 底部：邀請文字＋QR Code
-    const qy = H - 300;
+    for (let i = 0; i < 6; i++) { const [x, y] = pt(i, R0); g.beginPath(); g.moveTo(cx, cy); g.lineTo(x, y); g.strokeStyle = 'rgba(100,116,139,.18)'; g.stroke(); }
+    g.beginPath(); labels.forEach(([, , v], i) => { const [x, y] = pt(i, R0 * Math.max(.06, v / 100)); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.closePath();
+    g.fillStyle = hexA(ac, .28); g.fill(); g.lineWidth = 4; g.strokeStyle = ac; g.stroke();
+    labels.forEach(([em, name, v], i) => {
+      const [x, y] = pt(i, R0 + 42);
+      g.font = `26px ${EMOJI}`; g.fillText(em, x, y - 8);
+      g.fillStyle = '#475569'; g.font = `700 22px ${SANS}`; g.fillText(`${name} ${i === 2 ? v + '→0' : v}`, x, y + 22);
+      g.fillStyle = ac;
+    });
+
+    // 人生三句話
+    const tx = 520, tw = 340;
     g.textAlign = 'left';
-    g.fillStyle = '#1E293B'; g.font = `900 52px ${SERIF}`; g.fillText('你會活成什麼樣？', 120, qy + 60);
-    g.fillStyle = '#475569'; g.font = `500 32px ${SANS}`; g.fillText('掃描 QR Code，一起下凡抽籤', 120, qy + 115);
-    g.fillStyle = '#059669'; g.font = `700 26px ${SANS}`; g.fillText('steven4dev.github.io/yiguandao-2027-course', 120, qy + 162);
-    g.fillStyle = '#94A3B8'; g.font = `500 24px ${SANS}`; g.fillText('2027 全真社青 Life Design', 120, qy + 202);
+    g.fillStyle = '#1E293B'; g.font = `900 34px ${SERIF}`; g.fillText('人生三句話', tx, 585);
+    let ty = 645;
+    highlights().forEach(([age, text]) => {
+      rr(g, tx, ty - 27, 88, 36, 18); g.fillStyle = hexA(ac, .15); g.fill();
+      g.fillStyle = ac; g.font = `700 22px ${SANS}`; g.textAlign = 'center'; g.fillText(`${age} 歲`, tx + 44, ty - 2); g.textAlign = 'left';
+      g.fillStyle = '#334155'; g.font = `500 26px ${SANS}`;
+      const ls = wrap(g, text.replace(/。$/, ''), tw, 2);
+      ls.forEach((l, k) => g.fillText(l, tx + 102, ty + k * 34));
+      ty += ls.length * 34 + 30;
+    });
+
+    // 人生成就圖示
+    g.textAlign = 'center';
+    g.fillStyle = ac; g.font = `700 30px ${SANS}`;
+    g.fillText(`🏆 人生成就 ${S.badges.size} / 8　・　金幣帶不走，天幣留下`, W / 2, 985);
+    g.font = `52px ${EMOJI}`;
+    BADGES.forEach((b, i) => {
+      g.globalAlpha = S.badges.has(b.id) ? 1 : .22;
+      g.fillText(b.em, W / 2 + (i - 3.5) * 92, 1050);
+    });
+    g.globalAlpha = 1;
+
+    // 底部：邀請文字＋QR Code
+    const qy = H - 272;
+    g.textAlign = 'left';
+    g.fillStyle = '#1E293B'; g.font = `900 50px ${SERIF}`; g.fillText('你會活成什麼樣？', 120, qy + 62);
+    g.fillStyle = '#475569'; g.font = `500 30px ${SANS}`; g.fillText('掃描 QR Code，一起下凡抽籤', 120, qy + 114);
+    g.fillStyle = '#059669'; g.font = `700 25px ${SANS}`; g.fillText('steven4dev.github.io/yiguandao-2027-course', 120, qy + 158);
+    g.fillStyle = '#94A3B8'; g.font = `500 23px ${SANS}`; g.fillText('2027 全真社青 Life Design', 120, qy + 196);
     if (window.qrcode) {
       const qr = window.qrcode(0, 'M'); qr.addData(GAME_URL); qr.make();
-      const n = qr.getModuleCount(), box = 180, cell = box / n, qx = W - 120 - box, qyy = qy + 6;
+      const n = qr.getModuleCount(), box = 170, cell = box / n, qx = W - 120 - box, qyy = qy + 22;
       rr(g, qx - 14, qyy - 14, box + 28, box + 28, 18); g.fillStyle = '#fff'; g.fill();
       g.fillStyle = '#1E293B';
       for (let r = 0; r < n; r++) for (let cc = 0; cc < n; cc++) if (qr.isDark(r, cc)) g.fillRect(qx + cc * cell, qyy + r * cell, Math.ceil(cell), Math.ceil(cell));
