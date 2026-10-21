@@ -1456,7 +1456,7 @@
                 <button type="button" role="radio" data-v="2d" aria-checked="false">2D 平面</button>
                 <button type="button" role="radio" data-v="25d" aria-checked="true">2.5D 立體</button>
               </div>
-              <a class="game-link" id="gameLink" href="game/fahui-angel-25d.html">🎮 先玩玩看：法會小天使 <span aria-hidden="true">→</span></a>
+              <a class="game-link" id="gameLink" href="game/fahui-angel-25d.html?v=2">🎮 先玩玩看：法會小天使 <span aria-hidden="true">→</span></a>
             </div>
           </div>
         </div>
@@ -1805,7 +1805,7 @@
       const link = document.getElementById('gameLink');
       const sw = document.querySelector('.ver-switch');
       if (!link || !sw) return;
-      const URLS = { '2d': 'game/fahui-angel.html', '25d': 'game/fahui-angel-25d.html' };
+      const URLS = { '2d': 'game/fahui-angel.html', '25d': 'game/fahui-angel-25d.html?v=2' };
       const btns = [...sw.querySelectorAll('button')];
       const show = v => { sw.dataset.on = v; btns.forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === v))); };
       const set = (v, save) => {

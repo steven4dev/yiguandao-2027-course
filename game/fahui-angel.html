@@ -374,7 +374,7 @@
   <div id="intro" class="overlay">
     <div class="card tour" role="region" aria-roledescription="說明" aria-label="遊戲說明">
       <div class="tour-top">
-        <nav class="vswitch" data-on="2d" aria-label="選擇畫面版本"><a aria-current="page" href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html" data-v="2d">2D</a><a href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel-25d.html" data-v="25d">2.5D</a></nav>
+        <nav class="vswitch" data-on="2d" aria-label="選擇畫面版本"><a aria-current="page" href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html" data-v="2d">2D</a><a href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel-25d.html?v=2" data-v="25d">2.5D</a></nav>
         <button id="tourSkip" class="skip-btn" type="button">⏩ 跳過說明，直接開始</button>
         <button id="tourAgain" class="linkbtn" type="button" hidden>📖 重看說明</button>
       </div>
@@ -768,7 +768,7 @@
     const fresh = opts.filter(l => !S.thanks.some(t => t.line === l));
     return pick(fresh.length ? fresh : opts);
   }
-  const GAME_URL = 'https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html';
+  const GAME_URL = 'https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel-25d.html?v=2';   // 分享出去一律帶到 2.5D 版（帶 ?v=2 讓 LINE、臉書重新抓預覽）
   // ---------- 體驗人次計數器（Google 試算表 + Apps Script） ----------
   // 網址只設定在 game/stats-config.json 一個地方；還沒填就不計數、不顯示
   // 只送匿名事件（開始／完成／分享、版本、模式、星等），不收集任何個人資料
