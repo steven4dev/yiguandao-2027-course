@@ -2098,19 +2098,6 @@
   }
   // ── 延伸地景：小島往左上延伸成後院、往右下延伸成前庭、前方多一條草地，把等角畫面空出來的角落補滿
   const EXT = 3.6, EXTY = 2.6;
-  function drawIsland() {
-    const C = COLS, R = ROWS, x0 = IM - EXT, x1 = C - IM + EXT, y1 = R - IM + EXTY;
-    const [cx, cy] = iso((x0 + x1) / 2, (IM + y1) / 2, -2.4);
-    softShadow(cx, cy, TW * (x1 - x0 + y1) * .26, TW * (x1 - x0 + y1) * .08, .14);
-    box(x0, x1, IM, y1, -1.1, -.18, '#C99B74', { top: '#C99B74', left: '#C99B74', right: '#B08360' });
-    box(x0, x1, IM, y1, -.18, 0, '#9ACD8C', { top: '#A9D89A', left: '#8DC27F', right: '#7DB271' });
-    for (let i = 1; i < 8; i++) {
-      const [x, y] = iso(x0 + (x1 - x0) * i / 8, y1, -.5 - (i % 2) * .25); ell(x, y, TW * .1, TW * .055, '#B08360');
-      const [x2, y2] = iso(x1, R * i / 8, -.45 - (i % 3) * .2); ell(x2, y2, TW * .1, TW * .055, '#A07655');
-    }
-    const ex = SPOTS.entrance[0];
-    for (const b of [.6, .85]) { const [x, y] = iso(ex + .5, b); ell(x, y, TW * .2, TW * .09, '#E8DCC8', INK, 1); }
-  }
   function flowerDots(gx, gy, n, seed) {
     const cols = ['#F6B8C4', '#FFF1A8', '#FFFFFF', '#E98FA5', '#C7B8E8'];
     for (let i = 0; i < n; i++) {
@@ -2334,6 +2321,134 @@
     if (d.id === 'bike') { d.ring = S.time + .5; sfx('unlock'); } else sfx('pop');
   }
 
+  // ── 會場外的小鎮：草地鋪滿整個畫面，基地四周一圈道路，道路外依位置長出樹、花、草叢與民宅
+  //    只畫畫面看得到的範圍；用固定的偽亂數，同一格每次長出的東西都一樣
+  const lotBox = () => ({ x0: IM - EXT, x1: COLS - IM + EXT, y0: IM, y1: ROWS - IM + EXTY });
+  let GRID_RECT = null;   // 畫快取時指定的世界範圍；平常是畫面看得到的範圍
+  function visibleGrid() {
+    let gx0 = 1e9, gx1 = -1e9, gy0 = 1e9, gy1 = -1e9;
+    const r = GRID_RECT || [-view.ex / view.z, -view.ey / view.z, (W - view.ex) / view.z, (H - view.ey) / view.z];
+    for (const [wx, wy] of [[r[0], r[1]], [r[2], r[1]], [r[0], r[3]], [r[2], r[3]]]) {
+      const u = (wx - OX) / (TW / 2), v = (wy - OY) / (TW / 4), gx = (u + v) / 2, gy = (v - u) / 2;
+      gx0 = Math.min(gx0, gx); gx1 = Math.max(gx1, gx); gy0 = Math.min(gy0, gy); gy1 = Math.max(gy1, gy);
+    }
+    return [Math.floor(gx0) - 2, Math.ceil(gx1) + 4, Math.floor(gy0) - 2, Math.ceil(gy1) + 4];
+  }
+  const outDist = (gx, gy, L) => Math.max(gx < L.x0 ? L.x0 - gx : gx > L.x1 ? gx - L.x1 : 0, gy < L.y0 ? L.y0 - gy : gy > L.y1 ? gy - L.y1 : 0);
+  const cellH = (x, y, s = 0) => hrnd(x * 127.1 + y * 311.7 + s * 74.7);
+  const HOUSE = 6;
+  function houseAt(ax, ay, L) { return outDist(ax + 1, ay + 1, L) >= 5.5 && cellH(ax, ay, 9) < .42; }
+  function drawHouse(ax, ay) {
+    const i = Math.floor(cellH(ax, ay, 3) * 4), x0 = ax, x1 = ax + 2.2, y0 = ay, y1 = ay + 2, h = 1.35, rh = .85, ym = (y0 + y1) / 2;
+    const walls = ['#FFF7EA', '#FDE7D8', '#E8F1F8', '#F3EBD8'][i], roofs = ['#E98F7E', '#6FA8C9', '#8CC77D', '#C98F6B'][i];
+    const [sx, sy] = iso((x0 + x1) / 2, y1 + .2); softShadow(sx, sy, TW * 1.6, TW * .5, .16);
+    box(x0, x1, y0, y1, 0, h, walls, { right: mix(walls, -.12) });
+    const lw = Math.max(1, TW * .018);
+    poly([iso(x0, y1, .02), iso(x0 + .55, y1, .02), iso(x0 + .55, y1, .9), iso(x0, y1, .9)].map(([a, b]) => [a + TW * .35, b - TW * .17]), '#B9875A', INK, lw);
+    for (const wx of [1.2, 1.75]) poly([iso(x0 + wx - .22, y1, .55), iso(x0 + wx + .18, y1, .55), iso(x0 + wx + .18, y1, 1.0), iso(x0 + wx - .22, y1, 1.0)], '#BFE3F2', '#FFFFFF', lw);
+    poly([iso(x1 + .1, y0 - .12, h), iso(x1 + .1, y1 + .12, h), iso(x1 + .1, ym, h + rh)], mix(walls, -.08), INK, lw);
+    poly([iso(x0 - .1, y1 + .12, h), iso(x1 + .1, y1 + .12, h), iso(x1 + .1, ym, h + rh), iso(x0 - .1, ym, h + rh)], roofs, INK, lw);
+    poly([iso(x0 - .1, ym, h + rh), iso(x1 + .1, ym, h + rh), iso(x1 + .1, ym - .04, h + rh + .03), iso(x0 - .1, ym - .04, h + rh + .03)], mix(roofs, -.2));
+  }
+  // 地面：草地底色、雲影、道路（畫在最底下）
+  function drawWorldGround(t) {
+    const L = lotBox(), [gx0, gx1, gy0, gy1] = visibleGrid();
+    // 草地深淺塊，讓大片草地有層次
+    for (let y = Math.floor(gy0 / 3) * 3; y < gy1; y += 3) for (let x = Math.floor(gx0 / 3) * 3; x < gx1; x += 3) {
+      if (outDist(x + 1.5, y + 1.5, L) < 1) continue;
+      const v = cellH(x, y, 5); if (v > .45) continue;
+      poly([iso(x, y), iso(x + 3, y), iso(x + 3, y + 3), iso(x, y + 3)], v < .2 ? 'rgba(120,180,100,.18)' : 'rgba(255,255,255,.1)');
+    }
+    // 基地外緣的石砌邊框
+    box(L.x0 - .15, L.x1 + .15, L.y0 - .15, L.y1 + .15, -.02, 0, '#E3D6BF', { top: '#E3D6BF', line: 'rgba(120,100,70,.35)' });
+    box(L.x0, L.x1, L.y0, L.y1, -.01, .005, '#A9D89A', { top: '#A9D89A', line: null });
+    // 一圈道路（距基地 1～3 格）
+    const road = '#B9BEC6', edge = '#E6E1D6', lw = Math.max(1.5, TW * .04);
+    const bands = [[L.x0 - 3, L.x0 - 1, L.y0 - 3, L.y1 + 3], [L.x1 + 1, L.x1 + 3, L.y0 - 3, L.y1 + 3], [L.x0 - 1, L.x1 + 1, L.y0 - 3, L.y0 - 1], [L.x0 - 1, L.x1 + 1, L.y1 + 1, L.y1 + 3]];
+    for (const [a, b, c, d] of bands) poly([iso(a, c), iso(b, c), iso(b, d), iso(a, d)], road, edge, lw);
+    ctx.setLineDash([TW * .35, TW * .35]); ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = Math.max(1, TW * .035);
+    ctx.beginPath();
+    ctx.moveTo(...iso(L.x0 - 2, L.y0 - 2)); ctx.lineTo(...iso(L.x1 + 2, L.y0 - 2)); ctx.lineTo(...iso(L.x1 + 2, L.y1 + 2)); ctx.lineTo(...iso(L.x0 - 2, L.y1 + 2)); ctx.closePath();
+    ctx.stroke(); ctx.setLineDash([]);
+    // 斑馬線：從後門前方草地通到前方道路
+    if (DOOR) for (let i = 0; i < 4; i++) { const yy = L.y1 + 1.15 + i * .45; poly([iso(DOOR[0] - .3, yy), iso(DOOR[0] + 1.3, yy), iso(DOOR[0] + 1.3, yy + .22), iso(DOOR[0] - .3, yy + .22)], 'rgba(255,255,255,.9)'); }
+    // 草叢與小花（地面層）
+    let n = 0;
+    for (let y = gy0; y < gy1; y++) for (let x = gx0; x < gx1; x++) {
+      const d = outDist(x + .5, y + .5, L); if (d < 3.4 && d > 0) continue; if (d === 0) continue;
+      const v = cellH(x, y);
+      if (v < .32) tuft(x + cellH(x, y, 1), y + cellH(x, y, 2), .8);
+      else if (v < .4) flowerDots(x, y, 2, x * 7 + y);
+      n++;
+    }
+  }
+  function drawCloudShadows(t) {
+    const [gx0, gx1, gy0, gy1] = visibleGrid();
+    if (!RM) for (const [k, s] of [[0, 1], [.37, .8], [.71, 1.2]]) {
+      const ph = (t * .012 + k) % 1, gx = gx0 + (gx1 - gx0) * ph, gy = gy0 + (gy1 - gy0) * ((k * 1.7 + .2) % 1);
+      const [x, y] = iso(gx, gy); softShadow(x, y, TW * 4 * s, TW * 2 * s, .08);
+    }
+  }
+  // 立體景物：樹、樹叢、民宅、小車；基地後方與左側的先畫（back），前方與右側的後畫（front）
+  function drawWorldThings(t, layer) {
+    const L = lotBox(), [gx0, gx1, gy0, gy1] = visibleGrid(), items = [];
+    const isFront = (gx, gy) => gy > L.y1 || gx > L.x1;
+    for (let y = gy0; y < gy1; y++) for (let x = gx0; x < gx1; x++) {
+      const d = outDist(x + .5, y + .5, L); if (d < 3.6) continue;
+      const ax = Math.floor(x / HOUSE) * HOUSE, ay = Math.floor(y / HOUSE) * HOUSE;
+      const hasHouse = houseAt(ax, ay, L);
+      if (hasHouse && x - ax <= 3 && y - ay <= 3) { if (x === ax && y === ay && isFront(x + 1, y + 1) === (layer === 'front')) items.push({ k: x + y + 2.5, f: () => drawHouse(ax, ay) }); continue; }
+      const v = cellH(x, y, 4), gx = x + .3 + cellH(x, y, 6) * .4, gy = y + .3 + cellH(x, y, 7) * .4;
+      if (isFront(gx, gy) !== (layer === 'front')) continue;
+      if (v < .085) items.push({ k: gx + gy, f: () => drawTree(gx, gy, .7 + cellH(x, y, 8) * .5, t) });
+      else if (v < .17) items.push({ k: gx + gy, f: () => bush(gx, gy, .6 + cellH(x, y, 8) * .5) });
+    }
+    items.sort((a, b) => a.k - b.k).forEach(i => i.f());
+  }
+  // 前方道路上的小車：來回慢慢開（每一格都畫）
+  function drawCar(t) {
+    const L = lotBox(), items = [];
+    {
+      const span = L.x1 - L.x0 + 4, u = RM ? .3 : (t * .05) % 2, k = u < 1 ? u : 2 - u, dir = u < 1 ? 1 : -1;
+      const cx = L.x0 - 2 + span * k, cy = L.y1 + (dir > 0 ? 2.5 : 1.5);
+      items.push({ k: cx + cy, f: () => {
+        const [x, y] = iso(cx, cy); softShadow(x, y, TW * .7, TW * .25, .2);
+        box(cx - .55, cx + .55, cy - .3, cy + .3, .1, .55, '#F2C14E', { right: '#D9A73A' });
+        box(cx - .3, cx + .25, cy - .26, cy + .26, .55, .85, '#FFF4D6', { right: '#EADFC0' });
+        for (const [dx, dy] of [[-.35, .3], [.35, .3]]) { const [wx, wy] = iso(cx + dx, cy + dy, .12); ell(wx, wy, TW * .08, TW * .08, '#4A3B2F'); }
+      } });
+    }
+    items.forEach(i => i.f());
+  }
+  // ── 戶外景物快取：草地、道路、樹、民宅先畫到兩張畫布（後層、前層），鏡頭移出範圍或倍數改變才重畫
+  const WC = { back: document.createElement('canvas'), front: document.createElement('canvas'), key: '', rect: null, z: 0 };
+  function worldCache() {
+    const z = view.z, vr = [-view.ex / z, -view.ey / z, (W - view.ex) / z, (H - view.ey) / z];
+    const key = [TW.toFixed(2), OX.toFixed(1), OY.toFixed(1), DOOR && DOOR.join(), COLS, ROWS].join('|');
+    const r = WC.rect, settled = Math.abs(zoom - zoomTo) < .01;
+    const inside = r && vr[0] >= r[0] && vr[1] >= r[1] && vr[2] <= r[2] && vr[3] <= r[3];
+    if (WC.key === key && inside && (!settled || Math.abs(WC.z / z - 1) < .04)) return;
+    const mw = (vr[2] - vr[0]) * .3, mh = (vr[3] - vr[1]) * .3, rect = [vr[0] - mw, vr[1] - mh, vr[2] + mw, vr[3] + mh];
+    const s = Math.min(z * Math.min(dpr, 2), 4000 / Math.max(rect[2] - rect[0], rect[3] - rect[1]));
+    const cw = Math.ceil((rect[2] - rect[0]) * s), ch = Math.ceil((rect[3] - rect[1]) * s);
+    const keep = ctx;
+    try {
+      GRID_RECT = rect;
+      for (const [cv2, fn] of [[WC.back, () => { ctx.fillStyle = '#A3D394'; ctx.fillRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]); drawWorldGround(0); drawWorldThings(0, 'back'); }], [WC.front, () => drawWorldThings(0, 'front')]]) {
+        if (cv2.width !== cw || cv2.height !== ch) { cv2.width = cw; cv2.height = ch; }
+        ctx = cv2.getContext('2d'); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cw, ch);
+        ctx.setTransform(s, 0, 0, s, -rect[0] * s, -rect[1] * s);
+        fn();
+      }
+    } finally { ctx = keep; GRID_RECT = null; }
+    WC.key = key; WC.rect = rect; WC.z = z; WC.n = (WC.n || 0) + 1;
+  }
+  const blitWorld = layer => { const r = WC.rect; if (r) ctx.drawImage(WC[layer], r[0], r[1], r[2] - r[0], r[3] - r[1]); };
+  // 會場基地：平鋪在草地上（不再是漂浮小島）
+  function drawIsland() {
+    const ex = SPOTS.entrance[0];
+    for (const b of [.6, .85]) { const [x, y] = iso(ex + .5, b); ell(x, y, TW * .2, TW * .09, '#E8DCC8', INK, 1); }
+  }
   // 戶外地面層：畫在人物之前，花、草叢不會蓋到走出門的小天使
   const hrnd = i => { const v = Math.sin(i * 12.9898 + 4.1) * 43758.5453; return v - Math.floor(v); };   // 固定的偽亂數：每次重畫位置都一樣
   function tuft(gx, gy, s) {
@@ -2821,8 +2936,10 @@
     if (!W) resize();
     const t = now / 1000;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawSky(t);
     camera(now);
+    worldCache();
+    blitWorld('back');
+    drawCloudShadows(t);
     drawIsland();
     drawBackyard(t);
     drawTree(.75, .75, 1.15, t); drawTree(COLS * .78, .6, .8, t);
@@ -2894,6 +3011,8 @@
     // 右側矮牆
     box(COLS - 1, COLS - .72, 1, ROWS - 1, 0, .28, '#F3E5CF', { top: '#E9D4B5' });
     drawFrontyard(t);
+    blitWorld('front');
+    drawCar(t);
 
     // 提示層：箭頭、名牌、泡泡、手上的東西、愛心
     gt.seats.forEach(([x, y]) => arrowAt(x + .5, y + .5, 1.55, S.time));
@@ -3205,7 +3324,7 @@
   reset();
   resize();
   Counter.show('#playedIntro');
-  if (location.hash === '#debug') { window.__idle = () => S.player.t >= 1 && !S.path.length && !S.pending; window.__S = () => S; window.__view = () => view; window.__iso = iso; window.__decos = () => DECOS; window.__finish = () => finish(); window.__zoom = () => ({ zoom, zoomTo, STD, ZMAX, lens, W, H, TW }); window.__door = () => ({ DOOR, out: OUTDOOR && [...OUTDOOR.entries()].slice(0, 6), t: [tileAt(DOOR[0], DOOR[1]), tileAt(DOOR[0], DOOR[1] - 1), tileAt(DOOR[0], DOOR[1] + 1)], w: [walkable(DOOR[0], DOOR[1]), walkable(DOOR[0], DOOR[1] + 1)] }); window.__L = () => ({ LEVEL, MAP, STAFF: STAFF.map(s => ({ id: s.id, x: s.x, y: s.y })), seats }); }
+  if (location.hash === '#debug') { window.__idle = () => S.player.t >= 1 && !S.path.length && !S.pending; window.__S = () => S; window.__view = () => view; window.__iso = iso; window.__decos = () => DECOS; window.__wc = () => ({ n: WC.n, w: WC.back.width, h: WC.back.height }); window.__finish = () => finish(); window.__zoom = () => ({ zoom, zoomTo, STD, ZMAX, lens, W, H, TW }); window.__door = () => ({ DOOR, out: OUTDOOR && [...OUTDOOR.entries()].slice(0, 6), t: [tileAt(DOOR[0], DOOR[1]), tileAt(DOOR[0], DOOR[1] - 1), tileAt(DOOR[0], DOOR[1] + 1)], w: [walkable(DOOR[0], DOOR[1]), walkable(DOOR[0], DOOR[1] + 1)] }); window.__L = () => ({ LEVEL, MAP, STAFF: STAFF.map(s => ({ id: s.id, x: s.x, y: s.y })), seats }); }
   requestAnimationFrame(loop);
 })();
 </script>
