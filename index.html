@@ -1819,7 +1819,7 @@
       // 點一下或按住滑塊拖到另一邊都可以
       let down = false, moved = false;
       const side = e => { const r = sw.getBoundingClientRect(); return e.clientX < r.left + r.width / 2 ? '2d' : '25d'; };
-      sw.addEventListener('pointerdown', e => { down = true; moved = false; sw.classList.add('press'); sw.setPointerCapture(e.pointerId); });
+      sw.addEventListener('pointerdown', e => { down = true; moved = false; sw.classList.add('press'); try { sw.setPointerCapture(e.pointerId); } catch (err) {} });
       sw.addEventListener('pointermove', e => { if (!down) return; const s = side(e); if (s !== sw.dataset.on) { moved = true; show(s); } });
       const up = e => { if (!down) return; down = false; sw.classList.remove('press'); set(e.type === 'pointerup' ? (moved ? sw.dataset.on : side(e)) : v, e.type === 'pointerup'); v = sw.dataset.on; };
       sw.addEventListener('pointerup', up); sw.addEventListener('pointercancel', up);

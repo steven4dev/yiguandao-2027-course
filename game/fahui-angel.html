@@ -1780,7 +1780,7 @@
     };
     let down = false, moved = false;
     const side = e => { const r = sw.getBoundingClientRect(); return e.clientX < r.left + r.width / 2 ? '2d' : '25d'; };
-    sw.addEventListener('pointerdown', e => { down = true; moved = false; sw.classList.add('press'); sw.setPointerCapture(e.pointerId); });
+    sw.addEventListener('pointerdown', e => { down = true; moved = false; sw.classList.add('press'); try { sw.setPointerCapture(e.pointerId); } catch (err) {} });
     sw.addEventListener('pointermove', e => { if (!down) return; const v = side(e); if (v !== sw.dataset.on) { moved = true; show(v); } });
     const up = e => { if (!down) return; down = false; sw.classList.remove('press'); if (e.type === 'pointerup') go(moved ? sw.dataset.on : side(e)); else show(cur); };
     sw.addEventListener('pointerup', up); sw.addEventListener('pointercancel', up);

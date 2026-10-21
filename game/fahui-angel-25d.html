@@ -409,6 +409,7 @@
   .lens { position: fixed; bottom: calc(var(--bar-h, 56px) + 18px + env(safe-area-inset-bottom)); }
   .sheet { position: fixed; bottom: calc(var(--bar-h, 56px) + 90px + env(safe-area-inset-bottom)); }
   @media (orientation: landscape) {
+    .lens { top: calc(8px + env(safe-area-inset-top)); bottom: auto; left: auto; right: calc(54px + env(safe-area-inset-right)); transform: none; }
     footer.br #hint { font-size: .82rem; -webkit-line-clamp: 2; }
     .sheet { left: auto; width: min(440px, 60vw); }
   }
@@ -952,7 +953,7 @@
     MAP = LV.map; COLS = MAP[0].length; ROWS = MAP.length; SPOTS = LV.spots; ZONES = LV.zones;
     STAFF.forEach((st, i) => { st.x = st.fx = st.hx = LV.staff[i][0]; st.y = st.fy = st.hy = LV.staff[i][1]; st.t = 1; st.next = 1 + Math.random() * 2; });
     seats = []; MAP.forEach((r, y) => [...r].forEach((c, x) => c === 'c' && seats.push([x, y])));
-    if (typeof DECOS !== 'undefined') DECOS = [];
+    buildDecos();
     document.body.classList.toggle('wide', name === 'desktop');
     const note = document.querySelector('#levelNote');
     if (note) note.textContent = name === 'desktop'
@@ -1094,7 +1095,9 @@
   }
 
   // ---------- map helpers ----------
-  const tileAt = (x, y) => (MAP[y] || '')[x] || '#';
+  // 2.5D：前方矮牆開了後門，門外兩排草地也能走（OUTDOOR 由 buildDecos 依地圖建立）
+  let OUTDOOR = null;
+  const tileAt = (x, y) => (OUTDOOR && OUTDOOR.get(x + ',' + y)) || (MAP[y] || '')[x] || '#';
   const solid = (x, y) => { const c = tileAt(x, y); return c !== '.' && c !== 'E'; };
   const staffAt = (x, y) => STAFF.find(s => s.x === x && s.y === y);
   const npcAt = (x, y) => S.npcs.find(n => n.state !== 'following' && n.x === x && n.y === y);
@@ -1857,7 +1860,7 @@
     };
     let down = false, moved = false;
     const side = e => { const r = sw.getBoundingClientRect(); return e.clientX < r.left + r.width / 2 ? '2d' : '25d'; };
-    sw.addEventListener('pointerdown', e => { down = true; moved = false; sw.classList.add('press'); sw.setPointerCapture(e.pointerId); });
+    sw.addEventListener('pointerdown', e => { down = true; moved = false; sw.classList.add('press'); try { sw.setPointerCapture(e.pointerId); } catch (err) {} });
     sw.addEventListener('pointermove', e => { if (!down) return; const v = side(e); if (v !== sw.dataset.on) { moved = true; show(v); } });
     const up = e => { if (!down) return; down = false; sw.classList.remove('press'); if (e.type === 'pointerup') go(moved ? sw.dataset.on : side(e)); else show(cur); };
     sw.addEventListener('pointerup', up); sw.addEventListener('pointercancel', up);
@@ -2109,14 +2112,14 @@
     const [px, py] = iso(-2.1, R * .62); ell(px, py, TW * .75, TW * .34, '#BFE3F2', '#8FC3DA', Math.max(1.5, TW * .03)); ell(px - TW * .2, py - TW * .06, TW * .2, TW * .06, 'rgba(255,255,255,.7)');
     // 花圃
     for (const [g0, sd] of [[R * .3, 1], [R * .82, 4]]) { box(-2.9, -1.9, g0, g0 + 1, 0, .12, '#B5835A', { top: '#9B6B45' }); flowerDots(-2.9, g0, 7, sd); }
-    const trees = [[-1.5, R * .18, 1.0], [-2.6, R * .45, 1.25], [-1.3, R * .74, .95], [-2.7, R * .95, .85], [-.9, R * .4, .7]];
-    const bushes = [[-.7, R * .12, .9], [-.8, R * .58, 1], [-.7, R * .9, .9], [-3, R * .18, .8]];
+    const trees = [[-1.5, R * .18, 1.0], [-2.6, R * .45, 1.25], [-1.3, R * .74, .95], [-2.7, R * .95, .85], [-.9, R * .4, .7], [-2.8, R * .08, .8], [-.8, R * .96, .75], [-1.9, R * .3, .7]];
+    const bushes = [[-.7, R * .12, .9], [-.8, R * .58, 1], [-.7, R * .9, .9], [-3, R * .18, .8], [-3, R * .55, .9], [-1.2, R * .52, .7], [-3, R * .75, .8], [-1.9, R * .86, .7], [-.6, R * .28, .8]];
     const items = [...trees.map(([a, b, s]) => ({ k: a + b, f: () => drawTree(a, b, s, t) })), ...bushes.map(([a, b, s]) => ({ k: a + b, f: () => bush(a, b, s) }))];
     items.sort((p, q) => p.k - q.k).forEach(i => i.f());
   }
   // ── 會場外的小驚喜：會動、點了會說話，但不加分；點了小天使會走過去，挑戰模式裡等於在浪費時間 😆
   const REMIND = ['（裡面好像有人在等你喔！）', '（新朋友的泡泡還在冒…）', '（時間條在跑喔，快回去！）'];
-  let DECOS = [];
+  let DECOS = [], DOOR = null;
   function buildDecos() {
     const C = COLS, R = ROWS, wa = C - .45;
     const say3 = (...a) => a;
@@ -2128,7 +2131,7 @@
         '📌 海報：「2027 全真社青 Life Design 探索地圖」——一起探索人生的方向！',
         '📌 海報：「每月一堂課，和一群同行的朋友一起成長。」',
         '📌 角落有張小紙條：「今天幫助別人的你，也正在被祝福。」') },
-      { id: 'vend', name: '自動販賣機', gx: C * .3 + .4 + off, gy: R + 1.1, box: [-.35, .35, -.28, .28, 1.45], lines: say3(
+      { id: 'vend', name: '自動販賣機', gx: C * .3 + .4 + off, gy: R + 1.5, box: [-.35, .35, -.28, .28, 1.45], lines: say3(
         '這一波已經喝過運動飲料了，喝太多會肚子痛喔～',
         '販賣機的小螢幕：本日推薦——先去照顧新朋友 😉',
         '按了半天，原來是展示用的模型販賣機……') },
@@ -2143,6 +2146,22 @@
       { id: 'sign', name: '立牌', gx: wa + 2.2, gy: R * .48 + .64, box: [-.1, .1, -.7, .7, 1.3], lines: say3(
         '全真社青・新道親法會——歡迎你來！', '立牌背面寫著：「一起當新朋友身邊的那雙手。」') },
     ].map(d => Object.assign({ i: 0, hb: null }, d));
+    // 門外兩排草地可以走；公布欄、販賣機站的格子不能走
+    OUTDOOR = new Map();
+    for (let y = R; y <= R + 1; y++) for (let x = 1; x <= C - 3; x++) OUTDOOR.set(x + ',' + y, '.');
+    for (const d of DECOS) if (d.box && d.gy > R - 1) {
+      const [a0, a1, b0, b1] = d.box;
+      for (let x = Math.floor(d.gx + a0); x <= Math.floor(d.gx + a1 - .01); x++) for (let y = Math.floor(d.gy + b0); y <= Math.floor(d.gy + b1 - .01); y++) if (OUTDOOR.has(x + ',' + y)) OUTDOOR.set(x + ',' + y, 'd');
+    }
+    // 後門：開在販賣機旁邊的前方矮牆；門內、門外那一格都要能走
+    const vend = DECOS.find(d => d.id === 'vend'), vx = Math.floor(vend.gx);
+    let dx = null;
+    for (const k of [-1, 1, -2, 2, -3, 3, -4, 4]) {
+      const x = vx + k;
+      if (x >= 1 && x <= C - 3 && (MAP[R - 2] || '')[x] === '.' && OUTDOOR.get(x + ',' + R) === '.') { dx = x; break; }
+    }
+    DOOR = dx === null ? null : [dx, R - 1];
+    if (DOOR) OUTDOOR.set(dx + ',' + (R - 1), 'E');
   }
   // 物件目前在世界座標的點擊框（會動的東西每一幀更新）
   function decoBox(d, x0, y0, x1, y1) { d.hb = [Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1)]; }
@@ -2263,6 +2282,10 @@
   }
   // 點了：小天使走到室內最靠近它的地方，才開始互動（挑戰模式裡，這段路就是被浪費掉的時間）
   function visitDeco(d) {
+    const near = [];
+    for (let y = 1; y <= ROWS + 1; y++) for (let x = 1; x < COLS - 1; x++)
+      if (Math.max(Math.abs(x + .5 - d.gx), Math.abs(y + .5 - d.gy)) <= 1.6 && (walkable(x, y) || (x === S.player.x && y === S.player.y))) near.push([x, y]);
+    if (near.length) return goTo(near, () => talkDeco(d));
     const tx = Math.min(COLS - 2, Math.max(1, Math.floor(d.gx))), ty = Math.min(ROWS - 2, Math.max(1, Math.floor(d.gy)));
     const goals = [];
     for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) if (Math.abs(x - tx) + Math.abs(y - ty) <= 2 && (walkable(x, y) || (x === S.player.x && y === S.player.y))) goals.push([x, y]);
@@ -2286,15 +2309,46 @@
     if (d.id === 'bike') { d.ring = S.time + .5; sfx('unlock'); } else sfx('pop');
   }
 
+  // 戶外地面層：畫在人物之前，花、草叢不會蓋到走出門的小天使
+  const hrnd = i => { const v = Math.sin(i * 12.9898 + 4.1) * 43758.5453; return v - Math.floor(v); };   // 固定的偽亂數：每次重畫位置都一樣
+  function tuft(gx, gy, s) {
+    const [x, y] = iso(gx, gy); ctx.strokeStyle = 'rgba(96,150,82,.75)'; ctx.lineWidth = Math.max(1, TW * .022); ctx.lineCap = 'round';
+    for (const [dx, h] of [[-.06, .16], [0, .22], [.06, .15]]) { ctx.beginPath(); ctx.moveTo(x + dx * TW * s, y); ctx.lineTo(x + dx * TW * s * 1.6, y - h * TW * s); ctx.stroke(); }
+    ctx.lineCap = 'butt';
+  }
+  function drawOutdoorGround(t) {
+    const C = COLS, R = ROWS, wa = C - .45, lw = Math.max(1, TW * .015);
+    // 草叢與小花：後院、前庭外緣、前方草地、兩個轉角，依面積撒
+    const areas = [[-3.3, -.4, 1, R], [C + 2.7, C + 3.1, 1, R], [.5, C + 3, R - .3, R + 2.1], [-3.3, .4, R - 1, R + 2.1]];
+    let n = 0;
+    for (const [x0, x1, y0, y1] of areas) {
+      const cnt = Math.round((x1 - x0) * (y1 - y0) * .9);
+      for (let i = 0; i < cnt; i++, n++) { const gx = x0 + hrnd(n) * (x1 - x0), gy = y0 + hrnd(n + 500) * (y1 - y0); if (i % 4 === 0) flowerDots(gx, gy, 2, n); else tuft(gx, gy, .8 + hrnd(n + 900) * .5); }
+    }
+    // 前庭石板步道與花圃
+    for (let gy = 1; gy < R - .5; gy += 1) poly([iso(wa + .3, gy + .06), iso(wa + 1.2, gy + .06), iso(wa + 1.2, gy + .94), iso(wa + .3, gy + .94)], gy % 2 ? '#EFE6D6' : '#E6DBC7', 'rgba(120,100,70,.3)', lw);
+    const beds = Math.max(2, Math.floor(R / 4));
+    for (let i = 0; i < beds; i++) { const g0 = 1.2 + i * (R - 2.4) / beds; box(wa + 1.6, wa + 2.6, g0, g0 + 1.4, 0, .14, '#B5835A', { top: '#9B6B45' }); flowerDots(wa + 1.6, g0, 6, i + 2); flowerDots(wa + 1.6, g0 + .5, 5, i + 5); }
+    // 前方草地：兩個花圃、後門前的踏腳石
+    for (const [g0, sd] of [[C * .62, 7], [C * .8, 8]]) { box(g0, g0 + 1.3, R + .25, R + 1.05, 0, .12, '#B5835A', { top: '#9B6B45' }); flowerDots(g0, R + .25, 6, sd); flowerDots(g0 + .4, R + .3, 5, sd + 3); }
+    if (DOOR) for (const [dx, dy] of [[.5, .55], [.35, 1.35], [.6, 2.0]]) { const [x, y] = iso(DOOR[0] + dx, DOOR[1] + dy); ell(x, y, TW * .2, TW * .09, '#E8DCC8', INK, 1); }
+  }
+  // 後門：矮牆缺口、兩根門柱、門口地墊
+  function drawBackDoor(x) {
+    const y = ROWS - 1;
+    poly([iso(x + .06, y + .04), iso(x + .94, y + .04), iso(x + .94, y + .96), iso(x + .06, y + .96)], '#EDE3D2', 'rgba(120,100,70,.3)', 1);
+    box(x + .2, x + .8, y + .25, y + .75, 0, .02, '#E98FA5', { top: '#F2A7B9', line: null });
+    onPlane('floor', 0, k => planeText('後門', (x + .5) * k, (y + .52) * k, .26 * k, '#FFFFFF'));
+    for (const px of [x, x + .9]) box(px, px + .1, y, y + .28, 0, .75, '#C9935F', { top: '#D9A574' });
+  }
   // 前庭（在右邊矮牆外面，畫在最前面）
   function drawFrontyard(t) {
     const C = COLS, R = ROWS, wa = C - .45;
-    // 石板步道
-    for (let gy = 1; gy < R - .5; gy += 1) poly([iso(wa + .3, gy + .06), iso(wa + 1.2, gy + .06), iso(wa + 1.2, gy + .94), iso(wa + .3, gy + .94)], gy % 2 ? '#EFE6D6' : '#E6DBC7', 'rgba(120,100,70,.3)', Math.max(1, TW * .015));
     const items = [];
-    // 花圃
-    const beds = Math.max(2, Math.floor(R / 4));
-    for (let i = 0; i < beds; i++) { const g0 = 1.2 + i * (R - 2.4) / beds; items.push({ k: wa + 2 + g0, f: () => { box(wa + 1.6, wa + 2.6, g0, g0 + 1.4, 0, .14, '#B5835A', { top: '#9B6B45' }); flowerDots(wa + 1.6, g0, 6, i + 2); flowerDots(wa + 1.6, g0 + .5, 5, i + 5); } }); }
+    // 前方草地外緣的矮樹籬、轉角的樹叢（不擋門外可以走的兩排）
+    for (let x = 1.4; x < C - 1; x += 1.7) { const cat = DECOS.find(d => d.id === 'cat'); if (cat && Math.abs(x - cat.gx) < 1.2) continue; items.push({ k: x + R + 2.1, f: () => bush(x, R + 2.15, .75) }); }
+    for (const [a, b, sc] of [[C + 1.4, R + 1.1, .95], [C + 2.7, R + .1, .7], [-1.4, R + 1.3, .9], [-2.8, R + .4, .7]]) items.push({ k: a + b, f: () => drawTree(a, b, sc, t) });
+    for (const [a, b, sc] of [[C + .6, R + 1.9, .8], [C + 2.4, R + 1.9, .9], [-.4, R + 1.9, .8], [-2.2, R + 2, .8], [C + 3, R * .62, .8], [C + 3, R * .3, .7]]) items.push({ k: a + b, f: () => bush(a, b, sc) });
     // 長椅
     for (const g of [R * .3, R * .68]) items.push({ k: wa + 1.5 + g, f: () => {
       for (const d of [.1, .8]) box(wa + 1.35, wa + 1.42, g + d, g + d + .07, 0, .3, '#8A6A4C', { line: null });
@@ -2319,8 +2373,6 @@
       });
     } });
     for (const [g, s] of [[R * .06, .65], [R * .95, .6]]) items.push({ k: wa + 2.6 + g, f: () => drawTree(wa + 2.6, g, s, t) });
-    // 前方草地上的小花
-    for (let i = 0; i < 7; i++) { flowerDots(.6 + i * (C - 1.5) / 7, ROWS - .1, 3, i + 9); flowerDots(1 + i * (C - 1.5) / 7, ROWS + 1.9, 3, i + 3); }
     if (!DECOS.length) buildDecos();
     L_TAG = [];
     for (const d of DECOS) items.push({ k: d.gx + d.gy + (d.fly ? 2 : 0), f: () => drawDeco(d, t) });
@@ -2750,6 +2802,7 @@
     drawBackyard(t);
     drawTree(.75, .75, 1.15, t); drawTree(COLS * .78, .6, .8, t);
     drawFloor();
+    drawOutdoorGround(t);
     const gt = guideTargets(), pl = pulseAt(S.time, 5);
     const tops = [];
     const people = [];
@@ -2805,9 +2858,15 @@
       const [px, py] = posOf(p.e), seated = p.kind === 'npc' && p.e.t >= 1 && tileAt(p.e.x, p.e.y) === 'c';
       items.push({ k: px + py + 1 + (seated ? .62 : .05), f: () => drawOne(p) });
     }
+    // 前方矮牆一格一格放進深度排序：走到門外的人才會正確地站在牆前面；後門那一格留空
+    for (let x = 1; x < COLS - 1; x++) {
+      const k = x + ROWS - .36;
+      if (DOOR && x === DOOR[0]) { items.push({ k, f: () => drawBackDoor(x) }); continue; }
+      const x1 = x === COLS - 2 ? COLS - .72 : x + 1;
+      items.push({ k, f: () => box(x, x1, ROWS - 1, ROWS - .72, 0, .28, '#F3E5CF', { top: '#E9D4B5' }) });
+    }
     items.sort((a, b) => a.k - b.k).forEach(i => i.f());
-    // 前景地圍
-    box(1, COLS - .72, ROWS - 1, ROWS - .72, 0, .28, '#F3E5CF', { top: '#E9D4B5' });
+    // 右側矮牆
     box(COLS - 1, COLS - .72, 1, ROWS - 1, 0, .28, '#F3E5CF', { top: '#E9D4B5' });
     drawFrontyard(t);
 
@@ -2896,7 +2955,8 @@
     const dc = decoPick(wx, wy); if (dc) return { kind: 'deco', ref: dc };
     const u = (wx - OX) / (TW / 2), v = (wy - OY) / (TW / 4);
     const tx = Math.floor((u + v) / 2), ty = Math.floor((v - u) / 2);
-    if (tx < 1 || ty < 1 || tx > COLS - 2 || ty > ROWS - 2) return null;
+    if (tx < 1 || ty < 1 || tx > COLS - 2 || ty > ROWS + 1) return null;
+    if (ty >= ROWS - 1 && solid(tx, ty)) return null;
     return { kind: 'tile', x: tx, y: ty };
   }
   function tapAt(sx, sy) {
@@ -2921,7 +2981,10 @@
   const local = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
   cv.addEventListener('pointerdown', e => {
     if (e.pointerType === 'mouse') { if (e.button === 0) tapAt(...local(e)); return; }
-    cv.setPointerCapture && cv.setPointerCapture(e.pointerId);
+    // 新的一次觸控（第一根手指）就清掉殘留紀錄：iPhone 兩指縮放或轉向時，有時不會送出放開的事件，
+    // 殘留的手指會讓之後每次碰地圖都被當成縮放，把鏡頭圓鈕選的倍數蓋掉
+    if (e.isPrimary) { touches.clear(); pinch = null; }
+    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
     touches.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY });
     if (touches.size === 1) gesture = false;
     if (touches.size === 2) {
@@ -2946,6 +3009,11 @@
   };
   cv.addEventListener('pointerup', endTouch);
   cv.addEventListener('pointercancel', endTouch);
+  cv.addEventListener('lostpointercapture', e => { touches.delete(e.pointerId); if (touches.size < 2) pinch = null; });
+  const resetTouch = () => { touches.clear(); pinch = null; };
+  window.addEventListener('orientationchange', resetTouch);
+  window.addEventListener('resize', resetTouch);
+  document.addEventListener('visibilitychange', resetTouch);
   cv.addEventListener('pointermove', e => {
     if (e.pointerType !== 'mouse' || !S.running) return;
     const r = cv.getBoundingClientRect(), h = pickAt(e.clientX - r.left, e.clientY - r.top);
@@ -3106,7 +3174,7 @@
   reset();
   resize();
   Counter.show('#playedIntro');
-  if (location.hash === '#debug') { window.__idle = () => S.player.t >= 1 && !S.path.length && !S.pending; window.__S = () => S; window.__view = () => view; window.__iso = iso; window.__decos = () => DECOS; window.__L = () => ({ LEVEL, MAP, STAFF: STAFF.map(s => ({ id: s.id, x: s.x, y: s.y })), seats }); }
+  if (location.hash === '#debug') { window.__idle = () => S.player.t >= 1 && !S.path.length && !S.pending; window.__S = () => S; window.__view = () => view; window.__iso = iso; window.__decos = () => DECOS; window.__zoom = () => ({ zoom, zoomTo, STD, ZMAX, lens, W, H, TW }); window.__door = () => ({ DOOR, out: OUTDOOR && [...OUTDOOR.entries()].slice(0, 6), t: [tileAt(DOOR[0], DOOR[1]), tileAt(DOOR[0], DOOR[1] - 1), tileAt(DOOR[0], DOOR[1] + 1)], w: [walkable(DOOR[0], DOOR[1]), walkable(DOOR[0], DOOR[1] + 1)] }); window.__L = () => ({ LEVEL, MAP, STAFF: STAFF.map(s => ({ id: s.id, x: s.x, y: s.y })), seats }); }
   requestAnimationFrame(loop);
 })();
 </script>
