@@ -181,6 +181,11 @@
   .tour { gap: 12px; padding: 16px 18px 14px; width: min(460px, 100%); }
   @media (pointer: fine) and (hover: hover) { .tour { width: min(520px, 100%); } }
   .tour-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  /* 版本膠囊開關：2D 平面／2.5D 模型屋，選過會記住（首頁也會照這個選擇開） */
+  .vswitch { display: inline-flex; flex: none; padding: 3px; gap: 2px; border-radius: 99px; background: var(--bg); border: 1.5px solid var(--line); }
+  .vswitch a { padding: 4px 11px; border-radius: 99px; font-size: .8rem; font-weight: 900; color: var(--muted); text-decoration: none; line-height: 1.3; }
+  .vswitch a[aria-current="page"] { background: var(--green); color: #fff; box-shadow: 0 2px 6px rgba(5,150,105,.3); }
+  .vswitch a:focus-visible { outline: 3px solid var(--blue); outline-offset: 1px; }
   .linkbtn { font: inherit; font-size: .82rem; font-weight: 700; color: var(--muted); background: none; border: 0; padding: 6px 2px; cursor: pointer; }
   .linkbtn:hover { color: var(--green); }
   /* 跳過說明：跳動＋光暈閃爍，讓玩家一眼看出可以直接開始 */
@@ -348,7 +353,7 @@
   <div id="intro" class="overlay">
     <div class="card tour" role="region" aria-roledescription="說明" aria-label="遊戲說明">
       <div class="tour-top">
-        <span class="eyebrow">全真社青・法會小天使</span>
+        <nav class="vswitch" aria-label="選擇畫面版本"><a aria-current="page" href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html" data-v="2d">2D</a><a href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel-25d.html" data-v="25d">2.5D</a></nav>
         <button id="tourSkip" class="skip-btn" type="button">⏩ 跳過說明，直接開始</button>
         <button id="tourAgain" class="linkbtn" type="button" hidden>📖 重看說明</button>
       </div>
@@ -1744,6 +1749,9 @@
   });
   // 每次進入都從第 1 頁開始（想跳過可按「略過」）；不再因為玩過就直接跳到最後一頁
   tourGo(0);
+  // 記住玩家選的版本，首頁的遊戲按鈕會照這個選擇開
+  try { localStorage.setItem('fahui-ver', '2d'); } catch (e) {}
+  document.querySelectorAll('.vswitch a').forEach(a => a.addEventListener('click', () => { try { localStorage.setItem('fahui-ver', a.dataset.v); } catch (e) {} }));
   $('#startBtn').addEventListener('click', () => start('challenge'));
   $('#relaxBtn').addEventListener('click', () => start('relax'));
   $('#againBtn').addEventListener('click', () => start(S.mode));

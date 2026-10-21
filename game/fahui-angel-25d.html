@@ -3,8 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="noindex">
-<meta name="description" content="法會小天使 2.5D 版：在模型屋裡照顧新朋友。">
+<meta name="description" content="新朋友第一次來法會，頭上冒出了需求泡泡……走進 2.5D 模型屋會場，一起當新朋友身邊的那雙手。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="2027 全真社青 Life Design 探索地圖">
+<meta property="og:title" content="法會小天使 2.5D｜一起當新朋友身邊的那雙手">
+<meta property="og:description" content="走進 2.5D 模型屋會場，照顧頭上冒出需求泡泡的新朋友。手機、電腦點開就能玩，約 3 分鐘。">
+<meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel-25d.html">
+<meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-fahui-angel.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="法會小天使：在法會會場幫助頭上冒出需求泡泡的新朋友">
+<meta property="og:locale" content="zh_TW">
+<meta name="twitter:card" content="summary_large_image">
 <title>法會小天使 2.5D</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -196,6 +206,11 @@
   .tour { gap: 12px; padding: 16px 18px 14px; width: min(460px, 100%); }
   @media (pointer: fine) and (hover: hover) { .tour { width: min(520px, 100%); } }
   .tour-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  /* 版本膠囊開關：2D 平面／2.5D 模型屋，選過會記住（首頁也會照這個選擇開） */
+  .vswitch { display: inline-flex; flex: none; padding: 3px; gap: 2px; border-radius: 99px; background: var(--bg); border: 1.5px solid var(--line); }
+  .vswitch a { padding: 4px 11px; border-radius: 99px; font-size: .8rem; font-weight: 900; color: var(--muted); text-decoration: none; line-height: 1.3; }
+  .vswitch a[aria-current="page"] { background: var(--green); color: #fff; box-shadow: 0 2px 6px rgba(5,150,105,.3); }
+  .vswitch a:focus-visible { outline: 3px solid var(--blue); outline-offset: 1px; }
   .linkbtn { font: inherit; font-size: .82rem; font-weight: 700; color: var(--muted); background: none; border: 0; padding: 6px 2px; cursor: pointer; }
   .linkbtn:hover { color: var(--green); }
   /* 跳過說明：跳動＋光暈閃爍，讓玩家一眼看出可以直接開始 */
@@ -228,6 +243,10 @@
   .ill { min-height: 132px; border-radius: 16px; padding: 30px 10px 14px; box-sizing: border-box;
     background: linear-gradient(160deg, #EAF4FB, #ECF7F0 60%, #FDF3EA);
     display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 6px; }
+  .ill.ill25 { padding: 0 0 10px; min-height: 0; display: grid; gap: 6px; justify-items: center; overflow: hidden; }
+  .illcv { width: 100%; height: 176px; display: block; border-radius: 0; box-shadow: none; cursor: default; touch-action: pan-y; }
+  .illrow { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; padding: 0 10px; }
+  .illrow:has(.only-desk:only-child) { padding: 0 10px; }
   .ill > span, .ill .only-touch, .ill .only-desk { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
   .who { position: relative; width: 46px; height: 46px; border-radius: 50%; background: #fff; border: 2px solid #94A3B8; display: inline-grid !important; place-items: center; font-size: 24px; flex: none; }
   .who.me { border-color: var(--gold); background: var(--gold-soft); border-width: 3px; }
@@ -368,80 +387,80 @@
   <div id="intro" class="overlay">
     <div class="card tour" role="region" aria-roledescription="說明" aria-label="遊戲說明">
       <div class="tour-top">
-        <span class="eyebrow">全真社青・法會小天使</span>
+        <nav class="vswitch" aria-label="選擇畫面版本"><a href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html" data-v="2d">2D</a><a aria-current="page" href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel-25d.html" data-v="25d">2.5D</a></nav>
         <button id="tourSkip" class="skip-btn" type="button">⏩ 跳過說明，直接開始</button>
         <button id="tourAgain" class="linkbtn" type="button" hidden>📖 重看說明</button>
       </div>
       <div class="tour-view">
         <div class="tour-track" id="tourTrack">
         <section class="tpage">
-          <div class="ill" aria-hidden="true"><span class="who ">👩<span class="bub">🧭</span></span><span class="who ">👨<span class="bub">👋</span></span><span class="who me">🙋<span class="tag">你</span></span><span class="who ">🧑<span class="bub">📝</span></span></div>
+          <div class="ill ill25" aria-hidden="true"><canvas class="illcv" data-scene="intro"></canvas></div>
           <h2>今天，我們一起當法會小天使</h2>
           <p class="lead">新朋友第一次來參加法會，難免有點陌生。看到誰頭上冒出泡泡，就走過去幫他一把吧！</p>
           <p class="tip">⏱ 一局約 3 分鐘　📱 手機、🖥 電腦都能玩</p>
         </section>
         <section class="tpage">
-          <div class="ill" aria-hidden="true"><span class="only-touch">👆 <span class="arr" aria-hidden="true">→</span><span class="floor"></span><span class="arr" aria-hidden="true">→</span><span class="who me">🙋<span class="tag">你</span></span></span><span class="only-desk"><span class="keys"><kbd>↑</kbd>↗ <kbd>→</kbd>↘ <kbd>↓</kbd>↙ <kbd>←</kbd>↖</span></span></div>
+          <div class="ill ill25" aria-hidden="true"><canvas class="illcv" data-scene="walk"></canvas><div class="illrow"><span class="only-desk"><span class="keys"><kbd>↑</kbd>↗ <kbd>→</kbd>↘ <kbd>↓</kbd>↙ <kbd>←</kbd>↖</span></span></div></div>
           <h2>怎麼走路</h2>
           <p class="lead"><span class="only-touch">點一下地板，小天使會自己走過去；點人或櫃子，走到旁邊就會互動。點到的東西會發金光，讓你知道有點到。</span><span class="only-desk">會場是斜著看的：↑／W 往右上（入口那面牆）、→／D 往右下、↓／S 往左下、←／A 往左上。按住可以一直走；撞到人或櫃子就會互動，空白鍵也能和面前的人互動。也可以直接用滑鼠點。</span></p>
           <p class="tip"><span class="only-touch">也可以點畫面下方「手上」把東西放下。</span><span class="only-desk">選單可以按數字鍵選，M 開關音樂。</span></p>
         </section>
         <section class="tpage">
-          <div class="ill" aria-hidden="true"><span class="chip">.5　×1　×2</span><span class="chip">🤏 兩指縮放</span><span class="chip">◀ 💺</span><span class="chip">✨ 發光</span></div>
+          <div class="ill ill25" aria-hidden="true"><canvas class="illcv" data-scene="lens"></canvas><div class="illrow"><span class="chip">.5　×1　×2</span><span class="chip">🤏 兩指縮放</span></div></div>
           <h2>2.5D 會場的小幫手</h2>
           <p class="lead">地圖下方的鏡頭圓鈕和 iPhone 相機一樣：<b>.5</b> 看整個會場、<b>×1</b> 標準近拍、<b>×2</b> 特寫。手機也能用兩指縮放，電腦可以用滑鼠滾輪；放大後鏡頭會平穩地跟著你走，倍數會記住。</p>
           <p class="tip">畫面外有人需要幫忙時，螢幕邊緣會出現圓鈕，箭頭指向他的方向；該去的地方（空椅子、對的廁所、拿到鑰匙後的備品區）會發金光。</p>
         </section>
         <section class="tpage">
-          <div class="ill" aria-hidden="true"><span class="who ">👨<span class="bub">📝</span></span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#0284C7">📚<small>文具櫃</small></span><span class="arr" aria-hidden="true">→</span><span class="who me">🙋📝<span class="tag">你</span></span><span class="arr" aria-hidden="true">→</span>❤️</div>
+          <div class="ill ill25" aria-hidden="true"><canvas class="illcv" data-scene="need"></canvas></div>
           <h2>頭上的泡泡＝他需要的東西</h2>
           <p class="lead">到對的櫃子拿東西，再送到他身邊，就完成一份心意 ❤️。</p>
           <p class="tip">✋ 手上一次只能拿一樣；直接去拿別的，舊的會自動放回去。</p>
         </section>
         <section class="tpage">
-          <div class="ill" aria-hidden="true"><span class="tile" style="--c:#059669">🧺<small>備品區 🔒</small></span><span class="arr back" aria-hidden="true">←</span><span class="chip">🔑</span><span class="arr back" aria-hidden="true">←</span><span class="who staff">👷<span class="tag">總務</span></span></div>
+          <div class="ill ill25" aria-hidden="true"><canvas class="illcv" data-scene="key"></canvas></div>
           <h2>備品區要先拿鑰匙</h2>
           <p class="lead">每一段時間開始，備品區都會重新上鎖。先找戴橘色帽子、穿綠衣服的<b>總務組學長</b>拿 🔑，再去打開備品區（放彩色籃子的木架）。</p>
           <p class="tip">總務學長會在附近走動；點他一下，他會停下來等你。備品區有 🧥 外套、🥤 紙杯、🍬 咖啡糖。</p>
         </section>
         <section class="tpage">
-          <div class="ill" aria-hidden="true"><span class="tile" style="--c:#059669">🥤<small>紙杯</small></span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#0D9488">🚰<small>飲水機</small></span><span class="arr" aria-hidden="true">→</span><span class="stack"><span class="chip">💧 溫水</span><span class="chip">♨️ 熱水</span><span class="chip">🍵 熱茶</span></span></div>
+          <div class="ill ill25" aria-hidden="true"><canvas class="illcv" data-scene="cup"></canvas><div class="illrow"><span class="chip">💧 溫水</span><span class="chip">♨️ 熱水</span><span class="chip">🍵 熱茶</span></div></div>
           <h2>每種飲料都要先拿紙杯</h2>
           <p class="lead">拿著紙杯到飲水機，可以選溫水、熱水或熱茶。</p>
           <p class="tip">💧 口渴的人要<b>溫</b>的，給熱水會太燙；♨️ 胃不舒服的人要<b>熱</b>的，給溫水不夠暖。</p>
         </section>
         <section class="tpage">
-          <div class="ill" aria-hidden="true"><span class="tile" style="--c:#059669">🥤<small>紙杯</small></span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#92400E">☕<small>咖啡機</small></span><span class="arr" aria-hidden="true">→</span><span class="chip">☕ 美式</span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#0EA5E9">🥛<small>冰箱</small></span><span class="arr" aria-hidden="true">→</span><span class="chip">☕🥛 拿鐵</span></div>
+          <div class="ill ill25" aria-hidden="true"><canvas class="illcv" data-scene="coffee"></canvas><div class="illrow"><span class="chip">🥤 → ☕ 美式</span><span class="chip">＋🥛 → ☕🥛 拿鐵</span></div></div>
           <h2>咖啡吧：美式和拿鐵</h2>
           <p class="lead">紙杯到咖啡機就是美式；美式再到冰箱加鮮奶，就變成拿鐵（先裝鮮奶再加咖啡也可以）。</p>
           <p class="tip">😪 想睡的朋友：給一杯美式，或備品區的 🍬 咖啡糖都可以。</p>
         </section>
         <section class="tpage">
-          <div class="ill" aria-hidden="true"><span class="pair"><span class="who ">👩<span class="bub">🧭</span></span><span class="arr" aria-hidden="true">→</span><span class="who me">🙋<span class="tag">你</span></span><span class="arr" aria-hidden="true">→</span><span class="seat"></span></span><span class="pair"><span class="tile" style="--c:#DB2777">🚺<small>女廁</small></span><span class="wc-or">粉紅門｜藍門</span><span class="tile" style="--c:#2563EB">🚹<small>男廁</small></span></span></div>
+          <div class="ill ill25" aria-hidden="true"><canvas class="illcv" data-scene="guide"></canvas></div>
           <h2>帶路：找座位、去洗手間</h2>
           <p class="lead">🧭 找座位、🚺🚹 想上洗手間的人，先走到他身邊讓他跟著你，再點發亮的空椅子或對的廁所。</p>
           <p class="tip">女廁是<b>粉紅門</b>、男廁是<b>藍門</b>。帶人時空椅子或對的那間廁所會發金光、上面有箭頭；帶錯了他會提醒你。</p>
         </section>
         <section class="tpage">
-          <div class="ill" aria-hidden="true"><span class="who ">👨<span class="bub">👋</span></span><span class="arr" aria-hidden="true">→</span><span class="chip">💬 吃過早餐了嗎？</span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#EA580C">🥟<small>餐點區</small></span><span class="chip">×2</span></div>
+          <div class="ill ill25" aria-hidden="true"><canvas class="illcv" data-scene="greet"></canvas><div class="illrow"><span class="chip">💬 吃過早餐了嗎？</span><span class="chip">🥟 ×2</span></div></div>
           <h2>剛到的朋友，先打招呼</h2>
           <p class="lead">走過去就會主動問候。如果他還沒吃早餐，到餐點區拿<b>兩顆</b>植物肉煎餃（點兩次）。</p>
           <p class="tip">有人已經吃過了，會改成想喝溫水或喝咖啡，聽他怎麼說就好。</p>
         </section>
         <section class="tpage">
-          <div class="ill" aria-hidden="true"><span class="pair"><span class="who ">🧑<span class="bub">😟</span></span><span class="who me ring">🙋<span class="tag">你</span></span></span><span class="pair"><span class="who hide">👤</span><span class="chip">角落…</span></span></div>
+          <div class="ill ill25" aria-hidden="true"><canvas class="illcv" data-scene="comfort"></canvas></div>
           <h2>陪伴，和主動關心</h2>
           <p class="lead">😟 緊張的人不用拿東西，站在他身邊<b>兩秒</b>陪他就好。有一位朋友會躲在角落、不會冒泡泡，要主動走近才會發現他。</p>
           <p class="tip">每一次幫忙，結算時都會收到新朋友的心聲。</p>
         </section>
         <section class="tpage">
-          <div class="ill" aria-hidden="true"><span class="who staff">👩‍💼<span class="tag">公關</span></span><span class="who staff">👷<span class="tag">總務</span></span><span class="who staff">👨‍🏫<span class="tag">輔導</span></span></div>
+          <div class="ill ill25" aria-hidden="true"><canvas class="illcv" data-scene="staff"></canvas></div>
           <h2>卡關了？找學長</h2>
           <p class="lead"><b>公關組</b>告訴你現在最需要幫的是誰、怎麼做；<b>總務組</b>保管備品區鑰匙；<b>輔導組</b>知道角落的朋友在哪裡。</p>
           <p class="tip">公關學長就在報到台旁邊，點報到台也能問他。</p>
         </section>
         <section class="tpage">
-          <div class="ill" aria-hidden="true"><span class="who ">👨<span class="bub"><span class="tbar"></span>💧</span></span><span class="arr" aria-hidden="true">→</span><span class="chip">⏱ 時間條跑完前完成</span><span class="arr" aria-hidden="true">→</span><span class="stars5">★★★★★</span></div>
+          <div class="ill ill25" aria-hidden="true"><canvas class="illcv" data-scene="modes"></canvas><div class="illrow"><span class="chip">⏱ 時間條跑完前完成</span><span class="stars5">★★★★★</span></div></div>
           <h2>選一個模式開始</h2>
           <p class="lead"><b>挑戰模式</b>：泡泡上方有時間條，好幾位朋友會同時需要幫忙；來不及的話學長會先接手。完成越多星星越多，最高 ★★★★★，零失誤就是「全能小天使」🏆</p>
           <p class="tiny" id="levelNote"></p>
@@ -537,7 +556,8 @@
 <script>
 (() => {
   const $ = s => document.querySelector(s);
-  const cv = $('#cv'), ctx = cv.getContext('2d');
+  const cv = $('#cv');
+  let ctx = cv.getContext('2d');   // 說明頁插圖會暫時借用同一套畫法畫到別的畫布
   const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const EMOJI = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
   const SANS = '"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
@@ -768,7 +788,7 @@
     const fresh = opts.filter(l => !S.thanks.some(t => t.line === l));
     return pick(fresh.length ? fresh : opts);
   }
-  const GAME_URL = 'https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html';
+  const GAME_URL = 'https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel-25d.html';
   // ---------- 體驗人次計數器（Google 試算表 + Apps Script） ----------
   // 網址只設定在 game/stats-config.json 一個地方；還沒填就不計數、不顯示
   // 只送匿名事件（開始／完成／分享、版本、模式、星等），不收集任何個人資料
@@ -1755,6 +1775,9 @@
   });
   // 每次進入都從第 1 頁開始（想跳過可按「略過」）；不再因為玩過就直接跳到最後一頁
   tourGo(0);
+  // 記住玩家選的版本，首頁的遊戲按鈕會照這個選擇開
+  try { localStorage.setItem('fahui-ver', '25d'); } catch (e) {}
+  document.querySelectorAll('.vswitch a').forEach(a => a.addEventListener('click', () => { try { localStorage.setItem('fahui-ver', a.dataset.v); } catch (e) {} }));
   $('#startBtn').addEventListener('click', () => start('challenge'));
   $('#relaxBtn').addEventListener('click', () => start('relax'));
   $('#againBtn').addEventListener('click', () => start(S.mode));
@@ -2568,11 +2591,148 @@
   });
   cv.addEventListener('pointerleave', () => { if (S) S.hover = null; });
 
+  // ---------- 說明頁插圖：和遊戲同一套模型屋畫法，畫在每一頁的小畫布上 ----------
+  const FR = [
+    { hair: 'spiky', hairCol: '#7A5238', shirt: '#9FD3B5', pants: '#6F86A8', ph: 1 },
+    { hair: 'bun', hairCol: '#4B3A33', shirt: '#F6B8C4', pants: '#8E7BB5', ph: 2 },
+    { hair: 'bob', hairCol: '#8C5A3C', shirt: '#C7B8E8', pants: '#6F86A8', ph: 4 },
+    { hair: 'short', hairCol: '#5A4030', shirt: '#FFE08A', pants: '#7D8B6A', ph: 5 },
+  ];
+  const ME_TAG = ['你', '#E4A23B'];
+  // 一個人：放進深度排序；名牌、泡泡、愛心放進提示層
+  function ilPerson(L, gx, gy, look, o = {}) {
+    const [x, y] = o.seated ? iso(gx + .5, gy + .55, .52) : iso(gx + .5, gy + .5);
+    L.items.push({ k: gx + gy + 1 + (o.seated ? .62 : .05), f: () => {
+      if (o.glow) glowRing(x, y, pulseAt(L.t, 6));
+      ctx.globalAlpha = o.alpha || 1;
+      const top = chibi(x, y, TW * 1.05, Object.assign({}, look, { seated: o.seated, walk: o.walk, wave: o.wave, worried: o.worried, hold: o.hold, face: o.face || 1 }), L.t);
+      ctx.globalAlpha = 1;
+      if (o.tag) L.ui.push(() => pill(o.tag[0], x, y + TW * .2, Math.max(9, TW * .2), o.tag[1]));
+      if (o.bubble) L.ui.push(() => bubble(x, top, TW * 1.05, o.bubble, L.t + (look.ph || 0), { frac: o.frac === undefined ? -1 : o.frac, ring: o.ring || 0 }));
+      if (o.follow) L.ui.push(() => emoji('💛', x + TW * .3, top + TW * .12, TW * .26));
+      if (o.x2) L.ui.push(() => pill('×2', x + TW * .55, y - TW * .2, Math.max(8, TW * .13), '#EA580C'));
+      if (o.dots) L.ui.push(() => { ctx.globalAlpha = .7; pill('…', x, top - TW * .1, Math.max(9, TW * .18), '#94A3B8'); ctx.globalAlpha = 1; });
+    } });
+  }
+  function ilStation(L, c, gx, gy, glow) {
+    const sb = shapeBox(c, gx, gy);
+    L.items.push({ k: (sb[0] + sb[1]) / 2 + (sb[2] + sb[3]) / 2, f: () => { drawStation(c, gx, gy, L.t); if (glow) glowBox(sb, .5 + .5 * pulseAt(L.t, 5)); } });
+  }
+  function ilChair(L, gx, gy) {
+    L.items.push({ k: gx + gy + .48, f: () => drawChairBack(gx, gy) }, { k: gx + gy + 1.08, f: () => drawChair(gx, gy) });
+  }
+  function ilEdge(L, icon) {
+    L.ui.push(() => {
+      const r = 15, px = W - 22, py = H * .45;
+      poly([[px + r + 9, py], [px + Math.cos(.5) * r, py + Math.sin(.5) * r], [px + Math.cos(-.5) * r, py + Math.sin(-.5) * r]], '#F2C14E');
+      ell(px, py, r, r, '#FFFFFF', '#F2C14E', 3); emoji(icon, px, py, r * 1.1);
+    });
+  }
+  const SCENES = {
+    intro: L => {
+      ilPerson(L, 1, 0, FR[0], { bubble: '🧭' }); ilPerson(L, 4, 0, FR[1], { bubble: '👋', wave: true });
+      ilPerson(L, 2, 1, ANGEL, { tag: ME_TAG }); ilPerson(L, 0, 2, FR[2], { bubble: '😟', worried: true }); ilPerson(L, 4, 2, FR[3], { bubble: '📝' });
+    },
+    walk: L => {
+      const u = (L.t * .7) % 1, gx = u * 2.6;
+      L.floor.push(() => { glowTile(3, 1, pulseAt(L.t, 5), '95,175,132'); });
+      L.ui.push(() => { const [x, y] = iso(3.6, 1.6); emoji('👆', x + TW * .1, y + TW * .05, TW * .45); });
+      ilPerson(L, gx, 1, ANGEL, { walk: true, tag: ME_TAG });
+      ilChair(L, 1, 0); ilChair(L, 4, 2);
+    },
+    lens: L => {
+      ilChair(L, 3, 0); ilChair(L, 4, 2);
+      L.floor.push(() => glowTile(3, 0, pulseAt(L.t, 5)));
+      L.ui.push(() => arrowAt(3.5, .5, 1.55, L.t));
+      ilPerson(L, 0, 1, FR[1], { follow: true }); ilPerson(L, 1, 1, ANGEL, { tag: ME_TAG });
+      ilEdge(L, '💺');
+    },
+    need: L => {
+      ilStation(L, 'S', 0, 0, true);
+      ilPerson(L, 2, 1, ANGEL, { tag: ME_TAG, hold: '📝' }); ilPerson(L, 4, 1, FR[0], { bubble: '📝' });
+    },
+    key: L => {
+      L.locked = true;
+      ilStation(L, 'B', 0, 0, true);
+      ilPerson(L, 2, 1, ANGEL, { tag: ME_TAG, hold: '🔑' }); ilPerson(L, 4, 1, STAFF_LOOK.gen, { tag: ['總務', STAFF_LOOK.gen.tagBg] });
+    },
+    cup: L => {
+      ilStation(L, 'B', 0, 0); ilStation(L, 'T', 4, 0, true);
+      ilPerson(L, 2, 1, ANGEL, { tag: ME_TAG, hold: '🥤' });
+    },
+    coffee: L => {
+      ilStation(L, 'K', 0, 0); ilStation(L, 'M', 4, 0, true);
+      ilPerson(L, 2, 1, ANGEL, { tag: ME_TAG, hold: '☕🥛' });
+    },
+    guide: L => {
+      ilChair(L, 3, 2);
+      L.floor.push(() => glowTile(3, 2, pulseAt(L.t, 5)));
+      L.ui.push(() => arrowAt(3.5, 2.5, 1.55, L.t));
+      ilPerson(L, 0, 1, FR[1], { follow: true }); ilPerson(L, 1, 1, ANGEL, { tag: ME_TAG });
+      ilStation(L, 'U', 4, 0); ilStation(L, 'V', 5, 0);
+    },
+    greet: L => {
+      ilPerson(L, 0, 1, FR[0], { bubble: '👋', wave: true });
+      ilPerson(L, 2, 1, ANGEL, { tag: ME_TAG, hold: '🥟', x2: true });
+      ilStation(L, 'F', 4, 0, true);
+    },
+    comfort: L => {
+      ilChair(L, 1, 1);
+      ilPerson(L, 1, 1, FR[2], { seated: true, worried: true, bubble: '😟', ring: (L.t * .4) % 1 });
+      ilPerson(L, 2, 1, ANGEL, { tag: ME_TAG });
+      ilPerson(L, 4, 0, FR[3], { alpha: .45, dots: true });
+    },
+    staff: L => {
+      ilPerson(L, 0, 1, STAFF_LOOK.pr, { tag: ['公關', STAFF_LOOK.pr.tagBg] });
+      ilPerson(L, 2, 1, STAFF_LOOK.gen, { tag: ['總務', STAFF_LOOK.gen.tagBg] });
+      ilPerson(L, 4, 1, STAFF_LOOK.care, { tag: ['輔導', STAFF_LOOK.care.tagBg] });
+      ilStation(L, 'R', 1, 0);
+    },
+    modes: L => {
+      ilPerson(L, 1, 1, FR[0], { bubble: '💧', frac: 1 - (L.t * .15) % 1 });
+      ilPerson(L, 3, 1, ANGEL, { tag: ME_TAG });
+    },
+  };
+  const SCENE_SIZE = { guide: [6, 3] };
+  function drawIll(canvas, scene, t) {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h || !SCENES[scene]) return;
+    const d = Math.min(window.devicePixelRatio || 1, 3);
+    if (canvas.width !== Math.round(w * d) || canvas.height !== Math.round(h * d)) { canvas.width = Math.round(w * d); canvas.height = Math.round(h * d); }
+    const keep = { ctx, TW, OX, OY, W, H, locked: S.locked, wave: S.wave };
+    const [GW, GH] = SCENE_SIZE[scene] || [5, 3];
+    try {
+      ctx = canvas.getContext('2d'); W = w; H = h;
+      const pts = [[0, GH, -.5], [GW, 0, -.5], [GW, GH, -.5], [.5, .5, 3.0], [GW, 0, 2.2]];
+      let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+      for (const [a, b, hh] of pts) { const x = (a - b) / 2, y = (a + b) / 4 - hh * HU; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+      TW = Math.min((w - 30) / (x1 - x0), (h - 6) / (y1 - y0));
+      OX = w / 2 - (x0 + x1) / 2 * TW; OY = h / 2 - (y0 + y1) / 2 * TW;
+      ctx.setTransform(d, 0, 0, d, 0, 0); ctx.clearRect(0, 0, w, h);
+      const L = { t, items: [], ui: [], floor: [], locked: false };
+      SCENES[scene](L);
+      S.locked = L.locked; S.wave = -1;
+      const [cx, cy] = iso(GW / 2, GH / 2, -1.2); softShadow(cx, cy, TW * (GW + GH) * .3, TW * (GW + GH) * .09, .14);
+      box(0, GW, 0, GH, -.5, -.12, '#C99B74', { top: '#C99B74', right: '#B08360' });
+      box(0, GW, 0, GH, -.12, 0, '#9ACD8C', { top: '#A9D89A', left: '#8DC27F', right: '#7DB271' });
+      const lw = Math.max(1, TW * .015);
+      for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+        poly([iso(x + .06, y + .06), iso(x + .94, y + .06), iso(x + .94, y + .94), iso(x + .06, y + .94)], (x + y) % 2 ? '#EBCB9F' : '#E4C190', 'rgba(160,110,60,.22)', lw);
+      }
+      L.floor.forEach(f => f());
+      L.items.sort((a, b) => a.k - b.k).forEach(i => i.f());
+      L.ui.forEach(f => f());
+    } finally {
+      ({ ctx, TW, OX, OY, W, H } = keep); S.locked = keep.locked; S.wave = keep.wave;
+    }
+  }
+
   function loop(now) {
     const dt = Math.min(.05, (now - (last || now)) / 1000);
     last = now;
     update(dt);
     draw(now);
+    if (!$('#intro').hidden) { const c = tourPages[tourAt] && tourPages[tourAt].querySelector('.illcv'); if (c) drawIll(c, c.dataset.scene, now / 1000); }
     requestAnimationFrame(loop);
   }
   setLevel(detectLevel());
