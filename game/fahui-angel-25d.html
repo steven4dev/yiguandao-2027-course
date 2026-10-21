@@ -2075,6 +2075,12 @@
       planeText(text, x * k, -h * k, size, color);
     });
   }
+  // 頭上名牌：不用膠囊底色，彩色粗體字加白邊，放在角色頭頂上方，不會蓋到腳下的東西
+  function headTag(text, x, top, color, size) {
+    ctx.font = `900 ${size}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(2.5, size * .32); ctx.strokeStyle = 'rgba(255,255,255,.95)';
+    ctx.strokeText(text, x, top - size * .2); ctx.fillStyle = color; ctx.fillText(text, x, top - size * .2);
+  }
   function pill(text, x, y, size, bg, fg = '#fff') {
     ctx.font = `${size}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const w = ctx.measureText(text).width + size * 1.1, h = size * 1.55;
@@ -2243,7 +2249,7 @@
         ctx.strokeStyle = '#A0703F'; ctx.lineWidth = Math.max(1.5, s * .035); ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke();
         poly([[ex - s * .08, ey + s * .02], [ex + s * .08, ey + s * .02], [ex + s * .04, ey - s * .08], [ex - s * .04, ey - s * .08]], '#E9C79C', INK, lw);
         if (!RM && Math.sin(t * 6) > .8) { ctx.globalAlpha = .5; ell(ex - s * .12, ey - s * .02, s * .05, s * .03, '#D8C8B0'); ctx.globalAlpha = 1; }
-        L_TAG.push(() => pill('掃地學長', x, y + TW * .2, Math.max(9, TW * .17), '#7DB271'));
+        L_TAG.push(() => headTag('掃地學長', x, top, '#4E8F4D', Math.max(9, TW * .17)));
         decoBox(d, x - s * .35, top, x + s * .45, y + s * .12);
         break;
       }
@@ -3021,9 +3027,9 @@
     gt.seats.forEach(([x, y]) => arrowAt(x + .5, y + .5, 1.55, S.time));
     if (gt.wc) { const sp = stationPos(gt.wc); if (sp) arrowAt(sp[0] + .5, sp[1] + .4, 2.5, S.time); }
     for (const { e, kind, x, y, top } of tops) {
-      if (kind === 'staff') pill(e.label, x, y + TW * .2, Math.max(10, TW * .2), STAFF_LOOK[e.id].tagBg);
+      if (kind === 'staff') headTag(e.label, x, top, STAFF_LOOK[e.id].tagBg, Math.max(10, TW * .22));
       if (kind === 'me') {
-        pill('你', x, y + TW * .2, Math.max(10, TW * .2), '#E4A23B');
+        headTag('你', x, top, '#D98E1E', Math.max(10, TW * .22));
         // 喝了運動飲料：腳邊有 ⚡，跑的時候身後有速度線
         if (S.boostWave === S.wave && S.running) {
           emoji('⚡', x - TW * .36, y - TW * .12, TW * .24);
@@ -3190,7 +3196,7 @@
       ctx.globalAlpha = o.alpha || 1;
       const top = chibi(x, y, TW * 1.05, Object.assign({}, look, { seated: o.seated, walk: o.walk, wave: o.wave, worried: o.worried, hold: o.hold, face: o.face || 1 }), L.t);
       ctx.globalAlpha = 1;
-      if (o.tag) L.ui.push(() => pill(o.tag[0], x, y + TW * .2, Math.max(9, TW * .2), o.tag[1]));
+      if (o.tag) L.ui.push(() => headTag(o.tag[0], x, top, o.tag[1] === '#E4A23B' ? '#D98E1E' : o.tag[1], Math.max(9, TW * .22)));
       if (o.bubble) L.ui.push(() => bubble(x, top, TW * 1.05, o.bubble, L.t + (look.ph || 0), { frac: o.frac === undefined ? -1 : o.frac, ring: o.ring || 0 }));
       if (o.follow) L.ui.push(() => emoji('💛', x + TW * .3, top + TW * .12, TW * .26));
       if (o.x2) L.ui.push(() => pill('×2', x + TW * .55, y - TW * .2, Math.max(8, TW * .13), '#EA580C'));
