@@ -520,14 +520,20 @@
       flip:  [[76, 0], [83, .06]],
       pop:   [[62, 0]],
       bell:  [[86, 0]],
-      msg:   [[83, 0], [88, .12]],
       coin:  [[96, 0]],
       fade:  [[81, 0], [76, .12], [72, .24], [69, .38]],
       end:   [[62, 0], [66, .2], [69, .4], [74, .6], [78, .8], [81, 1.05]],
     };
+    // 手機訊息提示音：兩聲上揚的木琴「叮咚」，模仿通訊軟體收到訊息的感覺（自行合成，非 LINE 原音）
+    function ping(m, t, vol) {
+      tone(sfxBus, m, t, .5, { type: 'sine', vol, attack: .003 });
+      tone(sfxBus, m + 24, t, .12, { type: 'sine', vol: vol * .35, attack: .002 });
+      tone(sfxBus, m + 12, t, .25, { type: 'triangle', vol: vol * .25, attack: .003 });
+    }
     function sfx(name) {
       init(); if (!ac || !sfxVol) return;
       const t = ac.currentTime + .01;
+      if (name === 'msg') { ping(84, t, .16); ping(91, t + .11, .16); return; }
       const long = name === 'end' || name === 'bell';
       for (const [m, dt] of SFX[name] || []) tone(sfxBus, m, t + dt, long ? 2.2 : .4, { type: name === 'pop' ? 'triangle' : 'sine', vol: name === 'tick' || name === 'coin' ? .04 : .09 });
     }
