@@ -42,6 +42,12 @@
   }
   [hidden] { display: none !important; }
   html, body { height: 100%; margin: 0; }
+  /* 手機轉向：整頁固定不捲動、不自動放大字（iPhone 橫放會放大文字），避免轉回直式後點擊位置和畫面對不上 */
+  html { overflow: hidden; overscroll-behavior: none; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body { position: fixed; inset: 0; overscroll-behavior: none; }
+  /* 成績單、說明：底部多留空間，最下面的按鈕可以捲到 Safari 工具列上方 */
+  .overlay { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  .overlay.end .end-wrap { padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
   body {
     background: var(--bg);
     background-image:
@@ -1865,6 +1871,16 @@
   });
   // 每次進入都從第 1 頁開始（想跳過可按「略過」）；不再因為玩過就直接跳到最後一頁
   tourGo(0);
+  // 手機轉向後：頁面捲動歸零，正在顯示的成績單／說明重新排版（iPhone Safari 轉向後，固定位置畫面的點擊位置有時會偏掉）
+  const afterRotate = () => {
+    window.scrollTo(0, 0);
+    document.querySelectorAll('.overlay:not([hidden])').forEach(el => {
+      const top = el.scrollTop; el.style.display = 'none'; void el.offsetHeight; el.style.display = ''; el.scrollTop = top;
+    });
+  };
+  window.addEventListener('orientationchange', () => setTimeout(afterRotate, 350));
+  let rotT = 0, lastLand = innerWidth > innerHeight;
+  window.addEventListener('resize', () => { const land = innerWidth > innerHeight; if (land !== lastLand) { lastLand = land; clearTimeout(rotT); rotT = setTimeout(afterRotate, 350); } });
   try { localStorage.setItem('fahui-ver', '25d'); } catch (e) {}
   // 版本切換（iPhone 分段控制器）：點或拖曳滑塊，滑完再換頁；記住選擇，首頁會照這個版本開
   (() => {
@@ -3094,7 +3110,6 @@
       const [x, y] = iso(px + .5, py + .5 + (seated ? .05 : 0), seated ? .52 : 0), s = TW * 1.05, k = px + py + (seated ? .62 : .05);
       if (Math.abs(wx - x) < s * .32 && wy < y + s * .12 && wy > y - s * 1.0 && k > bk) { best = { kind: 'person', ref: e, staff: kind === 'staff' }; bk = k; }
     }
-    if (best) return best;
     // 物件：用螢幕上的外框判斷（越前面的越優先）
     let hit = null, hk = -1;
     for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
@@ -3104,6 +3119,13 @@
       for (const gx of [x0, x1]) for (const gy of [y0, y1]) for (const hh of [0, h]) { const [px, py] = iso(gx, gy, hh); a = Math.min(a, px); b = Math.max(b, px); cc = Math.min(cc, py); d = Math.max(d, py); }
       if (wx > a && wx < b && wy > cc && wy < d && x + y > hk) { hit = { kind: 'station', ref: c, x, y }; hk = x + y; }
     }
+    // 同時點到人和設施：已經照顧好（沒有需求）的人、或正在帶人去洗手間時，以設施優先；其他時候以人優先
+    if (best && hit) {
+      const p = best.ref, idle = !best.staff && (p.state === 'done' || p.state === 'missed' || p.state === 'following');
+      const toWC = S.follower && S.follower.need === 'toilet' && (hit.ref === 'U' || hit.ref === 'V');
+      return idle || toWC ? hit : best;
+    }
+    if (best) return best;
     if (hit) return hit;
     const dc = decoPick(wx, wy); if (dc) return { kind: 'deco', ref: dc };
     const u = (wx - OX) / (TW / 2), v = (wy - OY) / (TW / 4);

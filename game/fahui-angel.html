@@ -42,6 +42,12 @@
   }
   [hidden] { display: none !important; }
   html, body { height: 100%; margin: 0; }
+  /* 手機轉向：整頁固定不捲動、不自動放大字（iPhone 橫放會放大文字），避免轉回直式後點擊位置和畫面對不上 */
+  html { overflow: hidden; overscroll-behavior: none; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body { position: fixed; inset: 0; overscroll-behavior: none; }
+  /* 成績單、說明：底部多留空間，最下面的按鈕可以捲到 Safari 工具列上方 */
+  .overlay { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  .overlay.end .end-wrap { padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
   body {
     background: var(--bg);
     background-image:
@@ -1764,6 +1770,16 @@
   });
   // 每次進入都從第 1 頁開始（想跳過可按「略過」）；不再因為玩過就直接跳到最後一頁
   tourGo(0);
+  // 手機轉向後：頁面捲動歸零，正在顯示的成績單／說明重新排版（iPhone Safari 轉向後，固定位置畫面的點擊位置有時會偏掉）
+  const afterRotate = () => {
+    window.scrollTo(0, 0);
+    document.querySelectorAll('.overlay:not([hidden])').forEach(el => {
+      const top = el.scrollTop; el.style.display = 'none'; void el.offsetHeight; el.style.display = ''; el.scrollTop = top;
+    });
+  };
+  window.addEventListener('orientationchange', () => setTimeout(afterRotate, 350));
+  let rotT = 0, lastLand = innerWidth > innerHeight;
+  window.addEventListener('resize', () => { const land = innerWidth > innerHeight; if (land !== lastLand) { lastLand = land; clearTimeout(rotT); rotT = setTimeout(afterRotate, 350); } });
   try { localStorage.setItem('fahui-ver', '2d'); } catch (e) {}
   // 版本切換（iPhone 分段控制器）：點或拖曳滑塊，滑完再換頁；記住選擇，首頁會照這個版本開
   (() => {
