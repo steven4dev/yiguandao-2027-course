@@ -359,11 +359,11 @@
   @media (prefers-reduced-motion: reduce) { #banner div, .result img { animation: none; } .confetti { display: none; } }
   /* ── 2.5D 版面：地圖滿版，介面像疊在上面的一層透明面板（淡底＋細邊框，透得到底下的遊戲）──
      左上：狀態三列，由上而下資訊由多到少排成三角形；右上：靜音；
-     最底部：提示與對話滿寬橫條；橫條上方左邊：手上的東西；中間：鏡頭圓鈕 */
+     最底部：一字型橫條（左邊是手上的東西，右邊是提示與對話）；橫條上方中間：鏡頭圓鈕 */
   #app { max-width: none !important; padding: 0 !important; gap: 0 !important; }
   #stage { position: fixed; inset: 0; }
   #stage canvas { border-radius: 0; box-shadow: none; }
-  .tri-row, footer.br .msg, .snd-tr, footer.br #hand {
+  .tri-row, footer.bar.br, .snd-tr, footer.br #hand {
     background: rgba(255,255,255,.34); border: 1.5px solid rgba(255,255,255,.92);
     box-shadow: 0 0 0 1px rgba(84,62,46,.16), 0 3px 10px rgba(84,62,46,.10);
     backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
@@ -391,12 +391,17 @@
   #sound.snd-tr[aria-pressed="false"] { opacity: .6; }
   footer.bar.br {
     position: fixed; z-index: 3; left: calc(8px + env(safe-area-inset-left)); right: calc(8px + env(safe-area-inset-right));
-    bottom: calc(8px + env(safe-area-inset-bottom)); display: grid; justify-items: start; gap: 8px; min-height: 0; pointer-events: none;
+    bottom: calc(8px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 10px; min-height: 0;
+    padding: 5px 12px 5px 5px; border-radius: 18px; pointer-events: none;
   }
-  footer.br #hand { order: -1; pointer-events: auto; background: rgba(254,243,199,.5); border: 2px solid rgba(217,119,6,.85); }
+  footer.br #hand {
+    order: -1; flex: none; width: 58px; padding: 3px 2px; border-radius: 13px; pointer-events: auto;
+    background: rgba(254,243,199,.55); border: 2px solid rgba(217,119,6,.85); box-shadow: none;
+  }
+  footer.br #hand .em { font-size: 1.2rem; }
   footer.br .msg {
-    position: relative; width: 100%; max-width: none; height: auto; min-height: 2.6em; display: grid; align-items: center;
-    border-radius: 16px; padding: 8px 14px; box-sizing: border-box; pointer-events: none;
+    position: relative; flex: 1; min-width: 0; width: auto; max-width: none; height: auto; display: grid; align-items: center;
+    padding: 0; pointer-events: none;
   }
   footer.br .msg > * { grid-area: 1 / 1; }
   footer.br #say { position: static; inset: auto; border: 0; background: transparent; padding: 0; animation: sayIn .18s ease-out; }
@@ -2521,7 +2526,7 @@
   // 介面佔住的區塊（相對畫布）：左上狀態列、右下操作區、下方鏡頭圓鈕
   function uiRects() {
     const c = cv.getBoundingClientRect(), out = [];
-    for (const sel of ['.hud.tri', '#sound', '#hand', 'footer.br .msg', '.lens']) {
+    for (const sel of ['.hud.tri', '#sound', 'footer.br', '.lens']) {
       const el = document.querySelector(sel); if (!el) continue;
       const r = el.getBoundingClientRect(); if (!r.width) continue;
       out.push({ l: r.left - c.left, t: r.top - c.top, r: r.right - c.left, b: r.bottom - c.top });
@@ -2895,7 +2900,7 @@
 
   let shownSteps = -1;
   // 鏡頭圓鈕放在底部橫條上方：橫條高度會隨字數變，跟著調整
-  new ResizeObserver(() => { const m = document.querySelector('footer.br .msg'); if (m) document.documentElement.style.setProperty('--bar-h', m.offsetHeight + 'px'); }).observe(document.querySelector('footer.br .msg'));
+  new ResizeObserver(() => { const m = document.querySelector('footer.br'); if (m) document.documentElement.style.setProperty('--bar-h', m.offsetHeight + 'px'); }).observe(document.querySelector('footer.br'));
   function loop(now) {
     const dt = Math.min(.05, (now - (last || now)) / 1000);
     last = now;
