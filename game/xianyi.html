@@ -518,13 +518,15 @@
       pop:   [[62, 0]],
       bell:  [[86, 0]],
       msg:   [[83, 0], [88, .12]],
+      coin:  [[96, 0]],
+      fade:  [[81, 0], [76, .12], [72, .24], [69, .38]],
       end:   [[62, 0], [66, .2], [69, .4], [74, .6], [78, .8], [81, 1.05]],
     };
     function sfx(name) {
       init(); if (!ac || !sfxVol) return;
       const t = ac.currentTime + .01;
       const long = name === 'end' || name === 'bell';
-      for (const [m, dt] of SFX[name] || []) tone(sfxBus, m, t + dt, long ? 2.2 : .4, { type: name === 'pop' ? 'triangle' : 'sine', vol: name === 'tick' ? .04 : .09 });
+      for (const [m, dt] of SFX[name] || []) tone(sfxBus, m, t + dt, long ? 2.2 : .4, { type: name === 'pop' ? 'triangle' : 'sine', vol: name === 'tick' || name === 'coin' ? .04 : .09 });
     }
     return { startMusic, setMusic, setSfx, sfx, get musicVol() { return musicVol; }, get sfxVol() { return sfxVol; } };
   })();
@@ -549,7 +551,7 @@
     { id: '圓滿人生', em: '🌟', how: '打出最圓滿的結局' },
     { id: '初次體驗', em: '🍃', how: '第一次去社青班' },
     { id: '熱心志工', em: '🙋', how: '到法會當志工' },
-    { id: '扛得起', em: '💪', how: '出國開荒或扛下班務' },
+    { id: '扛得起', em: '💪', how: '外派時也在當地找佛堂開荒' },
   ];
 
   // 六場專題（依首頁 index.html 年度企劃）
@@ -720,6 +722,27 @@
     if (go) return templeDay(ti);
     addLine('→ 你回了一句：「這次先不了，下次有空再說。」', 'sys', '');
     await wait(1600);
+  }
+
+  // 戶外聯誼邀約：同樣是彈出對話框，去了才會有對應的事件
+  async function outdoor(date, what, scene, fx) {
+    await wait(2000);
+    sfx('msg');
+    const who = S.mates.length ? `同行夥伴${S.mates[0]}` : (S.flags.qiudao ? '佛堂的學長' : '老同學');
+    const go = await card(`<h2>📱 ${who}傳來訊息</h2><div class="invite-msg">「${date}（六）社青班辦<b>戶外聯誼</b>，${what}，要不要一起來走走？」</div><div class="row2" style="margin-top:14px"><button class="btn ghost" type="button" data-go="0">這次先不了</button><button class="btn primary" type="button" data-go="1">🌳 好，一起去</button></div>`, (el, done) => {
+      el.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { sfx('tap'); done(b.dataset.go === '1'); });
+    });
+    if (!go) {
+      addLine('→ 你回了一句：「這次先不了，玩得開心！」', 'sys', '');
+      await wait(1600);
+      return;
+    }
+    if (!S.mates.length) {
+      S.mates = shuffle(MATES).slice(0, 3);
+      remember(`在戶外聯誼認識了同行夥伴${S.mates.join('、')}。`);
+    }
+    remember(`參加 ${date} 戶外聯誼，${what}。`);
+    await event(null, [scene(), fx]);
   }
 
   // ───────── 序章 ─────────
@@ -931,7 +954,6 @@
             <div><b>❤️ 人際與感情</b>${r.love}</div>
           </div>
           <p class="quote">${r.tip}</p>
-          <p class="hint">把家人的生日也算進來，回家就多了好多話題。</p>
           <button class="btn primary" type="button">繼續</button>`;
         el.scrollTop = 0;
         el.querySelector('.btn').onclick = end;
@@ -1078,8 +1100,8 @@
       { text: '最近太忙，下次再說', fx: { hp: -4, work: 2 }, note: '「下次」又多了一筆。' },
     ]);
     if (Math.random() < .7) await line(36, '鄰居阿伯經過，丟下一句：「雄班某營歸剛，哈班某妹丁當。」你聽不太懂，但覺得很有道理。');
+    await outdoor('05/29', '到河濱公園野餐', () => `05/29 戶外聯誼，${S.mates[1]}帶了野餐墊，大家在草地上躺成一排，聊到太陽下山。`, { pal: 5, hp: 3 });
     await invite(2);
-    if (S.visits) await event(37, [`05/29 戶外聯誼，${S.mates[1]}帶了野餐墊，大家在草地上躺成一排。`, { pal: 3, hp: 2 }]);
     // 08/28 新道親法會：有接觸佛堂的人才會在群組看到志工召集
     if (S.visits || S.flags.qiudao) {
       await line(37, '佛堂群組跳出訊息：「8/28 新道親法會，有人可以來當志工嗎？」');
@@ -1128,7 +1150,7 @@
     if (S.mates.length && S.pal >= 25) opts.splice(2, 0, { text: `打給同行夥伴${S.mates[2]}`, fx: { pal: 4, tian: 4, badge: '雨過天晴' }, note: `${S.mates[2]}什麼都沒說，只說：「我現在過去。」` });
     await ask('🌧️ 人生卡關了', '你會怎麼辦？', opts);
     await invite(3);
-    if (S.visits >= 2) await event(41, ['10/30 戶外聯誼，大家騎腳踏車，你騎在最後面，有人一直回頭等你。', { pal: 3, hp: 3 }]);
+    await outdoor('10/30', '沿著河堤騎腳踏車', () => `10/30 戶外聯誼，大家騎腳踏車，你騎在最後面，${S.mates[2]}一直回頭等你。`, { pal: 5, hp: 4 });
     await yearsPass();
   }
 
@@ -1147,11 +1169,11 @@
     await line(43, pick(['你開始學一種新語言，進度停在「你好」和「謝謝」。', '你在旅行的路上，學會了一個人吃飯也很好。']));
     await invite(4);
     if (S.visits >= 3) {
-      await line(44, '學長問你：「你願不願意幫忙社青班的班務？每個月去關心幾位同學。」');
-      await ask('🏮 一起扛', '要花時間，也要真心。', [
-        { text: '我來扛！', fx: { tian: 12, pal: 5, badge: ['扛得起', '熱心志工'] }, note: '關心別人的路上很累，回程的路上很輕。' },
-        { text: '先從每月關心一位開始', fx: { tian: 6, pal: 3, badge: '扛得起' }, note: '一位，也是一份心。' },
-        { text: '我再想想', fx: {}, note: '學長說：「沒關係，佛堂一直都在。」' },
+      await line(44, `${S.mates[0]}傳來訊息：「這週六我們要去找阿明學長喝下午茶，他最近搬了新家，要不要一起來？」`);
+      await ask('☕ 下午茶', '輕鬆聊聊天而已。', [
+        { text: '好啊，我帶點心過去', fx: { tian: 6, pal: 6, gold: -2 }, note: '阿明學長泡了一壺好茶，大家從工作聊到人生，一聊就是一下午。' },
+        { text: '好啊，一起去', fx: { tian: 5, pal: 5 }, note: '回家的路上，你覺得心裡暖暖的。' },
+        { text: '這週有事，下次再約', fx: {}, note: `${S.mates[0]}說：「沒問題，下次揪你！」` },
       ]);
     }
     await yearsPass();
@@ -1265,7 +1287,7 @@
         </div>
       </div>
       <div class="sec">
-        <h3>🤝 揪一位夥伴一起回鄉</h3>
+        <h3>🤝 揪一位夥伴一起回來佛堂</h3>
         <img id="endCard" alt="你的人生成績卡（長按可儲存）" hidden>
         <p class="hint" style="text-align:center;margin:0 0 10px">長按成績卡可以儲存，傳給朋友看看</p>
         <a class="btn line" id="lineBtn" href="#" target="_blank" rel="noopener">💬 分享至 LINE</a>
@@ -1281,8 +1303,8 @@
     let g = S.gold;
     const gEl = el.querySelector('#eGold');
     setTimeout(function drain() {
-      if (g <= 0) { gEl.textContent = '0'; el.querySelector('#eNote').textContent = '金幣歸零，帶不走；天幣留下，化成仙衣的光。'; return; }
-      g = Math.max(0, g - Math.ceil(S.gold / 20)); gEl.textContent = g; setTimeout(drain, 60);
+      if (g <= 0) { gEl.textContent = '0'; sfx('fade'); el.querySelector('#eNote').textContent = '金幣歸零，帶不走；天幣留下，化成仙衣的光。'; return; }
+      g = Math.max(0, g - Math.ceil(S.gold / 20)); gEl.textContent = g; sfx('coin'); setTimeout(drain, 70);
     }, 1200);
 
     // 分享至 LINE：手機直接打開 LINE 選聊天室，電腦開 LINE 的分享網頁
