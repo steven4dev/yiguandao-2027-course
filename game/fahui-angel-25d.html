@@ -357,21 +357,67 @@
     100% { transform: translateY(105vh) rotate(260deg); opacity: 0; }
   }
   @media (prefers-reduced-motion: reduce) { #banner div, .result img { animation: none; } .confetti { display: none; } }
+  /* ── 2.5D 版面：地圖滿版，介面像疊在上面的一層透明面板（淡底＋細邊框，透得到底下的遊戲）──
+     左上：狀態三列，由上而下資訊由多到少排成三角形；右上：靜音；
+     最底部：提示與對話滿寬橫條；橫條上方左邊：手上的東西；中間：鏡頭圓鈕 */
+  #app { max-width: none !important; padding: 0 !important; gap: 0 !important; }
+  #stage { position: fixed; inset: 0; }
+  #stage canvas { border-radius: 0; box-shadow: none; }
+  .tri-row, footer.br .msg, .snd-tr, footer.br #hand {
+    background: rgba(255,255,255,.34); border: 1.5px solid rgba(255,255,255,.92);
+    box-shadow: 0 0 0 1px rgba(84,62,46,.16), 0 3px 10px rgba(84,62,46,.10);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+    text-shadow: 0 0 3px rgba(255,255,255,.95), 0 0 6px rgba(255,255,255,.8);
+  }
+  .hud.tri {
+    position: fixed; z-index: 3; top: calc(8px + env(safe-area-inset-top)); left: calc(8px + env(safe-area-inset-left));
+    display: grid; justify-items: start; gap: 6px; pointer-events: none;
+  }
+  .tri-row { pointer-events: none; display: inline-flex; align-items: center; gap: 6px; border-radius: 99px; padding: 5px 12px; white-space: nowrap; }
+  .r1 { font-size: .8rem; font-weight: 700; color: var(--blue); }
+  .r1 .gname { font-family: var(--serif); font-weight: 900; font-size: .95rem; color: var(--ink); letter-spacing: .04em; }
+  .r1 .b25 { font-size: .66rem; font-weight: 900; color: #fff; background: #E11D48; border-radius: 6px; padding: 1px 5px; text-shadow: none; }
+  .r1 .sep { color: rgba(100,116,139,.5); margin: 0 -2px; }
+  .r1 #wave { font-size: .8rem; }
+  .r2 #hearts { font-size: .95rem; }
+  .r2 .warm { display: inline; font-size: .7rem; color: var(--ink-soft); font-weight: 700; }
+  .r3 { font-size: .8rem; gap: 4px; padding: 4px 11px; }
+  .r3 b { font-weight: 900; font-variant-numeric: tabular-nums; }
+  .r3 small { font-size: .7rem; color: var(--ink-soft); font-weight: 700; }
+  .snd-tr {
+    position: fixed; z-index: 3; top: calc(8px + env(safe-area-inset-top)); right: calc(8px + env(safe-area-inset-right));
+    width: 38px; height: 38px; border-radius: 50%; font-size: 1.05rem; cursor: pointer; padding: 0; margin: 0;
+  }
+  #sound.snd-tr[aria-pressed="false"] { opacity: .6; }
+  footer.bar.br {
+    position: fixed; z-index: 3; left: calc(8px + env(safe-area-inset-left)); right: calc(8px + env(safe-area-inset-right));
+    bottom: calc(8px + env(safe-area-inset-bottom)); display: grid; justify-items: start; gap: 8px; min-height: 0; pointer-events: none;
+  }
+  footer.br #hand { order: -1; pointer-events: auto; background: rgba(254,243,199,.5); border: 2px solid rgba(217,119,6,.85); }
+  footer.br .msg {
+    position: relative; width: 100%; max-width: none; height: auto; min-height: 2.6em; display: grid; align-items: center;
+    border-radius: 16px; padding: 8px 14px; box-sizing: border-box; pointer-events: none;
+  }
+  footer.br .msg > * { grid-area: 1 / 1; }
+  footer.br #say { position: static; inset: auto; border: 0; background: transparent; padding: 0; animation: sayIn .18s ease-out; }
+  footer.br #hint { font-size: .86rem; color: var(--ink); -webkit-line-clamp: 3; }
+  .lens { position: fixed; bottom: calc(var(--bar-h, 56px) + 18px + env(safe-area-inset-bottom)); }
+  .sheet { position: fixed; bottom: calc(var(--bar-h, 56px) + 90px + env(safe-area-inset-bottom)); }
+  @media (orientation: landscape) {
+    footer.br #hint { font-size: .82rem; -webkit-line-clamp: 2; }
+    .sheet { left: auto; width: min(440px, 60vw); }
+  }
 </style>
 </head>
 <body>
 
 <div id="app">
-  <header class="hud">
-    <div>
-      <div class="eyebrow">08／28 新道親法會・志工陪伴・2.5D 版</div>
-      <h1>法會小天使</h1>
-    </div>
-    <div class="stats">
-      <div id="wave">準備中</div>
-      <div class="warm">溫暖值 <div id="hearts" aria-live="polite"></div></div>
-    </div>
+  <header class="hud tri" aria-label="遊戲狀態">
+    <div class="tri-row r1"><b class="gname">法會小天使</b><span class="b25">2.5D</span><span class="sep" aria-hidden="true">｜</span><span id="wave">準備中</span></div>
+    <div class="tri-row r2"><div id="hearts" aria-live="polite"></div><span class="warm">溫暖值</span></div>
+    <div class="tri-row r3"><span aria-hidden="true">👣</span><b id="steps">0</b><small>步</small></div>
   </header>
+  <button id="sound" class="snd-tr" type="button" aria-pressed="true" aria-label="背景音樂：開">🔊</button>
 
   <div id="stage">
     <canvas id="cv" aria-label="2.5D 法會會場，點地板移動，點人物或櫃子互動"></canvas>
@@ -383,15 +429,14 @@
     <div id="banner" hidden></div>
   </div>
 
-  <footer class="bar">
-    <button id="hand" type="button" aria-label="手上的物品，點一下放下">
-      <span class="em" id="handEm"></span><span id="handName">空空的</span>
-    </button>
+  <footer class="bar br">
     <div class="msg">
       <p id="hint" aria-live="polite">點「開始服務」進入會場。</p>
       <div id="say" aria-live="polite" hidden></div>
     </div>
-    <button id="sound" type="button" aria-pressed="true" aria-label="背景音樂：開">🔊</button>
+    <button id="hand" type="button" aria-label="手上的物品，點一下放下">
+      <span class="em" id="handEm"></span><span id="handName">空空的</span>
+    </button>
   </footer>
 
   <div id="choice" class="sheet" hidden>
@@ -2017,25 +2062,86 @@
       ctx.fillRect(x, y, r * 2.3, r * .9);
     }
   }
+  // ── 延伸地景：小島往左上延伸成後院、往右下延伸成前庭、前方多一條草地，把等角畫面空出來的角落補滿
+  const EXT = 3.6, EXTY = 1.4;
   function drawIsland() {
-    const C = COLS, R = ROWS;
-    const [cx, cy] = iso(C / 2, R / 2, -2.4);
-    softShadow(cx, cy, TW * (C + R) * .26, TW * (C + R) * .08, .14);
-    box(IM, C - IM, IM, R - IM, -1.1, -.18, '#C99B74', { top: '#C99B74', left: '#C99B74', right: '#B08360' });
-    box(IM, C - IM, IM, R - IM, -.18, 0, '#9ACD8C', { top: '#A9D89A', left: '#8DC27F', right: '#7DB271' });
-    for (let i = 1; i < 6; i++) {
-      const [x, y] = iso(C * i / 6, R - IM, -.5 - (i % 2) * .25); ell(x, y, TW * .1, TW * .055, '#B08360');
-      const [x2, y2] = iso(C - IM, R * i / 6, -.45 - (i % 3) * .2); ell(x2, y2, TW * .1, TW * .055, '#A07655');
-    }
-    const cols = ['#F6B8C4', '#FFF1A8', '#FFFFFF'];
-    for (let i = 0; i < 14; i++) {
-      const front = i % 2, u = ((i * 37) % 97) / 97;
-      const [x, y] = front ? iso(1 + u * (C - 2), R - .7) : iso(C - .7, 1 + u * (R - 2));
-      for (let j = 0; j < 5; j++) ell(x + Math.cos(j * 1.26) * TW * .04, y + Math.sin(j * 1.26) * TW * .02, TW * .028, TW * .02, cols[i % 3]);
-      ell(x, y, TW * .02, TW * .015, '#F2C14E');
+    const C = COLS, R = ROWS, x0 = IM - EXT, x1 = C - IM + EXT, y1 = R - IM + EXTY;
+    const [cx, cy] = iso((x0 + x1) / 2, (IM + y1) / 2, -2.4);
+    softShadow(cx, cy, TW * (x1 - x0 + y1) * .26, TW * (x1 - x0 + y1) * .08, .14);
+    box(x0, x1, IM, y1, -1.1, -.18, '#C99B74', { top: '#C99B74', left: '#C99B74', right: '#B08360' });
+    box(x0, x1, IM, y1, -.18, 0, '#9ACD8C', { top: '#A9D89A', left: '#8DC27F', right: '#7DB271' });
+    for (let i = 1; i < 8; i++) {
+      const [x, y] = iso(x0 + (x1 - x0) * i / 8, y1, -.5 - (i % 2) * .25); ell(x, y, TW * .1, TW * .055, '#B08360');
+      const [x2, y2] = iso(x1, R * i / 8, -.45 - (i % 3) * .2); ell(x2, y2, TW * .1, TW * .055, '#A07655');
     }
     const ex = SPOTS.entrance[0];
     for (const b of [.6, .85]) { const [x, y] = iso(ex + .5, b); ell(x, y, TW * .2, TW * .09, '#E8DCC8', INK, 1); }
+  }
+  function flowerDots(gx, gy, n, seed) {
+    const cols = ['#F6B8C4', '#FFF1A8', '#FFFFFF', '#E98FA5', '#C7B8E8'];
+    for (let i = 0; i < n; i++) {
+      const u = ((i * 37 + seed * 11) % 97) / 97, v = ((i * 53 + seed * 7) % 89) / 89;
+      const [x, y] = iso(gx + u * .9, gy + v * .9, .12);
+      for (let j = 0; j < 5; j++) ell(x + Math.cos(j * 1.26) * TW * .035, y + Math.sin(j * 1.26) * TW * .018, TW * .025, TW * .018, cols[(i + seed) % 5]);
+      ell(x, y, TW * .018, TW * .013, '#F2C14E');
+    }
+  }
+  function bush(gx, gy, s) {
+    const [x, y] = iso(gx, gy, .25 * s); softShadow(x, y + TW * .1 * s, TW * .4 * s, TW * .15 * s, .18);
+    for (const [dx, dy, r, c] of [[-.22, .05, .26, '#7DB86F'], [.2, .04, .25, '#74AF67'], [0, -.1, .3, '#8CC77D']]) ell(x + dx * TW * s, y + dy * TW * s, r * TW * s, r * TW * s * .8, c, INK, Math.max(1, TW * .015));
+  }
+  // 後院（在左牆後面，畫在室內之前）
+  function drawBackyard(t) {
+    const R = ROWS, xa = IM - EXT + .25;
+    // 竹籬笆沿著後院最外緣
+    for (let gy = 1; gy < R - .5; gy += .5) box(xa, xa + .08, gy, gy + .08, 0, .5, '#E9D4B5', { line: 'rgba(84,62,46,.35)' });
+    poly([iso(xa + .04, 1, .38), iso(xa + .04, R - .5, .38)], null, '#C9A27E', Math.max(1.5, TW * .03));
+    poly([iso(xa + .04, 1, .2), iso(xa + .04, R - .5, .2)], null, '#C9A27E', Math.max(1.5, TW * .03));
+    // 小池塘
+    const [px, py] = iso(-2.1, R * .62); ell(px, py, TW * .75, TW * .34, '#BFE3F2', '#8FC3DA', Math.max(1.5, TW * .03)); ell(px - TW * .2, py - TW * .06, TW * .2, TW * .06, 'rgba(255,255,255,.7)');
+    // 花圃
+    for (const [g0, sd] of [[R * .3, 1], [R * .82, 4]]) { box(-2.9, -1.9, g0, g0 + 1, 0, .12, '#B5835A', { top: '#9B6B45' }); flowerDots(-2.9, g0, 7, sd); }
+    const trees = [[-1.5, R * .18, 1.0], [-2.6, R * .45, 1.25], [-1.3, R * .74, .95], [-2.7, R * .95, .85], [-.9, R * .4, .7]];
+    const bushes = [[-.7, R * .12, .9], [-.8, R * .58, 1], [-.7, R * .9, .9], [-3, R * .18, .8]];
+    const items = [...trees.map(([a, b, s]) => ({ k: a + b, f: () => drawTree(a, b, s, t) })), ...bushes.map(([a, b, s]) => ({ k: a + b, f: () => bush(a, b, s) }))];
+    items.sort((p, q) => p.k - q.k).forEach(i => i.f());
+  }
+  // 前庭（在右邊矮牆外面，畫在最前面）
+  function drawFrontyard(t) {
+    const C = COLS, R = ROWS, wa = C - .45;
+    // 石板步道
+    for (let gy = 1; gy < R - .5; gy += 1) poly([iso(wa + .3, gy + .06), iso(wa + 1.2, gy + .06), iso(wa + 1.2, gy + .94), iso(wa + .3, gy + .94)], gy % 2 ? '#EFE6D6' : '#E6DBC7', 'rgba(120,100,70,.3)', Math.max(1, TW * .015));
+    const items = [];
+    // 花圃
+    const beds = Math.max(2, Math.floor(R / 4));
+    for (let i = 0; i < beds; i++) { const g0 = 1.2 + i * (R - 2.4) / beds; items.push({ k: wa + 2 + g0, f: () => { box(wa + 1.6, wa + 2.6, g0, g0 + 1.4, 0, .14, '#B5835A', { top: '#9B6B45' }); flowerDots(wa + 1.6, g0, 6, i + 2); flowerDots(wa + 1.6, g0 + .5, 5, i + 5); } }); }
+    // 長椅
+    for (const g of [R * .3, R * .68]) items.push({ k: wa + 1.5 + g, f: () => {
+      for (const d of [.1, .8]) box(wa + 1.35, wa + 1.42, g + d, g + d + .07, 0, .3, '#8A6A4C', { line: null });
+      box(wa + 1.3, wa + 1.62, g, g + .95, .3, .36, '#C9935F');
+      box(wa + 1.58, wa + 1.64, g, g + .95, .36, .72, '#C9935F');
+    } });
+    // 路燈
+    for (const g of [R * .14, R * .5, R * .86]) items.push({ k: wa + 1.45 + g, f: () => {
+      box(wa + 1.42, wa + 1.5, g, g + .08, 0, 1.9, '#6B5446', { line: null });
+      const [lx, ly] = iso(wa + 1.46, g + .04, 2.0); ell(lx, ly, TW * .13, TW * .13, '#FFF6D8', '#C9A27E', Math.max(1, TW * .025));
+      softShadow(lx, ly, TW * .4, TW * .4, .0);
+    } });
+    // 立牌
+    const sg = R * .48;
+    items.push({ k: wa + 2.2 + sg + .5, f: () => {
+      for (const d of [.05, 1.15]) box(wa + 2.18, wa + 2.26, sg + d, sg + d + .08, 0, 1.1, '#8A6A4C', { line: null });
+      box(wa + 2.12, wa + 2.2, sg - .05, sg + 1.33, .6, 1.25, '#FFF7EA', { left: '#F3E5CF', right: '#FFF7EA', top: '#E9D4B5' });
+      onPlane('x', wa + 2.2, k => {
+        const u = (ROWS - (sg + .64)) * k;
+        planeText('全真社青', u, -1.06 * k, .22 * k, '#5FAF84');
+        planeText('新道親法會', u, -.8 * k, .24 * k, '#B4602F');
+      });
+    } });
+    for (const [g, s] of [[R * .06, .65], [R * .95, .6]]) items.push({ k: wa + 2.6 + g, f: () => drawTree(wa + 2.6, g, s, t) });
+    items.sort((p, q) => p.k - q.k).forEach(i => i.f());
+    // 前方草地上的小花
+    for (let i = 0; i < 6; i++) flowerDots(1 + i * (C - 2) / 6, ROWS - .2, 3, i + 9);
   }
   const zoneOf = (x, y) => ZONES.find(z => x >= z.x0 && x <= z.x1 && y >= z.y0 && y <= z.y1);
   const ZONE_FLOOR = name => !name ? ['#F5EFE4', '#ECE3D3'] : name.includes('教室') ? null
@@ -2412,6 +2518,16 @@
   const stationPos = c => { for (let y = 0; y < ROWS; y++) { const x = MAP[y].indexOf(c); if (x >= 0) return [x, y]; } return null; };
 
   // 鏡頭：小天使在畫面中間的緩衝區裡走動時鏡頭不動，走出去才平滑地跟上（和幀率無關的指數平滑）
+  // 介面佔住的區塊（相對畫布）：左上狀態列、右下操作區、下方鏡頭圓鈕
+  function uiRects() {
+    const c = cv.getBoundingClientRect(), out = [];
+    for (const sel of ['.hud.tri', '#sound', '#hand', 'footer.br .msg', '.lens']) {
+      const el = document.querySelector(sel); if (!el) continue;
+      const r = el.getBoundingClientRect(); if (!r.width) continue;
+      out.push({ l: r.left - c.left, t: r.top - c.top, r: r.right - c.left, b: r.bottom - c.top });
+    }
+    return out;
+  }
   function camera(now) {
     const dt = Math.min(.05, Math.max(0, (now - (camT || now)) / 1000)); camT = now;
     zoom += (zoomTo - zoom) * (1 - Math.exp(-dt * 7));
@@ -2423,6 +2539,15 @@
     let tx = camX, ty = camY;
     if (px > camX + dzx) tx = px - dzx; else if (px < camX - dzx) tx = px + dzx;
     if (py > camY + dzy) ty = py - dzy; else if (py < camY - dzy) ty = py + dzy;
+    // 小天使不要走到左上狀態列、右下操作區或鏡頭圓鈕底下：會擋到就把鏡頭推開
+    const u = TW * zoom;
+    for (const r of uiRects()) {
+      const sx = (px - tx) * zoom + W / 2, sy = (py - ty) * zoom + H / 2;
+      const bb = [sx - u * .45, sy - u * 1.1, sx + u * .45, sy + u * .45];
+      if (bb[2] < r.l - 8 || bb[0] > r.r + 8 || bb[3] < r.t - 8 || bb[1] > r.b + 8) continue;
+      const opts = [[(r.r + 8 - bb[0]), -1, 0], [(bb[2] - r.l + 8), 1, 0], [(r.b + 8 - bb[1]), 0, -1], [(bb[3] - r.t + 8), 0, 1]].sort((a, b) => a[0] - b[0]);
+      const [d, mx, my] = opts[0]; tx += mx * d / zoom; ty += my * d / zoom;
+    }
     const k = 1 - Math.exp(-dt * 4.5);
     camX += (tx - camX) * k; camY += (ty - camY) * k;
     camX = b.x1 - b.x0 > 2 * hw ? Math.min(b.x1 - hw, Math.max(b.x0 + hw, camX)) : (b.x0 + b.x1) / 2;
@@ -2438,7 +2563,8 @@
     drawSky(t);
     camera(now);
     drawIsland();
-    drawTree(.75, .75, 1.15, t); drawTree(.6, ROWS * .45, .75, t); drawTree(COLS * .78, .6, .8, t);
+    drawBackyard(t);
+    drawTree(.75, .75, 1.15, t); drawTree(COLS * .78, .6, .8, t);
     drawFloor();
     const gt = guideTargets(), pl = pulseAt(S.time, 5);
     const tops = [];
@@ -2499,6 +2625,7 @@
     // 前景地圍
     box(1, COLS - .72, ROWS - 1, ROWS - .72, 0, .28, '#F3E5CF', { top: '#E9D4B5' });
     box(COLS - 1, COLS - .72, 1, ROWS - 1, 0, .28, '#F3E5CF', { top: '#E9D4B5' });
+    drawFrontyard(t);
 
     // 提示層：箭頭、名牌、泡泡、手上的東西、愛心
     gt.seats.forEach(([x, y]) => arrowAt(x + .5, y + .5, 1.55, S.time));
@@ -2536,11 +2663,13 @@
     gt.seats.forEach(([x, y]) => marks.push([...iso(x + .5, y + .5, .8), '💺']));
     if (gt.wc) { const sp = stationPos(gt.wc); if (sp) marks.push([...iso(sp[0] + .5, sp[1] + .4, 1.2), gt.wc === 'U' ? '🚹' : '🚺']); }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const m = 24, r = 16;
+    const m = 24, r = 16, rects = uiRects();
     for (const [wx, wy, icon] of marks) {
       const sx = wx * view.z + view.ex, sy = wy * view.z + view.ey;
       if (sx > 0 && sx < W && sy > 0 && sy < H) continue;
-      const cx = Math.min(W - m, Math.max(m, sx)), cy = Math.min(H - m, Math.max(m, sy)), ang = Math.atan2(sy - cy, sx - cx);
+      let cx = Math.min(W - m, Math.max(m, sx)), cy = Math.min(H - m, Math.max(m, sy));
+      for (const q of rects) if (cx > q.l - r && cx < q.r + r && cy > q.t - r && cy < q.b + r) { if (q.t < H / 2) cy = q.b + r + 6; else cy = q.t - r - 6; }
+      const ang = Math.atan2(sy - cy, sx - cx);
       const bob = RM ? 0 : Math.sin(S.time * 5) * 3, px = cx + Math.cos(ang) * bob, py = cy + Math.sin(ang) * bob;
       poly([[px + Math.cos(ang) * (r + 9), py + Math.sin(ang) * (r + 9)], [px + Math.cos(ang + .5) * r, py + Math.sin(ang + .5) * r], [px + Math.cos(ang - .5) * r, py + Math.sin(ang - .5) * r]], '#F2C14E');
       ell(px, py, r, r, '#FFFFFF', '#F2C14E', 3);
@@ -2764,11 +2893,15 @@
     }
   }
 
+  let shownSteps = -1;
+  // 鏡頭圓鈕放在底部橫條上方：橫條高度會隨字數變，跟著調整
+  new ResizeObserver(() => { const m = document.querySelector('footer.br .msg'); if (m) document.documentElement.style.setProperty('--bar-h', m.offsetHeight + 'px'); }).observe(document.querySelector('footer.br .msg'));
   function loop(now) {
     const dt = Math.min(.05, (now - (last || now)) / 1000);
     last = now;
     update(dt);
     draw(now);
+    if (S.steps !== shownSteps) { shownSteps = S.steps; $('#steps').textContent = shownSteps; }
     if (!$('#intro').hidden) { const c = tourPages[tourAt] && tourPages[tourAt].querySelector('.illcv'); if (c) drawIll(c, c.dataset.scene, now / 1000); }
     requestAnimationFrame(loop);
   }
