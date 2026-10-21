@@ -971,8 +971,11 @@
   // ---------- sound: synthesized with Web Audio, no audio files ----------
   const Sound = (() => {
     let ac = null, master, music, sfxBus, timer = null, oldTimer = null, nextTime = 0, step = 0;
-    let on = true;
+    let on = true, want = false, stale = false;
     try { on = localStorage.getItem('fahui-sound') !== 'off'; } catch (e) {}
+    // iPhone／iPad：切到別的 App 再回來，網頁的聲音會被系統「中斷」，而且只有在使用者點畫面時才能重新開啟；
+    // 有時看起來恢復了卻沒有聲音，所以回來後的第一次點擊，直接換一個新的音效引擎
+    const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const EIGHTH = 60 / 84 / 2;
     const hz = m => 440 * Math.pow(2, (m - 69) / 12);
     // F – Am – B♭ – C – F – Dm – B♭ – C，五聲音階旋律
@@ -1004,11 +1007,30 @@
       const wet = ac.createGain(); wet.gain.value = .35;
       delay.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(music);
       music.echo = delay;
-      document.addEventListener('visibilitychange', () => {
-        if (!ac) return;
-        if (document.hidden) ac.suspend(); else if (on) ac.resume();
-      });
     }
+    document.addEventListener('visibilitychange', () => {
+      if (!ac) return;
+      if (document.hidden) { stale = true; ac.suspend().catch(() => {}); }
+      else if (on) ac.resume().then(() => { if (!IOS && ac && ac.state === 'running') stale = false; }, () => {});
+    });
+    window.addEventListener('pageshow', e => { if (e.persisted) stale = true; });
+    // 回到遊戲後的第一次點擊／按鍵：把聲音救回來（點擊才算使用者允許播放）
+    function revive() {
+      if (!ac || !on || (!stale && ac.state === 'running')) return;
+      stale = false;
+      if (IOS || ac.state !== 'suspended') return rebuild();
+      // 其他手機先試著恢復；恢復不了就換新的
+      const cur = ac;
+      cur.resume().then(() => { if (ac === cur && cur.state !== 'running') rebuild(); }, () => { if (ac === cur) rebuild(); });
+    }
+    function rebuild() {
+      clearInterval(timer); clearInterval(oldTimer); timer = oldTimer = null;
+      const old = ac; ac = null; try { old.close(); } catch (e) {}
+      init(); if (!ac) return;
+      ac.resume().catch(() => {});
+      if (want) startMusic();
+    }
+    for (const ev of ['pointerdown', 'touchend', 'keydown', 'click']) document.addEventListener(ev, revive, { capture: true, passive: true });
     function tone(dest, m, t, dur, { type = 'sine', vol = .1, attack = .01, cutoff = 0, echo = false } = {}) {
       const o = ac.createOscillator(), g = ac.createGain();
       o.type = type; o.frequency.value = hz(m);
@@ -1036,6 +1058,7 @@
       }
     }
     function startMusic() {
+      want = true;
       init(); if (!ac || !on) return;
       ac.resume();
       if (oldTimer) { clearInterval(oldTimer); oldTimer = null; }
@@ -1044,6 +1067,7 @@
       music.gain.setTargetAtTime(1, ac.currentTime, .4);
     }
     function stopMusic(fade = .3) {
+      want = false;
       if (!ac) return;
       music.gain.cancelScheduledValues(ac.currentTime);
       music.gain.setTargetAtTime(0, ac.currentTime, fade);
