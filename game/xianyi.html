@@ -86,7 +86,7 @@
   #title {
     position: absolute; inset: 0;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
-    padding: 32px 24px; text-align: center; gap: 14px;
+    padding: 32px 24px 150px; text-align: center; gap: 14px;
   }
   .robe {
     font-size: 4.2rem; line-height: 1;
@@ -131,6 +131,25 @@
     padding: 2px 10px; font-size: .75rem; font-weight: 700; color: var(--ink-soft);
   }
   #speedBtn.on { background: var(--blue-soft); color: var(--blue); border-color: var(--blue); }
+  .hud-btns { display: flex; gap: 4px; align-items: center; }
+  #bgmBtn { border: 1.5px solid var(--line); background: #fff; border-radius: 99px; padding: 0 7px; font-size: .8rem; }
+
+  /* 背景音樂：主題曲〈回來佛堂〉的 YouTube 迷你播放器 */
+  #bgm {
+    position: absolute; z-index: 26;
+    left: 50%; bottom: 24px; transform: translateX(-50%);
+    width: 176px; text-align: center;
+  }
+  #bgm .scr { width: 176px; height: 99px; border-radius: 12px; overflow: hidden; background: #0F172A; box-shadow: 0 8px 18px rgba(15,23,42,.2); }
+  #bgm .scr iframe { width: 100%; height: 100%; display: block; }
+  #bgm .cap { font-size: .75rem; color: var(--muted); margin-top: 4px; }
+  #bgm .tap { display: none; font-size: .78rem; font-weight: 700; color: #fff; background: var(--rose); border-radius: 99px; padding: 3px 10px; margin-top: 4px; animation: breathe 1.4s ease-in-out infinite; }
+  #bgm.nudge .tap { display: inline-block; }
+  #app.playing #bgm { left: auto; right: 10px; bottom: auto; transform: none; width: 96px; }
+  #app.playing #bgm .scr { width: 96px; height: 54px; border-radius: 8px; }
+  #app.playing #bgm .cap { display: none; }
+  #app.playing #bgm.nudge .tap { position: absolute; right: 104px; top: 26px; white-space: nowrap; }
+  #app.playing #chapter { padding-right: 116px; min-height: 62px; }
 
   /* 章節橫幅 */
   #chapter {
@@ -330,7 +349,7 @@
         <div class="bar tian"><span>✨ 天幣</span><span class="v" id="v-tian"></span><div class="track"><div class="fill" id="b-tian"></div></div></div>
       </div>
       <div class="hud-right">
-        <div id="robeMini" title="仙衣的光">🪷</div>
+        <div class="hud-btns"><div id="robeMini" title="仙衣的光">🪷</div><button id="bgmBtn" type="button" aria-label="背景音樂開關">🔊</button></div>
         <button id="speedBtn" type="button">▶▶ ×2</button>
       </div>
     </header>
@@ -338,6 +357,7 @@
     <main id="feed" aria-live="polite"></main>
   </div>
 
+  <div id="bgm"><div class="scr"><div id="ytp"></div></div><div class="cap">🎵 主題曲〈回來佛堂〉</div><div class="tap">👆 點影片播放音樂</div></div>
   <div id="sheet" role="dialog" aria-modal="true"></div>
   <div id="overlay" hidden></div>
   <section id="ending" hidden></section>
@@ -1005,10 +1025,12 @@
       </div>
       <div class="sec stack">
         <button class="btn ghost" type="button" id="againBtn">🔁 再下凡一次</button>
+        <a class="btn ghost" href="https://youtu.be/${YT_ID}" target="_blank" rel="noopener">🎧 到 YouTube 聽〈回來佛堂〉完整版</a>
         <a class="btn ghost" href="fahui-angel-25d.html">🎮 也玩玩看：法會小天使</a>
       </div>`;
     el.hidden = false;
     el.scrollTop = 0;
+    placeBgm();
 
     // 金幣帶不走：數字慢慢歸零
     let g = S.gold;
@@ -1030,8 +1052,51 @@
     };
   }
 
+  // ───────── 背景音樂 ─────────
+  // 主題曲用 YouTube 播放器，在玩家按「下凡去」的那一下開始播；手機擋下自動播放時，提示玩家直接點影片
+  const YT_ID = 'JdVeI9Nm5Uc';
+  let yt = null, ytReady = false, bgmOn = true;
+  try { bgmOn = localStorage.getItem('xianyi-bgm') !== 'off'; } catch (e) {}
+  const bgmEl = $('bgm');
+  const isPlaying = () => ytReady && yt.getPlayerState && yt.getPlayerState() === 1;
+  function bgmIcon() { $('bgmBtn').textContent = bgmOn ? '🔊' : '🔇'; }
+  function bgmPlay() {
+    if (!bgmOn) return;
+    if (ytReady) { try { yt.unMute(); yt.playVideo(); } catch (e) {} }
+    setTimeout(() => { if (bgmOn && !isPlaying()) bgmEl.classList.add('nudge'); }, 2500);
+  }
+  function placeBgm() {
+    if (!$('app').classList.contains('playing')) return;
+    const ch = $('ending').hidden ? $('chapter') : null;
+    bgmEl.style.top = ch ? (ch.offsetTop + 4) + 'px' : '12px';
+  }
+  window.onYouTubeIframeAPIReady = () => {
+    yt = new YT.Player('ytp', {
+      videoId: YT_ID,
+      playerVars: { playsinline: 1, loop: 1, playlist: YT_ID, rel: 0, modestbranding: 1 },
+      events: {
+        onReady: () => { ytReady = true; yt.setVolume(60); if ($('app').classList.contains('playing')) bgmPlay(); },
+        onStateChange: e => { if (e.data === 1) bgmEl.classList.remove('nudge'); },
+      },
+    });
+  };
+  const ytScript = document.createElement('script');
+  ytScript.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(ytScript);
+  $('bgmBtn').onclick = () => {
+    bgmOn = !bgmOn;
+    try { localStorage.setItem('xianyi-bgm', bgmOn ? 'on' : 'off'); } catch (e) {}
+    bgmIcon();
+    if (bgmOn) bgmPlay();
+    else { bgmEl.classList.remove('nudge'); if (ytReady) try { yt.pauseVideo(); } catch (e) {} }
+  };
+  bgmIcon();
+  window.addEventListener('resize', placeBgm);
+
   // ───────── 主流程 ─────────
   async function start() {
+    $('app').classList.add('playing');
+    bgmPlay();
     S = newState();
     $('ending').hidden = true;
     $('title').hidden = true;
@@ -1039,6 +1104,7 @@
     chapter('');
     $('game').hidden = false;
     hud();
+    placeBgm();
     await prologue();
     await gacha();
     await childhood();
