@@ -2133,7 +2133,7 @@
     const [x, y] = iso(gx, gy, .25 * s); softShadow(x, y + TW * .1 * s, TW * .4 * s, TW * .15 * s, .18);
     for (const [dx, dy, r, c] of [[-.22, .05, .26, '#7DB86F'], [.2, .04, .25, '#74AF67'], [0, -.1, .3, '#8CC77D']]) ell(x + dx * TW * s, y + dy * TW * s, r * TW * s, r * TW * s * .8, c, INK, Math.max(1, TW * .015));
   }
-  // 後院（在左牆後面，畫在室內之前）
+  // 後院（在左牆後面）：地面的籬笆、池塘、花圃先畫；樹和樹叢交給深度排序（和走到後院的人一起排）
   function drawBackyard(t) {
     const R = ROWS, xa = IM - EXT + .25;
     // 竹籬笆沿著後院最外緣
@@ -2141,17 +2141,13 @@
     poly([iso(xa + .04, 1, .38), iso(xa + .04, R - .5, .38)], null, '#C9A27E', Math.max(1.5, TW * .03));
     poly([iso(xa + .04, 1, .2), iso(xa + .04, R - .5, .2)], null, '#C9A27E', Math.max(1.5, TW * .03));
     // 小池塘
-    const [px, py] = iso(-2.1, R * .62); ell(px, py, TW * .75, TW * .34, '#BFE3F2', '#8FC3DA', Math.max(1.5, TW * .03)); ell(px - TW * .2, py - TW * .06, TW * .2, TW * .06, 'rgba(255,255,255,.7)');
+    const [px, py] = iso(...LAY.pond); ell(px, py, TW * .75, TW * .34, '#BFE3F2', '#8FC3DA', Math.max(1.5, TW * .03)); ell(px - TW * .2, py - TW * .06, TW * .2, TW * .06, 'rgba(255,255,255,.7)');
     // 花圃
-    for (const [g0, sd] of [[R * .3, 1], [R * .82, 4]]) { box(-2.9, -1.9, g0, g0 + 1, 0, .12, '#B5835A', { top: '#9B6B45' }); flowerDots(-2.9, g0, 7, sd); }
-    const trees = [[-1.5, R * .18, 1.0], [-2.6, R * .45, 1.25], [-1.3, R * .74, .95], [-2.7, R * .95, .85], [-.9, R * .4, .7], [-2.8, R * .08, .8], [-.8, R * .96, .75], [-1.9, R * .3, .7]];
-    const bushes = [[-.7, R * .12, .9], [-.8, R * .58, 1], [-.7, R * .9, .9], [-3, R * .18, .8], [-3, R * .55, .9], [-1.2, R * .52, .7], [-3, R * .75, .8], [-1.9, R * .86, .7], [-.6, R * .28, .8]];
-    const items = [...trees.map(([a, b, s]) => ({ k: a + b, f: () => drawTree(a, b, s, t) })), ...bushes.map(([a, b, s]) => ({ k: a + b, f: () => bush(a, b, s) }))];
-    items.sort((p, q) => p.k - q.k).forEach(i => i.f());
+    for (const [g0, sd] of LAY.backBeds) { box(-2.9, -1.9, g0, g0 + 1, 0, .12, '#B5835A', { top: '#9B6B45' }); flowerDots(-2.9, g0, 7, sd); }
   }
   // ── 會場外的小驚喜：會動、點了會說話，但不加分；點了小天使會走過去，挑戰模式裡等於在浪費時間 😆
   const REMIND = ['（裡面好像有人在等你喔！）', '（新朋友的泡泡還在冒…）', '（時間條在跑喔，快回去！）'];
-  let DECOS = [], DOOR = null, YARD = { dy: 0, z0: -9, z1: -9, sign: 1 };
+  let DECOS = [], DOOR = null, YARD = { dy: 0, z0: -9, z1: -9, sign: 1 }, LAY = null;
   function buildDecos() {
     const C = COLS, R = ROWS, wa = C - .45;
     const say3 = (...a) => a;
@@ -2184,12 +2180,44 @@
       { id: 'sign', name: '立牌', gx: wa + 2.2, gy: YARD.sign + .64, box: [-.1, .1, -.7, .7, 1.3], lines: say3(
         '全真社青・新道親法會——歡迎你來！', '立牌背面寫著：「一起當新朋友身邊的那雙手。」') },
     ].map(d => Object.assign({ i: 0, hb: null }, d));
-    // 側門外的石板步道（右牆外那一排）可以走
+    // 戶外景物的位置（畫圖和「能不能走」共用同一份）
+    const free = g => g < YARD.z0 - 1 || g > YARD.z1 + .2;   // 避開側門外的休息角
+    LAY = {
+      backTrees: [[-.8, R * .18, 1.0], [-2.6, R * .45, 1.25], [-2.6, R * .76, .95], [-2.7, R * .95, .85], [-.9, R * .42, .7], [-2.8, R * .08, .8], [-.8, R * .96, .75], [-.75, R * .78, .8]],
+      backBushes: [[-.7, R * .06, .9], [-.7, R * .36, 1], [-.7, R * .88, .9], [-3, R * .18, .8], [-3, R * .55, .9], [-3, R * .66, .8], [-.6, R * .3, .8]],   // 中間那一排（x=-2）留給小天使走
+      pond: [-2.1, R * .62], backBeds: [[R * .3, 1], [R * .82, 4]],
+      trees: [[C + 1.4, R + 1.1, .95], [C + 2.7, R + .1, .7], [-1.4, R + 1.3, .9], [-2.8, R + .4, .7], [wa + 2.6, R * .06, .65], [wa + 2.6, R * .95, .6]],
+      bushes: [[C + .6, R + 1.9, .8], [C + 2.4, R + 1.9, .9], [-.4, R + 1.9, .8], [-2.2, R + 2, .8], [C + 3.05, R * .62, .8], [C + 3.05, R * .3, .7]],
+      benches: [R * .12, R * .3, R * .68, R * .86].filter(free).slice(0, 2),
+      lamps: [R * .1, R * .3, R * .5, R * .7, R * .9].filter(g => g < YARD.z0 - .5 || g > YARD.z1 - 1.5),
+      yardBeds: [], lawnBeds: [[C * .62, 7], [C * .8, 8]],
+    };
+    const beds = Math.max(2, Math.floor(R / 4));
+    for (let i = 0; i < beds; i++) { const g0 = 1.2 + i * (R - 2.4) / beds; if (!(g0 + 1.4 > YARD.z0 && g0 < YARD.z1)) LAY.yardBeds.push([g0, i]); }
+    // 會擋路的東西（格座標的外框）：樹、樹叢、池塘、花圃、長椅、路燈、立牌、販賣機、小貓……
+    const blocks = [];
+    const dot = (a, b, r) => blocks.push([a - r, a + r, b - r, b + r]);
+    for (const [a, b] of [...LAY.backTrees, ...LAY.trees]) dot(a, b, .25);
+    for (const [a, b, sc] of [...LAY.backBushes, ...LAY.bushes]) dot(a, b, .3 * sc);
+    blocks.push([LAY.pond[0] - .75, LAY.pond[0] + .75, LAY.pond[1] - .7, LAY.pond[1] + .7]);
+    for (const [g0] of LAY.backBeds) blocks.push([-2.9, -1.9, g0, g0 + 1]);
+    for (const [g0] of LAY.yardBeds) blocks.push([wa + 1.6, wa + 2.6, g0, g0 + 1.4]);
+    blocks.push([wa + 1.55, wa + 2.75, dy - 3.3, dy - 2]);
+    for (const [g0] of LAY.lawnBeds) blocks.push([g0, g0 + 1.3, R + .25, R + 1.05]);
+    for (const g of LAY.benches) blocks.push([wa + 1.65, wa + 1.99, g, g + .95]);
+    blocks.push([wa + 2.12, wa + 2.26, YARD.sign, YARD.sign + 1.33]);
+    for (const d of DECOS) if (d.box) blocks.push([d.gx + d.box[0], d.gx + d.box[1], d.gy + d.box[2], d.gy + d.box[3]]);
+    // 基地裡、房子外面的草地都能走（不能走上馬路；後門是唯一的出入口）
     OUTDOOR = new Map();
-    for (let y = 1; y <= R - 2; y++) OUTDOOR.set(C + ',' + y, '.');
+    for (let y = 1; y <= R + 1; y++) for (let x = -3; x <= C + 2; x++) {
+      if (x >= 0 && x < C && y < R) continue;
+      if (blocks.some(([a0, a1, b0, b1]) => a1 > x + .2 && a0 < x + .8 && b1 > y + .2 && b0 < y + .8)) continue;
+      OUTDOOR.set(x + ',' + y, '.');
+    }
     DOOR = [C - 1, dy];
     OUTDOOR.set((C - 1) + ',' + dy, 'E');
   }
+  const outdoorTile = (x, y) => x < 1 || x > COLS - 2 || y > ROWS - 2;
   // 物件目前在世界座標的點擊框（會動的東西每一幀更新）
   function decoBox(d, x0, y0, x1, y1) { d.hb = [Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1)]; }
   function staticHB(d) {
@@ -2310,7 +2338,7 @@
   // 點了：小天使走到室內最靠近它的地方，才開始互動（挑戰模式裡，這段路就是被浪費掉的時間）
   function visitDeco(d) {
     const near = [];
-    for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x <= COLS + 1; x++)
+    for (let y = 1; y <= ROWS + 1; y++) for (let x = -3; x <= COLS + 2; x++)
       if (Math.max(Math.abs(x + .5 - d.gx), Math.abs(y + .5 - d.gy)) <= 1.6 && (walkable(x, y) || (x === S.player.x && y === S.player.y))) near.push([x, y]);
     if (near.length) return goTo(near, () => talkDeco(d));
     const tx = Math.min(COLS - 2, Math.max(1, Math.floor(d.gx))), ty = Math.min(ROWS - 2, Math.max(1, Math.floor(d.gy)));
@@ -2484,10 +2512,9 @@
     }
     // 前庭石板步道與花圃
     for (let gy = 1; gy < R - .5; gy += 1) poly([iso(wa + .3, gy + .06), iso(wa + 1.2, gy + .06), iso(wa + 1.2, gy + .94), iso(wa + .3, gy + .94)], gy % 2 ? '#EFE6D6' : '#E6DBC7', 'rgba(120,100,70,.3)', lw);
-    const beds = Math.max(2, Math.floor(R / 4));
-    for (let i = 0; i < beds; i++) { const g0 = 1.2 + i * (R - 2.4) / beds; if (g0 + 1.4 > YARD.z0 && g0 < YARD.z1) continue; box(wa + 1.6, wa + 2.6, g0, g0 + 1.4, 0, .14, '#B5835A', { top: '#9B6B45' }); flowerDots(wa + 1.6, g0, 6, i + 2); flowerDots(wa + 1.6, g0 + .5, 5, i + 5); }
+    for (const [g0, i] of LAY.yardBeds) { box(wa + 1.6, wa + 2.6, g0, g0 + 1.4, 0, .14, '#B5835A', { top: '#9B6B45' }); flowerDots(wa + 1.6, g0, 6, i + 2); flowerDots(wa + 1.6, g0 + .5, 5, i + 5); }
     // 前方草地：兩個花圃、後門前的踏腳石
-    for (const [g0, sd] of [[C * .62, 7], [C * .8, 8]]) { box(g0, g0 + 1.3, R + .25, R + 1.05, 0, .12, '#B5835A', { top: '#9B6B45' }); flowerDots(g0, R + .25, 6, sd); flowerDots(g0 + .4, R + .3, 5, sd + 3); }
+    for (const [g0, sd] of LAY.lawnBeds) { box(g0, g0 + 1.3, R + .25, R + 1.05, 0, .12, '#B5835A', { top: '#9B6B45' }); flowerDots(g0, R + .25, 6, sd); flowerDots(g0 + .4, R + .3, 5, sd + 3); }
     // 側門外休息角的花圃（蝴蝶繞著飛）
     box(wa + 1.55, wa + 2.75, YARD.dy - 3.3, YARD.dy - 2, 0, .12, '#B5835A', { top: '#9B6B45' }); flowerDots(wa + 1.6, YARD.dy - 3.2, 6, 21); flowerDots(wa + 1.9, YARD.dy - 2.8, 5, 23);
   }
@@ -2499,25 +2526,25 @@
     onPlane('floor', 0, k => planeText('側門', (x + .5) * k, (y + .52) * k, .26 * k, '#FFFFFF'));
     for (const py of [y, y + .9]) box(x, x + .28, py, py + .1, 0, .75, '#C9935F', { top: '#D9A574' });
   }
-  // 前庭（在右邊矮牆外面，畫在最前面）
-  function drawFrontyard(t) {
+  // 戶外立體景物（前庭、前方草地、後院）：回傳清單，和人物一起依深度排序；每一項帶著 gx，後院的會在牆之前畫
+  function yardItems(t) {
     const C = COLS, R = ROWS, wa = C - .45;
     const items = [];
     // 前方草地外緣的矮樹籬、轉角的樹叢（不擋門外可以走的兩排）
-    for (let x = 1.4; x < C - 1; x += 1.7) { const cat = DECOS.find(d => d.id === 'cat'); if (cat && Math.abs(x - cat.gx) < 1.2) continue; items.push({ k: x + R + 2.1, f: () => bush(x, R + 2.15, .75) }); }
-    for (const [a, b, sc] of [[C + 1.4, R + 1.1, .95], [C + 2.7, R + .1, .7], [-1.4, R + 1.3, .9], [-2.8, R + .4, .7]]) items.push({ k: a + b, f: () => drawTree(a, b, sc, t) });
-    for (const [a, b, sc] of [[C + .6, R + 1.9, .8], [C + 2.4, R + 1.9, .9], [-.4, R + 1.9, .8], [-2.2, R + 2, .8], [C + 3, R * .62, .8], [C + 3, R * .3, .7]]) items.push({ k: a + b, f: () => bush(a, b, sc) });
-    const free = g => g < YARD.z0 - 1 || g > YARD.z1 + .2;   // 避開側門外的休息角
+    for (let x = 1.4; x < C - 1; x += 1.7) { const cat = DECOS.find(d => d.id === 'cat'); if (cat && Math.abs(x - cat.gx) < 1.2) continue; items.push({ k: x + R + 2.1, gx: x, f: () => bush(x, R + 2.15, .75) }); }
+    if (!DECOS.length) buildDecos();
+    for (const [a, b, sc] of [...LAY.trees, ...LAY.backTrees]) items.push({ k: a + b, gx: a, f: () => drawTree(a, b, sc, t) });
+    for (const [a, b, sc] of [...LAY.bushes, ...LAY.backBushes]) items.push({ k: a + b, gx: a, f: () => bush(a, b, sc) });
     // 長椅
-    for (const g of [R * .12, R * .3, R * .68, R * .86].filter(free).slice(0, 2)) items.push({ k: wa + 1.8 + g, f: () => {
+    for (const g of LAY.benches) items.push({ k: wa + 1.8 + g, f: () => {
       for (const d of [.1, .8]) box(wa + 1.7, wa + 1.77, g + d, g + d + .07, 0, .3, '#8A6A4C', { line: null });
       box(wa + 1.65, wa + 1.97, g, g + .95, .3, .36, '#C9935F');
       box(wa + 1.93, wa + 1.99, g, g + .95, .36, .72, '#C9935F');
     } });
     // 路燈（外緣，不擋步道）
-    for (const g of [R * .1, R * .3, R * .5, R * .7, R * .9].filter(g => g < YARD.z0 - .5 || g > YARD.z1 - 1.5)) items.push({ k: wa + 2.9 + g, f: () => {
-      box(wa + 2.86, wa + 2.94, g, g + .08, 0, 1.9, '#6B5446', { line: null });
-      const [lx, ly] = iso(wa + 2.9, g + .04, 2.0); ell(lx, ly, TW * .13, TW * .13, '#FFF6D8', '#C9A27E', Math.max(1, TW * .025));
+    for (const g of LAY.lamps) items.push({ k: wa + 3.3 + g, f: () => {
+      box(wa + 3.26, wa + 3.34, g, g + .08, 0, 1.9, '#6B5446', { line: null });
+      const [lx, ly] = iso(wa + 3.3, g + .04, 2.0); ell(lx, ly, TW * .13, TW * .13, '#FFF6D8', '#C9A27E', Math.max(1, TW * .025));
     } });
     // 立牌
     const sg = YARD.sign;
@@ -2530,12 +2557,10 @@
         planeText('新道親法會', u, -.8 * k, .24 * k, '#B4602F');
       });
     } });
-    for (const [g, s] of [[R * .06, .65], [R * .95, .6]]) items.push({ k: wa + 2.6 + g, f: () => drawTree(wa + 2.6, g, s, t) });
-    if (!DECOS.length) buildDecos();
     L_TAG = [];
     for (const d of DECOS) items.push({ k: d.gx + d.gy + (d.fly ? 2 : 0), f: () => drawDeco(d, t) });
-    items.sort((p, q) => p.k - q.k).forEach(i => i.f());
-    L_TAG.forEach(f => f());
+    for (const i of items) if (i.gx === undefined) i.gx = COLS;
+    return items;
   }
   const zoneOf = (x, y) => ZONES.find(z => x >= z.x0 && x <= z.x1 && y >= z.y0 && y <= z.y1);
   const ZONE_FLOOR = name => !name ? ['#F5EFE4', '#ECE3D3'] : name.includes('教室') ? null
@@ -2995,9 +3020,11 @@
       ctx.globalAlpha = 1;
       tops.push({ e, kind, x, y, top });
     };
-    // 還在門外的人在牆的後面：先畫人，再畫牆（只會從門洞看到）
-    const outside = people.filter(p => posOf(p.e)[1] < .98);
-    outside.forEach(drawOne);
+    // 還在門外的人、走到後院的人在牆的後面：先和後院的樹一起排好畫，再畫牆（牆會擋住一部分）
+    const yard = yardItems(t), behind = it => it.gx < .98;
+    const outside = people.filter(p => { const [px, py] = posOf(p.e); return py < .98 || px < .98; });
+    [...yard.filter(behind), ...outside.map(p => { const [px, py] = posOf(p.e); return { k: px + py + 1.05, f: () => drawOne(p) }; })]
+      .sort((a, b) => a.k - b.k).forEach(i => i.f());
     drawWalls();
     gt.seats.forEach(([x, y]) => glowTile(x, y, pl));
     if (S.ripple) glowTile(S.ripple.x, S.ripple.y, 1 - S.ripple.t, '95,175,132');
@@ -3033,11 +3060,12 @@
       if (DOOR && y === DOOR[1]) { items.push({ k, f: () => drawSideDoor(y) }); continue; }
       items.push({ k, f: () => box(COLS - 1, COLS - .72, y, y + 1, 0, .28, '#F3E5CF', { top: '#E9D4B5' }) });
     }
+    for (const it of yard) if (!behind(it)) items.push(it);
     items.sort((a, b) => a.k - b.k).forEach(i => i.f());
-    // 右側矮牆
-    drawFrontyard(t);
-    blitWorld('front');
+    L_TAG.forEach(f => f());
+    // 車子在前方道路上：先畫車，再蓋上道路外側（更前面）的樹和民宅
     drawCar(t);
+    blitWorld('front');
 
     // 提示層：箭頭、名牌、泡泡、手上的東西、愛心
     gt.seats.forEach(([x, y]) => arrowAt(x + .5, y + .5, 1.55, S.time));
@@ -3130,8 +3158,8 @@
     const dc = decoPick(wx, wy); if (dc) return { kind: 'deco', ref: dc };
     const u = (wx - OX) / (TW / 2), v = (wy - OY) / (TW / 4);
     const tx = Math.floor((u + v) / 2), ty = Math.floor((v - u) / 2);
-    if (tx < 1 || ty < 1 || tx > COLS + 1 || ty > ROWS - 2) return null;
-    if (tx >= COLS - 1 && solid(tx, ty)) return null;
+    if (tx < -3 || ty < 1 || tx > COLS + 2 || ty > ROWS + 1) return null;
+    if (outdoorTile(tx, ty) && solid(tx, ty)) return null;
     return { kind: 'tile', x: tx, y: ty };
   }
   function tapAt(sx, sy) {
@@ -3360,7 +3388,7 @@
   reset();
   resize();
   Counter.show('#playedIntro');
-  if (location.hash === '#debug') { window.__idle = () => S.player.t >= 1 && !S.path.length && !S.pending; window.__S = () => S; window.__view = () => view; window.__iso = iso; window.__decos = () => DECOS; window.__wc = () => ({ n: WC.n, w: WC.back.width, h: WC.back.height }); window.__finish = () => finish(); window.__zoom = () => ({ zoom, zoomTo, STD, ZMAX, lens, W, H, TW }); window.__door = () => ({ DOOR, out: OUTDOOR && [...OUTDOOR.entries()].slice(0, 6), t: [tileAt(DOOR[0], DOOR[1]), tileAt(DOOR[0], DOOR[1] - 1), tileAt(DOOR[0], DOOR[1] + 1)], w: [walkable(DOOR[0], DOOR[1]), walkable(DOOR[0], DOOR[1] + 1)] }); window.__L = () => ({ LEVEL, MAP, STAFF: STAFF.map(s => ({ id: s.id, x: s.x, y: s.y })), seats }); }
+  if (location.hash === '#debug') { window.__idle = () => S.player.t >= 1 && !S.path.length && !S.pending; window.__S = () => S; window.__view = () => view; window.__iso = iso; window.__decos = () => DECOS; window.__wc = () => ({ n: WC.n, w: WC.back.width, h: WC.back.height }); window.__finish = () => finish(); window.__out = () => [...OUTDOOR.keys()]; window.__zoom = () => ({ zoom, zoomTo, STD, ZMAX, lens, W, H, TW }); window.__door = () => ({ DOOR, out: OUTDOOR && [...OUTDOOR.entries()].slice(0, 6), t: [tileAt(DOOR[0], DOOR[1]), tileAt(DOOR[0], DOOR[1] - 1), tileAt(DOOR[0], DOOR[1] + 1)], w: [walkable(DOOR[0], DOOR[1]), walkable(DOOR[0], DOOR[1] + 1)] }); window.__L = () => ({ LEVEL, MAP, STAFF: STAFF.map(s => ({ id: s.id, x: s.x, y: s.y })), seats }); }
   requestAnimationFrame(loop);
 })();
 </script>
