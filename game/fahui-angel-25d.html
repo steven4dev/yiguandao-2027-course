@@ -2083,13 +2083,12 @@
   function planeText(text, u, v, size, color) {
     ctx.font = `${size}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = color; ctx.fillText(text, u, v);
   }
-  function faceLabel(text, x, y1, h, color, bg) {
-    onPlane('y', y1, k => {
-      const size = .34 * k;
-      ctx.font = `${size}px ${FONT}`;
-      if (bg) { const w = ctx.measureText(text).width + size * .7; ctx.fillStyle = bg; rr(x * k - w / 2, -h * k - size * .7, w, size * 1.4, size * .4); ctx.fill(); }
-      planeText(text, x * k, -h * k, size, color);
-    });
+  // 設施名稱：不寫在物件正面，改成和人物一樣的彩色白邊字，浮在物件頂上（畫在提示層，不會被擋住）
+  const STAG_COL = { R: '#4E9A72', S: '#A16A3B', T: '#3D7E86', K: '#7A5A44', M: '#4E7FA6', B: '#8A5A35', F: '#B4602F', L: '#7E6BB8', U: '#4E7FA6', V: '#C2577E' };
+  let STAGS = [], CUR_ST = null;
+  function faceLabel(text) {
+    const [c, x, y] = CUR_ST, sb = shapeBox(c, x, y), [tx, ty] = iso((sb[0] + sb[1]) / 2, (sb[2] + sb[3]) / 2, sb[4]);
+    STAGS.push({ c, text, x: tx, y: ty });
   }
   // 頭上名牌：不用膠囊底色，彩色粗體字加白邊，放在角色頭頂上方，不會蓋到腳下的東西
   function headTag(text, x, top, color, size) {
@@ -2698,6 +2697,7 @@
   };
   const shapeBox = (c, x, y) => { const s = SHAPES[c]; return [x + s[0], x + s[1], y + s[2], y + s[3], s[4]]; };
   function drawStation(c, x, y, t) {
+    CUR_ST = [c, x, y];
     const lw = Math.max(1, TW * .02);
     switch (c) {
       case 'R':
@@ -3081,6 +3081,8 @@
     blitWorld('front');
 
     // 提示層：箭頭、名牌、泡泡、手上的東西、愛心
+    for (const g of STAGS) headTag(g.text, g.x, g.y - TW * .08, STAG_COL[g.c], Math.max(9, TW * .19));
+    STAGS = [];
     gt.seats.forEach(([x, y]) => arrowAt(x + .5, y + .5, 1.55, S.time));
     if (gt.wc) { const sp = stationPos(gt.wc); if (sp) arrowAt(sp[0] + .5, sp[1] + .4, 2.5, S.time); }
     for (const { e, kind, x, y, top } of tops) {
@@ -3372,9 +3374,12 @@
         poly([iso(x + .06, y + .06), iso(x + .94, y + .06), iso(x + .94, y + .94), iso(x + .06, y + .94)], (x + y) % 2 ? '#EBCB9F' : '#E4C190', 'rgba(160,110,60,.22)', lw);
       }
       L.floor.forEach(f => f());
+      STAGS = [];
       L.items.sort((a, b) => a.k - b.k).forEach(i => i.f());
+      for (const g of STAGS) headTag(g.text, g.x, g.y - TW * .08, STAG_COL[g.c], Math.max(9, TW * .19));
       L.ui.forEach(f => f());
     } finally {
+      STAGS = [];
       ({ ctx, TW, OX, OY, W, H } = keep); S.locked = keep.locked; S.wave = keep.wave;
     }
   }
