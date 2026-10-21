@@ -718,16 +718,27 @@
   }
   /* 遊戲入口：先選 2D／2.5D（膠囊開關），按鈕就連到那個版本；選過會記住 */
   .game-entry { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+  /* iPhone 分段控制器：灰底軌＋白色滑塊，切換時滑塊用彈簧曲線滑過去，也能按住拖曳 */
   .ver-switch {
-    display: inline-flex; padding: 3px; gap: 2px; border-radius: 99px;
-    background: #FFF1F2; border: 1.5px solid #FECDD3;
+    position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; padding: 2px; border-radius: 99px;
+    background: rgba(118, 118, 128, 0.14); touch-action: none; user-select: none; -webkit-user-select: none;
   }
+  .ver-switch::before {
+    content: ""; position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc(50% - 2px); border-radius: 99px;
+    background: #FFFFFF; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+    transition: transform 0.38s cubic-bezier(0.32, 1.25, 0.52, 1);
+  }
+  .ver-switch[data-on="25d"]::before { transform: translateX(100%); }
+  .ver-switch.press::before { transform: scale(0.94); }
+  .ver-switch.press[data-on="25d"]::before { transform: translateX(100%) scale(0.94); }
   .ver-switch button {
-    border: 0; background: transparent; cursor: pointer; font: inherit; font-size: 0.8rem; font-weight: 700;
-    color: #9F1239; padding: 5px 11px; border-radius: 99px; transition: background 0.2s ease, color 0.2s ease;
+    position: relative; z-index: 1; border: 0; background: transparent; cursor: pointer; font: inherit; font-size: 0.8rem;
+    font-weight: 700; color: #6B7280; padding: 6px 14px; border-radius: 99px; transition: color 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
   }
-  .ver-switch button[aria-checked="true"] { background: #E11D48; color: #FFFFFF; box-shadow: 0 2px 6px rgba(225, 29, 72, 0.3); }
+  .ver-switch button[aria-checked="true"] { color: #BE123C; font-weight: 900; }
   .ver-switch button:focus-visible { outline: 3px solid #0284C7; outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { .ver-switch::before { transition: none; } }
   .game-link:hover {
     background: #BE123C;
     transform: translateY(-1px);
@@ -1441,7 +1452,7 @@
               🌱 新道親法會－志工陪伴體驗
             </div>
             <div class="game-entry">
-              <div class="ver-switch" role="radiogroup" aria-label="選擇遊戲畫面">
+              <div class="ver-switch" data-on="25d" role="radiogroup" aria-label="選擇遊戲畫面">
                 <button type="button" role="radio" data-v="2d" aria-checked="false">2D 平面</button>
                 <button type="button" role="radio" data-v="25d" aria-checked="true">2.5D 立體</button>
               </div>
@@ -1789,22 +1800,30 @@
     });
   </script>
   <script>
-    // 法會小天使：2D／2.5D 版本開關（預設 2.5D；在遊戲裡切換過也會記住）
+    // 法會小天使：2D／2.5D 版本開關（iPhone 分段控制器；預設 2.5D；在遊戲裡切換過也會記住）
     (() => {
       const link = document.getElementById('gameLink');
-      if (!link) return;
+      const sw = document.querySelector('.ver-switch');
+      if (!link || !sw) return;
       const URLS = { '2d': 'game/fahui-angel.html', '25d': 'game/fahui-angel-25d.html' };
-      const btns = document.querySelectorAll('.ver-switch button');
+      const btns = [...sw.querySelectorAll('button')];
+      const show = v => { sw.dataset.on = v; btns.forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === v))); };
       const set = (v, save) => {
         if (!URLS[v]) v = '25d';
-        link.href = URLS[v];
-        btns.forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === v)));
+        show(v); link.href = URLS[v];
         if (save) { try { localStorage.setItem('fahui-ver', v); } catch (e) {} }
       };
       let v = '25d';
       try { v = localStorage.getItem('fahui-ver') || '25d'; } catch (e) {}
       set(v, false);
-      btns.forEach(b => b.addEventListener('click', () => set(b.dataset.v, true)));
+      // 點一下或按住滑塊拖到另一邊都可以
+      let down = false, moved = false;
+      const side = e => { const r = sw.getBoundingClientRect(); return e.clientX < r.left + r.width / 2 ? '2d' : '25d'; };
+      sw.addEventListener('pointerdown', e => { down = true; moved = false; sw.classList.add('press'); sw.setPointerCapture(e.pointerId); });
+      sw.addEventListener('pointermove', e => { if (!down) return; const s = side(e); if (s !== sw.dataset.on) { moved = true; show(s); } });
+      const up = e => { if (!down) return; down = false; sw.classList.remove('press'); set(e.type === 'pointerup' ? (moved ? sw.dataset.on : side(e)) : v, e.type === 'pointerup'); v = sw.dataset.on; };
+      sw.addEventListener('pointerup', up); sw.addEventListener('pointercancel', up);
+      btns.forEach(b => b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); set(b.dataset.v, true); v = b.dataset.v; } }));
     })();
   </script>
 

@@ -206,11 +206,26 @@
   .tour { gap: 12px; padding: 16px 18px 14px; width: min(460px, 100%); }
   @media (pointer: fine) and (hover: hover) { .tour { width: min(520px, 100%); } }
   .tour-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  /* 版本膠囊開關：2D 平面／2.5D 模型屋，選過會記住（首頁也會照這個選擇開） */
-  .vswitch { display: inline-flex; flex: none; padding: 3px; gap: 2px; border-radius: 99px; background: var(--bg); border: 1.5px solid var(--line); }
-  .vswitch a { padding: 4px 11px; border-radius: 99px; font-size: .8rem; font-weight: 900; color: var(--muted); text-decoration: none; line-height: 1.3; }
-  .vswitch a[aria-current="page"] { background: var(--green); color: #fff; box-shadow: 0 2px 6px rgba(5,150,105,.3); }
+  /* 版本切換：iPhone 分段控制器（灰底軌＋白色滑塊），滑塊用彈簧曲線滑過去，也能按住拖曳 */
+  .vswitch {
+    position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; flex: none; padding: 2px; border-radius: 99px;
+    background: rgba(118,118,128,.14); touch-action: none; user-select: none; -webkit-user-select: none;
+  }
+  .vswitch::before {
+    content: ""; position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc(50% - 2px); border-radius: 99px;
+    background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.12), 0 3px 1px rgba(0,0,0,.04), 0 0 0 .5px rgba(0,0,0,.04);
+    transition: transform .38s cubic-bezier(.32,1.25,.52,1);
+  }
+  .vswitch[data-on="25d"]::before { transform: translateX(100%); }
+  .vswitch.press::before { transform: scale(.94); }
+  .vswitch.press[data-on="25d"]::before { transform: translateX(100%) scale(.94); }
+  .vswitch a {
+    position: relative; z-index: 1; text-align: center; padding: 5px 13px; border-radius: 99px; font-size: .8rem; font-weight: 700;
+    color: #6B7280; text-decoration: none; line-height: 1.3; transition: color .25s ease; -webkit-tap-highlight-color: transparent;
+  }
+  .vswitch a.on { color: #111827; font-weight: 900; }
   .vswitch a:focus-visible { outline: 3px solid var(--blue); outline-offset: 1px; }
+  @media (prefers-reduced-motion: reduce) { .vswitch::before { transition: none; } }
   .linkbtn { font: inherit; font-size: .82rem; font-weight: 700; color: var(--muted); background: none; border: 0; padding: 6px 2px; cursor: pointer; }
   .linkbtn:hover { color: var(--green); }
   /* 跳過說明：跳動＋光暈閃爍，讓玩家一眼看出可以直接開始 */
@@ -387,7 +402,7 @@
   <div id="intro" class="overlay">
     <div class="card tour" role="region" aria-roledescription="說明" aria-label="遊戲說明">
       <div class="tour-top">
-        <nav class="vswitch" aria-label="選擇畫面版本"><a href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html" data-v="2d">2D</a><a aria-current="page" href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel-25d.html" data-v="25d">2.5D</a></nav>
+        <nav class="vswitch" data-on="25d" aria-label="選擇畫面版本"><a href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html" data-v="2d">2D</a><a aria-current="page" href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel-25d.html" data-v="25d">2.5D</a></nav>
         <button id="tourSkip" class="skip-btn" type="button">⏩ 跳過說明，直接開始</button>
         <button id="tourAgain" class="linkbtn" type="button" hidden>📖 重看說明</button>
       </div>
@@ -1775,9 +1790,31 @@
   });
   // 每次進入都從第 1 頁開始（想跳過可按「略過」）；不再因為玩過就直接跳到最後一頁
   tourGo(0);
-  // 記住玩家選的版本，首頁的遊戲按鈕會照這個選擇開
   try { localStorage.setItem('fahui-ver', '25d'); } catch (e) {}
-  document.querySelectorAll('.vswitch a').forEach(a => a.addEventListener('click', () => { try { localStorage.setItem('fahui-ver', a.dataset.v); } catch (e) {} }));
+  // 版本切換（iPhone 分段控制器）：點或拖曳滑塊，滑完再換頁；記住選擇，首頁會照這個版本開
+  (() => {
+    const sw = document.querySelector('.vswitch'); if (!sw) return;
+    const links = [...sw.querySelectorAll('a')], cur = sw.dataset.on;
+    const show = v => { sw.dataset.on = v; links.forEach(a => a.classList.toggle('on', a.dataset.v === v)); };
+    show(cur);
+    const go = v => {
+      show(v);
+      try { localStorage.setItem('fahui-ver', v); } catch (e) {}
+      if (v === cur) return;
+      const href = links.find(a => a.dataset.v === v).href;
+      setTimeout(() => { location.href = href; }, RM ? 0 : 330);
+    };
+    let down = false, moved = false;
+    const side = e => { const r = sw.getBoundingClientRect(); return e.clientX < r.left + r.width / 2 ? '2d' : '25d'; };
+    sw.addEventListener('pointerdown', e => { down = true; moved = false; sw.classList.add('press'); sw.setPointerCapture(e.pointerId); });
+    sw.addEventListener('pointermove', e => { if (!down) return; const v = side(e); if (v !== sw.dataset.on) { moved = true; show(v); } });
+    const up = e => { if (!down) return; down = false; sw.classList.remove('press'); if (e.type === 'pointerup') go(moved ? sw.dataset.on : side(e)); else show(cur); };
+    sw.addEventListener('pointerup', up); sw.addEventListener('pointercancel', up);
+    links.forEach(a => {
+      a.addEventListener('click', e => e.preventDefault());
+      a.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(a.dataset.v); } });
+    });
+  })();
   $('#startBtn').addEventListener('click', () => start('challenge'));
   $('#relaxBtn').addEventListener('click', () => start('relax'));
   $('#againBtn').addEventListener('click', () => start(S.mode));
