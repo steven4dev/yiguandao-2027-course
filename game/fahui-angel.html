@@ -2057,9 +2057,15 @@
   function loop(now) {
     const dt = Math.min(.05, (now - (last || now)) / 1000);
     last = now;
-    update(dt);
-    draw(now);
-    requestAnimationFrame(loop);
+    // 就算某一格畫面出錯（例如手機轉向途中尺寸還沒穩定），也只略過這一格，迴圈照常繼續
+    try {
+      update(dt);
+      draw(now);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      requestAnimationFrame(loop);
+    }
   }
   setLevel(detectLevel());
   reset();

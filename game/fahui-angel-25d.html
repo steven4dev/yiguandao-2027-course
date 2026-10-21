@@ -1968,8 +1968,10 @@
   const iso = (gx, gy, h = 0) => [OX + (gx - gy) * TW / 2, OY + (gx + gy) * TW / 4 - h * HU * TW];
   function resize() {
     const st = $('#stage');
-    W = st.clientWidth; H = st.clientHeight;
-    if (!W || !H) return;
+    const w = st.clientWidth, h = st.clientHeight;
+    // 手機轉向的過程中，會短暫回報很小的尺寸：先不重算，等尺寸穩定了 ResizeObserver 會再叫一次
+    if (w < 80 || h < 80) return;
+    W = w; H = h;
     dpr = Math.min(window.devicePixelRatio || 1, 3);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     // 先以 TW=1、原點 0 量出整座小島的外框，再縮放置中
@@ -1977,7 +1979,7 @@
     const pts = [[IM, R - IM, -1.1], [C - IM, IM, -1.1], [C - IM, R - IM, -1.1], [.75, .75, 3.7], [1, 1, WH], [IM, IM, 0]];
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     for (const [a, b, h] of pts) { const x = (a - b) / 2, y = (a + b) / 4 - h * HU; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
-    TW = Math.min((W - 16) / (x1 - x0), (H - 16) / (y1 - y0));
+    TW = Math.max(6, Math.min((W - 16) / (x1 - x0), (H - 16) / (y1 - y0)));
     OX = W / 2 - (x0 + x1) / 2 * TW; OY = H / 2 - (y0 + y1) / 2 * TW;
     // 鏡頭可移動的範圍：連後院、前庭、前方草地一起算進去
     for (const [a, b, h] of [[C - IM + EXT * .8, R / 2, -1.1], [C / 2, R - IM + EXTY, -1.1], [C - IM + EXT * .8, R - IM + EXTY, -1.1], [IM + 1, R - IM + EXTY, -1.1]]) { const x = (a - b) / 2, y = (a + b) / 4 - h * HU; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
@@ -3150,7 +3152,7 @@
   const SCENE_SIZE = { guide: [6, 3] };
   function drawIll(canvas, scene, t) {
     const w = canvas.clientWidth, h = canvas.clientHeight;
-    if (!w || !h || !SCENES[scene]) return;
+    if (w < 60 || h < 40 || !SCENES[scene]) return;
     const d = Math.min(window.devicePixelRatio || 1, 3);
     if (canvas.width !== Math.round(w * d) || canvas.height !== Math.round(h * d)) { canvas.width = Math.round(w * d); canvas.height = Math.round(h * d); }
     const keep = { ctx, TW, OX, OY, W, H, locked: S.locked, wave: S.wave };
@@ -3187,17 +3189,23 @@
   function loop(now) {
     const dt = Math.min(.05, (now - (last || now)) / 1000);
     last = now;
-    update(dt);
-    draw(now);
-    if (S.steps !== shownSteps) { shownSteps = S.steps; $('#steps').textContent = shownSteps; }
-    if (!$('#intro').hidden) { const c = tourPages[tourAt] && tourPages[tourAt].querySelector('.illcv'); if (c) drawIll(c, c.dataset.scene, now / 1000); }
-    requestAnimationFrame(loop);
+    // 就算某一格畫面出錯（例如手機轉向途中尺寸還沒穩定），也只略過這一格，迴圈照常繼續，不會整個停住
+    try {
+      update(dt);
+      draw(now);
+      if (S.steps !== shownSteps) { shownSteps = S.steps; $('#steps').textContent = shownSteps; }
+      if (!$('#intro').hidden) { const c = tourPages[tourAt] && tourPages[tourAt].querySelector('.illcv'); if (c) drawIll(c, c.dataset.scene, now / 1000); }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      requestAnimationFrame(loop);
+    }
   }
   setLevel(detectLevel());
   reset();
   resize();
   Counter.show('#playedIntro');
-  if (location.hash === '#debug') { window.__idle = () => S.player.t >= 1 && !S.path.length && !S.pending; window.__S = () => S; window.__view = () => view; window.__iso = iso; window.__decos = () => DECOS; window.__zoom = () => ({ zoom, zoomTo, STD, ZMAX, lens, W, H, TW }); window.__door = () => ({ DOOR, out: OUTDOOR && [...OUTDOOR.entries()].slice(0, 6), t: [tileAt(DOOR[0], DOOR[1]), tileAt(DOOR[0], DOOR[1] - 1), tileAt(DOOR[0], DOOR[1] + 1)], w: [walkable(DOOR[0], DOOR[1]), walkable(DOOR[0], DOOR[1] + 1)] }); window.__L = () => ({ LEVEL, MAP, STAFF: STAFF.map(s => ({ id: s.id, x: s.x, y: s.y })), seats }); }
+  if (location.hash === '#debug') { window.__idle = () => S.player.t >= 1 && !S.path.length && !S.pending; window.__S = () => S; window.__view = () => view; window.__iso = iso; window.__decos = () => DECOS; window.__finish = () => finish(); window.__zoom = () => ({ zoom, zoomTo, STD, ZMAX, lens, W, H, TW }); window.__door = () => ({ DOOR, out: OUTDOOR && [...OUTDOOR.entries()].slice(0, 6), t: [tileAt(DOOR[0], DOOR[1]), tileAt(DOOR[0], DOOR[1] - 1), tileAt(DOOR[0], DOOR[1] + 1)], w: [walkable(DOOR[0], DOOR[1]), walkable(DOOR[0], DOOR[1] + 1)] }); window.__L = () => ({ LEVEL, MAP, STAFF: STAFF.map(s => ({ id: s.id, x: s.x, y: s.y })), seats }); }
   requestAnimationFrame(loop);
 })();
 </script>
