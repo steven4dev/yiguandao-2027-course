@@ -142,8 +142,9 @@
   #ctrl button { border: 0; background: transparent; border-radius: 99px; min-width: 34px; height: 30px; font-size: .82rem; font-weight: 700; color: var(--ink-soft); }
   #ctrl #playBtn { background: var(--green); color: #fff; font-size: .9rem; }
   #ctrl #playBtn.paused { background: var(--gold); }
+  #ctrl #playBtn.nudge { animation: breathe 1.2s ease-in-out infinite; }
   #ctrl .spd.on { background: var(--green-soft); color: var(--green); }
-  #pausedTag { position: absolute; left: 14px; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 19; font-size: .8rem; font-weight: 700; color: var(--gold); background: var(--gold-soft); border-radius: 99px; padding: 4px 10px; }
+  #pausedTag { position: absolute; right: 12px; bottom: calc(62px + env(safe-area-inset-bottom)); z-index: 19; font-size: .85rem; font-weight: 700; color: var(--gold); background: var(--gold-soft); border: 1px solid rgba(217,119,6,.3); border-radius: 99px; padding: 5px 12px; pointer-events: none; }
 
   /* 章節橫幅 */
   #chapter { padding: 8px 14px 4px; font-size: .82rem; color: var(--green); font-weight: 700; min-height: 1.9em; }
@@ -558,7 +559,12 @@
       const long = name === 'end' || name === 'bell';
       for (const [m, dt] of SFX[name] || []) tone(sfxBus, m, t + dt, long ? 2.2 : .4, { type: name === 'pop' ? 'triangle' : 'sine', vol: name === 'tick' || name === 'coin' ? .04 : .09 });
     }
-    return { startMusic, setMusic, setSfx, sfx, get musicVol() { return musicVol; }, get sfxVol() { return sfxVol; } };
+    // 玩家按 ▶ 繼續時保險再喚醒一次（剛被碰觸重建過就不重複）
+    function revive() {
+      if (!ac || Date.now() - rebuiltAt < 1500) return;
+      wasHidden = false; rebuiltAt = Date.now(); rebuild();
+    }
+    return { startMusic, setMusic, setSfx, sfx, revive, get musicVol() { return musicVol; }, get sfxVol() { return sfxVol; } };
   })();
   const sfx = n => Sound.sfx(n);
 
@@ -1542,6 +1548,15 @@
     speed = v; save('xianyi-speed', v);
     document.querySelectorAll('#ctrl .spd').forEach(b => b.classList.toggle('on', +b.dataset.s === v));
   }
+  // 切到其他 App 時自動暫停，回來按 ▶ 就能接著玩，聲音也一起恢復
+  let autoPaused = false;
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden || $('game').hidden || paused) return;
+    setPaused(true);
+    autoPaused = true;
+    $('pausedTag').textContent = '👋 歡迎回來！按右下角 ▶ 繼續';
+    $('playBtn').classList.add('nudge');
+  });
   function setPaused(v) {
     paused = v;
     const b = $('playBtn');
@@ -1551,7 +1566,14 @@
     $('pausedTag').hidden = !v;
   }
   document.querySelectorAll('#ctrl .spd').forEach(b => b.onclick = () => { sfx('tap'); setSpeed(+b.dataset.s); });
-  $('playBtn').onclick = () => { sfx('tap'); setPaused(!paused); };
+  $('playBtn').onclick = () => {
+    if (paused && autoPaused) Sound.revive();
+    autoPaused = false;
+    $('pausedTag').textContent = '⏸ 已暫停';
+    $('playBtn').classList.remove('nudge');
+    sfx('tap');
+    setPaused(!paused);
+  };
   setSpeed(speed);
 
   let pausedBySettings = false;
