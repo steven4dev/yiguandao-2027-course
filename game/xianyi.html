@@ -1,0 +1,1004 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="每個人都是褪下仙衣、來到人間的原靈。下凡抽籤、快速走完一生——名利帶不走，你帶走了什麼？">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="2027 全真社青 Life Design 探索地圖">
+<meta property="og:title" content="褪下仙衣：八十億分之一">
+<meta property="og:description" content="下凡抽籤、快速走完一生。金幣帶不走，天幣帶得走——這一生，你活成什麼樣？約 6 分鐘。">
+<meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/game/xianyi.html">
+<meta property="og:locale" content="zh_TW">
+<title>褪下仙衣：八十億分之一</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="https://fontsapi.zeoseven.com/52/main/result.css">
+<style>
+  /* Layout: one-screen portrait game — HUD on top, life feed in the middle, choices slide up from the bottom. Single light theme on purpose (matches the course site's meadow palette). */
+  :root {
+    --bg: #EEF7F2;
+    --ink: #1E293B;
+    --ink-soft: #475569;
+    --muted: #64748B;
+    --card: #FFFFFF;
+    --green: #059669;
+    --green-soft: #D1FAE5;
+    --blue: #0284C7;
+    --blue-soft: #E0F2FE;
+    --gold: #D97706;
+    --gold-soft: #FEF3C7;
+    --teal: #0D9488;
+    --rose: #E11D74;
+    --line: #CFE3D8;
+    --serif: 'jf-openhuninn-2.1', "Noto Serif TC", serif;
+    --sans: 'jf-openhuninn-2.1', "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+    color-scheme: light;
+  }
+  [hidden] { display: none !important; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 10% 0%, rgba(56,189,248,.16), transparent 45%),
+      radial-gradient(circle at 95% 100%, rgba(251,191,36,.14), transparent 50%);
+    color: var(--ink);
+    font-family: var(--sans);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    overflow: hidden;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  #app {
+    position: relative;
+    height: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+
+  /* 共用按鈕 */
+  .btn {
+    display: block; width: 100%;
+    border: 0; border-radius: 16px;
+    padding: 14px 18px;
+    font-weight: 700; font-size: 1.05rem;
+    background: var(--blue); color: #fff;
+    box-shadow: 0 6px 16px rgba(2,132,199,.25);
+    transition: transform .15s ease;
+    text-decoration: none; text-align: center;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn.gold { background: var(--gold); box-shadow: 0 6px 16px rgba(217,119,6,.25); }
+  .btn.green { background: var(--green); box-shadow: 0 6px 16px rgba(5,150,105,.25); }
+  .btn.ghost { background: #fff; color: var(--ink-soft); border: 1.5px solid var(--line); box-shadow: none; }
+
+  /* 開始畫面 */
+  #title {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    padding: 32px 24px; text-align: center; gap: 14px;
+  }
+  .robe {
+    font-size: 4.2rem; line-height: 1;
+    filter: drop-shadow(0 0 18px rgba(251,191,36,.7));
+    animation: float 3.2s ease-in-out infinite;
+  }
+  @keyframes float { 50% { transform: translateY(-8px); } }
+  #title h1 { font-family: var(--serif); font-weight: 900; font-size: 2.3rem; margin: 6px 0 0; letter-spacing: .06em; }
+  #title .sub { font-family: var(--serif); color: var(--blue); font-weight: 700; font-size: 1.15rem; letter-spacing: .3em; margin: 0; }
+  #title .lede { color: var(--ink-soft); line-height: 1.8; margin: 8px 0 10px; }
+  #title .meta { color: var(--muted); font-size: .85rem; margin: 0; }
+  #title .collect { color: var(--muted); font-size: .85rem; margin: 0; }
+  #title .home { color: var(--muted); font-size: .85rem; text-decoration: underline; }
+
+  /* HUD */
+  #hud {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px 8px;
+    border-bottom: 2px dashed rgba(2,132,199,.15);
+    background: rgba(238,247,242,.92);
+  }
+  .age-box { text-align: center; flex: none; min-width: 64px; }
+  .age-box .n { font-family: var(--serif); font-size: 1.9rem; font-weight: 900; line-height: 1; }
+  .age-box .u { font-size: .75rem; color: var(--muted); }
+  .bars { flex: 1; display: grid; gap: 4px; }
+  .bar { display: grid; grid-template-columns: 4.2em 1fr 2em; align-items: center; gap: 6px; font-size: .78rem; }
+  .bar .track { height: 8px; border-radius: 99px; background: #E2E8F0; overflow: hidden; }
+  .bar .fill { height: 100%; border-radius: 99px; transition: width .5s ease; }
+  .bar .v { text-align: right; font-weight: 700; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .bar.gold .fill { background: var(--gold); }
+  .bar.tian .fill { background: linear-gradient(90deg, #38BDF8, #A78BFA); }
+  .bar.fam .fill { background: var(--rose); }
+  .hud-right { flex: none; display: grid; gap: 6px; justify-items: center; }
+  #robeMini { font-size: 1.6rem; transition: filter .5s ease, opacity .5s ease; }
+  #speedBtn {
+    border: 1.5px solid var(--line); background: #fff; border-radius: 99px;
+    padding: 2px 10px; font-size: .75rem; font-weight: 700; color: var(--ink-soft);
+  }
+  #speedBtn.on { background: var(--blue-soft); color: var(--blue); border-color: var(--blue); }
+
+  /* 章節橫幅 */
+  #chapter {
+    padding: 6px 14px; font-size: .82rem; color: var(--teal); font-weight: 700;
+    min-height: 1.9em;
+  }
+
+  /* 人生跑馬燈 */
+  #feed {
+    flex: 1; overflow-y: auto;
+    padding: 4px 14px 24px;
+    scroll-behavior: smooth;
+  }
+  .ln {
+    display: flex; gap: 10px; align-items: flex-start;
+    margin: 8px 0;
+    animation: pop .35s ease;
+    line-height: 1.65;
+  }
+  @keyframes pop { from { opacity: 0; transform: translateY(8px); } }
+  .ln .a {
+    flex: none; min-width: 3.6em; text-align: center;
+    font-size: .78rem; font-weight: 700; color: var(--blue);
+    background: var(--blue-soft); border-radius: 99px; padding: 2px 8px; margin-top: 2px;
+  }
+  .ln .t { flex: 1; }
+  .ln.sys .t { color: var(--muted); font-size: .9rem; }
+  .ln.lyric .t {
+    font-family: var(--serif); color: var(--gold); font-weight: 700;
+    background: var(--gold-soft); border-radius: 12px; padding: 8px 12px;
+  }
+  .ln.big .t {
+    font-family: var(--serif); font-weight: 900; font-size: 1.1rem; color: var(--teal);
+    border-left: 4px solid var(--teal); padding-left: 10px;
+  }
+  .chip { display: inline-block; font-size: .78rem; font-weight: 700; border-radius: 99px; padding: 1px 8px; margin: 2px 4px 0 0; background: #F1F5F9; }
+  .chip.up { color: var(--green); background: var(--green-soft); }
+  .chip.down { color: #B91C1C; background: #FEE2E2; }
+  .chip.badge { color: var(--gold); background: var(--gold-soft); }
+
+  /* 底部抉擇面板與疊加視窗 */
+  #sheet {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: #fff;
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -12px 30px rgba(15,23,42,.12);
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+    transform: translateY(105%);
+    transition: transform .3s ease;
+    max-height: 82%; overflow-y: auto;
+    z-index: 20;
+  }
+  #sheet.open { transform: none; }
+  #sheet h3 { margin: 0 0 4px; font-family: var(--serif); font-size: 1.15rem; }
+  #sheet .q { margin: 0 0 14px; color: var(--ink-soft); line-height: 1.7; }
+  .opt {
+    display: block; width: 100%; text-align: left;
+    border: 1.5px solid var(--line); background: #F8FAFC;
+    border-radius: 14px; padding: 12px 14px; margin-bottom: 10px;
+    font-weight: 600; line-height: 1.5;
+    transition: transform .12s ease, border-color .12s ease;
+  }
+  .opt:active { transform: scale(.98); }
+  .opt:hover { border-color: var(--blue); }
+  .opt.temple { background: var(--green-soft); border-color: var(--green); }
+  .opt.excuse { background: #F1F5F9; border-style: dashed; }
+  .opt small { display: block; font-weight: 400; color: var(--muted); font-size: .8rem; margin-top: 2px; }
+
+  #overlay {
+    position: absolute; inset: 0; z-index: 30;
+    background: rgba(15,23,42,.45);
+    display: flex; align-items: center; justify-content: center;
+    padding: 18px;
+  }
+  .card {
+    width: 100%; max-height: 100%; overflow-y: auto;
+    background: #fff; border-radius: 24px;
+    padding: 22px 18px;
+    box-shadow: 0 20px 40px rgba(15,23,42,.25);
+    text-align: center;
+    animation: pop .3s ease;
+  }
+  .card h2 { font-family: var(--serif); margin: 4px 0 8px; font-size: 1.35rem; }
+  .card p { color: var(--ink-soft); line-height: 1.75; margin: 8px 0; }
+  .card .btn { margin-top: 12px; }
+  .card .hint { font-size: .8rem; color: var(--muted); }
+
+  /* 母娘對話 */
+  .glow {
+    width: 84px; height: 84px; margin: 4px auto 10px; border-radius: 50%;
+    background: radial-gradient(circle, #FEF3C7 0%, #FDE68A 40%, rgba(251,191,36,0) 72%);
+    animation: breathe 2.6s ease-in-out infinite;
+  }
+  @keyframes breathe { 50% { transform: scale(1.12); } }
+  .say { font-family: var(--serif); font-size: 1.12rem; min-height: 3.4em; color: var(--ink); }
+
+  /* 下凡抽籤 */
+  .slot {
+    font-family: var(--serif); font-weight: 900; font-size: 2.2rem;
+    height: 1.6em; line-height: 1.6em; margin: 14px 0;
+    border-radius: 16px; background: var(--blue-soft); color: var(--blue);
+  }
+  .slot.win { background: var(--gold-soft); color: var(--gold); animation: pop .3s ease; }
+
+  /* 劇本卡 */
+  .deck { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0 4px; perspective: 600px; }
+  .pc {
+    aspect-ratio: 3/4; border-radius: 14px; border: 0;
+    background: linear-gradient(135deg, #0284C7, #0D9488);
+    color: #fff; font-size: 1.6rem;
+    box-shadow: 0 6px 14px rgba(2,132,199,.25);
+    transition: transform .45s ease;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    padding: 6px;
+  }
+  .pc.flip { transform: rotateY(180deg) scale(1.04); }
+  .pc.face { background: #fff; color: var(--ink); border: 2px solid var(--gold); transform: none; }
+  .pc.face b { font-size: .8rem; }
+  .pc.dim { opacity: .35; }
+
+  /* 佛堂充電一日 */
+  .day { text-align: left; margin: 10px 0; display: grid; gap: 6px; }
+  .day div { display: flex; gap: 8px; padding: 6px 10px; border-radius: 10px; background: #F8FAFC; opacity: .35; transition: all .25s ease; font-size: .92rem; }
+  .day div.on { opacity: 1; background: var(--green-soft); }
+  .day span:first-child { font-variant-numeric: tabular-nums; color: var(--muted); flex: none; }
+  .quote { font-family: var(--serif); color: var(--gold); background: var(--gold-soft); border-radius: 12px; padding: 10px 12px; font-weight: 700; }
+
+  /* 小遊戲 */
+  .balloon { font-size: 3rem; display: inline-block; transition: transform .15s ease; margin: 18px 0; transform-origin: center bottom; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ingr { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; }
+  .ingr button { border: 1.5px solid var(--line); background: #fff; border-radius: 12px; padding: 8px 2px; font-size: .78rem; }
+  .ingr button.sel { border-color: var(--green); background: var(--green-soft); }
+  .ingr button span { display: block; font-size: 1.5rem; }
+  .likes { display: grid; gap: 8px; margin: 12px 0; text-align: left; }
+  .likes button { border: 1.5px solid var(--line); background: #fff; border-radius: 12px; padding: 10px 12px; text-align: left; line-height: 1.5; }
+  .likes button.got { border-color: var(--rose); background: #FFF1F7; }
+  input[type=date] { font: inherit; padding: 10px; border-radius: 12px; border: 1.5px solid var(--line); width: 100%; margin: 10px 0 0; }
+
+  /* 結局頁 */
+  #ending { position: absolute; inset: 0; overflow-y: auto; padding: 22px 16px 40px; background: var(--bg); z-index: 25; }
+  .end-card {
+    background: #fff; border-radius: 24px; padding: 24px 18px; text-align: center;
+    border: 2px solid var(--gold); box-shadow: 0 10px 25px rgba(217,119,6,.15);
+  }
+  .end-card .em { font-size: 3.4rem; }
+  .end-card .kicker { color: var(--muted); font-size: .85rem; margin: 6px 0 0; }
+  .end-card h2 { font-family: var(--serif); font-size: 1.6rem; margin: 2px 0 10px; }
+  .end-card .lyric { font-family: var(--serif); color: var(--gold); background: var(--gold-soft); border-radius: 12px; padding: 10px; font-weight: 700; line-height: 1.8; }
+  .end-card .desc { color: var(--ink-soft); line-height: 1.8; }
+  .sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 4px; }
+  .sum div { background: #F8FAFC; border-radius: 12px; padding: 8px 4px; }
+  .sum b { display: block; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+  .sum small { color: var(--muted); font-size: .72rem; }
+  .sec { background: #fff; border-radius: 20px; padding: 18px 16px; margin-top: 14px; border: 1.5px solid rgba(2,132,199,.18); }
+  .sec h3 { margin: 0 0 10px; font-family: var(--serif); font-size: 1.05rem; }
+  .badges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .badges div { border-radius: 12px; padding: 8px 2px; text-align: center; font-size: .8rem; font-weight: 700; background: #F1F5F9; color: #94A3B8; }
+  .badges div.got { background: var(--gold-soft); color: var(--gold); }
+  .themes { display: grid; gap: 6px; margin: 10px 0 12px; }
+  .themes div { display: flex; gap: 10px; font-size: .9rem; align-items: baseline; }
+  .themes b { color: var(--blue); flex: none; font-variant-numeric: tabular-nums; }
+  .themes span { color: var(--ink-soft); }
+  .stack { display: grid; gap: 10px; }
+  .toast {
+    position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
+    background: var(--ink); color: #fff; padding: 8px 16px; border-radius: 99px; font-size: .9rem;
+    z-index: 50; animation: pop .25s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <section id="title">
+    <div class="robe">🪷</div>
+    <h1>褪下仙衣</h1>
+    <p class="sub">八十億分之一</p>
+    <p class="lede">每個人都是褪下仙衣、來到人間的原靈。<br>下凡抽籤，快速走完一生——<br>名利帶不走，這一生，你帶走了什麼？</p>
+    <button class="btn gold" id="startBtn" type="button">下凡去 ▶</button>
+    <p class="meta">約 6 分鐘・手機電腦點開就能玩</p>
+    <p class="collect" id="collect"></p>
+    <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
+  </section>
+
+  <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
+    <header id="hud">
+      <div class="age-box"><div class="n" id="ageN">0</div><div class="u">歲</div></div>
+      <div class="bars">
+        <div class="bar gold"><span>🪙 金幣</span><div class="track"><div class="fill" id="bGold"></div></div><span class="v" id="vGold"></span></div>
+        <div class="bar tian"><span>✨ 天幣</span><div class="track"><div class="fill" id="bTian"></div></div><span class="v" id="vTian"></span></div>
+        <div class="bar fam"><span>❤️ 家人</span><div class="track"><div class="fill" id="bFam"></div></div><span class="v" id="vFam"></span></div>
+      </div>
+      <div class="hud-right">
+        <div id="robeMini" title="仙衣的光">🪷</div>
+        <button id="speedBtn" type="button">▶▶ ×2</button>
+      </div>
+    </header>
+    <div id="chapter"></div>
+    <main id="feed" aria-live="polite"></main>
+  </div>
+
+  <div id="sheet" role="dialog" aria-modal="true"></div>
+  <div id="overlay" hidden></div>
+  <section id="ending" hidden></section>
+</div>
+
+<script>
+(() => {
+  // ───────── 工具 ─────────
+  const $ = id => document.getElementById(id);
+  const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const clamp = v => Math.max(0, Math.min(100, v));
+  const shuffle = arr => arr.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(x => x[1]);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let fast = false;
+  const wait = ms => new Promise(r => setTimeout(r, fast ? ms / 2.2 : ms));
+
+  const SITE = 'https://steven4dev.github.io/yiguandao-2027-course/';
+  const CAL = 'https://calendar.google.com/calendar/u/0?cid=NWMyYTEyNmIwYzFiOWIzMzQ4ZmM5MzM5NTFkZDNiNzQ5ZmY5ZjM5Zjc1MDkzMzE3N2Q5MDgzNDNiMTY4ZjRmY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t';
+
+  // 收集紀錄只存在這台裝置，讀不到也照常遊玩
+  const STORE = 'xianyi-collect';
+  const loadCollect = () => {
+    try { return Object.assign({ endings: [], badges: [], personas: [], plays: 0 }, JSON.parse(localStorage.getItem(STORE) || '{}')); }
+    catch (e) { return { endings: [], badges: [], personas: [], plays: 0 }; }
+  };
+  const saveCollect = c => { try { localStorage.setItem(STORE, JSON.stringify(c)); } catch (e) {} };
+
+  // ───────── 資料 ─────────
+  // 六張人生劇本卡（取自〈回來佛堂〉Verse 2、3）
+  const PERSONAS = [
+    { id: 'tech', em: '💻', name: '科技新貴派', lyric: '他進了科學園區　頗高的工作待遇', fx: { gold: 20, fam: -5 }, excuse: '先拚個幾年，存夠再說' },
+    { id: 'family', em: '🏠', name: '成家立業派', lyric: '有人說他先成家立業不得閒', fx: { fam: 15 }, excuse: '等孩子大一點再說' },
+    { id: 'social', em: '🥂', name: '人脈社交派', lyric: '有人說拓展人脈不易　假日要忙 Social', fx: { gold: 8 }, excuse: '週末已經排滿了' },
+    { id: 'drift', em: '🌊', name: '漂流派', lyric: '有人失去了自我　手足無措四處漂流', fx: {}, excuse: '我現在不知道要幹嘛' },
+    { id: 'forgot', em: '🕯️', name: '初衷遺忘派', lyric: '有人忘記了初衷　入道之後依舊漂泊', fx: { tian: 8 }, excuse: '求過道就好了吧' },
+    { id: 'abroad', em: '✈️', name: '留學菁英派', lyric: '有人為了變強　力爭上游還留學出國', fx: { gold: 12, fam: -8 }, excuse: '我在國外，回不去' },
+  ];
+
+  // 八枚心法徽章（取自副歌括號）
+  const BADGES = [
+    { id: '不沉醉', how: '不被飛車跑車牽著走' },
+    { id: '駕法航', how: '回佛堂 3 次以上' },
+    { id: '別感傷', how: '無常來時，選擇接納' },
+    { id: '這無常', how: '遇見一張無常卡' },
+    { id: '老母娘', how: '打出真結局' },
+    { id: '回佛堂', how: '第一次回佛堂' },
+    { id: '人才是', how: '法會當志工' },
+    { id: '能擔當', how: '出國開荒或扛下佛堂' },
+  ];
+
+  // 六場專題（依首頁 index.html 年度企劃）
+  const THEMES = [
+    { date: '03/27', name: '好好玩', sub: '重新找回生活的樂趣', pm: '迎新聯誼 🥳', ages: [26, 29] },
+    { date: '04/24', name: '好好賺', sub: '不一定要有錢，先學會理財', pm: '藝術氣球 🎈', ages: [30, 33] },
+    { date: '06/26', name: '好好愛', sub: '喜歡別人之前，先搞懂自己', pm: '生命靈數 🔮', ages: [34, 37] },
+    { date: '10/02', name: '人生重開機', sub: '人生卡關的時候，你會怎麼辦', pm: 'V·翻轉後的人生 🎲', ages: [38, 41] },
+    { date: '11/27', name: '出去走走', sub: '世界這麼大，別只活在自己的日常', pm: '蔬食料理王 🥗', ages: [42, 45] },
+    { date: '12/25', name: '活成自己喜歡的樣子', sub: '人生不是交作業', pm: '結班聯誼 🥂', ages: [46, 100] },
+  ];
+
+  const WISDOM = [
+    '行住坐臥端莊　真我磨到發光',
+    '不沉醉　不爭也不搶',
+    '菩提樹芬芳　平爐煉心伴隨檀香',
+    '把日子過成修行，把修行過成日子',
+    '修道的人啊　不用追逐娑婆世界假象',
+  ];
+
+  const MATES = ['阿哲', '小芸', '大寶', 'Momo', '阿凱', '小安', 'Jerry', '佳佳', '老王', '小魚', '阿布', 'Vivi'];
+
+  // ───────── 狀態 ─────────
+  let S;
+  const newState = () => ({
+    age: 0, gold: 20, tian: 5, fam: 50,
+    persona: null, badges: new Set(), visits: 0, excuses: 0,
+    mates: [], flags: {},
+  });
+
+  // ───────── 畫面 ─────────
+  const feed = $('feed');
+  function hud() {
+    $('ageN').textContent = S.age;
+    for (const [k, b, v] of [['gold', 'bGold', 'vGold'], ['tian', 'bTian', 'vTian'], ['fam', 'bFam', 'vFam']]) {
+      $(b).style.width = S[k] + '%';
+      $(v).textContent = S[k];
+    }
+    const glow = S.tian / 100;
+    $('robeMini').style.filter = `grayscale(${1 - glow}) drop-shadow(0 0 ${4 + glow * 14}px rgba(251,191,36,${.2 + glow * .8}))`;
+  }
+  function addLine(text, cls = '', ageLabel) {
+    const d = document.createElement('div');
+    d.className = 'ln ' + cls;
+    const a = ageLabel === undefined ? S.age + ' 歲' : ageLabel;
+    d.innerHTML = (a ? `<span class="a">${a}</span>` : '<span class="a" style="visibility:hidden">·</span>') + `<span class="t">${text}</span>`;
+    feed.appendChild(d);
+    feed.scrollTop = feed.scrollHeight;
+    return d;
+  }
+  async function line(age, text, cls) {
+    if (age != null) { S.age = age; hud(); }
+    addLine(text, cls);
+    await wait(cls === 'lyric' || cls === 'big' ? 1500 : 1100);
+  }
+  function chapter(txt) { $('chapter').textContent = txt; }
+
+  // 套用數值變化，並在跑馬燈印出變化標籤
+  function apply(fx = {}, note) {
+    const chips = [];
+    const label = { gold: '🪙', tian: '✨', fam: '❤️' };
+    for (const k of ['gold', 'tian', 'fam']) {
+      if (!fx[k]) continue;
+      S[k] = clamp(S[k] + fx[k]);
+      chips.push(`<span class="chip ${fx[k] > 0 ? 'up' : 'down'}">${label[k]} ${fx[k] > 0 ? '+' : '−'}${Math.abs(fx[k])}</span>`);
+    }
+    if (fx.badge) chips.push(...[].concat(fx.badge).map(earn).filter(Boolean));
+    hud();
+    if (note || chips.length) addLine((note ? esc(note) + '<br>' : '') + chips.join(''), 'sys', '');
+  }
+  function earn(id) {
+    if (S.badges.has(id)) return '';
+    S.badges.add(id);
+    return `<span class="chip badge">🏅 心法徽章「${id}」</span>`;
+  }
+
+  // 底部抉擇面板：回傳被選的選項
+  function choose(title, q, opts) {
+    return new Promise(resolve => {
+      const sh = $('sheet');
+      sh.innerHTML = `<h3>${title}</h3><p class="q">${q}</p>`;
+      opts.forEach(o => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'opt ' + (o.cls || '');
+        b.innerHTML = o.text + (o.small ? `<small>${o.small}</small>` : '');
+        b.onclick = () => {
+          sh.classList.remove('open');
+          addLine('→ ' + o.text, 'sys', '');
+          setTimeout(() => resolve(o), 250);
+        };
+        sh.appendChild(b);
+      });
+      sh.classList.add('open');
+    });
+  }
+
+  // 置中卡片；fn 拿到卡片元素與 done()
+  function card(html, fn) {
+    return new Promise(resolve => {
+      const ov = $('overlay');
+      ov.innerHTML = `<div class="card">${html}</div>`;
+      ov.hidden = false;
+      const done = v => { ov.hidden = true; ov.innerHTML = ''; resolve(v); };
+      fn(ov.firstElementChild, done);
+    });
+  }
+  const okCard = (html, label = '繼續') => card(html + `<button class="btn" type="button">${label}</button>`,
+    (el, done) => { el.querySelector('.btn').onclick = () => done(); });
+
+  function toast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast'; t.textContent = msg;
+    $('app').appendChild(t);
+    setTimeout(() => t.remove(), 1800);
+  }
+
+  // ───────── 序章 ─────────
+  async function prologue() {
+    const says = [
+      '孩子，你本來就住在這裡。',
+      '下凡治理，是你自己發的願。',
+      '記得——金幣帶不走，<br>帶得走的，要自己修。',
+      '去吧。別忘了回家的路。',
+    ];
+    await card(`<div class="glow"></div><p class="hint">理天・母娘身邊</p><p class="say" id="say"></p><button class="btn" type="button">▶</button>`, (el, done) => {
+      let i = 0;
+      const sayEl = el.querySelector('#say'), b = el.querySelector('.btn');
+      const show = () => { sayEl.innerHTML = says[i]; b.textContent = i === says.length - 1 ? '在三山坡旁，褪下仙衣 ▶' : '▶'; };
+      show();
+      b.onclick = () => { if (++i < says.length) show(); else done(); };
+    });
+  }
+
+  // 下凡抽籤：先跑世界，最後揭曉台灣籤
+  async function gacha() {
+    const world = ['印度', '中國', '美國', '印尼', '巴基斯坦', '奈及利亞', '巴西', '孟加拉', '俄羅斯', '衣索比亞', '墨西哥', '日本', '菲律賓', '埃及', '越南', '剛果', '土耳其', '德國', '泰國', '法國'];
+    await card(`<h2>🎰 下凡抽籤</h2><p>八十億人，每一個都是褪下仙衣的原靈。<br>你會投胎到哪裡？</p><div class="slot" id="slot">？</div><p class="hint" id="odds">依人口比例，你最可能生在印度（約 18%）或中國（約 17%）</p><button class="btn gold" type="button" id="spin">抽！</button>`, (el, done) => {
+      const slot = el.querySelector('#slot'), btn = el.querySelector('#spin');
+      btn.onclick = () => {
+        btn.disabled = true; btn.textContent = '命運轉動中⋯⋯';
+        let n = 0, delay = 50;
+        const tick = () => {
+          slot.textContent = world[n++ % world.length];
+          delay *= 1.12;
+          if (delay < 420) return setTimeout(tick, delay);
+          slot.textContent = '台灣'; slot.classList.add('win');
+          el.querySelector('#odds').innerHTML = '叮！恭喜抽中 <b>台灣籤</b>！<br>全世界每 1000 人只有約 3 人生在台灣（約 2,340 萬 ÷ 81 億）。';
+          btn.disabled = false; btn.textContent = '出生！';
+          btn.onclick = () => done();
+        };
+        tick();
+      };
+    });
+  }
+
+  // ───────── 童年跑馬燈 ─────────
+  async function childhood() {
+    chapter('序章・下凡治理卻迷航');
+    await line(0, '你褪下仙衣仙裳，哭得很大聲。護理師說：「肺活量不錯。」');
+    await line(rand(1, 3), pick(['你說的第一個詞是「手機」。', '阿嬤說你很乖，因為給你平板就不哭。', '你在全家福照片裡唯一沒看鏡頭。']));
+    await line(rand(6, 8), pick(['才藝班連報五個，週末比上班族還忙。', '你把壓歲錢全投進夾娃娃機，夾到一隻很像皮卡丘的東西。', '作文〈我的志願〉你寫：當有錢人。老師給你乙上。']));
+    await line(rand(11, 13), pick(['第一次跟媽媽去佛堂，記得最清楚的是那盤水果。', '第一支手機到手，螢幕使用時間：一天 5 小時。', '你在補習班認識了一輩子的好朋友，也認識了一輩子的近視。']));
+    if (Math.random() < .6) {
+      S.flags.qiudao = true;
+      await line(15, '跟著家人求道。點傳師說的話你沒全懂，但你記得那天很安心。');
+      apply({ tian: 8 });
+    } else {
+      await line(15, '朋友邀你去佛堂，你說：「下次。」');
+    }
+    await line(17, pick(['學測前三個月，你的 IG 限動比讀書時數還多。', '模擬考成績出來，你把成績單折成紙飛機。']));
+    if (Math.random() < .55) {
+      S.flags.debt = true;
+      await line(20, '你跟同學借了 500 元，說：「下週就還。」');
+    } else {
+      await line(20, '宿舍泡麵吃到可以出一本評鑑。');
+    }
+    await line(23, '在 104 投了 87 封履歷，收到 3 封面試通知、1 封詐騙。');
+    await line(24, '第一份薪水入帳，你在 ATM 前站了很久。');
+    apply({ gold: 5 });
+    await line(null, '忘了回鄉　遠離了母娘', 'lyric');
+  }
+
+  // ───────── 人生劇本卡 ─────────
+  async function drawPersona() {
+    S.age = 25; hud();
+    const deck = shuffle(PERSONAS);
+    const p = await card(`<h2>🎴 25 歲・人生劇本卡</h2><p>出社會了。翻開一張，看看你會活成哪一種人？</p><div class="deck">${deck.map((_, i) => `<button class="pc" type="button" data-i="${i}">？</button>`).join('')}</div><p class="hint">六張劇本，都寫在〈回來佛堂〉的歌詞裡</p>`, (el, done) => {
+      el.querySelectorAll('.pc').forEach(b => b.onclick = () => {
+        const i = +b.dataset.i;
+        el.querySelectorAll('.pc').forEach((x, j) => { x.disabled = true; if (j !== i) x.classList.add('dim'); });
+        b.classList.add('flip');
+        setTimeout(() => {
+          const d = deck[i];
+          b.classList.remove('flip'); b.classList.add('face');
+          b.innerHTML = `${d.em}<b>${d.name}</b>`;
+          setTimeout(() => {
+            el.innerHTML = `<div style="font-size:3rem">${d.em}</div><h2>${d.name}</h2><p class="quote">${d.lyric}</p><p>你的專屬藉口卡：<b>「${d.excuse}」</b></p><button class="btn" type="button">就是我了 ▶</button>`;
+            el.querySelector('.btn').onclick = () => done(d);
+          }, 650);
+        }, 450);
+      });
+    });
+    S.persona = p;
+    addLine(`抽到人生劇本卡：${p.em} <b>${p.name}</b>`, 'big');
+    apply(p.fx);
+  }
+
+  // ───────── 週末邀約：回來佛堂 / 其他 / 藉口卡 ─────────
+  async function invite(ti, alt) {
+    const t = THEMES[ti];
+    const who = S.mates.length ? `同行夥伴${S.mates[0]}` : (S.visits ? '佛堂學長' : '老同學');
+    const o = await choose(`📱 ${who}傳來訊息`,
+      `「${t.date}（六）社青班，主題<b>「${t.name}｜${t.sub}」</b>，下午是 ${t.pm}，要不要一起來？」`, [
+        { text: '🍃 回來佛堂', small: '每月給自己一天', cls: 'temple', k: 'temple' },
+        alt,
+        { text: `🃏 打出藉口卡：「${S.persona.excuse}」`, small: '這個週末先這樣', cls: 'excuse', k: 'excuse' },
+      ]);
+    if (o.k === 'temple') return templeDay(ti);
+    if (o.k === 'excuse') {
+      S.excuses++;
+      apply({ gold: 4, tian: -3 }, pick(['這個週末過得很快，快到想不起做了什麼。', '你回了一張「下次一定」的貼圖。', '仙衣暗了一格，你沒發現。']));
+      return;
+    }
+    apply(alt.fx, alt.note);
+  }
+
+  // 佛堂充電一日：照首頁「每日流程」走一遍，再接當月的下午活動
+  async function templeDay(ti) {
+    const t = THEMES[ti];
+    S.visits++;
+    const firstMates = !S.mates.length;
+    if (firstMates) S.mates = shuffle(MATES).slice(0, 3);
+    const flow = [
+      ['09:30', '🧘‍♀️ 古典哈達瑜伽'], ['10:00', '🥐 休息＆早午餐'], ['10:20', '💡 智慧引路・啟心'],
+      ['10:30', `💬 觀點分享：${t.name}`], ['12:00', '🍱 午餐＆小敘'], ['13:00', `🎲 ${t.pm}`], ['14:20', '✨ 溫暖結語'],
+    ];
+    await card(`<h2>🍃 佛堂充電的一天</h2><p class="hint">${t.date}・${t.name}｜${t.sub}</p><div class="day">${flow.map(f => `<div><span>${f[0]}</span><span>${f[1]}</span></div>`).join('')}</div><p class="quote" id="wq" hidden></p><button class="btn" type="button" hidden>下午活動 ▶</button>`, async (el, done) => {
+      const rows = el.querySelectorAll('.day div');
+      for (let i = 0; i < 5; i++) {
+        await wait(380);
+        rows[i].classList.add('on');
+        if (i === 2) { const q = el.querySelector('#wq'); q.textContent = pick(WISDOM); q.hidden = false; }
+      }
+      const b = el.querySelector('.btn'); b.hidden = false; b.onclick = () => done();
+    });
+    addLine(`回來佛堂（第 ${S.visits} 次）：瑜伽、早午餐、觀點分享「${t.name}」⋯⋯`, 'sys');
+    if (firstMates) addLine(`你認識了三位同行夥伴：${S.mates.join('、')}`, 'sys', '');
+    await [welcome, balloon, numerology, vflip, cooking][ti]();
+    const fx = { tian: 8, fam: 2, badge: ['回佛堂'] };
+    if (S.visits >= 3) fx.badge.push('駕法航');
+    apply(fx, '溫暖結語：心靈充好電了。');
+  }
+
+  // ───────── 下午活動小遊戲 ─────────
+  // 03/27 迎新聯誼
+  function welcome() {
+    return okCard(`<h2>🥳 迎新聯誼</h2><p>破冰遊戲輸了，你被罰模仿一種動物。<br>你選了無尾熊，全場笑翻。</p><p>${S.mates.map(m => `<span class="chip">🙋 ${m}</span>`).join('')}</p><p class="hint">這三位，之後會在你人生卡關的時候出現。</p>`)
+      .then(() => apply({ fam: 3 }));
+  }
+
+  // 04/24 藝術氣球：名利像氣球，吹越大越好看，也越容易破
+  function balloon() {
+    const limit = rand(5, 13);
+    let n = 0;
+    return card(`<h2>🎈 藝術氣球</h2><p>名利就像氣球：吹得越大越好看，<br>也越容易破。你要吹到多大？</p><div class="balloon" id="bl">🎈</div><p class="hint" id="bn">已吹 0 口・每口 🪙 +2</p><div class="row2"><button class="btn gold" type="button" id="pump">再吹一口</button><button class="btn green" type="button" id="stop">見好就收</button></div>`, (el, done) => {
+      const bl = el.querySelector('#bl'), bn = el.querySelector('#bn');
+      const finish = (html, fx, note) => {
+        el.innerHTML = html + '<button class="btn" type="button">繼續</button>';
+        el.querySelector('.btn').onclick = () => { done(); apply(fx, note); };
+      };
+      el.querySelector('#pump').onclick = () => {
+        n++;
+        if (n >= limit) {
+          return finish(`<div style="font-size:3rem">💥</div><h2>砰！</h2><p>氣球破了，大家笑成一團。<br>吹了 ${n} 口，什麼都沒留下。</p><p class="quote">掙下金幣　終會轉移</p>`, { tian: 3 }, '氣球破了，但你學會了一件事。');
+        }
+        bl.style.transform = `scale(${1 + n * .18})`;
+        bn.textContent = `已吹 ${n} 口・每口 🪙 +2`;
+      };
+      el.querySelector('#stop').onclick = () => {
+        finish(`<div style="font-size:3rem">🐶</div><h2>見好就收</h2><p>你把氣球折成一隻小狗，送給隔壁的小朋友。</p><p class="quote">不沉醉　不爭也不搶</p>`, { gold: n * 2, tian: 5 }, `知足：吹了 ${n} 口就收手。`);
+      };
+    });
+  }
+
+  // 06/26 生命靈數：只在這支手機上計算，不上傳
+  function numerology() {
+    const TRAITS = {
+      1: ['開創者', '天生的領頭羊，小心別一個人扛全部。'],
+      2: ['協調者', '最懂別人的心，記得也要懂自己的。'],
+      3: ['表達者', '一開口就是氣氛，難過的時候也要說出來。'],
+      4: ['建造者', '穩穩的、可靠的，偶爾可以不用那麼完美。'],
+      5: ['冒險家', '自由是你的氧氣，記得留一個回家的方向。'],
+      6: ['守護者', '照顧別人是本能，照顧自己是功課。'],
+      7: ['探索者', '總在追問「為什麼」，答案也許在靜坐裡。'],
+      8: ['實踐家', '很會賺也很會拚，金幣之外也存點天幣。'],
+      9: ['奉獻者', '心裡裝得下全世界，別忘了也裝下自己。'],
+    };
+    return card(`<h2>🔮 生命靈數</h2><p>輸入你真實的生日，看看藏在數字裡的性格密碼。</p><input type="date" id="bd" aria-label="生日"><p class="hint">只在你的手機上計算，不會上傳。</p><div class="row2"><button class="btn ghost" type="button" id="skip">先跳過</button><button class="btn" type="button" id="calc">算算看</button></div>`, (el, done) => {
+      const end = () => { done(); apply({ fam: 5, tian: 3 }, '你更懂自己了，也更懂家人一點。'); };
+      el.querySelector('#skip').onclick = end;
+      el.querySelector('#calc').onclick = () => {
+        const v = el.querySelector('#bd').value.replace(/\D/g, '');
+        if (!v) return toast('先選一個日期喔');
+        let n = [...v].reduce((s, c) => s + +c, 0);
+        while (n > 9) n = [...String(n)].reduce((s, c) => s + +c, 0);
+        const [name, txt] = TRAITS[n];
+        el.innerHTML = `<div style="font-size:3rem">${n}</div><h2>${n} 號人・${name}</h2><p>${txt}</p><p class="hint">把家人的生日也算進來，回家就多了好多話題。</p><button class="btn" type="button">繼續</button>`;
+        el.querySelector('.btn').onclick = end;
+      };
+    });
+  }
+
+  // 10/02 V·翻轉：夥伴幫你按讚
+  function vflip() {
+    const LIKES = [
+      '你講話的時候，大家會不自覺地安靜下來聽。',
+      '上次大家累到不行，是你默默去洗碗的。',
+      '你笑起來的時候，整桌都會跟著笑。',
+      '你記得每個人的飲料甜度冰塊。',
+      '你明明自己也很忙，還是回了我那則很長的訊息。',
+      '你比你以為的，勇敢很多。',
+    ];
+    const items = shuffle(LIKES).slice(0, 3).map((t, i) => [S.mates[i], t]);
+    return card(`<h2>🎲 V·翻轉後的人生</h2><p>主題只有一個字：<b>「讚」</b>！<br>點一下，收下夥伴給你的讚。</p><div class="likes">${items.map(([m, t]) => `<button type="button">👍 <b>${m}</b>：${t}</button>`).join('')}</div><button class="btn" type="button" id="go" hidden>收下了 ▶</button>`, (el, done) => {
+      let got = 0;
+      el.querySelectorAll('.likes button').forEach(b => b.onclick = () => {
+        if (b.classList.contains('got')) return;
+        b.classList.add('got'); b.innerHTML = b.innerHTML.replace('👍', '❤️');
+        if (++got === items.length) el.querySelector('#go').hidden = false;
+      });
+      el.querySelector('#go').onclick = () => { done(); apply({ tian: 5, fam: 5 }, '原來在夥伴眼中，你藏著這麼多閃光點。'); };
+    });
+  }
+
+  // 11/27 蔬食料理王：挑三樣食材
+  function cooking() {
+    const ING = [['🍄', '香菇'], ['🥦', '花椰菜'], ['🍅', '番茄'], ['🥕', '紅蘿蔔'], ['🧈', '豆腐'], ['🌽', '玉米'], ['🍆', '茄子'], ['🥑', '酪梨']];
+    const STYLE = ['三杯', '塔香', '日式照燒', '義式焗烤', '泰式酸辣', '古早味滷'];
+    return card(`<h2>🥗 蔬食料理王</h2><p>挑三樣食材，做一道你的招牌菜！</p><div class="ingr">${ING.map(([e, n], i) => `<button type="button" data-i="${i}"><span>${e}</span>${n}</button>`).join('')}</div><button class="btn green" type="button" id="cook" disabled>下鍋！</button>`, (el, done) => {
+      const sel = new Set();
+      const cook = el.querySelector('#cook');
+      el.querySelectorAll('.ingr button').forEach(b => b.onclick = () => {
+        const i = +b.dataset.i;
+        if (sel.has(i)) sel.delete(i); else if (sel.size < 3) sel.add(i);
+        b.classList.toggle('sel', sel.has(i));
+        cook.disabled = sel.size !== 3;
+      });
+      cook.onclick = () => {
+        const parts = [...sel].map(i => ING[i]);
+        const dish = `${pick(STYLE)}${parts[0][1]}佐${parts[1][1]}${parts[2][1]}`;
+        el.innerHTML = `<div style="font-size:3rem">${parts.map(p => p[0]).join('')}</div><h2>${dish}</h2><p>擺盤、找光、一鍵修圖⋯⋯<br>上傳群組 3 分鐘，收到 ${rand(21, 68)} 個讚。</p><p class="hint">家族群組有長輩問：「這哪裡買的？」</p><button class="btn" type="button">繼續</button>`;
+        el.querySelector('.btn').onclick = () => { done(); apply({ fam: 6, tian: 4 }, `你的招牌菜：${dish}`); };
+      };
+    });
+  }
+
+  // ───────── 六大章節 ─────────
+  async function ch1() {
+    const t = THEMES[0];
+    chapter(`第一章・${t.name}｜${t.sub}`);
+    await line(26, `第一章・${t.name}`, 'big');
+    await line(26, '下班回家打開串流平台，一抬頭，天亮了。');
+    if (S.persona.id === 'social') {
+      await line(27, '這個月：喜酒 3 場、尾牙 2 場、同學會 1 場。');
+      const o = await choose('🥂 人脈社交派', '名片收了一疊，行事曆塞滿了。下個月還有 5 場邀約。', [
+        { text: '全部到，人脈就是錢脈', fx: { gold: 6, fam: -6 }, note: '名片收了一疊，叫得出名字的只有兩張。' },
+        { text: '挑重要的去，其他的婉拒', fx: { fam: 6, tian: 2 }, note: '多出來的週末，你陪媽媽去菜市場。' },
+      ]);
+      apply(o.fx, o.note);
+    }
+    const o = await choose('📺 週五晚上 11 點', '影集還剩 6 集。<br><span style="color:var(--gold)">「劇太好看　片太火　他說追不完」</span>', [
+      { text: '一口氣追完', fx: { fam: -3, tian: -2 }, note: '週六睡到下午三點，醒來覺得更累。' },
+      { text: '看兩集就睡，明早去爬山', fx: { fam: 3, tian: 3 }, note: '山頂的風，比演算法懂你。' },
+      { text: '約家人一起看', fx: { fam: 8 }, note: '原來爸爸也會哭，在第 4 集。' },
+    ]);
+    apply(o.fx, o.note);
+    await line(28, pick(['你的 Spotify 年度回顧，第一名是〈不想上班〉。', '你開始在 IG 追蹤很多「質感生活」帳號，自己的生活沒什麼質感。']));
+    await invite(0, { text: '🎨 去看展、吃早午餐', small: '好好玩一下', fx: { fam: 4, gold: -3 }, note: '拍了很多照片，回家後一張也沒再看。' });
+    apply({ gold: 6 }, '這幾年的薪水入帳。');
+  }
+
+  async function ch2() {
+    const t = THEMES[1];
+    chapter(`第二章・${t.name}｜${t.sub}`);
+    await line(30, `第二章・${t.name}`, 'big');
+    await line(30, '你在 104 又登入了一次，只是看看。（第 38 次只是看看）');
+    const where = S.persona.id === 'tech' ? '某神山的車棚裡' : '同學會的停車場';
+    await line(31, `${where}，停滿學長姐的<b>飛車跑車</b>。`);
+    const o = await choose('🏎️ 飛車跑車', '有人拍拍你的肩：「欸，還在開那台喔？」', [
+      { text: '貸款買一台，不能輸', fx: { gold: -25, tian: -5 }, note: '每個月的車貸，剛好等於陪爸媽吃飯的錢 × 12。', fastcar: true },
+      { text: '不買，把錢存起來', fx: { gold: 12, badge: '不沉醉' }, note: '不沉醉——錢留給真正重要的事。' },
+      { text: '不買，帶爸媽去吃大餐', fx: { gold: -4, fam: 12, badge: '不沉醉' }, note: '媽媽說這家好貴，然後把菜全部吃完了。' },
+    ]);
+    if (o.fastcar) S.flags.fastcar = true;
+    apply(o.fx, o.note);
+    await invite(1, { text: '💼 週末去上投資理財課', small: '好好賺一筆', fx: { gold: 8, fam: -2 }, note: '老師說要分散風險，你把全部的錢都買了老師推薦的那一支。' });
+    apply({ gold: 6 }, '這幾年的薪水入帳。');
+  }
+
+  async function ch3() {
+    const t = THEMES[2];
+    chapter(`第三章・${t.name}｜${t.sub}`);
+    await line(34, `第三章・${t.name}`, 'big');
+    await line(34, S.persona.id === 'family'
+      ? '過年家族聚會，第 7 位長輩問你：「什麼時候生第二胎？」'
+      : '過年家族聚會，第 7 位長輩問你：「什麼時候結婚？」');
+    if (S.persona.id === 'family') {
+      const o = await choose('🏠 成家立業派', '房貸、孩子的才藝班、雙方父母⋯⋯你已經三個月沒有自己的時間了。', [
+        { text: '再撐一下，等孩子大一點', fx: { gold: 5, fam: -4 }, note: '孩子大一點了，你也老一點了。' },
+        { text: '跟另一半說好，每月各放一天假', fx: { fam: 8, tian: 3 }, note: '放假那天你什麼都沒做，覺得好幸福。' },
+      ]);
+      apply(o.fx, o.note);
+    }
+    const o = await choose('😤 為了小事大吵一架', '你和家人誰也不肯先低頭。', [
+      { text: '冷戰到底，我又沒錯', fx: { fam: -12 }, note: '「脾氣毛病的倔強　帶不回天堂」' },
+      { text: '先傳一個貼圖', fx: { fam: 8, tian: 3 }, note: '對方回了一個一樣的貼圖。' },
+      { text: '吵完一起去吃宵夜', fx: { fam: 10, gold: -2 }, note: '鹽酥雞吃完，誰也忘了在吵什麼。' },
+    ]);
+    apply(o.fx, o.note);
+    if (Math.random() < .7) await line(36, '鄰居阿伯經過，丟下一句：「雄班某營歸剛，哈班某妹丁當。」你聽不太懂，但覺得很有道理。');
+    await invite(2, { text: '💑 去參加聯誼', small: '好好愛一下', fx: { fam: 5, gold: -3 }, note: '你遇到一個很好的人，聊了三小時，都在聊前任。' });
+    if (S.visits) await line(37, `05/29 戶外聯誼，${S.mates[1]}帶了野餐墊，大家在草地上躺成一排。`);
+    // 08/28 新道親法會
+    const f = await choose('🌱 新道親法會缺志工', '班長在群組問：「8/28 法會，有人可以來幫忙嗎？」', [
+      { text: '我來！', fx: { tian: 10, badge: '人才是' }, note: '你在法會當了一天小天使，新朋友說謝謝的時候，你比他還開心。', vol: true },
+      { text: '那天要加班', fx: { gold: 6 }, note: '加班費入帳。群組裡大家貼了法會的照片，看起來很開心。' },
+    ]);
+    if (f.vol) S.flags.volunteer = true;
+    apply(f.fx, f.note);
+    apply({ gold: 6 }, '這幾年的薪水入帳。');
+  }
+
+  async function ch4() {
+    const t = THEMES[3];
+    chapter(`第四章・${t.name}｜${t.sub}`);
+    await line(38, `第四章・${t.name}`, 'big');
+    if (S.persona.id === 'drift') await line(38, '你換了第 5 份工作，履歷自傳越寫越短。');
+    if (S.persona.id === 'forgot') await line(38, '整理抽屜，翻到當年的求道卡。你盯著看了很久。');
+    if (S.flags.debt) {
+      await line(39, '當年借你 500 元的同學，成了你的新主管。<b>（業力回力鏢命中）</b>');
+      const d = await choose('🪃 業力回力鏢', '<span style="color:var(--gold)">「就算再不想　欠的　也不能不還」</span>', [
+        { text: '馬上還 1000 元，再請吃一頓', fx: { gold: -3, tian: 4, fam: 2 }, note: '主管笑說：「利息算你便宜。」' },
+        { text: '裝作不記得', fx: { tian: -6 }, note: '你的考績，剛好少了一點點。' },
+      ]);
+      apply(d.fx, d.note);
+    }
+    const card4 = pick([
+      ['公司組織重整，你被資遣了。', { gold: -15 }],
+      ['健檢報告，紅字三項。', { fam: -3 }],
+      ['一位老朋友突然離開了。', { tian: -2 }],
+    ]);
+    await line(40, `🃏 無常卡：${card4[0]}`);
+    apply({ ...card4[1], badge: '這無常' });
+    await line(null, '脫下了這身　皮囊　終究要歸返', 'lyric');
+    const opts = [
+      { text: '怨天尤人，躲進手機裡', fx: { tian: -5, fam: -5 }, note: '螢幕使用時間：一天 9 小時。' },
+      { text: '接受它，一步一步來', fx: { tian: 6, badge: '別感傷' }, note: '別感傷——無常，也是一種提醒。' },
+    ];
+    opts.push(S.mates.length
+      ? { text: `打給同行夥伴${S.mates[2]}`, fx: { tian: 5, fam: 6, badge: '別感傷' }, note: `${S.mates[2]}什麼都沒說，只說：「我現在過去。」` }
+      : { text: '打給很久沒聯絡的老朋友', fx: { fam: 4 }, note: '電話響了很久，沒人接。' });
+    const o = await choose('🌧️ 人生卡關了', '你會怎麼辦？', opts);
+    apply(o.fx, o.note);
+    await invite(3, { text: '🛌 在家耍廢，什麼都不想', small: '先重開機再說', fx: { fam: 2 }, note: '睡了一整天，醒來還是一樣的問題。' });
+    if (S.visits >= 2) await line(41, '10/30 戶外聯誼，大家騎腳踏車，你騎在最後面，有人一直回頭等你。');
+    apply({ gold: 6 }, '這幾年的薪水入帳。');
+  }
+
+  async function ch5() {
+    const t = THEMES[4];
+    chapter(`第五章・${t.name}｜${t.sub}`);
+    await line(42, `第五章・${t.name}`, 'big');
+    if (S.persona.id === 'abroad') await line(42, '你在國外住了十年。某天在超市聽到有人講台語，差點哭出來。');
+    const o = await choose('✈️ 外派兩年', '公司問你：要不要外派兩年？', [
+      { text: '去！順便在當地找佛堂、開荒', fx: { gold: 12, tian: 10, fam: -4, badge: '能擔當' }, note: '「出國可開荒」——你在異鄉，也找到了回家的路。' },
+      { text: '去，專心衝業績', fx: { gold: 18, fam: -8 }, note: '業績第一名。視訊裡的家人，好像又老了一點。' },
+      { text: '留下來陪家人', fx: { fam: 10, gold: -4 }, note: '你沒看到世界，但看到了爸媽的每一個生日。' },
+    ]);
+    apply(o.fx, o.note);
+    await invite(4, { text: '🏝️ 出國旅遊一週', small: '世界這麼大', fx: { fam: 4, gold: -8 }, note: '你在海邊看夕陽，想起小時候在佛堂聞到的檀香。' });
+    if (S.visits >= 3) {
+      const d = await choose('🏮 學長問你', '「你願不願意扛下佛堂的班務？每個月去家訪幾位道親。」<br><span style="color:var(--gold)">「扛下了佛堂　要熱情真心去家訪」</span>', [
+        { text: '我來扛！', fx: { tian: 12, gold: -3, badge: ['能擔當', '人才是'] }, note: '家訪的路上很累，回程的路上很輕。' },
+        { text: '我再想想', fx: {}, note: '學長說：「沒關係，佛堂一直都在。」' },
+      ]);
+      apply(d.fx, d.note);
+    }
+    apply({ gold: 6 }, '這幾年的薪水入帳。');
+  }
+
+  async function finale() {
+    const t = THEMES[5];
+    chapter(`終章・${t.name}｜${t.sub}`);
+    await line(46, `終章・${t.name}`, 'big');
+    await line(46, '人生不是交作業。接下來的日子，照你這一路的選擇慢慢走。');
+    await line(50, S.gold >= 55 ? '你的存款數字很漂亮，你常常一個人看。' : '錢不算多，但週末的餐桌總是很擠。');
+    await line(55, S.fam >= 55 ? '姪子帶著另一半回家吃飯，說你是他最想變成的大人。' : '家族群組裡，你已讀的訊息比回覆的多。');
+    await line(60, S.tian >= 45 ? '你帶的學弟妹，現在也在帶新人了。' : '偶爾路過佛堂，聞到檀香，你的腳步停了一下。');
+    if (S.flags.fastcar) await line(65, '那台飛車跑車，現在在二手車行，標價是當年的零頭。');
+    if (S.visits >= 2) {
+      await line(62, '濟公老師說：<b>「入我門者不貧。」</b>這些年，你的日子一直都夠用，心裡也不缺什麼。');
+      apply({ gold: 8 });
+    }
+    if (S.excuses >= 2) await line(68, `你說過的「${S.persona.excuse}」，加起來有 ${S.excuses} 次。`);
+    let death = rand(76, 90) + (S.fam >= 60 ? 2 : 0);
+    if (Math.random() < .12) death = rand(58, 70);
+    await line(death, '脫下了這身皮囊，終究要歸返。', 'big');
+    S.age = death;
+    await line(null, '就在百年後消散隨風飄蕩', 'lyric');
+  }
+
+  // ───────── 結局 ─────────
+  function judge() {
+    const { gold: g, tian: t, fam: f } = S;
+    if (g >= 40 && t >= 50 && f >= 50) return 'true';
+    if (g >= 55 && t < 30) return 'tycoon';
+    if (t >= 55 && f < 45) return 'resident';
+    if (g < 35 && t < 35 && f < 45) return 'drift';
+    return 'gate';
+  }
+  const ENDINGS = {
+    true: { em: '🌟', title: '聖凡兼修・了愿返鄉', lyric: '我立下志向　赴約龍華會上<br>了愿返鄉的盼望　在修辦日常',
+      desc: '你沒有放下世間，你把世間過成了修行。仙衣發著光，母娘在門口等你。' },
+    tycoon: { em: '🏎️', title: '飛車跑車大亨', lyric: '多少人拋棄了修行<br>掙下金幣　終會轉移',
+      desc: '你開著飛車跑車來到南天門，門口立著一塊牌子：「車輛禁止進入」。金幣在門口一枚一枚化成了風。' },
+    resident: { em: '🏮', title: '佛堂常駐・家裡等門', lyric: '扛下了佛堂　要熱情真心去家訪',
+      desc: '佛堂的事你都扛下了，家裡的燈卻常常等你到很晚。母娘笑著說：「孩子，把家顧好，也是修行喔。」' },
+    gate: { em: '🙏', title: '南天門外', lyric: '徒跪在南天門外落下淚<br>祈求老師啊　帶我回家',
+      desc: '差一點點。你想起很多次「下次再說」。老師沒有放棄你——這一次，換真的你來選。' },
+    drift: { em: '🌊', title: '漂流到底', lyric: '本有遠大的理想<br>但世事無常',
+      desc: '你漂了一輩子，還沒想起家在哪裡。沒關係，回家的路一直都在。' },
+  };
+
+  async function showEnding() {
+    $('sheet').classList.remove('open');
+    const key = judge();
+    if (key === 'true') S.badges.add('老母娘');
+    const E = ENDINGS[key];
+    const c = loadCollect();
+    c.plays++;
+    for (const [list, v] of [[c.endings, key], [c.personas, S.persona.id], ...[...S.badges].map(b => [c.badges, b])]) if (!list.includes(v)) list.push(v);
+    saveCollect(c);
+
+    const el = $('ending');
+    el.innerHTML = `
+      <div class="end-card">
+        <div class="em">${E.em}</div>
+        <p class="kicker">${S.persona.em} ${S.persona.name}・享年 ${S.age} 歲・回佛堂 ${S.visits} 次</p>
+        <h2>${E.title}</h2>
+        <div class="lyric">${E.lyric}</div>
+        <p class="desc">${E.desc}</p>
+        <div class="sum">
+          <div><b id="eGold">${S.gold}</b><small>🪙 金幣</small></div>
+          <div><b>${S.tian}</b><small>✨ 天幣</small></div>
+          <div><b>${S.fam}</b><small>❤️ 家人</small></div>
+        </div>
+        <p class="hint" id="eNote" style="color:var(--muted);font-size:.85rem"></p>
+      </div>
+      <div class="sec">
+        <h3>🏅 心法徽章 ${S.badges.size} / 8</h3>
+        <div class="badges">${BADGES.map(b => `<div class="${S.badges.has(b.id) ? 'got' : ''}" title="${b.how}">${b.id}</div>`).join('')}</div>
+        <p class="hint" style="color:var(--muted);font-size:.8rem;margin:10px 0 0">結局收集 ${c.endings.length} / 5・劇本卡 ${c.personas.length} / 6・這台裝置共下凡 ${c.plays} 次</p>
+      </div>
+      <div class="sec">
+        <h3>🍃 這一次，換真的你來選</h3>
+        <p style="color:var(--ink-soft);line-height:1.8;margin:0">遊戲裡的六個章節，就是 <b>2027 全真社青班</b> 的六場專題。<br>每月給自己一天，我們一起把日子過成修行，把修行過成日子。</p>
+        <div class="themes">${THEMES.map(t => `<div><b>${t.date}</b><span>${t.name}｜${t.sub}</span></div>`).join('')}</div>
+        <div class="stack">
+          <a class="btn green" href="${CAL}" target="_blank" rel="noopener">📅 訂閱全真社青 2027 行事曆</a>
+          <a class="btn" href="../index.html">🌿 認識社青班</a>
+          <button class="btn gold" type="button" id="shareBtn">🤝 揪一位夥伴一起回鄉</button>
+        </div>
+      </div>
+      <div class="sec stack">
+        <button class="btn ghost" type="button" id="againBtn">🔁 再下凡一次</button>
+        <a class="btn ghost" href="fahui-angel-25d.html">🎮 也玩玩看：法會小天使</a>
+      </div>`;
+    el.hidden = false;
+    el.scrollTop = 0;
+
+    // 金幣帶不走：數字慢慢歸零
+    let g = S.gold;
+    const gEl = el.querySelector('#eGold');
+    setTimeout(function drain() {
+      if (g <= 0) { gEl.textContent = '0'; el.querySelector('#eNote').textContent = '金幣歸零，帶不走；天幣留下，化成仙衣的光。'; return; }
+      g = Math.max(0, g - Math.ceil(S.gold / 20)); gEl.textContent = g; setTimeout(drain, 60);
+    }, 1200);
+
+    el.querySelector('#againBtn').onclick = start;
+    el.querySelector('#shareBtn').onclick = async () => {
+      const text = `我在《褪下仙衣：八十億分之一》抽到「${S.persona.name}」，活成了「${E.title}」。你呢？夥伴們快跟上！`;
+      const url = SITE + 'game/xianyi.html';
+      try {
+        if (navigator.share) return await navigator.share({ title: '褪下仙衣：八十億分之一', text, url });
+      } catch (e) { if (e.name === 'AbortError') return; }
+      try { await navigator.clipboard.writeText(text + '\n' + url); toast('已複製，貼到 LINE 揪夥伴吧！'); }
+      catch (e) { window.open('https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text), '_blank', 'noopener'); }
+    };
+  }
+
+  // ───────── 主流程 ─────────
+  async function start() {
+    S = newState();
+    $('ending').hidden = true;
+    $('title').hidden = true;
+    feed.innerHTML = '';
+    chapter('');
+    $('game').hidden = false;
+    hud();
+    await prologue();
+    await gacha();
+    await childhood();
+    await drawPersona();
+    await line(null, '下凡治理卻迷航　都變了個樣', 'lyric');
+    await ch1(); await ch2(); await ch3(); await ch4(); await ch5();
+    await finale();
+    await showEnding();
+  }
+
+  $('speedBtn').onclick = () => { fast = !fast; $('speedBtn').classList.toggle('on', fast); };
+  $('startBtn').onclick = start;
+  const c = loadCollect();
+  if (c.plays) $('collect').textContent = `結局收集 ${c.endings.length} / 5・心法徽章 ${c.badges.length} / 8・劇本卡 ${c.personas.length} / 6`;
+})();
+</script>
+</body>
+</html>
