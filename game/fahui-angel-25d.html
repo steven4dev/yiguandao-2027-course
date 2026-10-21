@@ -4,900 +4,2502 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<meta name="description" content="法會小天使 2.5D 試玩版：教室與入口。">
+<meta name="description" content="法會小天使 2.5D 版：在模型屋裡照顧新朋友。">
 <title>法會小天使 2.5D</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap">
+<script src="qrcode.js"></script>
 <style>
-  /* 2.5D 試玩版：等角模型屋（教室＋入口）。單一亮色主題，與風格樣張同一套粉彩色。 */
+  /* Layout: one-screen portrait game — HUD on top, tiled hall in the middle, hand slot + hint at the bottom. Single light theme on purpose (matches the course site's meadow palette). */
   :root {
-    --bg: #F4EFE6;
-    --ink: #4A3B2F;
-    --muted: #8A7868;
-    --card: #FFFDF8;
-    --green: #5FAF84;
-    --green-soft: #DDF0E4;
-    --gold: #E4A23B;
-    --gold-soft: #FFF1D2;
-    --line: #E6DCCB;
-    --round: "Huninn", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    --bg: #EEF7F2;
+    --ink: #1E293B;
+    --ink-soft: #475569;
+    --muted: #64748B;
+    --card: #FFFFFF;
+    --green: #059669;
+    --green-soft: #D1FAE5;
+    --blue: #0284C7;
+    --gold: #D97706;
+    --gold-soft: #FEF3C7;
+    --pink: #E11D74;
+    --line: #CFE3D8;
+    --serif: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+    --sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
     color-scheme: light;
   }
   [hidden] { display: none !important; }
   html, body { height: 100%; margin: 0; }
   body {
-    background: var(--bg); color: var(--ink); font-family: var(--round);
-    display: flex; flex-direction: column; height: 100dvh; overflow: hidden;
-    -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 10% 0%, rgba(56,189,248,.16), transparent 45%),
+      radial-gradient(circle at 95% 100%, rgba(251,191,36,.14), transparent 50%);
+    color: var(--ink);
+    font-family: var(--sans);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    overflow: hidden;
   }
-  .hud { display: flex; align-items: center; gap: 8px; padding: calc(10px + env(safe-area-inset-top)) 14px 6px; }
-  .hud h1 { margin: 0; font-size: 1.2rem; font-weight: 400; flex: 1; line-height: 1.25; }
-  .hud h1 small { display: block; font-size: .75rem; color: var(--muted); }
-  .chip {
-    border: 2px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px;
-    padding: 5px 12px; font: 1rem var(--round); white-space: nowrap; font-variant-numeric: tabular-nums;
+  #app {
+    position: relative;
+    height: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 10px;
+    box-sizing: border-box;
   }
-  button.chip { cursor: pointer; }
-  #wrap { flex: 1; position: relative; min-height: 0; overflow: hidden; }
-  #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-  .msg {
-    margin: 0 12px calc(12px + env(safe-area-inset-bottom)); background: var(--card); border: 2px solid var(--line);
-    border-radius: 16px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; min-height: 2.8em;
+  body.wide #app { max-width: 1200px; }
+  @media (max-width: 520px) {
+    #app { padding-left: max(10px, env(safe-area-inset-left, 0px)); padding-right: max(10px, env(safe-area-inset-right, 0px)); gap: 6px; padding-block: 8px; }
+    canvas { border-radius: 10px; }
   }
-  .msg p { margin: 0; flex: 1; font-size: .98rem; line-height: 1.5; }
-  #hand { font-size: 1.4rem; width: 2.2rem; height: 2.2rem; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--gold-soft); border: 2px dashed var(--gold); }
-  .overlay {
-    position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; z-index: 10;
-    background: rgba(244,239,230,.82); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+  .hud { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+  .eyebrow { font-size: .72rem; font-weight: 700; letter-spacing: .08em; color: var(--green); }
+  h1 { margin: 0; font-family: var(--serif); font-weight: 900; font-size: 1.45rem; line-height: 1.2; letter-spacing: .04em; text-wrap: balance; }
+  .stats { text-align: right; display: grid; gap: 4px; flex: none; white-space: nowrap; }
+  #wave { font-size: .8rem; font-weight: 700; color: var(--blue); }
+  .warm { display: flex; align-items: center; gap: 6px; justify-content: flex-end; font-size: .72rem; color: var(--muted); font-weight: 700; }
+  #hearts { display: inline-flex; align-items: center; gap: 4px; font-size: .95rem; font-weight: 900; color: var(--pink); font-variant-numeric: tabular-nums; line-height: 1; }
+  #hearts small { font-size: .72rem; color: var(--muted); font-weight: 700; }
+  #hearts.bump { animation: bump .45s ease-out; }
+  @keyframes bump { 40% { transform: scale(1.3); } }
+
+  #stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; }
+  /* 2.5D：畫布填滿整個舞台，畫面大小隨舞台（含手機轉向）重新計算，不會被拉扁 */
+  #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; }
+  .mapbtn {
+    position: absolute; top: 8px; right: 8px; z-index: 2; border: 2px solid var(--line); background: rgba(255,255,255,.92);
+    border-radius: 999px; padding: 5px 12px; font: 700 .85rem var(--sans); color: var(--ink); cursor: pointer;
   }
-  .card {
-    width: min(400px, 100%); box-sizing: border-box; background: var(--card); border-radius: 24px; padding: 22px 20px; text-align: center;
-    border: 2px solid var(--line); box-shadow: 0 14px 40px rgba(120,90,60,.18);
+  /* 手機橫放：高度很矮，標題與下方列縮小，地圖可以用滿整個寬度 */
+  @media (orientation: landscape) and (max-height: 520px) {
+    #app { max-width: none; gap: 4px; padding-block: 4px; }
+    .eyebrow { display: none; }
+    h1 { font-size: 1.05rem; }
+    .bar { min-height: 0; }
+    .msg { height: 46px; }
+    #hand { width: 56px; padding: 3px; }
+    #hand .em { font-size: 1.1rem; }
+    #sound { width: 38px; height: 38px; }
   }
-  .card h2 { font-weight: 400; font-size: 1.55rem; margin: 4px 0 8px; }
-  .card p { line-height: 1.6; margin: 6px 0; }
-  .card ul { text-align: left; padding-left: 1.3em; margin: 10px 0 14px; line-height: 1.75; }
-  .tag { display: inline-block; background: var(--gold-soft); color: #B07419; border-radius: 999px; padding: 2px 12px; font-size: .85rem; }
-  .big { font-size: 2.6rem; }
+  canvas { display: block; border-radius: 14px; box-shadow: 0 10px 30px rgba(5,150,105,.12), 0 0 0 1px var(--line); touch-action: none; cursor: pointer; max-width: 100%; }
+  /* 對話出現在下方提示列（暫時蓋住提示），不佔地圖空間、也不會擋住入口 */
+  .msg { position: relative; flex: 1; min-width: 0; height: 66px; display: flex; align-items: center; }
+  #say {
+    position: absolute; inset: 0; display: flex; align-items: center; box-sizing: border-box;
+    background: var(--card); color: var(--ink);
+    border: 1.5px solid var(--green); border-radius: 12px;
+    padding: 4px 10px; font-size: .84rem; line-height: 1.45; overflow: hidden;
+    pointer-events: none; animation: sayIn .18s ease-out;
+  }
+  #say > span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  @keyframes sayIn { from { transform: translateY(4px); opacity: 0; } to { transform: none; opacity: 1; } }
+  #say b { color: var(--green); margin-right: 6px; }
+  #banner {
+    position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
+  }
+  #banner div {
+    background: rgba(255,255,255,.95); border-radius: 16px; padding: 14px 22px; text-align: center;
+    box-shadow: 0 12px 30px rgba(30,41,59,.18); border: 2px solid var(--gold);
+    animation: pop .35s ease-out;
+  }
+  #banner small { display: block; font-size: .75rem; font-weight: 700; color: var(--gold); letter-spacing: .1em; }
+  #banner strong { font-family: var(--serif); font-size: 1.4rem; }
+  @keyframes pop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .bar { display: flex; align-items: center; gap: 10px; min-height: 52px; }
+  #hand {
+    flex: none; display: grid; justify-items: center; gap: 0;
+    width: 64px; padding: 6px 4px; border-radius: 12px;
+    background: var(--gold-soft); border: 2px solid var(--gold); color: var(--ink);
+    font: inherit; font-size: .68rem; font-weight: 700; cursor: pointer;
+  }
+  #hand .em { font-size: 1.35rem; line-height: 1.2; min-height: 1.35em; }
+  #hand:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  #sound {
+    flex: none; width: 44px; height: 44px; border-radius: 50%; margin-left: auto;
+    border: 2px solid var(--line); background: var(--card); font-size: 1.2rem; cursor: pointer;
+  }
+  #sound[aria-pressed="false"] { opacity: .55; }
+  #hint { margin: 0; flex: 1; font-size: .85rem; line-height: 1.5; color: var(--ink-soft); min-width: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+  .sheet {
+    position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); bottom: 74px;
+    background: var(--card); border-radius: 16px; padding: 14px; border: 2px solid var(--green);
+    box-shadow: 0 14px 34px rgba(30,41,59,.2); display: grid; gap: 10px; z-index: 5;
+  }
+  .sheet p { margin: 0; font-weight: 700; }
+  .sheet .row { display: flex; gap: 8px; flex-wrap: wrap; }
   .btn {
-    display: block; width: 100%; box-sizing: border-box; margin-top: 10px; padding: 12px; border-radius: 16px; text-decoration: none;
-    border: 2px solid var(--green); background: var(--green-soft); color: var(--ink); font: 1.05rem var(--round); cursor: pointer;
+    font: inherit; font-weight: 700; font-size: .95rem; border-radius: 12px; padding: 10px 14px; cursor: pointer;
+    border: 2px solid var(--green); background: var(--green-soft); color: var(--ink);
   }
   .btn.primary { background: var(--green); color: #fff; }
   .btn.ghost { background: transparent; border-color: var(--line); color: var(--muted); }
-  .note { color: var(--muted); font-size: .88rem; }
+
+  .overlay {
+    position: fixed; inset: 0; z-index: 10; display: grid; place-items: center;
+    background: rgba(238,247,242,.86); backdrop-filter: blur(4px);
+    padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    overflow-y: auto;
+  }
+  .card {
+    width: min(440px, 100%); background: var(--card); border-radius: 20px; padding: 22px 20px;
+    box-shadow: 0 20px 50px rgba(5,150,105,.18); border: 1px solid var(--line);
+    display: grid; gap: 14px;
+  }
+  .card h2 { margin: 0; font-family: var(--serif); font-size: 1.6rem; font-weight: 900; text-wrap: balance; }
+  .card .lead { margin: 0; color: var(--ink-soft); line-height: 1.7; }
+  .card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .card li { display: grid; grid-template-columns: 1.8em 1fr; gap: 6px; line-height: 1.55; font-size: .92rem; }
+  .card .event { background: var(--gold-soft); border-radius: 12px; padding: 10px 12px; font-size: .88rem; line-height: 1.6; }
+  .card .event b { color: var(--gold); }
+  .card .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .card .actions a { text-decoration: none; display: inline-block; }
+  .stat { font-size: 2rem; font-weight: 900; color: var(--green); font-variant-numeric: tabular-nums; }
+  .quote { font-family: var(--serif); font-size: 1.1rem; line-height: 1.7; margin: 0; }
+  .tiny { font-size: .75rem; color: var(--muted); margin: 0; }
+  /* 結算畫面 */
+  .overlay.end { place-items: start center; background: rgba(238,247,242,.94); }
+  .end-wrap { width: min(440px, 100%); display: grid; gap: 14px; position: relative; z-index: 1; padding-bottom: 8px; }
+  .end-head { text-align: center; display: grid; gap: 4px; }
+  .end-head h2 { margin: 0; font-family: var(--serif); font-size: 1.45rem; font-weight: 900; text-wrap: balance; line-height: 1.4; }
+  .end-head .eyebrow { color: var(--gold); }
+  .end-title { margin: 0; font-weight: 900; color: var(--gold); letter-spacing: .04em; }
+  .end-steps { margin: 0; font-size: .85rem; line-height: 1.6; color: var(--ink-soft); }
+  .result { margin: 0; display: grid; gap: 6px; justify-items: center; }
+  .result img {
+    width: 100%; max-width: 100%; aspect-ratio: 4 / 5; border-radius: 18px; display: block;
+    background: linear-gradient(180deg, #DCEFFB, #EEF7F2 55%, #FDF3D8);
+    box-shadow: 0 18px 40px rgba(5,150,105,.2), 0 0 0 1px var(--line);
+    animation: rise .7s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes rise { from { transform: translateY(18px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+  /* 翻頁式說明：一頁一件事 */
+  .tour { gap: 12px; padding: 16px 18px 14px; width: min(460px, 100%); }
+  @media (pointer: fine) and (hover: hover) { .tour { width: min(520px, 100%); } }
+  .tour-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .linkbtn { font: inherit; font-size: .82rem; font-weight: 700; color: var(--muted); background: none; border: 0; padding: 6px 2px; cursor: pointer; }
+  .linkbtn:hover { color: var(--green); }
+  /* 跳過說明：跳動＋光暈閃爍，讓玩家一眼看出可以直接開始 */
+  .skip-btn {
+    font: inherit; font-size: .84rem; font-weight: 900; color: #fff; cursor: pointer; white-space: nowrap;
+    background: linear-gradient(135deg, #F59E0B, #EA580C); border: 0; border-radius: 99px; padding: 7px 14px;
+    box-shadow: 0 0 0 0 rgba(245,158,11,.7);
+    animation: skipHop 1.6s ease-in-out infinite, skipGlow 1.6s ease-out infinite;
+  }
+  .skip-btn:hover, .skip-btn:focus-visible { animation-play-state: paused; filter: brightness(1.08); }
+  .skip-btn:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  @keyframes skipHop {
+    0%, 55%, 100% { transform: translateY(0) scale(1); }
+    15% { transform: translateY(-6px) scale(1.06); }
+    30% { transform: translateY(0) scale(.98); }
+    42% { transform: translateY(-3px) scale(1.03); }
+  }
+  @keyframes skipGlow {
+    0% { box-shadow: 0 0 0 0 rgba(245,158,11,.75); }
+    70% { box-shadow: 0 0 0 12px rgba(245,158,11,0); }
+    100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .skip-btn { animation: skipGlow 2.4s ease-out infinite; } }
+  .tour-view { overflow: hidden; margin: 0 -18px; touch-action: pan-y; }
+  .tour-track { display: flex; transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+  .tpage { flex: 0 0 100%; box-sizing: border-box; padding: 0 18px; display: grid; gap: 10px; align-content: start; }
+  .tpage h2 { font-size: 1.35rem; }
+  .tpage .lead { font-size: .95rem; }
+  .tip { margin: 0; font-size: .82rem; line-height: 1.6; color: var(--ink-soft); background: var(--bg); border-radius: 10px; padding: 8px 10px; }
+  .ill { min-height: 132px; border-radius: 16px; padding: 30px 10px 14px; box-sizing: border-box;
+    background: linear-gradient(160deg, #EAF4FB, #ECF7F0 60%, #FDF3EA);
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 6px; }
+  .ill > span, .ill .only-touch, .ill .only-desk { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .who { position: relative; width: 46px; height: 46px; border-radius: 50%; background: #fff; border: 2px solid #94A3B8; display: inline-grid !important; place-items: center; font-size: 24px; flex: none; }
+  .who.me { border-color: var(--gold); background: var(--gold-soft); border-width: 3px; }
+  .who.staff { border-color: var(--green); background: var(--green-soft); border-width: 3px; }
+  .who.ring { box-shadow: 0 0 0 4px rgba(225,29,116,.35); }
+  .who.hide { opacity: .7; }
+  .who .bub { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #fff; border: 1.6px solid var(--blue); border-radius: 10px; padding: 1px 6px; font-size: 15px; line-height: 1.3; white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; animation: bob 2.4s ease-in-out infinite; }
+  .who .bub .tbar { display: inline-block; width: 22px; height: 5px; border-radius: 3px; background: linear-gradient(90deg, #10B981 60%, #E2E8F0 60%); }
+  .who .tag { position: absolute; top: calc(100% - 6px); left: 50%; transform: translateX(-50%); background: var(--gold); color: #fff; font-size: 10px; font-weight: 700; padding: 0 6px; border-radius: 99px; white-space: nowrap; line-height: 1.5; }
+  .who.staff .tag { background: var(--green); }
+  @keyframes bob { 50% { transform: translate(-50%, -3px); } }
+  .tile { position: relative; width: 52px; height: 52px; border-radius: 12px; background: #fff; border: 2px solid var(--c); display: inline-grid !important; place-items: center; font-size: 22px; padding-bottom: 10px; box-sizing: border-box; flex: none; }
+  .tile small { position: absolute; bottom: 2px; left: 0; right: 0; text-align: center; font-size: 9.5px; font-weight: 700; color: var(--c); white-space: nowrap; }
+  .arr { color: var(--muted); font-weight: 700; font-size: 1rem; }
+  .chip { background: #fff; border: 1.5px solid var(--line); border-radius: 99px; padding: 3px 9px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+  .stars5 { color: var(--gold); font-size: 1.05rem; letter-spacing: 1px; }
+  .stack { flex-direction: column; gap: 4px !important; }
+  .pair { width: 100%; }
+  .floor { width: 34px; height: 34px; border-radius: 8px; background: #E1EEF8; box-shadow: inset 0 0 0 2px #0284C7; }
+  .seat { width: 30px; height: 30px; border-radius: 6px; background: #E3C7A8; box-shadow: 0 0 0 4px rgba(52,211,153,.55); }
+  .wc-or { font-size: .72rem; color: var(--muted); font-weight: 700; }
+  .keys { display: inline-flex; gap: 4px; }
+  kbd { display: inline-grid; place-items: center; min-width: 30px; height: 30px; padding: 0 6px; border-radius: 7px; background: #fff; border: 1.5px solid #CBD5E1; border-bottom-width: 3px; font: 700 .85rem var(--sans); color: var(--ink); box-sizing: border-box; }
+  .or { font-size: .8rem; color: var(--muted); font-weight: 700; }
+  .only-desk { display: none !important; }
+  @media (pointer: fine) and (hover: hover) { .only-desk { display: inline-flex !important; } .only-touch { display: none !important; } }
+  .lead .only-desk, .tip .only-desk { display: none !important; }
+  @media (pointer: fine) and (hover: hover) { .lead .only-desk, .tip .only-desk { display: inline !important; } }
+  .lead .only-touch, .tip .only-touch { display: inline; }
+  .tour-nav { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; }
+  .tour-nav .btn { padding: 9px 14px; }
+  .tour-nav .btn[disabled] { visibility: hidden; }
+  .dots { display: flex; justify-content: center; flex-wrap: nowrap; gap: 4px; min-width: 0; }
+  .dots button { flex: none; width: 6px; height: 6px; padding: 0; border-radius: 50%; border: 0; background: #CBD5E1; cursor: pointer; }
+  .dots button[aria-selected="true"] { background: var(--green); width: 14px; border-radius: 99px; }
+  @media (prefers-reduced-motion: reduce) { .tour-track { transition: none; } .who .bub { animation: none; } }
+  .played { margin: 0; font-size: .85rem; font-weight: 700; color: var(--gold); }
+  .thanks { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 8px; }
+  .thanks h3 { margin: 0; font-family: var(--serif); font-size: 1.05rem; }
+  .thanks h3 small { font-family: var(--sans); font-size: .75rem; color: var(--muted); font-weight: 500; }
+  .thanks ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+  .thanks li { display: grid; grid-template-columns: 1.7em 1fr auto; gap: 8px; align-items: center; font-size: .9rem; line-height: 1.5; }
+  .thanks li .what { font-size: .95rem; opacity: .85; }
+  .share { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 10px; }
+  .share .btn { width: 100%; }
+  .share-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .share-main { display: grid; gap: 2px; justify-items: center; }
+  .share-main small { font-size: .74rem; font-weight: 500; opacity: .9; }
+  .sbtn {
+    display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 8px 6px;
+    border-radius: 12px; font: inherit; font-size: .88rem; font-weight: 700; cursor: pointer; text-decoration: none;
+    border: 2px solid var(--line); background: var(--card); color: var(--ink);
+  }
+  .sbtn.fb { background: #1877F2; border-color: #1877F2; color: #fff; }
+  .sbtn.line { background: #06C755; border-color: #06C755; color: #fff; }
+  .sbtn b { font-family: Arial, sans-serif; font-size: 1.05rem; }
+  #shareTip { line-height: 1.6; }
+  #shareTip.ok { color: var(--green); font-weight: 700; }
+  .end-wrap .event { background: var(--gold-soft); border-radius: 14px; padding: 12px 14px; font-size: .88rem; line-height: 1.65; }
+  .end-wrap .event b { color: var(--gold); }
+  .end-wrap .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .end-wrap .actions .btn { text-align: center; text-decoration: none; }
+  #switchBtn { grid-column: auto; }
+  .end-wrap .actions .home { grid-column: 1 / -1; font-size: 1.05rem; padding: 13px 14px; }
+  .event-link { display: inline-block; margin-top: 6px; font-weight: 700; color: var(--gold); text-decoration: none; }
+  .event-link:hover, .back-home:hover { text-decoration: underline; }
+  .back-home { justify-self: center; font-size: .85rem; font-weight: 700; color: var(--green); text-decoration: none; text-align: center; }
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .modes .btn { display: grid; gap: 2px; justify-items: center; padding: 12px 8px; }
+  .modes small { font-size: .72rem; font-weight: 500; opacity: .85; }
+  .overlay.save { z-index: 20; background: rgba(30,41,59,.55); place-items: start center; }
+  .save .card { gap: 10px; }
+  .save h2 { font-size: 1.3rem; }
+  #saveImg { width: min(240px, 100%); max-height: 46vh; object-fit: contain; justify-self: center; border-radius: 14px; box-shadow: 0 10px 24px rgba(30,41,59,.25); -webkit-touch-callout: default; }
+  .fmt { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--bg); padding: 4px; border-radius: 12px; }
+  .fmt button { font: inherit; font-weight: 700; font-size: .9rem; border: 0; border-radius: 9px; padding: 8px 6px; background: transparent; color: var(--muted); cursor: pointer; display: grid; gap: 1px; }
+  .fmt button small { font-size: .7rem; font-weight: 500; }
+  .fmt button.on { background: var(--card); color: var(--ink); box-shadow: 0 2px 6px rgba(30,41,59,.12); }
+  .step { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; align-items: center; }
+  .step[hidden] { display: none; }
+  .step .num { width: 30px; height: 30px; border-radius: 50%; background: var(--green); color: #fff; font-weight: 900; display: grid; place-items: center; }
+  .step b { display: block; font-size: .95rem; line-height: 1.4; }
+  .step small { display: block; font-size: .75rem; color: var(--muted); line-height: 1.5; }
+  .step .btn { padding: 9px 14px; white-space: nowrap; }
+  .step.done .num { background: var(--gold); }
+  #shareTextBox { width: 100%; box-sizing: border-box; font: inherit; font-size: .82rem; line-height: 1.5; padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); resize: none; }
+  /* 愛心從卡片前面飄下來（點不到，不會擋住按鈕） */
+  .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
+  .confetti span { position: absolute; top: -40px; font-size: 22px; animation: fall 3.2s ease-in forwards; opacity: 0; }
+  @keyframes fall {
+    0% { transform: translateY(0) rotate(0); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translateY(105vh) rotate(260deg); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { #banner div, .result img { animation: none; } .confetti { display: none; } }
 </style>
 </head>
 <body>
 
-<header class="hud">
-  <h1>法會小天使<small>2.5D 試玩版・教室＋入口</small></h1>
-  <span class="chip" id="hearts">❤️ 0／4</span>
-  <button class="chip" id="zoomBtn" aria-label="切換全景或近拍">🗺️</button>
-</header>
-<div id="wrap"><canvas id="cv" aria-label="等角視角的入口與教室"></canvas></div>
-<div class="msg">
-  <div id="hand" title="手上的東西">✋</div>
-  <p id="say" aria-live="polite">按「開始」走進會場。</p>
-</div>
+<div id="app">
+  <header class="hud">
+    <div>
+      <div class="eyebrow">08／28 新道親法會・志工陪伴・2.5D 版</div>
+      <h1>法會小天使</h1>
+    </div>
+    <div class="stats">
+      <div id="wave">準備中</div>
+      <div class="warm">溫暖值 <div id="hearts" aria-live="polite"></div></div>
+    </div>
+  </header>
 
-<div class="overlay" id="intro">
-  <div class="card">
-    <span class="tag">2.5D 試玩版</span>
-    <h2>走進法會的模型屋</h2>
-    <p>新朋友頭上冒出需求泡泡，一起照顧好他們，收集 4 顆愛心 ❤️</p>
-    <ul>
-      <li>點地板走路，點人或櫃子互動</li>
-      <li>電腦：方向鍵／WASD 走路，空白鍵互動</li>
-      <li>不知道下一步？點「公關學長」問問看</li>
-    </ul>
-    <button class="btn primary" id="startBtn">開始</button>
-    <a class="btn ghost" href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html">玩原版完整遊戲</a>
+  <div id="stage">
+    <canvas id="cv" aria-label="2.5D 法會會場，點地板移動，點人物或櫃子互動"></canvas>
+    <button id="zoomBtn" class="mapbtn" type="button" hidden>🔍 近拍</button>
+    <div id="banner" hidden></div>
   </div>
-</div>
 
-<div class="overlay" id="win" hidden>
-  <div class="card">
-    <div class="big">😇</div>
-    <h2>四顆愛心都收到了！</h2>
-    <p id="winText"></p>
-    <p class="note">這是 2.5D 試玩版，只有教室和入口。<br>其他區域會一區一區搬進來，一起期待吧！</p>
-    <button class="btn primary" id="againBtn">再玩一次</button>
-    <a class="btn" href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html">玩原版完整遊戲</a>
+  <footer class="bar">
+    <button id="hand" type="button" aria-label="手上的物品，點一下放下">
+      <span class="em" id="handEm"></span><span id="handName">空空的</span>
+    </button>
+    <div class="msg">
+      <p id="hint" aria-live="polite">點「開始服務」進入會場。</p>
+      <div id="say" aria-live="polite" hidden></div>
+    </div>
+    <button id="sound" type="button" aria-pressed="true" aria-label="背景音樂：開">🔊</button>
+  </footer>
+
+  <div id="choice" class="sheet" hidden>
+    <p id="choiceTitle"></p>
+    <div class="row" id="choiceRow"></div>
+  </div>
+
+  <div id="intro" class="overlay">
+    <div class="card tour" role="region" aria-roledescription="說明" aria-label="遊戲說明">
+      <div class="tour-top">
+        <span class="eyebrow">全真社青・法會小天使</span>
+        <button id="tourSkip" class="skip-btn" type="button">⏩ 跳過說明，直接開始</button>
+        <button id="tourAgain" class="linkbtn" type="button" hidden>📖 重看說明</button>
+      </div>
+      <div class="tour-view">
+        <div class="tour-track" id="tourTrack">
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="who ">👩<span class="bub">🧭</span></span><span class="who ">👨<span class="bub">👋</span></span><span class="who me">🙋<span class="tag">你</span></span><span class="who ">🧑<span class="bub">📝</span></span></div>
+          <h2>今天，我們一起當法會小天使</h2>
+          <p class="lead">新朋友第一次來參加法會，難免有點陌生。看到誰頭上冒出泡泡，就走過去幫他一把吧！</p>
+          <p class="tip">⏱ 一局約 3 分鐘　📱 手機、🖥 電腦都能玩</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="only-touch">👆 <span class="arr" aria-hidden="true">→</span><span class="floor"></span><span class="arr" aria-hidden="true">→</span><span class="who me">🙋<span class="tag">你</span></span></span><span class="only-desk"><span class="keys"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span><span class="or">或</span><span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></span></div>
+          <h2>怎麼走路</h2>
+          <p class="lead"><span class="only-touch">點一下地板，角色會自己走過去；點人或櫃子，走到旁邊就會互動。</span><span class="only-desk">用方向鍵或 WASD 走路，按住可以一直走；撞到人或櫃子就會互動，空白鍵也能和面前的人互動。</span></p>
+          <p class="tip"><span class="only-touch">也可以點畫面下方「手上」把東西放下。</span><span class="only-desk">選單可以按數字鍵選，M 開關音樂。</span></p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="who ">👨<span class="bub">📝</span></span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#0284C7">📚<small>文具櫃</small></span><span class="arr" aria-hidden="true">→</span><span class="who me">🙋📝<span class="tag">你</span></span><span class="arr" aria-hidden="true">→</span>❤️</div>
+          <h2>頭上的泡泡＝他需要的東西</h2>
+          <p class="lead">到對的櫃子拿東西，再送到他身邊，就完成一份心意 ❤️。</p>
+          <p class="tip">✋ 手上一次只能拿一樣；直接去拿別的，舊的會自動放回去。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="tile" style="--c:#059669">🧺<small>備品區 🔒</small></span><span class="arr back" aria-hidden="true">←</span><span class="chip">🔑</span><span class="arr back" aria-hidden="true">←</span><span class="who staff">👷<span class="tag">總務</span></span></div>
+          <h2>備品區要先拿鑰匙</h2>
+          <p class="lead">每一段時間開始，備品區都會重新上鎖。先找穿綠背心的<b>總務組學長</b>拿 🔑，再去打開備品區。</p>
+          <p class="tip">總務學長會在附近走動；點他一下，他會停下來等你。備品區有 🧥 外套、🥤 紙杯、🍬 咖啡糖。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="tile" style="--c:#059669">🥤<small>紙杯</small></span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#0D9488">🚰<small>飲水機</small></span><span class="arr" aria-hidden="true">→</span><span class="stack"><span class="chip">💧 溫水</span><span class="chip">♨️ 熱水</span><span class="chip">🍵 熱茶</span></span></div>
+          <h2>每種飲料都要先拿紙杯</h2>
+          <p class="lead">拿著紙杯到飲水機，可以選溫水、熱水或熱茶。</p>
+          <p class="tip">💧 口渴的人要<b>溫</b>的，給熱水會太燙；♨️ 胃不舒服的人要<b>熱</b>的，給溫水不夠暖。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="tile" style="--c:#059669">🥤<small>紙杯</small></span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#92400E">☕<small>咖啡機</small></span><span class="arr" aria-hidden="true">→</span><span class="chip">☕ 美式</span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#0EA5E9">🥛<small>冰箱</small></span><span class="arr" aria-hidden="true">→</span><span class="chip">☕🥛 拿鐵</span></div>
+          <h2>咖啡吧：美式和拿鐵</h2>
+          <p class="lead">紙杯到咖啡機就是美式；美式再到冰箱加鮮奶，就變成拿鐵（先裝鮮奶再加咖啡也可以）。</p>
+          <p class="tip">😪 想睡的朋友：給一杯美式，或備品區的 🍬 咖啡糖都可以。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="pair"><span class="who ">👩<span class="bub">🧭</span></span><span class="arr" aria-hidden="true">→</span><span class="who me">🙋<span class="tag">你</span></span><span class="arr" aria-hidden="true">→</span><span class="seat"></span></span><span class="pair"><span class="tile" style="--c:#DB2777">🚺<small>女廁</small></span><span class="wc-or">左下｜右下</span><span class="tile" style="--c:#2563EB">🚹<small>男廁</small></span></span></div>
+          <h2>帶路：找座位、去洗手間</h2>
+          <p class="lead">🧭 找座位、🚺🚹 想上洗手間的人，先走到他身邊讓他跟著你，再點發亮的空椅子或對的廁所。</p>
+          <p class="tip">女廁在<b>左下角</b>（粉色）、男廁在<b>右下角</b>（藍色），帶錯了他會提醒你。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="who ">👨<span class="bub">👋</span></span><span class="arr" aria-hidden="true">→</span><span class="chip">💬 吃過早餐了嗎？</span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#EA580C">🥟<small>餐點區</small></span><span class="chip">×2</span></div>
+          <h2>剛到的朋友，先打招呼</h2>
+          <p class="lead">走過去就會主動問候。如果他還沒吃早餐，到餐點區拿<b>兩顆</b>水煎包（點兩次）。</p>
+          <p class="tip">有人已經吃過了，會改成想喝溫水或喝咖啡，聽他怎麼說就好。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="pair"><span class="who ">🧑<span class="bub">😟</span></span><span class="who me ring">🙋<span class="tag">你</span></span></span><span class="pair"><span class="who hide">👤</span><span class="chip">角落…</span></span></div>
+          <h2>陪伴，和主動關心</h2>
+          <p class="lead">😟 緊張的人不用拿東西，站在他身邊<b>兩秒</b>陪他就好。有一位朋友會躲在角落、不會冒泡泡，要主動走近才會發現他。</p>
+          <p class="tip">每一次幫忙，結算時都會收到新朋友的心聲。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="who staff">👩‍💼<span class="tag">公關</span></span><span class="who staff">👷<span class="tag">總務</span></span><span class="who staff">👨‍🏫<span class="tag">輔導</span></span></div>
+          <h2>卡關了？找學長</h2>
+          <p class="lead"><b>公關組</b>告訴你現在最需要幫的是誰、怎麼做；<b>總務組</b>保管備品區鑰匙；<b>輔導組</b>知道角落的朋友在哪裡。</p>
+          <p class="tip">公關學長就在報到台旁邊，點報到台也能問他。</p>
+        </section>
+        <section class="tpage">
+          <div class="ill" aria-hidden="true"><span class="who ">👨<span class="bub"><span class="tbar"></span>💧</span></span><span class="arr" aria-hidden="true">→</span><span class="chip">⏱ 時間條跑完前完成</span><span class="arr" aria-hidden="true">→</span><span class="stars5">★★★★★</span></div>
+          <h2>選一個模式開始</h2>
+          <p class="lead"><b>挑戰模式</b>：泡泡上方有時間條，好幾位朋友會同時需要幫忙；來不及的話學長會先接手。完成越多星星越多，最高 ★★★★★，零失誤就是「全能小天使」🏆</p>
+          <p class="tiny" id="levelNote"></p>
+          <p class="played" id="playedIntro" hidden></p>
+          <div class="modes">
+            <button id="startBtn" class="btn primary" type="button">⏱ 挑戰模式<small>限時＋同時多人需要幫忙</small></button>
+            <button id="relaxBtn" class="btn" type="button">🌿 輕鬆模式<small>不限時，慢慢照顧</small></button>
+          </div>
+          <a class="back-home" href="https://steven4dev.github.io/yiguandao-2027-course/">← 回到社青班首頁，看看 2027 Life Design 探索地圖</a>
+        </section>
+        </div>
+      </div>
+      <div class="tour-nav">
+        <button id="tourPrev" class="btn ghost" type="button">‹ 上一步</button>
+        <div class="dots" id="tourDots" role="tablist" aria-label="說明頁"></div>
+        <button id="tourNext" class="btn primary" type="button">下一步 ›</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="saveSheet" class="overlay save" hidden>
+    <div class="card">
+      <h2>分享小天使卡，三個步驟</h2>
+      <p class="tiny" id="saveWhy"></p>
+      <div class="fmt" role="group" aria-label="卡片格式">
+        <button id="fmtPost" class="on" type="button" aria-pressed="true">動態貼文<small>FB・IG・LINE</small></button>
+        <button id="fmtStory" type="button" aria-pressed="false">限時動態<small>IG・FB 限動</small></button>
+      </div>
+      <img id="saveImg" alt="你的法會小天使卡（長按可儲存）">
+      <div class="step">
+        <span class="num">1</span>
+        <div><b>先複製貼文文字</b><small>臉書、IG 都不允許網站自動填入文字，要自己貼上</small></div>
+        <button id="copyShareText" class="btn" type="button">📋 複製</button>
+      </div>
+      <textarea id="shareTextBox" rows="3" readonly aria-label="要貼到臉書的文字"></textarea>
+      <div class="step" id="stepNative">
+        <span class="num">2</span>
+        <div><b>分享卡片圖片</b><small>在選單裡選 Facebook、Instagram 或 LINE，卡片會直接附上</small></div>
+        <button id="shareFileBtn" class="btn primary" type="button">📤 分享</button>
+      </div>
+      <div class="step" id="stepManual" hidden>
+        <span class="num">2</span>
+        <div><b>長按上面的卡片 → 儲存圖片</b><small>再打開臉書或 IG → 新增貼文／限動 → 附上剛存的卡片</small></div>
+      </div>
+      <div class="step">
+        <span class="num">3</span>
+        <div><b>長按文字框 →「貼上」</b><small>IG 限動可以加「連結」貼紙貼上網址；卡片上也有 QR Code，朋友掃了就能玩</small></div>
+      </div>
+      <button id="saveClose" class="btn ghost" type="button">完成，關閉</button>
+    </div>
+  </div>
+
+  <div id="end" class="overlay end" hidden>
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+    <div class="end-wrap">
+      <div class="end-head">
+        <p class="played" id="playedEnd" hidden></p>
+        <div class="eyebrow">✨ 服務圓滿</div>
+        <h2 id="endHead">謝謝你，今天的小天使</h2>
+        <p class="end-title" id="endTitle"></p>
+        <p class="end-steps" id="endSteps"></p>
+      </div>
+      <figure class="result">
+        <img id="resultImg" alt="你的法會小天使卡">
+        <figcaption class="tiny">長按或按右鍵，就能把這張卡片存下來</figcaption>
+      </figure>
+      <section class="thanks" id="thanksBox" hidden>
+        <h3>新朋友想對你說 <small id="thanksCount"></small></h3>
+        <ul id="thanksList"></ul>
+      </section>
+      <div class="share">
+        <button id="shareImg" class="btn primary share-main" type="button">📤 分享我的小天使卡<small>Facebook・Instagram・LINE 都可以</small></button>
+        <div class="share-row">
+          <a id="lineShare" class="sbtn line" href="#" target="_blank" rel="noopener">LINE 傳連結</a>
+          <button id="copyLink" class="sbtn" type="button">🔗 複製連結</button>
+        </div>
+        <p class="tiny" id="shareTip">分享出去的連結點開就能直接玩，邀朋友一起來當小天使。</p>
+      </div>
+      <div class="event">
+        <b>2027／08／28（六）新道親法會・志工陪伴體驗</b><br>
+        這一天，我們一起當新朋友身邊的那雙手。修行不只是為了自己，也在陪伴裡慢慢長進。
+        <a class="event-link" href="https://steven4dev.github.io/yiguandao-2027-course/#schedule">📅 看 2027 全年課程與活動 →</a>
+      </div>
+      <div class="actions">
+        <a class="btn primary home" href="https://steven4dev.github.io/yiguandao-2027-course/">🏠 回到社青班首頁</a>
+        <button id="againBtn" class="btn" type="button">🔁 再玩一次</button>
+        <button id="switchBtn" class="btn ghost" type="button">🌿 改玩輕鬆</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
 (() => {
-'use strict';
-const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), wrap = document.getElementById('wrap');
-const EMO = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
-const FONT = '"Huninn","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
-const INK = 'rgba(84,62,46,.55)';
-const WH = 2.4, HU = .52, M = .5;
+  const $ = s => document.querySelector(s);
+  const cv = $('#cv'), ctx = cv.getContext('2d');
+  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const EMOJI = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+  const SANS = '"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
 
-// ── 等角投影：x 往右下、y 往左下、h 往上
-let W = 0, H = 0, TW = 40, OX = 0, OY = 0, dpr = 1;
-let zoom = 1, zoomTo = 1, NEAR = 1.9, ISL = { x0: 0, x1: 0, y0: 0, y1: 0 };
-const iso = (gx, gy, h = 0) => [OX + (gx - gy) * TW / 2, OY + (gx + gy) * TW / 4 - h * HU * TW];
-function resize() {
-  const r = wrap.getBoundingClientRect(); W = r.width; H = r.height;
-  dpr = Math.min(window.devicePixelRatio || 1, 3);
-  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-  // 以 TW=1、原點 0 先量出整座小島的外框，再縮放置中
-  const pts = [[M, 10 - M, -1.1], [11 - M, M, -1.1], [.6, .6, 3.6], [1, 1, WH], [11 - M, 10 - M, -1.1]];
-  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
-  for (const [a, b, h] of pts) { const x = (a - b) / 2, y = (a + b) / 4 - h * HU; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
-  TW = Math.min((W - 20) / (x1 - x0), (H - 24) / (y1 - y0));
-  OX = W / 2 - (x0 + x1) / 2 * TW; OY = H / 2 - (y0 + y1) / 2 * TW;
-  ISL = { x0: OX + x0 * TW, x1: OX + x1 * TW, y0: OY + y0 * TW, y1: OY + y1 * TW };
-}
-
-// ── 顏色與基本形
-function mix(hex, f) {
-  const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = n >> 8 & 255, b = n & 255;
-  const t = f > 0 ? 255 : 40, a = Math.abs(f);
-  return `rgb(${Math.round(r + (t - r) * a)},${Math.round(g + (t - g) * a)},${Math.round(b + (t - b) * a)})`;
-}
-function poly(pts, fill, stroke, lw = 1) {
-  ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
-  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
-  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.stroke(); }
-}
-// 方塊：頂面最亮、左前面（朝 +y）中間、右前面（朝 +x）最暗
-function box(x0, x1, y0, y1, h0, h1, col, o = {}) {
-  const top = o.top || mix(col, .28), left = o.left || col, right = o.right || mix(col, -.16), line = o.line === undefined ? INK : o.line, lw = Math.max(1, TW * .018);
-  poly([iso(x0, y1, h0), iso(x1, y1, h0), iso(x1, y1, h1), iso(x0, y1, h1)], left, line, lw);
-  poly([iso(x1, y0, h0), iso(x1, y1, h0), iso(x1, y1, h1), iso(x1, y0, h1)], right, line, lw);
-  poly([iso(x0, y0, h1), iso(x1, y0, h1), iso(x1, y1, h1), iso(x0, y1, h1)], top, line, lw);
-}
-function softShadow(x, y, rx, ry, a = .22) {
-  const g = ctx.createRadialGradient(x, y, 0, x, y, rx);
-  g.addColorStop(0, `rgba(70,50,35,${a})`); g.addColorStop(1, 'rgba(70,50,35,0)');
-  ctx.save(); ctx.translate(x, y); ctx.scale(1, ry / rx); ctx.translate(-x, -y);
-  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, rx, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-}
-function rr(x, y, w, h, r) {
-  ctx.beginPath();
-  if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
-  else { ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-}
-function ell(x, y, rx, ry, fill, stroke, lw) {
-  ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
-  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
-  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
-}
-// 在牆面上寫字：plane 'y' 是平行 x 軸的牆（右後牆），'x' 是平行 y 軸的牆（左後牆，字從前往後寫）
-function onWall(plane, at, fn) {
-  const k = 40; ctx.save();
-  if (plane === 'y') { const o = iso(0, at, 0); ctx.transform(TW / 2 / k, TW / 4 / k, 0, HU * TW / k, o[0], o[1]); }
-  else { const o = iso(at, 10, 0); ctx.transform(TW / 2 / k, -TW / 4 / k, 0, HU * TW / k, o[0], o[1]); }
-  fn(k); ctx.restore();
-}
-function wallText(text, u, h, size, color) {
-  ctx.font = `${size}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = color; ctx.fillText(text, u, -h);
-}
-function pill(text, x, y, size, bg, fg = '#fff') {
-  ctx.font = `${size}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const w = ctx.measureText(text).width + size * 1.1, h = size * 1.55;
-  ctx.fillStyle = 'rgba(84,62,46,.18)'; rr(x - w / 2, y - h / 2 + 2, w, h, h / 2); ctx.fill();
-  ctx.fillStyle = bg; rr(x - w / 2, y - h / 2, w, h, h / 2); ctx.fill();
-  ctx.fillStyle = fg; ctx.fillText(text, x, y + size * .05);
-}
-
-// ── 場景
-const CHAIRS = [[2, 4], [5, 4], [8, 4], [2, 7], [5, 7], [8, 7]];
-const CUSHION = ['#9FD3B5', '#F6B8C4', '#A9CBEA'];
-function drawSky(t) {
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, '#DCEFF5'); g.addColorStop(.6, '#F3EFE4'); g.addColorStop(1, '#F6E9DA');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = 'rgba(255,255,255,.85)';
-  for (const [k, yy, s] of [[0, .14, 1], [.45, .3, .7], [.75, .1, .85]]) {
-    const x = ((k + t * .006) % 1.3 - .15) * W, y = yy * H, r = Math.max(W, H) * .035 * s;
-    ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.arc(x + r * 1.1, y - r * .4, r * 1.25, 0, 7); ctx.arc(x + r * 2.3, y, r * .9, 0, 7); ctx.fill();
-    ctx.fillRect(x, y, r * 2.3, r * .9);
-  }
-}
-function drawIsland() {
-  const [cx, cy] = iso(5.5, 5, -2.6);
-  softShadow(cx, cy, TW * 5.2, TW * 1.6, .16);
-  box(M, 11 - M, M, 10 - M, -1.1, -.18, '#C99B74', { top: '#C99B74', left: '#C99B74', right: '#B08360' });
-  box(M, 11 - M, M, 10 - M, -.18, 0, '#9ACD8C', { top: '#A9D89A', left: '#8DC27F', right: '#7DB271' });
-  // 土層裡的小石頭
-  for (const [a, b, h] of [[3, 10 - M, -.6], [6.5, 10 - M, -.8], [11 - M, 3, -.5], [11 - M, 7, -.75]]) {
-    const [x, y] = iso(a, b, h); ell(x, y, TW * .1, TW * .055, '#B08360');
-  }
-  // 草地上的小花
-  const fl = [[10.2, 2.5, '#F6B8C4'], [10.25, 4.4, '#FFF1A8'], [10.15, 6.8, '#F6B8C4'], [10.3, 8.6, '#FFFFFF'], [2.4, 9.25, '#FFF1A8'], [4.3, 9.2, '#FFFFFF'], [7.6, 9.3, '#F6B8C4'], [9.4, 9.2, '#FFF1A8'], [4.6, .7, '#F6B8C4'], [6.4, .75, '#FFF1A8']];
-  for (const [a, b, c] of fl) { const [x, y] = iso(a, b); for (let i = 0; i < 5; i++) ell(x + Math.cos(i * 1.26) * TW * .04, y + Math.sin(i * 1.26) * TW * .02, TW * .028, TW * .02, c); ell(x, y, TW * .02, TW * .015, '#F2C14E'); }
-  // 門外的踏腳石
-  for (const b of [.62, .86]) { const [x, y] = iso(5.5, b); ell(x, y, TW * .2, TW * .09, '#E8DCC8', INK, 1); }
-}
-function drawFloor() {
-  // 大廳磁磚
-  for (let x = 1; x < 10; x++) poly([iso(x, 1), iso(x + 1, 1), iso(x + 1, 2), iso(x, 2)], x % 2 ? '#F5EFE4' : '#ECE3D3', 'rgba(150,120,90,.25)');
-  // 教室木地板
-  poly([iso(1, 2), iso(10, 2), iso(10, 9), iso(1, 9)], '#EBCB9F');
-  ctx.strokeStyle = 'rgba(160,110,60,.28)'; ctx.lineWidth = 1;
-  for (let i = 0; i <= 21; i++) {
-    const gy = 2 + i / 3; ctx.beginPath(); ctx.moveTo(...iso(1, gy)); ctx.lineTo(...iso(10, gy)); ctx.stroke();
-    for (let gx = 1 + (i % 3) * .9; gx < 10; gx += 2.7) { if (gy >= 9) break; ctx.beginPath(); ctx.moveTo(...iso(gx, gy)); ctx.lineTo(...iso(gx, gy + 1 / 3)); ctx.stroke(); }
-  }
-  // 窗光
-  for (const [a, b] of [[2, 3.8], [7.2, 9]]) {
-    const g = ctx.createLinearGradient(...iso(a, 1), ...iso(a, 4));
-    g.addColorStop(0, 'rgba(255,250,230,.6)'); g.addColorStop(1, 'rgba(255,250,230,0)');
-    poly([iso(a, 1), iso(b, 1), iso(b + .9, 4), iso(a + .9, 4)], g);
-  }
-  // 迎賓地墊＋走道地毯
-  box(5.1, 5.9, 1.12, 1.9, 0, .03, '#E98FA5', { top: '#F2A7B9' });
-  box(3.15, 3.85, 2.3, 8.8, 0, .02, '#9FD3B5', { top: '#B5DEC6', line: 'rgba(84,62,46,.25)' });
-  box(6.15, 6.85, 2.3, 8.8, 0, .02, '#9FD3B5', { top: '#B5DEC6', line: 'rgba(84,62,46,.25)' });
-  // 牆角陰影
-  aoStrip('x'); aoStrip('y');
-}
-function aoStrip(axis) {
-  const g = axis === 'x' ? ctx.createLinearGradient(...iso(1, 5), ...iso(1.7, 5)) : ctx.createLinearGradient(...iso(5, 1), ...iso(5, 1.7));
-  g.addColorStop(0, 'rgba(90,60,35,.2)'); g.addColorStop(1, 'rgba(90,60,35,0)');
-  if (axis === 'x') poly([iso(1, 1), iso(1, 9), iso(1.7, 9), iso(1.7, 1)], g);
-  else poly([iso(1, 1), iso(10, 1), iso(10, 1.7), iso(1, 1.7)], g);
-}
-function drawTree(gx, gy, s, t) {
-  const [x, y] = iso(gx, gy); softShadow(x, y, TW * .6 * s, TW * .25 * s, .2);
-  box(gx - .07 * s, gx + .07 * s, gy - .07 * s, gy + .07 * s, 0, 1.6 * s, '#A87A55');
-  const sway = Math.sin(t * 1.2 + gx) * TW * .02;
-  const [cx, cy] = iso(gx, gy, 2.5 * s);
-  for (const [dx, dy, r, c] of [[-.32, .25, .42, '#7DB86F'], [.34, .22, .4, '#74AF67'], [0, -.2, .5, '#8CC77D'], [0, .3, .38, '#86C277']]) {
-    ell(cx + dx * TW * s + sway, cy + dy * TW * s, r * TW * s, r * TW * s * .92, c, INK, Math.max(1, TW * .018));
-  }
-  ell(cx - .12 * TW * s + sway, cy - .3 * TW * s, .16 * TW * s, .1 * TW * s, 'rgba(255,255,255,.35)');
-}
-function drawWalls() {
-  const wall = '#FFF7EA', side = '#F3E5CF', cap = '#E9D4B5';
-  // 左後牆（字和白板在這面）
-  box(.72, 1, .72, 9, 0, WH, wall, { left: side, right: wall, top: cap });
-  // 右後牆分三段，中間是門
-  const rw = { left: '#FBEFDC', right: side, top: cap };
-  box(1, 5.1, .72, 1, 0, WH, wall, rw);
-  box(5.9, 10, .72, 1, 0, WH, wall, rw);
-  box(5.1, 5.9, .72, 1, 1.62, WH, wall, rw);
-  // 門框
-  for (const [a, b] of [[5.02, 5.12], [5.88, 5.98]]) box(a, b, .98, 1.05, 0, 1.66, '#C9935F');
-  box(5.02, 5.98, .98, 1.05, 1.58, 1.68, '#C9935F');
-  // 牆裙
-  poly([iso(1, 9, 0), iso(1, 1, 0), iso(1, 1, .55), iso(1, 9, .55)], '#E7D2B2', INK, 1);
-  for (const [a, b] of [[1, 5.02], [5.98, 10]]) poly([iso(a, 1, 0), iso(b, 1, 0), iso(b, 1, .55), iso(a, 1, .55)], '#EBD7B8', INK, 1);
-  // 窗戶
-  for (const [a, b] of [[2, 3.8], [7.2, 9]]) {
-    const g = ctx.createLinearGradient(...iso(a, 1, 1.9), ...iso(a, 1, .85));
-    g.addColorStop(0, '#BFE3F2'); g.addColorStop(1, '#E4F4EC');
-    poly([iso(a, 1, .85), iso(b, 1, .85), iso(b, 1, 1.9), iso(a, 1, 1.9)], g, '#FFFFFF', Math.max(2, TW * .06));
-    const m = (a + b) / 2;
-    ctx.beginPath(); ctx.moveTo(...iso(m, 1, .85)); ctx.lineTo(...iso(m, 1, 1.9)); ctx.stroke();
-    poly([iso(a + .3, 1, 1.0), iso(a + .55, 1, 1.0), iso(a + .95, 1, 1.75), iso(a + .7, 1, 1.75)], 'rgba(255,255,255,.55)');
-    poly([iso(a - .05, 1, .78), iso(b + .05, 1, .78), iso(b + .05, 1, .85), iso(a - .05, 1, .85)], '#E9D4B5', INK, 1);
-  }
-  // 入口招牌
-  onWall('y', 1, k => {
-    ctx.fillStyle = '#5FAF84'; rr(4.65 * k, -2.28 * k, 1.7 * k, .5 * k, .25 * k); ctx.fill();
-    ctx.strokeStyle = '#4A9670'; ctx.lineWidth = .04 * k; ctx.stroke();
-    wallText('入口・歡迎', 5.5 * k, 2.03 * k, .3 * k, '#FFFFFF');
-  });
-  // 彩旗
-  ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(84,62,46,.45)';
-  const flags = ['#F6B8C4', '#FFE08A', '#9FD3B5', '#A9CBEA'];
-  for (const [a, b] of [[1.15, 4.95], [6.05, 9.85]]) {
-    const pt = u => { const gx = a + (b - a) * u; return iso(gx, 1, 2.15 - Math.sin(u * Math.PI) * .18); };
-    ctx.beginPath(); for (let i = 0; i <= 20; i++) { const p = pt(i / 20); i ? ctx.lineTo(...p) : ctx.moveTo(...p); } ctx.stroke();
-    for (let i = 1; i < 8; i++) {
-      const p0 = pt((i - .3) / 8), p1 = pt((i + .3) / 8), [mx, my] = pt(i / 8);
-      poly([p0, p1, [mx, my + HU * TW * .28]], flags[i % 4], 'rgba(84,62,46,.35)');
-    }
-  }
-  // 左牆白板
-  onWall('x', 1, k => {
-    // u = 從 y=10 往後量的距離
-    ctx.fillStyle = '#C9935F'; rr(3 * k, -1.95 * k, 4 * k, 1.15 * k, .08 * k); ctx.fill();
-    ctx.fillStyle = '#FFFFFF'; rr(3.08 * k, -1.88 * k, 3.84 * k, 1.01 * k, .05 * k); ctx.fill();
-    wallText('新道親法會', 5 * k, 1.57 * k, .3 * k, '#5FAF84');
-    wallText('歡迎你，一起來學習 ♡', 5 * k, 1.18 * k, .19 * k, '#C27A8E');
-    ctx.fillStyle = '#C9935F'; ctx.fillRect(3.3 * k, .76 * k, 3.4 * k, .06 * k);
-  });
-  // 時鐘
-  const [cx, cy] = iso(1, 7.6, 1.55);
-  ell(cx, cy, TW * .17, TW * .2, '#FFFFFF', '#C9935F', Math.max(2, TW * .04));
-  ctx.strokeStyle = '#4A3B2F'; ctx.lineWidth = Math.max(1, TW * .025); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - TW * .12); ctx.moveTo(cx, cy); ctx.lineTo(cx + TW * .07, cy + TW * .02); ctx.stroke();
-}
-function drawCounter() {
-  box(1.1, 1.9, 1.12, 1.88, 0, .8, '#9FD3B5', { left: '#9FD3B5', right: '#88C0A1' });
-  box(1.04, 1.96, 1.06, 1.94, .8, .9, '#E9C79C');
-  box(1.25, 1.62, 1.3, 1.55, .9, .96, '#FFFFFF');
-  box(1.68, 1.82, 1.25, 1.39, .9, 1.1, '#A9CBEA');
-  const [fx, fy] = iso(1.75, 1.32, 1.22);
-  for (let i = 0; i < 5; i++) ell(fx + Math.cos(i * 1.26) * TW * .05, fy + Math.sin(i * 1.26) * TW * .035, TW * .035, TW * .03, '#F6B8C4');
-  ell(fx, fy, TW * .025, TW * .02, '#F2C14E');
-  onWall('y', 1.88, k => wallText('報到台', 1.5 * k, .42 * k, .27 * k, '#FFFFFF'));
-}
-function drawCabinet(t) {
-  box(9.08, 9.92, 1.08, 1.72, 0, 2.0, '#D9A574', { left: '#D9A574', right: '#C18D5E', top: '#E8C096' });
-  const lw = Math.max(1, TW * .02);
-  poly([iso(9.15, 1.72, .12), iso(9.48, 1.72, .12), iso(9.48, 1.72, 1.4), iso(9.15, 1.72, 1.4)], '#E3B485', INK, lw);
-  poly([iso(9.52, 1.72, .12), iso(9.85, 1.72, .12), iso(9.85, 1.72, 1.4), iso(9.52, 1.72, 1.4)], '#E3B485', INK, lw);
-  for (const gx of [9.44, 9.56]) { const [x, y] = iso(gx, 1.72, .78); ell(x, y, TW * .025, TW * .025, '#8A5A35'); }
-  // 開放層板上的筆記本
-  ['#F6B8C4', '#A9CBEA', '#FFE08A', '#9FD3B5'].forEach((c, i) => box(9.18 + i * .17, 9.32 + i * .17, 1.25, 1.62, 1.48, 1.85 - (i % 2) * .08, c));
-  onWall('y', 1.72, k => { ctx.fillStyle = '#FFFFFF'; rr(9.27 * k, -1.18 * k, .46 * k, .3 * k, .08 * k); ctx.fill(); wallText('文具', 9.5 * k, 1.03 * k, .17 * k, '#A16A3B'); });
-  if (!cabinetHint()) return;
-  const [sx, sy] = iso(9.5, 1.4, 2.35);
-  const tw = .5 + Math.sin(t * 4) * .5;
-  ctx.globalAlpha = .4 + tw * .6; ctx.font = `${TW * (.26 + tw * .06)}px ${EMO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('✨', sx, sy); ctx.globalAlpha = 1;
-}
-function drawPlant(gx, gy, s, t) {
-  const [x, y] = iso(gx, gy); softShadow(x, y, TW * .3 * s, TW * .13 * s, .25);
-  box(gx - .16 * s, gx + .16 * s, gy - .16 * s, gy + .16 * s, 0, .4 * s, '#E59A7C', { top: '#8A5A35' });
-  const [cx, cy] = iso(gx, gy, .9 * s), sway = Math.sin(t * 1.5 + gy) * TW * .015;
-  for (const [dx, dy, r, c] of [[-.15, .05, .2, '#7DB86F'], [.15, .02, .2, '#74AF67'], [0, -.15, .24, '#8CC77D']]) ell(cx + dx * TW * s + sway, cy + dy * TW * s, r * TW * s, r * TW * s * .9, c, INK, Math.max(1, TW * .016));
-}
-function drawChair([cx, cy], i) {
-  const legs = '#B9875A';
-  for (const [a, b] of [[.26, .3], [.7, .3], [.26, .76], [.7, .76]]) box(cx + a, cx + a + .05, cy + b, cy + b + .05, 0, .36, legs, { line: null });
-  box(cx + .22, cx + .8, cy + .26, cy + .82, .36, .46, '#D9A574');
-  box(cx + .26, cx + .76, cy + .3, cy + .78, .46, .52, CUSHION[i % 3], { line: 'rgba(84,62,46,.3)' });
-}
-function drawChairBack([cx, cy]) {
-  box(cx + .22, cx + .8, cy + .2, cy + .28, .36, 1.05, '#D9A574');
-  box(cx + .27, cx + .75, cy + .27, cy + .29, .55, .95, '#E8C096', { line: null });
-}
-
-// ── Q 版人物
-function chibi(x, y, s, o, t) {
-  const walking = o.walk, ph = o.ph || 0;
-  const bob = walking ? Math.abs(Math.sin(t * 10)) * s * .05 : (Math.sin(t * 2.2 + ph) + 1) * s * .01;
-  const lw = Math.max(1, s * .024);
-  if (!o.seated) softShadow(x, y, s * .28, s * .11, .28);
-  const by = y - bob, face = o.face || 1;
-  // 翅膀
-  if (o.wings) {
-    const f = Math.sin(t * 6) * .15;
-    for (const d of [-1, 1]) {
-      ctx.save(); ctx.translate(x + d * s * .15, by - s * .4); ctx.rotate(d * (.5 + f));
-      ell(d * s * .1, -s * .02, s * .14, s * .09, '#FFFFFF', INK, lw); ell(d * s * .14, s * .04, s * .08, s * .05, '#F2F4FA'); ctx.restore();
-    }
-  }
-  // 後髮
-  const hx = x, hy = by - s * .68, r = s * .25;
-  if (o.hair === 'bob') { ctx.fillStyle = o.hairCol; rr(hx - r * 1.08, hy - r * .5, r * 2.16, r * 1.45, r * .5); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke(); }
-  // 腿
-  if (!o.seated) {
-    const sw = walking ? Math.sin(t * 10) * s * .035 : 0;
-    for (const d of [-1, 1]) {
-      ctx.fillStyle = o.pants; rr(x + d * s * .07 - s * .045, by - s * .2 + d * sw, s * .09, s * .2 - d * sw * .3, s * .045); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
-      ell(x + d * s * .075, by - s * .005 + d * sw * .6, s * .06, s * .035, '#6B5446');
-    }
-  }
-  // 身體
-  const top = by - s * (o.seated ? .44 : .5), bot = by - s * (o.seated ? .08 : .16);
-  ctx.beginPath(); ctx.moveTo(x - s * .13, top); ctx.lineTo(x + s * .13, top); ctx.quadraticCurveTo(x + s * .2, bot, x + s * .17, bot); ctx.lineTo(x - s * .17, bot); ctx.quadraticCurveTo(x - s * .2, bot, x - s * .13, top); ctx.closePath();
-  ctx.fillStyle = o.shirt; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
-  if (o.vest) { poly([[x - s * .05, top], [x + s * .05, top], [x, top + s * .14]], '#FFFFFF'); ell(x + s * .08, top + s * .12, s * .035, s * .025, '#F2C14E'); }
-  if (o.trim) { ctx.strokeStyle = o.trim; ctx.lineWidth = s * .03; ctx.beginPath(); ctx.moveTo(x - s * .17, bot - s * .03); ctx.lineTo(x + s * .17, bot - s * .03); ctx.stroke(); }
-  if (o.seated) {
-    // 坐姿：大腿從椅面往前（畫面左下）伸出，小腿垂下
-    for (const d of [1, -1]) {
-      const hx0 = x + d * s * .07, hy0 = by - s * .13, kx = hx0 - s * .16, ky = hy0 + s * .08, fx2 = kx - s * .01, fy2 = ky + s * .18;
-      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      ctx.beginPath(); ctx.moveTo(hx0, hy0); ctx.lineTo(kx, ky); ctx.lineTo(fx2, fy2);
-      ctx.strokeStyle = INK; ctx.lineWidth = s * .1 + lw * 2; ctx.stroke();
-      ctx.strokeStyle = o.pants; ctx.lineWidth = s * .1; ctx.stroke();
-      ell(fx2 - s * .025, fy2 + s * .03, s * .065, s * .035, '#6B5446');
-    }
-    ctx.lineCap = 'butt';
-  }
-  // 手
-  const wave = o.wave ? Math.sin(t * 9) * .5 : 0;
-  for (const d of [-1, 1]) {
-    ctx.save(); ctx.translate(x + d * s * .15, top + s * .05); ctx.rotate(d * .35 + (d === 1 && o.wave ? -2.4 + wave : 0));
-    ctx.fillStyle = o.shirt; rr(-s * .04, 0, s * .08, s * .17, s * .04); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
-    ell(0, s * .18, s * .04, s * .04, '#FFE2CC', INK, lw); ctx.restore();
-  }
-  // 頭
-  ell(hx, hy, r, r * .95, '#FFE2CC', INK, lw);
-  // 瀏海
-  ctx.save(); ctx.beginPath(); ctx.ellipse(hx, hy, r * 1.06, r * 1.02, 0, 0, Math.PI * 2); ctx.clip();
-  ctx.fillStyle = o.hairCol;
-  ctx.beginPath(); ctx.moveTo(hx - r * 1.2, hy - r * .1);
-  for (let i = 0; i <= 4; i++) { const xx = hx - r * 1.2 + i * r * .6; ctx.quadraticCurveTo(xx + r * .3, hy - r * (i % 2 ? .05 : .45), xx + r * .6, hy - r * .15); }
-  ctx.lineTo(hx + r * 1.2, hy - r * 1.3); ctx.lineTo(hx - r * 1.2, hy - r * 1.3); ctx.fill(); ctx.restore();
-  ctx.beginPath(); ctx.ellipse(hx, hy, r, r * .95, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
-  if (o.hair === 'bun') ell(hx + r * .2, hy - r * 1.05, r * .32, r * .3, o.hairCol, INK, lw);
-  if (o.hair === 'spiky') for (const d of [-.5, 0, .5]) poly([[hx + d * r - r * .2, hy - r * .8], [hx + d * r + r * .1, hy - r * 1.3], [hx + d * r + r * .25, hy - r * .78]], o.hairCol);
-  // 五官
-  const ex = face * s * .025, blink = ((t + ph) % 4) < .12;
-  for (const d of [-1, 1]) {
-    if (blink) { ctx.strokeStyle = '#3B2C22'; ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(hx + d * r * .36 + ex - r * .08, hy + r * .1); ctx.lineTo(hx + d * r * .36 + ex + r * .08, hy + r * .1); ctx.stroke(); }
-    else { ell(hx + d * r * .36 + ex, hy + r * .1, r * .085, r * .12, '#3B2C22'); ell(hx + d * r * .36 + ex + r * .03, hy + r * .05, r * .03, r * .035, '#FFFFFF'); }
-    ell(hx + d * r * .6 + ex, hy + r * .35, r * .14, r * .08, 'rgba(244,140,160,.55)');
-  }
-  ctx.strokeStyle = '#3B2C22'; ctx.lineWidth = lw; ctx.beginPath();
-  if (o.worried) { ctx.arc(hx + ex, hy + r * .55, r * .12, Math.PI * 1.15, Math.PI * 1.85); }
-  else ctx.arc(hx + ex, hy + r * .3, r * .13, Math.PI * .2, Math.PI * .8);
-  ctx.stroke();
-  if (o.halo) { const hb = Math.sin(t * 3) * s * .015; ell(hx, hy - r * 1.25 + hb, r * .55, r * .16, null, '#F2C14E', s * .045); ell(hx, hy - r * 1.25 + hb, r * .55, r * .16, null, 'rgba(255,240,180,.8)', s * .015); }
-  return { headTop: hy - r * (o.halo ? 1.45 : 1.1) };
-}
-function bubble(x, y, s, icon, t, ring) {
-  const fy = y - s * .1 + Math.sin(t * 3) * s * .03, w = s * .62, h = s * .52;
-  ctx.fillStyle = 'rgba(84,62,46,.15)'; rr(x - w / 2, fy - h + 3, w, h, h * .45); ctx.fill();
-  ctx.fillStyle = '#FFFFFF'; rr(x - w / 2, fy - h, w, h, h * .45); ctx.fill();
-  ctx.strokeStyle = '#F2C14E'; ctx.lineWidth = Math.max(2, s * .035); ctx.stroke();
-  poly([[x - s * .07, fy - 1], [x + s * .07, fy - 1], [x, fy + s * .1]], '#FFFFFF');
-  ctx.beginPath(); ctx.moveTo(x - s * .07, fy); ctx.lineTo(x, fy + s * .1); ctx.lineTo(x + s * .07, fy); ctx.stroke();
-  ctx.font = `${h * .66}px ${EMO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(icon, x, fy - h / 2 + 1);
-  if (ring !== undefined) { ctx.strokeStyle = '#E98FA5'; ctx.lineWidth = s * .05; ctx.beginPath(); ctx.arc(x, fy - h / 2, h * .72, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ring); ctx.stroke(); }
-}
-
-
-// ── 地圖：教室＋入口（第 1 排是大廳，門開在右後牆 x=5；P 是盆栽）
-const MAP = ['###########', '#R...E...S#', '#.........#', '#.........#', '#.c..c..c.#', '#.........#', '#.........#', '#.c..c..c.#', '#P.......P#', '###########'];
-const C = 11, R = 10;
-const $ = id => document.getElementById(id);
-const solid = (x, y) => {
-  if (x < 0 || y < 0 || x >= C || y >= R) return true;
-  if (x === 5 && y === 0) return false;
-  return '#RScP'.includes(MAP[y][x]);
-};
-const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
-const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-function bfs(sx, sy, isGoal, pass) {
-  if (isGoal(sx, sy)) return [];
-  const prev = new Map([[sy * C + sx, null]]), q = [[sx, sy]];
-  while (q.length) {
-    const [x, y] = q.shift();
-    for (const [dx, dy] of DIRS) {
-      const nx = x + dx, ny = y + dy, k = ny * C + nx;
-      if (prev.has(k) || nx < 0 || ny < 0 || nx >= C || ny >= R) continue;
-      const g = isGoal(nx, ny);
-      if (!g && !pass(nx, ny)) continue;
-      prev.set(k, [x, y]);
-      if (g) {
-        const path = [[nx, ny]]; let c = [x, y];
-        while (!(c[0] === sx && c[1] === sy)) { path.unshift(c); c = prev.get(c[1] * C + c[0]); }
-        return path;
-      }
-      q.push([nx, ny]);
-    }
-  }
-  return null;
-}
-const pick = a => a[Math.floor(Math.random() * a.length)];
-
-// ── 遊戲狀態
-const SEATS = CHAIRS.map(([x, y]) => ({ x, y, by: null }));
-const NEED_ICON = { guide: '🧭', greet: '👋', note: '📝', comfort: '😟' };
-const THANKS = {
-  guide: ['謝謝你帶我入座，第一次來還好有你！', '有人陪著走進來，心就安定多了。', '原來位子在這裡，謝謝你耐心帶路～'],
-  greet: ['被你這樣熱情招呼，緊張全不見了！', '謝謝你的微笑，我覺得好受歡迎～', '一進門就有人打招呼，好溫暖！'],
-  note: ['有筆記本就能把今天的感動記下來了！', '你怎麼知道我正需要這個，謝謝！', '等一下聽課就用它來寫筆記～'],
-  comfort: ['謝謝你陪我，我現在比較不緊張了。', '有你在旁邊，覺得好溫暖。', '跟你聊一聊，心情輕鬆多了。'],
-};
-let S;
-function person(o) { return Object.assign({ path: [], spd: 3, alpha: 1, need: null, state: 'idle', seated: false, walkT: 0, face: 1 }, o, { fx: o.x, fy: o.y }); }
-function reset() {
-  SEATS.forEach(c => c.by = null);
-  S = { t: 0, started: false, done: false, hearts: 0, goal: 4, steps: 0, fx: [], tap: null, target: null, comfort: null, hold: null, events: {}, keys: new Set(), sel: null, hover: null };
-  S.player = person({ id: 'me', x: 5, y: 3, spd: 4.4, tag: ['你', '#E4A23B'], look: { hair: 'short', hairCol: '#F2D37A', shirt: '#FFFFFF', trim: '#F2C14E', pants: '#F4D7A8', halo: true, wings: true } });
-  S.staff = person({ id: 'pr', x: 3, y: 6, spd: 2, wait: 2, tag: ['公關學長', '#5B7DB1'], look: { hair: 'short', hairCol: '#3D3029', shirt: '#5B7DB1', vest: true, pants: '#3F4D63', ph: 3 } });
-  S.npcs = [];
-  seatAt(person({ id: 'c', x: 8, y: 7, look: { hair: 'bob', hairCol: '#8C5A3C', shirt: '#C7B8E8', pants: '#6F86A8', ph: 4 } }), 8, 7);
-  seatAt(person({ id: 'd', x: 2, y: 7, look: { hair: 'short', hairCol: '#5A4030', shirt: '#FFE08A', pants: '#6F86A8', ph: 5 } }), 2, 7);
-  updateHud(); setHand();
-}
-function seatAt(n, x, y) { const c = SEATS.find(c => c.x === x && c.y === y); c.by = n; n.seated = true; n.state = 'sit'; S.npcs.push(n); }
-function people() { return [S.player, S.staff, ...S.npcs]; }
-function occupied(x, y, except) { return people().some(p => p !== except && !p.seated && p.x === x && p.y === y); }
-function say(t) { $('say').textContent = t; }
-function setHand() { $('hand').textContent = S.hold ? '📝' : '✋'; }
-function updateHud() { $('hearts').textContent = `❤️ ${S.hearts}／${S.goal}`; }
-function cabinetHint() { return S && S.npcs.some(n => n.need === 'note') && !S.hold; }
-
-// ── 音效（按「開始」後才啟用）
-let ac = null;
-function beep(notes) {
-  if (!ac) return;
-  const t0 = ac.currentTime;
-  notes.forEach(([f, d], i) => {
-    const o = ac.createOscillator(), g = ac.createGain();
-    o.type = 'triangle'; o.frequency.value = f; o.connect(g); g.connect(ac.destination);
-    const s = t0 + i * .09; g.gain.setValueAtTime(.0001, s); g.gain.exponentialRampToValueAtTime(.16, s + .02); g.gain.exponentialRampToValueAtTime(.0001, s + d);
-    o.start(s); o.stop(s + d + .02);
-  });
-}
-
-// ── 劇本：A 要帶位、B 要打招呼、A 入座後要筆記本、C 有點緊張
-function spawn(id, look, need, path) {
-  const n = person({ id, x: 5, y: 0, alpha: 0, state: 'arrive', want: need, look });
-  n.path = path; S.npcs.push(n); return n;
-}
-function script() {
-  const E = S.events;
-  if (!E.a && S.t > 1) { E.a = 1; spawn('a', { hair: 'spiky', hairCol: '#7A5238', shirt: '#9FD3B5', pants: '#6F86A8', ph: 1 }, 'guide', [[5, 1]]); say('門口來了一位新朋友，看看他需要什麼？'); }
-  if (!E.b && S.t > 9) { E.b = 1; spawn('b', { hair: 'bun', hairCol: '#4B3A33', shirt: '#F6B8C4', pants: '#8E7BB5', ph: 2 }, 'greet', [[5, 1], [6, 1], [7, 1]]); }
-  const a = S.npcs.find(n => n.id === 'a');
-  if (a && a.seated && !E.note) E.note = S.t + 2;
-  if (E.note && E.note !== true && S.t > E.note) { E.note = true; a.need = 'note'; }
-  if (!E.c && S.hearts >= 2) E.c = S.t + 1.5;
-  if (E.c && E.c !== true && S.t > E.c) { E.c = true; S.npcs.find(n => n.id === 'c').need = 'comfort'; }
-}
-function hintText() {
-  const has = k => S.npcs.some(n => n.need === k);
-  if (S.npcs.some(n => n.state === 'follow')) return '公關學長：帶他走到空椅子旁邊，他就會坐下囉！';
-  if (has('guide')) return '公關學長：門口有新朋友在找位子，點他一下，帶他入座吧！';
-  if (has('greet')) return '公關學長：有人在門口揮手 👋，過去跟他打聲招呼～';
-  if (has('note')) return S.hold ? '公關學長：筆記本拿好了，送去給需要的人吧！' : '公關學長：有人需要筆記本，文具櫃在右邊角落，閃著 ✨ 的那個！';
-  if (has('comfort')) return '公關學長：前排那位看起來有點緊張 😟，到他身邊陪他一下。';
-  return '公關學長：目前大家都很好，在會場走走，留意門口喔～';
-}
-
-// ── 互動
-function heart(n, key) {
-  n.need = null; S.hearts++; updateHud();
-  S.fx.push({ n, t: S.t });
-  say(`新朋友：「${pick(THANKS[key])}」`);
-  beep([[660, .18], [880, .18], [1175, .3]]);
-  if (S.hearts >= S.goal && !S.done) { S.done = true; setTimeout(win, 1500); }
-}
-function interact(p) {
-  faceTo(S.player, p);
-  if (p === S.staff) { say(hintText()); beep([[520, .12]]); return; }
-  if (p.state === 'arrive') return;
-  switch (p.need) {
-    case 'guide':
-      p.need = null; p.state = 'follow'; p.path = []; p.spd = S.player.spd;
-      say('你：「歡迎！我帶你找位子，跟我來～」→ 走到發光的空椅子旁邊，他就會坐下。'); beep([[600, .12], [760, .14]]); break;
-    case 'greet': {
-      heart(p, 'greet');
-      const c = freeSeat(p);
-      if (c) setTimeout(() => sitDown(p, c), 1000);
-      break;
-    }
-    case 'note':
-      if (S.hold === 'note') { S.hold = null; setHand(); heart(p, 'note'); }
-      else say('他需要一本筆記本 📝，去右邊角落的文具櫃拿吧！');
-      break;
-    case 'comfort':
-      S.comfort = { n: p, t: 0 }; say('你在他身邊陪他聊一聊……'); break;
-    default:
-      say(p.state === 'follow' ? '新朋友：「我跟著你走～」' : pick(['新朋友：「謝謝你，我先坐一下～」', '新朋友：「這裡氣氛好好喔。」', '新朋友：「彩旗好可愛！」']));
-  }
-}
-function useStation(ch) {
-  if (ch === 'S') {
-    if (S.hold) { say('手上已經有筆記本囉，送去給需要的人吧！'); return; }
-    S.hold = 'note'; setHand(); say('從文具櫃拿了一本筆記本 📝'); beep([[700, .1], [940, .14]]);
-  } else say('報到台：新朋友的名牌和簽到單都在這裡。');
-}
-function freeSeat(from) {
-  let best = null, bd = 1e9;
-  for (const c of SEATS) if (!c.by) { const d = Math.abs(c.x - from.x) + Math.abs(c.y - from.y); if (d < bd) { bd = d; best = c; } }
-  return best;
-}
-function sitDown(n, c) {
-  const path = bfs(n.x, n.y, (x, y) => x === c.x && y === c.y, (x, y) => !solid(x, y));
-  if (!path) return false;
-  c.by = n; n.path = path; n.state = 'toSeat'; n.spd = 3; return true;
-}
-function faceTo(p, q) { const d = (q.x - p.x) - (q.y - p.y); if (d) p.face = d > 0 ? 1 : -1; }
-
-// ── 玩家移動
-function walkTo(isGoal) {
-  const me = S.player;
-  let path = bfs(me.x, me.y, isGoal, (x, y) => !solid(x, y) && !occupied(x, y, me));
-  if (!path) path = bfs(me.x, me.y, isGoal, (x, y) => !solid(x, y));
-  if (path) me.path = path;
-  return !!path;
-}
-const adjGoal = t => (x, y) => !solid(x, y) && !(x === 5 && y === 0) && cheb({ x, y }, t) <= 1 && !(x === t.x && y === t.y);
-function setTarget(t) {
-  S.target = t; S.comfort = null;
-  if (t.kind === 'tile') { walkTo((x, y) => x === t.x && y === t.y); S.target = null; return; }
-  const tt = t.p || t;
-  if (cheb(S.player, tt) <= 1 && !(S.player.x === tt.x && S.player.y === tt.y)) { S.player.path = []; arriveCheck(); return; }
-  walkTo(adjGoal(tt));
-}
-function arriveCheck() {
-  const t = S.target, me = S.player;
-  if (!t) return;
-  const tt = t.p || t;
-  if (cheb(me, tt) <= 1) { S.target = null; t.kind === 'person' ? interact(t.p) : useStation(t.ch); }
-  else if ((t.tries = (t.tries || 0) + 1) < 8) walkTo(adjGoal(tt));
-  else S.target = null;
-}
-function onPlayerStep(prev) {
-  S.steps++;
-  const f = S.npcs.find(n => n.state === 'follow');
-  if (f) {
-    f.path.push(prev);
-    const c = SEATS.find(c => !c.by && cheb(c, S.player) <= 1);
-    if (c) {
-      f.path = []; f.state = 'pause';
-      setTimeout(() => { if (sitDown(f, c)) say('你：「這裡有位子，請坐～」'); else f.state = 'follow'; }, 150);
-    }
-  }
-  if (S.comfort && cheb(S.player, S.comfort.n) > 1) { S.comfort = null; say('陪伴要待在他身邊一下喔，再回去陪陪他吧。'); }
-}
-function move(p, dt) {
-  if (p.fx === p.x && p.fy === p.y) {
-    if (!p.path.length) return false;
-    const prev = [p.x, p.y], n = p.path.shift();
-    if (p === S.player && occupied(n[0], n[1], p) && p.path.length === 0) { arriveCheck(); return false; }
-    p.x = n[0]; p.y = n[1];
-    const d = (p.x - prev[0]) - (p.y - prev[1]); if (d) p.face = d > 0 ? 1 : -1;
-    if (p === S.player) onPlayerStep(prev);
-  }
-  const dx = p.x - p.fx, dy = p.y - p.fy, d = Math.hypot(dx, dy), st = p.spd * dt;
-  p.walkT += dt;
-  if (d <= st) { p.fx = p.x; p.fy = p.y; if (!p.path.length) arrived(p); }
-  else { p.fx += dx / d * st; p.fy += dy / d * st; }
-  return true;
-}
-function arrived(p) {
-  if (p === S.player) { arriveCheck(); return; }
-  if (p.state === 'arrive') { p.state = 'wait'; p.need = p.want; }
-  else if (p.state === 'toSeat') {
-    p.seated = true; p.state = 'sit'; p.face = 1;
-    if (p.id === 'a' && !S.events.guided) { S.events.guided = 1; heart(p, 'guide'); }
-  }
-}
-function update(dt) {
-  S.t += dt;
-  script();
-  const me = S.player;
-  // 鍵盤：← → 沿著左右斜線走，↑ ↓ 往門口／往前排
-  if (!me.path.length && me.fx === me.x && me.fy === me.y) {
-    const k = S.keys, d = k.has('L') ? [-1, 0] : k.has('R') ? [1, 0] : k.has('U') ? [0, -1] : k.has('D') ? [0, 1] : null;
-    if (d) { const nx = me.x + d[0], ny = me.y + d[1]; if (!solid(nx, ny) && !(nx === 5 && ny === 0) && !occupied(nx, ny, me)) { S.target = null; me.path = [[nx, ny]]; } }
-  }
-  people().forEach(p => {
-    if (!move(p, dt)) p.walkT = 0;
-    if (p.alpha < 1) p.alpha = Math.min(1, p.alpha + dt * 2.2);
-  });
-  const pr = S.staff;
-  if (!pr.path.length && pr.fx === pr.x && pr.fy === pr.y && (pr.wait -= dt) < 0) {
-    pr.wait = 2 + Math.random() * 2.5;
-    const opts = [];
-    for (let y = 2; y < 9; y++) for (let x = 1; x < 10; x++) if (!solid(x, y) && !occupied(x, y, pr) && Math.abs(x - pr.x) + Math.abs(y - pr.y) <= 4) opts.push([x, y]);
-    const g = opts.length && pick(opts);
-    if (g) pr.path = bfs(pr.x, pr.y, (x, y) => x === g[0] && y === g[1], (x, y) => !solid(x, y) && !occupied(x, y, pr) && y > 1) || [];
-  }
-  if (S.comfort) {
-    const cm = S.comfort;
-    if (me.fx === me.x && me.fy === me.y && cheb(me, cm.n) <= 1) cm.t += dt;
-    if (cm.t >= 2) { S.comfort = null; heart(cm.n, 'comfort'); }
-  }
-  S.fx = S.fx.filter(f => S.t - f.t < 1.6);
-}
-
-// ── 繪圖
-const footOf = p => iso(p.fx + .5, p.fy + .5 + (p.seated ? .05 : 0), p.seated ? .52 : 0);
-const BOXES = { R: [1.04, 1.96, 1.06, 1.94, 1.1], S: [9.08, 9.92, 1.08, 1.72, 2.0] };
-let view = { z: 1, ex: 0, ey: 0 };
-function camera() {
-  zoom += (zoomTo - zoom) * .08;
-  const me = S.player, [px, py] = iso(me.fx + .5, me.fy + .5, .7);
-  const k = Math.min(1, Math.max(0, (zoom - 1) / (NEAR - 1)));
-  let cx = W / 2 + (px - W / 2) * k, cy = H / 2 + (py - H / 2) * k;
-  // 近拍時不要露出太多小島外面；小島放得下時，讓它靠近畫面下緣，上方留給天空
-  const hw = W / 2 / zoom, hh = H / 2 / zoom, b = ISL;
-  if (b.x1 - b.x0 > 2 * hw) cx = Math.min(b.x1 - hw, Math.max(b.x0 + hw, cx)); else cx = (b.x0 + b.x1) / 2;
-  if (b.y1 - b.y0 > 2 * hh) cy = Math.min(b.y1 - hh, Math.max(b.y0 + hh, cy));
-  else cy = (b.y0 + b.y1) / 2;
-  view = { z: zoom, ex: W / 2 - cx * zoom, ey: H / 2 - cy * zoom };
-  ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, dpr * view.ex, dpr * view.ey);
-}
-const pulse = (t, sp = 4) => .5 + .5 * Math.sin(t * sp);
-// 地板上的發光菱形（提示可以去的位置、點到的位置）
-function glowTile(x, y, a, col = '255,205,80') {
-  const pts = [iso(x + .5, y + .04), iso(x + .96, y + .5), iso(x + .5, y + .96), iso(x + .04, y + .5)];
-  ctx.save(); ctx.shadowColor = `rgba(${col},.9)`; ctx.shadowBlur = TW * .3;
-  poly(pts, `rgba(${col},${.22 + .3 * a})`, `rgba(${col},${.6 + .4 * a})`, Math.max(2, TW * .05)); ctx.restore();
-}
-// 物件外框發光（點到或可以互動時）
-function glowBox([x0, x1, y0, y1, h], a, col = '255,200,70') {
-  const pts = [iso(x0, y0, h), iso(x1, y0, h), iso(x1, y0, 0), iso(x1, y1, 0), iso(x0, y1, 0), iso(x0, y1, h)];
-  ctx.save(); ctx.shadowColor = `rgba(${col},1)`; ctx.shadowBlur = TW * .35;
-  poly(pts, `rgba(${col},${.12 * a})`, `rgba(${col},${.55 + .45 * a})`, Math.max(2.5, TW * .06)); ctx.restore();
-}
-function glowRing(p, a, col = '255,200,70') {
-  const [x, y] = footOf(p), s = TW;
-  ctx.save(); ctx.shadowColor = `rgba(${col},1)`; ctx.shadowBlur = s * .3;
-  ell(x, y, s * .36, s * .18, `rgba(${col},${.15 + .2 * a})`, `rgba(${col},${.6 + .4 * a})`, Math.max(2.5, s * .06)); ctx.restore();
-}
-function arrowAt(gx, gy, h, t) {
-  const [x, y0] = iso(gx, gy, h), y = y0 - Math.abs(Math.sin(t * 4)) * TW * .15, s = TW * .2;
-  ctx.save(); ctx.shadowColor = 'rgba(84,62,46,.3)'; ctx.shadowBlur = 4;
-  poly([[x - s, y - s * 1.1], [x + s, y - s * 1.1], [x, y]], '#F2C14E', '#C98A1E', 2); ctx.restore();
-}
-// 目前被點到（或滑鼠指著）的東西：走過去的路上持續發光，互動後淡出
-function selOf(kind, ref) {
-  let a = 0;
-  const h = S.hover;
-  if (h && h.kind === kind && h.ref === ref) a = Math.max(a, .55);
-  const s = S.sel;
-  if (s && s.kind === kind && s.ref === ref) {
-    const live = S.target && (S.target.p === ref || S.target.ch === ref);
-    a = Math.max(a, live ? .7 + .3 * pulse(S.t, 8) : Math.max(0, 1 - (S.t - s.t) / .9));
-  }
-  return a;
-}
-function draw(t) {
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  drawSky(t);
-  camera();
-  drawIsland();
-  drawTree(.75, .75, 1.15, t); drawTree(.62, 5.2, .75, t); drawTree(9.3, .62, .8, t);
-  drawFloor();
-  const tops = [];
-  const drawP = p => {
-    const [x, y] = footOf(p);
-    const a = selOf('person', p); if (a > 0) glowRing(p, a);
-    ctx.globalAlpha = p.alpha;
-    const look = Object.assign({}, p.look, {
-      walk: p.walkT > 0, face: p.face, seated: p.seated,
-      wave: p.need === 'greet', worried: p.need === 'comfort' && !(S.comfort && S.comfort.n === p),
-    });
-    const r = chibi(x, y, TW * 1.05, look, t);
-    if (p === S.player && S.hold) box(p.fx + .62, p.fx + .8, p.fy + .55, p.fy + .75, .55, .62, '#F6B8C4');
-    ctx.globalAlpha = 1;
-    tops.push({ p, x, y, top: r.headTop });
+  // R 報到台  S 文具櫃  T 飲水機  K 咖啡機  M 冰箱  B 備品區  F 餐點區  L 休息區  U 男廁  V 女廁  c 座位  x 餐桌  E 入口
+  // 固定物件之間至少隔兩格、走道與門口兩格寬：任何一格被人站住，都不會擋死通往物件的路
+  // 依裝置出地圖：手機用直式小地圖，電腦用有隔間、餐桌的大地圖，需求也比較多
+  const LEVELS = {
+    mobile: {
+      name: '手機版', patience: 1.35, timeScale: 1.4, stepBase: 19,
+      map: [
+        '###########',
+        '#R...E...S#',
+        '#.........#',
+        '#.........#',
+        '#.c..c..c.#',
+        '#.........#',
+        '#.........#',
+        '#.c..c..c.#',
+        '#.........#',
+        '#.........#',
+        '#T...K...B#',
+        '#.........#',
+        '#.........#',
+        '#F...M...L#',
+        '#.........#',
+        '#.........#',
+        '#V.......U#',
+        '###########',
+      ],
+      staff: [[3, 2], [7, 11], [5, 15]],
+      spots: { start: [5, 8], entrance: [5, 1], greet: [7, 1], comfort: [8, 13], hiddens: [[1, 14], [9, 8]] },
+      zones: [
+        { x0: 1, x1: 9, y0: 1, y1: 1, a: '#FFF8E6', b: '#FCF1D8' },
+        { x0: 1, x1: 9, y0: 2, y1: 9, a: '#EAF4FB', b: '#E1EEF8', name: '教室', lx: 5.5, ly: 2.5 },
+        { x0: 1, x1: 9, y0: 10, y1: 12, a: '#ECF7F0', b: '#E2F2E8', name: '飲料吧・備品', lx: 5.5, ly: 11.5 },
+        { x0: 1, x1: 9, y0: 13, y1: 16, a: '#FDF3EA', b: '#F8EADC', name: '用餐・休息・洗手間', lx: 5.5, ly: 14.5 },
+      ],
+    },
+    desktop: {
+      name: '電腦版', patience: 2.5, timeScale: 2.2, stepBase: 37,
+      map: [
+        '########################',
+        '#R...E........#...S....#',
+        '#.............#........#',
+        '#.............#........#',
+        '#.c..c..c..c...........#',
+        '#......................#',
+        '#.............#.......B#',
+        '#.c..c..c..c..#........#',
+        '#.............#........#',
+        '###..#####..######..####',
+        '#T...K..M.............L#',
+        '#......................#',
+        '#..............x..x....#',
+        '#V..........F.........U#',
+        '########################',
+      ],
+      staff: [[3, 2], [19, 3], [13, 12]],
+      spots: { start: [7, 5], entrance: [5, 1], greet: [7, 1], greet2: [9, 1], comfort: [21, 12], hiddens: [[22, 8], [17, 13], [1, 7]] },
+      zones: [
+        { x0: 1, x1: 13, y0: 1, y1: 1, a: '#FFF8E6', b: '#FCF1D8' },
+        { x0: 1, x1: 13, y0: 2, y1: 8, a: '#EAF4FB', b: '#E1EEF8', name: '教室', lx: 7, ly: 5.5 },
+        { x0: 15, x1: 22, y0: 1, y1: 8, a: '#ECF7F0', b: '#E2F2E8', name: '備品室', lx: 18.5, ly: 4.5 },
+        { x0: 1, x1: 9, y0: 10, y1: 13, a: '#ECF7F0', b: '#E2F2E8', name: '飲料吧', lx: 5, ly: 11.5 },
+        { x0: 10, x1: 22, y0: 10, y1: 13, a: '#FDF3EA', b: '#F8EADC', name: '用餐・休息・洗手間', lx: 16.5, ly: 10.5 },
+      ],
+    },
   };
-  // 還在門外的人在牆的後面：先畫人，再畫牆（只會從門洞看到）
-  const all = people(), outside = all.filter(p => p.fy < .98).sort((a, b) => (a.fx + a.fy) - (b.fx + b.fy));
-  outside.forEach(drawP);
-  drawWalls();
-  // 帶位中：空椅子的地板發光
-  const following = S.npcs.some(n => n.state === 'follow');
-  if (following) SEATS.forEach(c => { if (!c.by) glowTile(c.x, c.y, pulse(S.t, 5)); });
-  if (S.tap && S.t - S.tap.t < .7) glowTile(S.tap.x, S.tap.y, 1 - (S.t - S.tap.t) / .7, '95,175,132');
-  // 依深度（x+y）由後往前畫
-  const items = [];
-  CHAIRS.forEach((c, i) => {
-    items.push({ k: c[0] + c[1] + .48, f: () => drawChairBack(c) });
-    items.push({ k: c[0] + c[1] + 1.08, f: () => drawChair(c, i) });
+  const detectLevel = () => {
+    const fine = matchMedia('(pointer: fine)').matches && matchMedia('(hover: hover)').matches;
+    return fine && innerWidth >= 900 && innerWidth > innerHeight ? 'desktop' : 'mobile';
+  };
+  let LEVEL, LV, MAP, COLS, ROWS, SPOTS, ZONES, seats = [];
+  const SPEED = 7;
+  const DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
+
+  const STATIONS = {
+    R: { name: '報到台', icon: '🖊️', color: '#D97706' },
+    S: { name: '文具櫃', icon: '📚', color: '#0284C7' },
+    T: { name: '飲水機', icon: '🚰', color: '#0D9488' },
+    K: { name: '咖啡機', icon: '☕', color: '#92400E' },
+    M: { name: '冰箱', icon: '🥛', color: '#0EA5E9' },
+    B: { name: '備品區', icon: '🧺', color: '#059669' },
+    F: { name: '餐點區', icon: '🍱', color: '#EA580C' },
+    L: { name: '休息區', icon: '🛋️', color: '#7C3AED' },
+    U: { name: '男廁', icon: '🚹', color: '#2563EB' },
+    V: { name: '女廁', icon: '🚺', color: '#DB2777' },
+  };
+  const ITEMS = {
+    note: { e: '📝', n: '筆記本' }, warm: { e: '💧', n: '溫開水' }, hot: { e: '♨️', n: '熱開水' }, coat: { e: '🧥', n: '薄外套' },
+    cup: { e: '🥤', n: '空紙杯' }, tea: { e: '🍵', n: '熱茶' }, bento: { e: '🍱', n: '素便當' }, key: { e: '🔑', n: '鑰匙' },
+    americano: { e: '☕', n: '美式咖啡' }, milk: { e: '🥛', n: '鮮奶' }, latte: { e: '☕🥛', n: '拿鐵' },
+    candy: { e: '🍬', n: '咖啡糖' }, bao: { e: '🥟', n: '水煎包' },
+  };
+  const NEEDS = {
+    guide:   { e: '🧭', ask: '請問…我的座位在哪裡？', hint: '先走到他身邊讓他跟著你，再點一張發亮的空椅子。' },
+    note:    { e: '📝', item: 'note', ask: '我想抄重點，有筆記本嗎？', hint: '筆記本在文具櫃（右上方）。' },
+    water:   { e: '💧', item: 'warm', ask: '有點口渴，可以給我一杯水嗎？', hint: '溫開水：備品區拿紙杯 → 飲水機選「溫水」。', wrong: { hot: '太燙了！我想喝溫的就好。' } },
+    hotwater:{ e: '♨️', item: 'hot', ask: '胃有點不舒服，想喝杯熱開水。', hint: '熱開水：備品區拿紙杯 → 飲水機選「熱水」。', wrong: { warm: '溫的不夠暖…想要熱一點的。' } },
+    toilet:  { e: '🚻', ask: '請問洗手間在哪裡？', hint: '讓他跟著你，帶到對的洗手間：左下角女廁 🚺、右下角男廁 🚹。' },
+    coat:    { e: '🧥', item: 'coat', ask: '冷氣好強，有點冷…', hint: '薄外套在備品區（右邊）；櫃子鎖著的話，找總務組拿鑰匙。' },
+    tea:     { e: '🍵', item: 'tea', ask: '想喝杯熱茶暖暖身子。', hint: '熱茶：備品區拿紙杯 → 飲水機選「熱茶」。' },
+    latte:   { e: '☕🥛', item: 'latte', ask: '好想喝一杯熱拿鐵～', hint: '拿鐵＝美式＋鮮奶：備品區拿紙杯，咖啡機裝美式，再到冰箱加鮮奶（順序反過來也可以）。' },
+    sleepy:  { e: '😪', items: ['candy', 'americano'], ask: '昨晚加班到好晚…好想睡…', hint: '幫他提神：備品區有咖啡糖，或是泡一杯美式咖啡給他。' },
+    greet:   { e: '👋', ask: '（剛到會場，有點不知所措…）', hint: '剛到的朋友，先走過去打聲招呼、關心一下。' },
+    coffee:  { e: '☕', item: 'americano', ask: '想來杯美式咖啡～', hint: '美式：備品區拿紙杯，再到咖啡機裝。' },
+    bao:     { e: '🥟', item: 'bao', qty: 2, ask: '還沒吃早餐，肚子有點餓…', hint: '餐點區（左下角）有水煎包，拿兩顆給他（點兩次）。' },
+    comfort: { e: '😟', ask: '第一次來，有點緊張…', hint: '走到休息區那位朋友身邊，靜靜陪他一下就好。' },
+    bento:   { e: '🍱', item: 'bento', ask: '午餐在哪裡拿呢？', hint: '便當在餐點區（左下角）。' },
+  };
+  // 每種需求有好幾句心聲，同一局不重複，讓玩家看見每一次幫忙都不一樣
+  const THANKS = {
+    guide: [
+      '有你帶路，我就不慌了。',
+      '第一次來找不到位子，還好有你。',
+      '這個位子看得好清楚，謝謝你幫我找。',
+      '一進門就有人帶，覺得被歡迎了。',
+    ],
+    note: [
+      '我會把今天的感動都記下來！',
+      '有筆記本，重點都抄下來了！',
+      '回家要好好再讀一遍，謝謝你。',
+      '剛剛那段話好感動，幸好來得及寫下來。',
+      '連筆記本都幫我準備，好貼心。',
+      '有地方寫字，聽課更專心了。',
+      '這本筆記，要拿來記今天的收穫。',
+    ],
+    water: [
+      '這杯溫水好暖，謝謝你注意到我。',
+      '喉嚨舒服多了，溫度剛剛好！',
+      '你怎麼知道我正口渴，謝謝！',
+      '剛剛講到一半就渴了，這杯水來得正好。',
+      '不冷不燙，喝起來好舒服。',
+      '一路趕過來都沒喝水，終於解渴了。',
+      '你倒的水溫溫的，好像家人倒的一樣。',
+      '本來不好意思麻煩人，謝謝你先想到。',
+      '喝了水，聲音都回來了，等等可以大聲念了。',
+    ],
+    coat: [
+      '不冷了，連心都暖了。',
+      '外套好暖，謝謝你的細心。',
+      '剛剛一直在發抖，現在好多了。',
+      '你連冷氣太強都注意到，好細心。',
+    ],
+    tea: [
+      '這杯熱茶，我會記很久。',
+      '熱茶的香氣，讓我放鬆下來了。',
+      '暖暖一杯茶，整個人都舒服了。',
+      '捧著熱茶，手都暖起來了。',
+      '泡得剛剛好，不會太濃。',
+      '喝一口茶，心也跟著靜下來了。',
+      '這個茶香，讓我想起阿嬤家。',
+    ],
+    comfort: [
+      '有你陪著，我不緊張了。',
+      '原來有人陪，就不那麼害怕了。',
+      '謝謝你沒有多問，只是陪著我。',
+      '心跳慢下來了，好像可以放心待下來。',
+    ],
+    bento: [
+      '吃飽了，覺得被好好照顧。',
+      '素便當好好吃，謝謝你幫我拿！',
+      '肚子飽飽，心也滿滿的。',
+      '沒想到素食這麼好吃，下次還想來。',
+      '有人幫忙拿便當，好像回到家一樣。',
+      '菜色好豐富，每一口都吃得到用心。',
+    ],
+    hidden: [
+      '謝謝你走過來，我以為沒人會發現我。',
+      '我不好意思開口，還好你看見我了。',
+      '你主動來問我，我好感動。',
+      '一個人坐在角落有點孤單，謝謝你過來。',
+    ],
+    hotwater: [
+      '熱熱的喝下去，胃舒服多了。',
+      '一杯熱開水，整個人暖起來了。',
+      '就是要這麼熱才舒服，謝謝你。',
+      '胃不再悶悶的了，好險有你。',
+      '小口小口喝，整個人慢慢放鬆了。',
+      '肚子暖了，終於可以專心聽課了。',
+    ],
+    toilet: [
+      '呼～得救了，謝謝你帶路！',
+      '還好有你，不然我真的找不到。',
+      '謝謝你，差點就來不及了！',
+      '原來在這裡，我剛剛繞了好久。',
+      '你帶得好快，太感謝了！',
+      '幸好有人帶，不然我不好意思問。',
+      '找到了！謝謝你陪我走一趟。',
+    ],
+    latte: [
+      '這杯拿鐵剛剛好，你好會調！',
+      '奶泡香香的，好療癒～',
+      '比外面買的還好喝耶！',
+      '咖啡加牛奶的比例剛好，好順口。',
+      '有拿鐵陪著，下午也有精神了。',
+      '溫溫的拿鐵，喝起來好安心。',
+    ],
+    bao: [
+      '熱騰騰的水煎包，好幸福！',
+      '兩顆剛剛好，終於有力氣了！',
+      '早上沒吃就出門，這兩顆救了我。',
+      '外皮好酥，吃了整個人都醒了。',
+    ],
+    coffee: [
+      '好香的美式，謝謝你！',
+      '一口美式，腦袋都清醒了。',
+      '黑咖啡就是我要的味道。',
+      '香氣好濃，聞著就有精神。',
+      '有這杯咖啡，下一堂課沒問題了。',
+      '剛好需要一點咖啡因，你懂我！',
+      '溫度剛好，一口氣喝了半杯。',
+    ],
+    candy: [
+      '咖啡糖好有效，醒了醒了！',
+      '一顆咖啡糖，眼睛都亮起來了。',
+      '甜甜的又提神，這個好！',
+    ],
+    americano: [
+      '一杯美式，精神都回來了！',
+      '喝完美式，瞌睡蟲都跑掉了。',
+      '苦苦的剛好把我叫醒，謝謝你。',
+    ],
+  };
+  function thankLine(key) {
+    const opts = THANKS[key] || ['謝謝你！'];
+    const fresh = opts.filter(l => !S.thanks.some(t => t.line === l));
+    return pick(fresh.length ? fresh : opts);
+  }
+  const GAME_URL = 'https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html';
+  // ---------- 體驗人次計數器（Google 試算表 + Apps Script） ----------
+  // 網址只設定在 game/stats-config.json 一個地方；還沒填就不計數、不顯示
+  // 只送匿名事件（開始／完成／分享、版本、模式、星等），不收集任何個人資料
+  const Counter = (() => {
+    let endpoint = '';
+    const ready = fetch('stats-config.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : {}))
+      .then(c => {
+        const u = String((c && c.endpoint) || '').trim();
+        if (/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u)) endpoint = u;
+      })
+      .catch(() => {});
+    const showNum = (sel, n) => {
+      if (!n) return;
+      const el = document.querySelector(sel);
+      el.textContent = `🙌 已經有 ${Number(n).toLocaleString('zh-TW')} 人次完成服務`;
+      el.hidden = false;
+    };
+    // 每日備份的 stats.json 當備援：Google 暫時連不上時也能顯示
+    const fromBackup = sel => fetch('stats.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null)).then(d => d && showNum(sel, d.finish)).catch(() => {});
+    return {
+      hit(ev, extra) {
+        ready.then(() => {
+          if (!endpoint) return;
+          const q = new URLSearchParams(Object.assign({ action: 'hit', ev }, extra || {}));
+          fetch(`${endpoint}?${q}`, { mode: 'no-cors', keepalive: true }).catch(() => {});
+        });
+      },
+      show(sel) {
+        ready.then(() => {
+          if (!endpoint) return fromBackup(sel);
+          fetch(endpoint).then(r => r.json()).then(d => showNum(sel, d.finish)).catch(() => fromBackup(sel));
+        });
+      },
+    };
+  })();
+  const SHORT_URL = 'steven4dev.github.io/yiguandao-2027-course';
+  // 新朋友男女交錯，想上洗手間時才能帶到對的那一間
+  const FACES = [['👩', 'f'], ['👨', 'm'], ['👩‍🦰', 'f'], ['🧔', 'm'], ['👱‍♀️', 'f'], ['👨‍🦱', 'm'], ['👩‍🦱', 'f'], ['👨‍🦰', 'm']];
+  // 每一局隨機出題：保留「報到 → 課間 → 午餐」的劇情，需求、人數、台詞、插單時間、隱藏角落都隨機
+  // delay：挑戰模式才會在這一波進行中插進來的需求（輕鬆模式略過）
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const shuffle = arr => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const ASKS = {
+    water:  ['有點口渴，可以給我一杯溫開水嗎？', '講了好多話，喉嚨好乾…想喝溫水。', '可以幫我倒杯溫開水嗎？'],
+    hotwater: ['胃有點不舒服，想喝杯熱開水。', '冷氣好強，想喝熱開水暖一下。'],
+    toilet: ['請問洗手間在哪裡？', '不好意思…想去一下洗手間。'],
+    note:   ['我想抄重點，有筆記本嗎？', '有紙可以寫嗎？想記下來。', '筆記本可以借我一本嗎？'],
+    tea:    ['想喝杯熱茶暖暖身子。', '有熱茶嗎？想暖暖胃。'],
+    coffee: ['想來杯美式咖啡～', '有黑咖啡嗎？提提神。'],
+    latte:  ['好想喝一杯熱拿鐵～', '可以幫我做杯拿鐵嗎？'],
+    coat:   ['冷氣好強，有點冷…', '好冷喔，有外套可以借嗎？'],
+    sleepy: ['昨晚加班到好晚…好想睡…', '眼皮好重…撐不住了…'],
+    bento:  ['肚子餓了，午餐在哪裡拿呢？', '午餐時間到了嗎？好餓～'],
+  };
+  const askFor = need => ASKS[need] ? pick(ASKS[need]) : NEEDS[need].ask;
+  function buildWaves(mode) {
+    const desk = LEVEL === 'desktop', ch = mode === 'challenge';
+    // 同一種需求一局最多出現 3 次，題目更多樣，心聲也不會重複
+    const used = {}, CAP = 3;
+    const ok = n => (used[n] || 0) < CAP;
+    const mark = n => { used[n] = (used[n] || 0) + 1; return n; };
+    const take = pool => { const c = pool.filter(ok); return mark(pick(c.length ? c : pool)); };
+    const takeMany = (pool, k) => { const out = []; for (const n of shuffle(pool)) { if (out.length >= k) break; if (ok(n)) out.push(mark(n)); } return out; };
+    const extras = (pool, n, from, to) => ch
+      ? Array.from({ length: n }, () => ({ need: take(pool), renew: true, delay: rnd(from, to) })).sort((a, b) => a.delay - b.delay) : [];
+    const w1 = [{ need: 'guide', at: 'entrance' }, { need: 'greet', at: 'greet' }];
+    if (desk) w1.push({ need: 'greet', at: 'greet2' });
+    takeMany(['note', 'water', 'tea', 'coffee', 'hotwater', 'note', 'water'], desk ? 3 : 2).forEach(need => w1.push({ need, seat: true }));
+    w1.push(...extras(['water', 'toilet', 'hotwater', 'note'], 1, 10, 20));
+    const mustB = take(['coat', 'latte', 'sleepy']);
+    const w2 = [mustB, ...takeMany(['coat', 'latte', 'sleepy', 'tea', 'coffee', 'note', 'water', 'hotwater'].filter(n => n !== mustB), desk ? 3 : 2)]
+      .map(need => ({ need, seat: true }));
+    w2.push(Math.random() < .75 ? { need: 'comfort', at: 'comfort' } : { need: take(['water', 'note', 'coffee']), renew: true });
+    w2.push({ need: mark('toilet'), renew: true });
+    w2.push(...extras(['note', 'coffee', 'water', 'tea', 'latte', 'toilet', 'hotwater'], 2, 8, 26));
+    const w3 = [{ need: 'bento', renew: true }];
+    if (desk) w3.push({ need: 'bento', renew: true });
+    w3.push({ need: take(['tea', 'latte', 'coffee', 'water', 'hotwater', 'toilet']), renew: true });
+    w3.push({ need: 'bento', at: pick(SPOTS.hiddens), hidden: true, ask: '（小聲）我…還沒拿到便當，不好意思開口…' });
+    w3.push(...extras(['latte', 'water', 'tea', 'coffee', 'toilet', 'hotwater'], desk ? 3 : 2, 8, 28));
+    return [
+      { name: '報到時間', intro: '新朋友陸續報到了！剛到的朋友記得先打聲招呼。備品區鎖著，要用先找總務組拿鑰匙。', lock: true, npcs: w1 },
+      { name: '課間休息', intro: '下課了！飲料吧可以泡咖啡、調拿鐵。備品區又鎖上了，記得找總務組。', lock: true, npcs: w2 },
+      { name: '用餐時間', intro: '開飯囉！早上認識的朋友又有新需要了，也看看角落。備品區再次上鎖。', lock: true, npcs: w3 },
+    ];
+  }
+  // 挑戰模式：每個需求能等幾秒（越複雜給越久）
+  const PATIENCE = { toilet: 26, hotwater: 30, guide: 24, greet: 20, bao: 32, note: 20, water: 26, coat: 36, latte: 40, sleepy: 28,
+                     comfort: 24, bento: 28, tea: 32, coffee: 32, hidden: 45 };
+  const totalFor = waves => waves.reduce((s, w) => s + w.npcs.length, 0);
+  function setLevel(name) {
+    LEVEL = name; LV = LEVELS[name];
+    MAP = LV.map; COLS = MAP[0].length; ROWS = MAP.length; SPOTS = LV.spots; ZONES = LV.zones;
+    STAFF.forEach((st, i) => { st.x = st.fx = st.hx = LV.staff[i][0]; st.y = st.fy = st.hy = LV.staff[i][1]; st.t = 1; st.next = 1 + Math.random() * 2; });
+    seats = []; MAP.forEach((r, y) => [...r].forEach((c, x) => c === 'c' && seats.push([x, y])));
+    document.body.classList.toggle('wide', name === 'desktop');
+    const note = document.querySelector('#levelNote');
+    if (note) note.textContent = name === 'desktop'
+      ? '🖥 偵測到電腦：使用電腦版大地圖（有隔間、需求更多），成績以電腦版計。'
+      : '📱 偵測到手機／平板：使用手機版地圖，成績以手機版計。';
+    if (typeof resize === 'function') resize();
+  }
+  const STAFF = [
+    { id: 'pr',   label: '公關', name: '公關禮節組', face: '👩‍💼', x: 2, y: 1 },
+    { id: 'gen',  label: '總務', name: '總務組',     face: '👷', x: 6, y: 8 },
+    { id: 'care', label: '輔導', name: '輔導組',     face: '👨‍🏫', x: 4, y: 11 },
+  ];
+
+  if (!ctx.roundRect) ctx.roundRect = function (x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath();
+  };
+  // ---------- sound: synthesized with Web Audio, no audio files ----------
+  const Sound = (() => {
+    let ac = null, master, music, sfxBus, timer = null, oldTimer = null, nextTime = 0, step = 0;
+    let on = true;
+    try { on = localStorage.getItem('fahui-sound') !== 'off'; } catch (e) {}
+    const EIGHTH = 60 / 84 / 2;
+    const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+    // F – Am – B♭ – C – F – Dm – B♭ – C，五聲音階旋律
+    const CHORDS = [[53,57,60],[57,60,64],[58,62,65],[55,60,64],[53,57,60],[50,53,57],[58,62,65],[55,60,64]];
+    const BASS = [41, 45, 46, 48, 41, 38, 46, 48];
+    const BARS = [
+      [[81,2],[84,2],[81,1],[79,1],[77,2]],
+      [[81,3],[84,1],[86,2],[84,2]],
+      [[86,2],[84,1],[81,1],[79,2],[77,2]],
+      [[79,3],[81,1],[79,4]],
+      [[77,2],[81,2],[84,2],[86,2]],
+      [[86,3],[84,1],[81,2],[77,2]],
+      [[79,2],[81,2],[86,2],[84,2]],
+      [[84,3],[81,1],[79,2],[0,2]],
+    ];
+    const MELODY = {};
+    BARS.forEach((bar, b) => { let pos = b * 8; for (const [m, len] of bar) { if (m) MELODY[pos] = [m, len]; pos += len; } });
+
+    function init() {
+      if (ac) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      ac = new AC();
+      master = ac.createGain(); master.gain.value = .7; master.connect(ac.destination);
+      music = ac.createGain(); music.gain.value = 0; music.connect(master);
+      sfxBus = ac.createGain(); sfxBus.gain.value = .9; sfxBus.connect(master);
+      const delay = ac.createDelay(); delay.delayTime.value = EIGHTH * 3;
+      const fb = ac.createGain(); fb.gain.value = .28;
+      const wet = ac.createGain(); wet.gain.value = .35;
+      delay.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(music);
+      music.echo = delay;
+      document.addEventListener('visibilitychange', () => {
+        if (!ac) return;
+        if (document.hidden) ac.suspend(); else if (on) ac.resume();
+      });
+    }
+    function tone(dest, m, t, dur, { type = 'sine', vol = .1, attack = .01, cutoff = 0, echo = false } = {}) {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.value = hz(m);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vol, t + attack);
+      g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      let node = o;
+      if (cutoff) { const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; o.connect(f); node = f; }
+      node.connect(g); g.connect(dest);
+      if (echo) g.connect(music.echo);
+      o.start(t); o.stop(t + dur + .05);
+    }
+    function schedule() {
+      while (nextTime < ac.currentTime + .25) {
+        const i = step % 64, bar = Math.floor(i / 8), pos = i % 8, t = nextTime;
+        if (pos === 0) for (const m of CHORDS[bar]) tone(music, m, t, EIGHTH * 8.5, { type: 'triangle', vol: .03, attack: .5, cutoff: 1100 });
+        if (pos === 0 || pos === 4) tone(music, BASS[bar], t, EIGHTH * 3.5, { vol: .09, attack: .02, cutoff: 500 });
+        if (pos === 2 || pos === 6) tone(music, CHORDS[bar][2] + 12, t, EIGHTH * 1.2, { type: 'triangle', vol: .018 });
+        const mel = MELODY[i];
+        if (mel) {
+          tone(music, mel[0], t, EIGHTH * mel[1] * 1.8, { vol: .07, echo: true });
+          tone(music, mel[0] + 12, t, EIGHTH * 1.2, { vol: .012 });
+        }
+        step++; nextTime += EIGHTH;
+      }
+    }
+    function startMusic() {
+      init(); if (!ac || !on) return;
+      ac.resume();
+      if (oldTimer) { clearInterval(oldTimer); oldTimer = null; }
+      if (!timer) { step = 0; nextTime = ac.currentTime + .1; timer = setInterval(schedule, 50); }
+      music.gain.cancelScheduledValues(ac.currentTime);
+      music.gain.setTargetAtTime(1, ac.currentTime, .4);
+    }
+    function stopMusic(fade = .3) {
+      if (!ac) return;
+      music.gain.cancelScheduledValues(ac.currentTime);
+      music.gain.setTargetAtTime(0, ac.currentTime, fade);
+      if (!timer) return;
+      const tm = oldTimer = timer; timer = null;
+      setTimeout(() => { clearInterval(tm); if (oldTimer === tm) oldTimer = null; }, fade * 3000);
+    }
+    const SFX = {
+      pick:   [[84, 0], [91, .07]],
+      drop:   [[79, 0], [72, .08]],
+      yay:    [[84, 0], [88, .08], [91, .16], [96, .24]],
+      wave:   [[77, 0], [81, .12], [84, .24]],
+      unlock: [[86, 0], [93, .1], [98, .2]],
+      pop:    [[88, 0]],
+      end:    [[77, 0], [81, .15], [84, .3], [89, .45], [93, .6], [96, .8]],
+    };
+    function sfx(name) {
+      if (!ac || !on) return;
+      const t = ac.currentTime + .01;
+      if (name === 'no') { tone(sfxBus, 55, t, .22, { type: 'triangle', vol: .12, cutoff: 600 }); tone(sfxBus, 52, t + .1, .25, { type: 'triangle', vol: .1, cutoff: 600 }); return; }
+      for (const [m, dt] of SFX[name] || []) tone(sfxBus, m, t + dt, name === 'end' ? 1.2 : .45, { vol: .09 });
+    }
+    function setOn(v, playing) {
+      on = v;
+      try { localStorage.setItem('fahui-sound', v ? 'on' : 'off'); } catch (e) {}
+      const b = document.querySelector('#sound');
+      b.textContent = v ? '🔊' : '🔇';
+      b.setAttribute('aria-pressed', String(v));
+      b.setAttribute('aria-label', v ? '背景音樂：開' : '背景音樂：關');
+      if (v && playing) startMusic(); else if (!v) stopMusic(.1);
+    }
+    return { startMusic, stopMusic, sfx, setOn, get on() { return on; } };
+  })();
+  const sfx = n => Sound.sfx(n);
+
+  const ent = (x, y) => ({ x, y, fx: x, fy: y, t: 1 });
+  let S, tile = 40, dpr = 1, last = 0;
+
+  function reset() {
+    S = { wave: -1, npcs: [], hand: null, locked: false, hearts: 0, player: ent(...SPOTS.start), follower: null,
+          path: [], pending: null, particles: [], ripple: null, time: 0, waveT: 0, running: false,
+          nextWaveAt: null, hi: null, faceIdx: 0, hiddenHinted: false, finished: false,
+          qty: 0, mode: 'challenge', total: 0, missed: 0, queue: [], steps: 0, hints: 0, wrong: 0, items: 0, hiddenEarly: false, careHint: false, thanks: [] };
+    renderHearts(); renderHand();
+  }
+
+  // ---------- map helpers ----------
+  const tileAt = (x, y) => (MAP[y] || '')[x] || '#';
+  const solid = (x, y) => { const c = tileAt(x, y); return c !== '.' && c !== 'E'; };
+  const staffAt = (x, y) => STAFF.find(s => s.x === x && s.y === y);
+  const npcAt = (x, y) => S.npcs.find(n => n.state !== 'following' && n.x === x && n.y === y);
+  const walkable = (x, y) => !solid(x, y) && !staffAt(x, y) && !npcAt(x, y);
+  const key = (x, y) => x + ',' + y;
+  const adjacent = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1;
+  const freeSeats = () => seats.filter(([x, y]) => !npcAt(x, y) && !S.npcs.some(n => n.home && n.home[0] === x && n.home[1] === y));
+
+  function bfs(goals) {
+    const p = S.player, sk = key(p.x, p.y);
+    if (goals.has(sk)) return [];
+    const prev = new Map([[sk, null]]), q = [[p.x, p.y]];
+    while (q.length) {
+      const [x, y] = q.shift();
+      for (const [dx, dy] of DIRS) {
+        const nx = x + dx, ny = y + dy, k = key(nx, ny);
+        if (prev.has(k) || !walkable(nx, ny)) continue;
+        prev.set(k, [x, y]);
+        if (goals.has(k)) {
+          const path = [[nx, ny]];
+          let c = [x, y];
+          while (c && key(...c) !== sk) { path.unshift(c); c = prev.get(key(...c)); }
+          return path;
+        }
+        q.push([nx, ny]);
+      }
+    }
+    return null;
+  }
+  function goTo(list, cb) {
+    const goals = new Set(list.map(([x, y]) => key(x, y)));
+    const path = bfs(goals);
+    if (!path) { say(null, '那邊過不去耶，換條路試試。'); return; }
+    S.path = path; S.pending = cb || null; S.goal = goals;
+  }
+  // 學長會在自己負責的區域附近走動；不站門口、走道等窄處，也不擋住預留給新朋友的位置
+  const openCount = (x, y) => DIRS.filter(([dx, dy]) => !solid(x + dx, y + dy)).length;
+  function reserved(x, y) {
+    const list = [SPOTS.entrance, SPOTS.greet, SPOTS.greet2, SPOTS.comfort, ...SPOTS.hiddens].filter(Boolean);
+    return list.some(([a, b]) => a === x && b === y);
+  }
+  function wanderStaff(dt) {
+    const p = S.player, nextStep = S.path[0];
+    for (const st of STAFF) {
+      if (st.t < 1) { st.t = Math.min(1, st.t + dt * SPEED * .4); continue; }
+      if (S.time < st.next) continue;
+      st.next = S.time + rnd(1.5, 4);
+      if (S.chasing === st || adjacent(p, st)) continue;
+      const opts = DIRS.map(([dx, dy]) => [st.x + dx, st.y + dy]).filter(([x, y]) =>
+        walkable(x, y) && Math.abs(x - st.hx) + Math.abs(y - st.hy) <= 2 && openCount(x, y) >= 3 && !reserved(x, y) &&
+        !(x === p.x && y === p.y) && !(nextStep && nextStep[0] === x && nextStep[1] === y) &&
+        !(S.follower && S.follower.x === x && S.follower.y === y));
+      if (!opts.length) continue;
+      const [nx, ny] = pick(opts);
+      st.fx = st.x; st.fy = st.y; st.x = nx; st.y = ny; st.t = 0;
+    }
+  }
+  function chaseStaff(st, tries = 0) {
+    S.chasing = st;
+    goAdjacent(st.x, st.y, () => {
+      if (adjacent(S.player, st)) { S.chasing = null; talkStaff(st); }
+      else if (tries < 3) chaseStaff(st, tries + 1);
+      else S.chasing = null;
+    });
+  }
+  function goAdjacent(x, y, cb) {
+    const p = S.player;
+    const list = DIRS.map(([dx, dy]) => [x + dx, y + dy])
+      .filter(([nx, ny]) => walkable(nx, ny) || (nx === p.x && ny === p.y));
+    goTo(list, cb);
+  }
+
+  // ---------- speech, hint, HUD ----------
+  let sayTimer = 0;
+  function say(who, text) {
+    const el = $('#say');
+    const name = !who ? '' : who.name || '新朋友';
+    el.innerHTML = '<span>' + (name ? `<b>${name}</b>` : '') + text + '</span>';
+    el.hidden = false;
+    $('#hint').style.visibility = 'hidden';   // 說話時先藏起提示，避免兩段字疊在一起
+    clearTimeout(sayTimer);
+    sayTimer = setTimeout(() => { el.hidden = true; $('#hint').style.visibility = ''; }, 2800);
+  }
+  const setHint = t => ($('#hint').textContent = t);
+  function renderHearts() {
+    const h = $('#hearts'), n = S ? S.hearts : 0;
+    h.innerHTML = `❤️ <span class="on">${n}</span><small>／${S && S.total ? S.total : '—'}</small>`;
+    if (n && !RM) { h.classList.remove('bump'); void h.offsetWidth; h.classList.add('bump'); }
+  }
+  function renderHand() {
+    const it = S && S.hand ? ITEMS[S.hand] : null;
+    $('#handEm').textContent = it ? it.e : '✋';
+    $('#handName').textContent = it ? it.n + (S.hand === 'bao' ? ` ×${S.qty}` : '') : '空空的';
+  }
+  function banner(sub, title) {
+    const b = $('#banner');
+    b.innerHTML = `<div><small>${sub}</small><strong>${title}</strong></div>`;
+    b.hidden = false;
+    setTimeout(() => (b.hidden = true), 1600);
+  }
+
+  // ---------- waves ----------
+  function freeNear(x, y) {
+    const p = S.player;
+    if (!(p.x === x && p.y === y) && walkable(x, y)) return [x, y];
+    for (let r = 1; r < 4; r++) for (const [dx, dy] of DIRS) {
+      const nx = x + dx * r, ny = y + dy * r;
+      if (walkable(nx, ny) && !(p.x === nx && p.y === ny)) return [nx, ny];
+    }
+    return [x, y];
+  }
+  const limitFor = (need, hidden) => S.mode === 'challenge' ? Math.round(PATIENCE[hidden ? 'hidden' : need] * LV.patience) : 0;
+  function spawnNpc(d, i) {
+    if (d.renew) {
+      const pool = S.npcs.filter(n => (n.state === 'done' || n.state === 'missed') && !n.hidden && tileAt(n.x, n.y) === 'c');
+      if (pool.length) {
+        const n = pool[Math.floor(Math.random() * pool.length)];
+        const limit = limitFor(d.need);
+        Object.assign(n, { need: d.need, state: 'wait', wave: i, ask: d.ask || askFor(d.need), born: S.time, prog: 0,
+                           renewed: true, limit, left: limit });
+        return true;
+      }
+      if (d.delay) return false;
+    }
+    let pos;
+    if (d.seat || d.renew) { const fs = freeSeats(); if (!fs.length) return false; pos = fs[Math.floor(Math.random() * fs.length)]; }
+    else { const sp = Array.isArray(d.at) ? d.at : SPOTS[d.at]; if (!sp) return false; pos = freeNear(...sp); }
+    const limit = limitFor(d.need, d.hidden);
+    S.npcs.push(Object.assign(ent(pos[0], pos[1]), {
+      need: d.need, face: FACES[S.faceIdx % FACES.length][0], gender: FACES[S.faceIdx++ % FACES.length][1], state: 'wait', wave: i,
+      hidden: !!d.hidden, revealed: !d.hidden, ask: d.ask || askFor(d.need), born: S.time, spawn: S.time, prog: 0,
+      limit, left: limit,
+    }));
+    return true;
+  }
+  function startWave(i) {
+    S.wave = i; S.waveT = 0; S.nextWaveAt = null; S.hiddenHinted = false;
+    const w = S.waves[i];
+    if (w.lock) { S.locked = true; if (i > 0) setTimeout(() => S.running && say(STAFF[1], '🔒 新的時段開始，我先把備品區鎖上囉！'), 1700); }
+    for (const d of w.npcs) {
+      if (d.delay) { if (S.mode === 'challenge') S.queue.push({ at: S.time + d.delay, d, wave: i }); continue; }
+      if (!spawnNpc(d, i)) S.total--;
+    }
+    renderHearts();
+    $('#wave').textContent = `第 ${i + 1}／${S.waves.length} 波・${w.name}`;
+    banner(`第 ${i + 1} 波`, w.name);
+    if (i > 0) sfx('wave');
+    setHint(w.intro + (S.mode === 'challenge' && i === 0 ? ' 泡泡上的時間條跑完前要完成喔！' : ''));
+  }
+  function checkWaveEnd() {
+    const settled = waveNpcs().every(m => m.state === 'done' || m.state === 'missed');
+    if (settled && !S.queue.some(q => q.wave === S.wave)) { S.nextWaveAt = S.time + 1.3; return true; }
+    return false;
+  }
+  function miss(n) {
+    n.state = 'missed'; S.missed++;
+    if (S.follower === n) S.follower = null;
+    sfx('no');
+    say(STAFF[0], '這位朋友我先接手照顧，你去幫其他人吧！');
+    setHint('沒關係，學長先接手了。一起繼續照顧其他人！');
+    checkWaveEnd();
+  }
+  const waveNpcs = () => S.npcs.filter(n => n.wave === S.wave);
+  function complete(n, used) {
+    n.state = 'done'; n.doneAt = S.time;
+    S.hearts++; renderHearts(); sfx('yay');
+    for (let k = 0; k < 5; k++) S.particles.push({ x: n.x + .5 + (Math.random() - .5) * .6, y: n.y + .2, vy: -(.8 + Math.random() * .8), life: 1 });
+    const line = thankLine(n.hidden ? 'hidden' : n.need === 'sleepy' ? used : n.need);
+    S.thanks.push({ face: n.face, line, hidden: n.hidden, what: NEEDS[n.need].e }); n.helped = true;
+    if (used) S.items++;
+    say(n, line);
+    if (!checkWaveEnd()) {
+      const left = waveNpcs().filter(m => m.state === 'wait' && m.revealed);
+      setHint(left.length ? '還有人需要幫忙，看看誰頭上有泡泡。' : '泡泡都處理完了…真的每個人都照顧到了嗎？');
+    }
+  }
+  function noteReveal() { if (!S.hiddenHinted && !S.careHint) S.hiddenEarly = true; }
+
+  // 稱號看的是「怎麼玩」，不是快慢：每一種玩法都值得被肯定
+  // 星等（只有挑戰模式）：看心意完成的比例，最少一顆星
+  const STAR_WORDS = { 5: '每一位都被你照顧到了！🏆', 4: '幾乎沒有漏掉任何人，好厲害！', 3: '大家都感受到你的用心了。',
+                       2: '你已經幫到一半以上的人，很棒！', 1: '願意走進來幫忙，就是最好的開始。' };
+  const doneRatio = () => S.hearts / Math.max(1, S.total);
+  function starsOf() {
+    if (S.mode !== 'challenge') return 0;
+    if (S.missed === 0) return 5;
+    const r = doneRatio();
+    return r >= .9 ? 4 : r >= .75 ? 3 : r >= .5 ? 2 : 1;
+  }
+  const starStr = n => '★'.repeat(n) + '☆'.repeat(5 - n);
+  // 步數效率：每份心意平均走幾步，和這張地圖的基準相比（1.0＝和有效率的路線一樣）
+  const stepEff = () => (S.steps / Math.max(1, S.hearts)) / LV.stepBase;
+  const STEP_WORDS = {
+    precise: ['每一步都走在刀口上，路線規劃得超漂亮！', '繞路？不存在的。', '走最少的路，幫最多的人。'],
+    steady:  ['步伐穩穩的，該去的地方都到了。', '走得剛剛好，不急也不亂。', '一步一步，把心意送到每個人手上。'],
+    roam:    ['你走遍了整個會場，到處都有你的腳印！', '這麼勤快，會場每個角落都認得你了。', '多走的每一步，都是多一分關心。'],
+  };
+  function stepWord() {
+    if (!S.hearts) return '下次一起走進會場，看看誰需要幫忙吧！';
+    const e = stepEff();
+    return pick(STEP_WORDS[e <= 1.15 ? 'precise' : e <= 1.6 ? 'steady' : 'roam']);
+  }
+  function distanceText(steps) {
+    const m = Math.round(steps * .6), laps = Math.floor(m / 400);
+    return `走了 ${steps} 步，約 ${m} 公尺` + (laps === 1 ? '，差不多繞操場一圈了！' : laps > 1 ? `，差不多繞操場 ${laps} 圈了！` : '');
+  }
+  // 頭銜由上往下比對，符合第一個就是它
+  function angelTitle(sec) {
+    if (starsOf() === 5) return { e: '🏆', name: '全能小天使', desc: '同時照顧好每一個人，你是會場的定心丸。' };
+    if (S.hiddenEarly) return { e: '🔍', name: '細心小天使', desc: '你看見了那個沒說出口的需要。' };
+    if (S.hearts && stepEff() <= 1.15 && doneRatio() >= .9) return { e: '🗺️', name: '路線小天使', desc: '最短的路，送出最暖的心意。' };
+    if (sec <= 100 * LV.timeScale) return { e: '🍃', name: '疾風小天使', desc: '需要出現的那一刻，你已經在路上。' };
+    if (S.hints >= 3) return { e: '🤝', name: '同行小天使', desc: '懂得請教夥伴，一群人走得更遠。' };
+    if (S.hearts && stepEff() >= 1.6) return { e: '👟', name: '勤走小天使', desc: '哪裡需要你，你就走到哪裡。' };
+    if (sec >= 240 * LV.timeScale) return { e: '🌿', name: '從容小天使', desc: '不疾不徐，把每份心意都送得穩穩的。' };
+    return { e: '☀️', name: '溫暖小天使', desc: '你的每一步，都讓會場更暖一點。' };
+  }
+  function timeText(sec) {
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return m ? `${m} 分 ${s} 秒` : `${s} 秒`;
+  }
+  let shareFile = null, shareText = '', resultUrl = '', storyFile = null, storyUrl = '', fmt = 'post';
+
+  function finish() {
+    if (S.finished) return;
+    S.running = false; S.finished = true;
+    Counter.hit('finish', { level: LEVEL, mode: S.mode, stars: starsOf() }); setTimeout(() => Counter.show('#playedEnd'), 1500);
+    Sound.stopMusic(1.2); setTimeout(() => sfx('end'), 300);
+    const sec = Math.max(1, Math.round(S.time));
+    const title = angelTitle(sec);
+    const helped = S.npcs.filter(n => n.helped).length;
+    // 卡片放三句：先放角落朋友，其餘挑不同的需求，讓玩家看見自己真的幫到了誰
+    const seen = new Set();
+    let pick = [...S.thanks].sort((a, b) => (b.hidden - a.hidden) || (Math.random() - .5))
+      .filter(t => !seen.has(t.line) && seen.add(t.line)).slice(0, 3);
+    renderThanks();
+    if (!pick.length) pick = [{ face: '👩‍💼', line: '謝謝你今天一起來服務！' }];
+    const stars = starsOf(), sw = stepWord(), dist = distanceText(S.steps);
+    const r = { sec, title, pick, hearts: S.hearts, total: S.total, people: helped, steps: S.steps, items: S.items, stars, mode: S.mode, level: LV.name,
+                stepWord: sw, meters: Math.round(S.steps * .6) };
+    const starTxt = `（${LV.name}）` + (stars ? `挑戰模式 ${starStr(stars)}，` : '輕鬆模式，');
+    shareText = `我在「法會小天使」${starTxt}成為了${title.e}${title.name}！${dist.replace(/[！。]$/, '')}，陪伴了 ${helped} 位新朋友。你也來當一天新朋友身邊的那雙手吧 👉 ${GAME_URL}`;
+    $('#endHead').textContent = stars ? STAR_WORDS[stars] : `你是今天的${title.name}`;
+    $('#endTitle').textContent = `${stars ? starStr(stars) + '　' : ''}${title.e} ${title.name}`;
+    $('#endSteps').textContent = `👣 ${sw}${dist}${/[！。]$/.test(dist) ? '' : '。'}`;
+    $('#switchBtn').textContent = S.mode === 'challenge' ? '🌿 改玩輕鬆' : '⏱ 改玩挑戰';
+    $('#lineShare').href = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(GAME_URL) + '&text=' + encodeURIComponent(shareText);
+    $('#shareTip').className = 'tiny';
+    $('#shareTip').textContent = IN_APP
+      ? `你正在${APP_NAME}的內建瀏覽器：按「分享我的小天使卡」會教你長按儲存；或點右上角「⋯」選「用瀏覽器開啟」分享更順。`
+      : '分享出去的連結點開就能直接玩，邀朋友一起來當小天使。';
+    $('#resultImg').removeAttribute('src');
+    shareFile = storyFile = null; resultUrl = storyUrl = ''; fmt = 'post';
+    $('#end').hidden = false;
+    $('#end').scrollTop = 0;
+    confetti();
+    renderCard(r).then(cv2 => {
+      resultUrl = cv2.toDataURL('image/png');
+      $('#resultImg').src = resultUrl;
+      $('#resultImg').alt = `法會小天使卡：${title.name}，${timeText(sec)}陪伴了 ${helped} 位新朋友`;
+      cv2.toBlob(b => { if (b) shareFile = new File([b], 'fahui-angel.png', { type: 'image/png' }); }, 'image/png');
+      const st = renderStory(cv2);
+      storyUrl = st.toDataURL('image/png');
+      st.toBlob(b => { if (b) storyFile = new File([b], 'fahui-angel-story.png', { type: 'image/png' }); }, 'image/png');
+    });
+    $('#shareImg').focus({ preventScroll: true });
+  }
+  function renderThanks() {
+    const list = S.thanks;
+    $('#thanksBox').hidden = !list.length;
+    $('#thanksCount').textContent = `（這局你幫到的 ${list.length} 個需要）`;
+    $('#thanksList').innerHTML = list.map(t => `<li><span>${t.face}</span><span>「${t.line}」</span><span class="what" title="幫了什麼">${t.what || ''}</span></li>`).join('');
+  }
+  function confetti() {
+    const box = $('#confetti'); box.innerHTML = '';
+    if (RM) return;
+    const bits = ['❤️', '✨', '💛', '🌸', '🍃', '💚'];
+    for (let i = 0; i < 22; i++) {
+      const sp = document.createElement('span');
+      sp.textContent = bits[i % bits.length];
+      sp.style.left = (Math.random() * 100) + '%';
+      sp.style.animationDelay = (Math.random() * 1.2) + 's';
+      sp.style.fontSize = (16 + Math.random() * 16) + 'px';
+      box.appendChild(sp);
+    }
+  }
+
+  // ---------- 小天使卡（1080×1350，臉書/IG 動態 4:5） ----------
+  async function renderCard(r) {
+    const W = 1080, H = 1350;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    const SERIF = '"Noto Serif TC","Songti TC","PMingLiU",serif';
+    const allText = '我是' + r.title.name + r.title.desc + '你花了分秒讓位新朋友的第一次不再陌生被照顧步陪伴份物資新朋友想對你說也來當一天小天使掃描或輸入網址一起玩全真社青新道親法會志工陪伴' + r.pick.map(p => p.line).join('') + '0123456789';
+    try {
+      await Promise.race([
+        Promise.all([
+          document.fonts.load(`900 80px "Noto Serif TC"`, allText),
+          document.fonts.load(`700 30px "Noto Sans TC"`, allText),
+          document.fonts.load(`400 30px "Noto Sans TC"`, allText),
+        ]),
+        new Promise(res => setTimeout(res, 2500)),
+      ]);
+    } catch (e) {}
+    const font = (w, px, fam = SANS) => (g.font = `${w} ${px}px ${fam}`);
+    const center = (t, y, color) => { g.fillStyle = color; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, W / 2, y); };
+    const em = (ch, x, y, px) => { g.font = `${px}px ${EMOJI}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, x, y + px * .05); };
+    const round = (x, y, w, h, rad) => { g.beginPath(); g.roundRect(x, y, w, h, rad); };
+    if (!g.roundRect) g.roundRect = ctx.roundRect;
+
+    // 天空到草原的背景
+    const bg = g.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#D6ECFA'); bg.addColorStop(.5, '#EEF7F2'); bg.addColorStop(1, '#FDF0CF');
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    g.fillStyle = 'rgba(255,255,255,.55)';
+    for (const [x, y, rr] of [[120, 160, 120], [960, 120, 90], [1000, 620, 150], [60, 760, 110]]) { g.beginPath(); g.arc(x, y, rr, 0, Math.PI * 2); g.fill(); }
+    g.globalAlpha = .5;
+    for (const [ch, x, y, px] of [['❤️', 150, 420, 40], ['✨', 930, 380, 46], ['🌸', 110, 600, 36], ['💛', 975, 520, 34], ['🍃', 880, 250, 40], ['✨', 210, 260, 34]]) em(ch, x, y, px);
+    g.globalAlpha = 1;
+
+    font(700, 28); center('2027 全真社青・新道親法會 志工陪伴', 50, '#059669');
+    {
+      g.font = `700 26px ${SANS}`;
+      const lab = `${r.level}・` + (r.stars ? `挑戰模式  ${starStr(r.stars)}` : '輕鬆模式');
+      const lw = g.measureText(lab).width + 44;
+      g.fillStyle = '#D97706'; round((W - lw) / 2, 74, lw, 40, 20); g.fill();
+      center(lab, 95, '#fff');
+    }
+
+    // 徽章
+    const halo = g.createRadialGradient(540, 250, 60, 540, 250, 200);
+    halo.addColorStop(0, 'rgba(251,191,36,.45)'); halo.addColorStop(1, 'rgba(251,191,36,0)');
+    g.fillStyle = halo; g.beginPath(); g.arc(540, 250, 200, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(540, 250, 118, 0, Math.PI * 2); g.fill();
+    g.lineWidth = 12; g.strokeStyle = '#F59E0B'; g.stroke();
+    g.lineWidth = 3; g.strokeStyle = '#FDE68A'; g.beginPath(); g.arc(540, 250, 98, 0, Math.PI * 2); g.stroke();
+    em(r.title.e, 540, 250, 120);
+    g.fillStyle = '#D97706'; round(440, 352, 200, 44, 22); g.fill();
+    font(700, 24); center('法會小天使', 375, '#fff');
+
+    font(400, 34); center('我是', 448, '#475569');
+    font(900, 92, SERIF); center(r.title.name, 520, '#1E293B');
+    font(500, 34); center(r.title.desc, 590, '#475569');
+
+    // 成績面板
+    g.save(); g.shadowColor = 'rgba(5,150,105,.16)'; g.shadowBlur = 30; g.shadowOffsetY = 10;
+    g.fillStyle = '#fff'; round(90, 640, 900, 300, 36); g.fill(); g.restore();
+    font(900, 40, SERIF); center(`你花了 ${timeText(r.sec)}`, 700, '#059669');
+    font(500, 30); center(r.hearts ? `👣 ${r.stepWord}` : '你的到來，就是今天最好的陪伴', 752, '#1E293B');
+    g.strokeStyle = '#E2EEE7'; g.lineWidth = 2; g.beginPath(); g.moveTo(150, 795); g.lineTo(930, 795); g.stroke();
+    const cols = [['❤️', r.mode === 'challenge' ? `${r.hearts}/${r.total}` : r.hearts, '份心意'], ['👣', r.steps, `步・約 ${r.meters} 公尺`], ['🎁', r.items, '份物資']];
+    cols.forEach(([ch, n, lab], i) => {
+      const x = 240 + i * 300;
+      g.font = `900 54px ${SANS}`;
+      const nw = g.measureText(String(n)).width, gx = x - (52 + nw) / 2;
+      em(ch, gx + 22, 850, 44);
+      g.font = `900 54px ${SANS}`; g.fillStyle = '#1E293B'; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText(String(n), gx + 52, 852);
+      g.font = `500 26px ${SANS}`; g.fillStyle = '#64748B'; g.textAlign = 'center'; g.fillText(lab, x, 905);
+    });
+
+    // 新朋友的感謝
+    font(700, 28); center('新朋友想對你說', 978, '#64748B');
+    r.pick.forEach((p, i) => {
+      const y = 1004 + i * 62;
+      g.font = `500 28px ${SANS}`;
+      const tw = g.measureText(`「${p.line}」`).width, bw = tw + 110, bx = (W - bw) / 2;
+      g.fillStyle = 'rgba(255,255,255,.92)'; round(bx, y - 2, bw, 54, 27); g.fill();
+      g.lineWidth = 2; g.strokeStyle = '#BAE6FD'; g.stroke();
+      em(p.face, bx + 40, y + 25, 34);
+      g.font = `500 28px ${SANS}`;
+      g.fillStyle = '#1E293B'; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText(`「${p.line}」`, bx + 72, y + 26);
+    });
+
+    // 邀請區：網址 + QR Code
+    g.fillStyle = '#059669'; g.fillRect(0, 1190, W, H - 1190);
+    const hasQR = typeof window.qrcode === 'function';
+    const tx = hasQR ? 80 : W / 2, align = hasQR ? 'left' : 'center';
+    g.textAlign = align; g.textBaseline = 'middle'; g.fillStyle = '#fff';
+    g.font = `900 46px ${SERIF}`; g.fillText('你也來當一天小天使 →', tx, 1245);
+    g.font = `500 26px ${SANS}`; g.fillStyle = '#D1FAE5'; g.fillText(hasQR ? '掃描 QR Code 或輸入網址一起玩' : '輸入網址一起玩', tx, 1292);
+    g.font = `700 25px ${SANS}`; g.fillStyle = '#fff'; g.fillText(SHORT_URL, tx, 1326);
+    if (hasQR) {
+      try {
+        const qr = window.qrcode(0, 'M'); qr.addData(GAME_URL); qr.make();
+        const n = qr.getModuleCount(), box = 124, cell = box / n, qx = 896, qy = 1208;
+        g.fillStyle = '#fff'; round(qx - 10, qy - 10, box + 20, box + 20, 12); g.fill();
+        g.fillStyle = '#065F46';
+        for (let rr = 0; rr < n; rr++) for (let cc = 0; cc < n; cc++) if (qr.isDark(rr, cc)) g.fillRect(qx + cc * cell, qy + rr * cell, Math.ceil(cell), Math.ceil(cell));
+      } catch (e) {}
+    }
+    return c;
+  }
+
+  // IG 限時動態用的 9:16 版本：把 4:5 小天使卡放在全螢幕背景中間
+  function renderStory(card) {
+    const W = 1080, H = 1920, c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    if (!g.roundRect) g.roundRect = ctx.roundRect;
+    const SERIF = '"Noto Serif TC","Songti TC","PMingLiU",serif';
+    const bg = g.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#BFE3F7'); bg.addColorStop(.55, '#E3F4EA'); bg.addColorStop(1, '#FBE7B5');
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    g.fillStyle = 'rgba(255,255,255,.5)';
+    for (const [x, y, r] of [[130, 140, 150], [960, 260, 110], [80, 1720, 140], [1000, 1800, 170]]) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); }
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = '#059669'; g.font = `700 34px ${SANS}`; g.fillText('2027 全真社青', W / 2, 150);
+    g.fillStyle = '#1E293B'; g.font = `900 76px ${SERIF}`; g.fillText('我是今天的法會小天使', W / 2, 235);
+    const cw = 920, ch = 1150, cx = (W - cw) / 2, cy = 330;
+    g.save(); g.shadowColor = 'rgba(5,150,105,.28)'; g.shadowBlur = 50; g.shadowOffsetY = 18;
+    g.fillStyle = '#fff'; g.beginPath(); g.roundRect(cx, cy, cw, ch, 40); g.fill(); g.restore();
+    g.save(); g.beginPath(); g.roundRect(cx, cy, cw, ch, 40); g.clip(); g.drawImage(card, cx, cy, cw, ch); g.restore();
+    g.fillStyle = '#1E293B'; g.font = `900 54px ${SERIF}`; g.fillText('你也來當一天小天使', W / 2, 1600);
+    g.fillStyle = '#475569'; g.font = `500 32px ${SANS}`; g.fillText('掃描卡片上的 QR Code，或點限動上的連結', W / 2, 1668);
+    g.fillStyle = '#059669'; g.font = `700 30px ${SANS}`; g.fillText(SHORT_URL, W / 2, 1724);
+    return c;
+  }
+
+  // ---------- 分享 ----------
+  function tip(text) { const t = $('#shareTip'); t.textContent = text; t.className = 'tiny ok'; }
+  function copyText(text) {
+    try { return navigator.clipboard.writeText(text).then(() => true, () => false); } catch (e) { return Promise.resolve(false); }
+  }
+  // 臉書、IG、LINE 的內建瀏覽器擋掉系統分享、下載與開新分頁，改用「長按儲存」的方式
+  const UA = navigator.userAgent || '';
+  const IN_APP = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\//i.test(UA);
+  const APP_NAME = /Line\//i.test(UA) ? 'LINE' : /Instagram/i.test(UA) ? 'Instagram' : '臉書';
+  // 分享拆成兩次點擊：先複製文字、再只送圖片給系統分享選單。
+  // 圖片和連結一起送時，臉書 App 常只抓連結預覽而丟掉圖片；文字則一律會被臉書忽略。
+  const curUrl = () => (fmt === 'story' && storyUrl) || resultUrl;
+  const curFile = () => (fmt === 'story' && storyFile) || shareFile;
+  function setFmt(f) {
+    fmt = f;
+    $('#fmtPost').classList.toggle('on', f === 'post'); $('#fmtPost').setAttribute('aria-pressed', String(f === 'post'));
+    $('#fmtStory').classList.toggle('on', f === 'story'); $('#fmtStory').setAttribute('aria-pressed', String(f === 'story'));
+    $('#saveImg').src = curUrl();
+    $('#shareFileBtn').closest('.step').classList.remove('done');
+  }
+  $('#fmtPost').addEventListener('click', () => setFmt('post'));
+  $('#fmtStory').addEventListener('click', () => setFmt('story'));
+  function openSaveSheet(reason, native) {
+    $('#saveImg').src = curUrl();
+    $('#shareTextBox').value = shareText;
+    $('#saveWhy').textContent = reason || '';
+    $('#stepNative').hidden = !native;
+    $('#stepManual').hidden = !!native;
+    $('#copyShareText').textContent = '📋 複製';
+    document.querySelectorAll('#saveSheet .step').forEach(el => el.classList.remove('done'));
+    $('#saveSheet').hidden = false;
+    $('#saveSheet').scrollTop = 0;
+  }
+  $('#saveClose').addEventListener('click', () => { $('#saveSheet').hidden = true; });
+  $('#copyShareText').addEventListener('click', () => {
+    const box = $('#shareTextBox');
+    copyText(shareText).then(ok => {
+      if (!ok) { box.focus(); box.select(); }
+      $('#copyShareText').textContent = ok ? '✅ 已複製' : '已選取，按拷貝';
+      if (ok) $('#copyShareText').closest('.step').classList.add('done');
+    });
   });
-  items.push({ k: 1.5 + 1.5, f: () => { drawCounter(); const a = selOf('station', 'R'); if (a > 0) glowBox(BOXES.R, a); } });
-  items.push({ k: 9.5 + 1.4, f: () => { drawCabinet(t); const a = Math.max(selOf('station', 'S'), cabinetHint() ? .35 * pulse(S.t, 4) : 0); if (a > 0) glowBox(BOXES.S, a); } });
-  items.push({ k: 10, f: () => drawPlant(1.5, 8.5, 1.1, t) }, { k: 18, f: () => drawPlant(9.5, 8.5, 1.1, t) });
-  for (const p of all) if (!outside.includes(p)) items.push({ k: p.fx + p.fy + 1 + (p.seated ? .62 : .05), f: () => drawP(p) });
-  items.sort((a, b) => a.k - b.k).forEach(i => i.f());
-  // 前景提示層：名牌、需求泡泡、箭頭、愛心永遠在最上面
-  if (following) SEATS.forEach(c => { if (!c.by) arrowAt(c.x + .5, c.y + .5, 1.55, S.t); });
-  for (const { p, x, y, top } of tops) {
-    if (p.tag) pill(p.tag[0], x, y + TW * .2, Math.max(10, TW * .2), p.tag[1]);
-    const icon = p.need ? NEED_ICON[p.need] : (p.state === 'follow' || p.state === 'pause') ? '💺' : null;
-    if (icon && p.alpha >= 1) bubble(x, top, TW * 1.05, icon, t + (p.look.ph || 0), S.comfort && S.comfort.n === p ? Math.min(1, S.comfort.t / 2) : undefined);
+  $('#shareFileBtn').addEventListener('click', () => {
+    const file = curFile();
+    if (!file) return;
+    Counter.hit('share', { level: LEVEL, mode: S.mode });
+    navigator.share({ files: [file] })
+      .then(() => $('#shareFileBtn').closest('.step').classList.add('done'))
+      .catch(e => { if (!e || e.name !== 'AbortError') openSaveSheet('這次沒有成功叫出分享選單，改用長按儲存的方式。', false); });
+  });
+  const canShareFiles = () => !!(shareFile && navigator.canShare && navigator.canShare({ files: [shareFile] }));
+  $('#shareImg').addEventListener('click', () => {
+    if (!resultUrl) return tip('卡片還在準備中，再按一次試試。');
+    if (IN_APP) return openSaveSheet(`你正在${APP_NAME}的內建瀏覽器，沒辦法叫出分享選單，改用長按儲存。`, false);
+    if (canShareFiles()) return openSaveSheet('', true);
+    if (window.matchMedia('(pointer: coarse)').matches) return openSaveSheet('', false);
+    copyText(shareText);
+    const a = document.createElement('a');
+    a.href = resultUrl; a.download = 'fahui-angel.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    tip('已下載小天使卡，文字和連結也複製好了：到臉書新增貼文、附上圖片、貼上文字就完成。');
+  });
+  if (IN_APP) {
+    // 內建瀏覽器常常擋掉新分頁，改在同一頁開啟
+    $('#lineShare').removeAttribute('target');
   }
-  for (const f of S.fx) {
-    const k = (S.t - f.t) / 1.6, [x, y] = footOf(f.n);
-    ctx.globalAlpha = 1 - k * k; ctx.font = `${TW * (.45 + k * .25)}px ${EMO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('❤️', x, y - TW * (1.5 + k * 1.1)); ctx.globalAlpha = 1;
-  }
-  edgeMarks(following);
-}
-// 目標在畫面外時，在螢幕邊緣放一個指引圓鈕（近拍時才會發生）
-function edgeMarks(following) {
-  const marks = [];
-  for (const n of S.npcs) if (n.need && n.alpha >= 1) { const [x, y] = footOf(n); marks.push([x, y - TW * 1.3, NEED_ICON[n.need]]); }
-  if (following) SEATS.forEach(c => { if (!c.by) marks.push([...iso(c.x + .5, c.y + .5, .8), '💺']); });
-  if (cabinetHint()) marks.push([...iso(9.5, 1.4, 1.2), '📝']);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const m = 26, r = 17;
-  for (const [wx, wy, icon] of marks) {
-    const sx = wx * view.z + view.ex, sy = wy * view.z + view.ey;
-    if (sx > 0 && sx < W && sy > 0 && sy < H) continue;
-    const cx = Math.min(W - m, Math.max(m, sx)), cy = Math.min(H - m, Math.max(m, sy)), ang = Math.atan2(sy - cy, sx - cx);
-    const bob = Math.sin(S.t * 5) * 3, px = cx + Math.cos(ang) * bob, py = cy + Math.sin(ang) * bob;
-    poly([[px + Math.cos(ang) * (r + 9), py + Math.sin(ang) * (r + 9)], [px + Math.cos(ang + .5) * r, py + Math.sin(ang + .5) * r], [px + Math.cos(ang - .5) * r, py + Math.sin(ang - .5) * r]], '#F2C14E');
-    ell(px, py, r, r, '#FFFFFF', '#F2C14E', 3);
-    ctx.font = `${r * 1.1}px ${EMO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(icon, px, py + 1);
-  }
-}
+  $('#lineShare').addEventListener('click', () => tip('已開啟 LINE 分享，選好聊天室就能送出。'));
+  $('#copyLink').addEventListener('click', () => {
+    copyText(shareText).then(ok => tip(ok ? '已複製成績文字和遊戲連結，貼到任何地方都可以。' : '複製失敗，網址是：' + GAME_URL));
+  });
 
-// ── 點擊與滑鼠指向（先換回世界座標，再判斷點到什麼）
-function stationBox(x0, x1, y0, y1, h) {
-  let a = 1e9, b = -1e9, c = 1e9, d = -1e9;
-  for (const gx of [x0, x1]) for (const gy of [y0, y1]) for (const hh of [0, h]) { const [x, y] = iso(gx, gy, hh); a = Math.min(a, x); b = Math.max(b, x); c = Math.min(c, y); d = Math.max(d, y); }
-  return [a, b, c, d];
-}
-function pickAt(sx, sy) {
-  const wx = (sx - view.ex) / view.z, wy = (sy - view.ey) / view.z;
-  let best = null, bk = -1;
-  for (const p of people()) {
-    if (p === S.player || p.alpha < 1) continue;
-    const [x, y] = footOf(p), s = TW * 1.05, k = p.fx + p.fy + (p.seated ? .62 : .05);
-    if (Math.abs(wx - x) < s * .32 && wy < y + s * .12 && wy > y - s * 1.0 && k > bk) { best = p; bk = k; }
+  // ---------- interactions ----------
+  function give(item) {
+    if (item === 'bao' && S.hand === 'bao') {
+      if (S.qty >= 2) return say(null, '兩顆水煎包剛剛好，快送過去吧！');
+      S.qty = 2; renderHand(); sfx('pick');
+      return say(null, '再拿一顆！🥟 水煎包 ×2');
+    }
+    if (S.hand === item) return say(null, `手上已經有${ITEMS[item].n}了。`);
+    const old = S.hand;
+    S.hand = item; S.qty = 1; renderHand(); sfx('pick');
+    if (old) say(null, `${ITEMS[old].e}${ITEMS[old].n}${old === 'key' ? '先還給總務組' : '放回去'}，換成 ${ITEMS[item].e} ${ITEMS[item].n}`);
+    else if (item === 'bao') say(null, '拿到 🥟 水煎包 ×1（再點一次可以多拿一顆）');
+    else say(null, `拿到 ${ITEMS[item].e} ${ITEMS[item].n}`);
   }
-  if (best) return { kind: 'person', ref: best };
-  for (const ch of ['R', 'S']) {
-    const [a, b, c, d] = stationBox(...BOXES[ch]);
-    if (wx > a && wx < b && wy > c && wy < d) return { kind: 'station', ref: ch };
+  function brew(to, msg) { S.hand = to; S.qty = 1; renderHand(); sfx('unlock'); say(null, msg); }
+  let onChoice = null;
+  function openChoice(title, opts, cb) {
+    $('#choiceTitle').textContent = title;
+    $('#choiceRow').innerHTML = opts.map(([item, label]) => `<button class="btn" type="button" data-item="${item}">${label}</button>`).join('')
+      + '<button class="btn ghost" type="button" data-item="">先不用</button>';
+    onChoice = cb; $('#choice').hidden = false; $('#choice .btn').focus();
   }
-  const u = (wx - OX) / (TW / 2), v = (wy - OY) / (TW / 4);
-  const tx = Math.floor((u + v) / 2), ty = Math.floor((v - u) / 2);
-  if (tx < 1 || tx > 9 || ty < 1 || ty > 8) return null;
-  const seat = SEATS.find(c => c.x === tx && c.y === ty);
-  if (seat && seat.by && seat.by.seated) return { kind: 'person', ref: seat.by };
-  if (solid(tx, ty)) return null;
-  return { kind: 'tile', x: tx, y: ty };
-}
-function onTap(sx, sy) {
-  if (!S.started || S.done) return;
-  const h = pickAt(sx, sy);
-  if (!h) return;
-  if (h.kind === 'tile') { S.sel = null; S.tap = { x: h.x, y: h.y, t: S.t }; setTarget({ kind: 'tile', x: h.x, y: h.y }); return; }
-  S.sel = { kind: h.kind, ref: h.ref, t: S.t };
-  if (h.kind === 'person') setTarget({ kind: 'person', p: h.ref });
-  else { const [x, y] = h.ref === 'R' ? [1, 1] : [9, 1]; setTarget({ kind: 'station', ch: h.ref, x, y }); }
-}
-cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(); onTap(e.clientX - r.left, e.clientY - r.top); });
-cv.addEventListener('pointermove', e => {
-  if (e.pointerType !== 'mouse' || !S.started) return;
-  const r = cv.getBoundingClientRect(), h = pickAt(e.clientX - r.left, e.clientY - r.top);
-  S.hover = h && h.kind !== 'tile' ? h : null;
-  cv.style.cursor = h ? 'pointer' : 'default';
-});
-cv.addEventListener('pointerleave', () => { if (S) S.hover = null; });
-const KEYMAP = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', ArrowDown: 'D', KeyS: 'D' };
-addEventListener('keydown', e => {
-  if (!S.started || S.done) { if ((e.code === 'Enter' || e.code === 'Space') && !$('intro').hidden) { e.preventDefault(); start(); } return; }
-  if (KEYMAP[e.code]) { e.preventDefault(); S.keys.add(KEYMAP[e.code]); }
-  else if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); interactNearest(); }
-});
-addEventListener('keyup', e => { if (KEYMAP[e.code] && S) S.keys.delete(KEYMAP[e.code]); });
-function interactNearest() {
-  const me = S.player;
-  const near = [...S.npcs, S.staff].filter(p => cheb(me, p) <= 1 && p.alpha >= 1);
-  const p = near.find(n => n.need) || near.find(n => n === S.staff) || near[0];
-  if (p) { interact(p); return; }
-  if (cheb(me, { x: 9, y: 1 }) <= 1) useStation('S');
-  else if (cheb(me, { x: 1, y: 1 }) <= 1) useStation('R');
-  else say('身邊沒有人喔，走到新朋友旁邊再按空白鍵。');
-}
+  const openSupplies = () => openChoice('🧺 備品區：要拿哪一樣？', [['coat', '🧥 薄外套'], ['cup', '🥤 空紙杯'], ['candy', '🍬 咖啡糖']], give);
+  function closeChoice() { $('#choice').hidden = true; }
 
-function win() {
-  $('winText').textContent = `你走了 ${S.steps} 步、花了 ${Math.round(S.t)} 秒，照顧好 4 位新朋友。`;
-  $('win').hidden = false;
-  beep([[523, .2], [659, .2], [784, .2], [1047, .4]]);
-}
-function start() {
-  $('intro').hidden = true; S.started = true;
-  try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume(); } catch (e) { ac = null; }
-  say('會場準備好了，留意門口的新朋友！');
-}
-$('startBtn').onclick = start;
-$('againBtn').onclick = () => { $('win').hidden = true; reset(); start(); };
-const zbtn = $('zoomBtn');
-function setZoomLabel() { zbtn.textContent = zoomTo === 1 ? '🔍 近拍' : '🗺️ 全景'; }
-zbtn.onclick = () => { zoomTo = zoomTo === 1 ? NEAR : 1; setZoomLabel(); };
+  function useStation(c) {
+    switch (c) {
+      case 'R': return talkStaff(STAFF[0]);
+      case 'S': return give('note');
+      case 'T':
+        if (['warm', 'hot', 'tea'].includes(S.hand)) return say(null, `${ITEMS[S.hand].n}已經裝好了，快送過去吧！`);
+        if (S.hand !== 'cup') { sfx('no'); return say(null, '飲水機：每種飲料都要先到備品區拿一個空紙杯。'); }
+        return openChoice('🚰 飲水機：要裝什麼？', [['warm', '💧 溫水'], ['hot', '♨️ 熱水'], ['tea', '🍵 熱茶']], it =>
+          brew(it, { warm: '💧 溫開水裝好了，入口剛剛好。', hot: '♨️ 熱開水裝好了，小心燙！', tea: '🍵 熱茶泡好了，小心燙！' }[it]));
+      case 'B':
+        if (S.locked) {
+          if (S.hand === 'key') { S.locked = false; S.hand = null; renderHand(); sfx('unlock'); say(null, '🔓 備品區打開了！'); return openSupplies(); }
+          sfx('no'); return say(null, '🔒 備品區鎖住了，去找總務組拿鑰匙。');
+        }
+        return openSupplies();
+      case 'F':
+        return give(S.wave < 2 ? 'bao' : 'bento');
+      case 'K':
+        if (S.hand === 'cup') return brew('americano', '☕ 美式咖啡好了，香！');
+        if (S.hand === 'milk') return brew('latte', '☕🥛 鮮奶加美式，拿鐵完成！');
+        if (S.hand === 'americano') return say(null, '已經是美式了。想做拿鐵，到冰箱加鮮奶。');
+        if (S.hand === 'latte') return say(null, '拿鐵已經好了，快送過去吧！');
+        sfx('no'); return say(null, '咖啡機：先到備品區拿一個空紙杯來裝。');
+      case 'M':
+        if (S.hand === 'americano') return brew('latte', '☕🥛 美式加鮮奶，拿鐵完成！');
+        if (S.hand === 'cup') return brew('milk', '🥛 裝了一杯鮮奶。再去咖啡機加美式，就是拿鐵。');
+        if (S.hand === 'milk' || S.hand === 'latte') return say(null, '已經加過鮮奶了。');
+        sfx('no'); return say(null, '冰箱裡有鮮奶：拿紙杯或美式咖啡過來裝。');
+      case 'L': return say(null, '休息區：累了可以來這裡坐一下。');
+      case 'U': case 'V': {
+        const n = S.follower;
+        if (!n || n.need !== 'toilet') return say(null, c === 'U' ? '🚹 男廁' : '🚺 女廁');
+        if ((c === 'U') !== (n.gender === 'm')) { sfx('no'); S.wrong++; return say(n, c === 'U' ? '這是男廁耶…我要去女廁 🚺' : '這是女廁耶…我要去男廁 🚹'); }
+        S.follower = null; n.state = 'done';
+        n.fx = n.x; n.fy = n.y; n.x = n.home[0]; n.y = n.home[1]; n.t = 1; n.away = S.time + 3; n.home = null;
+        n.state = 'wait';
+        return complete(n);
+      }
+    }
+  }
+  function firstUnmet() {
+    return waveNpcs().filter(n => n.state !== 'done' && n.revealed).sort((a, b) => a.born - b.born)[0];
+  }
+  function talkStaff(st) {
+    if (st.id !== 'gen') S.hints++;
+    if (st.id === 'pr') {
+      const n = firstUnmet();
+      if (n) { S.hi = { n, until: S.time + 3 }; return say(st, NEEDS[n.need].hint); }
+      const hidden = waveNpcs().find(m => !m.revealed);
+      if (hidden) { S.careHint = true; return say(st, '再看看四周，是不是還有人沒被照顧到？輔導組可能知道喔。'); }
+      return say(st, '大家都照顧到了，辛苦了！');
+    }
+    if (st.id === 'gen') {
+      if (S.locked && S.hand !== 'key') {
+        const old = S.hand;
+        S.hand = 'key'; renderHand(); sfx('pick');
+        return say(st, old ? `${ITEMS[old].n}我幫你放回去，🔑 鑰匙給你！` : '🔑 備品區鑰匙給你，用完櫃子就開著囉！');
+      }
+      return say(st, '物資不夠隨時跟我說！');
+    }
+    if (st.id === 'care') {
+      const hidden = waveNpcs().find(m => !m.revealed);
+      if (hidden) { S.careHint = true; S.hi = { n: hidden, until: S.time + 4 }; return say(st, '角落那位朋友，好像一直沒開口…我幫你標出來了，去關心一下吧。'); }
+      return say(st, '有人緊張的話，陪在身邊就好。主動關心，是輔導組的日常～');
+    }
+  }
+  function touchNpc(n) {
+    if (n.state === 'done') return say(n, '今天收穫好多，謝謝你～');
+    if (n.state === 'missed') return say(n, '學長已經照顧我了，謝謝你～');
+    if (!n.revealed) { n.revealed = true; noteReveal(); sfx('pop'); return say(n, n.ask); }
+    const nd = NEEDS[n.need];
+    if (n.need === 'guide') {
+      if (S.follower) return;
+      n.state = 'following'; S.follower = n;
+      say(n, '謝謝！我跟著你走～');
+      return setHint('點一張發亮的空椅子，帶他入座。');
+    }
+    if (n.need === 'comfort') { say(n, n.ask); return setHint('站在他身邊別走開，陪他一下下。'); }
+    if (n.need === 'toilet') {
+      if (S.follower) return say(n, '你正在帶另一位朋友，等等再麻煩你～');
+      n.home = [n.x, n.y]; n.state = 'following'; S.follower = n;
+      say(n, n.gender === 'm' ? '謝謝！麻煩帶我去男廁 🚹' : '謝謝！麻煩帶我去女廁 🚺');
+      return setHint(n.gender === 'm' ? '帶他到右下角的男廁 🚹，點一下廁所。' : '帶她到左下角的女廁 🚺，點一下廁所。');
+    }
+    if (n.need === 'greet') {
+      say(null, '你：早安，歡迎你來！吃過早餐了嗎？');
+      const r = Math.random();
+      const [need, ask] = r < .6 ? ['bao', pick(['還沒耶…早上趕著出門。', '還沒，肚子正在叫…'])]
+        : r < .8 ? ['water', '吃過了！不過一路趕來有點渴，想喝溫水…'] : ['coffee', '吃過了～不過好想來杯咖啡！'];
+      n.need = need; n.ask = ask; n.born = S.time; n.talking = true; n.limit = n.left = limitFor(need);
+      setTimeout(() => { if (S.running) { n.talking = false; say(n, n.ask); setHint(NEEDS[need].hint); } }, 1500);
+      return;
+    }
+    const ok = nd.items || [nd.item];
+    if (ok.includes(S.hand)) {
+      if (nd.qty && S.qty < nd.qty) return say(n, '謝謝！不過一顆好像不太夠…可以再一顆嗎？');
+      const used = S.hand;
+      S.hand = null; S.qty = 0; renderHand(); return complete(n, used);
+    }
+    const want = ok.map(k => ITEMS[k].e + ITEMS[k].n).join('或');
+    if (S.hand && nd.wrong && nd.wrong[S.hand]) { sfx('no'); S.wrong++; return say(n, nd.wrong[S.hand]); }
+    if (S.hand) { sfx('no'); S.wrong++; return say(n, `這是${ITEMS[S.hand].n}…我需要的是${want}。`); }
+    say(n, n.ask); setHint(nd.hint);
+  }
+  function seatFollower(x, y) {
+    const n = S.follower;
+    if (!n || npcAt(x, y)) return;
+    n.fx = n.x; n.fy = n.y; n.x = x; n.y = y; n.t = 0;
+    S.follower = null;
+    complete(n);
+  }
+  function handleTile(x, y, direct) {
+    const act = fn => (direct ? fn() : goAdjacent(x, y, fn));
+    S.chasing = null;
+    const st = staffAt(x, y); if (st) return direct ? talkStaff(st) : chaseStaff(st);
+    const n = npcAt(x, y); if (n) return act(() => touchNpc(n));
+    const c = tileAt(x, y);
+    if (STATIONS[c]) return act(() => useStation(c));
+    if (c === 'c') {
+      if (S.follower && S.follower.need === 'toilet') return say(null, '先帶這位朋友去洗手間吧！');
+      if (S.follower) return act(() => seatFollower(x, y));
+      return say(null, '這是空位，帶找座位的朋友來坐吧。');
+    }
+    if (c === '#' || c === 'x' || direct) return;
+    goTo([[x, y]], null);
+  }
 
-let last = 0;
-function frame(ts) {
-  const dt = Math.min(.05, (ts - last) / 1000 || 0); last = ts;
-  if (S.started && !S.done) update(dt);
-  else { S.t += dt; S.fx = S.fx.filter(f => S.t - f.t < 1.6); }
-  draw(ts / 1000);
-  requestAnimationFrame(frame);
-}
-reset(); resize();
-addEventListener('resize', resize);
-if (document.fonts) document.fonts.ready.then(resize);
-// 直立手機一開始就近拍，鏡頭跟著小天使
-if (W / H < .8) { NEAR = 1.8; zoom = zoomTo = NEAR; }
-setZoomLabel();
-if (location.hash === '#debug') Object.assign(window, { __S: () => S, __iso: iso, __foot: footOf, __view: () => view });
-requestAnimationFrame(frame);
+  // ---------- input ----------
+  // 鍵盤：看實體按鍵（e.code），開著注音輸入法、大寫鎖定或按住 Shift 都能用
+  const KEY_DIRS = {
+    ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1],
+    ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0],
+  };
+  const held = [];              // 目前按住的方向鍵，最後按的優先
+  let facing = [0, 1];
+  function keyStep(d, bump) {
+    const p = S.player;
+    S.path = []; S.pending = null; S.chasing = null; facing = d;
+    const nx = p.x + d[0], ny = p.y + d[1];
+    if (walkable(nx, ny)) S.path = [[nx, ny]];
+    else if (bump) handleTile(nx, ny, true);   // 撞到人或櫃子＝互動（只在剛按下時，按住不會一直觸發）
+  }
+  window.addEventListener('keydown', e => {
+    if (e.code === 'KeyM') { if (!e.repeat) Sound.setOn(!Sound.on, S.running); return; }
+    if (!$('#intro').hidden) {
+      const onBtn = !!e.target.closest('button, a');
+      if (e.code === 'ArrowRight' || (e.code === 'Enter' && !onBtn)) { e.preventDefault(); tourGo(tourAt + 1); }
+      if (e.code === 'ArrowLeft') { e.preventDefault(); tourGo(tourAt - 1); }
+      return;
+    }
+    if (!S.running) return;
+    if (!$('#choice').hidden) {
+      const btns = [...document.querySelectorAll('#choiceRow .btn')];
+      const k = e.code.match(/^(?:Digit|Numpad)([1-9])$/);
+      if (k && btns[k[1] - 1]) { e.preventDefault(); btns[k[1] - 1].click(); return; }
+      if (e.code === 'Escape') { e.preventDefault(); closeChoice(); return; }
+    }
+    const d = KEY_DIRS[e.code];
+    if (d) {
+      e.preventDefault();
+      closeChoice();
+      const i = held.indexOf(e.code); if (i >= 0) held.splice(i, 1);
+      held.push(e.code);
+      if (!e.repeat && S.player.t >= 1) keyStep(d, true);
+      return;
+    }
+    // 空白鍵／Enter：和面前那一格的人或櫃子互動（焦點在按鈕上時讓按鈕自己處理）
+    if ((e.code === 'Space' || e.code === 'Enter') && !e.target.closest('button, a, input, textarea')) {
+      e.preventDefault();
+      if (S.player.t >= 1) handleTile(S.player.x + facing[0], S.player.y + facing[1], true);
+    }
+  });
+  window.addEventListener('keyup', e => { const i = held.indexOf(e.code); if (i >= 0) held.splice(i, 1); });
+  window.addEventListener('blur', () => { held.length = 0; });
+  $('#hand').addEventListener('click', () => {
+    if (!S.hand) return say(null, '手上空空的，去櫃子拿點東西吧。');
+    say(null, `${ITEMS[S.hand].e}${ITEMS[S.hand].n}放回去了。`);
+    S.hand = null; renderHand(); sfx('drop');
+  });
+  $('#choice').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    closeChoice();
+    if (b.dataset.item && onChoice) onChoice(b.dataset.item);
+  });
+  function start(mode) {
+    setLevel(detectLevel());
+    reset();
+    S.mode = mode === 'relax' ? 'relax' : 'challenge';
+    S.waves = buildWaves(S.mode); S.total = totalFor(S.waves); renderHearts();
+    $('#intro').hidden = true; $('#end').hidden = true;
+    try { localStorage.setItem(TOUR_KEY, '1'); } catch (e) {}
+    S.running = true;
+    Sound.startMusic();
+    Counter.hit('start', { level: LEVEL, mode: S.mode });
+    startWave(0);
+  }
+  $('#sound').addEventListener('click', () => Sound.setOn(!Sound.on, S.running));
+  Sound.setOn(Sound.on, false);
+  // ---------- 翻頁式說明 ----------
+  const TOUR_KEY = 'fahui-tour-seen';
+  const tourPages = [...document.querySelectorAll('.tpage')];
+  let tourAt = 0;
+  tourPages.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.type = 'button'; d.setAttribute('role', 'tab'); d.setAttribute('aria-label', `第 ${i + 1} 頁`);
+    d.addEventListener('click', () => tourGo(i));
+    $('#tourDots').appendChild(d);
+  });
+  function tourGo(i) {
+    tourAt = Math.max(0, Math.min(tourPages.length - 1, i));
+    $('#tourTrack').style.transform = `translateX(${-tourAt * 100}%)`;
+    tourPages.forEach((pg, k) => { pg.setAttribute('aria-hidden', String(k !== tourAt)); pg.inert = k !== tourAt; });
+    [...$('#tourDots').children].forEach((d, k) => d.setAttribute('aria-selected', String(k === tourAt)));
+    const lastPage = tourAt === tourPages.length - 1;
+    $('#tourPrev').disabled = tourAt === 0;
+    $('#tourNext').hidden = lastPage;
+    $('#tourSkip').hidden = lastPage;
+    $('#tourAgain').hidden = !lastPage;
+  }
+  $('#tourPrev').addEventListener('click', () => tourGo(tourAt - 1));
+  $('#tourNext').addEventListener('click', () => tourGo(tourAt + 1));
+  $('#tourSkip').addEventListener('click', () => tourGo(tourPages.length - 1));
+  $('#tourAgain').addEventListener('click', () => tourGo(0));
+  // 手機左右滑動翻頁
+  let swipeX = null;
+  $('.tour-view').addEventListener('pointerdown', e => { swipeX = e.clientX; });
+  $('.tour-view').addEventListener('pointerup', e => {
+    if (swipeX === null) return;
+    const dx = e.clientX - swipeX; swipeX = null;
+    if (Math.abs(dx) > 45) tourGo(tourAt + (dx < 0 ? 1 : -1));
+  });
+  // 每次進入都從第 1 頁開始（想跳過可按「略過」）；不再因為玩過就直接跳到最後一頁
+  tourGo(0);
+  $('#startBtn').addEventListener('click', () => start('challenge'));
+  $('#relaxBtn').addEventListener('click', () => start('relax'));
+  $('#againBtn').addEventListener('click', () => start(S.mode));
+  $('#switchBtn').addEventListener('click', () => start(S.mode === 'challenge' ? 'relax' : 'challenge'));
+
+  // ---------- update ----------
+  function update(dt) {
+    if (!S.running) return;
+    S.time += dt; S.waveT += dt;
+    const p = S.player;
+    if (p.t < 1) {
+      p.t = Math.min(1, p.t + dt * SPEED);
+      if (S.follower) S.follower.t = p.t;
+    }
+    if (p.t >= 1) {
+      if (S.path.length) {
+        const [nx, ny] = S.path[0];
+        if (!walkable(nx, ny)) { const np = S.goal && bfs(S.goal); if (np && np.length) S.path = np; else if (np) S.path = []; else { S.path = []; S.pending = null; } }
+        else {
+          S.path.shift();
+          if (S.follower) { const f = S.follower; f.fx = f.x; f.fy = f.y; f.x = p.x; f.y = p.y; f.t = 0; }
+          p.fx = p.x; p.fy = p.y; p.x = nx; p.y = ny; p.t = 0; S.steps++;
+        }
+      } else if (S.pending) { const cb = S.pending; S.pending = null; cb(); }
+    }
+    if (held.length && p.t >= 1 && !S.path.length && !S.pending) keyStep(KEY_DIRS[held[held.length - 1]], false);
+    wanderStaff(dt);
+    const idle = p.t >= 1 && !S.path.length;
+    for (const n of S.npcs) {
+      if (n.t < 1 && n !== S.follower) n.t = Math.min(1, n.t + dt * SPEED * .8);
+      if (n.state !== 'wait') continue;
+      if (!n.revealed && Math.abs(n.x - p.x) + Math.abs(n.y - p.y) <= 2) { n.revealed = true; n.born = S.time; noteReveal(); sfx('pop'); say(n, n.ask); }
+      if (n.limit && n.wave === S.wave && !n.talking) {
+        n.left -= dt;
+        if (n.left <= 0) { miss(n); continue; }
+      }
+      if (n.need === 'comfort') {
+        if (idle && adjacent(p, n)) n.prog += dt / 2;
+        else n.prog = Math.max(0, n.prog - dt * .6);
+        if (n.prog >= 1) complete(n);
+      }
+    }
+    for (const q of S.queue) {
+      if (q.wave !== S.wave || S.time < q.at) continue;
+      if (spawnNpc(q.d, q.wave)) { q.done = true; sfx('pop'); setHint('又有人需要幫忙了！同時照顧好幾位，先挑快來不及的。'); }
+      else if (waveNpcs().every(m => m.state === 'done' || m.state === 'missed')) { q.done = true; S.total--; renderHearts(); checkWaveEnd(); }
+      else q.at = S.time + 2;
+    }
+    S.queue = S.queue.filter(q => !q.done);
+    if (S.wave === 2 && !S.hiddenHinted && S.waveT > 20 && waveNpcs().some(n => !n.revealed)) {
+      S.hiddenHinted = true;
+      setHint('好像有一位朋友躲在角落一直沒開口…四處看看？也可以問問輔導組。');
+    }
+    if (S.nextWaveAt !== null && S.time >= S.nextWaveAt) {
+      S.nextWaveAt = null;
+      if (S.wave + 1 < S.waves.length) startWave(S.wave + 1);
+      else setTimeout(finish, 600);
+    }
+    for (const q of S.particles) { q.y += q.vy * dt; q.life -= dt * .9; }
+    S.particles = S.particles.filter(q => q.life > 0);
+    if (S.ripple) { S.ripple.t += dt * 2.5; if (S.ripple.t > 1) S.ripple = null; }
+  }
+
+  // ---------- drawing：2.5D 等角模型屋 ----------
+  // 等角投影：x 往右下、y 往左下、h 往上；整張地圖是一座漂浮的小島，後面兩道牆（上排、左排）切開看得到室內
+  // 前後遮擋一律依 x+y 由後往前畫；名牌、泡泡、箭頭等提示畫在最上層
+  const FONT = '"Huninn","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
+  const INK = 'rgba(84,62,46,.55)';
+  const WH = 2.4, HU = .52, IM = .45;
+  let W = 0, H = 0, TW = 40, OX = 0, OY = 0, ISL = { x0: 0, x1: 0, y0: 0, y1: 0 };
+  let zoom = 1, zoomTo = 1, NEAR = 1, nearMode = null, view = { z: 1, ex: 0, ey: 0 };
+  const iso = (gx, gy, h = 0) => [OX + (gx - gy) * TW / 2, OY + (gx + gy) * TW / 4 - h * HU * TW];
+  function resize() {
+    const st = $('#stage');
+    W = st.clientWidth; H = st.clientHeight;
+    if (!W || !H) return;
+    dpr = Math.min(window.devicePixelRatio || 1, 3);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    // 先以 TW=1、原點 0 量出整座小島的外框，再縮放置中
+    const C = COLS, R = ROWS;
+    const pts = [[IM, R - IM, -1.1], [C - IM, IM, -1.1], [C - IM, R - IM, -1.1], [.75, .75, 3.7], [1, 1, WH], [IM, IM, 0]];
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const [a, b, h] of pts) { const x = (a - b) / 2, y = (a + b) / 4 - h * HU; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    TW = Math.min((W - 16) / (x1 - x0), (H - 16) / (y1 - y0));
+    OX = W / 2 - (x0 + x1) / 2 * TW; OY = H / 2 - (y0 + y1) / 2 * TW;
+    ISL = { x0: OX + x0 * TW, x1: OX + x1 * TW, y0: OY + y0 * TW, y1: OY + y1 * TW };
+    // 格子太小（手機）就預設近拍，鏡頭跟著小天使；轉向後重新計算
+    NEAR = Math.min(3, Math.max(1, 52 / TW));
+    if (nearMode === null) nearMode = NEAR > 1.15;
+    zoomTo = nearMode ? NEAR : 1;
+    if (Math.abs(zoom - zoomTo) > .5) zoom = zoomTo;
+    setZoomLabel();
+  }
+  new ResizeObserver(resize).observe($('#stage'));
+  window.addEventListener('orientationchange', () => setTimeout(resize, 300));
+  function setZoomLabel() {
+    const b = $('#zoomBtn'); if (!b) return;
+    b.hidden = NEAR <= 1.05 && !nearMode;
+    b.textContent = nearMode ? '🗺️ 全景' : '🔍 近拍';
+  }
+  $('#zoomBtn').addEventListener('click', () => { nearMode = !nearMode; zoomTo = nearMode ? NEAR : 1; setZoomLabel(); });
+
+  const ease = t => t * t * (3 - 2 * t);
+  const posOf = e => { const k = ease(e.t); return [e.fx + (e.x - e.fx) * k, e.fy + (e.y - e.fy) * k]; };
+
+  // ── 顏色與基本形
+  function mix(hex, f) {
+    const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = n >> 8 & 255, b = n & 255;
+    const t = f > 0 ? 255 : 40, a = Math.abs(f);
+    return `rgb(${Math.round(r + (t - r) * a)},${Math.round(g + (t - g) * a)},${Math.round(b + (t - b) * a)})`;
+  }
+  function poly(pts, fill, stroke, lw = 1) {
+    ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.stroke(); }
+  }
+  // 方塊：頂面最亮、左前面（朝 +y）中間、右前面（朝 +x）最暗
+  function box(x0, x1, y0, y1, h0, h1, col, o = {}) {
+    const top = o.top || mix(col, .28), left = o.left || col, right = o.right || mix(col, -.16), line = o.line === undefined ? INK : o.line, lw = Math.max(1, TW * .018);
+    poly([iso(x0, y1, h0), iso(x1, y1, h0), iso(x1, y1, h1), iso(x0, y1, h1)], left, line, lw);
+    poly([iso(x1, y0, h0), iso(x1, y1, h0), iso(x1, y1, h1), iso(x1, y0, h1)], right, line, lw);
+    poly([iso(x0, y0, h1), iso(x1, y0, h1), iso(x1, y1, h1), iso(x0, y1, h1)], top, line, lw);
+  }
+  function softShadow(x, y, rx, ry, a = .22) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, rx);
+    g.addColorStop(0, `rgba(70,50,35,${a})`); g.addColorStop(1, 'rgba(70,50,35,0)');
+    ctx.save(); ctx.translate(x, y); ctx.scale(1, ry / rx); ctx.translate(-x, -y);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, rx, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  }
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+  function ell(x, y, rx, ry, fill, stroke, lw) {
+    ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
+  }
+  function emoji(ch, cx, cy, size) {
+    ctx.font = `${size}px ${EMOJI}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(ch, cx, cy + size * .06);
+  }
+  // 在牆面／物件正面寫字：plane 'y' 是平行 x 軸的面，'x' 是平行 y 軸的面（字從前往後寫），'floor' 是地板
+  function onPlane(plane, at, fn) {
+    const k = 40; ctx.save();
+    if (plane === 'y') { const o = iso(0, at, 0); ctx.transform(TW / 2 / k, TW / 4 / k, 0, HU * TW / k, o[0], o[1]); }
+    else if (plane === 'x') { const o = iso(at, ROWS, 0); ctx.transform(TW / 2 / k, -TW / 4 / k, 0, HU * TW / k, o[0], o[1]); }
+    else { const o = iso(0, 0, 0); ctx.transform(TW / 2 / k, TW / 4 / k, -TW / 2 / k, TW / 4 / k, o[0], o[1]); }
+    fn(k); ctx.restore();
+  }
+  function planeText(text, u, v, size, color) {
+    ctx.font = `${size}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = color; ctx.fillText(text, u, v);
+  }
+  function faceLabel(text, x, y1, h, color, bg) {
+    onPlane('y', y1, k => {
+      const size = .34 * k;
+      ctx.font = `${size}px ${FONT}`;
+      if (bg) { const w = ctx.measureText(text).width + size * .7; ctx.fillStyle = bg; rr(x * k - w / 2, -h * k - size * .7, w, size * 1.4, size * .4); ctx.fill(); }
+      planeText(text, x * k, -h * k, size, color);
+    });
+  }
+  function pill(text, x, y, size, bg, fg = '#fff') {
+    ctx.font = `${size}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const w = ctx.measureText(text).width + size * 1.1, h = size * 1.55;
+    ctx.fillStyle = 'rgba(84,62,46,.18)'; rr(x - w / 2, y - h / 2 + 2, w, h, h / 2); ctx.fill();
+    ctx.fillStyle = bg; rr(x - w / 2, y - h / 2, w, h, h / 2); ctx.fill();
+    ctx.fillStyle = fg; ctx.fillText(text, x, y + size * .05);
+  }
+  const pulseAt = (t, sp = 4) => RM ? .6 : .5 + .5 * Math.sin(t * sp);
+
+  // ── 場景：天空、小島、地板、牆
+  function drawSky(t) {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#DCEFF5'); g.addColorStop(.6, '#F3EFE4'); g.addColorStop(1, '#F6E9DA');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    for (const [k, yy, s] of [[0, .12, 1], [.45, .28, .7], [.75, .08, .85]]) {
+      const x = ((k + (RM ? 0 : t * .006)) % 1.3 - .15) * W, y = yy * H, r = Math.max(W, H) * .03 * s;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.arc(x + r * 1.1, y - r * .4, r * 1.25, 0, 7); ctx.arc(x + r * 2.3, y, r * .9, 0, 7); ctx.fill();
+      ctx.fillRect(x, y, r * 2.3, r * .9);
+    }
+  }
+  function drawIsland() {
+    const C = COLS, R = ROWS;
+    const [cx, cy] = iso(C / 2, R / 2, -2.4);
+    softShadow(cx, cy, TW * (C + R) * .26, TW * (C + R) * .08, .14);
+    box(IM, C - IM, IM, R - IM, -1.1, -.18, '#C99B74', { top: '#C99B74', left: '#C99B74', right: '#B08360' });
+    box(IM, C - IM, IM, R - IM, -.18, 0, '#9ACD8C', { top: '#A9D89A', left: '#8DC27F', right: '#7DB271' });
+    for (let i = 1; i < 6; i++) {
+      const [x, y] = iso(C * i / 6, R - IM, -.5 - (i % 2) * .25); ell(x, y, TW * .1, TW * .055, '#B08360');
+      const [x2, y2] = iso(C - IM, R * i / 6, -.45 - (i % 3) * .2); ell(x2, y2, TW * .1, TW * .055, '#A07655');
+    }
+    const cols = ['#F6B8C4', '#FFF1A8', '#FFFFFF'];
+    for (let i = 0; i < 14; i++) {
+      const front = i % 2, u = ((i * 37) % 97) / 97;
+      const [x, y] = front ? iso(1 + u * (C - 2), R - .7) : iso(C - .7, 1 + u * (R - 2));
+      for (let j = 0; j < 5; j++) ell(x + Math.cos(j * 1.26) * TW * .04, y + Math.sin(j * 1.26) * TW * .02, TW * .028, TW * .02, cols[i % 3]);
+      ell(x, y, TW * .02, TW * .015, '#F2C14E');
+    }
+    const ex = SPOTS.entrance[0];
+    for (const b of [.6, .85]) { const [x, y] = iso(ex + .5, b); ell(x, y, TW * .2, TW * .09, '#E8DCC8', INK, 1); }
+  }
+  const zoneOf = (x, y) => ZONES.find(z => x >= z.x0 && x <= z.x1 && y >= z.y0 && y <= z.y1);
+  const ZONE_FLOOR = name => !name ? ['#F5EFE4', '#ECE3D3'] : name.includes('教室') ? null
+    : name.includes('備品室') ? ['#E6EEF6', '#DCE6F0'] : name.includes('飲料') ? ['#E3F1E8', '#D6EADD'] : ['#FBEBDD', '#F3DDC9'];
+  function drawFloor() {
+    const lw = Math.max(1, TW * .015);
+    for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
+      if (tileAt(x, y) === '#') continue;
+      const z = zoneOf(x, y), fl = ZONE_FLOOR(z && z.name);
+      const pts = [iso(x, y), iso(x + 1, y), iso(x + 1, y + 1), iso(x, y + 1)];
+      if (fl) { poly(pts, (x + y) % 2 ? fl[0] : fl[1], 'rgba(150,120,90,.18)', lw); continue; }
+      poly(pts, '#EBCB9F');
+      ctx.strokeStyle = 'rgba(160,110,60,.26)'; ctx.lineWidth = lw;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath(); ctx.moveTo(...iso(x, y + i / 3)); ctx.lineTo(...iso(x + 1, y + i / 3)); ctx.stroke();
+        const sx = x + ((x * 3 + y * 7 + i) % 3) / 3; ctx.beginPath(); ctx.moveTo(...iso(sx, y + i / 3)); ctx.lineTo(...iso(sx, y + (i + 1) / 3)); ctx.stroke();
+      }
+    }
+    // 入口迎賓地墊
+    const [ex, ey] = SPOTS.entrance;
+    box(ex + .1, ex + .9, ey + .12, ey + .9, 0, .03, '#E98FA5', { top: '#F2A7B9' });
+    // 窗光
+    for (const [a, b] of topWindows()) {
+      const g = ctx.createLinearGradient(...iso(a, 1), ...iso(a, 4));
+      g.addColorStop(0, 'rgba(255,250,230,.55)'); g.addColorStop(1, 'rgba(255,250,230,0)');
+      poly([iso(a, 1), iso(b, 1), iso(b + .9, 4), iso(a + .9, 4)], g);
+    }
+    // 牆角陰影
+    for (const ax of ['x', 'y']) {
+      const g = ax === 'x' ? ctx.createLinearGradient(...iso(1, 5), ...iso(1.7, 5)) : ctx.createLinearGradient(...iso(5, 1), ...iso(5, 1.7));
+      g.addColorStop(0, 'rgba(90,60,35,.2)'); g.addColorStop(1, 'rgba(90,60,35,0)');
+      if (ax === 'x') poly([iso(1, 1), iso(1, ROWS - 1), iso(1.7, ROWS - 1), iso(1.7, 1)], g);
+      else poly([iso(1, 1), iso(COLS - 1, 1), iso(COLS - 1, 1.7), iso(1, 1.7)], g);
+    }
+    // 區域名稱漆在地板上
+    onPlane('floor', 0, k => {
+      ctx.globalAlpha = .35;
+      for (const z of ZONES) if (z.name) planeText(z.name, z.lx * k, (z.ly + .1) * k, .42 * k, '#7A6450');
+      ctx.globalAlpha = 1;
+    });
+  }
+  // 上排牆的窗戶位置：避開門口和隔間牆
+  function topWindows() {
+    const ex = SPOTS.entrance[0], out = [];
+    for (let a = 1.6; a + 1.8 < COLS - 1.2; a += 4) {
+      const b = a + 1.8;
+      if (b > ex - .3 && a < ex + 1.3) continue;
+      let blocked = false; for (let x = Math.floor(a) - 1; x <= Math.ceil(b); x++) if (tileAt(x, 1) === '#' || tileAt(x, 2) === '#') blocked = true;
+      if (!blocked) out.push([a, b]);
+    }
+    return out;
+  }
+  function drawTree(gx, gy, s, t) {
+    const [x, y] = iso(gx, gy); softShadow(x, y, TW * .6 * s, TW * .25 * s, .2);
+    box(gx - .07 * s, gx + .07 * s, gy - .07 * s, gy + .07 * s, 0, 1.6 * s, '#A87A55');
+    const sway = RM ? 0 : Math.sin(t * 1.2 + gx) * TW * .02;
+    const [cx, cy] = iso(gx, gy, 2.5 * s);
+    for (const [dx, dy, r, c] of [[-.32, .25, .42, '#7DB86F'], [.34, .22, .4, '#74AF67'], [0, -.2, .5, '#8CC77D'], [0, .3, .38, '#86C277']]) {
+      ell(cx + dx * TW * s + sway, cy + dy * TW * s, r * TW * s, r * TW * s * .92, c, INK, Math.max(1, TW * .018));
+    }
+    ell(cx - .12 * TW * s + sway, cy - .3 * TW * s, .16 * TW * s, .1 * TW * s, 'rgba(255,255,255,.35)');
+  }
+  function drawWalls() {
+    const C = COLS, R = ROWS, ex = SPOTS.entrance[0];
+    const wall = '#FFF7EA', side = '#F3E5CF', cap = '#E9D4B5';
+    box(.72, 1, .72, R - 1, 0, WH, wall, { left: side, right: wall, top: cap });
+    const rw = { left: '#FBEFDC', right: side, top: cap };
+    box(1, ex + .1, .72, 1, 0, WH, wall, rw);
+    box(ex + .9, C - 1, .72, 1, 0, WH, wall, rw);
+    box(ex + .1, ex + .9, .72, 1, 1.62, WH, wall, rw);
+    for (const [a, b] of [[ex + .02, ex + .12], [ex + .88, ex + .98]]) box(a, b, .98, 1.05, 0, 1.66, '#C9935F');
+    box(ex + .02, ex + .98, .98, 1.05, 1.58, 1.68, '#C9935F');
+    // 牆裙
+    poly([iso(1, R - 1, 0), iso(1, 1, 0), iso(1, 1, .55), iso(1, R - 1, .55)], '#E7D2B2', INK, 1);
+    for (const [a, b] of [[1, ex + .02], [ex + .98, C - 1]]) poly([iso(a, 1, 0), iso(b, 1, 0), iso(b, 1, .55), iso(a, 1, .55)], '#EBD7B8', INK, 1);
+    // 窗戶
+    for (const [a, b] of topWindows()) {
+      const g = ctx.createLinearGradient(...iso(a, 1, 1.9), ...iso(a, 1, .85));
+      g.addColorStop(0, '#BFE3F2'); g.addColorStop(1, '#E4F4EC');
+      poly([iso(a, 1, .85), iso(b, 1, .85), iso(b, 1, 1.9), iso(a, 1, 1.9)], g, '#FFFFFF', Math.max(2, TW * .06));
+      const m = (a + b) / 2;
+      ctx.beginPath(); ctx.moveTo(...iso(m, 1, .85)); ctx.lineTo(...iso(m, 1, 1.9)); ctx.stroke();
+      poly([iso(a + .3, 1, 1.0), iso(a + .55, 1, 1.0), iso(a + .95, 1, 1.75), iso(a + .7, 1, 1.75)], 'rgba(255,255,255,.55)');
+    }
+    // 入口招牌
+    onPlane('y', 1, k => {
+      ctx.fillStyle = '#5FAF84'; rr((ex - .35) * k, -2.28 * k, 1.7 * k, .5 * k, .25 * k); ctx.fill();
+      planeText('入口・歡迎', (ex + .5) * k, -2.03 * k, .3 * k, '#FFFFFF');
+    });
+    // 彩旗
+    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(84,62,46,.45)';
+    const flags = ['#F6B8C4', '#FFE08A', '#9FD3B5', '#A9CBEA'];
+    for (const [a, b] of [[1.15, ex - .05], [ex + 1.05, C - 1.15]]) {
+      if (b - a < 1) continue;
+      const pt = u => iso(a + (b - a) * u, 1, 2.15 - Math.sin(u * Math.PI) * .18);
+      ctx.beginPath(); for (let i = 0; i <= 20; i++) { const p = pt(i / 20); i ? ctx.lineTo(...p) : ctx.moveTo(...p); } ctx.stroke();
+      const n = Math.max(2, Math.round((b - a) * 2));
+      for (let i = 1; i < n; i++) {
+        const p0 = pt((i - .3) / n), p1 = pt((i + .3) / n), [mx, my] = pt(i / n);
+        poly([p0, p1, [mx, my + HU * TW * .28]], flags[i % 4], 'rgba(84,62,46,.35)');
+      }
+    }
+    // 左牆白板與時鐘（教室那一段）
+    const cls = ZONES.find(z => z.name && z.name.includes('教室'));
+    if (cls) {
+      const g0 = cls.y0 + .6, g1 = Math.min(cls.y1 + .4, g0 + 4.2), u0 = R - g1, u1 = R - g0;
+      onPlane('x', 1, k => {
+        ctx.fillStyle = '#C9935F'; rr(u0 * k, -1.95 * k, (u1 - u0) * k, 1.15 * k, .08 * k); ctx.fill();
+        ctx.fillStyle = '#FFFFFF'; rr((u0 + .08) * k, -1.88 * k, (u1 - u0 - .16) * k, 1.01 * k, .05 * k); ctx.fill();
+        planeText('新道親法會', (u0 + u1) / 2 * k, -1.57 * k, .3 * k, '#5FAF84');
+        planeText('歡迎你，一起來學習 ♡', (u0 + u1) / 2 * k, -1.18 * k, .19 * k, '#C27A8E');
+      });
+      const [cx, cy] = iso(1, g1 + .6, 1.55);
+      ell(cx, cy, TW * .17, TW * .2, '#FFFFFF', '#C9935F', Math.max(2, TW * .04));
+      ctx.strokeStyle = '#4A3B2F'; ctx.lineWidth = Math.max(1, TW * .025); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - TW * .12); ctx.moveTo(cx, cy); ctx.lineTo(cx + TW * .07, cy + TW * .02); ctx.stroke();
+    }
+  }
+
+  // ── 家具與櫃台（每一樣都有固定的外框，點到時外框發光）
+  const SHAPES = {
+    R: [.04, .96, .06, .94, 1.1], S: [.08, .92, .08, .72, 2.0], T: [.18, .82, .22, .78, 1.65], K: [.08, .92, .2, .86, 1.4],
+    M: [.12, .88, .12, .78, 1.95], B: [.08, .92, .15, .8, 1.5], F: [.06, .94, .18, .88, 1.1], L: [.06, .94, .16, .88, 1.05],
+    U: [.08, .92, .1, .62, 1.95], V: [.08, .92, .1, .62, 1.95],
+  };
+  const shapeBox = (c, x, y) => { const s = SHAPES[c]; return [x + s[0], x + s[1], y + s[2], y + s[3], s[4]]; };
+  function drawStation(c, x, y, t) {
+    const lw = Math.max(1, TW * .02);
+    switch (c) {
+      case 'R':
+        box(x + .1, x + .9, y + .12, y + .88, 0, .8, '#9FD3B5', { right: '#88C0A1' });
+        box(x + .04, x + .96, y + .06, y + .94, .8, .9, '#E9C79C');
+        box(x + .25, x + .62, y + .3, y + .55, .9, .96, '#FFFFFF');
+        box(x + .68, x + .82, y + .25, y + .39, .9, 1.1, '#A9CBEA');
+        faceLabel('報到台', x + .5, y + .88, .42, '#FFFFFF');
+        break;
+      case 'S':
+        box(x + .08, x + .92, y + .08, y + .72, 0, 2.0, '#D9A574', { right: '#C18D5E', top: '#E8C096' });
+        poly([iso(x + .15, y + .72, .12), iso(x + .48, y + .72, .12), iso(x + .48, y + .72, 1.4), iso(x + .15, y + .72, 1.4)], '#E3B485', INK, lw);
+        poly([iso(x + .52, y + .72, .12), iso(x + .85, y + .72, .12), iso(x + .85, y + .72, 1.4), iso(x + .52, y + .72, 1.4)], '#E3B485', INK, lw);
+        ['#F6B8C4', '#A9CBEA', '#FFE08A', '#9FD3B5'].forEach((col, i) => box(x + .18 + i * .17, x + .32 + i * .17, y + .25, y + .62, 1.48, 1.85 - (i % 2) * .08, col));
+        faceLabel('文具櫃', x + .5, y + .72, .8, '#A16A3B', '#FFFFFF');
+        break;
+      case 'T':
+        box(x + .2, x + .8, y + .25, y + .75, 0, 1.1, '#F4F7FA', { right: '#DCE3EA' });
+        box(x + .28, x + .72, y + .33, y + .67, 1.1, 1.6, '#BFE3F5', { top: '#D8F0FA', line: 'rgba(84,62,46,.3)' });
+        for (const [dx, col] of [[.38, '#E98F8F'], [.62, '#8FB8E9']]) { const [px, py] = iso(x + dx, y + .75, .75); ell(px, py, TW * .045, TW * .045, col, INK, lw); }
+        faceLabel('飲水機', x + .5, y + .75, .35, '#3D7E86');
+        break;
+      case 'K':
+        box(x + .08, x + .92, y + .2, y + .86, 0, .8, '#D9A574', { right: '#C18D5E' });
+        box(x + .25, x + .65, y + .3, y + .65, .8, 1.38, '#6B5446', { top: '#8A7060' });
+        box(x + .33, x + .5, y + .6, y + .72, .8, .95, '#FFFFFF');
+        box(x + .72, x + .84, y + .35, y + .5, .8, .98, '#FFFFFF');
+        faceLabel('咖啡機', x + .5, y + .86, .4, '#FFFFFF');
+        break;
+      case 'M':
+        box(x + .12, x + .88, y + .12, y + .78, 0, 1.95, '#EAF2F8', { right: '#CFDDE9', top: '#F6FAFD' });
+        poly([iso(x + .14, y + .78, 1.25), iso(x + .86, y + .78, 1.25)], null, INK, lw);
+        box(x + .72, x + .78, y + .78, y + .82, .7, 1.1, '#9AAAB8', { line: null });
+        box(x + .72, x + .78, y + .78, y + .82, 1.4, 1.75, '#9AAAB8', { line: null });
+        faceLabel('冰箱', x + .45, y + .78, .5, '#4E7FA6');
+        break;
+      case 'B': {
+        box(x + .08, x + .92, y + .15, y + .72, 0, 1.5, '#CFA57A', { right: '#B88E63', top: '#E0BC94' });
+        const bk = ['#F6B8C4', '#A9CBEA', '#FFE08A'];
+        for (let r = 0; r < 2; r++) for (let i = 0; i < 3; i++) box(x + .14 + i * .26, x + .34 + i * .26, y + .66, y + .8, .12 + r * .7, .5 + r * .7, bk[(i + r) % 3]);
+        if (S.locked) emoji('🔒', ...iso(x + .5, y + .8, 1.32), TW * .38);
+        faceLabel('備品區', x + .5, y + .8, .05, '#8A5A35', '#FFFFFF');
+        break;
+      }
+      case 'F':
+        box(x + .06, x + .94, y + .18, y + .88, 0, .72, '#F3C9A8', { top: '#FFF3E6', right: '#E3B591' });
+        for (const dx of [.3, .7]) { const [px, py] = iso(x + dx, y + .5, .72); ell(px, py, TW * .16, TW * .08, '#FFFFFF', INK, lw); emoji(S.wave < 2 ? '🥟' : '🍱', px, py - TW * .08, TW * .3); }
+        faceLabel('餐點區', x + .5, y + .88, .35, '#B4602F');
+        break;
+      case 'L':
+        box(x + .06, x + .94, y + .16, y + .32, .4, 1.05, '#B9A6E0');
+        box(x + .06, x + .94, y + .3, y + .88, 0, .42, '#C7B8E8', { top: '#D9CEF2' });
+        box(x + .06, x + .2, y + .3, y + .88, .42, .66, '#B9A6E0');
+        box(x + .8, x + .94, y + .3, y + .88, .42, .66, '#B9A6E0');
+        faceLabel('休息區', x + .5, y + .88, .2, '#FFFFFF');
+        break;
+      case 'U': case 'V': {
+        const men = c === 'U';
+        box(x + .08, x + .92, y + .1, y + .62, 0, 1.95, men ? '#DCE9F7' : '#F9E0EA', { right: men ? '#C5D7EC' : '#EDC9D7' });
+        poly([iso(x + .25, y + .62, .04), iso(x + .75, y + .62, .04), iso(x + .75, y + .62, 1.45), iso(x + .25, y + .62, 1.45)], men ? '#7FA6D9' : '#E58FB0', INK, lw);
+        const [kx, ky] = iso(x + .68, y + .62, .75); ell(kx, ky, TW * .03, TW * .03, '#FFFFFF');
+        emoji(men ? '🚹' : '🚺', ...iso(x + .5, y + .62, 1.72), TW * .32);
+        faceLabel(men ? '男廁' : '女廁', x + .45, y + .62, 1.0, '#FFFFFF');
+        break;
+      }
+    }
+  }
+  function drawTable(x, y) {
+    box(x + .45, x + .55, y + .45, y + .55, 0, .65, '#B9875A', { line: null });
+    box(x + .12, x + .88, y + .12, y + .88, .65, .74, '#E9C79C');
+    for (const [dx, dy] of [[.32, .35], [.66, .62]]) { const [px, py] = iso(x + dx, y + dy, .74); ell(px, py, TW * .1, TW * .05, '#FFFFFF', INK, 1); }
+  }
+  const CUSHION = ['#9FD3B5', '#F6B8C4', '#A9CBEA'];
+  function drawChairBack(x, y) {
+    box(x + .22, x + .8, y + .2, y + .28, .36, 1.05, '#D9A574');
+    box(x + .27, x + .75, y + .27, y + .29, .55, .95, '#E8C096', { line: null });
+  }
+  function drawChair(x, y) {
+    for (const [a, b] of [[.26, .3], [.7, .3], [.26, .76], [.7, .76]]) box(x + a, x + a + .05, y + b, y + b + .05, 0, .36, '#B9875A', { line: null });
+    box(x + .22, x + .8, y + .26, y + .82, .36, .46, '#D9A574');
+    box(x + .26, x + .76, y + .3, y + .78, .46, .52, CUSHION[(x + y) % 3], { line: 'rgba(84,62,46,.3)' });
+  }
+  // 隔間矮牆：依相鄰的牆決定走向，畫成薄牆而不是整塊方塊
+  function drawPartition(x, y) {
+    const o = { left: '#F7E9D3', right: '#EBDABF', top: '#E9D4B5' }, h = .95;
+    const wl = tileAt(x - 1, y) === '#', wr = tileAt(x + 1, y) === '#', wu = tileAt(x, y - 1) === '#', wd = tileAt(x, y + 1) === '#';
+    const horiz = wl || wr || !(wu || wd);
+    if (wu) box(x + .38, x + .62, y, y + .38, 0, h, '#FFF7EA', o);
+    if (horiz) box(wl ? x : x + .38, wr ? x + 1 : x + .62, y + .38, y + .62, 0, h, '#FFF7EA', o);
+    else box(x + .38, x + .62, y + .38, y + .62, 0, h, '#FFF7EA', o);
+    if (wd) box(x + .38, x + .62, y + .62, y + 1, 0, h, '#FFF7EA', o);
+  }
+
+  // ── Q 版人物
+  function chibi(x, y, s, o, t) {
+    const walking = o.walk && !RM, ph = o.ph || 0;
+    const bob = walking ? Math.abs(Math.sin(t * 10)) * s * .05 : RM ? 0 : (Math.sin(t * 2.2 + ph) + 1) * s * .01;
+    const lw = Math.max(1, s * .024);
+    if (!o.seated) softShadow(x, y, s * .28, s * .11, .28);
+    const by = y - bob, face = o.face || 1;
+    if (o.wings) {
+      const f = RM ? 0 : Math.sin(t * 6) * .15;
+      for (const d of [-1, 1]) {
+        ctx.save(); ctx.translate(x + d * s * .15, by - s * .4); ctx.rotate(d * (.5 + f));
+        ell(d * s * .1, -s * .02, s * .14, s * .09, '#FFFFFF', INK, lw); ell(d * s * .14, s * .04, s * .08, s * .05, '#F2F4FA'); ctx.restore();
+      }
+    }
+    const hx = x, hy = by - s * .68, r = s * .25;
+    if (o.hair === 'bob') { ctx.fillStyle = o.hairCol; rr(hx - r * 1.08, hy - r * .5, r * 2.16, r * 1.45, r * .5); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke(); }
+    if (!o.seated) {
+      const sw = walking ? Math.sin(t * 10) * s * .035 : 0;
+      for (const d of [-1, 1]) {
+        ctx.fillStyle = o.pants; rr(x + d * s * .07 - s * .045, by - s * .2 + d * sw, s * .09, s * .2 - d * sw * .3, s * .045); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
+        ell(x + d * s * .075, by - s * .005 + d * sw * .6, s * .06, s * .035, '#6B5446');
+      }
+    }
+    const top = by - s * (o.seated ? .44 : .5), bot = by - s * (o.seated ? .08 : .16);
+    ctx.beginPath(); ctx.moveTo(x - s * .13, top); ctx.lineTo(x + s * .13, top); ctx.quadraticCurveTo(x + s * .2, bot, x + s * .17, bot); ctx.lineTo(x - s * .17, bot); ctx.quadraticCurveTo(x - s * .2, bot, x - s * .13, top); ctx.closePath();
+    ctx.fillStyle = o.shirt; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
+    if (o.vest) { poly([[x - s * .05, top], [x + s * .05, top], [x, top + s * .14]], '#FFFFFF'); ell(x + s * .08, top + s * .12, s * .035, s * .025, '#F2C14E'); }
+    if (o.apron) { ctx.fillStyle = o.apron; rr(x - s * .11, top + s * .1, s * .22, bot - top - s * .1, s * .04); ctx.fill(); }
+    if (o.trim) { ctx.strokeStyle = o.trim; ctx.lineWidth = s * .03; ctx.beginPath(); ctx.moveTo(x - s * .17, bot - s * .03); ctx.lineTo(x + s * .17, bot - s * .03); ctx.stroke(); }
+    if (o.seated) {
+      // 坐姿：大腿從椅面往前（畫面左下）伸出，小腿垂下
+      for (const d of [1, -1]) {
+        const hx0 = x + d * s * .07, hy0 = by - s * .13, kx = hx0 - s * .16, ky = hy0 + s * .08, fx2 = kx - s * .01, fy2 = ky + s * .18;
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.beginPath(); ctx.moveTo(hx0, hy0); ctx.lineTo(kx, ky); ctx.lineTo(fx2, fy2);
+        ctx.strokeStyle = INK; ctx.lineWidth = s * .1 + lw * 2; ctx.stroke();
+        ctx.strokeStyle = o.pants; ctx.lineWidth = s * .1; ctx.stroke();
+        ell(fx2 - s * .025, fy2 + s * .03, s * .065, s * .035, '#6B5446');
+      }
+      ctx.lineCap = 'butt';
+    }
+    const wave = o.wave && !RM ? Math.sin(t * 9) * .5 : 0;
+    for (const d of [-1, 1]) {
+      ctx.save(); ctx.translate(x + d * s * .15, top + s * .05); ctx.rotate(d * .35 + (d === 1 && o.wave ? -2.4 + wave : 0));
+      ctx.fillStyle = o.shirt; rr(-s * .04, 0, s * .08, s * .17, s * .04); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
+      ell(0, s * .18, s * .04, s * .04, '#FFE2CC', INK, lw); ctx.restore();
+    }
+    ell(hx, hy, r, r * .95, '#FFE2CC', INK, lw);
+    ctx.save(); ctx.beginPath(); ctx.ellipse(hx, hy, r * 1.06, r * 1.02, 0, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = o.hairCol;
+    ctx.beginPath(); ctx.moveTo(hx - r * 1.2, hy - r * .1);
+    for (let i = 0; i <= 4; i++) { const xx = hx - r * 1.2 + i * r * .6; ctx.quadraticCurveTo(xx + r * .3, hy - r * (i % 2 ? .05 : .45), xx + r * .6, hy - r * .15); }
+    ctx.lineTo(hx + r * 1.2, hy - r * 1.3); ctx.lineTo(hx - r * 1.2, hy - r * 1.3); ctx.fill(); ctx.restore();
+    ctx.beginPath(); ctx.ellipse(hx, hy, r, r * .95, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
+    if (o.hair === 'bun') ell(hx + r * .2, hy - r * 1.05, r * .32, r * .3, o.hairCol, INK, lw);
+    if (o.hair === 'spiky') for (const d of [-.5, 0, .5]) poly([[hx + d * r - r * .2, hy - r * .8], [hx + d * r + r * .1, hy - r * 1.3], [hx + d * r + r * .25, hy - r * .78]], o.hairCol);
+    if (o.cap) { ctx.fillStyle = o.cap; ctx.beginPath(); ctx.ellipse(hx, hy - r * .55, r * 1.02, r * .55, 0, Math.PI, 0); ctx.fill(); ell(hx + face * r * .55, hy - r * .5, r * .5, r * .12, o.cap); }
+    const ex = face * s * .025, blink = !RM && ((t + ph) % 4) < .12;
+    for (const d of [-1, 1]) {
+      if (blink) { ctx.strokeStyle = '#3B2C22'; ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(hx + d * r * .36 + ex - r * .08, hy + r * .1); ctx.lineTo(hx + d * r * .36 + ex + r * .08, hy + r * .1); ctx.stroke(); }
+      else { ell(hx + d * r * .36 + ex, hy + r * .1, r * .085, r * .12, '#3B2C22'); ell(hx + d * r * .36 + ex + r * .03, hy + r * .05, r * .03, r * .035, '#FFFFFF'); }
+      ell(hx + d * r * .6 + ex, hy + r * .35, r * .14, r * .08, 'rgba(244,140,160,.55)');
+    }
+    ctx.strokeStyle = '#3B2C22'; ctx.lineWidth = lw; ctx.beginPath();
+    if (o.worried) ctx.arc(hx + ex, hy + r * .55, r * .12, Math.PI * 1.15, Math.PI * 1.85);
+    else ctx.arc(hx + ex, hy + r * .3, r * .13, Math.PI * .2, Math.PI * .8);
+    ctx.stroke();
+    if (o.halo) { const hb = RM ? 0 : Math.sin(t * 3) * s * .015; ell(hx, hy - r * 1.25 + hb, r * .55, r * .16, null, '#F2C14E', s * .045); ell(hx, hy - r * 1.25 + hb, r * .55, r * .16, null, 'rgba(255,240,180,.8)', s * .015); }
+    return hy - r * (o.halo ? 1.45 : 1.1);
+  }
+  // 需求泡泡：上方有時間條（挑戰模式），陪伴時外圈有進度環
+  function bubble(x, top, s, icon, age, o = {}) {
+    const two = Array.from(icon).length > 1;
+    const fy = top - s * .1 + (RM ? 0 : Math.sin(age * 3) * s * .03), w = s * (two ? .82 : .62), h = s * .52;
+    ctx.save(); ctx.translate(x, fy - h / 2);
+    if (o.warn && !RM) ctx.rotate(Math.sin(age * 14) * .12);
+    const tint = icon === '🚹' ? '#DBEAFE' : icon === '🚺' ? '#FCE7F3' : '#FFFFFF';
+    const edge = o.warn ? '#E4572E' : icon === '🚹' ? '#5B8BD9' : icon === '🚺' ? '#E07AA2' : '#F2C14E';
+    ctx.fillStyle = 'rgba(84,62,46,.15)'; rr(-w / 2, -h / 2 + 3, w, h, h * .45); ctx.fill();
+    ctx.fillStyle = tint; rr(-w / 2, -h / 2, w, h, h * .45); ctx.fill();
+    ctx.strokeStyle = edge; ctx.lineWidth = Math.max(2, s * .035); ctx.stroke();
+    poly([[-s * .07, h / 2 - 1], [s * .07, h / 2 - 1], [0, h / 2 + s * .1]], tint);
+    ctx.beginPath(); ctx.moveTo(-s * .07, h / 2); ctx.lineTo(0, h / 2 + s * .1); ctx.lineTo(s * .07, h / 2); ctx.stroke();
+    emoji(icon, 0, 0, h * (two ? .5 : .66));
+    if (o.frac >= 0) {
+      const bw = Math.max(w, s * .7), bh = Math.max(5, s * .1), bx = -bw / 2, byy = -h / 2 - bh - 4;
+      ctx.fillStyle = '#FFFFFF'; rr(bx - 2, byy - 2, bw + 4, bh + 4, (bh + 4) / 2); ctx.fill();
+      ctx.fillStyle = '#EDE6DA'; rr(bx, byy, bw, bh, bh / 2); ctx.fill();
+      ctx.fillStyle = o.frac > .5 ? '#5FAF84' : o.frac > .3 ? '#F2B33D' : '#E4572E';
+      if (o.frac > 0) { rr(bx, byy, Math.max(bh, bw * o.frac), bh, bh / 2); ctx.fill(); }
+    }
+    if (o.ring > 0) { ctx.strokeStyle = '#E98FA5'; ctx.lineWidth = s * .05; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(0, 0, h * .78, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * o.ring); ctx.stroke(); ctx.lineCap = 'butt'; }
+    ctx.restore();
+  }
+  const HAIRS = { f: ['bob', 'bun', 'bob', 'bun'], m: ['short', 'spiky', 'short', 'short'] };
+  const HAIR_COLS = ['#4B3A33', '#7A5238', '#8C5A3C', '#3D3029', '#A0703F', '#5A4030'];
+  const SHIRTS = ['#9FD3B5', '#F6B8C4', '#C7B8E8', '#FFE08A', '#A9CBEA', '#F4B183', '#B5DEC6', '#F2A7B9'];
+  let lookSeq = 0;
+  function lookOf(n) {
+    if (!n.look) { const i = lookSeq++; n.look = { hair: HAIRS[n.gender || 'm'][i % 4], hairCol: HAIR_COLS[(i * 5) % 6], shirt: SHIRTS[(i * 3) % 8], pants: ['#6F86A8', '#8E7BB5', '#7D8B6A'][i % 3], ph: i * 1.3 }; }
+    return n.look;
+  }
+  const STAFF_LOOK = {
+    pr: { hair: 'short', hairCol: '#3D3029', shirt: '#5B7DB1', vest: true, pants: '#3F4D63', ph: 3, tagBg: '#5B7DB1' },
+    gen: { hair: 'short', hairCol: '#4B3A33', shirt: '#7FB77E', apron: '#5E9A5D', cap: '#E4A23B', pants: '#5B6B4E', ph: 7, tagBg: '#5E9A5D' },
+    care: { hair: 'bob', hairCol: '#6B4A35', shirt: '#E8A87C', pants: '#7D6A8E', ph: 11, tagBg: '#D07F52' },
+  };
+  const ANGEL = { hair: 'short', hairCol: '#F2D37A', shirt: '#FFFFFF', trim: '#F2C14E', pants: '#F4D7A8', halo: true, wings: true };
+  const faceDir = e => { const d = (e.x - e.fx) - (e.y - e.fy); if (d) e.dir = d > 0 ? 1 : -1; return e.dir || 1; };
+
+  // ── 發光提示
+  function glowTile(x, y, a, col = '255,205,80') {
+    const pts = [iso(x + .5, y + .04), iso(x + .96, y + .5), iso(x + .5, y + .96), iso(x + .04, y + .5)];
+    ctx.save(); ctx.shadowColor = `rgba(${col},.9)`; ctx.shadowBlur = TW * .3;
+    poly(pts, `rgba(${col},${.22 + .3 * a})`, `rgba(${col},${.6 + .4 * a})`, Math.max(2, TW * .05)); ctx.restore();
+  }
+  function glowBox([x0, x1, y0, y1, h], a, col = '255,200,70') {
+    const pts = [iso(x0, y0, h), iso(x1, y0, h), iso(x1, y0, 0), iso(x1, y1, 0), iso(x0, y1, 0), iso(x0, y1, h)];
+    ctx.save(); ctx.shadowColor = `rgba(${col},1)`; ctx.shadowBlur = TW * .35;
+    poly(pts, `rgba(${col},${.12 * a})`, `rgba(${col},${.55 + .45 * a})`, Math.max(2.5, TW * .06)); ctx.restore();
+  }
+  function glowRing(x, y, a, col = '255,200,70') {
+    ctx.save(); ctx.shadowColor = `rgba(${col},1)`; ctx.shadowBlur = TW * .3;
+    ell(x, y, TW * .36, TW * .18, `rgba(${col},${.15 + .2 * a})`, `rgba(${col},${.6 + .4 * a})`, Math.max(2.5, TW * .06)); ctx.restore();
+  }
+  function arrowAt(gx, gy, h, t) {
+    const [x, y0] = iso(gx, gy, h), y = y0 - (RM ? 0 : Math.abs(Math.sin(t * 4))) * TW * .15, s = TW * .2;
+    poly([[x - s, y - s * 1.1], [x + s, y - s * 1.1], [x, y]], '#F2C14E', '#C98A1E', 2);
+  }
+  // 被點到（或滑鼠指著）的東西：走過去的路上持續發光，互動後淡出
+  function selAlpha(kind, ref) {
+    let a = 0;
+    const h = S.hover;
+    if (h && h.kind === kind && h.ref === ref) a = .55;
+    const s = S.sel;
+    if (s && s.kind === kind && s.ref === ref) a = Math.max(a, S.pending || S.chasing ? .7 + .3 * pulseAt(S.time, 8) : Math.max(0, 1 - (S.time - s.t) / .9));
+    return a;
+  }
+  // 目前「該去哪裡」的提示：帶位時的空椅子、帶去洗手間時對的那間
+  function guideTargets() {
+    const f = S.follower;
+    if (!f) return { seats: [], wc: null };
+    if (f.need === 'guide') return { seats: freeSeats(), wc: null };
+    if (f.need === 'toilet') return { seats: [], wc: f.gender === 'm' ? 'U' : 'V' };
+    return { seats: [], wc: null };
+  }
+  const stationPos = c => { for (let y = 0; y < ROWS; y++) { const x = MAP[y].indexOf(c); if (x >= 0) return [x, y]; } return null; };
+
+  function camera() {
+    zoom += (zoomTo - zoom) * .08;
+    const [ppx, ppy] = posOf(S.player), [px, py] = iso(ppx + .5, ppy + .5, .7);
+    const k = Math.min(1, Math.max(0, (zoom - 1) / Math.max(.01, NEAR - 1)));
+    let cx = W / 2 + (px - W / 2) * k, cy = H / 2 + (py - H / 2) * k;
+    const hw = W / 2 / zoom, hh = H / 2 / zoom, b = ISL;
+    cx = b.x1 - b.x0 > 2 * hw ? Math.min(b.x1 - hw, Math.max(b.x0 + hw, cx)) : (b.x0 + b.x1) / 2;
+    cy = b.y1 - b.y0 > 2 * hh ? Math.min(b.y1 - hh, Math.max(b.y0 + hh, cy)) : (b.y0 + b.y1) / 2;
+    view = { z: zoom, ex: W / 2 - cx * zoom, ey: H / 2 - cy * zoom };
+    ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, dpr * view.ex, dpr * view.ey);
+  }
+
+  function draw(now) {
+    if (!W) resize();
+    const t = now / 1000;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawSky(t);
+    camera();
+    drawIsland();
+    drawTree(.75, .75, 1.15, t); drawTree(.6, ROWS * .45, .75, t); drawTree(COLS * .78, .6, .8, t);
+    drawFloor();
+    const gt = guideTargets(), pl = pulseAt(S.time, 5);
+    const tops = [];
+    const people = [];
+    for (const st of STAFF) people.push({ e: st, kind: 'staff' });
+    for (const n of S.npcs) if (!(n.away && S.time < n.away)) people.push({ e: n, kind: 'npc' });
+    people.push({ e: S.player, kind: 'me' });
+    const drawOne = ({ e, kind }) => {
+      const [px, py] = posOf(e), seated = kind === 'npc' && e.t >= 1 && tileAt(e.x, e.y) === 'c';
+      const [x, y] = iso(px + .5, py + .5 + (seated ? .05 : 0), seated ? .52 : 0);
+      const sa = selAlpha('person', e);
+      if (sa > 0) glowRing(x, y, sa);
+      if (kind === 'npc' && S.hi && S.hi.n === e && S.time < S.hi.until) glowRing(x, y, pulseAt(S.time, 8), '228,120,60');
+      let look, alpha = 1;
+      if (kind === 'me') look = ANGEL;
+      else if (kind === 'staff') look = STAFF_LOOK[e.id];
+      else {
+        look = lookOf(e);
+        alpha = (RM ? 1 : Math.min(1, (S.time - (e.spawn || 0)) * 4)) * (e.revealed ? 1 : .75);
+      }
+      ctx.globalAlpha = alpha;
+      const waiting = kind === 'npc' && e.state === 'wait' && e.revealed;
+      const top = chibi(x, y, TW * 1.05, Object.assign({}, look, {
+        walk: e.t < 1, face: faceDir(e), seated,
+        wave: waiting && e.need === 'greet', worried: waiting && e.need === 'comfort' && !(e.prog > 0),
+      }), t);
+      ctx.globalAlpha = 1;
+      tops.push({ e, kind, x, y, top });
+    };
+    // 還在門外的人在牆的後面：先畫人，再畫牆（只會從門洞看到）
+    const outside = people.filter(p => posOf(p.e)[1] < .98);
+    outside.forEach(drawOne);
+    drawWalls();
+    gt.seats.forEach(([x, y]) => glowTile(x, y, pl));
+    if (S.ripple) glowTile(S.ripple.x, S.ripple.y, 1 - S.ripple.t, '95,175,132');
+    // 依深度（x+y）由後往前畫
+    const items = [];
+    for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
+      const c = tileAt(x, y);
+      if (c === '#') items.push({ k: x + y + 1, f: () => drawPartition(x, y) });
+      else if (c === 'c') { items.push({ k: x + y + .48, f: () => drawChairBack(x, y) }); items.push({ k: x + y + 1.08, f: () => drawChair(x, y) }); }
+      else if (c === 'x') items.push({ k: x + y + 1, f: () => drawTable(x, y) });
+      else if (STATIONS[c]) {
+        const sb = shapeBox(c, x, y);
+        items.push({ k: (sb[0] + sb[1]) / 2 + (sb[2] + sb[3]) / 2, f: () => {
+          drawStation(c, x, y, t);
+          const want = gt.wc === c || (c === 'B' && S.locked && S.hand === 'key') ? .5 + .5 * pl : 0;
+          const a = Math.max(selAlpha('station', c), want);
+          if (a > 0) glowBox(sb, a);
+        } });
+      }
+    }
+    for (const p of people) if (!outside.includes(p)) {
+      const [px, py] = posOf(p.e), seated = p.kind === 'npc' && p.e.t >= 1 && tileAt(p.e.x, p.e.y) === 'c';
+      items.push({ k: px + py + 1 + (seated ? .62 : .05), f: () => drawOne(p) });
+    }
+    items.sort((a, b) => a.k - b.k).forEach(i => i.f());
+    // 前景地圍
+    box(1, COLS - .72, ROWS - 1, ROWS - .72, 0, .28, '#F3E5CF', { top: '#E9D4B5' });
+    box(COLS - 1, COLS - .72, 1, ROWS - 1, 0, .28, '#F3E5CF', { top: '#E9D4B5' });
+
+    // 提示層：箭頭、名牌、泡泡、手上的東西、愛心
+    gt.seats.forEach(([x, y]) => arrowAt(x + .5, y + .5, 1.55, S.time));
+    if (gt.wc) { const sp = stationPos(gt.wc); if (sp) arrowAt(sp[0] + .5, sp[1] + .4, 2.5, S.time); }
+    for (const { e, kind, x, y, top } of tops) {
+      if (kind === 'staff') pill(e.label, x, y + TW * .2, Math.max(10, TW * .2), STAFF_LOOK[e.id].tagBg);
+      if (kind === 'me') {
+        pill('你', x, y + TW * .2, Math.max(10, TW * .2), '#E4A23B');
+        if (S.hand) {
+          const bx = x + TW * .38, by = top + TW * .2, r = TW * .2;
+          ctx.save(); ctx.shadowColor = 'rgba(84,62,46,.25)'; ctx.shadowBlur = 4;
+          ell(bx, by, r, r, '#FFFFFF', '#E4A23B', Math.max(1.5, TW * .035)); ctx.restore();
+          const he = ITEMS[S.hand].e; emoji(he, bx, by, r * (Array.from(he).length > 1 ? .85 : 1.25));
+          if (S.hand === 'bao' && S.qty > 1) pill('×2', bx + r * 1.2, by + r * .8, Math.max(9, TW * .17), '#EA580C');
+        }
+      }
+      if (kind !== 'npc') continue;
+      if (e.state === 'missed') emoji('🤝', x + TW * .3, top + TW * .15, TW * .26);
+      if (e.state === 'done' && S.time - e.doneAt < 2.5) emoji('✨', x + TW * .3, top + TW * .12, TW * .3);
+      if (e.state === 'following') emoji('💛', x + TW * .3, top + TW * .12, TW * .26);
+      if (e.state === 'wait' && e.revealed && !e.talking) {
+        const frac = e.limit ? Math.max(0, e.left / e.limit) : -1;
+        const icon = e.need === 'toilet' ? (e.gender === 'm' ? '🚹' : '🚺') : NEEDS[e.need].e;
+        bubble(x, top, TW * 1.05, icon, S.time - e.born, { frac, warn: frac >= 0 ? frac < .3 : S.time - e.born > 18, ring: e.need === 'comfort' ? e.prog : 0 });
+      }
+    }
+    for (const q of S.particles) {
+      if (q.y0 === undefined) q.y0 = q.y;
+      const [x, y] = iso(q.x, q.y0 + .3, 1.6 + (q.y0 - q.y) * 1.4);
+      ctx.globalAlpha = Math.max(0, q.life); emoji('❤️', x, y, TW * .32);
+    }
+    ctx.globalAlpha = 1;
+    edgeMarks(gt);
+  }
+  // 近拍時，畫面外有需要幫忙的人或該去的地方，就在螢幕邊緣放一個指引圓鈕
+  function edgeMarks(gt) {
+    const marks = [];
+    for (const n of S.npcs) if (n.state === 'wait' && n.revealed && !(n.away && S.time < n.away)) {
+      const [px, py] = posOf(n); marks.push([...iso(px + .5, py + .5, 2.2), n.need === 'toilet' ? (n.gender === 'm' ? '🚹' : '🚺') : NEEDS[n.need].e]);
+    }
+    gt.seats.forEach(([x, y]) => marks.push([...iso(x + .5, y + .5, .8), '💺']));
+    if (gt.wc) { const sp = stationPos(gt.wc); if (sp) marks.push([...iso(sp[0] + .5, sp[1] + .4, 1.2), gt.wc === 'U' ? '🚹' : '🚺']); }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const m = 24, r = 16;
+    for (const [wx, wy, icon] of marks) {
+      const sx = wx * view.z + view.ex, sy = wy * view.z + view.ey;
+      if (sx > 0 && sx < W && sy > 0 && sy < H) continue;
+      const cx = Math.min(W - m, Math.max(m, sx)), cy = Math.min(H - m, Math.max(m, sy)), ang = Math.atan2(sy - cy, sx - cx);
+      const bob = RM ? 0 : Math.sin(S.time * 5) * 3, px = cx + Math.cos(ang) * bob, py = cy + Math.sin(ang) * bob;
+      poly([[px + Math.cos(ang) * (r + 9), py + Math.sin(ang) * (r + 9)], [px + Math.cos(ang + .5) * r, py + Math.sin(ang + .5) * r], [px + Math.cos(ang - .5) * r, py + Math.sin(ang - .5) * r]], '#F2C14E');
+      ell(px, py, r, r, '#FFFFFF', '#F2C14E', 3);
+      emoji(icon, px, py, r * (Array.from(icon).length > 1 ? .8 : 1.1));
+    }
+  }
+
+  // ---------- 點擊與滑鼠指向：換回世界座標，判斷點到誰 ----------
+  function pickAt(sx, sy) {
+    const wx = (sx - view.ex) / view.z, wy = (sy - view.ey) / view.z;
+    let best = null, bk = -1;
+    const cand = [...STAFF.map(e => ['staff', e]), ...S.npcs.filter(n => !(n.away && S.time < n.away)).map(e => ['npc', e])];
+    for (const [kind, e] of cand) {
+      const [px, py] = posOf(e), seated = kind === 'npc' && e.t >= 1 && tileAt(e.x, e.y) === 'c';
+      const [x, y] = iso(px + .5, py + .5 + (seated ? .05 : 0), seated ? .52 : 0), s = TW * 1.05, k = px + py + (seated ? .62 : .05);
+      if (Math.abs(wx - x) < s * .32 && wy < y + s * .12 && wy > y - s * 1.0 && k > bk) { best = { kind: 'person', ref: e, staff: kind === 'staff' }; bk = k; }
+    }
+    if (best) return best;
+    // 物件：用螢幕上的外框判斷（越前面的越優先）
+    let hit = null, hk = -1;
+    for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
+      const c = tileAt(x, y); if (!STATIONS[c]) continue;
+      const [x0, x1, y0, y1, h] = shapeBox(c, x, y);
+      let a = 1e9, b = -1e9, cc = 1e9, d = -1e9;
+      for (const gx of [x0, x1]) for (const gy of [y0, y1]) for (const hh of [0, h]) { const [px, py] = iso(gx, gy, hh); a = Math.min(a, px); b = Math.max(b, px); cc = Math.min(cc, py); d = Math.max(d, py); }
+      if (wx > a && wx < b && wy > cc && wy < d && x + y > hk) { hit = { kind: 'station', ref: c, x, y }; hk = x + y; }
+    }
+    if (hit) return hit;
+    const u = (wx - OX) / (TW / 2), v = (wy - OY) / (TW / 4);
+    const tx = Math.floor((u + v) / 2), ty = Math.floor((v - u) / 2);
+    if (tx < 1 || ty < 1 || tx > COLS - 2 || ty > ROWS - 2) return null;
+    return { kind: 'tile', x: tx, y: ty };
+  }
+  cv.addEventListener('pointerdown', e => {
+    if (!S.running) return;
+    closeChoice();
+    const r = cv.getBoundingClientRect();
+    const h = pickAt(e.clientX - r.left, e.clientY - r.top);
+    if (!h) return;
+    S.chasing = null;
+    if (h.kind === 'person') {
+      S.sel = { kind: 'person', ref: h.ref, t: S.time };
+      if (h.staff) return chaseStaff(h.ref);
+      const n = h.ref; return handleTile(n.x, n.y, false);
+    }
+    if (h.kind === 'station') { S.sel = { kind: 'station', ref: h.ref, t: S.time }; return handleTile(h.x, h.y, false); }
+    S.sel = null;
+    S.ripple = { x: h.x, y: h.y, t: 0 };
+    handleTile(h.x, h.y, false);
+  });
+  cv.addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse' || !S.running) return;
+    const r = cv.getBoundingClientRect(), h = pickAt(e.clientX - r.left, e.clientY - r.top);
+    S.hover = h && h.kind !== 'tile' ? h : null;
+    cv.style.cursor = h ? 'pointer' : 'default';
+  });
+  cv.addEventListener('pointerleave', () => { if (S) S.hover = null; });
+
+  function loop(now) {
+    const dt = Math.min(.05, (now - (last || now)) / 1000);
+    last = now;
+    update(dt);
+    draw(now);
+    requestAnimationFrame(loop);
+  }
+  setLevel(detectLevel());
+  reset();
+  resize();
+  Counter.show('#playedIntro');
+  if (location.hash === '#debug') { window.__idle = () => S.player.t >= 1 && !S.path.length && !S.pending; window.__S = () => S; window.__view = () => view; window.__iso = iso; window.__L = () => ({ LEVEL, MAP, STAFF: STAFF.map(s => ({ id: s.id, x: s.x, y: s.y })), seats }); }
+  requestAnimationFrame(loop);
 })();
 </script>
 </body>
