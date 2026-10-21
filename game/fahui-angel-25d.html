@@ -371,9 +371,7 @@ function chibi(x, y, s, o, t) {
   const hx = x, hy = by - s * .68, r = s * .25;
   if (o.hair === 'bob') { ctx.fillStyle = o.hairCol; rr(hx - r * 1.08, hy - r * .5, r * 2.16, r * 1.45, r * .5); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke(); }
   // 腿
-  if (o.seated) {
-    for (const d of [-1, 1]) { ctx.fillStyle = o.pants; rr(x + d * s * .07 - s * .045 - s * .04, by - s * .1, s * .09, s * .16, s * .045); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke(); }
-  } else {
+  if (!o.seated) {
     const sw = walking ? Math.sin(t * 10) * s * .035 : 0;
     for (const d of [-1, 1]) {
       ctx.fillStyle = o.pants; rr(x + d * s * .07 - s * .045, by - s * .2 + d * sw, s * .09, s * .2 - d * sw * .3, s * .045); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
@@ -386,6 +384,18 @@ function chibi(x, y, s, o, t) {
   ctx.fillStyle = o.shirt; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
   if (o.vest) { poly([[x - s * .05, top], [x + s * .05, top], [x, top + s * .14]], '#FFFFFF'); ell(x + s * .08, top + s * .12, s * .035, s * .025, '#F2C14E'); }
   if (o.trim) { ctx.strokeStyle = o.trim; ctx.lineWidth = s * .03; ctx.beginPath(); ctx.moveTo(x - s * .17, bot - s * .03); ctx.lineTo(x + s * .17, bot - s * .03); ctx.stroke(); }
+  if (o.seated) {
+    // 坐姿：大腿從椅面往前（畫面左下）伸出，小腿垂下
+    for (const d of [1, -1]) {
+      const hx0 = x + d * s * .07, hy0 = by - s * .13, kx = hx0 - s * .16, ky = hy0 + s * .08, fx2 = kx - s * .01, fy2 = ky + s * .18;
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(hx0, hy0); ctx.lineTo(kx, ky); ctx.lineTo(fx2, fy2);
+      ctx.strokeStyle = INK; ctx.lineWidth = s * .1 + lw * 2; ctx.stroke();
+      ctx.strokeStyle = o.pants; ctx.lineWidth = s * .1; ctx.stroke();
+      ell(fx2 - s * .025, fy2 + s * .03, s * .065, s * .035, '#6B5446');
+    }
+    ctx.lineCap = 'butt';
+  }
   // 手
   const wave = o.wave ? Math.sin(t * 9) * .5 : 0;
   for (const d of [-1, 1]) {
@@ -477,7 +487,7 @@ let S;
 function person(o) { return Object.assign({ path: [], spd: 3, alpha: 1, need: null, state: 'idle', seated: false, walkT: 0, face: 1 }, o, { fx: o.x, fy: o.y }); }
 function reset() {
   SEATS.forEach(c => c.by = null);
-  S = { t: 0, started: false, done: false, hearts: 0, goal: 4, steps: 0, fx: [], tap: null, target: null, comfort: null, hold: null, events: {}, keys: new Set() };
+  S = { t: 0, started: false, done: false, hearts: 0, goal: 4, steps: 0, fx: [], tap: null, target: null, comfort: null, hold: null, events: {}, keys: new Set(), sel: null, hover: null };
   S.player = person({ id: 'me', x: 5, y: 3, spd: 4.4, tag: ['你', '#E4A23B'], look: { hair: 'short', hairCol: '#F2D37A', shirt: '#FFFFFF', trim: '#F2C14E', pants: '#F4D7A8', halo: true, wings: true } });
   S.staff = person({ id: 'pr', x: 3, y: 6, spd: 2, wait: 2, tag: ['公關學長', '#5B7DB1'], look: { hair: 'short', hairCol: '#3D3029', shirt: '#5B7DB1', vest: true, pants: '#3F4D63', ph: 3 } });
   S.npcs = [];
@@ -546,7 +556,7 @@ function interact(p) {
   switch (p.need) {
     case 'guide':
       p.need = null; p.state = 'follow'; p.path = []; p.spd = S.player.spd;
-      say('你：「歡迎！我帶你找位子，跟我來～」'); beep([[600, .12], [760, .14]]); break;
+      say('你：「歡迎！我帶你找位子，跟我來～」→ 走到發光的空椅子旁邊，他就會坐下。'); beep([[600, .12], [760, .14]]); break;
     case 'greet': {
       heart(p, 'greet');
       const c = freeSeat(p);
@@ -672,18 +682,55 @@ function update(dt) {
 
 // ── 繪圖
 const footOf = p => iso(p.fx + .5, p.fy + .5 + (p.seated ? .05 : 0), p.seated ? .52 : 0);
+const BOXES = { R: [1.04, 1.96, 1.06, 1.94, 1.1], S: [9.08, 9.92, 1.08, 1.72, 2.0] };
 let view = { z: 1, ex: 0, ey: 0 };
 function camera() {
   zoom += (zoomTo - zoom) * .08;
   const me = S.player, [px, py] = iso(me.fx + .5, me.fy + .5, .7);
   const k = Math.min(1, Math.max(0, (zoom - 1) / (NEAR - 1)));
   let cx = W / 2 + (px - W / 2) * k, cy = H / 2 + (py - H / 2) * k;
-  // 近拍時不要露出太多小島外面
+  // 近拍時不要露出太多小島外面；小島放得下時，讓它靠近畫面下緣，上方留給天空
   const hw = W / 2 / zoom, hh = H / 2 / zoom, b = ISL;
   if (b.x1 - b.x0 > 2 * hw) cx = Math.min(b.x1 - hw, Math.max(b.x0 + hw, cx)); else cx = (b.x0 + b.x1) / 2;
-  if (b.y1 - b.y0 > 2 * hh) cy = Math.min(b.y1 - hh, Math.max(b.y0 + hh, cy)); else cy = (b.y0 + b.y1) / 2;
+  if (b.y1 - b.y0 > 2 * hh) cy = Math.min(b.y1 - hh, Math.max(b.y0 + hh, cy));
+  else cy = (b.y0 + b.y1) / 2;
   view = { z: zoom, ex: W / 2 - cx * zoom, ey: H / 2 - cy * zoom };
   ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, dpr * view.ex, dpr * view.ey);
+}
+const pulse = (t, sp = 4) => .5 + .5 * Math.sin(t * sp);
+// 地板上的發光菱形（提示可以去的位置、點到的位置）
+function glowTile(x, y, a, col = '255,205,80') {
+  const pts = [iso(x + .5, y + .04), iso(x + .96, y + .5), iso(x + .5, y + .96), iso(x + .04, y + .5)];
+  ctx.save(); ctx.shadowColor = `rgba(${col},.9)`; ctx.shadowBlur = TW * .3;
+  poly(pts, `rgba(${col},${.22 + .3 * a})`, `rgba(${col},${.6 + .4 * a})`, Math.max(2, TW * .05)); ctx.restore();
+}
+// 物件外框發光（點到或可以互動時）
+function glowBox([x0, x1, y0, y1, h], a, col = '255,200,70') {
+  const pts = [iso(x0, y0, h), iso(x1, y0, h), iso(x1, y0, 0), iso(x1, y1, 0), iso(x0, y1, 0), iso(x0, y1, h)];
+  ctx.save(); ctx.shadowColor = `rgba(${col},1)`; ctx.shadowBlur = TW * .35;
+  poly(pts, `rgba(${col},${.12 * a})`, `rgba(${col},${.55 + .45 * a})`, Math.max(2.5, TW * .06)); ctx.restore();
+}
+function glowRing(p, a, col = '255,200,70') {
+  const [x, y] = footOf(p), s = TW;
+  ctx.save(); ctx.shadowColor = `rgba(${col},1)`; ctx.shadowBlur = s * .3;
+  ell(x, y, s * .36, s * .18, `rgba(${col},${.15 + .2 * a})`, `rgba(${col},${.6 + .4 * a})`, Math.max(2.5, s * .06)); ctx.restore();
+}
+function arrowAt(gx, gy, h, t) {
+  const [x, y0] = iso(gx, gy, h), y = y0 - Math.abs(Math.sin(t * 4)) * TW * .15, s = TW * .2;
+  ctx.save(); ctx.shadowColor = 'rgba(84,62,46,.3)'; ctx.shadowBlur = 4;
+  poly([[x - s, y - s * 1.1], [x + s, y - s * 1.1], [x, y]], '#F2C14E', '#C98A1E', 2); ctx.restore();
+}
+// 目前被點到（或滑鼠指著）的東西：走過去的路上持續發光，互動後淡出
+function selOf(kind, ref) {
+  let a = 0;
+  const h = S.hover;
+  if (h && h.kind === kind && h.ref === ref) a = Math.max(a, .55);
+  const s = S.sel;
+  if (s && s.kind === kind && s.ref === ref) {
+    const live = S.target && (S.target.p === ref || S.target.ch === ref);
+    a = Math.max(a, live ? .7 + .3 * pulse(S.t, 8) : Math.max(0, 1 - (S.t - s.t) / .9));
+  }
+  return a;
 }
 function draw(t) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -692,31 +739,41 @@ function draw(t) {
   drawIsland();
   drawTree(.75, .75, 1.15, t); drawTree(.62, 5.2, .75, t); drawTree(9.3, .62, .8, t);
   drawFloor();
-  drawWalls();
-  if (S.tap && S.t - S.tap.t < .6) {
-    const k = (S.t - S.tap.t) / .6, { x, y } = S.tap;
-    ctx.globalAlpha = 1 - k; poly([iso(x + .5, y), iso(x + 1, y + .5), iso(x + .5, y + 1), iso(x, y + .5)], 'rgba(95,175,132,.45)', '#5FAF84', 2); ctx.globalAlpha = 1;
-  }
-  const items = [];
-  CHAIRS.forEach((c, i) => { items.push({ k: c[0] + c[1] + .48, f: () => drawChairBack(c) }); items.push({ k: c[0] + c[1] + 1.08, f: () => drawChair(c, i) }); });
-  items.push({ k: 3, f: drawCounter }, { k: 10.8, f: () => drawCabinet(t) });
-  items.push({ k: 10, f: () => drawPlant(1.5, 8.5, 1.1, t) }, { k: 18, f: () => drawPlant(9.5, 8.5, 1.1, t) });
   const tops = [];
-  for (const p of people()) {
-    items.push({ k: p.fx + p.fy + 1 + (p.seated ? .62 : .05), f: () => {
-      const [x, y] = footOf(p);
-      ctx.globalAlpha = p.alpha;
-      const look = Object.assign({}, p.look, {
-        walk: p.walkT > 0, face: p.face, seated: p.seated,
-        wave: p.need === 'greet', worried: p.need === 'comfort' && !(S.comfort && S.comfort.n === p),
-      });
-      const r = chibi(x, y, TW * 1.05, look, t);
-      if (p === S.player && S.hold) { box(p.fx + .62, p.fx + .8, p.fy + .55, p.fy + .75, .55, .62, '#F6B8C4'); }
-      ctx.globalAlpha = 1;
-      tops.push({ p, x, y, top: r.headTop });
-    } });
-  }
+  const drawP = p => {
+    const [x, y] = footOf(p);
+    const a = selOf('person', p); if (a > 0) glowRing(p, a);
+    ctx.globalAlpha = p.alpha;
+    const look = Object.assign({}, p.look, {
+      walk: p.walkT > 0, face: p.face, seated: p.seated,
+      wave: p.need === 'greet', worried: p.need === 'comfort' && !(S.comfort && S.comfort.n === p),
+    });
+    const r = chibi(x, y, TW * 1.05, look, t);
+    if (p === S.player && S.hold) box(p.fx + .62, p.fx + .8, p.fy + .55, p.fy + .75, .55, .62, '#F6B8C4');
+    ctx.globalAlpha = 1;
+    tops.push({ p, x, y, top: r.headTop });
+  };
+  // 還在門外的人在牆的後面：先畫人，再畫牆（只會從門洞看到）
+  const all = people(), outside = all.filter(p => p.fy < .98).sort((a, b) => (a.fx + a.fy) - (b.fx + b.fy));
+  outside.forEach(drawP);
+  drawWalls();
+  // 帶位中：空椅子的地板發光
+  const following = S.npcs.some(n => n.state === 'follow');
+  if (following) SEATS.forEach(c => { if (!c.by) glowTile(c.x, c.y, pulse(S.t, 5)); });
+  if (S.tap && S.t - S.tap.t < .7) glowTile(S.tap.x, S.tap.y, 1 - (S.t - S.tap.t) / .7, '95,175,132');
+  // 依深度（x+y）由後往前畫
+  const items = [];
+  CHAIRS.forEach((c, i) => {
+    items.push({ k: c[0] + c[1] + .48, f: () => drawChairBack(c) });
+    items.push({ k: c[0] + c[1] + 1.08, f: () => drawChair(c, i) });
+  });
+  items.push({ k: 1.5 + 1.5, f: () => { drawCounter(); const a = selOf('station', 'R'); if (a > 0) glowBox(BOXES.R, a); } });
+  items.push({ k: 9.5 + 1.4, f: () => { drawCabinet(t); const a = Math.max(selOf('station', 'S'), cabinetHint() ? .35 * pulse(S.t, 4) : 0); if (a > 0) glowBox(BOXES.S, a); } });
+  items.push({ k: 10, f: () => drawPlant(1.5, 8.5, 1.1, t) }, { k: 18, f: () => drawPlant(9.5, 8.5, 1.1, t) });
+  for (const p of all) if (!outside.includes(p)) items.push({ k: p.fx + p.fy + 1 + (p.seated ? .62 : .05), f: () => drawP(p) });
   items.sort((a, b) => a.k - b.k).forEach(i => i.f());
+  // 前景提示層：名牌、需求泡泡、箭頭、愛心永遠在最上面
+  if (following) SEATS.forEach(c => { if (!c.by) arrowAt(c.x + .5, c.y + .5, 1.55, S.t); });
   for (const { p, x, y, top } of tops) {
     if (p.tag) pill(p.tag[0], x, y + TW * .2, Math.max(10, TW * .2), p.tag[1]);
     const icon = p.need ? NEED_ICON[p.need] : (p.state === 'follow' || p.state === 'pause') ? '💺' : null;
@@ -727,39 +784,71 @@ function draw(t) {
     ctx.globalAlpha = 1 - k * k; ctx.font = `${TW * (.45 + k * .25)}px ${EMO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('❤️', x, y - TW * (1.5 + k * 1.1)); ctx.globalAlpha = 1;
   }
+  edgeMarks(following);
+}
+// 目標在畫面外時，在螢幕邊緣放一個指引圓鈕（近拍時才會發生）
+function edgeMarks(following) {
+  const marks = [];
+  for (const n of S.npcs) if (n.need && n.alpha >= 1) { const [x, y] = footOf(n); marks.push([x, y - TW * 1.3, NEED_ICON[n.need]]); }
+  if (following) SEATS.forEach(c => { if (!c.by) marks.push([...iso(c.x + .5, c.y + .5, .8), '💺']); });
+  if (cabinetHint()) marks.push([...iso(9.5, 1.4, 1.2), '📝']);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const m = 26, r = 17;
+  for (const [wx, wy, icon] of marks) {
+    const sx = wx * view.z + view.ex, sy = wy * view.z + view.ey;
+    if (sx > 0 && sx < W && sy > 0 && sy < H) continue;
+    const cx = Math.min(W - m, Math.max(m, sx)), cy = Math.min(H - m, Math.max(m, sy)), ang = Math.atan2(sy - cy, sx - cx);
+    const bob = Math.sin(S.t * 5) * 3, px = cx + Math.cos(ang) * bob, py = cy + Math.sin(ang) * bob;
+    poly([[px + Math.cos(ang) * (r + 9), py + Math.sin(ang) * (r + 9)], [px + Math.cos(ang + .5) * r, py + Math.sin(ang + .5) * r], [px + Math.cos(ang - .5) * r, py + Math.sin(ang - .5) * r]], '#F2C14E');
+    ell(px, py, r, r, '#FFFFFF', '#F2C14E', 3);
+    ctx.font = `${r * 1.1}px ${EMO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(icon, px, py + 1);
+  }
 }
 
-// ── 點擊（先換回世界座標）
+// ── 點擊與滑鼠指向（先換回世界座標，再判斷點到什麼）
 function stationBox(x0, x1, y0, y1, h) {
   let a = 1e9, b = -1e9, c = 1e9, d = -1e9;
   for (const gx of [x0, x1]) for (const gy of [y0, y1]) for (const hh of [0, h]) { const [x, y] = iso(gx, gy, hh); a = Math.min(a, x); b = Math.max(b, x); c = Math.min(c, y); d = Math.max(d, y); }
   return [a, b, c, d];
 }
-function onTap(sx, sy) {
-  if (!S.started || S.done) return;
+function pickAt(sx, sy) {
   const wx = (sx - view.ex) / view.z, wy = (sy - view.ey) / view.z;
-  // 人（越前面的越優先）
   let best = null, bk = -1;
   for (const p of people()) {
     if (p === S.player || p.alpha < 1) continue;
     const [x, y] = footOf(p), s = TW * 1.05, k = p.fx + p.fy + (p.seated ? .62 : .05);
-    if (Math.abs(wx - x) < s * .32 && wy < y + s * .1 && wy > y - s * 1.0 && k > bk) { best = p; bk = k; }
+    if (Math.abs(wx - x) < s * .32 && wy < y + s * .12 && wy > y - s * 1.0 && k > bk) { best = p; bk = k; }
   }
-  if (best) { setTarget({ kind: 'person', p: best }); return; }
-  for (const [ch, x, y, bx] of [['R', 1, 1, [1.04, 1.96, 1.06, 1.94, 1.1]], ['S', 9, 1, [9.08, 9.92, 1.08, 1.72, 2.0]]]) {
-    const [a, b, c, d] = stationBox(...bx);
-    if (wx > a && wx < b && wy > c && wy < d) { setTarget({ kind: 'station', ch, x, y }); return; }
+  if (best) return { kind: 'person', ref: best };
+  for (const ch of ['R', 'S']) {
+    const [a, b, c, d] = stationBox(...BOXES[ch]);
+    if (wx > a && wx < b && wy > c && wy < d) return { kind: 'station', ref: ch };
   }
   const u = (wx - OX) / (TW / 2), v = (wy - OY) / (TW / 4);
   const tx = Math.floor((u + v) / 2), ty = Math.floor((v - u) / 2);
-  if (tx < 1 || tx > 9 || ty < 1 || ty > 8) return;
+  if (tx < 1 || tx > 9 || ty < 1 || ty > 8) return null;
   const seat = SEATS.find(c => c.x === tx && c.y === ty);
-  if (seat && seat.by && seat.by.seated) { setTarget({ kind: 'person', p: seat.by }); return; }
-  if (solid(tx, ty)) return;
-  S.tap = { x: tx, y: ty, t: S.t };
-  setTarget({ kind: 'tile', x: tx, y: ty });
+  if (seat && seat.by && seat.by.seated) return { kind: 'person', ref: seat.by };
+  if (solid(tx, ty)) return null;
+  return { kind: 'tile', x: tx, y: ty };
+}
+function onTap(sx, sy) {
+  if (!S.started || S.done) return;
+  const h = pickAt(sx, sy);
+  if (!h) return;
+  if (h.kind === 'tile') { S.sel = null; S.tap = { x: h.x, y: h.y, t: S.t }; setTarget({ kind: 'tile', x: h.x, y: h.y }); return; }
+  S.sel = { kind: h.kind, ref: h.ref, t: S.t };
+  if (h.kind === 'person') setTarget({ kind: 'person', p: h.ref });
+  else { const [x, y] = h.ref === 'R' ? [1, 1] : [9, 1]; setTarget({ kind: 'station', ch: h.ref, x, y }); }
 }
 cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(); onTap(e.clientX - r.left, e.clientY - r.top); });
+cv.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse' || !S.started) return;
+  const r = cv.getBoundingClientRect(), h = pickAt(e.clientX - r.left, e.clientY - r.top);
+  S.hover = h && h.kind !== 'tile' ? h : null;
+  cv.style.cursor = h ? 'pointer' : 'default';
+});
+cv.addEventListener('pointerleave', () => { if (S) S.hover = null; });
 const KEYMAP = { ArrowLeft: 'L', KeyA: 'L', ArrowRight: 'R', KeyD: 'R', ArrowUp: 'U', KeyW: 'U', ArrowDown: 'D', KeyS: 'D' };
 addEventListener('keydown', e => {
   if (!S.started || S.done) { if ((e.code === 'Enter' || e.code === 'Space') && !$('intro').hidden) { e.preventDefault(); start(); } return; }
@@ -805,7 +894,7 @@ reset(); resize();
 addEventListener('resize', resize);
 if (document.fonts) document.fonts.ready.then(resize);
 // 直立手機一開始就近拍，鏡頭跟著小天使
-if (W / H < .8) { NEAR = 1.45; zoom = zoomTo = NEAR; }
+if (W / H < .8) { NEAR = 1.8; zoom = zoomTo = NEAR; }
 setZoomLabel();
 if (location.hash === '#debug') Object.assign(window, { __S: () => S, __iso: iso, __foot: footOf, __view: () => view });
 requestAnimationFrame(frame);
