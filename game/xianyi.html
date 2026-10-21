@@ -1051,7 +1051,7 @@
         const dish = `${style}${parts[0][1]}佐${parts[1][1]}${parts[2][1]}`;
         remember(`做了一道蔬食料理「${dish}」。`);
         el.innerHTML = `<h2>${dish}</h2><img class="dish" src="${drawDish(parts, style)}" alt="${dish}的擺盤照（長按可儲存）"><p>擺盤、找光、一鍵修圖⋯⋯<br>上傳群組 3 分鐘，收到 ${rand(21, 68)} 個讚。</p><p class="hint">家族群組有長輩問：「這哪裡買的？」</p>
-          <div class="real"><img src="../img/Vegetarian%20Cooking%20Champion/thumb/${pick(REAL)}" alt="社青班蔬食料理課的真實作品"><span>📸 這是真實社青班「蔬食料理王」課堂上的作品，11/27 一起來做做看！</span></div>
+          <div class="real"><img src="../img/Vegetarian%20Cooking%20Champion/thumb/${pick(REAL)}" alt="社青班蔬食料理課的真實作品"><span>📸 這可能是真實社青班「蔬食料理王」課堂上的作品，11/27 一起來做做看！</span></div>
           <button class="btn primary" type="button">繼續</button>`;
         el.scrollTop = 0;
         el.querySelector('.btn').onclick = () => { sfx('tap'); done(); apply({ fam: 6, tian: 4, hp: 3 }, `你的招牌菜：${dish}`); };
