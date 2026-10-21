@@ -8,9 +8,9 @@
 <meta property="og:site_name" content="2027 全真社青 Life Design 探索地圖">
 <meta property="og:title" content="褪下仙衣：八十億分之一">
 <meta property="og:description" content="下凡抽籤、快速走完一生。金幣帶不走，天幣帶得走——這一生，你活成什麼樣？約 8 分鐘。">
-<meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/game/xianyi.html?v=2">
-<meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png?v=2">
-<meta property="og:image:secure_url" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png?v=2">
+<meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/game/xianyi.html?v=3">
+<meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png?v=3">
+<meta property="og:image:secure_url" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png?v=3">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -594,7 +594,7 @@
 
   // 八枚心法徽章（取自副歌括號）
   const BADGES = [
-    { id: '不沉醉', how: '不被飛車跑車牽著走' },
+    { id: '不沉醉', how: '不被飛天跑車牽著走' },
     { id: '駕法航', how: '回佛堂 3 次以上' },
     { id: '別感傷', how: '無常來時，選擇接納' },
     { id: '這無常', how: '遇見一張無常卡' },
@@ -665,6 +665,11 @@
     return d;
   }
   // 每一行停留的時間依字數而定，讓人來得及讀完
+  // 敘事本身就有後果的句子（熬夜、喝手搖飲⋯⋯），印出後一併套用效果
+  async function event(age, [text, fx]) {
+    await line(age, text);
+    if (fx && Object.keys(fx).length) await settle(fx);
+  }
   async function line(age, text, cls) {
     if (age != null) { S.age = age; hud(); }
     addLine(text, cls);
@@ -823,11 +828,11 @@
   async function childhood() {
     chapter('序章・下凡治理卻迷航');
     await line(0, '你褪下仙衣仙裳，哭得很大聲。護理師說：「肺活量不錯。」');
-    await line(rand(1, 3), pick(['你說的第一個詞是「手機」。', '阿嬤說你很乖，因為給你平板就不哭。', '你在全家福照片裡唯一沒看鏡頭。']));
-    await line(rand(4, 5), pick(['幼稚園畢業典禮，你演一棵樹，站得非常認真。', '你在阿公的機車前座睡著，口水滴在安全帽上。']));
-    await line(rand(6, 8), pick(['才藝班連報五個，週末比上班族還忙。', '你把壓歲錢全投進夾娃娃機，夾到一隻很像皮卡丘的東西。', '作文〈我的志願〉你寫：當有錢人。老師給你乙上。']));
-    await line(rand(10, 12), pick(['第一次跟媽媽去佛堂，記得最清楚的是那盤水果。', '你在補習班認識了一輩子的好朋友，也認識了一輩子的近視。', '暑假每天看卡通，看到會背所有片尾曲。']));
-    await line(13, pick(['第一支手機到手，螢幕使用時間：一天 5 小時。', '你第一次失戀，對象是隔壁班的，對方不知道。']));
+    await event(rand(1, 3), pick([['你說的第一個詞是「手機」。'], ['阿嬤說你很乖，因為給你平板就不哭。'], ['你在全家福照片裡唯一沒看鏡頭。']]));
+    await event(rand(4, 5), pick([['幼稚園畢業典禮，你演一棵樹，站得非常認真。'], ['你在阿公的機車前座睡著，口水滴在安全帽上。', { fam: 2 }]]));
+    await event(rand(6, 8), pick([['才藝班連報五個，週末比上班族還忙。', { hp: -2 }], ['你把壓歲錢全投進夾娃娃機，夾到一隻很像皮卡丘的東西。'], ['作文〈我的志願〉你寫：當有錢人。老師給你乙上。']]));
+    await event(rand(10, 12), pick([['第一次跟媽媽去佛堂，記得最清楚的是那盤水果。', { tian: 2 }], ['你在補習班認識了一輩子的好朋友，也認識了一輩子的近視。', { pal: 3, hp: -2 }], ['暑假每天看卡通，看到會背所有片尾曲。']]));
+    await event(13, pick([['第一支手機到手，螢幕使用時間：一天 5 小時。', { hp: -3 }], ['你第一次失戀，對象是隔壁班的，對方不知道。']]));
     if (Math.random() < .6) {
       S.flags.qiudao = true;
       await line(15, '跟著家人求道。點傳師說的話你沒全懂，但你記得那天很安心。');
@@ -841,9 +846,9 @@
       S.flags.debt = true;
       await line(20, '你跟同學借了 500 元，說：「下週就還。」');
     } else {
-      await line(20, '宿舍泡麵吃到可以出一本評鑑。');
+      await event(20, ['宿舍泡麵吃到可以出一本評鑑。', { hp: -3 }]);
     }
-    await line(22, pick(['第一次打工，領到薪水先買了一雙球鞋。', '你在畢業旅行的夜市，吃完一整條街。']));
+    await event(22, pick([['第一次打工，領到薪水先買了一雙球鞋。'], ['你在畢業旅行的夜市，吃完一整條街。', { hp: -2, pal: 2 }]]));
     await line(23, '在 104 投了 87 封履歷，收到 3 封面試通知、1 封詐騙。');
     await settle({ work: 10 });
     await line(24, '第一份薪水入帳，你在 ATM 前站了很久。');
@@ -901,7 +906,7 @@
     addLine(`回來佛堂（第 ${S.visits} 次）：瑜伽、早午餐、觀點分享「${t.name}」⋯⋯`, 'sys');
     if (firstMates) addLine(`你認識了三位同行夥伴：${S.mates.join('、')}`, 'sys', '');
     await [welcome, balloon, numerology, vflip, cooking][ti]();
-    const fx = { tian: 8, hp: 4, pal: 6, fam: 2, badge: ['回佛堂'] };
+    const fx = { tian: 8, hp: 4, pal: 6, badge: ['回佛堂'] };
     if (S.visits >= 3) fx.badge.push('駕法航');
     await settle(fx, '溫暖結語：心靈充好電了。');
   }
@@ -917,7 +922,7 @@
   function balloon() {
     const limit = rand(5, 13);
     let n = 0;
-    return card(`<h2>🎈 藝術氣球</h2><p>名利就像氣球：吹得越大越好看，<br>也越容易破。你要吹到多大？</p><div class="balloon" id="bl">🎈</div><p class="hint" id="bn">已吹 0 口・每口 🪙 +2</p><div class="row2"><button class="btn gold" type="button" id="pump">再吹一口</button><button class="btn green" type="button" id="stop">見好就收</button></div>`, (el, done) => {
+    return card(`<h2>🎈 藝術氣球</h2><p>名利就像氣球：吹得越大越好看，<br>也越容易破。你要吹到多大？</p><div class="balloon" id="bl">🎈</div><p class="hint" id="bn">已吹 0 口</p><div class="row2"><button class="btn gold" type="button" id="pump">再吹一口</button><button class="btn green" type="button" id="stop">見好就收</button></div>`, (el, done) => {
       const bl = el.querySelector('#bl'), bn = el.querySelector('#bn');
       const finish = (html, fx, note) => {
         el.innerHTML = html + '<button class="btn" type="button">繼續</button>';
@@ -931,11 +936,11 @@
         }
         sfx('tick');
         bl.style.transform = `scale(${1 + n * .18})`;
-        bn.textContent = `已吹 ${n} 口・每口 🪙 +2`;
+        bn.textContent = `已吹 ${n} 口`;
       };
       el.querySelector('#stop').onclick = () => {
         sfx('win');
-        finish(`<div style="font-size:3rem">🐶</div><h2>見好就收</h2><p>你把氣球折成一隻小狗，送給隔壁的小朋友。</p><p class="quote">不沉醉　不爭也不搶</p>`, { gold: n * 2, tian: 5 }, `知足：吹了 ${n} 口就收手。`);
+        finish(`<div style="font-size:3rem">🐶</div><h2>見好就收</h2><p>吹了 ${n} 口就收手，你把氣球折成一隻小狗，送給隔壁的小朋友。</p><p class="quote">不沉醉　不爭也不搶</p>`, { tian: 5, pal: 2 }, `知足：吹了 ${n} 口就收手。`);
       };
     });
   }
@@ -1031,20 +1036,20 @@
     chapter(`第一章・${t.name}｜${t.sub}`);
     await line(26, `第一章・${t.name}`, 'big');
     openInvite(0);
-    await line(26, '下班回家打開串流平台，一抬頭，天亮了。');
-    await line(26, '公司樓下開了一家手搖飲，你成了第一個集滿點數的人。');
+    await event(26, ['下班回家打開串流平台，一抬頭，天亮了。', { hp: -4 }]);
+    await event(26, ['公司樓下開了一家手搖飲，你成了第一個集滿點數的人。', { hp: -4, gold: -2 }]);
     if (S.persona.id === 'social') {
       await line(27, '這個月：喜酒 3 場、尾牙 2 場、同學會 1 場。');
       await ask('🥂 行事曆塞滿了', '下個月還有 5 場邀約。', [
-        { text: '全部到，人脈就是錢脈', fx: { gold: 4, work: 3, pal: 4, hp: -4, fam: -5 }, note: '名片收了一疊，叫得出名字的只有兩張。' },
-        { text: '挑真正想見的人去', fx: { pal: 4, fam: 4 }, note: '少了幾場應酬，多了幾段好好說話的時間。' },
+        { text: '全部到，人脈就是錢脈', fx: { gold: -8, work: 3, pal: 4, hp: -4, fam: -4 }, note: '紅包包了一疊，名片也收了一疊，叫得出名字的只有兩張。' },
+        { text: '挑真正想見的人去', fx: { gold: -3, pal: 4, fam: 2 }, note: '少了幾場應酬，多了幾段好好說話的時間。' },
         { text: '這個月全推掉，好好休息', fx: { hp: 6, pal: -3 }, note: '睡飽的你，終於想起自己喜歡畫畫。' },
       ]);
     }
     await line(27, '週五晚上 11 點，影集還剩 6 集。');
     await ask('📺 追劇', '<span style="color:var(--gold)">「劇太好看　片太火　他說追不完」</span>', [
       { text: '一口氣追完', fx: { hp: -5 }, note: '週六睡到下午三點。劇很好看，人有點空。' },
-      { text: '看兩集就好，剩下的週末再看', fx: { hp: 2 }, note: '節制一點，劇反而更好看。' },
+      { text: '看兩集就好，剩下的週末再看', fx: { hp: 1 }, note: '節制一點，劇反而更好看。' },
       { text: '明天要去爬山，先不追了', fx: { hp: 7 }, note: '山頂的風，比演算法懂你。' },
       { text: '留著週末跟家人一起看', fx: { fam: 7 }, note: '原來爸爸也會哭，在第 4 集。' },
     ]);
@@ -1057,7 +1062,7 @@
     ]);
     await line(28, pick(['你的 Spotify 年度回顧，第一名是〈不想上班〉。', '你開始在 IG 追蹤很多「質感生活」帳號，自己的生活沒什麼質感。']));
     await templeSlot();
-    await line(29, pick(['第一次一個人出國，在機場迷路了兩次。', '你養了一盆多肉植物，它活得比你規律。']));
+    await event(29, pick([['第一次一個人出國，在機場迷路了兩次。', { gold: -3 }], ['你養了一盆多肉植物，它活得比你規律。']]));
     await yearsPass();
   }
 
@@ -1068,10 +1073,10 @@
     openInvite(1);
     await line(30, '你在 104 又登入了一次，只是看看。（第 38 次只是看看）');
     const where = S.persona.id === 'tech' ? '某神山的車棚裡' : '同學會的停車場';
-    await line(31, `${where}，停滿學長姐的<b>飛車跑車</b>。有人拍拍你：「欸，還在開那台喔？」`);
-    await ask('🏎️ 飛車跑車', '你心裡有點癢。', [
-      { text: '貸款買一台，不能輸', fx: { gold: -20, work: 3, fam: -3 }, note: '每個月的車貸，剛好等於陪爸媽吃飯的錢 × 12。', run: () => { S.flags.fastcar = true; } },
-      { text: '買台實用的二手車，剩下的存起來', fx: { gold: 4, fam: 2, badge: '不沉醉' }, note: '週末載全家去兜風，後座擠得剛剛好。' },
+    await line(31, `${where}，停滿學長姐的<b>飛天跑車</b>。有人拍拍你：「欸，還在開那台喔？」`);
+    await ask('🏎️ 飛天跑車', '你心裡有點癢。', [
+      { text: '貸款買一台，不能輸', fx: { gold: -20, work: 3, hp: -2, fam: -3 }, note: '為了繳車貸更拚了。每個月的車貸，剛好等於陪爸媽吃飯的錢 × 12。', run: () => { S.flags.fastcar = true; } },
+      { text: '買台實用的二手車，剩下的存起來', fx: { gold: -6, fam: 3, badge: '不沉醉' }, note: '週末載全家去兜風，後座擠得剛剛好。' },
       { text: '不買，車子是代步不是成績單', fx: { gold: 8, badge: '不沉醉' }, note: '不沉醉——錢留給真正重要的事。' },
       { text: '不買，帶爸媽去吃頓好的', fx: { gold: -4, fam: 10, badge: '不沉醉' }, note: '媽媽說這家好貴，然後把菜全部吃完了。' },
     ]);
@@ -1120,14 +1125,14 @@
     ]);
     if (Math.random() < .7) await line(36, '鄰居阿伯經過，丟下一句：「雄班某營歸剛，哈班某妹丁當。」你聽不太懂，但覺得很有道理。');
     await templeSlot();
-    if (S.visits) await line(37, `05/29 戶外聯誼，${S.mates[1]}帶了野餐墊，大家在草地上躺成一排。`);
+    if (S.visits) await event(37, [`05/29 戶外聯誼，${S.mates[1]}帶了野餐墊，大家在草地上躺成一排。`, { pal: 3, hp: 2 }]);
     // 08/28 新道親法會：有接觸佛堂的人才會在群組看到志工召集
     if (S.visits || S.flags.qiudao) {
       await line(37, '佛堂群組跳出訊息：「8/28 新道親法會，有人可以來當志工嗎？」');
       await ask('🌱 法會志工', '那天是星期六。', [
         { text: '我來！', fx: { tian: 10, pal: 5, badge: '人才是' }, note: '你在法會當了一天小天使，新朋友說謝謝的時候，你比他還開心。' },
         { text: '當天有事，但可以前一晚幫忙準備', fx: { tian: 4, pal: 2 }, note: '你折了兩百份資料夾，手很酸，心很滿。' },
-        { text: '那天要加班', fx: { gold: 3, work: 3 }, note: '加班費入帳。' },
+        { text: '那天要加班', fx: { gold: 3, work: 3, hp: -1 }, note: '加班費入帳。' },
         { text: '這次先不了', fx: {}, note: '群組裡大家貼了法會的照片，看起來很開心。' },
       ]);
     } else {
@@ -1141,7 +1146,7 @@
     chapter(`第四章・${t.name}｜${t.sub}`);
     await line(38, `第四章・${t.name}`, 'big');
     openInvite(3);
-    if (S.persona.id === 'drift') await line(38, '你換了第 5 份工作，履歷自傳越寫越短。');
+    if (S.persona.id === 'drift') await event(38, ['你換了第 5 份工作，履歷自傳越寫越短。', { work: -3 }]);
     if (S.persona.id === 'forgot') await line(38, '整理抽屜，翻到當年的求道卡。你盯著看了很久。');
     await line(38, pick(['同學會上，大家聊的話題從夢想變成了血壓。', '你發現自己開始會說「我們年輕的時候⋯⋯」。']));
     if (S.flags.debt) {
@@ -1155,7 +1160,7 @@
     const CARDS = [
       ['公司組織重整，你被資遣了。', { gold: -10, work: -20 }],
       ['健檢報告，紅字三項。', { hp: -15 }],
-      ['一位老朋友突然離開了。', { pal: -5, tian: -2 }],
+      ['一位老朋友突然離開了。', { pal: -6 }],
     ];
     const card4 = S.hp < 40 ? CARDS[1] : pick(CARDS);
     await line(40, `🃏 無常卡：${card4[0]}`);
@@ -1170,7 +1175,7 @@
     if (S.mates.length && S.pal >= 25) opts.splice(2, 0, { text: `打給同行夥伴${S.mates[2]}`, fx: { pal: 4, tian: 4, badge: '別感傷' }, note: `${S.mates[2]}什麼都沒說，只說：「我現在過去。」` });
     await ask('🌧️ 人生卡關了', '你會怎麼辦？', opts);
     await templeSlot();
-    if (S.visits >= 2) await line(41, '10/30 戶外聯誼，大家騎腳踏車，你騎在最後面，有人一直回頭等你。');
+    if (S.visits >= 2) await event(41, ['10/30 戶外聯誼，大家騎腳踏車，你騎在最後面，有人一直回頭等你。', { pal: 3, hp: 3 }]);
     await yearsPass();
   }
 
@@ -1218,7 +1223,7 @@
       await settle({ gold: Math.max(8, 40 - S.gold) });
     }
     await L(65, S.work >= 60 ? '退休歡送會上，同事們排隊跟你合照。' : '退休那天很安靜，你終於有時間好好吃一頓早餐。');
-    if (S.flags.fastcar) await L(66, '那台飛車跑車，現在在二手車行，標價是當年的零頭。');
+    if (S.flags.fastcar) await L(66, '那台飛天跑車，現在在二手車行，標價是當年的零頭。');
     await L(70, S.hp >= 55 ? '你還能爬上年輕時那座山，風還是一樣。' : '藥盒分成早、中、晚三格，你常常忘記今天吃了沒。');
     if (S.pal >= 50) await L(72, `${S.mates[0] || '老朋友'}揪大家吃飯，一桌坐不下，又開了一桌。`);
     await line(death, '脫下了這身皮囊，終究要歸返。', 'big');
@@ -1238,8 +1243,8 @@
   const ENDINGS = {
     true: { em: '🌟', title: '聖凡兼修・了愿返鄉', lyric: '我立下志向　赴約龍華會上<br>了愿返鄉的盼望　在修辦日常',
       desc: '你沒有放下世間，你把世間過成了修行。仙衣發著光，母娘在門口等你。' },
-    tycoon: { em: '🏎️', title: '飛車跑車大亨', lyric: '多少人拋棄了修行<br>掙下金幣　終會轉移',
-      desc: '你開著飛車跑車來到南天門，門口立著一塊牌子：「車輛禁止進入」。金幣在門口一枚一枚化成了風。' },
+    tycoon: { em: '🏎️', title: '飛天跑車大亨', lyric: '多少人拋棄了修行<br>掙下金幣　終會轉移',
+      desc: '你開著飛天跑車來到南天門，門口立著一塊牌子：「車輛禁止進入」。金幣在門口一枚一枚化成了風。' },
     temple: { em: '🍃', title: '回來佛堂', lyric: '喔～回來佛堂　心靈充電的家<br>解開生活迷茫',
       desc: '你做到了三不離：不離佛堂、不離前賢、不離經典。佛堂是你一輩子的充電站，母娘看著你笑了。下一回，記得把家人也一起帶回來，一起回鄉。' },
     gate: { em: '🙏', title: '南天門外', lyric: '徒跪在南天門外落下淚<br>祈求老師啊　帶我回家',
@@ -1319,7 +1324,7 @@
   }
 
   // ───────── 成績卡與分享 ─────────
-  const GAME_URL = SITE + 'game/xianyi.html?v=2';   // 帶 ?v=2 讓 LINE、臉書重新抓預覽圖
+  const GAME_URL = SITE + 'game/xianyi.html?v=3';   // 帶 ?v=3 讓 LINE、臉書重新抓預覽圖
   let shareText = '', cardFile = null, cardUrl = '';
   const SERIF = '"Noto Serif TC", "Songti TC", serif';
   const SANS = '"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif';
