@@ -1075,7 +1075,7 @@
       videoId: YT_ID,
       playerVars: { playsinline: 1, loop: 1, playlist: YT_ID, rel: 0, modestbranding: 1 },
       events: {
-        onReady: () => { ytReady = true; yt.setVolume(60); if ($('app').classList.contains('playing')) bgmPlay(); },
+        onReady: () => { ytReady = true; yt.setVolume(25); if ($('app').classList.contains('playing')) bgmPlay(); },
         onStateChange: e => { if (e.data === 1) bgmEl.classList.remove('nudge'); },
       },
     });
