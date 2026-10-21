@@ -75,10 +75,18 @@
   #stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; }
   /* 2.5D：畫布填滿整個舞台，畫面大小隨舞台（含手機轉向）重新計算，不會被拉扁 */
   #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; }
-  .mapbtn {
-    position: absolute; top: 8px; right: 8px; z-index: 2; border: 2px solid var(--line); background: rgba(255,255,255,.92);
-    border-radius: 999px; padding: 5px 12px; font: 700 .85rem var(--sans); color: var(--ink); cursor: pointer;
+  /* 鏡頭倍數：參考 iPhone 相機的 .5／1×／2 圓鈕 */
+  .lens {
+    position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 2;
+    display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 999px;
+    background: rgba(40,32,26,.32); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   }
+  .lens button {
+    width: 32px; height: 32px; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
+    background: rgba(30,24,20,.55); color: #fff; font: 700 .72rem var(--sans); font-variant-numeric: tabular-nums;
+    transition: width .15s, height .15s;
+  }
+  .lens button.on { width: 38px; height: 38px; color: #FFD60A; font-size: .8rem; }
   /* 手機橫放：高度很矮，標題與下方列縮小，地圖可以用滿整個寬度 */
   @media (orientation: landscape) and (max-height: 520px) {
     #app { max-width: none; gap: 4px; padding-block: 4px; }
@@ -333,7 +341,11 @@
 
   <div id="stage">
     <canvas id="cv" aria-label="2.5D 法會會場，點地板移動，點人物或櫃子互動"></canvas>
-    <button id="zoomBtn" class="mapbtn" type="button" hidden>🔍 近拍</button>
+    <div class="lens" role="group" aria-label="鏡頭倍數">
+      <button type="button" data-lens="0" aria-label="0.5 倍：看整個會場">.5</button>
+      <button type="button" data-lens="1" aria-label="1 倍：標準近拍">×1</button>
+      <button type="button" data-lens="2" aria-label="2 倍：特寫">×2</button>
+    </div>
     <div id="banner" hidden></div>
   </div>
 
@@ -375,9 +387,9 @@
           <p class="tip"><span class="only-touch">也可以點畫面下方「手上」把東西放下。</span><span class="only-desk">選單可以按數字鍵選，M 開關音樂。</span></p>
         </section>
         <section class="tpage">
-          <div class="ill" aria-hidden="true"><span class="chip">🔍 近拍</span><span class="arr" aria-hidden="true">⇄</span><span class="chip">🗺️ 全景</span><span class="chip">◀ 💺</span><span class="chip">✨ 發光</span></div>
+          <div class="ill" aria-hidden="true"><span class="chip">.5　×1　×2</span><span class="chip">🤏 兩指縮放</span><span class="chip">◀ 💺</span><span class="chip">✨ 發光</span></div>
           <h2>2.5D 會場的小幫手</h2>
-          <p class="lead">右上角可以切換<b>近拍</b>（鏡頭跟著你走）和<b>全景</b>（一次看整個會場）。手機會先用近拍，人物比較大、比較好點；電腦畫面夠大時直接看全景，就不會出現這個按鈕。</p>
+          <p class="lead">地圖下方的鏡頭圓鈕和 iPhone 相機一樣：<b>.5</b> 看整個會場、<b>×1</b> 標準近拍、<b>×2</b> 特寫。手機也能用兩指縮放，電腦可以用滑鼠滾輪；放大後鏡頭會平穩地跟著你走，倍數會記住。</p>
           <p class="tip">畫面外有人需要幫忙時，螢幕邊緣會出現圓鈕，箭頭指向他的方向；該去的地方（空椅子、對的廁所、拿到鑰匙後的備品區）會發金光。</p>
         </section>
         <section class="tpage">
@@ -1813,7 +1825,11 @@
   const INK = 'rgba(84,62,46,.55)';
   const WH = 2.4, HU = .52, IM = .45;
   let W = 0, H = 0, TW = 40, OX = 0, OY = 0, ISL = { x0: 0, x1: 0, y0: 0, y1: 0 };
-  let zoom = 1, zoomTo = 1, NEAR = 1, nearMode = null, view = { z: 1, ex: 0, ey: 0 };
+  // zoom 以「全景」為 1 倍；近拍倍數用想要的格子大小（像素）記住，手機轉向後看起來一樣大
+  // 鏡頭倍數：.5＝看整個會場（zoom 1）、×1＝標準近拍（格子約 52px）、×2＝特寫；lens 記的是相對 ×1 的倍數，0 代表全景
+  let zoom = 1, zoomTo = 1, NEAR = 1, STD = 1.4, ZMAX = 3, lens = null, view = { z: 1, ex: 0, ey: 0 };
+  let camX = null, camY = null, camT = 0;
+  try { const v = localStorage.getItem('fahui25-lens'); if (v !== null && v !== '') lens = +v; } catch (e) {}
   const iso = (gx, gy, h = 0) => [OX + (gx - gy) * TW / 2, OY + (gx + gy) * TW / 4 - h * HU * TW];
   function resize() {
     const st = $('#stage');
@@ -1831,22 +1847,41 @@
     ISL = { x0: OX + x0 * TW, x1: OX + x1 * TW, y0: OY + y0 * TW, y1: OY + y1 * TW };
     // 格子太小（手機）就預設近拍，鏡頭跟著小天使；轉向後重新計算
     NEAR = Math.min(3, Math.max(1, 52 / TW));
-    if (nearMode === null) nearMode = NEAR > 1.15;
-    zoomTo = nearMode ? NEAR : 1;
-    if (Math.abs(zoom - zoomTo) > .5) zoom = zoomTo;
+    STD = Math.max(1.4, 52 / TW); ZMAX = STD * 2.2;
+    if (lens === null) lens = NEAR > 1.15 ? 1 : 0;
+    zoomTo = lens ? Math.min(ZMAX, Math.max(1, lens * STD)) : 1;
+    zoom = zoomTo; camX = null;
     setZoomLabel();
   }
   new ResizeObserver(resize).observe($('#stage'));
   window.addEventListener('orientationchange', () => setTimeout(resize, 300));
-  function setZoomLabel() {
-    const b = $('#zoomBtn'); if (!b) return;
-    b.hidden = NEAR <= 1.05 && !nearMode;
-    b.textContent = nearMode ? '🗺️ 全景' : '🔍 近拍';
+  const lensZooms = () => [1, STD, Math.min(ZMAX, STD * 2)];
+  function setZoom(z, remember = true) {
+    zoomTo = Math.min(ZMAX, Math.max(1, z));
+    if (zoomTo < 1.03) zoomTo = 1;
+    if (remember) { lens = zoomTo > 1 ? zoomTo / STD : 0; try { localStorage.setItem('fahui25-lens', lens.toFixed(2)); } catch (e) {} }
+    setZoomLabel();
   }
-  $('#zoomBtn').addEventListener('click', () => { nearMode = !nearMode; zoomTo = nearMode ? NEAR : 1; setZoomLabel(); });
+  // 亮起的圓鈕：停在預設檔位就顯示 ×.5／×1／×2，介於中間時顯示實際倍數（和 iPhone 一樣）
+  function setZoomLabel() {
+    const btns = [...document.querySelectorAll('.lens button')]; if (!btns.length) return;
+    const zs = lensZooms(), r = zoomTo / STD;
+    let best = 0, bd = 1e9;
+    zs.forEach((z, i) => { const d = Math.abs(Math.log(zoomTo / z)); if (d < bd) { bd = d; best = i; } });
+    const fmt = v => v < 1 ? v.toFixed(1).replace(/^0/, '') : v.toFixed(1).replace(/\.0$/, '');
+    btns.forEach((b, i) => {
+      const on = i === best;
+      b.classList.toggle('on', on);
+      b.textContent = !on ? ['.5', '×1', '×2'][i] : bd < .03 ? ['×.5', '×1', '×2'][i] : (i === 0 ? '×.5' : '×' + fmt(r));
+    });
+  }
+  document.querySelectorAll('.lens button').forEach((b, i) => b.addEventListener('click', () => setZoom(lensZooms()[i])));
+  // 電腦：滑鼠滾輪縮放
+  cv.addEventListener('wheel', e => { e.preventDefault(); setZoom(zoomTo * Math.exp(-e.deltaY * .0015)); }, { passive: false });
 
   const ease = t => t * t * (3 - 2 * t);
-  const posOf = e => { const k = ease(e.t); return [e.fx + (e.x - e.fx) * k, e.fy + (e.y - e.fy) * k]; };
+  // 連續走路（後面還有路）時用等速，不會每一格停頓；最後一步才放慢
+  const posOf = e => { const k = e === S.player && S.path.length ? e.t : ease(e.t); return [e.fx + (e.x - e.fx) * k, e.fy + (e.y - e.fy) * k]; };
 
   // ── 顏色與基本形
   function mix(hex, f) {
@@ -2203,9 +2238,17 @@
     }
     const wave = o.wave && !RM ? Math.sin(t * 9) * .5 : 0;
     for (const d of [-1, 1]) {
-      ctx.save(); ctx.translate(x + d * s * .15, top + s * .05); ctx.rotate(d * .35 + (d === 1 && o.wave ? -2.4 + wave : 0));
+      const holding = d === 1 && o.hold;
+      ctx.save(); ctx.translate(x + d * s * .15, top + s * .05); ctx.rotate(holding ? -.9 : d * .35 + (d === 1 && o.wave ? -2.4 + wave : 0));
       ctx.fillStyle = o.shirt; rr(-s * .04, 0, s * .08, s * .17, s * .04); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
       ell(0, s * .18, s * .04, s * .04, '#FFE2CC', INK, lw); ctx.restore();
+    }
+    // 手上拿的東西：畫在抬起的右手上
+    if (o.hold) {
+      const hx2 = x + s * .29, hy2 = top + s * .14, two = Array.from(o.hold).length > 1;
+      softShadow(hx2, hy2 + s * .1, s * .14, s * .05, .18);
+      emoji(o.hold, hx2, hy2 - s * .04, s * (two ? .2 : .3));
+      ell(hx2 - s * .01, hy2 + s * .02, s * .04, s * .04, '#FFE2CC', INK, lw);
     }
     ell(hx, hy, r, r * .95, '#FFE2CC', INK, lw);
     ctx.save(); ctx.beginPath(); ctx.ellipse(hx, hy, r * 1.06, r * 1.02, 0, 0, Math.PI * 2); ctx.clip();
@@ -2308,15 +2351,23 @@
   }
   const stationPos = c => { for (let y = 0; y < ROWS; y++) { const x = MAP[y].indexOf(c); if (x >= 0) return [x, y]; } return null; };
 
-  function camera() {
-    zoom += (zoomTo - zoom) * .08;
-    const [ppx, ppy] = posOf(S.player), [px, py] = iso(ppx + .5, ppy + .5, .7);
-    const k = Math.min(1, Math.max(0, (zoom - 1) / Math.max(.01, NEAR - 1)));
-    let cx = W / 2 + (px - W / 2) * k, cy = H / 2 + (py - H / 2) * k;
+  // 鏡頭：小天使在畫面中間的緩衝區裡走動時鏡頭不動，走出去才平滑地跟上（和幀率無關的指數平滑）
+  function camera(now) {
+    const dt = Math.min(.05, Math.max(0, (now - (camT || now)) / 1000)); camT = now;
+    zoom += (zoomTo - zoom) * (1 - Math.exp(-dt * 7));
+    if (Math.abs(zoom - zoomTo) < .001) zoom = zoomTo;
+    const p = S.player, [px, py] = iso(p.fx + (p.x - p.fx) * p.t + .5, p.fy + (p.y - p.fy) * p.t + .5, .7);
     const hw = W / 2 / zoom, hh = H / 2 / zoom, b = ISL;
-    cx = b.x1 - b.x0 > 2 * hw ? Math.min(b.x1 - hw, Math.max(b.x0 + hw, cx)) : (b.x0 + b.x1) / 2;
-    cy = b.y1 - b.y0 > 2 * hh ? Math.min(b.y1 - hh, Math.max(b.y0 + hh, cy)) : (b.y0 + b.y1) / 2;
-    view = { z: zoom, ex: W / 2 - cx * zoom, ey: H / 2 - cy * zoom };
+    if (camX === null) { camX = px; camY = py; }
+    const dzx = hw * .28, dzy = hh * .22;
+    let tx = camX, ty = camY;
+    if (px > camX + dzx) tx = px - dzx; else if (px < camX - dzx) tx = px + dzx;
+    if (py > camY + dzy) ty = py - dzy; else if (py < camY - dzy) ty = py + dzy;
+    const k = 1 - Math.exp(-dt * 4.5);
+    camX += (tx - camX) * k; camY += (ty - camY) * k;
+    camX = b.x1 - b.x0 > 2 * hw ? Math.min(b.x1 - hw, Math.max(b.x0 + hw, camX)) : (b.x0 + b.x1) / 2;
+    camY = b.y1 - b.y0 > 2 * hh ? Math.min(b.y1 - hh, Math.max(b.y0 + hh, camY)) : (b.y0 + b.y1) / 2;
+    view = { z: zoom, ex: W / 2 - camX * zoom, ey: H / 2 - camY * zoom };
     ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, dpr * view.ex, dpr * view.ey);
   }
 
@@ -2325,7 +2376,7 @@
     const t = now / 1000;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawSky(t);
-    camera();
+    camera(now);
     drawIsland();
     drawTree(.75, .75, 1.15, t); drawTree(.6, ROWS * .45, .75, t); drawTree(COLS * .78, .6, .8, t);
     drawFloor();
@@ -2342,7 +2393,7 @@
       if (sa > 0) glowRing(x, y, sa);
       if (kind === 'npc' && S.hi && S.hi.n === e && S.time < S.hi.until) glowRing(x, y, pulseAt(S.time, 8), '228,120,60');
       let look, alpha = 1;
-      if (kind === 'me') look = ANGEL;
+      if (kind === 'me') look = Object.assign({}, ANGEL, { hold: S.hand ? ITEMS[S.hand].e : null });
       else if (kind === 'staff') look = STAFF_LOOK[e.id];
       else {
         look = lookOf(e);
@@ -2396,13 +2447,7 @@
       if (kind === 'staff') pill(e.label, x, y + TW * .2, Math.max(10, TW * .2), STAFF_LOOK[e.id].tagBg);
       if (kind === 'me') {
         pill('你', x, y + TW * .2, Math.max(10, TW * .2), '#E4A23B');
-        if (S.hand) {
-          const bx = x + TW * .38, by = top + TW * .2, r = TW * .2;
-          ctx.save(); ctx.shadowColor = 'rgba(84,62,46,.25)'; ctx.shadowBlur = 4;
-          ell(bx, by, r, r, '#FFFFFF', '#E4A23B', Math.max(1.5, TW * .035)); ctx.restore();
-          const he = ITEMS[S.hand].e; emoji(he, bx, by, r * (Array.from(he).length > 1 ? .85 : 1.25));
-          if (S.hand === 'bao' && S.qty > 1) pill('×2', bx + r * 1.2, by + r * .8, Math.max(9, TW * .17), '#EA580C');
-        }
+        if (S.hand === 'bao' && S.qty > 1) pill('×2', x + TW * .55, y - TW * .2, TW * .13, '#EA580C');
       }
       if (kind !== 'npc') continue;
       if (e.state === 'missed') emoji('🤝', x + TW * .3, top + TW * .15, TW * .26);
@@ -2469,11 +2514,10 @@
     if (tx < 1 || ty < 1 || tx > COLS - 2 || ty > ROWS - 2) return null;
     return { kind: 'tile', x: tx, y: ty };
   }
-  cv.addEventListener('pointerdown', e => {
+  function tapAt(sx, sy) {
     if (!S.running) return;
     closeChoice();
-    const r = cv.getBoundingClientRect();
-    const h = pickAt(e.clientX - r.left, e.clientY - r.top);
+    const h = pickAt(sx, sy);
     if (!h) return;
     S.chasing = null;
     if (h.kind === 'person') {
@@ -2485,7 +2529,37 @@
     S.sel = null;
     S.ripple = { x: h.x, y: h.y, t: 0 };
     handleTile(h.x, h.y, false);
+  }
+  const touches = new Map();
+  let pinch = null, gesture = false;
+  const local = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  cv.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse') { if (e.button === 0) tapAt(...local(e)); return; }
+    cv.setPointerCapture && cv.setPointerCapture(e.pointerId);
+    touches.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY });
+    if (touches.size === 1) gesture = false;
+    if (touches.size === 2) {
+      const [a, b] = [...touches.values()];
+      pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, z: zoomTo }; gesture = true;
+    }
   });
+  cv.addEventListener('pointermove', e => {
+    const t = touches.get(e.pointerId); if (!t) return;
+    t.x = e.clientX; t.y = e.clientY;
+    if (Math.hypot(t.x - t.x0, t.y - t.y0) > 12) gesture = true;
+    if (pinch && touches.size >= 2) {
+      const [a, b] = [...touches.values()];
+      setZoom(pinch.z * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d);
+    }
+  });
+  const endTouch = e => {
+    const t = touches.get(e.pointerId); if (!t) return;
+    touches.delete(e.pointerId);
+    if (touches.size < 2) pinch = null;
+    if (e.type === 'pointerup' && !gesture && touches.size === 0) tapAt(...local(e));
+  };
+  cv.addEventListener('pointerup', endTouch);
+  cv.addEventListener('pointercancel', endTouch);
   cv.addEventListener('pointermove', e => {
     if (e.pointerType !== 'mouse' || !S.running) return;
     const r = cv.getBoundingClientRect(), h = pickAt(e.clientX - r.left, e.clientY - r.top);
