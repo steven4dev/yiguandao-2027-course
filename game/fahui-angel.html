@@ -116,6 +116,7 @@
     font: inherit; font-size: .68rem; font-weight: 700; cursor: pointer;
   }
   #hand .em { font-size: 1.35rem; line-height: 1.2; min-height: 1.35em; }
+  #handName { word-break: keep-all; line-height: 1.25; text-align: center; }
   #hand:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
   #sound {
     flex: none; width: 44px; height: 44px; border-radius: 50%; margin-left: auto;
@@ -398,7 +399,7 @@
         <section class="tpage">
           <div class="ill" aria-hidden="true"><span class="who ">👨<span class="bub">👋</span></span><span class="arr" aria-hidden="true">→</span><span class="chip">💬 吃過早餐了嗎？</span><span class="arr" aria-hidden="true">→</span><span class="tile" style="--c:#EA580C">🥟<small>餐點區</small></span><span class="chip">×2</span></div>
           <h2>剛到的朋友，先打招呼</h2>
-          <p class="lead">走過去就會主動問候。如果他還沒吃早餐，到餐點區拿<b>兩顆</b>水煎包（點兩次）。</p>
+          <p class="lead">走過去就會主動問候。如果他還沒吃早餐，到餐點區拿<b>兩顆</b>植物肉煎餃（點兩次）。</p>
           <p class="tip">有人已經吃過了，會改成想喝溫水或喝咖啡，聽他怎麼說就好。</p>
         </section>
         <section class="tpage">
@@ -604,7 +605,7 @@
     note: { e: '📝', n: '筆記本' }, warm: { e: '💧', n: '溫開水' }, hot: { e: '♨️', n: '熱開水' }, coat: { e: '🧥', n: '薄外套' },
     cup: { e: '🥤', n: '空紙杯' }, tea: { e: '🍵', n: '熱茶' }, bento: { e: '🍱', n: '素便當' }, key: { e: '🔑', n: '鑰匙' },
     americano: { e: '☕', n: '美式咖啡' }, milk: { e: '🥛', n: '鮮奶' }, latte: { e: '☕🥛', n: '拿鐵' },
-    candy: { e: '🍬', n: '咖啡糖' }, bao: { e: '🥟', n: '水煎包' },
+    candy: { e: '🍬', n: '咖啡糖' }, bao: { e: '🥟', n: '植物肉煎餃' },
   };
   const NEEDS = {
     guide:   { e: '🧭', ask: '請問…我的座位在哪裡？', hint: '先走到他身邊讓他跟著你，再點一張發亮的空椅子。' },
@@ -618,7 +619,7 @@
     sleepy:  { e: '😪', items: ['candy', 'americano'], ask: '昨晚加班到好晚…好想睡…', hint: '幫他提神：備品區有咖啡糖，或是泡一杯美式咖啡給他。' },
     greet:   { e: '👋', ask: '（剛到會場，有點不知所措…）', hint: '剛到的朋友，先走過去打聲招呼、關心一下。' },
     coffee:  { e: '☕', item: 'americano', ask: '想來杯美式咖啡～', hint: '美式：備品區拿紙杯，再到咖啡機裝。' },
-    bao:     { e: '🥟', item: 'bao', qty: 2, ask: '還沒吃早餐，肚子有點餓…', hint: '餐點區（左下角）有水煎包，拿兩顆給他（點兩次）。' },
+    bao:     { e: '🥟', item: 'bao', qty: 2, ask: '還沒吃早餐，肚子有點餓…', hint: '餐點區（左下角）有植物肉煎餃，拿兩顆給他（點兩次）。' },
     comfort: { e: '😟', ask: '第一次來，有點緊張…', hint: '走到休息區那位朋友身邊，靜靜陪他一下就好。' },
     bento:   { e: '🍱', item: 'bento', ask: '午餐在哪裡拿呢？', hint: '便當在餐點區（左下角）。' },
   };
@@ -711,7 +712,7 @@
       '溫溫的拿鐵，喝起來好安心。',
     ],
     bao: [
-      '熱騰騰的水煎包，好幸福！',
+      '熱騰騰的植物肉煎餃，好幸福！',
       '兩顆剛剛好，終於有力氣了！',
       '早上沒吃就出門，這兩顆救了我。',
       '外皮好酥，吃了整個人都醒了。',
@@ -1473,15 +1474,15 @@
   // ---------- interactions ----------
   function give(item) {
     if (item === 'bao' && S.hand === 'bao') {
-      if (S.qty >= 2) return say(null, '兩顆水煎包剛剛好，快送過去吧！');
+      if (S.qty >= 2) return say(null, '兩顆植物肉煎餃剛剛好，快送過去吧！');
       S.qty = 2; renderHand(); sfx('pick');
-      return say(null, '再拿一顆！🥟 水煎包 ×2');
+      return say(null, '再拿一顆！🥟 植物肉煎餃 ×2');
     }
     if (S.hand === item) return say(null, `手上已經有${ITEMS[item].n}了。`);
     const old = S.hand;
     S.hand = item; S.qty = 1; renderHand(); sfx('pick');
     if (old) say(null, `${ITEMS[old].e}${ITEMS[old].n}${old === 'key' ? '先還給總務組' : '放回去'}，換成 ${ITEMS[item].e} ${ITEMS[item].n}`);
-    else if (item === 'bao') say(null, '拿到 🥟 水煎包 ×1（再點一次可以多拿一顆）');
+    else if (item === 'bao') say(null, '拿到 🥟 植物肉煎餃 ×1（再點一次可以多拿一顆）');
     else say(null, `拿到 ${ITEMS[item].e} ${ITEMS[item].n}`);
   }
   function brew(to, msg) { S.hand = to; S.qty = 1; renderHand(); sfx('unlock'); say(null, msg); }
