@@ -1049,8 +1049,8 @@
     chapter(`第二章・${t.name}｜${t.sub}`);
     await line(30, `第二章・${t.name}`, 'big');
     await line(30, '你在 104 又登入了一次，只是看看。（第 38 次只是看看）');
-    const where = S.persona.id === 'tech' ? '科學園區的車棚裡' : '同學會的停車場';
-    await line(31, `${where}，停滿學長姐的<b>飛天跑車</b>。有人拍拍你：「欸，還在開那台喔？」`);
+    const where = S.persona.id === 'tech' ? '科學園區的車棚裡，停滿學長姐' : '同學會的停車場，停滿同學';
+    await line(31, `${where}的<b>飛天跑車</b>。有人拍拍你：「欸，還在開那台喔？」`);
     await ask('🏎️ 飛天跑車', '你心裡有點癢。', [
       { text: '貸款買一台，不能輸', fx: { gold: -20, work: 3, hp: -2, fam: -3 }, note: '為了繳車貸更拚了。每個月的車貸，剛好等於陪爸媽吃飯的錢 × 12。', run: () => { S.flags.fastcar = true; } },
       { text: '買台實用的二手車，剩下的存起來', fx: { gold: -6, fam: 3, badge: '知足常樂' }, note: '週末載全家去兜風，後座擠得剛剛好。' },
