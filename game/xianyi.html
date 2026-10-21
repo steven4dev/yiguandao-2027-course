@@ -336,6 +336,19 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
+  /* 分享成績卡 */
+  #shareSheet { position: absolute; inset: 0; z-index: 45; background: rgba(15,23,42,.5); display: flex; align-items: center; justify-content: center; padding: 14px; }
+  #shareSheet .card { text-align: left; }
+  #shareSheet h2 { text-align: center; }
+  #cardImg { display: block; width: min(260px, 100%); margin: 6px auto 12px; border-radius: 14px; box-shadow: 0 10px 24px rgba(30,41,59,.25); -webkit-touch-callout: default; }
+  .step { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; align-items: center; margin: 10px 0; }
+  .step .num { width: 28px; height: 28px; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+  .step.done .num { background: var(--green); }
+  .step b { display: block; font-size: .95rem; }
+  .step small { display: block; color: var(--muted); font-size: .78rem; line-height: 1.5; }
+  .step .btn { width: auto; padding: 10px 14px; font-size: .9rem; margin: 0; }
+  #shareText { width: 100%; font: inherit; font-size: .85rem; border: 1.5px solid var(--line); border-radius: 12px; padding: 8px 10px; color: var(--ink-soft); resize: none; }
+  .why { font-size: .8rem; color: var(--gold); text-align: center; margin: 0 0 4px; }
 </style>
 </head>
 <body>
@@ -381,6 +394,38 @@
     <div id="pausedTag" hidden>⏸ 已暫停</div>
   </div>
 
+  <div id="shareSheet" hidden>
+    <div class="card">
+      <h2>🤝 揪夥伴一起回鄉</h2>
+      <p class="why" id="shareWhy"></p>
+      <img id="cardImg" alt="你的人生成績卡（長按可儲存）">
+      <div class="step" id="stepCopy">
+        <span class="num">1</span>
+        <div><b>複製邀請文字</b><small>裡面有遊戲連結，朋友點開就能玩</small></div>
+        <button class="btn ghost" type="button" id="copyText">📋 複製</button>
+      </div>
+      <textarea id="shareText" rows="3" readonly aria-label="邀請文字"></textarea>
+      <div class="step" id="stepNative">
+        <span class="num">2</span>
+        <div><b>分享成績卡</b><small>選 LINE、Facebook 或 Instagram，卡片會直接附上，再貼上剛剛的文字</small></div>
+        <button class="btn gold" type="button" id="shareFile">📤 分享</button>
+      </div>
+      <div class="step" id="stepSave" hidden>
+        <span class="num">2</span>
+        <div><b>長按上面的成績卡 → 儲存圖片</b><small>再到 LINE 聊天室傳照片，貼上剛剛的文字</small></div>
+        <span></span>
+      </div>
+      <div class="step" id="stepDownload" hidden>
+        <span class="num">2</span>
+        <div><b>下載成績卡</b><small>傳給朋友時附上圖片，再貼上剛剛的文字</small></div>
+        <button class="btn gold" type="button" id="downloadCard">⬇️ 下載</button>
+      </div>
+      <div class="stack" style="margin-top:10px">
+        <a class="btn green" id="lineLink" href="#" target="_blank" rel="noopener">💬 只傳連結到 LINE</a>
+        <button class="btn ghost" type="button" id="shareClose">關閉</button>
+      </div>
+    </div>
+  </div>
   <div id="settings" hidden>
     <div class="card">
       <h2>⚙️ 設定</h2>
@@ -395,6 +440,7 @@
   <section id="ending" hidden></section>
 </div>
 
+<script src="qrcode.js"></script>
 <script>
 (() => {
   // ───────── 工具 ─────────
@@ -1263,16 +1309,130 @@
     }, 1200);
 
     el.querySelector('#againBtn').onclick = start;
-    el.querySelector('#shareBtn').onclick = async () => {
-      const text = `我在《褪下仙衣：八十億分之一》抽到「${S.persona.name}」，活成了「${E.title}」。你呢？夥伴們快跟上！`;
-      const url = SITE + 'game/xianyi.html?v=2';   // 帶 ?v=2 讓 LINE、臉書重新抓預覽圖
-      try {
-        if (navigator.share) return await navigator.share({ title: '褪下仙衣：八十億分之一', text, url });
-      } catch (e) { if (e.name === 'AbortError') return; }
-      try { await navigator.clipboard.writeText(text + '\n' + url); toast('已複製，貼到 LINE 揪夥伴吧！'); }
-      catch (e) { window.open('https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text), '_blank', 'noopener'); }
-    };
+    shareText = `我在《褪下仙衣：八十億分之一》抽到「${S.persona.name}」，活成了「${E.title}」。你呢？夥伴們快跟上！\n${GAME_URL}`;
+    cardFile = null; cardUrl = '';
+    renderCard(E).then(cv => {
+      cardUrl = cv.toDataURL('image/png');
+      cv.toBlob(b => { if (b) cardFile = new File([b], 'xianyi.png', { type: 'image/png' }); }, 'image/png');
+    });
+    el.querySelector('#shareBtn').onclick = openShare;
   }
+
+  // ───────── 成績卡與分享 ─────────
+  const GAME_URL = SITE + 'game/xianyi.html?v=2';   // 帶 ?v=2 讓 LINE、臉書重新抓預覽圖
+  let shareText = '', cardFile = null, cardUrl = '';
+  const SERIF = '"Noto Serif TC", "Songti TC", serif';
+  const SANS = '"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif';
+  function rr(g, x, y, w, h, r) {
+    g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+  }
+  // 1080×1350 直式成績卡（適合 LINE、FB、IG 貼文）
+  async function renderCard(E) {
+    const W = 1080, H = 1350;
+    try {
+      await Promise.all([`900 80px ${SERIF}`, `700 40px ${SERIF}`, `700 40px ${SANS}`, `500 30px ${SANS}`].map(f => document.fonts.load(f, '褪下仙衣八十億分之一' + E.title)));
+    } catch (e) {}
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    const bg = g.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#E0F2FE'); bg.addColorStop(.55, '#EEF7F2'); bg.addColorStop(1, '#FEF9E7');
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    const glow = g.createRadialGradient(W / 2, 250, 10, W / 2, 250, 300);
+    glow.addColorStop(0, 'rgba(253,230,138,.85)'); glow.addColorStop(1, 'rgba(253,230,138,0)');
+    g.fillStyle = glow; g.fillRect(0, 0, W, 600);
+    rr(g, 50, 50, W - 100, H - 100, 44); g.fillStyle = 'rgba(255,255,255,.88)'; g.fill();
+    g.lineWidth = 6; g.strokeStyle = '#D97706'; g.stroke();
+    g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+    g.fillStyle = '#0284C7'; g.font = `700 40px ${SERIF}`; g.fillText('褪下仙衣・八十億分之一', W / 2, 140);
+    g.font = `116px ${SANS}`; g.fillText(E.em, W / 2, 280);
+    g.fillStyle = '#1E293B'; g.font = `900 80px ${SERIF}`; g.fillText(E.title, W / 2, 400);
+    g.fillStyle = '#64748B'; g.font = `500 32px ${SANS}`;
+    g.fillText(`${moodOf()} ${S.persona.em} ${S.persona.name}・享年 ${S.age} 歲・回佛堂 ${S.visits} 次`, W / 2, 455);
+    const lyric = E.lyric.split('<br>');
+    rr(g, 130, 485, W - 260, 44 + lyric.length * 56, 26); g.fillStyle = '#FEF3C7'; g.fill();
+    g.fillStyle = '#D97706'; g.font = `700 40px ${SERIF}`;
+    lyric.forEach((t, i) => g.fillText(t, W / 2, 543 + i * 56));
+    const top = 560 + lyric.length * 56;
+    const cells = [['💪 健康', S.hp], ['💼 工作', S.work], ['🪙 金幣', `${S.gold}→0`], ['❤️ 家人', S.fam], ['🤝 夥伴', S.pal], ['✨ 天幣', S.tian]];
+    const cw = 280, ch = 120, gap = 24, x0 = (W - cw * 3 - gap * 2) / 2;
+    cells.forEach(([k, v], i) => {
+      const x = x0 + (i % 3) * (cw + gap), y = top + Math.floor(i / 3) * (ch + gap);
+      rr(g, x, y, cw, ch, 22); g.fillStyle = '#F1F5F9'; g.fill();
+      g.fillStyle = '#1E293B'; g.font = `700 50px ${SANS}`; g.fillText(String(v), x + cw / 2, y + 62);
+      g.fillStyle = '#64748B'; g.font = `500 28px ${SANS}`; g.fillText(k, x + cw / 2, y + 102);
+    });
+    const by = top + ch * 2 + gap + 58;
+    g.fillStyle = '#D97706'; g.font = `700 32px ${SANS}`;
+    g.fillText(`🏅 心法徽章 ${S.badges.size} / 8　・　金幣帶不走，天幣留下`, W / 2, by);
+    // 底部：邀請文字＋QR Code
+    const qy = H - 300;
+    g.textAlign = 'left';
+    g.fillStyle = '#1E293B'; g.font = `900 52px ${SERIF}`; g.fillText('你會活成什麼樣？', 120, qy + 60);
+    g.fillStyle = '#475569'; g.font = `500 32px ${SANS}`; g.fillText('掃描 QR Code，一起下凡抽籤', 120, qy + 115);
+    g.fillStyle = '#059669'; g.font = `700 26px ${SANS}`; g.fillText('steven4dev.github.io/yiguandao-2027-course', 120, qy + 162);
+    g.fillStyle = '#94A3B8'; g.font = `500 24px ${SANS}`; g.fillText('2027 全真社青 Life Design', 120, qy + 202);
+    if (window.qrcode) {
+      const qr = window.qrcode(0, 'M'); qr.addData(GAME_URL); qr.make();
+      const n = qr.getModuleCount(), box = 180, cell = box / n, qx = W - 120 - box, qyy = qy + 6;
+      rr(g, qx - 14, qyy - 14, box + 28, box + 28, 18); g.fillStyle = '#fff'; g.fill();
+      g.fillStyle = '#1E293B';
+      for (let r = 0; r < n; r++) for (let cc = 0; cc < n; cc++) if (qr.isDark(r, cc)) g.fillRect(qx + cc * cell, qyy + r * cell, Math.ceil(cell), Math.ceil(cell));
+    }
+    return c;
+  }
+  // 臉書、IG、LINE 的內建瀏覽器擋掉系統分享與下載，改用長按儲存
+  const UA = navigator.userAgent || '';
+  const IN_APP = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\//i.test(UA);
+  const APP_NAME = /Line\//i.test(UA) ? 'LINE' : /Instagram/i.test(UA) ? 'Instagram' : '臉書';
+  const canShareFile = () => !!(cardFile && navigator.canShare && navigator.canShare({ files: [cardFile] }));
+  function copyText(t) {
+    try { return navigator.clipboard.writeText(t).then(() => true, () => false); } catch (e) { return Promise.resolve(false); }
+  }
+  async function openShare() {
+    sfx('tap');
+    for (let i = 0; i < 40 && !cardUrl; i++) await new Promise(r => setTimeout(r, 50));
+    const native = !IN_APP && canShareFile();
+    const touch = window.matchMedia('(pointer: coarse)').matches;
+    $('cardImg').src = cardUrl;
+    $('shareText').value = shareText;
+    $('shareWhy').textContent = IN_APP ? `你正在${APP_NAME}的內建瀏覽器，沒辦法直接分享圖片，請長按成績卡儲存。` : '';
+    $('stepNative').hidden = !native;
+    $('stepSave').hidden = native || !touch;
+    $('stepDownload').hidden = native || touch;
+    $('copyText').textContent = '📋 複製';
+    document.querySelectorAll('#shareSheet .step').forEach(x => x.classList.remove('done'));
+    $('lineLink').href = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(GAME_URL) + '&text=' + encodeURIComponent(shareText.split('\n')[0]);
+    if (IN_APP) $('lineLink').removeAttribute('target');
+    $('shareSheet').hidden = false;
+  }
+  $('copyText').onclick = () => {
+    const box = $('shareText');
+    copyText(shareText).then(ok => {
+      if (!ok) { box.focus(); box.select(); }
+      $('copyText').textContent = ok ? '✅ 已複製' : '已選取，請拷貝';
+      if (ok) $('stepCopy').classList.add('done');
+      sfx('up');
+    });
+  };
+  // 圖片和連結一起送時，臉書常只抓連結預覽而丟掉圖片，所以文字另外複製、這裡只送圖片
+  $('shareFile').onclick = () => {
+    if (!cardFile) return;
+    navigator.share({ files: [cardFile] })
+      .then(() => $('stepNative').classList.add('done'))
+      .catch(e => {
+        if (e && e.name === 'AbortError') return;
+        $('stepNative').hidden = true; $('stepSave').hidden = false;
+        $('shareWhy').textContent = '這次沒有叫出分享選單，請改用長按成績卡儲存。';
+      });
+  };
+  $('downloadCard').onclick = () => {
+    const a = document.createElement('a');
+    a.href = cardUrl; a.download = 'xianyi.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    $('stepDownload').classList.add('done');
+  };
+  $('shareClose').onclick = () => { sfx('tap'); $('shareSheet').hidden = true; };
 
   // ───────── 播放控制與設定 ─────────
   function setSpeed(v) {
