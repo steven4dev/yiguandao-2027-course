@@ -9,78 +9,75 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;700&display=swap">
 <style>
-  /* 2.5D 試玩版：教室＋入口。與原版同一套草地色系，單一亮色主題。 */
+  /* 2.5D 試玩版：等角模型屋（教室＋入口）。單一亮色主題，與風格樣張同一套粉彩色。 */
   :root {
-    --bg: #EEF7F2;
-    --ink: #1E293B;
-    --muted: #64748B;
-    --card: #FFFFFF;
-    --green: #059669;
-    --green-soft: #D1FAE5;
-    --gold: #D97706;
-    --gold-soft: #FEF3C7;
-    --pink: #E11D74;
-    --line: #CFE3D8;
-    --serif: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
-    --sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+    --bg: #F4EFE6;
+    --ink: #4A3B2F;
+    --muted: #8A7868;
+    --card: #FFFDF8;
+    --green: #5FAF84;
+    --green-soft: #DDF0E4;
+    --gold: #E4A23B;
+    --gold-soft: #FFF1D2;
+    --line: #E6DCCB;
+    --round: "Huninn", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
     color-scheme: light;
   }
   [hidden] { display: none !important; }
   html, body { height: 100%; margin: 0; }
   body {
-    background: var(--bg); color: var(--ink); font-family: var(--sans);
+    background: var(--bg); color: var(--ink); font-family: var(--round);
     display: flex; flex-direction: column; height: 100dvh; overflow: hidden;
     -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
   }
-  .hud {
-    display: flex; align-items: center; gap: 10px; padding: calc(8px + env(safe-area-inset-top)) 14px 8px;
+  .hud { display: flex; align-items: center; gap: 8px; padding: calc(10px + env(safe-area-inset-top)) 14px 6px; }
+  .hud h1 { margin: 0; font-size: 1.2rem; font-weight: 400; flex: 1; line-height: 1.25; }
+  .hud h1 small { display: block; font-size: .75rem; color: var(--muted); }
+  .chip {
+    border: 2px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px;
+    padding: 5px 12px; font: 1rem var(--round); white-space: nowrap; font-variant-numeric: tabular-nums;
   }
-  .hud h1 { margin: 0; font-family: var(--serif); font-weight: 900; font-size: 1.15rem; flex: 1; line-height: 1.2; }
-  .hud h1 small { display: block; font-family: var(--sans); font-weight: 500; font-size: .72rem; color: var(--muted); letter-spacing: .04em; }
-  .pill {
-    background: var(--card); border: 2px solid var(--line); border-radius: 999px; padding: 4px 12px;
-    font-weight: 700; font-size: .95rem; white-space: nowrap; font-variant-numeric: tabular-nums;
-  }
+  button.chip { cursor: pointer; }
   #wrap { flex: 1; position: relative; min-height: 0; overflow: hidden; }
-  #cv { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+  #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
   .msg {
-    margin: 0 10px calc(10px + env(safe-area-inset-bottom)); background: var(--card); border: 2px solid var(--line);
-    border-radius: 14px; padding: 10px 14px; min-height: 2.9em; display: flex; align-items: center; gap: 10px;
+    margin: 0 12px calc(12px + env(safe-area-inset-bottom)); background: var(--card); border: 2px solid var(--line);
+    border-radius: 16px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; min-height: 2.8em;
   }
-  .msg p { margin: 0; font-size: .95rem; line-height: 1.45; flex: 1; }
-  #hand { font-size: 1.5rem; width: 2.2rem; height: 2.2rem; display: grid; place-items: center; border-radius: 10px; background: var(--gold-soft); border: 2px dashed var(--gold); flex: none; }
+  .msg p { margin: 0; flex: 1; font-size: .98rem; line-height: 1.5; }
+  #hand { font-size: 1.4rem; width: 2.2rem; height: 2.2rem; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--gold-soft); border: 2px dashed var(--gold); }
   .overlay {
     position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; z-index: 10;
-    background: rgba(238,247,242,.86); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    background: rgba(244,239,230,.82); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
   }
   .card {
-    width: min(420px, 100%); background: var(--card); border-radius: 20px; padding: 22px 20px;
-    box-shadow: 0 12px 40px rgba(5,150,105,.18); border: 2px solid var(--green-soft); text-align: center;
+    width: min(400px, 100%); box-sizing: border-box; background: var(--card); border-radius: 24px; padding: 22px 20px; text-align: center;
+    border: 2px solid var(--line); box-shadow: 0 14px 40px rgba(120,90,60,.18);
   }
-  .card h2 { font-family: var(--serif); font-weight: 900; margin: 0 0 6px; font-size: 1.5rem; }
-  .card .tag { display: inline-block; background: var(--gold-soft); color: var(--gold); font-weight: 700; font-size: .8rem; border-radius: 999px; padding: 2px 10px; margin-bottom: 10px; }
-  .card ul { text-align: left; padding-left: 1.2em; margin: 10px 0 16px; line-height: 1.7; }
-  .card p { line-height: 1.6; }
+  .card h2 { font-weight: 400; font-size: 1.55rem; margin: 4px 0 8px; }
+  .card p { line-height: 1.6; margin: 6px 0; }
+  .card ul { text-align: left; padding-left: 1.3em; margin: 10px 0 14px; line-height: 1.75; }
+  .tag { display: inline-block; background: var(--gold-soft); color: #B07419; border-radius: 999px; padding: 2px 12px; font-size: .85rem; }
+  .big { font-size: 2.6rem; }
   .btn {
-    display: block; width: 100%; box-sizing: border-box; margin-top: 10px; padding: 12px; border-radius: 14px;
-    border: 2px solid var(--green); background: var(--green-soft); color: var(--ink); font: 700 1rem var(--sans);
-    cursor: pointer; text-decoration: none;
+    display: block; width: 100%; box-sizing: border-box; margin-top: 10px; padding: 12px; border-radius: 16px; text-decoration: none;
+    border: 2px solid var(--green); background: var(--green-soft); color: var(--ink); font: 1.05rem var(--round); cursor: pointer;
   }
   .btn.primary { background: var(--green); color: #fff; }
   .btn.ghost { background: transparent; border-color: var(--line); color: var(--muted); }
-  .big { font-size: 2.6rem; margin: 4px 0; }
-  @media (max-width: 520px) { .hud { padding-left: 10px; padding-right: 10px; } .hud h1 { font-size: 1.02rem; } }
+  .note { color: var(--muted); font-size: .88rem; }
 </style>
 </head>
 <body>
 
 <header class="hud">
   <h1>法會小天使<small>2.5D 試玩版・教室＋入口</small></h1>
-  <span class="pill" id="hearts">❤️ 0／4</span>
+  <span class="chip" id="hearts">❤️ 0／4</span>
+  <button class="chip" id="zoomBtn" aria-label="切換全景或近拍">🗺️</button>
 </header>
-<div id="wrap"><canvas id="cv" aria-label="2.5D 會場：教室與入口"></canvas></div>
+<div id="wrap"><canvas id="cv" aria-label="等角視角的入口與教室"></canvas></div>
 <div class="msg">
   <div id="hand" title="手上的東西">✋</div>
   <p id="say" aria-live="polite">按「開始」走進會場。</p>
@@ -88,16 +85,16 @@
 
 <div class="overlay" id="intro">
   <div class="card">
-    <span class="tag">試玩版</span>
-    <h2>走進 2.5D 的會場</h2>
+    <span class="tag">2.5D 試玩版</span>
+    <h2>走進法會的模型屋</h2>
     <p>新朋友頭上冒出需求泡泡，一起照顧好他們，收集 4 顆愛心 ❤️</p>
     <ul>
       <li>點地板走路，點人或櫃子互動</li>
-      <li>電腦可用方向鍵／WASD 走、空白鍵互動</li>
+      <li>電腦：方向鍵／WASD 走路，空白鍵互動</li>
       <li>不知道下一步？點「公關學長」問問看</li>
     </ul>
     <button class="btn primary" id="startBtn">開始</button>
-    <a class="btn ghost" id="origLink" href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html">玩原版完整遊戲</a>
+    <a class="btn ghost" href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html">玩原版完整遊戲</a>
   </div>
 </div>
 
@@ -106,57 +103,341 @@
     <div class="big">😇</div>
     <h2>四顆愛心都收到了！</h2>
     <p id="winText"></p>
-    <p style="color:var(--muted);font-size:.9rem">這是 2.5D 試玩版，只有教室和入口。<br>喜歡這個視角嗎？一起把整個會場蓋起來吧！</p>
+    <p class="note">這是 2.5D 試玩版，只有教室和入口。<br>其他區域會一區一區搬進來，一起期待吧！</p>
     <button class="btn primary" id="againBtn">再玩一次</button>
-    <a class="btn" id="origLink2" href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html">玩原版完整遊戲</a>
+    <a class="btn" href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html">玩原版完整遊戲</a>
   </div>
 </div>
 
 <script>
 (() => {
 'use strict';
-// ── 地圖：原版手機地圖的教室＋入口（上方一排是大廳，門開在後牆正中央）
-const MAP = ['###########','#R...E...S#','#.........#','#.........#','#.c..c..c.#','#.........#','#.........#','#.c..c..c.#','#.........#','###########'];
-const C = 11, R = 10;
-const ORIG = 'https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel.html';
-const EMO = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
-const TXT = '"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
-
 const cv = document.getElementById('cv'), ctx = cv.getContext('2d'), wrap = document.getElementById('wrap');
-const $ = id => document.getElementById(id);
+const EMO = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+const FONT = '"Huninn","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
+const INK = 'rgba(84,62,46,.55)';
+const WH = 2.4, HU = .52, M = .5;
 
-// ── 投影：前面（畫面下方）的格子比較大、後面比較小，越往後越扁 → 有景深的俯視
-const S0 = .8, K = (1 - S0) / 20, WALL = 2.2;
-let W = 0, H = 0, TW = 40, TD = 40, CX = 0, TOPY = 0;
-const sc = gy => S0 + (1 - S0) * gy / 10;
-const dep = gy => S0 * gy + K * gy * gy;
-const P = (gx, gy, h = 0) => { const s = sc(gy); return [CX + (gx - 5.5) * TW * s, TOPY + TD * dep(gy) - h * TW * .9 * s]; };
-function unP(px, py) {
-  const t = (py - TOPY) / TD, d = S0 * S0 + 4 * K * t;
-  if (d < 0) return null;
-  const gy = (-S0 + Math.sqrt(d)) / (2 * K);
-  return [(px - CX) / (TW * sc(gy)) + 5.5, gy];
-}
+// ── 等角投影：x 往右下、y 往左下、h 往上
+let W = 0, H = 0, TW = 40, OX = 0, OY = 0, dpr = 1;
+let zoom = 1, zoomTo = 1, NEAR = 1.9, ISL = { x0: 0, x1: 0, y0: 0, y1: 0 };
+const iso = (gx, gy, h = 0) => [OX + (gx - gy) * TW / 2, OY + (gx + gy) * TW / 4 - h * HU * TW];
 function resize() {
   const r = wrap.getBoundingClientRect(); W = r.width; H = r.height;
-  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  dpr = Math.min(window.devicePixelRatio || 1, 3);
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const span = dep(9.4) - dep(.6), up = WALL * .9 * sc(.6), pad = 12;
-  let tw = (W - 8) / 10.2, ratio;
-  ratio = ((H - pad) / tw - up) / span;
-  if (ratio < .72) { ratio = .72; tw = (H - pad) / (ratio * span + up); }
-  ratio = Math.min(ratio, 1.6);
-  TW = tw; TD = ratio * tw; CX = W / 2;
-  const used = TW * up + TD * span;
-  TOPY = (H - used) / 2 + TW * up - TD * dep(.6);
+  // 以 TW=1、原點 0 先量出整座小島的外框，再縮放置中
+  const pts = [[M, 10 - M, -1.1], [11 - M, M, -1.1], [.6, .6, 3.6], [1, 1, WH], [11 - M, 10 - M, -1.1]];
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  for (const [a, b, h] of pts) { const x = (a - b) / 2, y = (a + b) / 4 - h * HU; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  TW = Math.min((W - 20) / (x1 - x0), (H - 24) / (y1 - y0));
+  OX = W / 2 - (x0 + x1) / 2 * TW; OY = H / 2 - (y0 + y1) / 2 * TW;
+  ISL = { x0: OX + x0 * TW, x1: OX + x1 * TW, y0: OY + y0 * TW, y1: OY + y1 * TW };
 }
 
-// ── 小工具
+// ── 顏色與基本形
+function mix(hex, f) {
+  const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = n >> 8 & 255, b = n & 255;
+  const t = f > 0 ? 255 : 40, a = Math.abs(f);
+  return `rgb(${Math.round(r + (t - r) * a)},${Math.round(g + (t - g) * a)},${Math.round(b + (t - b) * a)})`;
+}
+function poly(pts, fill, stroke, lw = 1) {
+  ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.stroke(); }
+}
+// 方塊：頂面最亮、左前面（朝 +y）中間、右前面（朝 +x）最暗
+function box(x0, x1, y0, y1, h0, h1, col, o = {}) {
+  const top = o.top || mix(col, .28), left = o.left || col, right = o.right || mix(col, -.16), line = o.line === undefined ? INK : o.line, lw = Math.max(1, TW * .018);
+  poly([iso(x0, y1, h0), iso(x1, y1, h0), iso(x1, y1, h1), iso(x0, y1, h1)], left, line, lw);
+  poly([iso(x1, y0, h0), iso(x1, y1, h0), iso(x1, y1, h1), iso(x1, y0, h1)], right, line, lw);
+  poly([iso(x0, y0, h1), iso(x1, y0, h1), iso(x1, y1, h1), iso(x0, y1, h1)], top, line, lw);
+}
+function softShadow(x, y, rx, ry, a = .22) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, rx);
+  g.addColorStop(0, `rgba(70,50,35,${a})`); g.addColorStop(1, 'rgba(70,50,35,0)');
+  ctx.save(); ctx.translate(x, y); ctx.scale(1, ry / rx); ctx.translate(-x, -y);
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, rx, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+}
+function rr(x, y, w, h, r) {
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
+  else { ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+}
+function ell(x, y, rx, ry, fill, stroke, lw) {
+  ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
+}
+// 在牆面上寫字：plane 'y' 是平行 x 軸的牆（右後牆），'x' 是平行 y 軸的牆（左後牆，字從前往後寫）
+function onWall(plane, at, fn) {
+  const k = 40; ctx.save();
+  if (plane === 'y') { const o = iso(0, at, 0); ctx.transform(TW / 2 / k, TW / 4 / k, 0, HU * TW / k, o[0], o[1]); }
+  else { const o = iso(at, 10, 0); ctx.transform(TW / 2 / k, -TW / 4 / k, 0, HU * TW / k, o[0], o[1]); }
+  fn(k); ctx.restore();
+}
+function wallText(text, u, h, size, color) {
+  ctx.font = `${size}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = color; ctx.fillText(text, u, -h);
+}
+function pill(text, x, y, size, bg, fg = '#fff') {
+  ctx.font = `${size}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = ctx.measureText(text).width + size * 1.1, h = size * 1.55;
+  ctx.fillStyle = 'rgba(84,62,46,.18)'; rr(x - w / 2, y - h / 2 + 2, w, h, h / 2); ctx.fill();
+  ctx.fillStyle = bg; rr(x - w / 2, y - h / 2, w, h, h / 2); ctx.fill();
+  ctx.fillStyle = fg; ctx.fillText(text, x, y + size * .05);
+}
+
+// ── 場景
+const CHAIRS = [[2, 4], [5, 4], [8, 4], [2, 7], [5, 7], [8, 7]];
+const CUSHION = ['#9FD3B5', '#F6B8C4', '#A9CBEA'];
+function drawSky(t) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#DCEFF5'); g.addColorStop(.6, '#F3EFE4'); g.addColorStop(1, '#F6E9DA');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(255,255,255,.85)';
+  for (const [k, yy, s] of [[0, .14, 1], [.45, .3, .7], [.75, .1, .85]]) {
+    const x = ((k + t * .006) % 1.3 - .15) * W, y = yy * H, r = Math.max(W, H) * .035 * s;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.arc(x + r * 1.1, y - r * .4, r * 1.25, 0, 7); ctx.arc(x + r * 2.3, y, r * .9, 0, 7); ctx.fill();
+    ctx.fillRect(x, y, r * 2.3, r * .9);
+  }
+}
+function drawIsland() {
+  const [cx, cy] = iso(5.5, 5, -2.6);
+  softShadow(cx, cy, TW * 5.2, TW * 1.6, .16);
+  box(M, 11 - M, M, 10 - M, -1.1, -.18, '#C99B74', { top: '#C99B74', left: '#C99B74', right: '#B08360' });
+  box(M, 11 - M, M, 10 - M, -.18, 0, '#9ACD8C', { top: '#A9D89A', left: '#8DC27F', right: '#7DB271' });
+  // 土層裡的小石頭
+  for (const [a, b, h] of [[3, 10 - M, -.6], [6.5, 10 - M, -.8], [11 - M, 3, -.5], [11 - M, 7, -.75]]) {
+    const [x, y] = iso(a, b, h); ell(x, y, TW * .1, TW * .055, '#B08360');
+  }
+  // 草地上的小花
+  const fl = [[10.2, 2.5, '#F6B8C4'], [10.25, 4.4, '#FFF1A8'], [10.15, 6.8, '#F6B8C4'], [10.3, 8.6, '#FFFFFF'], [2.4, 9.25, '#FFF1A8'], [4.3, 9.2, '#FFFFFF'], [7.6, 9.3, '#F6B8C4'], [9.4, 9.2, '#FFF1A8'], [4.6, .7, '#F6B8C4'], [6.4, .75, '#FFF1A8']];
+  for (const [a, b, c] of fl) { const [x, y] = iso(a, b); for (let i = 0; i < 5; i++) ell(x + Math.cos(i * 1.26) * TW * .04, y + Math.sin(i * 1.26) * TW * .02, TW * .028, TW * .02, c); ell(x, y, TW * .02, TW * .015, '#F2C14E'); }
+  // 門外的踏腳石
+  for (const b of [.62, .86]) { const [x, y] = iso(5.5, b); ell(x, y, TW * .2, TW * .09, '#E8DCC8', INK, 1); }
+}
+function drawFloor() {
+  // 大廳磁磚
+  for (let x = 1; x < 10; x++) poly([iso(x, 1), iso(x + 1, 1), iso(x + 1, 2), iso(x, 2)], x % 2 ? '#F5EFE4' : '#ECE3D3', 'rgba(150,120,90,.25)');
+  // 教室木地板
+  poly([iso(1, 2), iso(10, 2), iso(10, 9), iso(1, 9)], '#EBCB9F');
+  ctx.strokeStyle = 'rgba(160,110,60,.28)'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 21; i++) {
+    const gy = 2 + i / 3; ctx.beginPath(); ctx.moveTo(...iso(1, gy)); ctx.lineTo(...iso(10, gy)); ctx.stroke();
+    for (let gx = 1 + (i % 3) * .9; gx < 10; gx += 2.7) { if (gy >= 9) break; ctx.beginPath(); ctx.moveTo(...iso(gx, gy)); ctx.lineTo(...iso(gx, gy + 1 / 3)); ctx.stroke(); }
+  }
+  // 窗光
+  for (const [a, b] of [[2, 3.8], [7.2, 9]]) {
+    const g = ctx.createLinearGradient(...iso(a, 1), ...iso(a, 4));
+    g.addColorStop(0, 'rgba(255,250,230,.6)'); g.addColorStop(1, 'rgba(255,250,230,0)');
+    poly([iso(a, 1), iso(b, 1), iso(b + .9, 4), iso(a + .9, 4)], g);
+  }
+  // 迎賓地墊＋走道地毯
+  box(5.1, 5.9, 1.12, 1.9, 0, .03, '#E98FA5', { top: '#F2A7B9' });
+  box(3.15, 3.85, 2.3, 8.8, 0, .02, '#9FD3B5', { top: '#B5DEC6', line: 'rgba(84,62,46,.25)' });
+  box(6.15, 6.85, 2.3, 8.8, 0, .02, '#9FD3B5', { top: '#B5DEC6', line: 'rgba(84,62,46,.25)' });
+  // 牆角陰影
+  aoStrip('x'); aoStrip('y');
+}
+function aoStrip(axis) {
+  const g = axis === 'x' ? ctx.createLinearGradient(...iso(1, 5), ...iso(1.7, 5)) : ctx.createLinearGradient(...iso(5, 1), ...iso(5, 1.7));
+  g.addColorStop(0, 'rgba(90,60,35,.2)'); g.addColorStop(1, 'rgba(90,60,35,0)');
+  if (axis === 'x') poly([iso(1, 1), iso(1, 9), iso(1.7, 9), iso(1.7, 1)], g);
+  else poly([iso(1, 1), iso(10, 1), iso(10, 1.7), iso(1, 1.7)], g);
+}
+function drawTree(gx, gy, s, t) {
+  const [x, y] = iso(gx, gy); softShadow(x, y, TW * .6 * s, TW * .25 * s, .2);
+  box(gx - .07 * s, gx + .07 * s, gy - .07 * s, gy + .07 * s, 0, 1.6 * s, '#A87A55');
+  const sway = Math.sin(t * 1.2 + gx) * TW * .02;
+  const [cx, cy] = iso(gx, gy, 2.5 * s);
+  for (const [dx, dy, r, c] of [[-.32, .25, .42, '#7DB86F'], [.34, .22, .4, '#74AF67'], [0, -.2, .5, '#8CC77D'], [0, .3, .38, '#86C277']]) {
+    ell(cx + dx * TW * s + sway, cy + dy * TW * s, r * TW * s, r * TW * s * .92, c, INK, Math.max(1, TW * .018));
+  }
+  ell(cx - .12 * TW * s + sway, cy - .3 * TW * s, .16 * TW * s, .1 * TW * s, 'rgba(255,255,255,.35)');
+}
+function drawWalls() {
+  const wall = '#FFF7EA', side = '#F3E5CF', cap = '#E9D4B5';
+  // 左後牆（字和白板在這面）
+  box(.72, 1, .72, 9, 0, WH, wall, { left: side, right: wall, top: cap });
+  // 右後牆分三段，中間是門
+  const rw = { left: '#FBEFDC', right: side, top: cap };
+  box(1, 5.1, .72, 1, 0, WH, wall, rw);
+  box(5.9, 10, .72, 1, 0, WH, wall, rw);
+  box(5.1, 5.9, .72, 1, 1.62, WH, wall, rw);
+  // 門框
+  for (const [a, b] of [[5.02, 5.12], [5.88, 5.98]]) box(a, b, .98, 1.05, 0, 1.66, '#C9935F');
+  box(5.02, 5.98, .98, 1.05, 1.58, 1.68, '#C9935F');
+  // 牆裙
+  poly([iso(1, 9, 0), iso(1, 1, 0), iso(1, 1, .55), iso(1, 9, .55)], '#E7D2B2', INK, 1);
+  for (const [a, b] of [[1, 5.02], [5.98, 10]]) poly([iso(a, 1, 0), iso(b, 1, 0), iso(b, 1, .55), iso(a, 1, .55)], '#EBD7B8', INK, 1);
+  // 窗戶
+  for (const [a, b] of [[2, 3.8], [7.2, 9]]) {
+    const g = ctx.createLinearGradient(...iso(a, 1, 1.9), ...iso(a, 1, .85));
+    g.addColorStop(0, '#BFE3F2'); g.addColorStop(1, '#E4F4EC');
+    poly([iso(a, 1, .85), iso(b, 1, .85), iso(b, 1, 1.9), iso(a, 1, 1.9)], g, '#FFFFFF', Math.max(2, TW * .06));
+    const m = (a + b) / 2;
+    ctx.beginPath(); ctx.moveTo(...iso(m, 1, .85)); ctx.lineTo(...iso(m, 1, 1.9)); ctx.stroke();
+    poly([iso(a + .3, 1, 1.0), iso(a + .55, 1, 1.0), iso(a + .95, 1, 1.75), iso(a + .7, 1, 1.75)], 'rgba(255,255,255,.55)');
+    poly([iso(a - .05, 1, .78), iso(b + .05, 1, .78), iso(b + .05, 1, .85), iso(a - .05, 1, .85)], '#E9D4B5', INK, 1);
+  }
+  // 入口招牌
+  onWall('y', 1, k => {
+    ctx.fillStyle = '#5FAF84'; rr(4.65 * k, -2.28 * k, 1.7 * k, .5 * k, .25 * k); ctx.fill();
+    ctx.strokeStyle = '#4A9670'; ctx.lineWidth = .04 * k; ctx.stroke();
+    wallText('入口・歡迎', 5.5 * k, 2.03 * k, .3 * k, '#FFFFFF');
+  });
+  // 彩旗
+  ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(84,62,46,.45)';
+  const flags = ['#F6B8C4', '#FFE08A', '#9FD3B5', '#A9CBEA'];
+  for (const [a, b] of [[1.15, 4.95], [6.05, 9.85]]) {
+    const pt = u => { const gx = a + (b - a) * u; return iso(gx, 1, 2.15 - Math.sin(u * Math.PI) * .18); };
+    ctx.beginPath(); for (let i = 0; i <= 20; i++) { const p = pt(i / 20); i ? ctx.lineTo(...p) : ctx.moveTo(...p); } ctx.stroke();
+    for (let i = 1; i < 8; i++) {
+      const p0 = pt((i - .3) / 8), p1 = pt((i + .3) / 8), [mx, my] = pt(i / 8);
+      poly([p0, p1, [mx, my + HU * TW * .28]], flags[i % 4], 'rgba(84,62,46,.35)');
+    }
+  }
+  // 左牆白板
+  onWall('x', 1, k => {
+    // u = 從 y=10 往後量的距離
+    ctx.fillStyle = '#C9935F'; rr(3 * k, -1.95 * k, 4 * k, 1.15 * k, .08 * k); ctx.fill();
+    ctx.fillStyle = '#FFFFFF'; rr(3.08 * k, -1.88 * k, 3.84 * k, 1.01 * k, .05 * k); ctx.fill();
+    wallText('新道親法會', 5 * k, 1.57 * k, .3 * k, '#5FAF84');
+    wallText('歡迎你，一起來學習 ♡', 5 * k, 1.18 * k, .19 * k, '#C27A8E');
+    ctx.fillStyle = '#C9935F'; ctx.fillRect(3.3 * k, .76 * k, 3.4 * k, .06 * k);
+  });
+  // 時鐘
+  const [cx, cy] = iso(1, 7.6, 1.55);
+  ell(cx, cy, TW * .17, TW * .2, '#FFFFFF', '#C9935F', Math.max(2, TW * .04));
+  ctx.strokeStyle = '#4A3B2F'; ctx.lineWidth = Math.max(1, TW * .025); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - TW * .12); ctx.moveTo(cx, cy); ctx.lineTo(cx + TW * .07, cy + TW * .02); ctx.stroke();
+}
+function drawCounter() {
+  box(1.1, 1.9, 1.12, 1.88, 0, .8, '#9FD3B5', { left: '#9FD3B5', right: '#88C0A1' });
+  box(1.04, 1.96, 1.06, 1.94, .8, .9, '#E9C79C');
+  box(1.25, 1.62, 1.3, 1.55, .9, .96, '#FFFFFF');
+  box(1.68, 1.82, 1.25, 1.39, .9, 1.1, '#A9CBEA');
+  const [fx, fy] = iso(1.75, 1.32, 1.22);
+  for (let i = 0; i < 5; i++) ell(fx + Math.cos(i * 1.26) * TW * .05, fy + Math.sin(i * 1.26) * TW * .035, TW * .035, TW * .03, '#F6B8C4');
+  ell(fx, fy, TW * .025, TW * .02, '#F2C14E');
+  onWall('y', 1.88, k => wallText('報到台', 1.5 * k, .42 * k, .27 * k, '#FFFFFF'));
+}
+function drawCabinet(t) {
+  box(9.08, 9.92, 1.08, 1.72, 0, 2.0, '#D9A574', { left: '#D9A574', right: '#C18D5E', top: '#E8C096' });
+  const lw = Math.max(1, TW * .02);
+  poly([iso(9.15, 1.72, .12), iso(9.48, 1.72, .12), iso(9.48, 1.72, 1.4), iso(9.15, 1.72, 1.4)], '#E3B485', INK, lw);
+  poly([iso(9.52, 1.72, .12), iso(9.85, 1.72, .12), iso(9.85, 1.72, 1.4), iso(9.52, 1.72, 1.4)], '#E3B485', INK, lw);
+  for (const gx of [9.44, 9.56]) { const [x, y] = iso(gx, 1.72, .78); ell(x, y, TW * .025, TW * .025, '#8A5A35'); }
+  // 開放層板上的筆記本
+  ['#F6B8C4', '#A9CBEA', '#FFE08A', '#9FD3B5'].forEach((c, i) => box(9.18 + i * .17, 9.32 + i * .17, 1.25, 1.62, 1.48, 1.85 - (i % 2) * .08, c));
+  onWall('y', 1.72, k => { ctx.fillStyle = '#FFFFFF'; rr(9.27 * k, -1.18 * k, .46 * k, .3 * k, .08 * k); ctx.fill(); wallText('文具', 9.5 * k, 1.03 * k, .17 * k, '#A16A3B'); });
+  if (!cabinetHint()) return;
+  const [sx, sy] = iso(9.5, 1.4, 2.35);
+  const tw = .5 + Math.sin(t * 4) * .5;
+  ctx.globalAlpha = .4 + tw * .6; ctx.font = `${TW * (.26 + tw * .06)}px ${EMO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('✨', sx, sy); ctx.globalAlpha = 1;
+}
+function drawPlant(gx, gy, s, t) {
+  const [x, y] = iso(gx, gy); softShadow(x, y, TW * .3 * s, TW * .13 * s, .25);
+  box(gx - .16 * s, gx + .16 * s, gy - .16 * s, gy + .16 * s, 0, .4 * s, '#E59A7C', { top: '#8A5A35' });
+  const [cx, cy] = iso(gx, gy, .9 * s), sway = Math.sin(t * 1.5 + gy) * TW * .015;
+  for (const [dx, dy, r, c] of [[-.15, .05, .2, '#7DB86F'], [.15, .02, .2, '#74AF67'], [0, -.15, .24, '#8CC77D']]) ell(cx + dx * TW * s + sway, cy + dy * TW * s, r * TW * s, r * TW * s * .9, c, INK, Math.max(1, TW * .016));
+}
+function drawChair([cx, cy], i) {
+  const legs = '#B9875A';
+  for (const [a, b] of [[.26, .3], [.7, .3], [.26, .76], [.7, .76]]) box(cx + a, cx + a + .05, cy + b, cy + b + .05, 0, .36, legs, { line: null });
+  box(cx + .22, cx + .8, cy + .26, cy + .82, .36, .46, '#D9A574');
+  box(cx + .26, cx + .76, cy + .3, cy + .78, .46, .52, CUSHION[i % 3], { line: 'rgba(84,62,46,.3)' });
+}
+function drawChairBack([cx, cy]) {
+  box(cx + .22, cx + .8, cy + .2, cy + .28, .36, 1.05, '#D9A574');
+  box(cx + .27, cx + .75, cy + .27, cy + .29, .55, .95, '#E8C096', { line: null });
+}
+
+// ── Q 版人物
+function chibi(x, y, s, o, t) {
+  const walking = o.walk, ph = o.ph || 0;
+  const bob = walking ? Math.abs(Math.sin(t * 10)) * s * .05 : (Math.sin(t * 2.2 + ph) + 1) * s * .01;
+  const lw = Math.max(1, s * .024);
+  if (!o.seated) softShadow(x, y, s * .28, s * .11, .28);
+  const by = y - bob, face = o.face || 1;
+  // 翅膀
+  if (o.wings) {
+    const f = Math.sin(t * 6) * .15;
+    for (const d of [-1, 1]) {
+      ctx.save(); ctx.translate(x + d * s * .15, by - s * .4); ctx.rotate(d * (.5 + f));
+      ell(d * s * .1, -s * .02, s * .14, s * .09, '#FFFFFF', INK, lw); ell(d * s * .14, s * .04, s * .08, s * .05, '#F2F4FA'); ctx.restore();
+    }
+  }
+  // 後髮
+  const hx = x, hy = by - s * .68, r = s * .25;
+  if (o.hair === 'bob') { ctx.fillStyle = o.hairCol; rr(hx - r * 1.08, hy - r * .5, r * 2.16, r * 1.45, r * .5); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke(); }
+  // 腿
+  if (o.seated) {
+    for (const d of [-1, 1]) { ctx.fillStyle = o.pants; rr(x + d * s * .07 - s * .045 - s * .04, by - s * .1, s * .09, s * .16, s * .045); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke(); }
+  } else {
+    const sw = walking ? Math.sin(t * 10) * s * .035 : 0;
+    for (const d of [-1, 1]) {
+      ctx.fillStyle = o.pants; rr(x + d * s * .07 - s * .045, by - s * .2 + d * sw, s * .09, s * .2 - d * sw * .3, s * .045); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
+      ell(x + d * s * .075, by - s * .005 + d * sw * .6, s * .06, s * .035, '#6B5446');
+    }
+  }
+  // 身體
+  const top = by - s * (o.seated ? .44 : .5), bot = by - s * (o.seated ? .08 : .16);
+  ctx.beginPath(); ctx.moveTo(x - s * .13, top); ctx.lineTo(x + s * .13, top); ctx.quadraticCurveTo(x + s * .2, bot, x + s * .17, bot); ctx.lineTo(x - s * .17, bot); ctx.quadraticCurveTo(x - s * .2, bot, x - s * .13, top); ctx.closePath();
+  ctx.fillStyle = o.shirt; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
+  if (o.vest) { poly([[x - s * .05, top], [x + s * .05, top], [x, top + s * .14]], '#FFFFFF'); ell(x + s * .08, top + s * .12, s * .035, s * .025, '#F2C14E'); }
+  if (o.trim) { ctx.strokeStyle = o.trim; ctx.lineWidth = s * .03; ctx.beginPath(); ctx.moveTo(x - s * .17, bot - s * .03); ctx.lineTo(x + s * .17, bot - s * .03); ctx.stroke(); }
+  // 手
+  const wave = o.wave ? Math.sin(t * 9) * .5 : 0;
+  for (const d of [-1, 1]) {
+    ctx.save(); ctx.translate(x + d * s * .15, top + s * .05); ctx.rotate(d * .35 + (d === 1 && o.wave ? -2.4 + wave : 0));
+    ctx.fillStyle = o.shirt; rr(-s * .04, 0, s * .08, s * .17, s * .04); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
+    ell(0, s * .18, s * .04, s * .04, '#FFE2CC', INK, lw); ctx.restore();
+  }
+  // 頭
+  ell(hx, hy, r, r * .95, '#FFE2CC', INK, lw);
+  // 瀏海
+  ctx.save(); ctx.beginPath(); ctx.ellipse(hx, hy, r * 1.06, r * 1.02, 0, 0, Math.PI * 2); ctx.clip();
+  ctx.fillStyle = o.hairCol;
+  ctx.beginPath(); ctx.moveTo(hx - r * 1.2, hy - r * .1);
+  for (let i = 0; i <= 4; i++) { const xx = hx - r * 1.2 + i * r * .6; ctx.quadraticCurveTo(xx + r * .3, hy - r * (i % 2 ? .05 : .45), xx + r * .6, hy - r * .15); }
+  ctx.lineTo(hx + r * 1.2, hy - r * 1.3); ctx.lineTo(hx - r * 1.2, hy - r * 1.3); ctx.fill(); ctx.restore();
+  ctx.beginPath(); ctx.ellipse(hx, hy, r, r * .95, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
+  if (o.hair === 'bun') ell(hx + r * .2, hy - r * 1.05, r * .32, r * .3, o.hairCol, INK, lw);
+  if (o.hair === 'spiky') for (const d of [-.5, 0, .5]) poly([[hx + d * r - r * .2, hy - r * .8], [hx + d * r + r * .1, hy - r * 1.3], [hx + d * r + r * .25, hy - r * .78]], o.hairCol);
+  // 五官
+  const ex = face * s * .025, blink = ((t + ph) % 4) < .12;
+  for (const d of [-1, 1]) {
+    if (blink) { ctx.strokeStyle = '#3B2C22'; ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(hx + d * r * .36 + ex - r * .08, hy + r * .1); ctx.lineTo(hx + d * r * .36 + ex + r * .08, hy + r * .1); ctx.stroke(); }
+    else { ell(hx + d * r * .36 + ex, hy + r * .1, r * .085, r * .12, '#3B2C22'); ell(hx + d * r * .36 + ex + r * .03, hy + r * .05, r * .03, r * .035, '#FFFFFF'); }
+    ell(hx + d * r * .6 + ex, hy + r * .35, r * .14, r * .08, 'rgba(244,140,160,.55)');
+  }
+  ctx.strokeStyle = '#3B2C22'; ctx.lineWidth = lw; ctx.beginPath();
+  if (o.worried) { ctx.arc(hx + ex, hy + r * .55, r * .12, Math.PI * 1.15, Math.PI * 1.85); }
+  else ctx.arc(hx + ex, hy + r * .3, r * .13, Math.PI * .2, Math.PI * .8);
+  ctx.stroke();
+  if (o.halo) { const hb = Math.sin(t * 3) * s * .015; ell(hx, hy - r * 1.25 + hb, r * .55, r * .16, null, '#F2C14E', s * .045); ell(hx, hy - r * 1.25 + hb, r * .55, r * .16, null, 'rgba(255,240,180,.8)', s * .015); }
+  return { headTop: hy - r * (o.halo ? 1.45 : 1.1) };
+}
+function bubble(x, y, s, icon, t, ring) {
+  const fy = y - s * .1 + Math.sin(t * 3) * s * .03, w = s * .62, h = s * .52;
+  ctx.fillStyle = 'rgba(84,62,46,.15)'; rr(x - w / 2, fy - h + 3, w, h, h * .45); ctx.fill();
+  ctx.fillStyle = '#FFFFFF'; rr(x - w / 2, fy - h, w, h, h * .45); ctx.fill();
+  ctx.strokeStyle = '#F2C14E'; ctx.lineWidth = Math.max(2, s * .035); ctx.stroke();
+  poly([[x - s * .07, fy - 1], [x + s * .07, fy - 1], [x, fy + s * .1]], '#FFFFFF');
+  ctx.beginPath(); ctx.moveTo(x - s * .07, fy); ctx.lineTo(x, fy + s * .1); ctx.lineTo(x + s * .07, fy); ctx.stroke();
+  ctx.font = `${h * .66}px ${EMO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(icon, x, fy - h / 2 + 1);
+  if (ring !== undefined) { ctx.strokeStyle = '#E98FA5'; ctx.lineWidth = s * .05; ctx.beginPath(); ctx.arc(x, fy - h / 2, h * .72, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ring); ctx.stroke(); }
+}
+
+
+// ── 地圖：教室＋入口（第 1 排是大廳，門開在右後牆 x=5；P 是盆栽）
+const MAP = ['###########', '#R...E...S#', '#.........#', '#.........#', '#.c..c..c.#', '#.........#', '#.........#', '#.c..c..c.#', '#P.......P#', '###########'];
+const C = 11, R = 10;
+const $ = id => document.getElementById(id);
 const solid = (x, y) => {
   if (x < 0 || y < 0 || x >= C || y >= R) return true;
   if (x === 5 && y === 0) return false;
-  const ch = MAP[y][x]; return ch === '#' || ch === 'R' || ch === 'S' || ch === 'c';
+  return '#RScP'.includes(MAP[y][x]);
 };
 const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
@@ -181,45 +462,10 @@ function bfs(sx, sy, isGoal, pass) {
   }
   return null;
 }
-function shade(hex, f) {
-  const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = n >> 8 & 255, b = n & 255;
-  const t = f > 0 ? 255 : 0, a = Math.abs(f);
-  r = Math.round(r + (t - r) * a); g = Math.round(g + (t - g) * a); b = Math.round(b + (t - b) * a);
-  return `rgb(${r},${g},${b})`;
-}
-function poly(pts, fill, stroke) {
-  ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
-  ctx.fillStyle = fill; ctx.fill();
-  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
-}
-// 方塊：先畫朝向中間的側面，再畫正面、頂面
-function box(x0, x1, y0, y1, h, col, h0 = 0) {
-  const cx = (x0 + x1) / 2, line = 'rgba(60,40,20,.18)';
-  if (cx < 5.49) poly([P(x1, y0, h0), P(x1, y1, h0), P(x1, y1, h), P(x1, y0, h)], shade(col, -.25), line);
-  else if (cx > 5.51) poly([P(x0, y0, h0), P(x0, y1, h0), P(x0, y1, h), P(x0, y0, h)], shade(col, -.25), line);
-  poly([P(x0, y1, h0), P(x1, y1, h0), P(x1, y1, h), P(x0, y1, h)], col, line);
-  poly([P(x0, y0, h), P(x1, y0, h), P(x1, y1, h), P(x0, y1, h)], shade(col, .22), line);
-}
-function emoji(ch, x, y, size) {
-  ctx.font = `${size}px ${EMO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ch, x, y);
-}
-function label(text, x, y, size, color, bg) {
-  ctx.font = `700 ${size}px ${TXT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  if (bg) {
-    const w = ctx.measureText(text).width + size * .9, h = size * 1.5;
-    ctx.fillStyle = bg; rrect(x - w / 2, y - h / 2, w, h, h / 2); ctx.fill();
-  }
-  ctx.fillStyle = color; ctx.fillText(text, x, y);
-}
-function rrect(x, y, w, h, r) {
-  ctx.beginPath();
-  if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
-  else { ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-}
+const pick = a => a[Math.floor(Math.random() * a.length)];
 
 // ── 遊戲狀態
-const CHAIRS = [];
-MAP.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === 'c') CHAIRS.push({ x, y, by: null }); }));
+const SEATS = CHAIRS.map(([x, y]) => ({ x, y, by: null }));
 const NEED_ICON = { guide: '🧭', greet: '👋', note: '📝', comfort: '😟' };
 const THANKS = {
   guide: ['謝謝你帶我入座，第一次來還好有你！', '有人陪著走進來，心就安定多了。', '原來位子在這裡，謝謝你耐心帶路～'],
@@ -227,27 +473,27 @@ const THANKS = {
   note: ['有筆記本就能把今天的感動記下來了！', '你怎麼知道我正需要這個，謝謝！', '等一下聽課就用它來寫筆記～'],
   comfort: ['謝謝你陪我，我現在比較不緊張了。', '有你在旁邊，覺得好溫暖。', '跟你聊一聊，心情輕鬆多了。'],
 };
-const pick = a => a[Math.floor(Math.random() * a.length)];
 let S;
-function person(o) { return Object.assign({ path: [], spd: 3, alpha: 1, need: null, state: 'idle', seated: false, born: S ? S.t : 0, walkT: 0 }, o, { fx: o.x, fy: o.y }); }
+function person(o) { return Object.assign({ path: [], spd: 3, alpha: 1, need: null, state: 'idle', seated: false, walkT: 0, face: 1 }, o, { fx: o.x, fy: o.y }); }
 function reset() {
-  CHAIRS.forEach(c => c.by = null);
+  SEATS.forEach(c => c.by = null);
   S = { t: 0, started: false, done: false, hearts: 0, goal: 4, steps: 0, fx: [], tap: null, target: null, comfort: null, hold: null, events: {}, keys: new Set() };
-  S.player = person({ id: 'me', emoji: '😇', col: '#FBBF24', x: 5, y: 3, spd: 4.6, tag: '你' });
-  S.staff = person({ id: 'pr', emoji: '🧑‍💼', col: '#60A5FA', x: 3, y: 6, spd: 2, tag: '公關學長', wait: 2 });
-  const c = CHAIRS.find(c => c.x === 8 && c.y === 7);
-  const cNpc = person({ id: 'c', emoji: '👨', col: '#C4B5FD', x: 8, y: 7, seated: true, state: 'sit' }); c.by = cNpc;
-  S.npcs = [cNpc];
+  S.player = person({ id: 'me', x: 5, y: 3, spd: 4.4, tag: ['你', '#E4A23B'], look: { hair: 'short', hairCol: '#F2D37A', shirt: '#FFFFFF', trim: '#F2C14E', pants: '#F4D7A8', halo: true, wings: true } });
+  S.staff = person({ id: 'pr', x: 3, y: 6, spd: 2, wait: 2, tag: ['公關學長', '#5B7DB1'], look: { hair: 'short', hairCol: '#3D3029', shirt: '#5B7DB1', vest: true, pants: '#3F4D63', ph: 3 } });
+  S.npcs = [];
+  seatAt(person({ id: 'c', x: 8, y: 7, look: { hair: 'bob', hairCol: '#8C5A3C', shirt: '#C7B8E8', pants: '#6F86A8', ph: 4 } }), 8, 7);
+  seatAt(person({ id: 'd', x: 2, y: 7, look: { hair: 'short', hairCol: '#5A4030', shirt: '#FFE08A', pants: '#6F86A8', ph: 5 } }), 2, 7);
   updateHud(); setHand();
 }
+function seatAt(n, x, y) { const c = SEATS.find(c => c.x === x && c.y === y); c.by = n; n.seated = true; n.state = 'sit'; S.npcs.push(n); }
 function people() { return [S.player, S.staff, ...S.npcs]; }
 function occupied(x, y, except) { return people().some(p => p !== except && !p.seated && p.x === x && p.y === y); }
-
 function say(t) { $('say').textContent = t; }
 function setHand() { $('hand').textContent = S.hold ? '📝' : '✋'; }
 function updateHud() { $('hearts').textContent = `❤️ ${S.hearts}／${S.goal}`; }
+function cabinetHint() { return S && S.npcs.some(n => n.need === 'note') && !S.hold; }
 
-// ── 音效（點「開始」後才啟用）
+// ── 音效（按「開始」後才啟用）
 let ac = null;
 function beep(notes) {
   if (!ac) return;
@@ -255,35 +501,33 @@ function beep(notes) {
   notes.forEach(([f, d], i) => {
     const o = ac.createOscillator(), g = ac.createGain();
     o.type = 'triangle'; o.frequency.value = f; o.connect(g); g.connect(ac.destination);
-    const s = t0 + i * .09; g.gain.setValueAtTime(.0001, s); g.gain.exponentialRampToValueAtTime(.18, s + .02); g.gain.exponentialRampToValueAtTime(.0001, s + d);
+    const s = t0 + i * .09; g.gain.setValueAtTime(.0001, s); g.gain.exponentialRampToValueAtTime(.16, s + .02); g.gain.exponentialRampToValueAtTime(.0001, s + d);
     o.start(s); o.stop(s + d + .02);
   });
 }
 
 // ── 劇本：A 要帶位、B 要打招呼、A 入座後要筆記本、C 有點緊張
-function spawn(id, emoji, col, need, path) {
-  const n = person({ id, emoji, col, x: 5, y: 0, alpha: 0, state: 'arrive', want: need });
+function spawn(id, look, need, path) {
+  const n = person({ id, x: 5, y: 0, alpha: 0, state: 'arrive', want: need, look });
   n.path = path; S.npcs.push(n); return n;
 }
 function script() {
   const E = S.events;
-  if (!E.a && S.t > 1) { E.a = 1; spawn('a', '🧑', '#6EE7B7', 'guide', [[5, 1]]); say('門口來了一位新朋友，看看他需要什麼？'); }
-  if (!E.b && S.t > 9) { E.b = 1; spawn('b', '👩', '#FDA4AF', 'greet', [[5, 1], [6, 1], [7, 1]]); }
+  if (!E.a && S.t > 1) { E.a = 1; spawn('a', { hair: 'spiky', hairCol: '#7A5238', shirt: '#9FD3B5', pants: '#6F86A8', ph: 1 }, 'guide', [[5, 1]]); say('門口來了一位新朋友，看看他需要什麼？'); }
+  if (!E.b && S.t > 9) { E.b = 1; spawn('b', { hair: 'bun', hairCol: '#4B3A33', shirt: '#F6B8C4', pants: '#8E7BB5', ph: 2 }, 'greet', [[5, 1], [6, 1], [7, 1]]); }
   const a = S.npcs.find(n => n.id === 'a');
-  if (a && a.seated && !E.note) { E.note = S.t + 2; }
+  if (a && a.seated && !E.note) E.note = S.t + 2;
   if (E.note && E.note !== true && S.t > E.note) { E.note = true; a.need = 'note'; }
   if (!E.c && S.hearts >= 2) E.c = S.t + 1.5;
   if (E.c && E.c !== true && S.t > E.c) { E.c = true; S.npcs.find(n => n.id === 'c').need = 'comfort'; }
 }
 function hintText() {
-  const ns = S.npcs.filter(n => n.need);
-  const has = k => ns.some(n => n.need === k);
-  const f = S.npcs.find(n => n.state === 'follow');
-  if (f) return '公關學長：帶他走到空椅子旁邊，他就會坐下囉！';
+  const has = k => S.npcs.some(n => n.need === k);
+  if (S.npcs.some(n => n.state === 'follow')) return '公關學長：帶他走到空椅子旁邊，他就會坐下囉！';
   if (has('guide')) return '公關學長：門口有新朋友在找位子，點他一下，帶他入座吧！';
   if (has('greet')) return '公關學長：有人在門口揮手 👋，過去跟他打聲招呼～';
-  if (has('note')) return S.hold ? '公關學長：筆記本拿好了，送去給需要的人吧！' : '公關學長：有人需要筆記本，右上角的文具櫃有 📝！';
-  if (has('comfort')) return '公關學長：右邊那位看起來有點緊張 😟，到他身邊陪他一下。';
+  if (has('note')) return S.hold ? '公關學長：筆記本拿好了，送去給需要的人吧！' : '公關學長：有人需要筆記本，文具櫃在右邊角落，閃著 ✨ 的那個！';
+  if (has('comfort')) return '公關學長：前排那位看起來有點緊張 😟，到他身邊陪他一下。';
   return '公關學長：目前大家都很好，在會場走走，留意門口喔～';
 }
 
@@ -293,9 +537,10 @@ function heart(n, key) {
   S.fx.push({ n, t: S.t });
   say(`新朋友：「${pick(THANKS[key])}」`);
   beep([[660, .18], [880, .18], [1175, .3]]);
-  if (S.hearts >= S.goal && !S.done) { S.done = true; setTimeout(win, 1400); }
+  if (S.hearts >= S.goal && !S.done) { S.done = true; setTimeout(win, 1500); }
 }
 function interact(p) {
+  faceTo(S.player, p);
   if (p === S.staff) { say(hintText()); beep([[520, .12]]); return; }
   if (p.state === 'arrive') return;
   switch (p.need) {
@@ -304,18 +549,18 @@ function interact(p) {
       say('你：「歡迎！我帶你找位子，跟我來～」'); beep([[600, .12], [760, .14]]); break;
     case 'greet': {
       heart(p, 'greet');
-      const c = freeChair(p);
-      if (c) setTimeout(() => sitDown(p, c), 900);
+      const c = freeSeat(p);
+      if (c) setTimeout(() => sitDown(p, c), 1000);
       break;
     }
     case 'note':
       if (S.hold === 'note') { S.hold = null; setHand(); heart(p, 'note'); }
-      else say('他需要一本筆記本 📝，去右上角的文具櫃拿吧！');
+      else say('他需要一本筆記本 📝，去右邊角落的文具櫃拿吧！');
       break;
     case 'comfort':
-      S.comfort = { n: p, t: 0 }; say('你在他身邊坐了下來，陪他聊一聊……'); break;
+      S.comfort = { n: p, t: 0 }; say('你在他身邊陪他聊一聊……'); break;
     default:
-      say(p.state === 'follow' ? '新朋友：「我跟著你走～」' : pick(['新朋友：「謝謝你，我先坐一下～」', '新朋友：「這裡氣氛好好喔。」']));
+      say(p.state === 'follow' ? '新朋友：「我跟著你走～」' : pick(['新朋友：「謝謝你，我先坐一下～」', '新朋友：「這裡氣氛好好喔。」', '新朋友：「彩旗好可愛！」']));
   }
 }
 function useStation(ch) {
@@ -324,32 +569,33 @@ function useStation(ch) {
     S.hold = 'note'; setHand(); say('從文具櫃拿了一本筆記本 📝'); beep([[700, .1], [940, .14]]);
   } else say('報到台：新朋友的名牌和簽到單都在這裡。');
 }
-function freeChair(from) {
+function freeSeat(from) {
   let best = null, bd = 1e9;
-  for (const c of CHAIRS) if (!c.by) { const d = Math.abs(c.x - from.x) + Math.abs(c.y - from.y); if (d < bd) { bd = d; best = c; } }
+  for (const c of SEATS) if (!c.by) { const d = Math.abs(c.x - from.x) + Math.abs(c.y - from.y); if (d < bd) { bd = d; best = c; } }
   return best;
 }
 function sitDown(n, c) {
   const path = bfs(n.x, n.y, (x, y) => x === c.x && y === c.y, (x, y) => !solid(x, y));
   if (!path) return false;
-  c.by = n; n.path = path; n.state = 'toSeat'; n.spd = 3; n.chair = c; return true;
+  c.by = n; n.path = path; n.state = 'toSeat'; n.spd = 3; return true;
 }
+function faceTo(p, q) { const d = (q.x - p.x) - (q.y - p.y); if (d) p.face = d > 0 ? 1 : -1; }
 
 // ── 玩家移動
 function walkTo(isGoal) {
   const me = S.player;
-  const sx = me.x, sy = me.y;
-  let path = bfs(sx, sy, isGoal, (x, y) => !solid(x, y) && !occupied(x, y, me));
-  if (!path) path = bfs(sx, sy, isGoal, (x, y) => !solid(x, y));
+  let path = bfs(me.x, me.y, isGoal, (x, y) => !solid(x, y) && !occupied(x, y, me));
+  if (!path) path = bfs(me.x, me.y, isGoal, (x, y) => !solid(x, y));
   if (path) me.path = path;
   return !!path;
 }
-const adjGoal = t => (x, y) => !solid(x, y) && !(x === 5 && y === 0) && Math.max(Math.abs(x - t.x), Math.abs(y - t.y)) <= 1 && !(x === t.x && y === t.y);
+const adjGoal = t => (x, y) => !solid(x, y) && !(x === 5 && y === 0) && cheb({ x, y }, t) <= 1 && !(x === t.x && y === t.y);
 function setTarget(t) {
   S.target = t; S.comfort = null;
   if (t.kind === 'tile') { walkTo((x, y) => x === t.x && y === t.y); S.target = null; return; }
-  if (cheb(S.player, t.p || t) <= 1 && !(S.player.x === (t.p || t).x && S.player.y === (t.p || t).y)) { S.player.path = []; arriveCheck(); return; }
-  walkTo(adjGoal(t.p || t));
+  const tt = t.p || t;
+  if (cheb(S.player, tt) <= 1 && !(S.player.x === tt.x && S.player.y === tt.y)) { S.player.path = []; arriveCheck(); return; }
+  walkTo(adjGoal(tt));
 }
 function arriveCheck() {
   const t = S.target, me = S.player;
@@ -364,59 +610,50 @@ function onPlayerStep(prev) {
   const f = S.npcs.find(n => n.state === 'follow');
   if (f) {
     f.path.push(prev);
-    const c = CHAIRS.find(c => !c.by && cheb(c, S.player) <= 1);
+    const c = SEATS.find(c => !c.by && cheb(c, S.player) <= 1);
     if (c) {
-      f.path = [];
-      setTimeout(() => {
-        if (sitDown(f, c)) say('你：「這裡有位子，請坐～」');
-        else f.state = 'follow';
-      }, 120);
-      f.state = 'pause';
+      f.path = []; f.state = 'pause';
+      setTimeout(() => { if (sitDown(f, c)) say('你：「這裡有位子，請坐～」'); else f.state = 'follow'; }, 150);
     }
   }
   if (S.comfort && cheb(S.player, S.comfort.n) > 1) { S.comfort = null; say('陪伴要待在他身邊一下喔，再回去陪陪他吧。'); }
 }
-
 function move(p, dt) {
   if (p.fx === p.x && p.fy === p.y) {
     if (!p.path.length) return false;
     const prev = [p.x, p.y], n = p.path.shift();
     if (p === S.player && occupied(n[0], n[1], p) && p.path.length === 0) { arriveCheck(); return false; }
     p.x = n[0]; p.y = n[1];
+    const d = (p.x - prev[0]) - (p.y - prev[1]); if (d) p.face = d > 0 ? 1 : -1;
     if (p === S.player) onPlayerStep(prev);
   }
   const dx = p.x - p.fx, dy = p.y - p.fy, d = Math.hypot(dx, dy), st = p.spd * dt;
   p.walkT += dt;
-  if (d <= st) {
-    p.fx = p.x; p.fy = p.y;
-    if (!p.path.length) arrived(p);
-  } else { p.fx += dx / d * st; p.fy += dy / d * st; }
+  if (d <= st) { p.fx = p.x; p.fy = p.y; if (!p.path.length) arrived(p); }
+  else { p.fx += dx / d * st; p.fy += dy / d * st; }
   return true;
 }
 function arrived(p) {
   if (p === S.player) { arriveCheck(); return; }
   if (p.state === 'arrive') { p.state = 'wait'; p.need = p.want; }
   else if (p.state === 'toSeat') {
-    p.seated = true; p.state = 'sit';
+    p.seated = true; p.state = 'sit'; p.face = 1;
     if (p.id === 'a' && !S.events.guided) { S.events.guided = 1; heart(p, 'guide'); }
   }
 }
-
 function update(dt) {
   S.t += dt;
   script();
   const me = S.player;
-  // 鍵盤：按住方向鍵一格一格走
+  // 鍵盤：← → 沿著左右斜線走，↑ ↓ 往門口／往前排
   if (!me.path.length && me.fx === me.x && me.fy === me.y) {
     const k = S.keys, d = k.has('L') ? [-1, 0] : k.has('R') ? [1, 0] : k.has('U') ? [0, -1] : k.has('D') ? [0, 1] : null;
     if (d) { const nx = me.x + d[0], ny = me.y + d[1]; if (!solid(nx, ny) && !(nx === 5 && ny === 0) && !occupied(nx, ny, me)) { S.target = null; me.path = [[nx, ny]]; } }
   }
   people().forEach(p => {
-    const moving = move(p, dt);
-    if (!moving) p.walkT = 0;
-    if (p.alpha < 1) p.alpha = Math.min(1, p.alpha + dt * 2.5);
+    if (!move(p, dt)) p.walkT = 0;
+    if (p.alpha < 1) p.alpha = Math.min(1, p.alpha + dt * 2.2);
   });
-  // 公關學長隨機走動
   const pr = S.staff;
   if (!pr.path.length && pr.fx === pr.x && pr.fy === pr.y && (pr.wait -= dt) < 0) {
     pr.wait = 2 + Math.random() * 2.5;
@@ -434,176 +671,89 @@ function update(dt) {
 }
 
 // ── 繪圖
-function footOf(p) {
-  const h = p.seated ? .42 : 0;
-  const [x, y] = P(p.fx + .5, p.fy + .55, h);
-  return { x, y, u: TW * sc(p.fy + .55) };
+const footOf = p => iso(p.fx + .5, p.fy + .5 + (p.seated ? .05 : 0), p.seated ? .52 : 0);
+let view = { z: 1, ex: 0, ey: 0 };
+function camera() {
+  zoom += (zoomTo - zoom) * .08;
+  const me = S.player, [px, py] = iso(me.fx + .5, me.fy + .5, .7);
+  const k = Math.min(1, Math.max(0, (zoom - 1) / (NEAR - 1)));
+  let cx = W / 2 + (px - W / 2) * k, cy = H / 2 + (py - H / 2) * k;
+  // 近拍時不要露出太多小島外面
+  const hw = W / 2 / zoom, hh = H / 2 / zoom, b = ISL;
+  if (b.x1 - b.x0 > 2 * hw) cx = Math.min(b.x1 - hw, Math.max(b.x0 + hw, cx)); else cx = (b.x0 + b.x1) / 2;
+  if (b.y1 - b.y0 > 2 * hh) cy = Math.min(b.y1 - hh, Math.max(b.y0 + hh, cy)); else cy = (b.y0 + b.y1) / 2;
+  view = { z: zoom, ex: W / 2 - cx * zoom, ey: H / 2 - cy * zoom };
+  ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, dpr * view.ex, dpr * view.ey);
 }
-function drawBg() {
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, '#D7EEF8'); g.addColorStop(.25, '#E6F4EA'); g.addColorStop(1, '#CFE9D6');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  // 兩側草地上的小花
-  ctx.globalAlpha = .55;
-  for (let i = 0; i < 26; i++) {
-    const side = i % 2 ? 1 : -1, gy = 1 + (i * 7 % 26) / 3, gx = side > 0 ? 10.6 + (i * 3 % 5) * .5 : .4 - (i * 3 % 5) * .5;
-    const [x, y] = P(gx, gy); if (x < -20 || x > W + 20) continue;
-    emoji(i % 3 ? '🌿' : '🌼', x, y, TW * sc(gy) * .42);
-  }
-  ctx.globalAlpha = 1;
-}
-function drawFloor() {
-  for (let y = 1; y < 9; y++) for (let x = 1; x < 10; x++) {
-    const pts = [P(x, y), P(x + 1, y), P(x + 1, y + 1), P(x, y + 1)];
-    let col;
-    if (y === 1) col = (x + y) % 2 ? '#F1EDE4' : '#E6E0D3';
-    else col = ['#E9C89B', '#E2BE8E', '#EDCDA3'][(x * 7 + y * 3) % 3];
-    poly(pts, col, y === 1 ? 'rgba(120,100,70,.18)' : 'rgba(150,100,50,.16)');
-  }
-  // 大廳與教室的分界線
-  ctx.strokeStyle = 'rgba(150,110,60,.45)'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(...P(1, 2)); ctx.lineTo(...P(10, 2)); ctx.stroke();
-  // 迎賓地墊
-  poly([P(5.12, 1.12), P(5.88, 1.12), P(5.88, 1.9), P(5.12, 1.9)], '#E11D74');
-  poly([P(5.2, 1.2), P(5.8, 1.2), P(5.8, 1.82), P(5.2, 1.82)], '#F472B6');
-  // 門口灑進來的光
-  const [lx, ly] = P(5.5, 1.6);
-  const rg = ctx.createRadialGradient(lx, ly, 0, lx, ly, TW * 2.6);
-  rg.addColorStop(0, 'rgba(255,248,220,.55)'); rg.addColorStop(1, 'rgba(255,248,220,0)');
-  ctx.fillStyle = rg; ctx.fillRect(lx - TW * 3, ly - TW * 3, TW * 6, TW * 6);
-  // 走道地毯（中央）
-  poly([P(4.15, 2.1), P(4.85, 2.1), P(4.85, 8.9), P(4.15, 8.9)], 'rgba(5,150,105,.12)');
-  poly([P(6.15, 2.1), P(6.85, 2.1), P(6.85, 8.9), P(6.15, 8.9)], 'rgba(5,150,105,.12)');
-}
-function wallRect(x0, x1, h0, h1, fill) {
-  const a = P(x0, 1, h1), b = P(x1, 1, h0);
-  ctx.fillStyle = fill; ctx.fillRect(a[0], a[1], b[0] - a[0], b[1] - a[1]);
-  return [a[0], a[1], b[0] - a[0], b[1] - a[1]];
-}
-function drawWalls() {
-  const wall = '#FBF3E4';
-  box(.6, 5, .6, 1, WALL, wall);
-  box(6, 10.4, .6, 1, WALL, wall);
-  box(5, 6, .6, 1, WALL, wall, 1.2);
-  // 門洞：外面的光
-  const [dx, dy, dw, dh] = wallRect(5, 6, 0, 1.2, '#FFF8DC');
-  const dg = ctx.createLinearGradient(0, dy, 0, dy + dh); dg.addColorStop(0, '#BFE3F5'); dg.addColorStop(1, '#E8F6D8');
-  ctx.fillStyle = dg; ctx.fillRect(dx, dy, dw, dh);
-  emoji('🌳', dx + dw * .25, dy + dh * .45, dw * .42); emoji('🌸', dx + dw * .78, dy + dh * .7, dw * .26);
-  ctx.strokeStyle = '#B45309'; ctx.lineWidth = Math.max(2, TW * .06); ctx.strokeRect(dx, dy, dw, dh);
-  // 牆裙
-  wallRect(.98, 5, 0, .42, '#D9C4A3'); wallRect(6, 10.02, 0, .42, '#D9C4A3');
-  // 窗戶
-  for (const [a, b] of [[1.6, 3.6], [7.4, 9.4]]) {
-    const [x, y, w, h] = wallRect(a, b, .8, 1.7, '#BAE6FD');
-    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = Math.max(2, TW * .07); ctx.strokeRect(x, y, w, h);
-    ctx.beginPath(); ctx.moveTo(x + w / 2, y); ctx.lineTo(x + w / 2, y + h); ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.moveTo(x + w * .1, y + h * .85); ctx.lineTo(x + w * .3, y + h * .15); ctx.lineTo(x + w * .38, y + h * .15); ctx.lineTo(x + w * .18, y + h * .85); ctx.fill();
-  }
-  // 入口招牌
-  const [sx, sy] = P(5.5, 1, 1.98);
-  label('入口・歡迎光臨', sx, sy, Math.max(10, TW * .3), '#FFFFFF', '#059669');
-  // 側牆
-  box(.6, 1, .6, 9.4, WALL, '#F4E8D2');
-  box(10, 10.4, .6, 9.4, WALL, '#F4E8D2');
-}
-function drawChair(c) {
-  const { x, y } = c;
-  box(x + .22, x + .78, y + .22, y + .34, 1.0, '#B45309', .42);
-  box(x + .2, x + .8, y + .25, y + .82, .42, '#D97706');
-}
-function drawStation(ch, x, y) {
-  if (ch === 'R') {
-    box(x + .06, x + .94, y + .3, y + .92, .82, '#0EA5E9');
-    const [ex, ey] = P(x + .5, y + .6, .82); emoji('📋', ex, ey - TW * .12, TW * .42);
-    const [lx, ly] = P(x + .5, y + .92, .42); label('報到台', lx, ly, Math.max(9, TW * .22), '#fff');
-  } else {
-    box(x + .1, x + .9, y + .18, y + .72, 1.5, '#A16207');
-    const [ex, ey] = P(x + .5, y + .72, 1.0); emoji('📝', ex, ey, TW * .42);
-    const [lx, ly] = P(x + .5, y + .72, .45); label('文具櫃', lx, ly, Math.max(9, TW * .22), '#fff');
-    if (S.npcs.some(n => n.need === 'note') && !S.hold) {
-      const [sx, sy] = P(x + .5, y + .45, 1.5); emoji('✨', sx, sy - TW * .3 - Math.sin(S.t * 5) * TW * .06, TW * .4);
-    }
-  }
-}
-function drawPerson(p) {
-  const { x, y, u } = footOf(p);
-  ctx.globalAlpha = p.alpha;
-  if (!p.seated) {
-    ctx.fillStyle = 'rgba(30,41,59,.18)'; ctx.beginPath(); ctx.ellipse(x, y, u * .3, u * .11, 0, 0, Math.PI * 2); ctx.fill();
-  }
-  const bob = p.walkT ? Math.abs(Math.sin(p.walkT * 12)) * u * .07 : Math.sin(S.t * 2 + p.x) * u * .015;
-  const bh = p.seated ? u * .36 : u * .5, bw = u * .46;
-  ctx.fillStyle = p.col; rrect(x - bw / 2, y - bh - bob, bw, bh, bw * .42); ctx.fill();
-  ctx.strokeStyle = 'rgba(30,41,59,.25)'; ctx.lineWidth = 1; ctx.stroke();
-  emoji(p.emoji, x, y - bh - bob - u * .22, u * .62);
-  if (p === S.player && S.hold) emoji('📝', x + u * .3, y - bh * .55 - bob, u * .3);
-  ctx.globalAlpha = 1;
-}
-function drawTag(p) {
-  if (!p.tag) return;
-  const { x, y, u } = footOf(p);
-  label(p.tag, x, y + u * .2, Math.max(9, u * .22), '#fff', p === S.player ? 'rgba(217,119,6,.92)' : 'rgba(2,132,199,.9)');
-}
-function drawBubble(p) {
-  const icon = p.need ? NEED_ICON[p.need] : p.state === 'follow' || p.state === 'pause' ? '💺' : null;
-  if (!icon || p.alpha < 1) return;
-  const { x, y, u } = footOf(p);
-  const bh = p.seated ? u * .36 : u * .5;
-  const pulse = 1 + Math.sin(S.t * 5) * .05, r = u * .36 * pulse, cy = y - bh - u * 1.05;
-  ctx.fillStyle = '#fff'; ctx.strokeStyle = p.need ? '#D97706' : '#94A3B8'; ctx.lineWidth = Math.max(2, u * .05);
-  ctx.beginPath(); ctx.arc(x, cy, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x - r * .3, cy + r * .9); ctx.lineTo(x, cy + r * 1.35); ctx.lineTo(x + r * .3, cy + r * .9); ctx.fill();
-  emoji(icon, x, cy + 1, r * 1.15);
-  if (S.comfort && S.comfort.n === p) {
-    ctx.strokeStyle = '#E11D74'; ctx.lineWidth = Math.max(3, u * .08);
-    ctx.beginPath(); ctx.arc(x, cy, r + u * .1, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, S.comfort.t / 2)); ctx.stroke();
-  }
-}
-function draw() {
-  ctx.clearRect(0, 0, W, H);
-  drawBg(); drawFloor(); drawWalls();
+function draw(t) {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawSky(t);
+  camera();
+  drawIsland();
+  drawTree(.75, .75, 1.15, t); drawTree(.62, 5.2, .75, t); drawTree(9.3, .62, .8, t);
+  drawFloor();
+  drawWalls();
   if (S.tap && S.t - S.tap.t < .6) {
     const k = (S.t - S.tap.t) / .6, { x, y } = S.tap;
-    ctx.globalAlpha = 1 - k; poly([P(x + .1, y + .1), P(x + .9, y + .1), P(x + .9, y + .9), P(x + .1, y + .9)], 'rgba(5,150,105,.35)'); ctx.globalAlpha = 1;
+    ctx.globalAlpha = 1 - k; poly([iso(x + .5, y), iso(x + 1, y + .5), iso(x + .5, y + 1), iso(x, y + .5)], 'rgba(95,175,132,.45)', '#5FAF84', 2); ctx.globalAlpha = 1;
   }
   const items = [];
-  CHAIRS.forEach(c => items.push({ k: c.y + .5, f: () => drawChair(c) }));
-  items.push({ k: 1.92, f: () => drawStation('R', 1, 1) }, { k: 1.72, f: () => drawStation('S', 9, 1) });
-  people().forEach(p => items.push({ k: p.seated ? p.fy + .9 : p.fy + .62, f: () => drawPerson(p) }));
+  CHAIRS.forEach((c, i) => { items.push({ k: c[0] + c[1] + .48, f: () => drawChairBack(c) }); items.push({ k: c[0] + c[1] + 1.08, f: () => drawChair(c, i) }); });
+  items.push({ k: 3, f: drawCounter }, { k: 10.8, f: () => drawCabinet(t) });
+  items.push({ k: 10, f: () => drawPlant(1.5, 8.5, 1.1, t) }, { k: 18, f: () => drawPlant(9.5, 8.5, 1.1, t) });
+  const tops = [];
+  for (const p of people()) {
+    items.push({ k: p.fx + p.fy + 1 + (p.seated ? .62 : .05), f: () => {
+      const [x, y] = footOf(p);
+      ctx.globalAlpha = p.alpha;
+      const look = Object.assign({}, p.look, {
+        walk: p.walkT > 0, face: p.face, seated: p.seated,
+        wave: p.need === 'greet', worried: p.need === 'comfort' && !(S.comfort && S.comfort.n === p),
+      });
+      const r = chibi(x, y, TW * 1.05, look, t);
+      if (p === S.player && S.hold) { box(p.fx + .62, p.fx + .8, p.fy + .55, p.fy + .75, .55, .62, '#F6B8C4'); }
+      ctx.globalAlpha = 1;
+      tops.push({ p, x, y, top: r.headTop });
+    } });
+  }
   items.sort((a, b) => a.k - b.k).forEach(i => i.f());
-  box(.6, 10.4, 9, 9.35, .32, '#E7D7BC');
-  people().forEach(drawTag);
-  people().forEach(drawBubble);
+  for (const { p, x, y, top } of tops) {
+    if (p.tag) pill(p.tag[0], x, y + TW * .2, Math.max(10, TW * .2), p.tag[1]);
+    const icon = p.need ? NEED_ICON[p.need] : (p.state === 'follow' || p.state === 'pause') ? '💺' : null;
+    if (icon && p.alpha >= 1) bubble(x, top, TW * 1.05, icon, t + (p.look.ph || 0), S.comfort && S.comfort.n === p ? Math.min(1, S.comfort.t / 2) : undefined);
+  }
   for (const f of S.fx) {
-    const k = (S.t - f.t) / 1.6, { x, y, u } = footOf(f.n);
-    ctx.globalAlpha = 1 - k * k; emoji('❤️', x, y - u * (1.4 + k * 1.2), u * (.5 + k * .3)); ctx.globalAlpha = 1;
+    const k = (S.t - f.t) / 1.6, [x, y] = footOf(f.n);
+    ctx.globalAlpha = 1 - k * k; ctx.font = `${TW * (.45 + k * .25)}px ${EMO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('❤️', x, y - TW * (1.5 + k * 1.1)); ctx.globalAlpha = 1;
   }
 }
 
-// ── 點擊
-function hitPerson(px, py) {
+// ── 點擊（先換回世界座標）
+function stationBox(x0, x1, y0, y1, h) {
+  let a = 1e9, b = -1e9, c = 1e9, d = -1e9;
+  for (const gx of [x0, x1]) for (const gy of [y0, y1]) for (const hh of [0, h]) { const [x, y] = iso(gx, gy, hh); a = Math.min(a, x); b = Math.max(b, x); c = Math.min(c, y); d = Math.max(d, y); }
+  return [a, b, c, d];
+}
+function onTap(sx, sy) {
+  if (!S.started || S.done) return;
+  const wx = (sx - view.ex) / view.z, wy = (sy - view.ey) / view.z;
+  // 人（越前面的越優先）
   let best = null, bk = -1;
   for (const p of people()) {
     if (p === S.player || p.alpha < 1) continue;
-    const { x, y, u } = footOf(p), k = p.fy + (p.seated ? .9 : .62);
-    if (Math.abs(px - x) < u * .42 && py < y + u * .15 && py > y - u * 1.45 && k > bk) { best = p; bk = k; }
+    const [x, y] = footOf(p), s = TW * 1.05, k = p.fx + p.fy + (p.seated ? .62 : .05);
+    if (Math.abs(wx - x) < s * .32 && wy < y + s * .1 && wy > y - s * 1.0 && k > bk) { best = p; bk = k; }
   }
-  return best;
-}
-function onTap(px, py) {
-  if (!S.started || S.done) return;
-  const p = hitPerson(px, py);
-  if (p) { setTarget({ kind: 'person', p }); return; }
-  const g = unP(px, py); if (!g) return;
-  // 點櫃子／報到台（含高度，往上一點也算）
-  for (const [ch, x, y, h] of [['R', 1, 1, .82], ['S', 9, 1, 1.5]]) {
-    const a = P(x, y + 1), b = P(x + 1, y + 1, h);
-    if (px > a[0] && px < P(x + 1, y + 1)[0] && py < a[1] && py > b[1] - TW * .2) { setTarget({ kind: 'station', ch, x, y }); return; }
+  if (best) { setTarget({ kind: 'person', p: best }); return; }
+  for (const [ch, x, y, bx] of [['R', 1, 1, [1.04, 1.96, 1.06, 1.94, 1.1]], ['S', 9, 1, [9.08, 9.92, 1.08, 1.72, 2.0]]]) {
+    const [a, b, c, d] = stationBox(...bx);
+    if (wx > a && wx < b && wy > c && wy < d) { setTarget({ kind: 'station', ch, x, y }); return; }
   }
-  const tx = Math.floor(g[0]), ty = Math.floor(g[1]);
+  const u = (wx - OX) / (TW / 2), v = (wy - OY) / (TW / 4);
+  const tx = Math.floor((u + v) / 2), ty = Math.floor((v - u) / 2);
   if (tx < 1 || tx > 9 || ty < 1 || ty > 8) return;
-  const seat = CHAIRS.find(c => c.x === tx && c.y === ty);
+  const seat = SEATS.find(c => c.x === tx && c.y === ty);
   if (seat && seat.by && seat.by.seated) { setTarget({ kind: 'person', p: seat.by }); return; }
   if (solid(tx, ty)) return;
   S.tap = { x: tx, y: ty, t: S.t };
@@ -620,7 +770,7 @@ addEventListener('keyup', e => { if (KEYMAP[e.code] && S) S.keys.delete(KEYMAP[e
 function interactNearest() {
   const me = S.player;
   const near = [...S.npcs, S.staff].filter(p => cheb(me, p) <= 1 && p.alpha >= 1);
-  const p = near.find(n => n.need) || near.find(n => n.state === 'follow') || near.find(n => n === S.staff) || near[0];
+  const p = near.find(n => n.need) || near.find(n => n === S.staff) || near[0];
   if (p) { interact(p); return; }
   if (cheb(me, { x: 9, y: 1 }) <= 1) useStation('S');
   else if (cheb(me, { x: 1, y: 1 }) <= 1) useStation('R');
@@ -639,17 +789,25 @@ function start() {
 }
 $('startBtn').onclick = start;
 $('againBtn').onclick = () => { $('win').hidden = true; reset(); start(); };
+const zbtn = $('zoomBtn');
+function setZoomLabel() { zbtn.textContent = zoomTo === 1 ? '🔍 近拍' : '🗺️ 全景'; }
+zbtn.onclick = () => { zoomTo = zoomTo === 1 ? NEAR : 1; setZoomLabel(); };
 
 let last = 0;
 function frame(ts) {
   const dt = Math.min(.05, (ts - last) / 1000 || 0); last = ts;
-  if (S.started && !S.done) update(dt); else if (S.done) { S.t += dt; S.fx = S.fx.filter(f => S.t - f.t < 1.6); }
-  draw();
+  if (S.started && !S.done) update(dt);
+  else { S.t += dt; S.fx = S.fx.filter(f => S.t - f.t < 1.6); }
+  draw(ts / 1000);
   requestAnimationFrame(frame);
 }
 reset(); resize();
 addEventListener('resize', resize);
-if (location.hash === '#debug') Object.assign(window, { __S: () => S, __P: P, __foot: footOf });
+if (document.fonts) document.fonts.ready.then(resize);
+// 直立手機一開始就近拍，鏡頭跟著小天使
+if (W / H < .8) { NEAR = 1.45; zoom = zoomTo = NEAR; }
+setZoomLabel();
+if (location.hash === '#debug') Object.assign(window, { __S: () => S, __iso: iso, __foot: footOf, __view: () => view });
 requestAnimationFrame(frame);
 })();
 </script>
