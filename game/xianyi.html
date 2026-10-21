@@ -106,14 +106,19 @@
   .age-box { text-align: center; flex: none; min-width: 64px; }
   .age-box .n { font-family: var(--serif); font-size: 1.9rem; font-weight: 900; line-height: 1; }
   .age-box .u { font-size: .75rem; color: var(--muted); }
-  .bars { flex: 1; display: grid; gap: 4px; }
-  .bar { display: grid; grid-template-columns: 4.2em 1fr 2em; align-items: center; gap: 6px; font-size: .78rem; }
-  .bar .track { height: 8px; border-radius: 99px; background: #E2E8F0; overflow: hidden; }
+  .age-box .mood { font-size: 1.3rem; line-height: 1.2; transition: transform .3s ease; }
+  .bars { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 8px; }
+  .bar { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 4px; font-size: .74rem; }
+  .bar span:first-child { white-space: nowrap; }
+  .bar .track { grid-column: 1 / -1; grid-row: 2; height: 7px; border-radius: 99px; background: #E2E8F0; overflow: hidden; }
   .bar .fill { height: 100%; border-radius: 99px; transition: width .5s ease; }
   .bar .v { text-align: right; font-weight: 700; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
   .bar.gold .fill { background: var(--gold); }
   .bar.tian .fill { background: linear-gradient(90deg, #38BDF8, #A78BFA); }
   .bar.fam .fill { background: var(--rose); }
+  .bar.hp .fill { background: var(--green); }
+  .bar.work .fill { background: var(--blue); }
+  .bar.pal .fill { background: var(--teal); }
   .hud-right { flex: none; display: grid; gap: 6px; justify-items: center; }
   #robeMini { font-size: 1.6rem; transition: filter .5s ease, opacity .5s ease; }
   #speedBtn {
@@ -310,11 +315,14 @@
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
     <header id="hud">
-      <div class="age-box"><div class="n" id="ageN">0</div><div class="u">歲</div></div>
+      <div class="age-box"><div class="n" id="ageN">0</div><div class="u">歲</div><div class="mood" id="mood" title="心情">🙂</div></div>
       <div class="bars">
-        <div class="bar gold"><span>🪙 金幣</span><div class="track"><div class="fill" id="bGold"></div></div><span class="v" id="vGold"></span></div>
-        <div class="bar tian"><span>✨ 天幣</span><div class="track"><div class="fill" id="bTian"></div></div><span class="v" id="vTian"></span></div>
-        <div class="bar fam"><span>❤️ 家人</span><div class="track"><div class="fill" id="bFam"></div></div><span class="v" id="vFam"></span></div>
+        <div class="bar hp"><span>💪 健康</span><span class="v" id="v-hp"></span><div class="track"><div class="fill" id="b-hp"></div></div></div>
+        <div class="bar work"><span>💼 工作</span><span class="v" id="v-work"></span><div class="track"><div class="fill" id="b-work"></div></div></div>
+        <div class="bar gold"><span>🪙 金幣</span><span class="v" id="v-gold"></span><div class="track"><div class="fill" id="b-gold"></div></div></div>
+        <div class="bar fam"><span>❤️ 家人</span><span class="v" id="v-fam"></span><div class="track"><div class="fill" id="b-fam"></div></div></div>
+        <div class="bar pal"><span>🤝 夥伴</span><span class="v" id="v-pal"></span><div class="track"><div class="fill" id="b-pal"></div></div></div>
+        <div class="bar tian"><span>✨ 天幣</span><span class="v" id="v-tian"></span><div class="track"><div class="fill" id="b-tian"></div></div></div>
       </div>
       <div class="hud-right">
         <div id="robeMini" title="仙衣的光">🪷</div>
@@ -356,12 +364,12 @@
   // ───────── 資料 ─────────
   // 六張人生劇本卡（取自〈回來佛堂〉Verse 2、3）
   const PERSONAS = [
-    { id: 'tech', em: '💻', name: '科技新貴派', lyric: '他進了科學園區　頗高的工作待遇', fx: { gold: 20, fam: -5 }, excuse: '先拚個幾年，存夠再說' },
-    { id: 'family', em: '🏠', name: '成家立業派', lyric: '有人說他先成家立業不得閒', fx: { fam: 15 }, excuse: '等孩子大一點再說' },
-    { id: 'social', em: '🥂', name: '人脈社交派', lyric: '有人說拓展人脈不易　假日要忙 Social', fx: { gold: 8 }, excuse: '週末已經排滿了' },
-    { id: 'drift', em: '🌊', name: '漂流派', lyric: '有人失去了自我　手足無措四處漂流', fx: {}, excuse: '我現在不知道要幹嘛' },
+    { id: 'tech', em: '💻', name: '科技新貴派', lyric: '他進了科學園區　頗高的工作待遇', fx: { gold: 15, work: 20, hp: -5, fam: -5 }, excuse: '先拚個幾年，存夠再說' },
+    { id: 'family', em: '🏠', name: '成家立業派', lyric: '有人說他先成家立業不得閒', fx: { fam: 15, work: 5 }, excuse: '等孩子大一點再說' },
+    { id: 'social', em: '🥂', name: '人脈社交派', lyric: '有人說拓展人脈不易　假日要忙 Social', fx: { gold: 5, work: 5, pal: 10 }, excuse: '週末已經排滿了' },
+    { id: 'drift', em: '🌊', name: '漂流派', lyric: '有人失去了自我　手足無措四處漂流', fx: { hp: 5, work: -5 }, excuse: '我現在不知道要幹嘛' },
     { id: 'forgot', em: '🕯️', name: '初衷遺忘派', lyric: '有人忘記了初衷　入道之後依舊漂泊', fx: { tian: 8 }, excuse: '求過道就好了吧' },
-    { id: 'abroad', em: '✈️', name: '留學菁英派', lyric: '有人為了變強　力爭上游還留學出國', fx: { gold: 12, fam: -8 }, excuse: '我在國外，回不去' },
+    { id: 'abroad', em: '✈️', name: '留學菁英派', lyric: '有人為了變強　力爭上游還留學出國', fx: { gold: 10, work: 15, fam: -8 }, excuse: '我在國外，回不去' },
   ];
 
   // 八枚心法徽章（取自副歌括號）
@@ -399,19 +407,31 @@
   // ───────── 狀態 ─────────
   let S;
   const newState = () => ({
-    age: 0, gold: 20, tian: 5, fam: 50,
+    age: 0, hp: 65, work: 15, gold: 20, fam: 50, pal: 10, tian: 5,
     persona: null, badges: new Set(), visits: 0, excuses: 0,
     mates: [], flags: {},
   });
+
+  // 六條進度條：凡（健康、工作、金幣、家人、夥伴）＋聖（天幣）
+  const STATS = ['hp', 'work', 'gold', 'fam', 'pal', 'tian'];
+  const FAN = ['hp', 'work', 'gold', 'fam', 'pal'];
+  const ICON = { hp: '💪', work: '💼', gold: '🪙', fam: '❤️', pal: '🤝', tian: '✨' };
+  const avg = keys => Math.round(keys.reduce((s, k) => s + S[k], 0) / keys.length);
+  // 心情不是進度條，由健康、家人、夥伴、天幣綜合而來
+  const moodOf = () => {
+    const m = avg(['hp', 'fam', 'pal', 'tian']);
+    return m >= 62 ? '😄' : m >= 48 ? '🙂' : m >= 34 ? '😐' : '😢';
+  };
 
   // ───────── 畫面 ─────────
   const feed = $('feed');
   function hud() {
     $('ageN').textContent = S.age;
-    for (const [k, b, v] of [['gold', 'bGold', 'vGold'], ['tian', 'bTian', 'vTian'], ['fam', 'bFam', 'vFam']]) {
-      $(b).style.width = S[k] + '%';
-      $(v).textContent = S[k];
+    for (const k of STATS) {
+      $('b-' + k).style.width = S[k] + '%';
+      $('v-' + k).textContent = S[k];
     }
+    $('mood').textContent = moodOf();
     const glow = S.tian / 100;
     $('robeMini').style.filter = `grayscale(${1 - glow}) drop-shadow(0 0 ${4 + glow * 14}px rgba(251,191,36,${.2 + glow * .8}))`;
   }
@@ -434,15 +454,22 @@
   // 套用數值變化，並在跑馬燈印出變化標籤
   function apply(fx = {}, note) {
     const chips = [];
-    const label = { gold: '🪙', tian: '✨', fam: '❤️' };
-    for (const k of ['gold', 'tian', 'fam']) {
+    for (const k of STATS) {
       if (!fx[k]) continue;
       S[k] = clamp(S[k] + fx[k]);
-      chips.push(`<span class="chip ${fx[k] > 0 ? 'up' : 'down'}">${label[k]} ${fx[k] > 0 ? '+' : '−'}${Math.abs(fx[k])}</span>`);
+      chips.push(`<span class="chip ${fx[k] > 0 ? 'up' : 'down'}">${ICON[k]} ${fx[k] > 0 ? '+' : '−'}${Math.abs(fx[k])}</span>`);
     }
     if (fx.badge) chips.push(...[].concat(fx.badge).map(earn).filter(Boolean));
     hud();
     if (note || chips.length) addLine((note ? esc(note) + '<br>' : '') + chips.join(''), 'sys', '');
+  }
+  // 每章結束：依工作發薪水；工作衝太高會過勞，年紀大了健康自然下滑
+  function yearsPass() {
+    const fx = { gold: 2 + Math.round(S.work / 10) };
+    let note = '這幾年的薪水入帳。';
+    if (S.work >= 75) { fx.hp = -6; fx.fam = -4; note = '薪水入帳，但你已經連續加班好幾個月了。'; }
+    if (S.age >= 38) fx.hp = (fx.hp || 0) - 3;
+    apply(fx, note);
   }
   function earn(id) {
     if (S.badges.has(id)) return '';
@@ -552,6 +579,7 @@
       await line(20, '宿舍泡麵吃到可以出一本評鑑。');
     }
     await line(23, '在 104 投了 87 封履歷，收到 3 封面試通知、1 封詐騙。');
+    apply({ work: 10 });
     await line(24, '第一份薪水入帳，你在 ATM 前站了很久。');
     apply({ gold: 5 });
     await line(null, '忘了回鄉　遠離了母娘', 'lyric');
@@ -595,7 +623,7 @@
     if (o.k === 'temple') return templeDay(ti);
     if (o.k === 'excuse') {
       S.excuses++;
-      apply({ gold: 4, tian: -3 }, pick(['這個週末過得很快，快到想不起做了什麼。', '你回了一張「下次一定」的貼圖。', '仙衣暗了一格，你沒發現。']));
+      apply({ work: 4, tian: -3 }, pick(['這個週末過得很快，快到想不起做了什麼。', '你回了一張「下次一定」的貼圖。', '仙衣暗了一格，你沒發現。']));
       return;
     }
     apply(alt.fx, alt.note);
@@ -623,7 +651,7 @@
     addLine(`回來佛堂（第 ${S.visits} 次）：瑜伽、早午餐、觀點分享「${t.name}」⋯⋯`, 'sys');
     if (firstMates) addLine(`你認識了三位同行夥伴：${S.mates.join('、')}`, 'sys', '');
     await [welcome, balloon, numerology, vflip, cooking][ti]();
-    const fx = { tian: 8, fam: 2, badge: ['回佛堂'] };
+    const fx = { tian: 8, hp: 4, pal: 6, fam: 2, badge: ['回佛堂'] };
     if (S.visits >= 3) fx.badge.push('駕法航');
     apply(fx, '溫暖結語：心靈充好電了。');
   }
@@ -632,7 +660,7 @@
   // 03/27 迎新聯誼
   function welcome() {
     return okCard(`<h2>🥳 迎新聯誼</h2><p>破冰遊戲輸了，你被罰模仿一種動物。<br>你選了無尾熊，全場笑翻。</p><p>${S.mates.map(m => `<span class="chip">🙋 ${m}</span>`).join('')}</p><p class="hint">這三位，之後會在你人生卡關的時候出現。</p>`)
-      .then(() => apply({ fam: 3 }));
+      .then(() => apply({ pal: 6 }));
   }
 
   // 04/24 藝術氣球：名利像氣球，吹越大越好看，也越容易破
@@ -705,7 +733,7 @@
         b.classList.add('got'); b.innerHTML = b.innerHTML.replace('👍', '❤️');
         if (++got === items.length) el.querySelector('#go').hidden = false;
       });
-      el.querySelector('#go').onclick = () => { done(); apply({ tian: 5, fam: 5 }, '原來在夥伴眼中，你藏著這麼多閃光點。'); };
+      el.querySelector('#go').onclick = () => { done(); apply({ tian: 5, pal: 6 }, '原來在夥伴眼中，你藏著這麼多閃光點。'); };
     });
   }
 
@@ -726,7 +754,7 @@
         const parts = [...sel].map(i => ING[i]);
         const dish = `${pick(STYLE)}${parts[0][1]}佐${parts[1][1]}${parts[2][1]}`;
         el.innerHTML = `<div style="font-size:3rem">${parts.map(p => p[0]).join('')}</div><h2>${dish}</h2><p>擺盤、找光、一鍵修圖⋯⋯<br>上傳群組 3 分鐘，收到 ${rand(21, 68)} 個讚。</p><p class="hint">家族群組有長輩問：「這哪裡買的？」</p><button class="btn" type="button">繼續</button>`;
-        el.querySelector('.btn').onclick = () => { done(); apply({ fam: 6, tian: 4 }, `你的招牌菜：${dish}`); };
+        el.querySelector('.btn').onclick = () => { done(); apply({ fam: 6, tian: 4, hp: 3 }, `你的招牌菜：${dish}`); };
       };
     });
   }
@@ -740,20 +768,26 @@
     if (S.persona.id === 'social') {
       await line(27, '這個月：喜酒 3 場、尾牙 2 場、同學會 1 場。');
       const o = await choose('🥂 人脈社交派', '名片收了一疊，行事曆塞滿了。下個月還有 5 場邀約。', [
-        { text: '全部到，人脈就是錢脈', fx: { gold: 6, fam: -6 }, note: '名片收了一疊，叫得出名字的只有兩張。' },
-        { text: '挑重要的去，其他的婉拒', fx: { fam: 6, tian: 2 }, note: '多出來的週末，你陪媽媽去菜市場。' },
+        { text: '全部到，人脈就是錢脈', fx: { gold: 6, pal: 6, hp: -4, fam: -6 }, note: '名片收了一疊，叫得出名字的只有兩張。' },
+        { text: '挑重要的去，其他的婉拒', fx: { fam: 6, pal: 3, tian: 2 }, note: '多出來的週末，你陪媽媽去菜市場。' },
       ]);
       apply(o.fx, o.note);
     }
     const o = await choose('📺 週五晚上 11 點', '影集還剩 6 集。<br><span style="color:var(--gold)">「劇太好看　片太火　他說追不完」</span>', [
-      { text: '一口氣追完', fx: { fam: -3, tian: -2 }, note: '週六睡到下午三點，醒來覺得更累。' },
-      { text: '看兩集就睡，明早去爬山', fx: { fam: 3, tian: 3 }, note: '山頂的風，比演算法懂你。' },
+      { text: '一口氣追完', fx: { hp: -6, fam: -3, tian: -2 }, note: '週六睡到下午三點，醒來覺得更累。' },
+      { text: '看兩集就睡，明早去爬山', fx: { hp: 6, tian: 2 }, note: '山頂的風，比演算法懂你。' },
       { text: '約家人一起看', fx: { fam: 8 }, note: '原來爸爸也會哭，在第 4 集。' },
     ]);
     apply(o.fx, o.note);
+    const w = await choose('💼 主管找你', '「這個新專案，你要不要接？」', [
+      { text: '接！加班也沒關係', fx: { work: 14, hp: -6 }, note: '專案成功了，你的黑眼圈也成功了。' },
+      { text: '接，但說好準時下班', fx: { work: 8 }, note: '主管愣了一下，然後說：「好。」' },
+      { text: '先婉拒，顧好手上的', fx: { work: -3, hp: 3 }, note: '同事接了，後來升職了。你睡得很好。' },
+    ]);
+    apply(w.fx, w.note);
     await line(28, pick(['你的 Spotify 年度回顧，第一名是〈不想上班〉。', '你開始在 IG 追蹤很多「質感生活」帳號，自己的生活沒什麼質感。']));
-    await invite(0, { text: '🎨 去看展、吃早午餐', small: '好好玩一下', fx: { fam: 4, gold: -3 }, note: '拍了很多照片，回家後一張也沒再看。' });
-    apply({ gold: 6 }, '這幾年的薪水入帳。');
+    await invite(0, { text: '🎨 去看展、吃早午餐', small: '好好玩一下', fx: { fam: 3, pal: 3, gold: -3 }, note: '拍了很多照片，回家後一張也沒再看。' });
+    yearsPass();
   }
 
   async function ch2() {
@@ -770,8 +804,8 @@
     ]);
     if (o.fastcar) S.flags.fastcar = true;
     apply(o.fx, o.note);
-    await invite(1, { text: '💼 週末去上投資理財課', small: '好好賺一筆', fx: { gold: 8, fam: -2 }, note: '老師說要分散風險，你把全部的錢都買了老師推薦的那一支。' });
-    apply({ gold: 6 }, '這幾年的薪水入帳。');
+    await invite(1, { text: '💼 週末去上投資理財課', small: '好好賺一筆', fx: { gold: 8, work: 3, fam: -2 }, note: '老師說要分散風險，你把全部的錢都買了老師推薦的那一支。' });
+    yearsPass();
   }
 
   async function ch3() {
@@ -783,8 +817,8 @@
       : '過年家族聚會，第 7 位長輩問你：「什麼時候結婚？」');
     if (S.persona.id === 'family') {
       const o = await choose('🏠 成家立業派', '房貸、孩子的才藝班、雙方父母⋯⋯你已經三個月沒有自己的時間了。', [
-        { text: '再撐一下，等孩子大一點', fx: { gold: 5, fam: -4 }, note: '孩子大一點了，你也老一點了。' },
-        { text: '跟另一半說好，每月各放一天假', fx: { fam: 8, tian: 3 }, note: '放假那天你什麼都沒做，覺得好幸福。' },
+        { text: '再撐一下，等孩子大一點', fx: { gold: 5, hp: -5, fam: -4 }, note: '孩子大一點了，你也老一點了。' },
+        { text: '跟另一半說好，每月各放一天假', fx: { fam: 8, hp: 4, tian: 3 }, note: '放假那天你什麼都沒做，覺得好幸福。' },
       ]);
       apply(o.fx, o.note);
     }
@@ -794,17 +828,23 @@
       { text: '吵完一起去吃宵夜', fx: { fam: 10, gold: -2 }, note: '鹽酥雞吃完，誰也忘了在吵什麼。' },
     ]);
     apply(o.fx, o.note);
+    await line(35, '爬三層樓梯就開始喘。');
+    const h = await choose('💪 身體在說話', '健康檢查的醫生說：「你該動一動了。」', [
+      { text: '開始每週運動三次', fx: { hp: 12, work: -2 }, note: '第一週全身痠痛，第三週開始期待。' },
+      { text: '下次再說', fx: { hp: -5 }, note: '「下次」又多了一筆。' },
+    ]);
+    apply(h.fx, h.note);
     if (Math.random() < .7) await line(36, '鄰居阿伯經過，丟下一句：「雄班某營歸剛，哈班某妹丁當。」你聽不太懂，但覺得很有道理。');
-    await invite(2, { text: '💑 去參加聯誼', small: '好好愛一下', fx: { fam: 5, gold: -3 }, note: '你遇到一個很好的人，聊了三小時，都在聊前任。' });
+    await invite(2, { text: '💑 去參加聯誼', small: '好好愛一下', fx: { fam: 3, pal: 4, gold: -3 }, note: '你遇到一個很好的人，聊了三小時，都在聊前任。' });
     if (S.visits) await line(37, `05/29 戶外聯誼，${S.mates[1]}帶了野餐墊，大家在草地上躺成一排。`);
     // 08/28 新道親法會
     const f = await choose('🌱 新道親法會缺志工', '班長在群組問：「8/28 法會，有人可以來幫忙嗎？」', [
-      { text: '我來！', fx: { tian: 10, badge: '人才是' }, note: '你在法會當了一天小天使，新朋友說謝謝的時候，你比他還開心。', vol: true },
-      { text: '那天要加班', fx: { gold: 6 }, note: '加班費入帳。群組裡大家貼了法會的照片，看起來很開心。' },
+      { text: '我來！', fx: { tian: 10, pal: 5, badge: '人才是' }, note: '你在法會當了一天小天使，新朋友說謝謝的時候，你比他還開心。', vol: true },
+      { text: '那天要加班', fx: { gold: 4, work: 4, hp: -2 }, note: '加班費入帳。群組裡大家貼了法會的照片，看起來很開心。' },
     ]);
     if (f.vol) S.flags.volunteer = true;
     apply(f.fx, f.note);
-    apply({ gold: 6 }, '這幾年的薪水入帳。');
+    yearsPass();
   }
 
   async function ch4() {
@@ -821,26 +861,27 @@
       ]);
       apply(d.fx, d.note);
     }
-    const card4 = pick([
-      ['公司組織重整，你被資遣了。', { gold: -15 }],
-      ['健檢報告，紅字三項。', { fam: -3 }],
-      ['一位老朋友突然離開了。', { tian: -2 }],
-    ]);
+    const CARDS = [
+      ['公司組織重整，你被資遣了。', { gold: -10, work: -20 }],
+      ['健檢報告，紅字三項。', { hp: -15 }],
+      ['一位老朋友突然離開了。', { pal: -5, tian: -2 }],
+    ];
+    const card4 = S.hp < 40 ? CARDS[1] : pick(CARDS);
     await line(40, `🃏 無常卡：${card4[0]}`);
     apply({ ...card4[1], badge: '這無常' });
     await line(null, '脫下了這身　皮囊　終究要歸返', 'lyric');
     const opts = [
-      { text: '怨天尤人，躲進手機裡', fx: { tian: -5, fam: -5 }, note: '螢幕使用時間：一天 9 小時。' },
+      { text: '怨天尤人，躲進手機裡', fx: { tian: -5, hp: -5, fam: -5 }, note: '螢幕使用時間：一天 9 小時。' },
       { text: '接受它，一步一步來', fx: { tian: 6, badge: '別感傷' }, note: '別感傷——無常，也是一種提醒。' },
     ];
-    opts.push(S.mates.length
-      ? { text: `打給同行夥伴${S.mates[2]}`, fx: { tian: 5, fam: 6, badge: '別感傷' }, note: `${S.mates[2]}什麼都沒說，只說：「我現在過去。」` }
+    opts.push(S.mates.length && S.pal >= 25
+      ? { text: `打給同行夥伴${S.mates[2]}`, fx: { tian: 5, pal: 4, hp: 3, badge: '別感傷' }, note: `${S.mates[2]}什麼都沒說，只說：「我現在過去。」` }
       : { text: '打給很久沒聯絡的老朋友', fx: { fam: 4 }, note: '電話響了很久，沒人接。' });
     const o = await choose('🌧️ 人生卡關了', '你會怎麼辦？', opts);
     apply(o.fx, o.note);
-    await invite(3, { text: '🛌 在家耍廢，什麼都不想', small: '先重開機再說', fx: { fam: 2 }, note: '睡了一整天，醒來還是一樣的問題。' });
+    await invite(3, { text: '🛌 在家耍廢，什麼都不想', small: '先重開機再說', fx: { hp: 4 }, note: '睡了一整天，醒來還是一樣的問題。' });
     if (S.visits >= 2) await line(41, '10/30 戶外聯誼，大家騎腳踏車，你騎在最後面，有人一直回頭等你。');
-    apply({ gold: 6 }, '這幾年的薪水入帳。');
+    yearsPass();
   }
 
   async function ch5() {
@@ -849,38 +890,44 @@
     await line(42, `第五章・${t.name}`, 'big');
     if (S.persona.id === 'abroad') await line(42, '你在國外住了十年。某天在超市聽到有人講台語，差點哭出來。');
     const o = await choose('✈️ 外派兩年', '公司問你：要不要外派兩年？', [
-      { text: '去！順便在當地找佛堂、開荒', fx: { gold: 12, tian: 10, fam: -4, badge: '能擔當' }, note: '「出國可開荒」——你在異鄉，也找到了回家的路。' },
-      { text: '去，專心衝業績', fx: { gold: 18, fam: -8 }, note: '業績第一名。視訊裡的家人，好像又老了一點。' },
-      { text: '留下來陪家人', fx: { fam: 10, gold: -4 }, note: '你沒看到世界，但看到了爸媽的每一個生日。' },
+      { text: '去！順便在當地找佛堂、開荒', fx: { gold: 10, work: 10, tian: 10, pal: 4, fam: -4, badge: '能擔當' }, note: '「出國可開荒」——你在異鄉，也找到了回家的路。' },
+      { text: '去，專心衝業績', fx: { gold: 15, work: 15, hp: -6, fam: -8 }, note: '業績第一名。視訊裡的家人，好像又老了一點。' },
+      { text: '留下來陪家人', fx: { fam: 10, work: -3 }, note: '你沒看到世界，但看到了爸媽的每一個生日。' },
     ]);
     apply(o.fx, o.note);
-    await invite(4, { text: '🏝️ 出國旅遊一週', small: '世界這麼大', fx: { fam: 4, gold: -8 }, note: '你在海邊看夕陽，想起小時候在佛堂聞到的檀香。' });
+    await invite(4, { text: '🏝️ 出國旅遊一週', small: '世界這麼大', fx: { fam: 4, hp: 4, gold: -8 }, note: '你在海邊看夕陽，想起小時候在佛堂聞到的檀香。' });
     if (S.visits >= 3) {
       const d = await choose('🏮 學長問你', '「你願不願意扛下佛堂的班務？每個月去家訪幾位道親。」<br><span style="color:var(--gold)">「扛下了佛堂　要熱情真心去家訪」</span>', [
-        { text: '我來扛！', fx: { tian: 12, gold: -3, badge: ['能擔當', '人才是'] }, note: '家訪的路上很累，回程的路上很輕。' },
+        { text: '我來扛！', fx: { tian: 12, pal: 5, badge: ['能擔當', '人才是'] }, note: '家訪的路上很累，回程的路上很輕。' },
         { text: '我再想想', fx: {}, note: '學長說：「沒關係，佛堂一直都在。」' },
       ]);
       apply(d.fx, d.note);
     }
-    apply({ gold: 6 }, '這幾年的薪水入帳。');
+    yearsPass();
   }
 
   async function finale() {
     const t = THEMES[5];
     chapter(`終章・${t.name}｜${t.sub}`);
     await line(46, `終章・${t.name}`, 'big');
+    let death = rand(74, 88) + Math.round((S.hp - 50) / 6) + (S.fam >= 60 ? 2 : 0);
+    if (Math.random() < (S.hp < 35 ? .3 : .08)) death = rand(58, 70);
+    death = Math.max(47, death);
+    // 只演出還活著的那幾年
+    const L = (a, t) => a < death ? line(a, t) : Promise.resolve();
     await line(46, '人生不是交作業。接下來的日子，照你這一路的選擇慢慢走。');
-    await line(50, S.gold >= 55 ? '你的存款數字很漂亮，你常常一個人看。' : '錢不算多，但週末的餐桌總是很擠。');
-    await line(55, S.fam >= 55 ? '姪子帶著另一半回家吃飯，說你是他最想變成的大人。' : '家族群組裡，你已讀的訊息比回覆的多。');
-    await line(60, S.tian >= 45 ? '你帶的學弟妹，現在也在帶新人了。' : '偶爾路過佛堂，聞到檀香，你的腳步停了一下。');
-    if (S.flags.fastcar) await line(65, '那台飛車跑車，現在在二手車行，標價是當年的零頭。');
-    if (S.visits >= 2) {
-      await line(62, '濟公老師說：<b>「入我門者不貧。」</b>這些年，你的日子一直都夠用，心裡也不缺什麼。');
-      apply({ gold: 8 });
+    await L(50, S.gold >= 55 ? '你的存款數字很漂亮，你常常一個人看。' : '錢不算多，但週末的餐桌總是很擠。');
+    await L(55, S.fam >= 55 ? '姪子帶著另一半回家吃飯，說你是他最想變成的大人。' : '家族群組裡，你已讀的訊息比回覆的多。');
+    await L(60, S.tian >= 45 ? '你帶的學弟妹，現在也在帶新人了。' : '偶爾路過佛堂，聞到檀香，你的腳步停了一下。');
+    if (S.visits >= 2 && death > 62) {
+      await L(62, '濟公老師說：<b>「入我門者不貧。」</b>這些年，你的日子一直都夠用，心裡也不缺什麼。');
+      apply({ gold: Math.max(8, 40 - S.gold) });
     }
-    if (S.excuses >= 2) await line(68, `你說過的「${S.persona.excuse}」，加起來有 ${S.excuses} 次。`);
-    let death = rand(76, 90) + (S.fam >= 60 ? 2 : 0);
-    if (Math.random() < .12) death = rand(58, 70);
+    await L(65, S.work >= 60 ? '退休歡送會上，同事們排隊跟你合照。' : '退休那天很安靜，你終於有時間好好吃一頓早餐。');
+    if (S.flags.fastcar) await L(66, '那台飛車跑車，現在在二手車行，標價是當年的零頭。');
+    if (S.excuses >= 2) await L(68, `你說過的「${S.persona.excuse}」，加起來有 ${S.excuses} 次。`);
+    await L(70, S.hp >= 55 ? '你還能爬上年輕時那座山，風還是一樣。' : '藥盒分成早、中、晚三格，你常常忘記今天吃了沒。');
+    if (S.pal >= 50) await L(72, `${S.mates[0] || '老朋友'}揪大家吃飯，一桌坐不下，又開了一桌。`);
     await line(death, '脫下了這身皮囊，終究要歸返。', 'big');
     S.age = death;
     await line(null, '就在百年後消散隨風飄蕩', 'lyric');
@@ -888,11 +935,11 @@
 
   // ───────── 結局 ─────────
   function judge() {
-    const { gold: g, tian: t, fam: f } = S;
-    if (g >= 40 && t >= 50 && f >= 50) return 'true';
-    if (g >= 55 && t < 30) return 'tycoon';
+    const fan = avg(FAN), low = Math.min(...FAN.map(k => S[k])), t = S.tian;
+    if (fan >= 50 && low >= 25 && t >= 50) return 'true';
+    if (S.gold >= 55 && t < 30) return 'tycoon';
     if (t >= 55) return 'temple';
-    if (g < 35 && t < 35 && f < 45) return 'drift';
+    if (fan < 40 && t < 35) return 'drift';
     return 'gate';
   }
   const ENDINGS = {
@@ -922,14 +969,17 @@
     el.innerHTML = `
       <div class="end-card">
         <div class="em">${E.em}</div>
-        <p class="kicker">${S.persona.em} ${S.persona.name}・享年 ${S.age} 歲・回佛堂 ${S.visits} 次</p>
+        <p class="kicker">${moodOf()} ${S.persona.em} ${S.persona.name}・享年 ${S.age} 歲・回佛堂 ${S.visits} 次</p>
         <h2>${E.title}</h2>
         <div class="lyric">${E.lyric}</div>
         <p class="desc">${E.desc}</p>
         <div class="sum">
+          <div><b>${S.hp}</b><small>💪 健康</small></div>
+          <div><b>${S.work}</b><small>💼 工作</small></div>
           <div><b id="eGold">${S.gold}</b><small>🪙 金幣</small></div>
-          <div><b>${S.tian}</b><small>✨ 天幣</small></div>
           <div><b>${S.fam}</b><small>❤️ 家人</small></div>
+          <div><b>${S.pal}</b><small>🤝 夥伴</small></div>
+          <div><b>${S.tian}</b><small>✨ 天幣</small></div>
         </div>
         <p class="hint" id="eNote" style="color:var(--muted);font-size:.85rem"></p>
       </div>
