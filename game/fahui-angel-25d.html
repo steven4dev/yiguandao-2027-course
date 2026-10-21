@@ -2148,7 +2148,8 @@
         '外面我顧著，裡面就拜託你囉！', '剛剛有片落葉跟我說，你今天很棒。', '咦？你怎麼跑出來了，新朋友在找你喔～') },
       { id: 'dove', name: '鴿子', gx: wa + 1.0, gy: dy + 5.6 <= R - 2 ? dy + 5.6 : cl(dy - 5.2), birds: true, gone: 0, lines: say3(
         '咕咕～（鴿子飛到屋頂上了）', '咕咕咕？（牠歪著頭看你）', '（鴿子拍拍翅膀，又飛走了）') },
-      { id: 'bike', name: '腳踏車', gx: wa + 1.95, gy: dy + 7.2 <= R - 1.6 ? dy + 7.2 : cl(dy - 6.6), box: [-.15, .15, -.55, .55, .75], ring: 0, lines: say3(
+      { id: 'bike', name: '腳踏車', gx: Math.floor(Math.min(C * .3 + Math.max(0, R - 15), C * .62 - 2)) + .5, gy: R + 1.35,   // 停在前方草地、原本後門的位置，不會被前庭的樹擋住
+        box: [-.15, .15, -.55, .55, .75], ring: 0, lines: say3(
         '叮鈴叮鈴！不知道是誰騎來的腳踏車。', '後座綁著一袋水果，大概是要給大家的吧。', '叮鈴！（鈴聲好清脆）') },
       { id: 'sign', name: '立牌', gx: wa + 2.2, gy: YARD.sign + .64, box: [-.1, .1, -.7, .7, 1.3], lines: say3(
         '全真社青・新道親法會——歡迎你來！', '立牌背面寫著：「一起當新朋友身邊的那雙手。」') },
@@ -2515,7 +2516,7 @@
     const C = COLS, R = ROWS, wa = C - .45;
     const items = [];
     // 前方草地外緣的矮樹籬、轉角的樹叢（不擋門外可以走的兩排）
-    for (let x = 1.4; x < C - 1; x += 1.7) { const cat = DECOS.find(d => d.id === 'cat'); if (cat && Math.abs(x - cat.gx) < 1.2) continue; items.push({ k: x + R + 2.1, gx: x, f: () => bush(x, R + 2.15, .75) }); }
+    for (let x = 1.4; x < C - 1; x += 1.7) { const bike = DECOS.find(d => d.id === 'bike'); if (bike && Math.abs(x - bike.gx) < 1) continue; items.push({ k: x + R + 2.1, gx: x, f: () => bush(x, R + 2.15, .75) }); }
     if (!DECOS.length) buildDecos();
     for (const [a, b, sc] of [...LAY.trees, ...LAY.backTrees]) items.push({ k: a + b, gx: a, f: () => drawTree(a, b, sc, t) });
     for (const [a, b, sc] of [...LAY.bushes, ...LAY.backBushes]) items.push({ k: a + b, gx: a, f: () => bush(a, b, sc) });
