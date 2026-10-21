@@ -7,7 +7,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="2027 全真社青 Life Design 探索地圖">
 <meta property="og:title" content="褪下仙衣：八十億分之一">
-<meta property="og:description" content="下凡抽籤、快速走完一生。金幣帶不走，天幣帶得走——這一生，你活成什麼樣？約 6 分鐘。">
+<meta property="og:description" content="下凡抽籤、快速走完一生。金幣帶不走，天幣帶得走——這一生，你活成什麼樣？約 8 分鐘。">
 <meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/game/xianyi.html">
 <meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png">
 <meta property="og:image:width" content="1200">
@@ -86,7 +86,7 @@
   #title {
     position: absolute; inset: 0;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
-    padding: 32px 24px 150px; text-align: center; gap: 14px;
+    padding: 32px 24px; text-align: center; gap: 14px;
   }
   .robe {
     font-size: 4.2rem; line-height: 1;
@@ -126,30 +126,43 @@
   .bar.pal .fill { background: var(--teal); }
   .hud-right { flex: none; display: grid; gap: 6px; justify-items: center; }
   #robeMini { font-size: 1.6rem; transition: filter .5s ease, opacity .5s ease; }
-  #speedBtn {
+  .gear {
     border: 1.5px solid var(--line); background: #fff; border-radius: 99px;
-    padding: 2px 10px; font-size: .75rem; font-weight: 700; color: var(--ink-soft);
+    width: 34px; height: 34px; font-size: 1rem; line-height: 1;
   }
-  #speedBtn.on { background: var(--blue-soft); color: var(--blue); border-color: var(--blue); }
-  .hud-btns { display: flex; gap: 4px; align-items: center; }
-  #bgmBtn { border: 1.5px solid var(--line); background: #fff; border-radius: 99px; padding: 0 7px; font-size: .8rem; }
+  #titleGear { position: absolute; top: calc(14px + env(safe-area-inset-top)); right: 14px; }
 
-  /* 背景音樂：主題曲〈回來佛堂〉的 YouTube 迷你播放器 */
-  #bgm {
-    position: absolute; z-index: 26;
-    left: 50%; bottom: 24px; transform: translateX(-50%);
-    width: 176px; text-align: center;
+  /* 播放控制：暫停／播放與 1×、2×、4×、8× */
+  #ctrl {
+    position: absolute; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 19;
+    display: flex; gap: 6px; align-items: center;
+    background: rgba(255,255,255,.94); border: 1.5px solid var(--line); border-radius: 99px;
+    padding: 4px; box-shadow: 0 6px 16px rgba(15,23,42,.12);
   }
-  #bgm .scr { width: 176px; height: 99px; border-radius: 12px; overflow: hidden; background: #0F172A; box-shadow: 0 8px 18px rgba(15,23,42,.2); }
-  #bgm .scr iframe { width: 100%; height: 100%; display: block; }
-  #bgm .cap { font-size: .75rem; color: var(--muted); margin-top: 4px; }
-  #bgm .tap { display: none; font-size: .78rem; font-weight: 700; color: #fff; background: var(--rose); border-radius: 99px; padding: 3px 10px; margin-top: 4px; animation: breathe 1.4s ease-in-out infinite; }
-  #bgm.nudge .tap { display: inline-block; }
-  #app.playing #bgm { left: auto; right: 10px; bottom: auto; transform: none; width: 96px; }
-  #app.playing #bgm .scr { width: 96px; height: 54px; border-radius: 8px; }
-  #app.playing #bgm .cap { display: none; }
-  #app.playing #bgm.nudge .tap { position: absolute; right: 104px; top: 26px; white-space: nowrap; }
-  #app.playing #chapter { padding-right: 116px; min-height: 62px; }
+  #ctrl button { border: 0; background: transparent; border-radius: 99px; min-width: 34px; height: 30px; font-size: .82rem; font-weight: 700; color: var(--ink-soft); }
+  #ctrl #playBtn { background: var(--blue); color: #fff; font-size: .9rem; }
+  #ctrl #playBtn.paused { background: var(--gold); }
+  #ctrl .spd.on { background: var(--blue-soft); color: var(--blue); }
+  #pausedTag { position: absolute; left: 14px; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 19; font-size: .8rem; font-weight: 700; color: var(--gold); background: var(--gold-soft); border-radius: 99px; padding: 4px 10px; }
+
+  /* 社青班邀請：不擋劇情，想去才點 */
+  #invite {
+    margin: 0 14px 4px; padding: 8px 10px 8px 12px;
+    display: flex; gap: 8px; align-items: center;
+    background: #fff; border: 1.5px solid rgba(5,150,105,.35); border-radius: 14px;
+    font-size: .82rem; line-height: 1.45; animation: pop .35s ease;
+  }
+  #invite .txt { flex: 1; color: var(--ink-soft); }
+  #invite .txt b { color: var(--ink); }
+  #invite button { flex: none; border: 1.5px solid var(--green); background: #fff; color: var(--green); border-radius: 99px; padding: 5px 10px; font-size: .8rem; font-weight: 700; }
+  #invite button.yes { background: var(--green); color: #fff; }
+
+  /* 設定面板 */
+  #settings { position: absolute; inset: 0; z-index: 40; background: rgba(15,23,42,.45); display: flex; align-items: center; justify-content: center; padding: 18px; }
+  #settings .card { text-align: left; }
+  .vol { display: grid; grid-template-columns: 5.5em 1fr 2.6em; align-items: center; gap: 10px; margin: 16px 0; font-weight: 700; }
+  .vol output { text-align: right; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--blue); height: 28px; }
 
   /* 章節橫幅 */
   #chapter {
@@ -160,7 +173,7 @@
   /* 人生跑馬燈 */
   #feed {
     flex: 1; overflow-y: auto;
-    padding: 4px 14px 24px;
+    padding: 4px 14px 80px;
     scroll-behavior: smooth;
   }
   .ln {
@@ -214,8 +227,6 @@
   }
   .opt:active { transform: scale(.98); }
   .opt:hover { border-color: var(--blue); }
-  .opt.temple { background: var(--green-soft); border-color: var(--green); }
-  .opt.excuse { background: #F1F5F9; border-style: dashed; }
   .opt small { display: block; font-weight: 400; color: var(--muted); font-size: .8rem; margin-top: 2px; }
 
   #overlay {
@@ -287,7 +298,8 @@
   .likes { display: grid; gap: 8px; margin: 12px 0; text-align: left; }
   .likes button { border: 1.5px solid var(--line); background: #fff; border-radius: 12px; padding: 10px 12px; text-align: left; line-height: 1.5; }
   .likes button.got { border-color: var(--rose); background: #FFF1F7; }
-  input[type=date] { font: inherit; padding: 10px; border-radius: 12px; border: 1.5px solid var(--line); width: 100%; margin: 10px 0 0; }
+  .bday { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8px; margin: 12px 0 0; }
+  .bday select { font: inherit; font-size: 1rem; padding: 10px 6px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; color: var(--ink); width: 100%; }
 
   /* 結局頁 */
   #ending { position: absolute; inset: 0; overflow-y: auto; padding: 22px 16px 40px; background: var(--bg); z-index: 25; }
@@ -327,12 +339,13 @@
 <body>
 <div id="app">
   <section id="title">
+    <button class="gear" id="titleGear" type="button" aria-label="設定">⚙️</button>
     <div class="robe">🪷</div>
     <h1>褪下仙衣</h1>
     <p class="sub">八十億分之一</p>
     <p class="lede">每個人都是褪下仙衣、來到人間的原靈。<br>下凡抽籤，快速走完一生——<br>名利帶不走，這一生，你帶走了什麼？</p>
     <button class="btn gold" id="startBtn" type="button">下凡去 ▶</button>
-    <p class="meta">約 6 分鐘・手機電腦點開就能玩</p>
+    <p class="meta">約 8 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
   </section>
@@ -349,15 +362,32 @@
         <div class="bar tian"><span>✨ 天幣</span><span class="v" id="v-tian"></span><div class="track"><div class="fill" id="b-tian"></div></div></div>
       </div>
       <div class="hud-right">
-        <div class="hud-btns"><div id="robeMini" title="仙衣的光">🪷</div><button id="bgmBtn" type="button" aria-label="背景音樂開關">🔊</button></div>
-        <button id="speedBtn" type="button">▶▶ ×2</button>
+        <div id="robeMini" title="仙衣的光">🪷</div>
+        <button class="gear" id="gearBtn" type="button" aria-label="設定">⚙️</button>
       </div>
     </header>
     <div id="chapter"></div>
+    <div id="invite" hidden></div>
     <main id="feed" aria-live="polite"></main>
+    <div id="ctrl">
+      <button id="playBtn" type="button" aria-label="暫停">⏸</button>
+      <button class="spd on" type="button" data-s="1">1×</button>
+      <button class="spd" type="button" data-s="2">2×</button>
+      <button class="spd" type="button" data-s="4">4×</button>
+      <button class="spd" type="button" data-s="8">8×</button>
+    </div>
+    <div id="pausedTag" hidden>⏸ 已暫停</div>
   </div>
 
-  <div id="bgm"><div class="scr"><div id="ytp"></div></div><div class="cap">🎵 主題曲〈回來佛堂〉</div><div class="tap">👆 點影片播放音樂</div></div>
+  <div id="settings" hidden>
+    <div class="card">
+      <h2>⚙️ 設定</h2>
+      <label class="vol"><span>🎵 背景音樂</span><input type="range" id="volMusic" min="0" max="100" step="5"><output id="oMusic"></output></label>
+      <label class="vol"><span>🔔 音效</span><input type="range" id="volSfx" min="0" max="100" step="5"><output id="oSfx"></output></label>
+      <p class="hint">往左滑到底就是靜音。設定會記在這台裝置上。</p>
+      <button class="btn" type="button" id="setDone">好了</button>
+    </div>
+  </div>
   <div id="sheet" role="dialog" aria-modal="true"></div>
   <div id="overlay" hidden></div>
   <section id="ending" hidden></section>
@@ -372,11 +402,25 @@
   const clamp = v => Math.max(0, Math.min(100, v));
   const shuffle = arr => arr.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(x => x[1]);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  let fast = false;
-  const wait = ms => new Promise(r => setTimeout(r, fast ? ms / 2.2 : ms));
+  const load = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } };
+  const save = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+  // 播放節奏：1× 是正常閱讀速度，暫停時時間不會往前走
+  let speed = +load('xianyi-speed', 1) || 1, paused = false;
+  const wait = ms => new Promise(res => {
+    let left = ms, last = performance.now();
+    const tick = () => {
+      const now = performance.now();
+      if (!paused) left -= (now - last) * speed;
+      last = now;
+      if (left <= 0) res(); else setTimeout(tick, 40);
+    };
+    setTimeout(tick, 40);
+  });
 
   const SITE = 'https://steven4dev.github.io/yiguandao-2027-course/';
   const CAL = 'https://calendar.google.com/calendar/u/0?cid=NWMyYTEyNmIwYzFiOWIzMzQ4ZmM5MzM5NTFkZDNiNzQ5ZmY5ZjM5Zjc1MDkzMzE3N2Q5MDgzNDNiMTY4ZjRmY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t';
+  const SONG = 'https://youtu.be/JdVeI9Nm5Uc';
 
   // 收集紀錄只存在這台裝置，讀不到也照常遊玩
   const STORE = 'xianyi-collect';
@@ -384,17 +428,120 @@
     try { return Object.assign({ endings: [], badges: [], personas: [], plays: 0 }, JSON.parse(localStorage.getItem(STORE) || '{}')); }
     catch (e) { return { endings: [], badges: [], personas: [], plays: 0 }; }
   };
-  const saveCollect = c => { try { localStorage.setItem(STORE, JSON.stringify(c)); } catch (e) {} };
+  const saveCollect = c => save(STORE, JSON.stringify(c));
+
+  // ───────── 聲音：Web Audio 即時合成，不用音檔（做法同法會小天使） ─────────
+  const Sound = (() => {
+    let ac = null, musicBus, sfxBus, timer = null, nextTime = 0, step = 0;
+    let musicVol = +load('xianyi-music', 35), sfxVol = +load('xianyi-sfx', 60);
+    // 慢板輕音樂：D 宮五聲音階，琴弦撥奏的旋律、溫暖的長音鋪底，偶爾一聲磬
+    const EIGHTH = 60 / 66 / 2;
+    const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+    const CHORDS = [[50,57,62,66],[47,54,59,62],[43,50,55,59],[45,52,57,61],[50,57,62,66],[42,49,54,57],[43,50,55,59],[45,52,57,64]];
+    const BARS = [
+      [[74,3],[76,1],[78,2],[81,2]],
+      [[78,4],[76,2],[74,2]],
+      [[71,2],[74,2],[76,3],[74,1]],
+      [[76,6],[0,2]],
+      [[81,3],[83,1],[81,2],[78,2]],
+      [[76,3],[78,1],[74,4]],
+      [[71,2],[74,2],[76,2],[78,2]],
+      [[74,6],[0,2]],
+    ];
+    const MELODY = {};
+    BARS.forEach((bar, b) => { let pos = b * 8; for (const [m, len] of bar) { if (m) MELODY[pos] = [m, len]; pos += len; } });
+    const gainOf = v => Math.pow(v / 100, 2);
+
+    function init() {
+      if (ac) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      ac = new AC();
+      const master = ac.createGain(); master.gain.value = .8; master.connect(ac.destination);
+      musicBus = ac.createGain(); musicBus.gain.value = 0; musicBus.connect(master);
+      sfxBus = ac.createGain(); sfxBus.gain.value = gainOf(sfxVol); sfxBus.connect(master);
+      const delay = ac.createDelay(); delay.delayTime.value = EIGHTH * 3;
+      const fb = ac.createGain(); fb.gain.value = .32;
+      const wet = ac.createGain(); wet.gain.value = .4;
+      delay.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(musicBus);
+      musicBus.echo = delay;
+      document.addEventListener('visibilitychange', () => {
+        if (!ac) return;
+        if (document.hidden) ac.suspend(); else ac.resume();
+      });
+    }
+    function tone(dest, m, t, dur, { type = 'sine', vol = .1, attack = .01, cutoff = 0, echo = false, detune = 0 } = {}) {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.value = hz(m); o.detune.value = detune;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vol, t + attack);
+      g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      let node = o;
+      if (cutoff) { const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; o.connect(f); node = f; }
+      node.connect(g); g.connect(dest);
+      if (echo) g.connect(musicBus.echo);
+      o.start(t); o.stop(t + dur + .05);
+    }
+    // 撥弦：兩個略為錯開的三角波，快起慢收
+    function pluck(m, t, dur, vol) {
+      tone(musicBus, m, t, dur, { type: 'triangle', vol, attack: .005, cutoff: 2400, echo: true });
+      tone(musicBus, m, t, dur * .6, { type: 'sine', vol: vol * .5, attack: .005, detune: 7 });
+    }
+    function schedule() {
+      while (nextTime < ac.currentTime + .3) {
+        const i = step % 64, bar = Math.floor(i / 8), pos = i % 8, t = nextTime;
+        const ch = CHORDS[bar];
+        if (pos === 0) {
+          for (const m of ch.slice(1)) tone(musicBus, m, t, EIGHTH * 9, { type: 'sine', vol: .022, attack: 1.2, cutoff: 900 });
+          tone(musicBus, ch[0] - 12, t, EIGHTH * 8, { type: 'sine', vol: .07, attack: .3, cutoff: 400 });
+        }
+        if (pos === 2 || pos === 5) pluck(ch[(pos === 2 ? 2 : 3)] + 12, t, EIGHTH * 2.5, .018);
+        const mel = MELODY[i];
+        if (mel) pluck(mel[0], t, EIGHTH * mel[1] * 1.6, .06);
+        if (i === 0 || i === 32) tone(musicBus, 86, t, 4, { type: 'sine', vol: .025, attack: .005, echo: true });
+        step++; nextTime += EIGHTH;
+      }
+    }
+    function startMusic() {
+      init(); if (!ac) return;
+      ac.resume();
+      if (!timer) { step = 0; nextTime = ac.currentTime + .15; timer = setInterval(schedule, 60); }
+      musicBus.gain.cancelScheduledValues(ac.currentTime);
+      musicBus.gain.setTargetAtTime(gainOf(musicVol), ac.currentTime, .8);
+    }
+    function setMusic(v) { musicVol = v; save('xianyi-music', v); if (ac) musicBus.gain.setTargetAtTime(gainOf(v), ac.currentTime, .1); }
+    function setSfx(v) { sfxVol = v; save('xianyi-sfx', v); if (ac) sfxBus.gain.setTargetAtTime(gainOf(v), ac.currentTime, .05); }
+    const SFX = {
+      tap:   [[81, 0]],
+      up:    [[79, 0], [86, .07]],
+      down:  [[74, 0], [69, .09]],
+      badge: [[86, 0], [90, .09], [93, .18], [98, .3]],
+      tick:  [[88, 0]],
+      win:   [[74, 0], [78, .1], [81, .2], [86, .32]],
+      flip:  [[76, 0], [83, .06]],
+      pop:   [[62, 0]],
+      bell:  [[86, 0]],
+      end:   [[62, 0], [66, .2], [69, .4], [74, .6], [78, .8], [81, 1.05]],
+    };
+    function sfx(name) {
+      init(); if (!ac || !sfxVol) return;
+      const t = ac.currentTime + .01;
+      const long = name === 'end' || name === 'bell';
+      for (const [m, dt] of SFX[name] || []) tone(sfxBus, m, t + dt, long ? 2.2 : .4, { type: name === 'pop' ? 'triangle' : 'sine', vol: name === 'tick' ? .04 : .09 });
+    }
+    return { startMusic, setMusic, setSfx, sfx, get musicVol() { return musicVol; }, get sfxVol() { return sfxVol; } };
+  })();
+  const sfx = n => Sound.sfx(n);
 
   // ───────── 資料 ─────────
   // 六張人生劇本卡（取自〈回來佛堂〉Verse 2、3）
   const PERSONAS = [
-    { id: 'tech', em: '💻', name: '科技新貴派', lyric: '他進了科學園區　頗高的工作待遇', fx: { gold: 15, work: 20, hp: -5, fam: -5 }, excuse: '先拚個幾年，存夠再說' },
-    { id: 'family', em: '🏠', name: '成家立業派', lyric: '有人說他先成家立業不得閒', fx: { fam: 15, work: 5 }, excuse: '等孩子大一點再說' },
-    { id: 'social', em: '🥂', name: '人脈社交派', lyric: '有人說拓展人脈不易　假日要忙 Social', fx: { gold: 5, work: 5, pal: 10 }, excuse: '週末已經排滿了' },
-    { id: 'drift', em: '🌊', name: '漂流派', lyric: '有人失去了自我　手足無措四處漂流', fx: { hp: 5, work: -5 }, excuse: '我現在不知道要幹嘛' },
-    { id: 'forgot', em: '🕯️', name: '初衷遺忘派', lyric: '有人忘記了初衷　入道之後依舊漂泊', fx: { tian: 8 }, excuse: '求過道就好了吧' },
-    { id: 'abroad', em: '✈️', name: '留學菁英派', lyric: '有人為了變強　力爭上游還留學出國', fx: { gold: 10, work: 15, fam: -8 }, excuse: '我在國外，回不去' },
+    { id: 'tech', em: '💻', name: '科技新貴派', lyric: '他進了科學園區　頗高的工作待遇', fx: { gold: 15, work: 20, hp: -5, fam: -5 } },
+    { id: 'family', em: '🏠', name: '成家立業派', lyric: '有人說他先成家立業不得閒', fx: { fam: 15, work: 5 } },
+    { id: 'social', em: '🥂', name: '人脈社交派', lyric: '有人說拓展人脈不易　假日要忙 Social', fx: { gold: 5, work: 5, pal: 10 } },
+    { id: 'drift', em: '🌊', name: '漂流派', lyric: '有人失去了自我　手足無措四處漂流', fx: { hp: 5, work: -5 } },
+    { id: 'forgot', em: '🕯️', name: '初衷遺忘派', lyric: '有人忘記了初衷　入道之後依舊漂泊', fx: { tian: 8 } },
+    { id: 'abroad', em: '✈️', name: '留學菁英派', lyric: '有人為了變強　力爭上游還留學出國', fx: { gold: 10, work: 15, fam: -8 } },
   ];
 
   // 八枚心法徽章（取自副歌括號）
@@ -411,12 +558,12 @@
 
   // 六場專題（依首頁 index.html 年度企劃）
   const THEMES = [
-    { date: '03/27', name: '好好玩', sub: '重新找回生活的樂趣', pm: '迎新聯誼 🥳', ages: [26, 29] },
-    { date: '04/24', name: '好好賺', sub: '不一定要有錢，先學會理財', pm: '藝術氣球 🎈', ages: [30, 33] },
-    { date: '06/26', name: '好好愛', sub: '喜歡別人之前，先搞懂自己', pm: '生命靈數 🔮', ages: [34, 37] },
-    { date: '10/02', name: '人生重開機', sub: '人生卡關的時候，你會怎麼辦', pm: 'V·翻轉後的人生 🎲', ages: [38, 41] },
-    { date: '11/27', name: '出去走走', sub: '世界這麼大，別只活在自己的日常', pm: '蔬食料理王 🥗', ages: [42, 45] },
-    { date: '12/25', name: '活成自己喜歡的樣子', sub: '人生不是交作業', pm: '結班聯誼 🥂', ages: [46, 100] },
+    { date: '03/27', name: '好好玩', sub: '重新找回生活的樂趣', pm: '迎新聯誼 🥳' },
+    { date: '04/24', name: '好好賺', sub: '不一定要有錢，先學會理財', pm: '藝術氣球 🎈' },
+    { date: '06/26', name: '好好愛', sub: '喜歡別人之前，先搞懂自己', pm: '生命靈數 🔮' },
+    { date: '10/02', name: '人生重開機', sub: '人生卡關的時候，你會怎麼辦', pm: 'V·翻轉後的人生 🎲' },
+    { date: '11/27', name: '出去走走', sub: '世界這麼大，別只活在自己的日常', pm: '蔬食料理王 🥗' },
+    { date: '12/25', name: '活成自己喜歡的樣子', sub: '人生不是交作業', pm: '結班聯誼 🥂' },
   ];
 
   const WISDOM = [
@@ -433,7 +580,7 @@
   let S;
   const newState = () => ({
     age: 0, hp: 65, work: 15, gold: 20, fam: 50, pal: 10, tian: 5,
-    persona: null, badges: new Set(), visits: 0, excuses: 0,
+    persona: null, badges: new Set(), visits: 0,
     mates: [], flags: {},
   });
 
@@ -442,9 +589,9 @@
   const FAN = ['hp', 'work', 'gold', 'fam', 'pal'];
   const ICON = { hp: '💪', work: '💼', gold: '🪙', fam: '❤️', pal: '🤝', tian: '✨' };
   const avg = keys => Math.round(keys.reduce((s, k) => s + S[k], 0) / keys.length);
-  // 心情不是進度條，由健康、家人、夥伴、天幣綜合而來
+  // 心情不是進度條，以健康、家人為主，夥伴、天幣為輔
   const moodOf = () => {
-    const m = avg(['hp', 'fam', 'pal', 'tian']);
+    const m = (S.hp + S.fam) * .35 + (S.pal + S.tian) * .15;
     return m >= 62 ? '😄' : m >= 48 ? '🙂' : m >= 34 ? '😐' : '😢';
   };
 
@@ -469,32 +616,43 @@
     feed.scrollTop = feed.scrollHeight;
     return d;
   }
+  // 每一行停留的時間依字數而定，讓人來得及讀完
   async function line(age, text, cls) {
     if (age != null) { S.age = age; hud(); }
     addLine(text, cls);
-    await wait(cls === 'lyric' || cls === 'big' ? 1500 : 1100);
+    const len = text.replace(/<[^>]+>/g, '').length;
+    await wait((cls === 'lyric' || cls === 'big' ? 2600 : 1600) + len * 55);
   }
   function chapter(txt) { $('chapter').textContent = txt; }
 
   // 套用數值變化，並在跑馬燈印出變化標籤
   function apply(fx = {}, note) {
     const chips = [];
+    let net = 0;
     for (const k of STATS) {
       if (!fx[k]) continue;
       S[k] = clamp(S[k] + fx[k]);
+      net += fx[k];
       chips.push(`<span class="chip ${fx[k] > 0 ? 'up' : 'down'}">${ICON[k]} ${fx[k] > 0 ? '+' : '−'}${Math.abs(fx[k])}</span>`);
     }
-    if (fx.badge) chips.push(...[].concat(fx.badge).map(earn).filter(Boolean));
+    const badges = fx.badge ? [].concat(fx.badge).map(earn).filter(Boolean) : [];
+    chips.push(...badges);
     hud();
+    if (badges.length) sfx('badge'); else if (chips.length) sfx(net >= 0 ? 'up' : 'down');
     if (note || chips.length) addLine((note ? esc(note) + '<br>' : '') + chips.join(''), 'sys', '');
   }
+  // 選完之後，讓結果停一下再往下走
+  async function settle(fx, note) {
+    apply(fx, note);
+    await wait(1400 + (note ? note.length * 45 : 0));
+  }
   // 每章結束：依工作發薪水；工作衝太高會過勞，年紀大了健康自然下滑
-  function yearsPass() {
+  async function yearsPass() {
     const fx = { gold: 2 + Math.round(S.work / 10) };
     let note = '這幾年的薪水入帳。';
     if (S.work >= 75) { fx.hp = -6; fx.fam = -4; note = '薪水入帳，但你已經連續加班好幾個月了。'; }
     if (S.age >= 38) fx.hp = (fx.hp || 0) - 3;
-    apply(fx, note);
+    await settle(fx, note);
   }
   function earn(id) {
     if (S.badges.has(id)) return '';
@@ -510,9 +668,10 @@
       opts.forEach(o => {
         const b = document.createElement('button');
         b.type = 'button';
-        b.className = 'opt ' + (o.cls || '');
+        b.className = 'opt';
         b.innerHTML = o.text + (o.small ? `<small>${o.small}</small>` : '');
         b.onclick = () => {
+          sfx('tap');
           sh.classList.remove('open');
           addLine('→ ' + o.text, 'sys', '');
           setTimeout(() => resolve(o), 250);
@@ -521,6 +680,13 @@
       });
       sh.classList.add('open');
     });
+  }
+  // 選擇題：選完套用結果
+  async function ask(title, q, opts) {
+    const o = await choose(title, q, opts);
+    if (o.run) o.run();
+    await settle(o.fx, o.note);
+    return o;
   }
 
   // 置中卡片；fn 拿到卡片元素與 done()
@@ -534,13 +700,34 @@
     });
   }
   const okCard = (html, label = '繼續') => card(html + `<button class="btn" type="button">${label}</button>`,
-    (el, done) => { el.querySelector('.btn').onclick = () => done(); });
+    (el, done) => { el.querySelector('.btn').onclick = () => { sfx('tap'); done(); }; });
 
   function toast(msg) {
     const t = document.createElement('div');
     t.className = 'toast'; t.textContent = msg;
     $('app').appendChild(t);
     setTimeout(() => t.remove(), 1800);
+  }
+
+  // ───────── 社青班邀請：出現在章節標題下方，想去才點，不點也不會怎樣 ─────────
+  let invite = null;
+  function openInvite(ti) {
+    const t = THEMES[ti];
+    invite = { ti, yes: false };
+    const el = $('invite');
+    const render = () => {
+      el.innerHTML = `<span class="txt">📱 社青班 <b>${t.date}「${t.name}」</b><br>下午：${t.pm}</span><button type="button" class="${invite.yes ? 'yes' : ''}">${invite.yes ? '✓ 這次會去' : '🍃 想去看看'}</button>`;
+      el.querySelector('button').onclick = () => { invite.yes = !invite.yes; sfx(invite.yes ? 'up' : 'tap'); render(); };
+    };
+    render();
+    el.hidden = false;
+  }
+  async function templeSlot() {
+    if (!invite) return;
+    const { ti, yes } = invite;
+    invite = null;
+    $('invite').hidden = true;
+    if (yes) await templeDay(ti);
   }
 
   // ───────── 序章 ─────────
@@ -556,7 +743,7 @@
       const sayEl = el.querySelector('#say'), b = el.querySelector('.btn');
       const show = () => { sayEl.innerHTML = says[i]; b.textContent = i === says.length - 1 ? '在三山坡旁，褪下仙衣 ▶' : '▶'; };
       show();
-      b.onclick = () => { if (++i < says.length) show(); else done(); };
+      b.onclick = () => { sfx('tap'); if (++i < says.length) show(); else done(); };
     });
   }
 
@@ -570,12 +757,14 @@
         let n = 0, delay = 50;
         const tick = () => {
           slot.textContent = world[n++ % world.length];
+          sfx('tick');
           delay *= 1.12;
           if (delay < 420) return setTimeout(tick, delay);
           slot.textContent = '台灣'; slot.classList.add('win');
+          sfx('win');
           el.querySelector('#odds').innerHTML = '叮！恭喜抽中 <b>台灣籤</b>！<br>全世界每 1000 人只有約 3 人生在台灣（約 2,340 萬 ÷ 81 億）。';
           btn.disabled = false; btn.textContent = '出生！';
-          btn.onclick = () => done();
+          btn.onclick = () => { sfx('tap'); done(); };
         };
         tick();
       };
@@ -587,26 +776,30 @@
     chapter('序章・下凡治理卻迷航');
     await line(0, '你褪下仙衣仙裳，哭得很大聲。護理師說：「肺活量不錯。」');
     await line(rand(1, 3), pick(['你說的第一個詞是「手機」。', '阿嬤說你很乖，因為給你平板就不哭。', '你在全家福照片裡唯一沒看鏡頭。']));
+    await line(rand(4, 5), pick(['幼稚園畢業典禮，你演一棵樹，站得非常認真。', '你在阿公的機車前座睡著，口水滴在安全帽上。']));
     await line(rand(6, 8), pick(['才藝班連報五個，週末比上班族還忙。', '你把壓歲錢全投進夾娃娃機，夾到一隻很像皮卡丘的東西。', '作文〈我的志願〉你寫：當有錢人。老師給你乙上。']));
-    await line(rand(11, 13), pick(['第一次跟媽媽去佛堂，記得最清楚的是那盤水果。', '第一支手機到手，螢幕使用時間：一天 5 小時。', '你在補習班認識了一輩子的好朋友，也認識了一輩子的近視。']));
+    await line(rand(10, 12), pick(['第一次跟媽媽去佛堂，記得最清楚的是那盤水果。', '你在補習班認識了一輩子的好朋友，也認識了一輩子的近視。', '暑假每天看卡通，看到會背所有片尾曲。']));
+    await line(13, pick(['第一支手機到手，螢幕使用時間：一天 5 小時。', '你第一次失戀，對象是隔壁班的，對方不知道。']));
     if (Math.random() < .6) {
       S.flags.qiudao = true;
       await line(15, '跟著家人求道。點傳師說的話你沒全懂，但你記得那天很安心。');
-      apply({ tian: 8 });
+      await settle({ tian: 8 });
     } else {
       await line(15, '朋友邀你去佛堂，你說：「下次。」');
     }
     await line(17, pick(['學測前三個月，你的 IG 限動比讀書時數還多。', '模擬考成績出來，你把成績單折成紙飛機。']));
+    await line(18, pick(['考上大學，家族群組洗了 87 個「讚」貼圖。', '畢業典禮，你們在操場上把學士帽丟得好高。']));
     if (Math.random() < .55) {
       S.flags.debt = true;
       await line(20, '你跟同學借了 500 元，說：「下週就還。」');
     } else {
       await line(20, '宿舍泡麵吃到可以出一本評鑑。');
     }
+    await line(22, pick(['第一次打工，領到薪水先買了一雙球鞋。', '你在畢業旅行的夜市，吃完一整條街。']));
     await line(23, '在 104 投了 87 封履歷，收到 3 封面試通知、1 封詐騙。');
-    apply({ work: 10 });
+    await settle({ work: 10 });
     await line(24, '第一份薪水入帳，你在 ATM 前站了很久。');
-    apply({ gold: 5 });
+    await settle({ gold: 5 });
     await line(null, '忘了回鄉　遠離了母娘', 'lyric');
   }
 
@@ -617,6 +810,7 @@
     const p = await card(`<h2>🎴 25 歲・人生劇本卡</h2><p>出社會了。翻開一張，看看你會活成哪一種人？</p><div class="deck">${deck.map((_, i) => `<button class="pc" type="button" data-i="${i}">？</button>`).join('')}</div><p class="hint">六張劇本，都寫在〈回來佛堂〉的歌詞裡</p>`, (el, done) => {
       el.querySelectorAll('.pc').forEach(b => b.onclick = () => {
         const i = +b.dataset.i;
+        sfx('flip');
         el.querySelectorAll('.pc').forEach((x, j) => { x.disabled = true; if (j !== i) x.classList.add('dim'); });
         b.classList.add('flip');
         setTimeout(() => {
@@ -624,34 +818,16 @@
           b.classList.remove('flip'); b.classList.add('face');
           b.innerHTML = `${d.em}<b>${d.name}</b>`;
           setTimeout(() => {
-            el.innerHTML = `<div style="font-size:3rem">${d.em}</div><h2>${d.name}</h2><p class="quote">${d.lyric}</p><p>你的專屬藉口卡：<b>「${d.excuse}」</b></p><button class="btn" type="button">就是我了 ▶</button>`;
-            el.querySelector('.btn').onclick = () => done(d);
+            sfx('win');
+            el.innerHTML = `<div style="font-size:3rem">${d.em}</div><h2>${d.name}</h2><p class="quote">${d.lyric}</p><button class="btn" type="button">就是我了 ▶</button>`;
+            el.querySelector('.btn').onclick = () => { sfx('tap'); done(d); };
           }, 650);
         }, 450);
       });
     });
     S.persona = p;
     addLine(`抽到人生劇本卡：${p.em} <b>${p.name}</b>`, 'big');
-    apply(p.fx);
-  }
-
-  // ───────── 週末邀約：回來佛堂 / 其他 / 藉口卡 ─────────
-  async function invite(ti, alt) {
-    const t = THEMES[ti];
-    const who = S.mates.length ? `同行夥伴${S.mates[0]}` : (S.visits ? '佛堂學長' : '老同學');
-    const o = await choose(`📱 ${who}傳來訊息`,
-      `「${t.date}（六）社青班，主題<b>「${t.name}｜${t.sub}」</b>，下午是 ${t.pm}，要不要一起來？」`, [
-        { text: '🍃 回來佛堂', small: '每月給自己一天', cls: 'temple', k: 'temple' },
-        alt,
-        { text: `🃏 打出藉口卡：「${S.persona.excuse}」`, small: '這個週末先這樣', cls: 'excuse', k: 'excuse' },
-      ]);
-    if (o.k === 'temple') return templeDay(ti);
-    if (o.k === 'excuse') {
-      S.excuses++;
-      apply({ work: 4, tian: -3 }, pick(['這個週末過得很快，快到想不起做了什麼。', '你回了一張「下次一定」的貼圖。', '仙衣暗了一格，你沒發現。']));
-      return;
-    }
-    apply(alt.fx, alt.note);
+    await settle(p.fx);
   }
 
   // 佛堂充電一日：照首頁「每日流程」走一遍，再接當月的下午活動
@@ -660,6 +836,7 @@
     S.visits++;
     const firstMates = !S.mates.length;
     if (firstMates) S.mates = shuffle(MATES).slice(0, 3);
+    sfx('bell');
     const flow = [
       ['09:30', '🧘‍♀️ 古典哈達瑜伽'], ['10:00', '🥐 休息＆早午餐'], ['10:20', '💡 智慧引路・啟心'],
       ['10:30', `💬 觀點分享：${t.name}`], ['12:00', '🍱 午餐＆小敘'], ['13:00', `🎲 ${t.pm}`], ['14:20', '✨ 溫暖結語'],
@@ -667,25 +844,25 @@
     await card(`<h2>🍃 佛堂充電的一天</h2><p class="hint">${t.date}・${t.name}｜${t.sub}</p><div class="day">${flow.map(f => `<div><span>${f[0]}</span><span>${f[1]}</span></div>`).join('')}</div><p class="quote" id="wq" hidden></p><button class="btn" type="button" hidden>下午活動 ▶</button>`, async (el, done) => {
       const rows = el.querySelectorAll('.day div');
       for (let i = 0; i < 5; i++) {
-        await wait(380);
+        await wait(700);
         rows[i].classList.add('on');
         if (i === 2) { const q = el.querySelector('#wq'); q.textContent = pick(WISDOM); q.hidden = false; }
       }
-      const b = el.querySelector('.btn'); b.hidden = false; b.onclick = () => done();
+      const b = el.querySelector('.btn'); b.hidden = false; b.onclick = () => { sfx('tap'); done(); };
     });
     addLine(`回來佛堂（第 ${S.visits} 次）：瑜伽、早午餐、觀點分享「${t.name}」⋯⋯`, 'sys');
     if (firstMates) addLine(`你認識了三位同行夥伴：${S.mates.join('、')}`, 'sys', '');
     await [welcome, balloon, numerology, vflip, cooking][ti]();
     const fx = { tian: 8, hp: 4, pal: 6, fam: 2, badge: ['回佛堂'] };
     if (S.visits >= 3) fx.badge.push('駕法航');
-    apply(fx, '溫暖結語：心靈充好電了。');
+    await settle(fx, '溫暖結語：心靈充好電了。');
   }
 
   // ───────── 下午活動小遊戲 ─────────
   // 03/27 迎新聯誼
-  function welcome() {
-    return okCard(`<h2>🥳 迎新聯誼</h2><p>破冰遊戲輸了，你被罰模仿一種動物。<br>你選了無尾熊，全場笑翻。</p><p>${S.mates.map(m => `<span class="chip">🙋 ${m}</span>`).join('')}</p><p class="hint">這三位，之後會在你人生卡關的時候出現。</p>`)
-      .then(() => apply({ pal: 6 }));
+  async function welcome() {
+    await okCard(`<h2>🥳 迎新聯誼</h2><p>破冰遊戲輸了，你被罰模仿一種動物。<br>你選了無尾熊，全場笑翻。</p><p>${S.mates.map(m => `<span class="chip">🙋 ${m}</span>`).join('')}</p><p class="hint">這三位，之後會在你人生卡關的時候出現。</p>`);
+    apply({ pal: 6 });
   }
 
   // 04/24 藝術氣球：名利像氣球，吹越大越好看，也越容易破
@@ -696,23 +873,26 @@
       const bl = el.querySelector('#bl'), bn = el.querySelector('#bn');
       const finish = (html, fx, note) => {
         el.innerHTML = html + '<button class="btn" type="button">繼續</button>';
-        el.querySelector('.btn').onclick = () => { done(); apply(fx, note); };
+        el.querySelector('.btn').onclick = () => { sfx('tap'); done(); apply(fx, note); };
       };
       el.querySelector('#pump').onclick = () => {
         n++;
         if (n >= limit) {
+          sfx('pop');
           return finish(`<div style="font-size:3rem">💥</div><h2>砰！</h2><p>氣球破了，大家笑成一團。<br>吹了 ${n} 口，什麼都沒留下。</p><p class="quote">掙下金幣　終會轉移</p>`, { tian: 3 }, '氣球破了，但你學會了一件事。');
         }
+        sfx('tick');
         bl.style.transform = `scale(${1 + n * .18})`;
         bn.textContent = `已吹 ${n} 口・每口 🪙 +2`;
       };
       el.querySelector('#stop').onclick = () => {
+        sfx('win');
         finish(`<div style="font-size:3rem">🐶</div><h2>見好就收</h2><p>你把氣球折成一隻小狗，送給隔壁的小朋友。</p><p class="quote">不沉醉　不爭也不搶</p>`, { gold: n * 2, tian: 5 }, `知足：吹了 ${n} 口就收手。`);
       };
     });
   }
 
-  // 06/26 生命靈數：只在這支手機上計算，不上傳
+  // 06/26 生命靈數：年、月、日分開選，iPhone 也不會漏選日期；只在這支手機上計算
   function numerology() {
     const TRAITS = {
       1: ['開創者', '天生的領頭羊，小心別一個人扛全部。'],
@@ -725,13 +905,23 @@
       8: ['實踐家', '很會賺也很會拚，金幣之外也存點天幣。'],
       9: ['奉獻者', '心裡裝得下全世界，別忘了也裝下自己。'],
     };
-    return card(`<h2>🔮 生命靈數</h2><p>輸入你真實的生日，看看藏在數字裡的性格密碼。</p><input type="date" id="bd" aria-label="生日"><p class="hint">只在你的手機上計算，不會上傳。</p><div class="row2"><button class="btn ghost" type="button" id="skip">先跳過</button><button class="btn" type="button" id="calc">算算看</button></div>`, (el, done) => {
-      const end = () => { done(); apply({ fam: 5, tian: 3 }, '你更懂自己了，也更懂家人一點。'); };
+    const opts = (from, to, sel, unit) => Array.from({ length: to - from + 1 }, (_, i) => from + i)
+      .map(v => `<option value="${v}"${v === sel ? ' selected' : ''}>${v} ${unit}</option>`).join('');
+    return card(`<h2>🔮 生命靈數</h2><p>選你真實的生日，看看藏在數字裡的性格密碼。</p><div class="bday"><select id="by" aria-label="年">${opts(1940, 2015, 1990, '年')}</select><select id="bm" aria-label="月">${opts(1, 12, 1, '月')}</select><select id="bdd" aria-label="日">${opts(1, 31, 1, '日')}</select></div><p class="hint">只在你的手機上計算，不會上傳。</p><div class="row2"><button class="btn ghost" type="button" id="skip">先跳過</button><button class="btn" type="button" id="calc">算算看</button></div>`, (el, done) => {
+      const by = el.querySelector('#by'), bm = el.querySelector('#bm'), bd = el.querySelector('#bdd');
+      // 依年月調整當月天數
+      const fixDays = () => {
+        const max = new Date(+by.value, +bm.value, 0).getDate();
+        const cur = Math.min(+bd.value, max);
+        bd.innerHTML = opts(1, max, cur, '日');
+      };
+      by.onchange = bm.onchange = fixDays;
+      const end = () => { sfx('tap'); done(); apply({ fam: 5, tian: 3 }, '你更懂自己了，也更懂家人一點。'); };
       el.querySelector('#skip').onclick = end;
       el.querySelector('#calc').onclick = () => {
-        const v = el.querySelector('#bd').value.replace(/\D/g, '');
-        if (!v) return toast('先選一個日期喔');
-        let n = [...v].reduce((s, c) => s + +c, 0);
+        sfx('win');
+        const digits = `${by.value}${bm.value}${bd.value}`;
+        let n = [...digits].reduce((s, c) => s + +c, 0);
         while (n > 9) n = [...String(n)].reduce((s, c) => s + +c, 0);
         const [name, txt] = TRAITS[n];
         el.innerHTML = `<div style="font-size:3rem">${n}</div><h2>${n} 號人・${name}</h2><p>${txt}</p><p class="hint">把家人的生日也算進來，回家就多了好多話題。</p><button class="btn" type="button">繼續</button>`;
@@ -755,10 +945,11 @@
       let got = 0;
       el.querySelectorAll('.likes button').forEach(b => b.onclick = () => {
         if (b.classList.contains('got')) return;
+        sfx('up');
         b.classList.add('got'); b.innerHTML = b.innerHTML.replace('👍', '❤️');
         if (++got === items.length) el.querySelector('#go').hidden = false;
       });
-      el.querySelector('#go').onclick = () => { done(); apply({ tian: 5, pal: 6 }, '原來在夥伴眼中，你藏著這麼多閃光點。'); };
+      el.querySelector('#go').onclick = () => { sfx('tap'); done(); apply({ tian: 5, pal: 6 }, '原來在夥伴眼中，你藏著這麼多閃光點。'); };
     });
   }
 
@@ -772,14 +963,16 @@
       el.querySelectorAll('.ingr button').forEach(b => b.onclick = () => {
         const i = +b.dataset.i;
         if (sel.has(i)) sel.delete(i); else if (sel.size < 3) sel.add(i);
+        sfx('tick');
         b.classList.toggle('sel', sel.has(i));
         cook.disabled = sel.size !== 3;
       });
       cook.onclick = () => {
+        sfx('win');
         const parts = [...sel].map(i => ING[i]);
         const dish = `${pick(STYLE)}${parts[0][1]}佐${parts[1][1]}${parts[2][1]}`;
         el.innerHTML = `<div style="font-size:3rem">${parts.map(p => p[0]).join('')}</div><h2>${dish}</h2><p>擺盤、找光、一鍵修圖⋯⋯<br>上傳群組 3 分鐘，收到 ${rand(21, 68)} 個讚。</p><p class="hint">家族群組有長輩問：「這哪裡買的？」</p><button class="btn" type="button">繼續</button>`;
-        el.querySelector('.btn').onclick = () => { done(); apply({ fam: 6, tian: 4, hp: 3 }, `你的招牌菜：${dish}`); };
+        el.querySelector('.btn').onclick = () => { sfx('tap'); done(); apply({ fam: 6, tian: 4, hp: 3 }, `你的招牌菜：${dish}`); };
       };
     });
   }
@@ -789,102 +982,127 @@
     const t = THEMES[0];
     chapter(`第一章・${t.name}｜${t.sub}`);
     await line(26, `第一章・${t.name}`, 'big');
+    openInvite(0);
     await line(26, '下班回家打開串流平台，一抬頭，天亮了。');
+    await line(26, '公司樓下開了一家手搖飲，你成了第一個集滿點數的人。');
     if (S.persona.id === 'social') {
       await line(27, '這個月：喜酒 3 場、尾牙 2 場、同學會 1 場。');
-      const o = await choose('🥂 人脈社交派', '名片收了一疊，行事曆塞滿了。下個月還有 5 場邀約。', [
-        { text: '全部到，人脈就是錢脈', fx: { gold: 6, pal: 6, hp: -4, fam: -6 }, note: '名片收了一疊，叫得出名字的只有兩張。' },
-        { text: '挑重要的去，其他的婉拒', fx: { fam: 6, pal: 3, tian: 2 }, note: '多出來的週末，你陪媽媽去菜市場。' },
+      await ask('🥂 行事曆塞滿了', '下個月還有 5 場邀約。', [
+        { text: '全部到，人脈就是錢脈', fx: { gold: 4, work: 3, pal: 4, hp: -4, fam: -5 }, note: '名片收了一疊，叫得出名字的只有兩張。' },
+        { text: '挑真正想見的人去', fx: { pal: 4, fam: 4 }, note: '少了幾場應酬，多了幾段好好說話的時間。' },
+        { text: '這個月全推掉，好好休息', fx: { hp: 6, pal: -3 }, note: '睡飽的你，終於想起自己喜歡畫畫。' },
       ]);
-      apply(o.fx, o.note);
     }
-    const o = await choose('📺 週五晚上 11 點', '影集還剩 6 集。<br><span style="color:var(--gold)">「劇太好看　片太火　他說追不完」</span>', [
-      { text: '一口氣追完', fx: { hp: -6, fam: -3, tian: -2 }, note: '週六睡到下午三點，醒來覺得更累。' },
-      { text: '看兩集就睡，明早去爬山', fx: { hp: 6, tian: 2 }, note: '山頂的風，比演算法懂你。' },
-      { text: '約家人一起看', fx: { fam: 8 }, note: '原來爸爸也會哭，在第 4 集。' },
+    await line(27, '週五晚上 11 點，影集還剩 6 集。');
+    await ask('📺 追劇', '<span style="color:var(--gold)">「劇太好看　片太火　他說追不完」</span>', [
+      { text: '一口氣追完', fx: { hp: -5 }, note: '週六睡到下午三點。劇很好看，人有點空。' },
+      { text: '看兩集就好，剩下的週末再看', fx: { hp: 2 }, note: '節制一點，劇反而更好看。' },
+      { text: '明天要去爬山，先不追了', fx: { hp: 7 }, note: '山頂的風，比演算法懂你。' },
+      { text: '留著週末跟家人一起看', fx: { fam: 7 }, note: '原來爸爸也會哭，在第 4 集。' },
     ]);
-    apply(o.fx, o.note);
-    const w = await choose('💼 主管找你', '「這個新專案，你要不要接？」', [
-      { text: '接！加班也沒關係', fx: { work: 14, hp: -6 }, note: '專案成功了，你的黑眼圈也成功了。' },
-      { text: '接，但說好準時下班', fx: { work: 8 }, note: '主管愣了一下，然後說：「好。」' },
-      { text: '先婉拒，顧好手上的', fx: { work: -3, hp: 3 }, note: '同事接了，後來升職了。你睡得很好。' },
+    await line(28, '主管把你叫進會議室。');
+    await ask('💼 新專案', '「這個新專案，你要不要接？」', [
+      { text: '接！加班也沒關係', fx: { work: 14, hp: -6, fam: -2 }, note: '專案成功了，你的黑眼圈也成功了。' },
+      { text: '接，但先講好分工和下班時間', fx: { work: 9, hp: -1 }, note: '主管愣了一下，然後說：「好。」' },
+      { text: '推薦同事接，我在旁邊幫忙', fx: { work: 4, pal: 3 }, note: '同事請你喝了一個月的咖啡。' },
+      { text: '先婉拒，把手上的做好', fx: { work: -2, hp: 3 }, note: '你準時下班，看到了很久沒看過的夕陽。' },
     ]);
-    apply(w.fx, w.note);
     await line(28, pick(['你的 Spotify 年度回顧，第一名是〈不想上班〉。', '你開始在 IG 追蹤很多「質感生活」帳號，自己的生活沒什麼質感。']));
-    await invite(0, { text: '🎨 去看展、吃早午餐', small: '好好玩一下', fx: { fam: 3, pal: 3, gold: -3 }, note: '拍了很多照片，回家後一張也沒再看。' });
-    yearsPass();
+    await templeSlot();
+    await line(29, pick(['第一次一個人出國，在機場迷路了兩次。', '你養了一盆多肉植物，它活得比你規律。']));
+    await yearsPass();
   }
 
   async function ch2() {
     const t = THEMES[1];
     chapter(`第二章・${t.name}｜${t.sub}`);
     await line(30, `第二章・${t.name}`, 'big');
+    openInvite(1);
     await line(30, '你在 104 又登入了一次，只是看看。（第 38 次只是看看）');
     const where = S.persona.id === 'tech' ? '某神山的車棚裡' : '同學會的停車場';
-    await line(31, `${where}，停滿學長姐的<b>飛車跑車</b>。`);
-    const o = await choose('🏎️ 飛車跑車', '有人拍拍你的肩：「欸，還在開那台喔？」', [
-      { text: '貸款買一台，不能輸', fx: { gold: -25, tian: -5 }, note: '每個月的車貸，剛好等於陪爸媽吃飯的錢 × 12。', fastcar: true },
-      { text: '不買，把錢存起來', fx: { gold: 12, badge: '不沉醉' }, note: '不沉醉——錢留給真正重要的事。' },
-      { text: '不買，帶爸媽去吃大餐', fx: { gold: -4, fam: 12, badge: '不沉醉' }, note: '媽媽說這家好貴，然後把菜全部吃完了。' },
+    await line(31, `${where}，停滿學長姐的<b>飛車跑車</b>。有人拍拍你：「欸，還在開那台喔？」`);
+    await ask('🏎️ 飛車跑車', '你心裡有點癢。', [
+      { text: '貸款買一台，不能輸', fx: { gold: -20, work: 3, fam: -3 }, note: '每個月的車貸，剛好等於陪爸媽吃飯的錢 × 12。', run: () => { S.flags.fastcar = true; } },
+      { text: '買台實用的二手車，剩下的存起來', fx: { gold: 4, fam: 2, badge: '不沉醉' }, note: '週末載全家去兜風，後座擠得剛剛好。' },
+      { text: '不買，車子是代步不是成績單', fx: { gold: 8, badge: '不沉醉' }, note: '不沉醉——錢留給真正重要的事。' },
+      { text: '不買，帶爸媽去吃頓好的', fx: { gold: -4, fam: 10, badge: '不沉醉' }, note: '媽媽說這家好貴，然後把菜全部吃完了。' },
     ]);
-    if (o.fastcar) S.flags.fastcar = true;
-    apply(o.fx, o.note);
-    await invite(1, { text: '💼 週末去上投資理財課', small: '好好賺一筆', fx: { gold: 8, work: 3, fam: -2 }, note: '老師說要分散風險，你把全部的錢都買了老師推薦的那一支。' });
-    yearsPass();
+    await line(32, '年終獎金入帳了。');
+    const lucky = Math.random() < .5;
+    await ask('💰 年終怎麼分', '同事在茶水間說他有一支「穩賺」的明牌。', [
+      { text: '全部押同事的明牌', fx: lucky ? { gold: 15 } : { gold: -12 }, note: lucky ? '漲了！你開心了三天，然後開始擔心它會跌。' : '跌了。同事說：「長期持有就好。」' },
+      { text: '先存緊急預備金，再小額定期定額', fx: { gold: 8 }, note: '不刺激，但睡得很好。' },
+      { text: '一部分孝親、一部分做公益', fx: { gold: -3, fam: 5, tian: 4 }, note: '錢少了一點，心多了一點。' },
+      { text: '犒賞自己，報名健身房', fx: { gold: -4, hp: 8 }, note: '這次你真的有去，不只是繳錢。' },
+    ]);
+    await line(33, '同事在茶水間聊房價，你默默算了一下：不吃不喝十幾年。');
+    await templeSlot();
+    await yearsPass();
   }
 
   async function ch3() {
     const t = THEMES[2];
     chapter(`第三章・${t.name}｜${t.sub}`);
     await line(34, `第三章・${t.name}`, 'big');
+    openInvite(2);
     await line(34, S.persona.id === 'family'
       ? '過年家族聚會，第 7 位長輩問你：「什麼時候生第二胎？」'
       : '過年家族聚會，第 7 位長輩問你：「什麼時候結婚？」');
     if (S.persona.id === 'family') {
-      const o = await choose('🏠 成家立業派', '房貸、孩子的才藝班、雙方父母⋯⋯你已經三個月沒有自己的時間了。', [
-        { text: '再撐一下，等孩子大一點', fx: { gold: 5, hp: -5, fam: -4 }, note: '孩子大一點了，你也老一點了。' },
-        { text: '跟另一半說好，每月各放一天假', fx: { fam: 8, hp: 4, tian: 3 }, note: '放假那天你什麼都沒做，覺得好幸福。' },
+      await line(34, '房貸、孩子的才藝班、雙方父母⋯⋯你已經三個月沒有自己的時間了。');
+      await ask('🏠 喘口氣', '你想怎麼辦？', [
+        { text: '再撐一下，等孩子大一點', fx: { gold: 4, hp: -5, fam: -3 }, note: '孩子大一點了，你也老一點了。' },
+        { text: '跟另一半說好，每月各放一天假', fx: { fam: 7, hp: 5 }, note: '放假那天你什麼都沒做，覺得好幸福。' },
+        { text: '請爸媽幫忙帶一天，兩人去約會', fx: { fam: 9, gold: -2 }, note: '你們聊了很多，都不是在聊孩子。' },
       ]);
-      apply(o.fx, o.note);
     }
-    const o = await choose('😤 為了小事大吵一架', '你和家人誰也不肯先低頭。', [
-      { text: '冷戰到底，我又沒錯', fx: { fam: -12 }, note: '「脾氣毛病的倔強　帶不回天堂」' },
-      { text: '先傳一個貼圖', fx: { fam: 8, tian: 3 }, note: '對方回了一個一樣的貼圖。' },
-      { text: '吵完一起去吃宵夜', fx: { fam: 10, gold: -2 }, note: '鹽酥雞吃完，誰也忘了在吵什麼。' },
+    await line(35, '為了一件小事，你和家人大吵一架，誰也不肯先低頭。');
+    await ask('😤 吵架之後', '<span style="color:var(--gold)">「脾氣毛病的倔強　帶不回天堂」</span>', [
+      { text: '冷戰到底，我又沒錯', fx: { fam: -10 }, note: '家裡安靜了一個禮拜，安靜得很吵。' },
+      { text: '先冷靜一晚，明天再好好談', fx: { fam: 5, hp: 1 }, note: '睡一覺起來，那件事好像沒那麼大了。' },
+      { text: '先傳一個貼圖', fx: { fam: 7 }, note: '對方回了一個一樣的貼圖。' },
+      { text: '吵完一起去吃宵夜', fx: { fam: 8, gold: -2, hp: -1 }, note: '鹽酥雞吃完，誰也忘了在吵什麼。' },
     ]);
-    apply(o.fx, o.note);
-    await line(35, '爬三層樓梯就開始喘。');
-    const h = await choose('💪 身體在說話', '健康檢查的醫生說：「你該動一動了。」', [
+    await line(35, '爬三層樓梯就開始喘。健康檢查的醫生說：「你該動一動了。」');
+    await ask('💪 身體在說話', '你打算？', [
       { text: '開始每週運動三次', fx: { hp: 12, work: -2 }, note: '第一週全身痠痛，第三週開始期待。' },
-      { text: '下次再說', fx: { hp: -5 }, note: '「下次」又多了一筆。' },
+      { text: '改成走樓梯、少喝手搖', fx: { hp: 6 }, note: '手搖飲店員問你最近是不是搬家了。' },
+      { text: '報名公司的路跑社', fx: { hp: 8, pal: 3 }, note: '跑完第一個 5K，大家在終點拍了一張很醜的合照。' },
+      { text: '最近太忙，下次再說', fx: { hp: -4, work: 2 }, note: '「下次」又多了一筆。' },
     ]);
-    apply(h.fx, h.note);
     if (Math.random() < .7) await line(36, '鄰居阿伯經過，丟下一句：「雄班某營歸剛，哈班某妹丁當。」你聽不太懂，但覺得很有道理。');
-    await invite(2, { text: '💑 去參加聯誼', small: '好好愛一下', fx: { fam: 3, pal: 4, gold: -3 }, note: '你遇到一個很好的人，聊了三小時，都在聊前任。' });
+    await templeSlot();
     if (S.visits) await line(37, `05/29 戶外聯誼，${S.mates[1]}帶了野餐墊，大家在草地上躺成一排。`);
-    // 08/28 新道親法會
-    const f = await choose('🌱 新道親法會缺志工', '班長在群組問：「8/28 法會，有人可以來幫忙嗎？」', [
-      { text: '我來！', fx: { tian: 10, pal: 5, badge: '人才是' }, note: '你在法會當了一天小天使，新朋友說謝謝的時候，你比他還開心。', vol: true },
-      { text: '那天要加班', fx: { gold: 4, work: 4, hp: -2 }, note: '加班費入帳。群組裡大家貼了法會的照片，看起來很開心。' },
-    ]);
-    if (f.vol) S.flags.volunteer = true;
-    apply(f.fx, f.note);
-    yearsPass();
+    // 08/28 新道親法會：有接觸佛堂的人才會在群組看到志工召集
+    if (S.visits || S.flags.qiudao) {
+      await line(37, '佛堂群組跳出訊息：「8/28 新道親法會，有人可以來當志工嗎？」');
+      await ask('🌱 法會志工', '那天是星期六。', [
+        { text: '我來！', fx: { tian: 10, pal: 5, badge: '人才是' }, note: '你在法會當了一天小天使，新朋友說謝謝的時候，你比他還開心。' },
+        { text: '當天有事，但可以前一晚幫忙準備', fx: { tian: 4, pal: 2 }, note: '你折了兩百份資料夾，手很酸，心很滿。' },
+        { text: '那天要加班', fx: { gold: 3, work: 3 }, note: '加班費入帳。' },
+        { text: '這次先不了', fx: {}, note: '群組裡大家貼了法會的照片，看起來很開心。' },
+      ]);
+    } else {
+      await line(37, '朋友在 IG 貼了法會志工的照片，大家笑得很開心。');
+    }
+    await yearsPass();
   }
 
   async function ch4() {
     const t = THEMES[3];
     chapter(`第四章・${t.name}｜${t.sub}`);
     await line(38, `第四章・${t.name}`, 'big');
+    openInvite(3);
     if (S.persona.id === 'drift') await line(38, '你換了第 5 份工作，履歷自傳越寫越短。');
     if (S.persona.id === 'forgot') await line(38, '整理抽屜，翻到當年的求道卡。你盯著看了很久。');
+    await line(38, pick(['同學會上，大家聊的話題從夢想變成了血壓。', '你發現自己開始會說「我們年輕的時候⋯⋯」。']));
     if (S.flags.debt) {
       await line(39, '當年借你 500 元的同學，成了你的新主管。<b>（業力回力鏢命中）</b>');
-      const d = await choose('🪃 業力回力鏢', '<span style="color:var(--gold)">「就算再不想　欠的　也不能不還」</span>', [
-        { text: '馬上還 1000 元，再請吃一頓', fx: { gold: -3, tian: 4, fam: 2 }, note: '主管笑說：「利息算你便宜。」' },
-        { text: '裝作不記得', fx: { tian: -6 }, note: '你的考績，剛好少了一點點。' },
+      await ask('🪃 業力回力鏢', '<span style="color:var(--gold)">「就算再不想　欠的　也不能不還」</span>', [
+        { text: '馬上還 1000 元，再請吃一頓', fx: { gold: -2, tian: 4, pal: 2 }, note: '主管笑說：「利息算你便宜。」' },
+        { text: '私下還錢，順便說聲抱歉', fx: { gold: -1, tian: 5 }, note: '他說他早就忘了，但收下了。' },
+        { text: '裝作不記得', fx: { tian: -5, work: -3 }, note: '你的考績，剛好少了一點點。' },
       ]);
-      apply(d.fx, d.note);
     }
     const CARDS = [
       ['公司組織重整，你被資遣了。', { gold: -10, work: -20 }],
@@ -893,42 +1111,45 @@
     ];
     const card4 = S.hp < 40 ? CARDS[1] : pick(CARDS);
     await line(40, `🃏 無常卡：${card4[0]}`);
-    apply({ ...card4[1], badge: '這無常' });
+    await settle({ ...card4[1], badge: '這無常' });
     await line(null, '脫下了這身　皮囊　終究要歸返', 'lyric');
     const opts = [
-      { text: '怨天尤人，躲進手機裡', fx: { tian: -5, hp: -5, fam: -5 }, note: '螢幕使用時間：一天 9 小時。' },
-      { text: '接受它，一步一步來', fx: { tian: 6, badge: '別感傷' }, note: '別感傷——無常，也是一種提醒。' },
+      { text: '先躲進手機裡，什麼都不想', fx: { hp: -4, fam: -3 }, note: '螢幕使用時間：一天 9 小時。' },
+      { text: '接受它，一步一步來', fx: { tian: 5, hp: 2, badge: '別感傷' }, note: '別感傷——無常，也是一種提醒。' },
+      { text: '回家跟家人說', fx: { fam: 6, badge: '別感傷' }, note: '媽媽沒多問，只煮了你最愛的那道菜。' },
+      { text: '去看醫生、找人聊聊', fx: { hp: 6 }, note: '原來說出口，就輕了一半。' },
     ];
-    opts.push(S.mates.length && S.pal >= 25
-      ? { text: `打給同行夥伴${S.mates[2]}`, fx: { tian: 5, pal: 4, hp: 3, badge: '別感傷' }, note: `${S.mates[2]}什麼都沒說，只說：「我現在過去。」` }
-      : { text: '打給很久沒聯絡的老朋友', fx: { fam: 4 }, note: '電話響了很久，沒人接。' });
-    const o = await choose('🌧️ 人生卡關了', '你會怎麼辦？', opts);
-    apply(o.fx, o.note);
-    await invite(3, { text: '🛌 在家耍廢，什麼都不想', small: '先重開機再說', fx: { hp: 4 }, note: '睡了一整天，醒來還是一樣的問題。' });
+    if (S.mates.length && S.pal >= 25) opts.splice(2, 0, { text: `打給同行夥伴${S.mates[2]}`, fx: { pal: 4, tian: 4, badge: '別感傷' }, note: `${S.mates[2]}什麼都沒說，只說：「我現在過去。」` });
+    await ask('🌧️ 人生卡關了', '你會怎麼辦？', opts);
+    await templeSlot();
     if (S.visits >= 2) await line(41, '10/30 戶外聯誼，大家騎腳踏車，你騎在最後面，有人一直回頭等你。');
-    yearsPass();
+    await yearsPass();
   }
 
   async function ch5() {
     const t = THEMES[4];
     chapter(`第五章・${t.name}｜${t.sub}`);
     await line(42, `第五章・${t.name}`, 'big');
+    openInvite(4);
     if (S.persona.id === 'abroad') await line(42, '你在國外住了十年。某天在超市聽到有人講台語，差點哭出來。');
-    const o = await choose('✈️ 外派兩年', '公司問你：要不要外派兩年？', [
-      { text: '去！順便在當地找佛堂、開荒', fx: { gold: 10, work: 10, tian: 10, pal: 4, fam: -4, badge: '能擔當' }, note: '「出國可開荒」——你在異鄉，也找到了回家的路。' },
-      { text: '去，專心衝業績', fx: { gold: 15, work: 15, hp: -6, fam: -8 }, note: '業績第一名。視訊裡的家人，好像又老了一點。' },
+    await line(42, '公司問你：要不要外派兩年？');
+    await ask('✈️ 外派', '機會難得，但也要離開很久。', [
+      { text: '去！順便在當地找佛堂、開荒', fx: { gold: 8, work: 10, tian: 10, pal: 4, fam: -4, badge: '能擔當' }, note: '「出國可開荒」——你在異鄉，也找到了回家的路。' },
+      { text: '去，專心衝業績', fx: { gold: 14, work: 15, hp: -6, fam: -8 }, note: '業績第一名。視訊裡的家人，好像又老了一點。' },
+      { text: '去，但每週固定視訊陪家人', fx: { gold: 10, work: 10, fam: -2 }, note: '時差七小時，你們的晚餐是你的早餐。' },
       { text: '留下來陪家人', fx: { fam: 10, work: -3 }, note: '你沒看到世界，但看到了爸媽的每一個生日。' },
     ]);
-    apply(o.fx, o.note);
-    await invite(4, { text: '🏝️ 出國旅遊一週', small: '世界這麼大', fx: { fam: 4, hp: 4, gold: -8 }, note: '你在海邊看夕陽，想起小時候在佛堂聞到的檀香。' });
+    await line(43, pick(['你開始學一種新語言，進度停在「你好」和「謝謝」。', '你在旅行的路上，學會了一個人吃飯也很好。']));
+    await templeSlot();
     if (S.visits >= 3) {
-      const d = await choose('🏮 學長問你', '「你願不願意扛下佛堂的班務？每個月去家訪幾位道親。」<br><span style="color:var(--gold)">「扛下了佛堂　要熱情真心去家訪」</span>', [
+      await line(44, '學長問你：「你願不願意扛下佛堂的班務？每個月去家訪幾位道親。」');
+      await ask('🏮 扛下佛堂', '<span style="color:var(--gold)">「扛下了佛堂　要熱情真心去家訪」</span>', [
         { text: '我來扛！', fx: { tian: 12, pal: 5, badge: ['能擔當', '人才是'] }, note: '家訪的路上很累，回程的路上很輕。' },
+        { text: '先從每月家訪一位開始', fx: { tian: 6, pal: 3, badge: '能擔當' }, note: '一位，也是一份心。' },
         { text: '我再想想', fx: {}, note: '學長說：「沒關係，佛堂一直都在。」' },
       ]);
-      apply(d.fx, d.note);
     }
-    yearsPass();
+    await yearsPass();
   }
 
   async function finale() {
@@ -946,11 +1167,10 @@
     await L(60, S.tian >= 45 ? '你帶的學弟妹，現在也在帶新人了。' : '偶爾路過佛堂，聞到檀香，你的腳步停了一下。');
     if (S.visits >= 2 && death > 62) {
       await L(62, '濟公老師說：<b>「入我門者不貧。」</b>這些年，你的日子一直都夠用，心裡也不缺什麼。');
-      apply({ gold: Math.max(8, 40 - S.gold) });
+      await settle({ gold: Math.max(8, 40 - S.gold) });
     }
     await L(65, S.work >= 60 ? '退休歡送會上，同事們排隊跟你合照。' : '退休那天很安靜，你終於有時間好好吃一頓早餐。');
     if (S.flags.fastcar) await L(66, '那台飛車跑車，現在在二手車行，標價是當年的零頭。');
-    if (S.excuses >= 2) await L(68, `你說過的「${S.persona.excuse}」，加起來有 ${S.excuses} 次。`);
     await L(70, S.hp >= 55 ? '你還能爬上年輕時那座山，風還是一樣。' : '藥盒分成早、中、晚三格，你常常忘記今天吃了沒。');
     if (S.pal >= 50) await L(72, `${S.mates[0] || '老朋友'}揪大家吃飯，一桌坐不下，又開了一桌。`);
     await line(death, '脫下了這身皮囊，終究要歸返。', 'big');
@@ -975,7 +1195,7 @@
     temple: { em: '🍃', title: '回來佛堂', lyric: '喔～回來佛堂　心靈充電的家<br>解開生活迷茫',
       desc: '你做到了三不離：不離佛堂、不離前賢、不離經典。佛堂是你一輩子的充電站，母娘看著你笑了。下一回，記得把家人也一起帶回來，一起回鄉。' },
     gate: { em: '🙏', title: '南天門外', lyric: '徒跪在南天門外落下淚<br>祈求老師啊　帶我回家',
-      desc: '差一點點。你想起很多次「下次再說」。老師沒有放棄你——這一次，換真的你來選。' },
+      desc: '差一點點。很多想做的事，總想著還有下次。老師沒有放棄你——這一次，換真的你來選。' },
     drift: { em: '🌊', title: '漂流到底', lyric: '本有遠大的理想<br>但世事無常',
       desc: '你漂了一輩子，還沒想起家在哪裡。沒關係，回家的路一直都在。' },
   };
@@ -989,6 +1209,7 @@
     c.plays++;
     for (const [list, v] of [[c.endings, key], [c.personas, S.persona.id], ...[...S.badges].map(b => [c.badges, b])]) if (!list.includes(v)) list.push(v);
     saveCollect(c);
+    sfx('end');
 
     const el = $('ending');
     el.innerHTML = `
@@ -1025,12 +1246,11 @@
       </div>
       <div class="sec stack">
         <button class="btn ghost" type="button" id="againBtn">🔁 再下凡一次</button>
-        <a class="btn ghost" href="https://youtu.be/${YT_ID}" target="_blank" rel="noopener">🎧 到 YouTube 聽〈回來佛堂〉完整版</a>
+        <a class="btn ghost" href="${SONG}" target="_blank" rel="noopener">🎧 聽主題曲〈回來佛堂〉</a>
         <a class="btn ghost" href="fahui-angel-25d.html">🎮 也玩玩看：法會小天使</a>
       </div>`;
     el.hidden = false;
     el.scrollTop = 0;
-    placeBgm();
 
     // 金幣帶不走：數字慢慢歸零
     let g = S.gold;
@@ -1052,59 +1272,60 @@
     };
   }
 
-  // ───────── 背景音樂 ─────────
-  // 主題曲用 YouTube 播放器，在玩家按「下凡去」的那一下開始播；手機擋下自動播放時，提示玩家直接點影片
-  const YT_ID = 'JdVeI9Nm5Uc';
-  let yt = null, ytReady = false, bgmOn = true;
-  try { bgmOn = localStorage.getItem('xianyi-bgm') !== 'off'; } catch (e) {}
-  const bgmEl = $('bgm');
-  const isPlaying = () => ytReady && yt.getPlayerState && yt.getPlayerState() === 1;
-  function bgmIcon() { $('bgmBtn').textContent = bgmOn ? '🔊' : '🔇'; }
-  function bgmPlay() {
-    if (!bgmOn) return;
-    if (ytReady) { try { yt.unMute(); yt.playVideo(); } catch (e) {} }
-    setTimeout(() => { if (bgmOn && !isPlaying()) bgmEl.classList.add('nudge'); }, 2500);
+  // ───────── 播放控制與設定 ─────────
+  function setSpeed(v) {
+    speed = v; save('xianyi-speed', v);
+    document.querySelectorAll('#ctrl .spd').forEach(b => b.classList.toggle('on', +b.dataset.s === v));
   }
-  function placeBgm() {
-    if (!$('app').classList.contains('playing')) return;
-    const ch = $('ending').hidden ? $('chapter') : null;
-    bgmEl.style.top = ch ? (ch.offsetTop + 4) + 'px' : '12px';
+  function setPaused(v) {
+    paused = v;
+    const b = $('playBtn');
+    b.textContent = v ? '▶' : '⏸';
+    b.classList.toggle('paused', v);
+    b.setAttribute('aria-label', v ? '繼續' : '暫停');
+    $('pausedTag').hidden = !v;
   }
-  window.onYouTubeIframeAPIReady = () => {
-    yt = new YT.Player('ytp', {
-      videoId: YT_ID,
-      playerVars: { playsinline: 1, loop: 1, playlist: YT_ID, rel: 0, modestbranding: 1 },
-      events: {
-        onReady: () => { ytReady = true; yt.setVolume(25); if ($('app').classList.contains('playing')) bgmPlay(); },
-        onStateChange: e => { if (e.data === 1) bgmEl.classList.remove('nudge'); },
-      },
-    });
+  document.querySelectorAll('#ctrl .spd').forEach(b => b.onclick = () => { sfx('tap'); setSpeed(+b.dataset.s); });
+  $('playBtn').onclick = () => { sfx('tap'); setPaused(!paused); };
+  setSpeed(speed);
+
+  let pausedBySettings = false;
+  function openSettings() {
+    sfx('tap');
+    pausedBySettings = !paused && !$('game').hidden;
+    if (pausedBySettings) setPaused(true);
+    $('settings').hidden = false;
+  }
+  function bindVol(id, out, get, set) {
+    const r = $(id);
+    r.value = get();
+    $(out).textContent = r.value;
+    r.oninput = () => { $(out).textContent = r.value; set(+r.value); };
+  }
+  bindVol('volMusic', 'oMusic', () => Sound.musicVol, v => { Sound.setMusic(v); Sound.startMusic(); });
+  bindVol('volSfx', 'oSfx', () => Sound.sfxVol, v => Sound.setSfx(v));
+  $('volSfx').onchange = () => sfx('up');
+  $('gearBtn').onclick = $('titleGear').onclick = openSettings;
+  $('setDone').onclick = () => {
+    sfx('tap');
+    $('settings').hidden = true;
+    if (pausedBySettings) setPaused(false);
   };
-  const ytScript = document.createElement('script');
-  ytScript.src = 'https://www.youtube.com/iframe_api';
-  document.head.appendChild(ytScript);
-  $('bgmBtn').onclick = () => {
-    bgmOn = !bgmOn;
-    try { localStorage.setItem('xianyi-bgm', bgmOn ? 'on' : 'off'); } catch (e) {}
-    bgmIcon();
-    if (bgmOn) bgmPlay();
-    else { bgmEl.classList.remove('nudge'); if (ytReady) try { yt.pauseVideo(); } catch (e) {} }
-  };
-  bgmIcon();
-  window.addEventListener('resize', placeBgm);
 
   // ───────── 主流程 ─────────
   async function start() {
-    $('app').classList.add('playing');
-    bgmPlay();
+    Sound.startMusic();
+    sfx('tap');
     S = newState();
+    invite = null;
+    $('invite').hidden = true;
+    setPaused(false);
     $('ending').hidden = true;
     $('title').hidden = true;
     feed.innerHTML = '';
     chapter('');
     $('game').hidden = false;
     hud();
-    placeBgm();
     await prologue();
     await gacha();
     await childhood();
@@ -1115,7 +1336,6 @@
     await showEnding();
   }
 
-  $('speedBtn').onclick = () => { fast = !fast; $('speedBtn').classList.toggle('on', fast); };
   $('startBtn').onclick = start;
   const c = loadCollect();
   if (c.plays) $('collect').textContent = `結局收集 ${c.endings.length} / 5・心法徽章 ${c.badges.length} / 8・劇本卡 ${c.personas.length} / 6`;
