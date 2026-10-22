@@ -1262,6 +1262,19 @@
     }
   }
 
+  /* 08/28 法會小天使入口：和褪下仙衣同款的橫幅卡，配色跟著法會卡片的玫瑰色 */
+  .fh-banner { flex: 1 1 100%; display: flex; gap: 20px; align-items: center; background: #FFFFFF; border: 1.5px solid rgba(251, 113, 133, 0.35); border-radius: 18px; padding: 14px; box-shadow: 0 6px 16px -6px rgba(251, 113, 133, 0.25); }
+  .fh-thumb { flex: none; width: 260px; }
+  .fh-thumb img { display: block; width: 100%; aspect-ratio: 1200 / 630; object-fit: cover; border-radius: 12px; }
+  .fh-text { min-width: 0; }
+  .fh-text .tag { display: inline-block; color: #E11D48; font-weight: 800; font-size: 0.82rem; margin-bottom: 2px; }
+  .fh-text h3 { font-family: var(--serif); font-size: 1.15rem; margin: 0 0 4px; color: var(--text-primary); }
+  .fh-text p { margin: 0 0 4px; color: var(--text-secondary); line-height: 1.7; font-size: 0.95rem; }
+  .fh-text .meta { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px; }
+  @media (max-width: 600px) {
+    .fh-banner { flex-direction: column; align-items: stretch; gap: 12px; }
+    .fh-thumb { width: 100%; }
+  }
   /* 褪下仙衣入口：大圖下方的膠囊＋年度企劃開頭的橫幅卡 */
   .xy-pill { display: inline-flex; gap: 6px; align-items: center; margin-top: 10px; padding: 8px 18px; border-radius: 99px; background: rgba(255, 255, 255, 0.94); border: 1.5px solid var(--accent-green); color: var(--accent-green); font-weight: 800; font-size: 0.9rem; box-shadow: 0 6px 16px rgba(5, 150, 105, 0.18); transition: transform 0.25s ease; }
   .xy-pill:hover { transform: translateY(-2px); }
@@ -1484,12 +1497,21 @@
             <div class="special-label">
               🌱 新道親法會－志工陪伴體驗
             </div>
+            <div class="fh-banner">
+              <a class="fh-thumb" id="gameThumb" href="game/fahui-angel-25d.html?v=2"><img id="gameImg" src="game/og-fahui-angel-25d.png" alt="法會小天使" loading="lazy"></a>
+              <div class="fh-text">
+                <span class="tag">🎮 互動小遊戲</span>
+                <h3>😇 先玩玩看：法會小天使</h3>
+                <p>新朋友來法會，頭上冒出了需求泡泡⋯⋯<br>你能照顧到每一個人嗎？</p>
+                <p class="meta">約 3 分鐘・不用登入、不用報名</p>
             <div class="game-entry">
               <div class="ver-switch" data-on="25d" role="radiogroup" aria-label="選擇遊戲畫面">
                 <button type="button" role="radio" data-v="2d" aria-checked="false">2D 平面</button>
                 <button type="button" role="radio" data-v="25d" aria-checked="true">2.5D 立體</button>
               </div>
-              <a class="game-link" id="gameLink" href="game/fahui-angel-25d.html?v=2">🎮 先玩玩看：法會小天使 <span aria-hidden="true">→</span></a>
+              <a class="game-link" id="gameLink" href="game/fahui-angel-25d.html?v=2">🎮 先玩玩看 <span aria-hidden="true">→</span></a>
+            </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1839,11 +1861,13 @@
       const sw = document.querySelector('.ver-switch');
       if (!link || !sw) return;
       const URLS = { '2d': 'game/fahui-angel.html', '25d': 'game/fahui-angel-25d.html?v=2' };
+      const IMGS = { '2d': 'game/og-fahui-angel.png', '25d': 'game/og-fahui-angel-25d.png' };
+      const thumb = document.getElementById('gameThumb'), img = document.getElementById('gameImg');
       const btns = [...sw.querySelectorAll('button')];
       const show = v => { sw.dataset.on = v; btns.forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === v))); };
       const set = (v, save) => {
         if (!URLS[v]) v = '25d';
-        show(v); link.href = URLS[v];
+        show(v); link.href = thumb.href = URLS[v]; img.src = IMGS[v];
         if (save) { try { localStorage.setItem('fahui-ver', v); } catch (e) {} }
       };
       let v = '25d';
