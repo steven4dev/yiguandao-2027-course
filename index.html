@@ -1261,6 +1261,24 @@
       padding: 8px 24px;
     }
   }
+
+  /* 褪下仙衣入口：大圖下方的膠囊＋年度企劃開頭的橫幅卡 */
+  .xy-pill { display: inline-flex; gap: 6px; align-items: center; margin-top: 10px; padding: 8px 18px; border-radius: 99px; background: rgba(255, 255, 255, 0.94); border: 1.5px solid var(--accent-green); color: var(--accent-green); font-weight: 800; font-size: 0.9rem; box-shadow: 0 6px 16px rgba(5, 150, 105, 0.18); transition: transform 0.25s ease; }
+  .xy-pill:hover { transform: translateY(-2px); }
+  .xy-mob { display: none; }
+  @media (max-width: 900px) { .xy-desk { display: none; } .xy-mob { display: inline-flex; } }
+  .xy-banner { display: flex; gap: 22px; align-items: center; background: linear-gradient(135deg, #FFFFFF 0%, var(--bg-sun) 100%); border: 1.5px solid var(--border-gold); border-radius: 22px; padding: 18px; box-shadow: var(--shadow-soft); margin: 0 0 28px; transition: transform 0.25s ease, box-shadow 0.25s ease; }
+  .xy-banner:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+  .xy-banner img { width: 300px; flex: none; aspect-ratio: 1200 / 630; object-fit: cover; border-radius: 14px; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08); }
+  .xy-banner .tag { display: inline-block; color: var(--accent-gold); font-weight: 800; font-size: 0.82rem; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .xy-banner h3 { font-family: var(--serif); font-size: 1.3rem; margin: 0 0 6px; color: var(--text-primary); }
+  .xy-banner p { margin: 0 0 4px; color: var(--text-secondary); line-height: 1.75; }
+  .xy-banner .meta { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; }
+  .xy-btn { display: inline-flex; gap: 6px; align-items: center; padding: 10px 22px; border-radius: 99px; background: var(--accent-green); color: #FFFFFF; font-weight: 800; box-shadow: 0 6px 14px rgba(5, 150, 105, 0.25); }
+  @media (max-width: 600px) {
+    .xy-banner { flex-direction: column; align-items: stretch; padding: 14px; gap: 12px; }
+    .xy-banner img { width: 100%; }
+  }
 </style>
 </head>
 <body>
@@ -1283,9 +1301,11 @@
   <header class="hero">
     <div class="hero-caption">
       <h1>給生活的一頁私藏時光</h1>
-      <p class="hero-sub">2027 Life Design 探索地圖</p>    </div>
+      <p class="hero-sub">2027 Life Design 探索地圖</p>
+      <a class="xy-pill xy-desk" href="game/xianyi.html?v=4">🪷 人生如戲，先玩一輪 →</a>    </div>
     <div class="hero-caption-bottom">
       <p class="hero-tagline">每月給自己一天，把日子過成喜歡的樣子</p>
+      <a class="xy-pill xy-mob" href="game/xianyi.html?v=4">🪷 人生如戲，先玩一輪 →</a>
     </div>
   </header>
 
@@ -1358,6 +1378,18 @@
         <span class="sub">六場專題課程與特別活動的完整一覽</span>
         <a class="cal-subscribe-btn" id="calSubscribeBtn" href="https://calendar.google.com/calendar/u/0?cid=NWMyYTEyNmIwYzFiOWIzMzQ4ZmM5MzM5NTFkZDNiNzQ5ZmY5ZjM5Zjc1MDkzMzE3N2Q5MDgzNDNiMTY4ZjRmY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t" target="_blank" rel="noopener">📅 點我訂閱行事曆</a>
       </div>
+
+      <!-- 褪下仙衣：遊戲的六章就是今年的六場專題 -->
+      <a class="xy-banner" href="game/xianyi.html?v=4">
+        <img src="game/og-xianyi.png" alt="褪下仙衣：八十億分之一" loading="lazy">
+        <div>
+          <span class="tag">🎮 互動小遊戲</span>
+          <h3>🪷 先玩一輪：褪下仙衣</h3>
+          <p>人生如戲，戲如人生。<br>遊戲裡的六個章節，就是今年的六場專題。</p>
+          <p class="meta">約 10 分鐘・不用登入、不用報名<br>遊玩紀錄只存在你自己的手機</p>
+          <span class="xy-btn">🎮 先玩玩看 →</span>
+        </div>
+      </a>
 
       <!-- Schedule List -->
       <div class="schedule-list">
