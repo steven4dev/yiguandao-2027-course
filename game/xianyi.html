@@ -339,7 +339,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261023.03</span>
+    <span id="ver">v261023.04</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -580,6 +580,8 @@
     { id: 'social', em: '🥂', name: '人脈社交派', desc: '相信人脈就是一切，假日也在跑行程。', fx: { gold: 5, work: 5, pal: 10 } },
     { id: 'drift', em: '🌊', name: '漂流派', desc: '還在找自己真正想要的是什麼。', fx: { hp: 5, work: -5 } },
     { id: 'forgot', em: '🕯️', name: '初衷遺忘派', desc: '小時候跟著家人去佛堂，長大後漸漸忘了初衷。', fx: { tian: 8 } },
+    // 沒有求道的人，用「斜槓追夢派」取代「初衷遺忘派」，牌堆永遠是六張
+    { id: 'dream', em: '🎨', name: '斜槓追夢派', desc: '白天上班，晚上追夢，什麼都想試試看。', fx: { work: 5, pal: 5, hp: -3 } },
     { id: 'abroad', em: '✈️', name: '留學菁英派', desc: '為了變得更強，出國念書、工作。', fx: { gold: 10, work: 15, fam: -8 } },
   ];
 
@@ -951,7 +953,7 @@
   async function drawPersona() {
     S.age = 25; hud();
     await wait(1200);
-    const deck = shuffle(PERSONAS.filter(p => p.id !== 'forgot' || S.flags.qiudao));
+    const deck = shuffle(PERSONAS.filter(p => p.id !== (S.flags.qiudao ? 'dream' : 'forgot')));
     const p = await card(`<h2>🎴 25 歲・人生劇本卡</h2><p>出社會了。翻開一張，看看你會活成哪一種人？</p><div class="deck">${deck.map((_, i) => `<button class="pc" type="button" data-i="${i}">？</button>`).join('')}</div><p class="hint">六種劇本，六種人生</p>`, (el, done) => {
       el.querySelectorAll('.pc').forEach(b => b.onclick = () => {
         const i = +b.dataset.i;
@@ -1479,7 +1481,7 @@
       <div class="sec">
         <h3>🏆 人生成就 ${S.badges.size} / 8</h3>
         <div class="badges">${BADGES.map(b => `<div class="${S.badges.has(b.id) ? 'got' : ''}" title="${b.how}"><span>${b.em}</span>${b.id}</div>`).join('')}</div>
-        <p class="hint">結局收集 ${c.endings.length} / 5・劇本卡 ${c.personas.length} / 6・這台裝置共下凡 ${c.plays} 次</p>
+        <p class="hint">結局收集 ${c.endings.length} / 5・劇本卡 ${c.personas.length} / 7・這台裝置共下凡 ${c.plays} 次</p>
       </div>
       <div class="sec">
         <h3>📖 人生回憶錄</h3>
@@ -1756,7 +1758,7 @@
   $('startBtn').onclick = start;
   const c = loadCollect();
   const known = c.badges.filter(b => BADGES.some(x => x.id === b)).length;
-  if (c.plays) $('collect').textContent = `結局收集 ${c.endings.length} / 5・人生成就 ${known} / 8・劇本卡 ${c.personas.length} / 6`;
+  if (c.plays) $('collect').textContent = `結局收集 ${c.endings.length} / 5・人生成就 ${known} / 8・劇本卡 ${c.personas.length} / 7`;
   renderMemoirs();
 })();
 </script>
