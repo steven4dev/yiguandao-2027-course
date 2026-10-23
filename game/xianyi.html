@@ -100,6 +100,8 @@
   #title .meta, #title .collect { color: var(--muted); font-size: .85rem; margin: 0; }
   #title .home { color: var(--muted); font-size: .85rem; text-decoration: underline; }
   #title .btn { max-width: 360px; }
+  /* 版本編號：給開發者確認有沒有更新成功，刻意做得很淡 */
+  #ver { position: absolute; right: 12px; bottom: calc(8px + env(safe-area-inset-bottom)); font-size: .68rem; color: var(--muted); opacity: .45; font-variant-numeric: tabular-nums; }
 
   /* HUD */
   #hud {
@@ -335,6 +337,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
+    <span id="ver">v2026.10.23-1</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
