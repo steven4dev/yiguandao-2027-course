@@ -342,7 +342,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261023.05</span>
+    <span id="ver">v261023.06</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -625,7 +625,7 @@
   const newState = () => ({
     age: 0, hp: 65, work: 15, gold: 20, fam: 50, pal: 10, tian: 5,
     persona: null, badges: new Set(), visits: 0,
-    daoAt: [Math.random() < .6 ? rand(10, 24) : 0, rand(26, 45), Math.random() < .4 ? rand(50, 55) : 0].filter(Boolean),
+    daoAt: [rand(10, 24), rand(26, 45)],
     mates: [], flags: {}, log: [],
   });
 
@@ -833,6 +833,7 @@
       addLine('這次緣分還沒到。', 'sys', '');
       note(NOTE.fate);
       remember(`答應去求道，卻遇到考驗：${t.replace(/。$/, '')}，這次緣分還沒到。`);
+      S.flags.daoFated = true;
       await wait(3600);
       return;
     }
@@ -1390,8 +1391,15 @@
     // 只演出還活著的那幾年
     const L = (a, t) => a < death ? line(a, t) : Promise.resolve();
     await line(46, '人生不是交作業。接下來的日子，照你這一路的選擇慢慢走。');
+    // 第二次邀約若排在第五章最後幾年還沒輪到，進入終章時補上
+    await daoCheck();
+    // 第三次求道邀約：只給「答應過、卻被天意擋下」的人；明確說不要的人不會再被問
+    if (!S.flags.qiudao && S.flags.daoFated && death > 49) {
+      S.age = 48; hud();
+      S.daoAt = [48];
+      await daoCheck();
+    }
     await L(50, S.gold >= 55 ? '你的存款數字很漂亮，你常常一個人看。' : '錢不算多，但週末的餐桌總是很擠。');
-    if (death > 55) { S.age = Math.max(S.age, 55); await daoCheck(); }
     await L(55, S.fam >= 55 ? '姪子帶著另一半回家吃飯，說你是他最想變成的大人。' : '家族群組裡，你已讀的訊息比回覆的多。');
     if (S.flags.cat) await L(52, '麻糬變成老貓了，還是每天在門口等你回家。');
     if (death > 58) {
@@ -1438,7 +1446,7 @@
     temple: { em: '🍃', title: '回來佛堂', line: '佛堂，是心靈充電的家。',
       desc: '你做到了三不離：不離佛堂、不離前賢、不離經典。佛堂是你一輩子的充電站，母娘看著你笑了。下一回，記得把家人也一起帶回來，一起回鄉。' },
     gate: { em: '🙏', title: '南天門外', line: '差一點點，還有好多想做的事。',
-      desc: '你站在南天門外，想起很多想做的事，總想著還有下次。老師沒有放棄你——這一次，換真的你來選。' },
+      desc: '你站在南天門外，想起很多想做的事，總想著還有下次。濟公老師沒有放棄你——這一次，換真的你來選。' },
     drift: { em: '🌊', title: '漂流到底', line: '走了很遠，還在找回家的路。',
       desc: '你漂了一輩子，還沒想起家在哪裡。沒關係，回家的路一直都在。' },
   };
