@@ -78,6 +78,7 @@
   .btn:active { transform: scale(.97); }
   .btn.primary { background: var(--green); color: #fff; }
   .btn.gold { background: var(--gold-soft); border-color: var(--gold); }
+  .btn.signup { background: #FEDC56; border-color: #E8B923; color: var(--ink); font-weight: 900; }
   .btn.ghost { background: transparent; border-color: var(--line); color: var(--muted); }
   .btn[disabled] { opacity: .45; }
 
@@ -364,7 +365,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261023.10</span>
+    <span id="ver">v261023.11</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -468,6 +469,7 @@
   const SITE = 'https://steven4dev.github.io/yiguandao-2027-course/';
   const GAME_URL = SITE + 'game/xianyi.html?v=5';   // 帶 ?v=5 讓 LINE 重新抓預覽圖
   const CAL = 'https://calendar.google.com/calendar/u/0?cid=NWMyYTEyNmIwYzFiOWIzMzQ4ZmM5MzM5NTFkZDNiNzQ5ZmY5ZjM5Zjc1MDkzMzE3N2Q5MDgzNDNiMTY4ZjRmY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t';
+  const SIGNUP = 'https://forms.gle/PG7yAsyz1r4unXXZ8';
 
   // 收集紀錄與人生回憶錄只存在這台裝置，讀不到也照常遊玩
   const STORE = 'xianyi-collect', MEMO = 'xianyi-memoirs';
@@ -1559,6 +1561,7 @@
         <p style="color:var(--ink-soft);line-height:1.8;margin:0">遊戲裡的六個章節，就是 <b>2027 全真社青班</b> 的六場專題。<br>每月給自己一天，我們一起把日子過成修行，把修行過成日子。</p>
         <div class="themes">${THEMES.map(t => `<div><b>${t.date}</b><span>${t.name}｜${t.sub}</span></div>`).join('')}</div>
         <div class="stack">
+          <a class="btn signup" href="${SIGNUP}" target="_blank" rel="noopener">✍️ 點我報名</a>
           <a class="btn primary" href="${CAL}" target="_blank" rel="noopener">📅 訂閱全真社青 2027 行事曆</a>
           <a class="btn" href="../index.html">🌿 認識社青班</a>
         </div>
