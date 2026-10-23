@@ -7,10 +7,10 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="2027 全真社青 Life Design 探索地圖">
 <meta property="og:title" content="褪下仙衣：八十億分之一">
-<meta property="og:description" content="人生如戲，戲如人生。下凡抽籤、走完一生——金幣帶不走，這一生，你活成什麼樣？約 12 分鐘。">
-<meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/game/xianyi.html?v=5">
-<meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png?v=5">
-<meta property="og:image:secure_url" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png?v=5">
+<meta property="og:description" content="人生如戲，戲如人生。下凡抽籤、走完一生——資產帶不走，這一生，你活成什麼樣？約 12 分鐘。">
+<meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/game/xianyi.html?v=6">
+<meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png?v=6">
+<meta property="og:image:secure_url" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png?v=6">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -165,6 +165,21 @@
   .ln.sys .t { color: var(--muted); font-size: .9rem; }
   .ln.note .t, .dao-note { font-size: .82rem; line-height: 1.65; color: #92400E; background: #FFFBEB; border-left: 3px solid var(--gold); border-radius: 8px; padding: 6px 10px; }
   .dao-note { text-align: left; margin-top: 10px; }
+  /* 求道成功：金色光暈的殊勝卡片；沒成功：安靜的灰藍卡片 */
+  .card.dao-ok { background: radial-gradient(circle at 50% 18%, #FFFBEB 0%, #FEF3C7 38%, #FFFFFF 75%); border: 2px solid #FCD34D; box-shadow: 0 0 0 6px rgba(253,230,138,.35), 0 24px 60px rgba(217,119,6,.28); }
+  .dao-halo { width: 120px; height: 120px; margin: 2px auto 4px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 64px;
+    background: radial-gradient(circle, #FFFFFF 0%, #FDE68A 42%, rgba(251,191,36,0) 72%); animation: daoGlow 2.8s ease-in-out infinite, daoIn 1.2s ease both; }
+  @keyframes daoGlow { 50% { box-shadow: 0 0 46px 14px rgba(251,191,36,.45); transform: scale(1.06); } }
+  @keyframes daoIn { from { opacity: 0; transform: scale(.4); } }
+  .dao-k { font-size: .82rem; font-weight: 700; letter-spacing: .08em; color: var(--gold) !important; margin: 0 !important; }
+  .card.dao-ok h2 { color: #92400E; font-size: 1.5rem; }
+  .dao-gain { display: inline-block; font-weight: 900; color: #6D28D9 !important; background: #EDE9FE; border-radius: 99px; padding: 2px 14px; }
+  .card.dao-ok .btn, .card.dao-miss .btn { animation: daoBtn .6s ease 2.2s both; }
+  @keyframes daoBtn { from { opacity: 0; transform: translateY(6px); pointer-events: none; } }
+  .card.dao-miss { background: linear-gradient(180deg, #F1F5F9, #FFFFFF 60%); border-color: #CBD5E1; box-shadow: 0 20px 50px rgba(71,85,105,.18); }
+  .card.dao-miss h2 { color: #475569; }
+  .card.dao-miss .dao-k { color: #64748B !important; }
+  .dao-big { font-size: 58px; line-height: 1.2; margin-top: 4px; animation: daoIn .8s ease both; }
   .ln.big .t { font-family: var(--serif); font-weight: 900; font-size: 1.1rem; color: var(--green); border-left: 4px solid var(--green); padding-left: 10px; }
   .chip { display: inline-block; font-size: .78rem; font-weight: 700; border-radius: 99px; padding: 1px 8px; margin: 2px 4px 0 0; background: #F1F5F9; }
   .chip.up { color: var(--green); background: var(--green-soft); }
@@ -365,7 +380,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261023.11</span>
+    <span id="ver">v261023.12</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -374,10 +389,10 @@
       <div class="bars">
         <div class="bar hp"><span>💪 健康</span><span class="v" id="v-hp"></span><div class="track"><div class="fill" id="b-hp"></div></div></div>
         <div class="bar work"><span>💼 工作</span><span class="v" id="v-work"></span><div class="track"><div class="fill" id="b-work"></div></div></div>
-        <div class="bar gold"><span>🪙 金幣</span><span class="v" id="v-gold"></span><div class="track"><div class="fill" id="b-gold"></div></div></div>
+        <div class="bar gold"><span>💵 資產</span><span class="v" id="v-gold"></span><div class="track"><div class="fill" id="b-gold"></div></div></div>
         <div class="bar fam"><span>❤️ 家人</span><span class="v" id="v-fam"></span><div class="track"><div class="fill" id="b-fam"></div></div></div>
         <div class="bar pal"><span>🤝 夥伴</span><span class="v" id="v-pal"></span><div class="track"><div class="fill" id="b-pal"></div></div></div>
-        <div class="bar tian"><span>✨ 天幣</span><span class="v" id="v-tian"></span><div class="track"><div class="fill" id="b-tian"></div></div></div>
+        <div class="bar tian"><span>💰 天幣</span><span class="v" id="v-tian"></span><div class="track"><div class="fill" id="b-tian"></div></div></div>
       </div>
       <div class="hud-right">
         <div id="robeMini" title="仙衣的光">🪷</div>
@@ -388,6 +403,7 @@
     <main id="feed" aria-live="polite"></main>
     <div id="ctrl">
       <button id="playBtn" type="button" aria-label="暫停">⏸</button>
+      <button class="spd" type="button" data-s="0.5">0.5×</button>
       <button class="spd on" type="button" data-s="1">1×</button>
       <button class="spd" type="button" data-s="2">2×</button>
       <button class="spd" type="button" data-s="4">4×</button>
@@ -453,7 +469,7 @@
   const load = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } };
   const save = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 
-  // 播放節奏：1× 是從容閱讀的速度，暫停時時間不會往前走
+  // 播放節奏：1× 是從容閱讀的速度，0.5× 給想慢慢讀的人；暫停時時間不會往前走
   let speed = +load('xianyi-speed', 1) || 1, paused = false;
   const wait = ms => new Promise(res => {
     let left = ms, last = performance.now();
@@ -467,7 +483,7 @@
   });
 
   const SITE = 'https://steven4dev.github.io/yiguandao-2027-course/';
-  const GAME_URL = SITE + 'game/xianyi.html?v=5';   // 帶 ?v=5 讓 LINE 重新抓預覽圖
+  const GAME_URL = SITE + 'game/xianyi.html?v=6';   // 帶 ?v=6 讓 LINE 重新抓預覽圖
   const CAL = 'https://calendar.google.com/calendar/u/0?cid=NWMyYTEyNmIwYzFiOWIzMzQ4ZmM5MzM5NTFkZDNiNzQ5ZmY5ZjM5Zjc1MDkzMzE3N2Q5MDgzNDNiMTY4ZjRmY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t';
   const SIGNUP = 'https://forms.gle/PG7yAsyz1r4unXXZ8';
 
@@ -592,6 +608,8 @@
       flip:  [[76, 0], [83, .06]],
       pop:   [[62, 0]],
       bell:  [[86, 0]],
+      dao:   [[74, 0], [86, .02], [81, .9], [93, .92], [86, 1.8]],
+      calm:  [[76, 0], [69, .45]],
       coin:  [[96, 0]],
       fade:  [[81, 0], [76, .12], [72, .24], [69, .38]],
       end:   [[62, 0], [66, .2], [69, .4], [74, .6], [78, .8], [81, 1.05]],
@@ -619,7 +637,7 @@
       const t = ac.currentTime + .01;
       if (name === 'msg') { ping(84, t, .16); ping(91, t + .11, .16); return; }
       if (name === 'stamp') { thump(t); return; }
-      const long = name === 'end' || name === 'bell';
+      const long = name === 'end' || name === 'bell' || name === 'dao' || name === 'calm';
       for (const [m, dt] of SFX[name] || []) tone(sfxBus, m, t + dt, long ? 2.2 : .4, { type: name === 'pop' ? 'triangle' : 'sine', vol: name === 'tick' || name === 'coin' ? .04 : .09 });
     }
     // 玩家按 ▶ 繼續時保險再喚醒一次（剛被碰觸重建過就不重複）
@@ -684,10 +702,10 @@
     mates: [], flags: {}, log: [],
   });
 
-  // 六條進度條：凡（健康、工作、金幣、家人、夥伴）＋聖（天幣）
+  // 六條進度條：凡（健康、工作、資產、家人、夥伴）＋聖（天幣）
   const STATS = ['hp', 'work', 'gold', 'fam', 'pal', 'tian'];
   const FAN = ['hp', 'work', 'gold', 'fam', 'pal'];
-  const ICON = { hp: '💪', work: '💼', gold: '🪙', fam: '❤️', pal: '🤝', tian: '✨' };
+  const ICON = { hp: '💪', work: '💼', gold: '💵', fam: '❤️', pal: '🤝', tian: '💰' };
   const avg = keys => Math.round(keys.reduce((s, k) => s + S[k], 0) / keys.length);
   // 心情不是進度條，以健康、家人為主，夥伴、天幣為輔
   const moodOf = () => {
@@ -800,17 +818,17 @@
   }
 
   // 置中卡片；fn 拿到卡片元素與 done()
-  function card(html, fn) {
+  function card(html, fn, cls = '') {
     return new Promise(resolve => {
       const ov = $('overlay');
-      ov.innerHTML = `<div class="card">${html}</div>`;
+      ov.innerHTML = `<div class="card ${cls}">${html}</div>`;
       ov.hidden = false;
       const done = v => { ov.hidden = true; ov.innerHTML = ''; resolve(v); };
       fn(ov.firstElementChild, done);
     });
   }
-  const okCard = (html, label = '繼續') => card(html + `<button class="btn primary" type="button">${label}</button>`,
-    (el, done) => { el.querySelector('.btn').onclick = () => { sfx('tap'); done(); }; });
+  const okCard = (html, label = '繼續', cls) => card(html + `<button class="btn primary" type="button">${label}</button>`,
+    (el, done) => { el.querySelector('.btn').onclick = () => { sfx('tap'); done(); }; }, cls);
 
   // ───────── 社青班邀請：彈出對話框，去不去都可以，不去也不扣分 ─────────
   async function invite(ti) {
@@ -881,21 +899,23 @@
     // 考驗：一半機率遇到，全部是天意，玩家無法改變
     if (Math.random() < .5) {
       const TESTS = a < 18
-        ? ['颱風來了，停班停課，佛堂的求道也延期了。', '前一晚突然發高燒，媽媽把你留在家裡休息。', '阿公突然住院，全家一早就趕去醫院。', '隔天要段考，爸媽說等考完再說。']
-        : ['颱風來了，停班停課，佛堂的求道也延期了。', '前一晚突然發高燒，整個人爬不起來。', '鬧鐘沒響，醒來已經中午了。', '公司臨時派你出差，那天人在外縣市。', '騎車去佛堂的路上，機車在半路爆胎了。'];
-      const t = pick(TESTS);
+        ? [['🌀', '颱風來了，停班停課，佛堂的求道也延期了。'], ['🤒', '前一晚突然發高燒，媽媽把你留在家裡休息。'], ['🏥', '阿公突然住院，全家一早就趕去醫院。'], ['📚', '隔天要段考，爸媽說等考完再說。']]
+        : [['🌀', '颱風來了，停班停課，佛堂的求道也延期了。'], ['🤒', '前一晚突然發高燒，整個人爬不起來。'], ['⏰', '鬧鐘沒響，醒來已經中午了。'], ['🧳', '公司臨時派你出差，那天人在外縣市。'], ['🛵', '騎車去佛堂的路上，機車在半路爆胎了。']];
+      const [ic, t] = pick(TESTS);
       await line(null, `🃏 考驗：${t}`);
+      sfx('calm');
+      await okCard(`<div class="dao-big">${ic}</div><p class="dao-k">${a} 歲・約好求道的那天</p><h2>這次緣分還沒到</h2><p>${t}</p><p class="dao-note">${NOTE.fate}</p>`, '繼續往下走', 'dao-miss');
       addLine('這次緣分還沒到。', 'sys', '');
-      note(NOTE.fate);
       remember(`答應去求道，卻遇到考驗：${t.replace(/。$/, '')}，這次緣分還沒到。`);
       S.flags.daoFated = true;
-      await wait(3600);
+      await wait(2000);
       return;
     }
     S.flags.qiudao = true;
     await line(null, `跟著${who}到佛堂求道。點傳師說的話你沒全懂，但你記得那天很安心。`);
-    note(NOTE.done);
-    remember(`跟著${who}到佛堂求道。`);
+    sfx('dao');
+    await okCard(`<div class="dao-halo">🪷</div><p class="dao-k">${a} 歲・佛前</p><h2>🙏 恭喜你，求得大道</h2><p>八十億人之中，能在今生得聞大道的，<br>是千萬年難逢的因緣。<br>今天，你的原靈有了回家的路。</p><p class="dao-gain">💰 天幣 +8</p><p class="dao-note">${NOTE.done}</p>`, '🍃 帶著這份安心，繼續人生', 'dao-ok');
+    remember(`🪷 跟著${who}到佛堂求道，求得大道。`);
     await settle({ tian: 8 });
     note(NOTE.after);
     await wait(3000);
@@ -906,7 +926,7 @@
     const says = [
       '孩子，你本來就住在這裡。',
       '下凡走一趟人間，是你自己發的願。',
-      '記得⋯⋯⋯「金幣」帶不走，<br><br>帶得走的，要靠自己「修」。',
+      '記得⋯⋯⋯「資產」帶不走，<br><br>帶得走的，要靠自己「修」。',
       '去吧。別忘了回家的路。',
     ];
     await card(`<div class="glow"></div><p class="hint">理天・母娘身邊</p><p class="say" id="say"></p><button class="btn primary" type="button">▶</button>`, (el, done) => {
@@ -1109,7 +1129,7 @@
     5: { name: '冒險家', key: '自由・好奇・變化', trait: '你喜歡新鮮事，待在同一個地方太久會悶。', strength: '適應力強、點子多，遇到變化反而興奮。', watch: '容易三分鐘熱度，也容易逃開不想面對的事。', work: '旅遊、媒體、業務、自由工作者', love: '需要空間，也需要一個回得去的家。', tip: '走得再遠，也記得留一個回家的方向。' },
     6: { name: '守護者', key: '責任・關懷・家庭', trait: '你天生會照顧人，朋友有事第一個想到你。', strength: '同理心、責任感，讓身邊的人有安全感。', watch: '照顧別人照顧到忘了自己，累了還說沒事。', work: '醫護、教育、社工、餐飲服務', love: '全心付出，也要學會接受別人的照顧。', tip: '照顧別人是本能，照顧自己是功課。' },
     7: { name: '探索者', key: '思考・直覺・內省', trait: '你總在追問「為什麼」，喜歡安靜地想事情。', strength: '分析力、洞察力，看得到別人沒注意的細節。', watch: '想太多會卡住，也容易把自己關起來。', work: '研究、工程、分析、寫作', love: '慢熟，但一旦信任就很深。', tip: '答案不一定在書裡，也許在靜坐裡。' },
-    8: { name: '實踐家', key: '目標・效率・影響力', trait: '你很會設定目標、看見機會，做事講求成果。', strength: '執行力、資源整合、帶人做大事。', watch: '太專注在成就，容易忽略身體和家人。', work: '經營管理、金融、創業、業務主管', love: '用照顧家人的能力證明愛，也別忘了陪伴。', tip: '金幣之外，也存點帶得走的東西。' },
+    8: { name: '實踐家', key: '目標・效率・影響力', trait: '你很會設定目標、看見機會，做事講求成果。', strength: '執行力、資源整合、帶人做大事。', watch: '太專注在成就，容易忽略身體和家人。', work: '經營管理、金融、創業、業務主管', love: '用照顧家人的能力證明愛，也別忘了陪伴。', tip: '資產之外，也存點帶得走的東西。' },
     9: { name: '奉獻者', key: '博愛・理想・包容', trait: '你心很大，看到別人受苦會放不下。', strength: '包容力、使命感，能讓一群人朝同一個方向走。', watch: '總是先想到別人，常常把自己排在最後。', work: '公益、教育、醫療、志工服務', love: '愛得寬厚，也要讓對方有機會為你付出。', tip: '心裡裝得下全世界，別忘了也裝下自己。' },
   };
   function numerology() {
@@ -1470,7 +1490,7 @@
     }
     await L(60, S.tian >= 45 ? '你帶過的學弟妹，現在也在帶新人了。' : '偶爾路過佛堂，聞到檀香，你的腳步停了一下。');
     if (S.visits >= 2 && death > 62) {
-      await L(62, '濟公老師說：<b>「入我門者不貧。」</b>這些年，你的日子一直都夠用，心裡也不缺什麼。');
+      await L(62, '濟公老師說：<b>「入我門者不貧。」</b>這些年，你的錢不一定多，卻一直都夠用；心裡也不缺什麼。');
       await settle({ gold: Math.max(8, 40 - S.gold) });
     }
     if (!S.flags.keepWorking) await L(65, S.work >= 60 ? '退休歡送會上，同事們排隊跟你合照。' : '退休那天很安靜，你終於有時間好好吃一頓早餐。');
@@ -1497,7 +1517,7 @@
     true: { em: '🌟', title: '聖凡兼修・圓滿返鄉', line: '不放下世間，也不忘記回家的路。',
       desc: '你沒有放下世間，而是把世間過成了修行。仙衣發著光，母娘在門口等你。' },
     tycoon: { em: '🏎️', title: '飛天跑車大亨', line: '賺到了全世界，卻沒帶走什麼。',
-      desc: '你開著飛天跑車來到南天門前，門口立著一塊牌子：「車輛禁止進入」。金幣在門口一枚一枚化成了風。' },
+      desc: '你開著飛天跑車來到南天門前，門口立著一塊牌子：「車輛禁止進入」。資產在門口一點一點化成了風。' },
     temple: { em: '🍃', title: '回來佛堂', line: '佛堂，是心靈充電的家。',
       desc: '你做到了三不離：不離佛堂、不離前賢、不離經典。佛堂是你一輩子的充電站，母娘看著你笑了。下一回，記得把家人也一起帶回來，一起回鄉。' },
     gate: { em: '🙏', title: '南天門外', line: '差一點點，還有好多想做的事。',
@@ -1534,7 +1554,7 @@
         <h2>${E.title}</h2>
         <p class="quote">${E.line}</p>
         <p class="desc">${E.desc}</p>
-        <p class="coin">🪙 金幣 ${S.gold} → <span id="eGold">${S.gold}</span>　<span id="eNote"></span></p>
+        <p class="coin">💵 資產 ${S.gold} → <span id="eGold">${S.gold}</span>　<span id="eNote"></span></p>
       </div>
       <figure class="result">
         <div class="card-wrap" id="cardWrap"><img id="endCard" alt="你的人生成績卡（長按可儲存）"><img class="seal-fly" id="sealFly" alt="" hidden></div>
@@ -1573,7 +1593,7 @@
     el.hidden = false;
     el.scrollTop = 0;
 
-    // 金幣帶不走：數字慢慢歸零
+    // 資產帶不走：數字慢慢歸零
     let g = S.gold;
     const gEl = el.querySelector('#eGold');
     const drained = new Promise(res => setTimeout(function drain() {
@@ -1581,7 +1601,7 @@
       g = Math.max(0, g - Math.ceil(S.gold / 30)); gEl.textContent = g; sfx('coin'); setTimeout(drain, 140);
     }, 2200));
 
-    // 成績卡：先放沒蓋章的版本，金幣歸零後，「已求道」印章從天而降蓋下去，再換成蓋好章的版本
+    // 成績卡：先放沒蓋章的版本，資產歸零後，「已求道」印章從天而降蓋下去，再換成蓋好章的版本
     shareText = `我在《褪下仙衣：八十億分之一》抽到「${S.persona.name}」，活成了「${E.title}」。你呢？夥伴們快跟上！\n${GAME_URL}`;
     lineUrl = window.matchMedia('(pointer: coarse)').matches
       ? 'https://line.me/R/share?text=' + encodeURIComponent(shareText)
@@ -1703,7 +1723,7 @@
     const W = 1080, H = 1350, [c1, c2, c3, ac] = THEME[key] || THEME.true;
     const EMOJI = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
     try {
-      await Promise.all([`900 72px ${SERIF}`, `700 40px ${SERIF}`, `700 40px ${SANS}`, `500 30px ${SANS}`].map(f => document.fonts.load(f, '褪下仙衣八十億分之一人生三句話健康工作金幣家人夥伴天幣' + E.title + E.line)));
+      await Promise.all([`900 72px ${SERIF}`, `700 40px ${SERIF}`, `700 40px ${SANS}`, `500 30px ${SANS}`].map(f => document.fonts.load(f, '褪下仙衣八十億分之一人生三句話健康工作資產家人夥伴天幣' + E.title + E.line)));
     } catch (e) {}
     const c = document.createElement('canvas'); c.width = W; c.height = H;
     const g = c.getContext('2d');
@@ -1726,7 +1746,7 @@
 
     // 六角能力圖
     const cx = 285, cy = 730, R0 = 122;
-    const labels = [['💪', '健康', S.hp], ['💼', '工作', S.work], ['🪙', '金幣', S.gold], ['❤️', '家人', S.fam], ['🤝', '夥伴', S.pal], ['✨', '天幣', S.tian]];
+    const labels = [['💪', '健康', S.hp], ['💼', '工作', S.work], ['💵', '資產', S.gold], ['❤️', '家人', S.fam], ['🤝', '夥伴', S.pal], ['💰', '天幣', S.tian]];
     const pt = (i, r) => [cx + Math.cos(-Math.PI / 2 + i * Math.PI / 3) * r, cy + Math.sin(-Math.PI / 2 + i * Math.PI / 3) * r];
     g.lineWidth = 2;
     [.25, .5, .75, 1].forEach(f => {
@@ -1760,7 +1780,7 @@
     // 人生成就圖示
     g.textAlign = 'center';
     g.fillStyle = ac; g.font = `700 30px ${SANS}`;
-    g.fillText(`🏆 人生成就 ${S.badges.size} / 8　・　金幣帶不走，天幣留下`, W / 2, 985);
+    g.fillText(`🏆 人生成就 ${S.badges.size} / 8　・　資產帶不走，天幣留下`, W / 2, 985);
     g.font = `52px ${EMOJI}`;
     BADGES.forEach((b, i) => {
       g.globalAlpha = S.badges.has(b.id) ? 1 : .22;
