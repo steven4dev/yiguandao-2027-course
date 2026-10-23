@@ -291,14 +291,36 @@
 
   /* 結局頁 */
   #ending { position: absolute; inset: 0; overflow-y: auto; padding: 22px 16px 40px; background: var(--bg); z-index: 25; }
-  .end-card { position: relative; background: #fff; border-radius: 22px; padding: 24px 18px; text-align: center; border: 2px solid var(--gold); box-shadow: 0 10px 25px rgba(217,119,6,.15); }
-  .end-card .em { font-size: 3.4rem; }
-  /* 求道成功的紅色印章 */
-  .seal { position: absolute; top: 16px; right: 16px; transform: rotate(-14deg); writing-mode: vertical-rl; font-family: var(--serif); font-weight: 900; font-size: 1.15rem; letter-spacing: .15em; color: #C8102E; border: 4px double #C8102E; border-radius: 6px; padding: 8px 5px; opacity: .85; animation: stamp .45s cubic-bezier(.2,1.6,.4,1) both .6s; }
-  @keyframes stamp { from { opacity: 0; transform: rotate(-14deg) scale(2.2); } }
-  .end-card .kicker { color: var(--muted); font-size: .85rem; margin: 6px 0 0; }
-  .end-card h2 { font-family: var(--serif); font-size: 1.6rem; margin: 2px 0 10px; }
-  .end-card .desc { color: var(--ink-soft); line-height: 1.8; }
+  .end-head { text-align: center; }
+  .end-head .em { font-size: 3.2rem; line-height: 1.2; }
+  .end-head .kicker { color: var(--muted); font-size: .85rem; margin: 6px 0 0; }
+  .end-head h2 { font-family: var(--serif); font-size: 1.6rem; margin: 2px 0 10px; }
+  .end-head .desc { color: var(--ink-soft); line-height: 1.8; margin: 10px 0 6px; }
+  .end-head .coin { font-weight: 700; color: var(--gold); margin: 4px 0 0; font-variant-numeric: tabular-nums; }
+  .result { margin: 14px auto 0; width: min(340px, 100%); text-align: center; }
+  .card-wrap { position: relative; }
+  .card-wrap.shake { animation: shake .35s ease; }
+  @keyframes shake { 20% { transform: translate(-4px, 3px); } 40% { transform: translate(4px, -3px); } 60% { transform: translate(-3px, 2px); } 80% { transform: translate(2px, -1px); } }
+  /* 從天而降、重重蓋下的「已求道」印章（位置對齊成績卡上的印章） */
+  .seal-fly { position: absolute; left: 83.8%; top: 14.5%; width: 16.9%; transform: translate(-50%, -50%) rotate(-14deg); opacity: 0; pointer-events: none; }
+  .seal-fly.go { animation: slam .9s cubic-bezier(.5, 0, .75, .25) forwards; }
+  @keyframes slam {
+    0% { opacity: 0; transform: translate(-50%, -420%) rotate(-32deg) scale(4.2); filter: drop-shadow(0 40px 24px rgba(0,0,0,.35)); }
+    25% { opacity: 1; }
+    70% { opacity: 1; transform: translate(-50%, -50%) rotate(-14deg) scale(.88); filter: drop-shadow(0 2px 2px rgba(0,0,0,.25)); }
+    84% { transform: translate(-50%, -50%) rotate(-14deg) scale(1.08); }
+    100% { opacity: .88; transform: translate(-50%, -50%) rotate(-14deg) scale(1); filter: none; }
+  }
+  .share-box { margin-top: 14px; text-align: center; }
+  .share-box h3 { font-family: var(--serif); font-size: 1.05rem; margin: 0 0 10px; }
+  .btn.line small { display: block; font-size: .78rem; font-weight: 500; opacity: .9; }
+  .step { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; align-items: center; margin: 10px 0; text-align: left; }
+  .step .num { width: 28px; height: 28px; border-radius: 50%; background: var(--green); color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+  .step.done .num { background: var(--gold); }
+  .step b { display: block; font-size: .95rem; }
+  .step small { display: block; color: var(--muted); font-size: .78rem; line-height: 1.5; }
+  .step .btn { width: auto; padding: 10px 14px; font-size: .9rem; margin: 0; }
+  #saveImg { display: block; width: min(240px, 100%); margin: 6px auto 10px; border-radius: 14px; box-shadow: 0 10px 24px rgba(30,41,59,.2); -webkit-touch-callout: default; }
   .sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 4px; }
   .sum div { background: #F8FAFC; border-radius: 12px; padding: 8px 4px; }
   .sum b { display: block; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
@@ -316,7 +338,7 @@
   .themes b { color: var(--green); flex: none; font-variant-numeric: tabular-nums; }
   .themes span { color: var(--ink-soft); }
   .stack { display: grid; gap: 10px; }
-  #endCard { display: block; width: min(300px, 100%); margin: 4px auto 6px; border-radius: 14px; box-shadow: 0 10px 24px rgba(30,41,59,.2); -webkit-touch-callout: default; }
+  #endCard { display: block; width: 100%; border-radius: 14px; box-shadow: 0 10px 24px rgba(30,41,59,.2); -webkit-touch-callout: default; }
   .btn.line { background: #06C755; border-color: #06C755; color: #fff; }
   .toast {
     position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
@@ -342,7 +364,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261023.06</span>
+    <span id="ver">v261023.07</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -385,6 +407,24 @@
         <button class="btn primary" type="button" id="memoClose">關閉</button>
         <button class="btn ghost" type="button" id="memoClear">清除所有回憶錄</button>
       </div>
+    </div>
+  </div>
+  <div id="saveSheet" class="overlay" hidden>
+    <div class="card">
+      <h2>分享到 LINE，兩個步驟</h2>
+      <p class="hint" id="saveWhy"></p>
+      <img id="saveImg" alt="你的人生成績卡（長按可以分享或儲存）">
+      <div class="step">
+        <span class="num">1</span>
+        <div><b>長按上面的成績卡 →「分享」選 LINE</b><small>也可以先「儲存圖片」，再到 LINE 聊天室附上這張成績卡</small></div>
+        <span></span>
+      </div>
+      <div class="step">
+        <span class="num">2</span>
+        <div><b>再傳遊戲連結</b><small>朋友點開就能一起下凡</small></div>
+        <a id="lineText" class="btn line" href="#" target="_blank" rel="noopener">💬 傳連結</a>
+      </div>
+      <button id="saveClose" class="btn ghost" type="button">完成，關閉</button>
     </div>
   </div>
   <div id="settings" class="overlay" hidden>
@@ -560,10 +600,23 @@
       tone(sfxBus, m + 24, t, .12, { type: 'sine', vol: vol * .35, attack: .002 });
       tone(sfxBus, m + 12, t, .25, { type: 'triangle', vol: vol * .25, attack: .003 });
     }
+    // 蓋章：木頭印章壓在紙上的「咚」——一小段低沉的雜音加上很低的悶響
+    function thump(t) {
+      const len = Math.floor(ac.sampleRate * .12), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+      const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+      src.buffer = buf; f.type = 'lowpass'; f.frequency.value = 900; g.gain.value = .55;
+      src.connect(f); f.connect(g); g.connect(sfxBus); src.start(t);
+      const o = ac.createOscillator(), og = ac.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(45, t + .18);
+      og.gain.setValueAtTime(.5, t); og.gain.exponentialRampToValueAtTime(.0001, t + .28);
+      o.connect(og); og.connect(sfxBus); o.start(t); o.stop(t + .3);
+    }
     function sfx(name) {
       init(); if (!ac || !sfxVol) return;
       const t = ac.currentTime + .01;
       if (name === 'msg') { ping(84, t, .16); ping(91, t + .11, .16); return; }
+      if (name === 'stamp') { thump(t); return; }
       const long = name === 'end' || name === 'bell';
       for (const [m, dt] of SFX[name] || []) tone(sfxBus, m, t + dt, long ? 2.2 : .4, { type: name === 'pop' ? 'triangle' : 'sine', vol: name === 'tick' || name === 'coin' ? .04 : .09 });
     }
@@ -1473,22 +1526,22 @@
 
     const el = $('ending');
     el.innerHTML = `
-      <div class="end-card">
-        ${S.flags.qiudao ? '<span class="seal" aria-label="已求道">已求道</span>' : ''}
+      <div class="end-head">
         <div class="em">${E.em}</div>
         <p class="kicker">${moodOf()} ${S.persona.em} ${S.persona.name}・享年 ${S.age} 歲・去社青班 ${S.visits} 次</p>
         <h2>${E.title}</h2>
         <p class="quote">${E.line}</p>
         <p class="desc">${E.desc}</p>
-        <div class="sum">
-          <div><b>${S.hp}</b><small>💪 健康</small></div>
-          <div><b>${S.work}</b><small>💼 工作</small></div>
-          <div><b id="eGold">${S.gold}</b><small>🪙 金幣</small></div>
-          <div><b>${S.fam}</b><small>❤️ 家人</small></div>
-          <div><b>${S.pal}</b><small>🤝 夥伴</small></div>
-          <div><b>${S.tian}</b><small>✨ 天幣</small></div>
-        </div>
-        <p class="hint" id="eNote" style="color:var(--muted);font-size:.85rem"></p>
+        <p class="coin">🪙 金幣 <span id="eGold">${S.gold}</span> → 0　<span id="eNote"></span></p>
+      </div>
+      <figure class="result">
+        <div class="card-wrap" id="cardWrap"><img id="endCard" alt="你的人生成績卡（長按可儲存）"><img class="seal-fly" id="sealFly" alt="" hidden></div>
+        <figcaption class="hint" style="margin-top:8px">長按就能存下這張成績卡</figcaption>
+      </figure>
+      <div class="share-box">
+        <h3>🤝 揪一位夥伴一起回來佛堂</h3>
+        <button class="btn line" id="shareImg" type="button">💬 分享至 LINE<small>成績卡和遊戲連結一起送出</small></button>
+        <p class="hint" id="shareTip">分享出去的連結點開就能直接玩。</p>
       </div>
       <div class="sec">
         <h3>🏆 人生成就 ${S.badges.size} / 8</h3>
@@ -1510,12 +1563,6 @@
           <a class="btn" href="../index.html">🌿 認識社青班</a>
         </div>
       </div>
-      <div class="sec">
-        <h3>🤝 揪一位夥伴一起回來佛堂</h3>
-        <img id="endCard" alt="你的人生成績卡（長按可儲存）" hidden>
-        <p class="hint" style="text-align:center;margin:0 0 10px">長按成績卡可以儲存，傳給朋友看看</p>
-        <a class="btn line" id="lineBtn" href="#" target="_blank" rel="noopener">💬 分享至 LINE</a>
-      </div>
       <div class="sec stack">
         <button class="btn ghost" type="button" id="againBtn">🔁 再下凡一次</button>
         <a class="btn ghost" href="fahui-angel-25d.html?v=2">🎮 也玩玩看：法會小天使</a>
@@ -1526,24 +1573,87 @@
     // 金幣帶不走：數字慢慢歸零
     let g = S.gold;
     const gEl = el.querySelector('#eGold');
-    setTimeout(function drain() {
-      if (g <= 0) { gEl.textContent = '0'; sfx('fade'); el.querySelector('#eNote').textContent = '金幣歸零，帶不走；天幣留下，化成仙衣的光。'; return; }
+    const drained = new Promise(res => setTimeout(function drain() {
+      if (g <= 0) { gEl.textContent = '0'; sfx('fade'); el.querySelector('#eNote').textContent = '帶不走，天幣留下'; return res(); }
       g = Math.max(0, g - Math.ceil(S.gold / 20)); gEl.textContent = g; sfx('coin'); setTimeout(drain, 70);
-    }, 1200);
+    }, 1200));
 
-    // 分享至 LINE：手機直接打開 LINE 選聊天室，電腦開 LINE 的分享網頁
-    const text = `我在《褪下仙衣：八十億分之一》抽到「${S.persona.name}」，活成了「${E.title}」。你呢？夥伴們快跟上！`;
-    const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || '');
-    const lineBtn = el.querySelector('#lineBtn');
-    lineBtn.href = mobile
-      ? 'https://line.me/R/share?text=' + encodeURIComponent(text + '\n' + GAME_URL)
-      : 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(GAME_URL) + '&text=' + encodeURIComponent(text);
-    if (/Line\//i.test(navigator.userAgent || '')) lineBtn.removeAttribute('target');
-    lineBtn.onclick = () => sfx('tap');
-    renderCard(E, key).then(cv => { const img = el.querySelector('#endCard'); img.src = cv.toDataURL('image/png'); img.hidden = false; });
-
+    // 成績卡：先放沒蓋章的版本，金幣歸零後，「已求道」印章從天而降蓋下去，再換成蓋好章的版本
+    shareText = `我在《褪下仙衣：八十億分之一》抽到「${S.persona.name}」，活成了「${E.title}」。你呢？夥伴們快跟上！\n${GAME_URL}`;
+    lineUrl = window.matchMedia('(pointer: coarse)').matches
+      ? 'https://line.me/R/share?text=' + encodeURIComponent(shareText)
+      : 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(GAME_URL) + '&text=' + encodeURIComponent(shareText.split('\n')[0]);
+    resultUrl = ''; shareFile = null;
+    const img = el.querySelector('#endCard');
+    const setFinal = cv => {
+      resultUrl = cv.toDataURL('image/png');
+      cv.toBlob(b => { if (b) shareFile = new File([b], 'xianyi.png', { type: 'image/png' }); }, 'image/png');
+    };
+    if (!S.flags.qiudao) {
+      renderCard(E, key, false).then(cv => { img.src = cv.toDataURL('image/png'); setFinal(cv); });
+      el.querySelector('#cardWrap').classList.add('ready');
+    } else {
+      renderCard(E, key, false).then(plain => { if (!img.src) img.src = plain.toDataURL('image/png'); });
+      Promise.all([renderCard(E, key, true), drained]).then(([sealed]) => {
+        setFinal(sealed);
+        const fly = el.querySelector('#sealFly');
+        fly.src = makeSeal().toDataURL('image/png');
+        fly.hidden = false;
+        // 成績卡捲到畫面裡才蓋章
+        const go = () => {
+          fly.classList.add('go');
+          setTimeout(() => { sfx('stamp'); el.querySelector('#cardWrap').classList.add('shake'); }, 640);
+          setTimeout(() => { img.src = resultUrl; fly.hidden = true; }, 1600);
+        };
+        const io = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) { io.disconnect(); setTimeout(go, 300); } }, { threshold: .6 });
+        io.observe(img);
+      });
+    }
+    el.querySelector('#shareImg').onclick = shareToLine;
     el.querySelector('#againBtn').onclick = start;
     el.querySelector('#allMemo').onclick = () => { sfx('tap'); renderMemoirs(); $('memoirs').hidden = false; };
+  }
+
+  // ───────── 分享至 LINE（做法同法會小天使）─────────
+  let shareText = '', lineUrl = '', resultUrl = '', shareFile = null;
+  const UA = navigator.userAgent || '';
+  const IN_APP = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\//i.test(UA);
+  const APP_NAME = /Line\//i.test(UA) ? 'LINE' : /Instagram/i.test(UA) ? 'Instagram' : '臉書';
+  function tip(text) { const t = $('shareTip'); if (t) t.textContent = text; }
+  function copyText(text) {
+    try { return navigator.clipboard.writeText(text).then(() => true, () => false); } catch (e) { return Promise.resolve(false); }
+  }
+  // LINE、臉書的內建瀏覽器擋掉系統分享，改用「長按成績卡分享＋傳連結」兩步驟
+  function openSaveSheet(reason) {
+    $('saveImg').src = resultUrl;
+    $('saveWhy').textContent = reason || '';
+    $('lineText').href = lineUrl;
+    if (IN_APP) $('lineText').removeAttribute('target');
+    document.querySelectorAll('#saveSheet .step').forEach(x => x.classList.remove('done'));
+    $('saveSheet').hidden = false;
+  }
+  $('saveClose').onclick = () => { sfx('tap'); $('saveSheet').hidden = true; };
+  $('lineText').onclick = () => $('lineText').closest('.step').classList.add('done');
+  const canShareFiles = () => { try { return !!(shareFile && navigator.canShare && navigator.canShare({ files: [shareFile], text: shareText })); } catch (e) { return false; } };
+  // 手機：叫出系統分享選單（選 LINE），成績卡圖片和文字連結一起送出；文字同時複製一份備用
+  function shareToLine() {
+    sfx('tap');
+    if (!resultUrl || !shareFile) return tip('成績卡還在準備中，再按一次試試。');
+    copyText(shareText);
+    if (!IN_APP && canShareFiles()) {
+      navigator.share({ files: [shareFile], text: shareText })
+        .then(() => tip('分享好了 🎉 如果朋友只收到圖片，在聊天室長按「貼上」就能補上遊戲連結（已經幫你複製好了）。'))
+        .catch(e => { if (!e || e.name !== 'AbortError') openSaveSheet('這次沒有成功叫出分享選單，改用長按分享。'); });
+      return;
+    }
+    if (IN_APP || window.matchMedia('(pointer: coarse)').matches)
+      return openSaveSheet(IN_APP ? `你正在${APP_NAME}的內建瀏覽器，沒辦法直接叫出分享選單，改用長按分享。` : '');
+    // 電腦：下載成績卡，並開啟 LINE 分享頁送出文字和連結
+    const a = document.createElement('a');
+    a.href = resultUrl; a.download = 'xianyi.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    window.open(lineUrl, '_blank', 'noopener');
+    tip('成績卡已下載，也開啟了 LINE 分享頁：送出文字和連結後，把下載的成績卡拖進同一個聊天室就完成。');
   }
 
   // ───────── 成績卡（長按儲存用） ─────────
@@ -1586,7 +1696,7 @@
     return lines;
   }
   // 1080×1350 直式成績卡（適合 LINE 傳圖）
-  async function renderCard(E, key) {
+  async function renderCard(E, key, withSeal) {
     const W = 1080, H = 1350, [c1, c2, c3, ac] = THEME[key] || THEME.true;
     const EMOJI = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
     try {
@@ -1635,7 +1745,7 @@
     g.textAlign = 'left';
     g.fillStyle = '#1E293B'; g.font = `900 34px ${SERIF}`; g.fillText('人生三句話', tx, 585);
     let ty = 645;
-    highlights().forEach(([age, text]) => {
+    (S.hl = S.hl || highlights()).forEach(([age, text]) => {
       rr(g, tx, ty - 27, 88, 36, 18); g.fillStyle = hexA(ac, .15); g.fill();
       g.fillStyle = ac; g.font = `700 22px ${SANS}`; g.textAlign = 'center'; g.fillText(`${age} 歲`, tx + 44, ty - 2); g.textAlign = 'left';
       g.fillStyle = '#334155'; g.font = `500 26px ${SANS}`;
@@ -1669,11 +1779,11 @@
       g.fillStyle = '#1E293B';
       for (let r = 0; r < n; r++) for (let cc = 0; cc < n; cc++) if (qr.isDark(r, cc)) g.fillRect(qx + cc * cell, qyy + r * cell, Math.ceil(cell), Math.ceil(cell));
     }
-    if (S.flags.qiudao) drawSeal(g, 905, 196);
+    if (withSeal) drawSeal(g, 905, 196);
     return c;
   }
   // 仿印章：紅色雙框方印、直書「已求道」，再打上斑駁的印泥紋理
-  function drawSeal(g, cx, cy) {
+  function makeSeal() {
     const size = 146, pad = 18, c = document.createElement('canvas');
     c.width = c.height = size + pad * 2;
     const t = c.getContext('2d'), red = '#C8102E';
@@ -1684,6 +1794,10 @@
     ['已', '求', '道'].forEach((ch, i) => t.fillText(ch, pad + size / 2, pad + 37 + i * 36));
     t.globalCompositeOperation = 'destination-out';
     for (let i = 0; i < 260; i++) { t.globalAlpha = Math.random() * .7; t.beginPath(); t.arc(pad + Math.random() * size, pad + Math.random() * size, Math.random() * 2.6, 0, Math.PI * 2); t.fill(); }
+    return c;
+  }
+  function drawSeal(g, cx, cy) {
+    const c = makeSeal();
     g.save(); g.translate(cx, cy); g.rotate(-14 * Math.PI / 180); g.globalAlpha = .88;
     g.drawImage(c, -c.width / 2, -c.height / 2); g.restore();
   }
