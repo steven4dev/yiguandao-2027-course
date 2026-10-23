@@ -364,7 +364,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261023.09</span>
+    <span id="ver">v261023.10</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -1575,8 +1575,8 @@
     const gEl = el.querySelector('#eGold');
     const drained = new Promise(res => setTimeout(function drain() {
       if (g <= 0) { gEl.textContent = '0'; sfx('fade'); el.querySelector('#eNote').textContent = '帶不走，天幣留下'; return res(); }
-      g = Math.max(0, g - Math.ceil(S.gold / 20)); gEl.textContent = g; sfx('coin'); setTimeout(drain, 70);
-    }, 1200));
+      g = Math.max(0, g - Math.ceil(S.gold / 30)); gEl.textContent = g; sfx('coin'); setTimeout(drain, 140);
+    }, 2200));
 
     // 成績卡：先放沒蓋章的版本，金幣歸零後，「已求道」印章從天而降蓋下去，再換成蓋好章的版本
     shareText = `我在《褪下仙衣：八十億分之一》抽到「${S.persona.name}」，活成了「${E.title}」。你呢？夥伴們快跟上！\n${GAME_URL}`;
