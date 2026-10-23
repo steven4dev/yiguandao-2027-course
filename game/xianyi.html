@@ -7,10 +7,10 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="2027 全真社青 Life Design 探索地圖">
 <meta property="og:title" content="褪下仙衣：八十億分之一">
-<meta property="og:description" content="人生如戲，戲如人生。下凡抽籤、走完一生——金幣帶不走，這一生，你活成什麼樣？約 10 分鐘。">
-<meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/game/xianyi.html?v=4">
-<meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png?v=4">
-<meta property="og:image:secure_url" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png?v=4">
+<meta property="og:description" content="人生如戲，戲如人生。下凡抽籤、走完一生——金幣帶不走，這一生，你活成什麼樣？約 12 分鐘。">
+<meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/game/xianyi.html?v=5">
+<meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png?v=5">
+<meta property="og:image:secure_url" content="https://steven4dev.github.io/yiguandao-2027-course/game/og-xianyi.png?v=5">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -332,7 +332,7 @@
     <p class="lede">每個人都是褪下仙衣、來到人間的原靈。<br>下凡抽籤，走完一生——<br>名利帶不走，這一生，你帶走了什麼？</p>
     <button class="btn primary" id="startBtn" type="button">下凡去 ▶</button>
     <button class="btn ghost" id="memoBtn" type="button" hidden>📖 人生回憶錄</button>
-    <p class="meta">約 10 分鐘・可暫停、可調整播放速度</p>
+    <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
   </section>
@@ -418,7 +418,7 @@
   });
 
   const SITE = 'https://steven4dev.github.io/yiguandao-2027-course/';
-  const GAME_URL = SITE + 'game/xianyi.html?v=4';   // 帶 ?v=4 讓 LINE 重新抓預覽圖
+  const GAME_URL = SITE + 'game/xianyi.html?v=5';   // 帶 ?v=5 讓 LINE 重新抓預覽圖
   const CAL = 'https://calendar.google.com/calendar/u/0?cid=NWMyYTEyNmIwYzFiOWIzMzQ4ZmM5MzM5NTFkZDNiNzQ5ZmY5ZjM5Zjc1MDkzMzE3N2Q5MDgzNDNiMTY4ZjRmY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t';
 
   // 收集紀錄與人生回憶錄只存在這台裝置，讀不到也照常遊玩
@@ -688,7 +688,7 @@
   }
   // 每章結束：依工作多寡存下積蓄；工作衝太高會過勞，年紀大了健康自然下滑
   async function yearsPass() {
-    const fx = { gold: 2 + Math.round(S.work / 10) };
+    const fx = { gold: 2 + Math.round(S.work / 10) + (S.flags.civil ? 2 : 0) };
     let note = '這幾年認真工作，存下了一點積蓄。';
     if (S.work >= 75) { fx.hp = -6; fx.fam = -4; note = '存款變多了，但你已經連續加班好幾個月。'; }
     if (S.age >= 38) fx.hp = (fx.hp || 0) - 3;
@@ -829,28 +829,64 @@
     await line(0, '你褪下仙衣仙裳，哭得很大聲。護理師說：「肺活量不錯。」');
     await event(rand(1, 3), pick([['你說的第一個詞是「手機」。'], ['阿嬤說你很乖，因為給你平板就不哭。'], ['你在全家福照片裡唯一沒看鏡頭。']]));
     await event(rand(4, 5), pick([['幼稚園畢業典禮，你演一棵樹，站得非常認真。'], ['你在阿公的機車前座睡著，口水滴在安全帽上。', { fam: 2 }]]));
-    await event(rand(6, 8), pick([['才藝班連報五個，週末比上班族還忙。', { hp: -2 }], ['你把壓歲錢全投進夾娃娃機，夾到一隻很像皮卡丘的東西。', { gold: -2 }], ['作文〈我的志願〉你寫：當有錢人。老師給你乙上。']]));
-    await event(rand(10, 12), pick([['第一次跟媽媽去佛堂，記得最清楚的是那盤水果。', { tian: 2 }], ['你在補習班認識了一輩子的好朋友，也認識了一輩子的近視。', { pal: 3, hp: -2 }], ['暑假每天看卡通，看到會背所有片尾曲。']]));
+    await line(8, '放學鐘聲響了，同學們一個個被接走。');
+    await ask('🎒 放學後', '你最常去哪裡？', [
+      { text: '去安親班把功課寫完', fx: { work: 3 }, note: '老師說你是全班最早寫完的。' },
+      { text: '去學鋼琴、畫畫', fx: { work: 2, gold: -2 }, note: '你的畫被貼在教室後面，貼了一整個學期。' },
+      { text: '去公園玩到天黑', fx: { hp: 4 }, note: '膝蓋上的疤，是那幾年最好的紀念。' },
+      { text: '跟阿嬤去菜市場', fx: { fam: 4 }, note: '阿嬤每次都跟老闆說：「這我孫啦！」' },
+    ]);
+    await event(rand(9, 11), pick([['第一次跟媽媽去佛堂，記得最清楚的是那盤水果。', { tian: 2 }], ['你在補習班認識了一輩子的好朋友，也認識了一輩子的近視。', { pal: 3, hp: -2 }], ['你把壓歲錢全投進夾娃娃機，夾到一隻很像皮卡丘的東西。', { gold: -2 }]]));
+    await line(12, '下課時，班上的小胖又被幾個同學圍在走廊角落。');
+    await ask('🏫 走廊角落', '你看見了。', [
+      { text: '走過去說：「夠了喔。」', fx: { pal: 3, tian: 2 }, note: '你後來也被嗆了好幾天，但小胖從此跟你最好。' },
+      { text: '偷偷去告訴老師', fx: { tian: 2 }, note: '老師處理了，沒有人知道是你說的。' },
+      { text: '裝作沒看到', fx: {}, note: '那天放學，你一直想起小胖的眼神。' },
+    ]);
     await event(13, pick([['第一支手機到手，螢幕使用時間：一天 5 小時。', { hp: -3 }], ['你第一次暗戀，對象是隔壁班的，對方不知道。']]));
     if (Math.random() < .6) {
       S.flags.qiudao = true;
-      await line(15, '跟著家人到佛堂求道。點傳師說的話你沒全懂，但你記得那天很安心。');
+      await line(14, '跟著家人到佛堂求道。點傳師說的話你沒全懂，但你記得那天很安心。');
       remember('跟著家人到佛堂求道。');
       await settle({ tian: 8 });
     } else {
-      await line(15, '朋友邀你去佛堂，你說：「下次。」');
+      await line(14, '朋友邀你去佛堂，你說：「下次。」');
     }
-    await line(17, pick(['學測前三個月，你的 IG 限動比讀書時數還多。', '模擬考成績出來，你把成績單折成紙飛機。']));
-    await line(18, pick(['考上大學，家族群組洗了 87 個「讚」貼圖。', '畢業典禮，你們在操場上把帽子丟得好高。']));
+    await line(15, '會考成績出來了，要選學校。爸媽有他們的想法，你也有你的。');
+    await ask('📚 選學校', '你怎麼選？', [
+      { text: '照爸媽的期望，念熱門科系', fx: { work: 4, hp: -2 }, note: '書念得很辛苦，但爸媽很放心。' },
+      { text: '選自己有興趣的', fx: { hp: 3, fam: -2 }, note: '爸媽唸了一整個暑假，你卻第一次期待開學。' },
+      { text: '念五專，早點出社會', fx: { work: 3, gold: 2 }, note: '你比同學早幾年拿到第一份正職薪水。', run: () => { S.flags.early = true; } },
+    ]);
+    if (S.flags.early) {
+      await line(17, '實習課上，你第一次穿上制服站在櫃台，緊張到把「歡迎光臨」說成「謝謝光臨」。');
+      await line(19, '同學在讀大學，你已經學會自己報稅了。');
+    } else {
+      await line(17, pick(['學測前三個月，你的 IG 限動比讀書時數還多。', '模擬考成績出來，你把成績單折成紙飛機。']));
+      await line(18, '考上大學，家族群組洗了 87 個「讚」貼圖。');
+      await ask('🎓 大學生活', '四年要怎麼過？', [
+        { text: '認真念書拿獎學金', fx: { work: 4, gold: 2 }, note: '獎學金不多，但你知道自己做得到。' },
+        { text: '社團玩到翻', fx: { pal: 6, work: -1 }, note: '那群一起熬夜辦活動的人，到現在還在同一個群組。' },
+        { text: '打工存學費', fx: { gold: 4, hp: -2 }, note: '你很早就知道錢有多難賺。' },
+        { text: '談一場戀愛', fx: { pal: 2, hp: 2 }, note: '後來分開了，但你學會了怎麼好好說再見。' },
+      ]);
+    }
     if (Math.random() < .55) {
       S.flags.debt = true;
       await line(20, '你跟同學借了 500 元，說：「下週就還。」');
     } else {
       await event(20, ['宿舍泡麵吃到可以出一本評鑑。', { hp: -3 }]);
     }
-    await event(22, pick([['第一次打工，領到薪水先買了一雙球鞋。', { gold: -2 }], ['你在畢業旅行的夜市，吃完一整條街。', { hp: -2, pal: 2, gold: -2 }]]));
-    await line(23, '在 104 投了 87 封履歷，收到 3 封面試通知、1 封詐騙。');
-    await settle({ work: 10 });
+    await event(21, pick([['第一次打工，領到薪水先買了一雙球鞋。', { gold: -2 }], ['你在畢業旅行的夜市，吃完一整條街。', { hp: -2, pal: 2, gold: -2 }]]));
+    await line(22, S.flags.early ? '工作幾年了，你開始想：要一直這樣下去嗎？' : '拿到畢業證書，下一步呢？');
+    await ask('🧭 下一步', '你決定？', [
+      { text: S.flags.early ? '繼續待在這份工作' : '直接找工作', fx: { work: 4, gold: 3 }, note: '在 104 投了 87 封履歷，收到 3 封面試通知、1 封詐騙。' },
+      { text: '考研究所', fx: { work: 3, gold: -3 }, note: '多念兩年書，履歷上多了一行字。' },
+      { text: '打工度假一年', fx: { pal: 4, hp: 3, gold: -4 }, note: '你在澳洲農場學會開堆高機，也學會一個人過生活。' },
+      { text: '準備考公職', fx: { work: 2, gold: 1 }, note: '考了兩次才上，從此不太需要擔心被裁員。', run: () => { S.flags.civil = true; } },
+    ]);
+    await line(23, S.flags.civil ? '報到那天，你穿了一件新襯衫，領到一張很長的公文編號。' : '你終於有了一份正職工作。');
+    await settle({ work: 8 });
     await line(24, '第一份薪水入帳，你在 ATM 前站了很久。');
     remember('領到人生第一份薪水。');
     await settle({ gold: 5 });
@@ -1108,6 +1144,12 @@
       { text: '明天要去爬山，先不追了', fx: { hp: 7 }, note: '山頂的風，比演算法懂你。' },
       { text: '留著週末跟家人一起看', fx: { fam: 7 }, note: '原來爸爸也會哭，在第 4 集。' },
     ]);
+    await line(27, '通勤單程一個半小時，媽媽每天都幫你留一碗湯。');
+    await ask('🏠 要不要搬出去', '你想怎麼住？', [
+      { text: '自己在公司附近租套房', fx: { gold: -5, hp: 3, fam: -2 }, note: '第一次自己倒垃圾、繳水電，才知道媽媽有多厲害。' },
+      { text: '住家裡，省錢也陪爸媽', fx: { gold: 4, fam: 4, hp: -1 }, note: '通勤很累，但每天都有熱湯。' },
+      { text: '跟朋友合租', fx: { gold: -2, pal: 4 }, note: '冰箱裡的布丁常常不見，但週末一起煮火鍋很開心。' },
+    ]);
     await line(28, '主管把你叫進會議室，桌上放著一份新專案的企劃書。');
     await ask('💼 新專案', '「這個新專案，你要不要接？」', [
       { text: '接！加班也沒關係', fx: { work: 14, hp: -6, fam: -2 }, note: '專案成功了，你的黑眼圈也成功了。' },
@@ -1143,6 +1185,12 @@
       { text: '犒賞自己，報名健身房', fx: { gold: -4, hp: 8 }, note: '這次你真的有去，不只是繳錢。' },
     ]);
     await line(33, '同事在茶水間聊房價，你默默算了一下：不吃不喝十幾年。');
+    await line(33, '爸爸突然住院，醫生說要開刀，術後要有人照顧兩個禮拜。');
+    await ask('🏥 誰來照顧', '工作也走不開。', [
+      { text: '請假自己顧', fx: { fam: 9, work: -4, hp: -2 }, note: '你在醫院走廊吃了兩個禮拜的便當，爸爸第一次跟你說謝謝。' },
+      { text: '請看護', fx: { gold: -8, fam: 2 }, note: '看護阿姨很專業，你每天下班都去坐一下。' },
+      { text: '跟兄弟姊妹排班輪流', fx: { fam: 6, hp: -1 }, note: '家族群組第一次這麼有效率。' },
+    ]);
     await invite(1);
     await yearsPass();
   }
@@ -1178,6 +1226,11 @@
     ]);
     if (Math.random() < .7) await line(36, '鄰居阿伯經過，丟下一句：「雄班某營歸剛，哈班某妹丁當。」你聽不太懂，但覺得很有道理。');
     await outdoor('05/29', '到河濱公園野餐', () => `05/29 戶外聯誼，${S.mates[1]}帶了野餐墊，大家在草地上躺成一排，聊到太陽下山。`, { pal: 5, hp: 3 });
+    await line(36, '朋友在收容所當志工，傳來一隻橘貓的照片：「牠在等一個家。」');
+    await ask('🐱 要不要養牠', '牠歪著頭看鏡頭。', [
+      { text: '去把牠帶回家', fx: { fam: 4, gold: -3, hp: 1 }, note: '牠叫「麻糬」，從此你下班有人等。', run: () => { S.flags.cat = true; } },
+      { text: '怕照顧不來，先不要', fx: {}, note: '你把照片存了下來，偶爾會點開來看。' },
+    ]);
     await invite(2);
     // 08/28 新道親法會：有接觸佛堂的人才會在群組看到志工召集
     if (S.visits || S.flags.qiudao) {
@@ -1209,12 +1262,18 @@
         { text: '裝作不記得', fx: { tian: -5, work: -3 }, note: '你的考績，剛好少了一點點。' },
       ]);
     }
+    await line(39, '工作十幾年了，你發現自己好像停在原地。');
+    await ask('📖 中年職涯', '要不要做點改變？', [
+      { text: '去讀在職專班', fx: { work: 8, gold: -5, hp: -3 }, note: '下班趕去上課，同學都是跟你一樣的老學生。' },
+      { text: '學一個第二專長', fx: { work: 5, gold: -2 }, note: '你學了咖啡沖煮，週末在朋友的店裡幫忙。' },
+      { text: '維持現狀，把時間留給生活', fx: { hp: 4, fam: 2 }, note: '你沒有變得更厲害，但變得更自在。' },
+    ]);
     const CARDS = [
       ['公司組織重整，你被資遣了。', { gold: -10, work: -20 }],
       ['健檢報告，紅字三項。', { hp: -15 }],
       ['一位老朋友突然離開了。', { pal: -6 }],
     ];
-    const card4 = S.hp < 40 ? CARDS[1] : pick(CARDS);
+    const card4 = S.hp < 40 ? CARDS[1] : pick(S.flags.civil ? CARDS.slice(1) : CARDS);
     await line(40, `🃏 無常卡：${card4[0]}`);
     remember(`遇見無常：${card4[0]}`);
     await settle({ ...card4[1], badge: '人生難免' });
@@ -1268,13 +1327,26 @@
     await line(46, '人生不是交作業。接下來的日子，照你這一路的選擇慢慢走。');
     await L(50, S.gold >= 55 ? '你的存款數字很漂亮，你常常一個人看。' : '錢不算多，但週末的餐桌總是很擠。');
     await L(55, S.fam >= 55 ? '姪子帶著另一半回家吃飯，說你是他最想變成的大人。' : '家族群組裡，你已讀的訊息比回覆的多。');
+    if (S.flags.cat) await L(52, '麻糬變成老貓了，還是每天在門口等你回家。');
+    if (death > 58) {
+      await line(58, '再過幾年就要退休了，你開始想：之後的日子要怎麼過？');
+      const r = await ask('🌅 退休後', '你想做什麼？', [
+        { text: '騎機車環島', fx: { hp: 4 }, later: '你騎著機車環島第三次，每一站都有人跟你揮手。' },
+        { text: '幫忙帶孫子', fx: { fam: 6 }, later: '孫子第一次開口，叫的就是你。你得意了一整年。' },
+        { text: '去醫院當志工', fx: { tian: 5, pal: 4 }, later: '你在醫院當導覽志工，大家都叫你「前輩」。' },
+        { text: '繼續工作', fx: { gold: 6, work: 4 }, later: '你成了公司裡最資深的人，年輕人有事都來問你。', keep: true },
+      ]);
+      S.flags.retire = r.later;
+      S.flags.keepWorking = !!r.keep;
+    }
     await L(60, S.tian >= 45 ? '你帶過的學弟妹，現在也在帶新人了。' : '偶爾路過佛堂，聞到檀香，你的腳步停了一下。');
     if (S.visits >= 2 && death > 62) {
       await L(62, '濟公老師說：<b>「入我門者不貧。」</b>這些年，你的日子一直都夠用，心裡也不缺什麼。');
       await settle({ gold: Math.max(8, 40 - S.gold) });
     }
-    await L(65, S.work >= 60 ? '退休歡送會上，同事們排隊跟你合照。' : '退休那天很安靜，你終於有時間好好吃一頓早餐。');
+    if (!S.flags.keepWorking) await L(65, S.work >= 60 ? '退休歡送會上，同事們排隊跟你合照。' : '退休那天很安靜，你終於有時間好好吃一頓早餐。');
     if (S.flags.fastcar) await L(66, '那台飛天跑車，現在在二手車行，標價是當年的零頭。');
+    if (S.flags.retire) await L(68, S.flags.retire);
     await L(70, S.hp >= 55 ? '你還能爬上年輕時那座山，風還是一樣。' : '藥盒分成早、中、晚三格，你常常忘記今天吃了沒。');
     if (S.pal >= 50) await L(72, `${S.mates[0] || '老朋友'}揪大家吃飯，一桌坐不下，又開了一桌。`);
     await line(death, '這一生，走到了終點。你褪下這身皮囊，準備回家。', 'big');
