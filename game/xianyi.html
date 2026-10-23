@@ -162,6 +162,8 @@
   }
   .ln .t { flex: 1; }
   .ln.sys .t { color: var(--muted); font-size: .9rem; }
+  .ln.note .t, .dao-note { font-size: .82rem; line-height: 1.65; color: #92400E; background: #FFFBEB; border-left: 3px solid var(--gold); border-radius: 8px; padding: 6px 10px; }
+  .dao-note { text-align: left; margin-top: 10px; }
   .ln.big .t { font-family: var(--serif); font-weight: 900; font-size: 1.1rem; color: var(--green); border-left: 4px solid var(--green); padding-left: 10px; }
   .chip { display: inline-block; font-size: .78rem; font-weight: 700; border-radius: 99px; padding: 1px 8px; margin: 2px 4px 0 0; background: #F1F5F9; }
   .chip.up { color: var(--green); background: var(--green-soft); }
@@ -337,7 +339,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261023.02</span>
+    <span id="ver">v261023.03</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -618,6 +620,7 @@
   const newState = () => ({
     age: 0, hp: 65, work: 15, gold: 20, fam: 50, pal: 10, tian: 5,
     persona: null, badges: new Set(), visits: 0,
+    daoAt: [Math.random() < .6 ? rand(10, 24) : 0, rand(26, 45), Math.random() < .4 ? rand(50, 55) : 0].filter(Boolean),
     mates: [], flags: {}, log: [],
   });
 
@@ -755,7 +758,7 @@
     await wait(2000);
     sfx('msg');
     const who = S.mates.length ? `同行夥伴${S.mates[0]}` : (S.flags.qiudao ? '佛堂的學長' : '老同學');
-    const go = await card(`<h2>📱 ${who}傳來訊息</h2><div class="invite-msg">「${t.date}（六）社青班的主題是<b>「${t.name}｜${t.sub}」</b>，下午是 ${t.pm}。每個月一天，給自己充個電，要不要一起來？」</div><div class="row2" style="margin-top:14px"><button class="btn ghost" type="button" data-go="0">這次先不了</button><button class="btn primary" type="button" data-go="1">🍃 好，去看看</button></div>`, (el, done) => {
+    const go = await card(`<h2>📱 ${who}傳來訊息</h2><div class="invite-msg">「${S.flags.qiudao ? '好久沒回佛堂了吧？' : '有個給上班族的生活課程叫社青班，'}${t.date}（六）的主題是<b>「${t.name}｜${t.sub}」</b>，下午是 ${t.pm}。每個月一天，給自己充個電，要不要一起來？」</div><div class="row2" style="margin-top:14px"><button class="btn ghost" type="button" data-go="0">這次先不了</button><button class="btn primary" type="button" data-go="1">🍃 好，去看看</button></div>`, (el, done) => {
       el.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { sfx('tap'); done(b.dataset.go === '1'); });
     });
     if (go) return templeDay(ti);
@@ -782,6 +785,59 @@
     }
     remember(`參加 ${date} 戶外聯誼，${what}。`);
     await event(null, [scene(), fx]);
+  }
+
+  // ───────── 求道：隨機時間有親友邀約，自己決定要不要去；去了還有一半機率遇到天意的考驗 ─────────
+  const NOTE = {
+    what: '📌 什麼是求道？在一貫道，「求道」是正式入道的儀式，要有引師帶你來、保師為你作保，再由點傳師傳授心法。一生只要求一次。',
+    prep: '📌 有些佛堂會建議求道前一天吃素，當天也會隨喜一份功德費（一生一次）。',
+    fate: '📌 道場常說「求道要有緣」。很多人第一次被邀時沒去成，過了幾年因緣成熟才來。',
+    done: '📌 求道當天會先聽一段道義講解，再由點傳師傳授「三寶」：玄關、口訣、合同。依照傳統，三寶的內容只在佛前親傳，不對外公開。',
+    after: '📌 剛求道的新朋友，通常會被邀請參加「新道親法會」，進一步認識道的內涵。',
+  };
+  const note = text => addLine(text, 'note', '');
+  async function daoCheck() {
+    if (S.flags.qiudao || !S.daoAt.length || S.daoAt[0] > S.age) return;
+    S.daoAt.shift();
+    const a = S.age;
+    const who = a <= 15 ? pick(['阿嬤', '阿姨', '表姊'])
+      : a <= 24 ? pick(['國中同學', '大學室友', '表姊'])
+      : a <= 45 ? (S.mates.length ? `同行夥伴${S.mates[0]}` : pick(['同事', '鄰居阿姨', '老朋友']))
+      : pick(['老朋友', '姪子']);
+    await wait(2000);
+    sfx('msg');
+    const go = await card(`<h2>📱 ${who}傳來訊息</h2><div class="invite-msg">「下禮拜六佛堂有辦<b>求道</b>，要不要${a <= 15 ? '跟我' : '一起'}去？」</div><p class="dao-note">${NOTE.what}</p><div class="row2" style="margin-top:14px"><button class="btn ghost" type="button" data-go="0">這次先不了</button><button class="btn primary" type="button" data-go="1">🙏 好，我去</button></div>`, (el, done) => {
+      el.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { sfx('tap'); done(b.dataset.go === '1'); });
+    });
+    if (!go) {
+      addLine('→ 你回了一句：「這次先不了。」', 'sys', '');
+      remember(`${who}邀你去求道，這次沒有去。`);
+      await wait(1600);
+      return;
+    }
+    addLine(`→ 你答應了${who}，約好下禮拜六一起去佛堂。`, 'sys', '');
+    note(NOTE.prep);
+    await wait(3400);
+    // 考驗：一半機率遇到，全部是天意，玩家無法改變
+    if (Math.random() < .5) {
+      const TESTS = a < 18
+        ? ['颱風來了，停班停課，佛堂的求道也延期了。', '前一晚突然發高燒，媽媽把你留在家裡休息。', '阿公突然住院，全家一早就趕去醫院。', '隔天要段考，爸媽說等考完再說。']
+        : ['颱風來了，停班停課，佛堂的求道也延期了。', '前一晚突然發高燒，整個人爬不起來。', '鬧鐘沒響，醒來已經中午了。', '公司臨時派你出差，那天人在外縣市。', '騎車去佛堂的路上，機車在半路爆胎了。'];
+      const t = pick(TESTS);
+      await line(null, `🃏 考驗：${t}`);
+      addLine('這次緣分還沒到。', 'sys', '');
+      note(NOTE.fate);
+      remember(`答應去求道，卻遇到考驗：${t.replace(/。$/, '')}，這次緣分還沒到。`);
+      await wait(3600);
+      return;
+    }
+    S.flags.qiudao = true;
+    await line(null, `跟著${who}到佛堂求道。點傳師說的話你沒全懂，但你記得那天很安心。`);
+    note(NOTE.done);
+    remember(`跟著${who}到佛堂求道。`);
+    await settle({ tian: 8 });
+    note(NOTE.after);
+    await wait(3000);
   }
 
   // ───────── 序章 ─────────
@@ -847,15 +903,9 @@
       { text: '裝作沒看到', fx: {}, note: '那天放學，你一直想起小胖的眼神。' },
     ]);
     await event(13, pick([['第一支手機到手，螢幕使用時間：一天 5 小時。', { hp: -3 }], ['你第一次暗戀，對象是隔壁班的，對方不知道。']]));
-    if (Math.random() < .6) {
-      S.flags.qiudao = true;
-      await line(14, '跟著家人到佛堂求道。點傳師說的話你沒全懂，但你記得那天很安心。');
-      remember('跟著家人到佛堂求道。');
-      await settle({ tian: 8 });
-    } else {
-      await line(14, '朋友邀你去佛堂，你說：「下次。」');
-    }
+    await daoCheck();
     await line(15, '會考成績出來了，要選學校。爸媽有他們的想法，你也有你的。');
+    await daoCheck();
     await ask('📚 選學校', '你怎麼選？', [
       { text: '照爸媽的期望，念熱門科系', fx: { work: 4, hp: -2 }, note: '書念得很辛苦，但爸媽很放心。' },
       { text: '選自己有興趣的', fx: { hp: 3, fam: -2 }, note: '爸媽唸了一整個暑假，你卻第一次期待開學。' },
@@ -880,6 +930,7 @@
     } else {
       await event(20, ['宿舍泡麵吃到可以出一本評鑑。', { hp: -3 }]);
     }
+    await daoCheck();
     await event(21, pick([['第一次打工，領到薪水先買了一雙球鞋。', { gold: -2 }], ['你在畢業旅行的夜市，吃完一整條街。', { hp: -2, pal: 2, gold: -2 }]]));
     await line(22, S.flags.early ? '工作幾年了，你開始想：要一直這樣下去嗎？' : '拿到畢業證書，下一步呢？');
     await ask('🧭 下一步', '你決定？', [
@@ -890,6 +941,7 @@
     ]);
     await line(23, S.flags.civil ? '報到那天，你穿了一件新襯衫，領到一張很長的公文編號。' : '你終於有了一份正職工作。');
     await settle({ work: 8 });
+    await daoCheck();
     await line(24, '第一份薪水入帳，你在 ATM 前站了很久。');
     remember('領到人生第一份薪水。');
     await settle({ gold: 5 });
@@ -899,7 +951,7 @@
   async function drawPersona() {
     S.age = 25; hud();
     await wait(1200);
-    const deck = shuffle(PERSONAS);
+    const deck = shuffle(PERSONAS.filter(p => p.id !== 'forgot' || S.flags.qiudao));
     const p = await card(`<h2>🎴 25 歲・人生劇本卡</h2><p>出社會了。翻開一張，看看你會活成哪一種人？</p><div class="deck">${deck.map((_, i) => `<button class="pc" type="button" data-i="${i}">？</button>`).join('')}</div><p class="hint">六種劇本，六種人生</p>`, (el, done) => {
       el.querySelectorAll('.pc').forEach(b => b.onclick = () => {
         const i = +b.dataset.i;
@@ -1164,6 +1216,7 @@
     await invite(0);
     await event(29, pick([['第一次一個人出國，在機場迷路了兩次。', { gold: -3 }], ['你養了一盆多肉植物，它活得比你規律。']]));
     await yearsPass();
+    await daoCheck();
   }
 
   async function ch2() {
@@ -1196,6 +1249,7 @@
     ]);
     await invite(1);
     await yearsPass();
+    await daoCheck();
   }
 
   async function ch3() {
@@ -1248,6 +1302,7 @@
       await line(37, '朋友在 IG 貼了法會志工的照片，大家笑得很開心。');
     }
     await yearsPass();
+    await daoCheck();
   }
 
   async function ch4() {
@@ -1291,6 +1346,7 @@
     await invite(3);
     await outdoor('10/30', '沿著河堤騎腳踏車', () => `10/30 戶外聯誼，大家騎腳踏車，你騎在最後面，${S.mates[2]}一直回頭等你。`, { pal: 5, hp: 4 });
     await yearsPass();
+    await daoCheck();
   }
 
   async function ch5() {
@@ -1316,6 +1372,7 @@
       ]);
     }
     await yearsPass();
+    await daoCheck();
   }
 
   async function finale() {
@@ -1329,6 +1386,7 @@
     const L = (a, t) => a < death ? line(a, t) : Promise.resolve();
     await line(46, '人生不是交作業。接下來的日子，照你這一路的選擇慢慢走。');
     await L(50, S.gold >= 55 ? '你的存款數字很漂亮，你常常一個人看。' : '錢不算多，但週末的餐桌總是很擠。');
+    if (death > 55) { S.age = Math.max(S.age, 55); await daoCheck(); }
     await L(55, S.fam >= 55 ? '姪子帶著另一半回家吃飯，說你是他最想變成的大人。' : '家族群組裡，你已讀的訊息比回覆的多。');
     if (S.flags.cat) await L(52, '麻糬變成老貓了，還是每天在門口等你回家。');
     if (death > 58) {
