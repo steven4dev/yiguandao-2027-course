@@ -280,16 +280,31 @@
 
   /* 劇本卡 */
   .deck { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0 4px; perspective: 600px; }
+  /* 劇本卡背面：星空金框，像天上安排好的命運卡 */
   .pc {
+    position: relative; overflow: hidden;
     aspect-ratio: 3/4; border-radius: 14px; border: 0;
-    background: linear-gradient(135deg, #059669, #0D9488);
+    background: radial-gradient(circle at 50% 40%, #3B3A7A 0%, #1E1B4B 60%, #0F0C2E 100%);
     color: #fff; font-size: 1.6rem;
-    box-shadow: 0 6px 14px rgba(5,150,105,.25);
-    transition: transform .45s ease;
+    box-shadow: 0 8px 18px rgba(30,27,75,.35);
+    transition: transform .45s ease, opacity .3s ease;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px;
   }
+  .pc::before { content: ""; position: absolute; inset: 5px; border: 1.5px solid rgba(253,230,138,.85); border-radius: 10px;
+    box-shadow: inset 0 0 0 3px #1E1B4B, inset 0 0 0 4px rgba(253,230,138,.4); pointer-events: none; }
+  .pc::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .9;
+    background-image: radial-gradient(1px 1px at 20% 25%, #fff, transparent), radial-gradient(1px 1px at 75% 18%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 30% 78%, #FDE68A, transparent), radial-gradient(1px 1px at 82% 70%, #fff, transparent),
+      radial-gradient(1px 1px at 55% 88%, #C4B5FD, transparent), radial-gradient(1px 1px at 12% 55%, #fff, transparent); }
+  .pc .ic { position: relative; z-index: 1; font-size: 1.9rem; filter: drop-shadow(0 0 8px rgba(253,230,138,.9)); }
+  .pc:not([disabled]) { animation: cardBob 2.6s ease-in-out infinite; }
+  .pc:nth-child(2) { animation-delay: -.4s; } .pc:nth-child(3) { animation-delay: -.8s; } .pc:nth-child(4) { animation-delay: -1.2s; }
+  .pc:nth-child(5) { animation-delay: -1.6s; } .pc:nth-child(6) { animation-delay: -2s; }
+  @keyframes cardBob { 50% { transform: translateY(-4px); } }
   .pc.flip { transform: rotateY(180deg) scale(1.04); }
-  .pc.face { background: #fff; color: var(--ink); border: 2px solid var(--gold); transform: none; }
+  .pc.face { background: #fff; color: var(--ink); border: 2px solid var(--gold); transform: none; animation: faceGlow .9s ease-out; }
+  .pc.face::before, .pc.face::after { display: none; }
+  @keyframes faceGlow { from { box-shadow: 0 0 0 0 rgba(253,230,138,.95), 0 0 24px rgba(253,230,138,.9); } to { box-shadow: 0 0 0 16px rgba(253,230,138,0), 0 6px 14px rgba(5,150,105,.2); } }
   .pc.face b { font-size: .8rem; }
   .pc.dim { opacity: .35; }
 
@@ -471,7 +486,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.32</span>
+    <span id="ver">v261024.33</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -1268,7 +1283,7 @@
     S.age = 25; hud();
     await wait(1200);
     const deck = shuffle(PERSONAS.filter(p => p.id !== (S.flags.qiudao ? 'dream' : 'forgot')));
-    const p = await card(`<h2>🎴 25 歲・人生劇本卡</h2><p>出社會了。翻開一張，看看你會活成哪一種人？</p><div class="deck">${deck.map((_, i) => `<button class="pc" type="button" data-i="${i}">？</button>`).join('')}</div><p class="hint">六種劇本，六種人生</p>`, (el, done) => {
+    const p = await card(`<h2>🎴 25 歲・人生劇本卡</h2><p>出社會了。翻開一張，<br>看看你會活成哪一種人？</p><div class="deck">${deck.map((_, i) => `<button class="pc" type="button" data-i="${i}" aria-label="第 ${i + 1} 張劇本卡"><span class="ic">🪷</span></button>`).join('')}</div><p class="hint">六種劇本，六種人生</p>`, (el, done) => {
       el.querySelectorAll('.pc').forEach(b => b.onclick = () => {
         const i = +b.dataset.i;
         sfx('flip');
