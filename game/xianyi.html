@@ -317,9 +317,17 @@
   .birth .zoom { position: absolute; inset: 0; opacity: 0; background: radial-gradient(ellipse at 52% 48%, #1D4E89 0%, #123463 55%, #0B1F44 100%); }
   .birth svg { position: absolute; left: 50%; top: 50%; width: 230px; margin: -201px 0 0 -115px; overflow: visible; }
   .birth .lbl { position: absolute; font-size: 11px; color: rgba(191,219,254,.55); letter-spacing: .2em; }
-  .birth .beam { position: absolute; top: -10px; width: 30px; height: 0; border-radius: 0 0 20px 20px;
-    background: linear-gradient(to bottom, rgba(253,230,138,0), rgba(253,230,138,.95) 30%, #FFF7D6 100%);
-    filter: blur(1px) drop-shadow(0 0 18px rgba(253,230,138,.9)); }
+  .birth .star { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; }
+  .birth .star .tail { position: absolute; right: 0; top: -1.5px; width: 130px; height: 3px; transform-origin: right center; border-radius: 3px;
+    background: linear-gradient(to left, rgba(255,247,214,.95), rgba(253,230,138,0)); filter: blur(.5px); }
+  .birth .star .head { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%;
+    background: radial-gradient(circle, #FFFFFF 0%, #FFF7D6 35%, rgba(253,230,138,0) 70%); box-shadow: 0 0 14px 6px rgba(253,230,138,.85);
+    animation: twinkle .25s ease-in-out infinite alternate; }
+  .birth .star .head::before, .birth .star .head::after { content: ""; position: absolute; left: 50%; top: 50%; background: #FFF7D6; border-radius: 2px; transform: translate(-50%, -50%); }
+  .birth .star .head::before { width: 34px; height: 2px; }
+  .birth .star .head::after { width: 2px; height: 34px; }
+  @keyframes twinkle { to { transform: scale(1.25); } }
+  .birth .spark { position: absolute; font-size: 15px; color: #FFF7D6; opacity: 0; text-shadow: 0 0 10px #FDE68A, 0 0 4px #fff; transform: translate(-50%, -50%); }
   .birth .ring { position: absolute; width: 20px; height: 20px; border-radius: 50%; border: 3px solid #FDE68A; opacity: 0; box-shadow: 0 0 20px #FDE68A; transform: translate(-50%, -50%); }
   .birth .halo { position: absolute; width: 120px; height: 120px; border-radius: 50%; opacity: 0; transform: translate(-50%, -50%);
     background: radial-gradient(circle, rgba(255,247,214,.95) 0%, rgba(253,230,138,.5) 35%, rgba(253,230,138,0) 70%); }
@@ -429,7 +437,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.13</span>
+    <span id="ver">v261024.14</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -660,7 +668,7 @@
       bell:  [[86, 0]],
       dao:   [[74, 0], [86, .02], [81, .9], [93, .92], [86, 1.8]],
       calm:  [[76, 0], [69, .45]],
-      beam:  [[74, 0], [81, .1], [86, .2], [93, .32], [98, .46]],
+      beam:  [[93, 0], [98, .07], [100, .14], [105, .24]],
       coin:  [[96, 0]],
       fade:  [[81, 0], [76, .12], [72, .24], [69, .38]],
       end:   [[62, 0], [66, .2], [69, .4], [74, .6], [78, .8], [81, 1.05]],
@@ -1015,7 +1023,7 @@
     await birth();
   }
 
-  // 按下「出生！」之後：從外太空看地球，拉近到台灣，一道光從理天射下（約 3 秒，不跟倍速，點一下跳過）
+  // 按下「出生！」之後：從外太空看地球，拉近到台灣，一顆星星從理天落到台灣（約 3 秒，不跟倍速，點一下跳過）
   async function birth() {
     const v = document.createElement('div');
     v.className = 'birth';
@@ -1024,7 +1032,7 @@
         <path d="M147.3,16.1 Q149.0,15.3 153.7,19.1 Q158.3,23.0 160.6,23.5 Q162.9,24.0 165.6,27.0 Q168.3,30.0 176.1,31.0 Q183.8,32.0 187.5,38.0 Q191.1,44.0 183.4,51.5 Q175.6,59.0 176.5,67.0 Q177.4,75.0 178.4,80.5 Q179.3,86.0 176.1,93.0 Q172.9,100.0 170.6,107.5 Q168.3,115.0 165.2,120.0 Q162.0,125.0 159.2,135.0 Q156.5,145.0 152.0,165.0 Q147.4,185.0 141.0,210.0 Q134.7,235.0 127.4,246.0 Q120.1,257.0 116.9,263.5 Q113.8,270.0 106.9,277.5 Q100.1,285.0 95.5,297.5 Q91.0,310.0 90.1,317.5 Q89.2,325.0 89.2,335.0 Q89.2,345.0 87.8,350.0 Q86.4,355.0 81.0,353.5 Q75.5,352.0 74.2,345.0 Q72.8,338.0 70.5,329.0 Q68.2,320.0 65.1,314.0 Q61.9,308.0 56.0,303.5 Q50.0,299.0 46.9,297.0 Q43.7,295.0 38.7,289.0 Q33.7,283.0 29.6,270.0 Q25.5,257.0 24.1,251.0 Q22.8,245.0 19.6,237.5 Q16.4,230.0 17.3,227.5 Q18.2,225.0 20.5,216.0 Q22.8,207.0 22.8,203.5 Q22.8,200.0 23.7,193.5 Q24.6,187.0 28.2,176.0 Q31.8,165.0 35.0,159.0 Q38.2,153.0 41.9,146.5 Q45.5,140.0 51.0,129.0 Q56.4,118.0 59.1,111.5 Q61.9,105.0 66.0,100.0 Q70.1,95.0 78.3,85.0 Q86.4,75.0 89.6,69.0 Q92.8,63.0 95.5,58.0 Q98.3,53.0 103.7,46.5 Q109.2,40.0 118.3,36.0 Q127.4,32.0 132.9,29.5 Q138.3,27.0 142.0,22.0 Q145.6,17.0 147.3,16.1 Z" fill="url(#twLand)" stroke="#BBF7D0" stroke-width="2.5" stroke-linejoin="round" style="filter:drop-shadow(0 0 10px rgba(134,239,172,.5))"/>
         <path d="M145.6,60.0 Q131.9,110.0 122.8,140.0 Q113.8,170.0 106.9,197.5 Q100.1,225.0 93.3,257.5 Q86.4,290.0 85.1,310.0 L83.7,330.0" fill="none" stroke="#166534" stroke-width="10" stroke-linecap="round" opacity=".45"/><circle cx="144.7" cy="279.0" r="3.5" fill="#4ADE80" stroke="#BBF7D0" stroke-width="1.2"/><circle cx="150.1" cy="340.0" r="3.5" fill="#4ADE80" stroke="#BBF7D0" stroke-width="1.2"/></svg>
         <span class="lbl" style="left:10%;top:39%">台灣海峽</span><span class="lbl" style="right:9%;top:62%">太平洋</span></div>
-      <div class="beam"></div><div class="halo"></div><div class="ring"></div>
+      <div class="star"><div class="tail"></div><div class="head"></div></div><div class="halo"></div><div class="ring"></div>${'<span class="spark">✦</span>'.repeat(8)}
       <div class="cap"><b>🪷 降生台灣</b><small>全世界約 3‰ 的機率</small></div><span class="skip">點一下跳過 ›</span>`;
     $('app').appendChild(v);
     // 星空
@@ -1033,9 +1041,12 @@
     // 光束落在台灣中部
     const box = v.getBoundingClientRect(), r = v.querySelector('svg').getBoundingClientRect();
     const tx = r.left - box.left + 97.4 / 212 * r.width, ty = r.top - box.top + 170 / 370 * r.height;
-    const [beam, halo, ring] = ['.beam', '.halo', '.ring'].map(q => v.querySelector(q));
-    beam.style.left = (tx - 15) + 'px';
-    for (const el of [halo, ring]) { el.style.left = tx + 'px'; el.style.top = ty + 'px'; }
+    const [star, halo, ring] = ['.star', '.halo', '.ring'].map(q => v.querySelector(q));
+    const sparks = [...v.querySelectorAll('.spark')];
+    for (const el of [halo, ring, ...sparks]) { el.style.left = tx + 'px'; el.style.top = ty + 'px'; }
+    // 星星從右上方（理天）斜斜落下；尾巴跟著方向，星芒保持正十字
+    const sx = tx + 170, sy = -30, ang = Math.atan2(ty - sy, tx - sx) * 180 / Math.PI;
+    star.querySelector('.tail').style.transform = `rotate(${ang - 180}deg)`;
     let skipped, skip = new Promise(res => { skipped = res; });
     v.onclick = () => { sfx('tap'); skipped(); };
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1047,11 +1058,18 @@
         { transform: 'translate(-45%,-55%) scale(1.25)', opacity: 0, offset: .43 }, { opacity: 0, offset: 1 }], o),
       v.querySelector('.zoom').animate([{ opacity: 0, offset: 0 }, { opacity: 0, offset: .3 }, { opacity: 1, offset: .43 }, { opacity: 1, offset: 1 }], o),
       v.querySelector('svg').animate([{ transform: 'scale(.6)', offset: 0 }, { transform: 'scale(.6)', offset: .3 }, { transform: 'scale(1)', offset: .45 }, { transform: 'scale(1)', offset: 1 }], o),
-      beam.animate([{ height: '0px', opacity: 0, offset: 0 }, { height: '0px', opacity: 1, offset: .43 },
-        { height: (ty + 10) + 'px', opacity: 1, offset: .66 }, { height: (ty + 10) + 'px', opacity: .85, offset: .85 }, { height: (ty + 10) + 'px', opacity: .5, offset: 1 }], o),
-      halo.animate([{ opacity: 0, offset: 0 }, { opacity: 0, offset: .64 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.4)', offset: .72 }, { opacity: .8, transform: 'translate(-50%,-50%) scale(1.1)', offset: 1 }], o),
+      star.animate([{ transform: `translate(${sx}px,${sy}px)`, opacity: 0, offset: 0 }, { transform: `translate(${sx}px,${sy}px)`, opacity: 1, offset: .43 },
+        { transform: `translate(${(sx + tx) / 2 + 10}px,${(sy + ty) / 2 - 16}px)`, opacity: 1, offset: .56 },
+        { transform: `translate(${tx}px,${ty}px)`, opacity: 1, offset: .66 }, { transform: `translate(${tx}px,${ty}px)`, opacity: 0, offset: .7 }, { opacity: 0, offset: 1 }], o),
+      ...sparks.map((el, k) => {
+        const a = k / 8 * Math.PI * 2, dx = Math.cos(a) * 52, dy = Math.sin(a) * 52;
+        return el.animate([{ opacity: 0, transform: 'translate(-50%,-50%) scale(.4)', offset: 0 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(.4)', offset: .66 },
+          { opacity: 1, transform: `translate(calc(-50% + ${dx * .55}px), calc(-50% + ${dy * .55}px)) scale(1.2)`, offset: .73 },
+          { opacity: 0, transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.6)`, offset: .95 }, { opacity: 0, offset: 1 }], o);
+      }),
+      halo.animate([{ opacity: 0, offset: 0 }, { opacity: 0, offset: .65 }, { opacity: .9, transform: 'translate(-50%,-50%) scale(1.1)', offset: .72 }, { opacity: .65, transform: 'translate(-50%,-50%) scale(.9)', offset: 1 }], o),
       ring.animate([{ opacity: 0, offset: 0 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(1)', offset: .65 },
-        { opacity: .9, offset: .69 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(9)', offset: .92 }, { opacity: 0, offset: 1 }], o),
+        { opacity: .9, offset: .69 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(5)', offset: .92 }, { opacity: 0, offset: 1 }], o),
       v.querySelector('.cap').animate([{ opacity: 0, transform: 'translateY(10px)', offset: 0 }, { opacity: 0, transform: 'translateY(10px)', offset: .66 }, { opacity: 1, transform: 'none', offset: .78 }, { opacity: 1, offset: 1 }], o),
     ];
     if (calm) await Promise.race([wait(1000), skip]);
@@ -1061,7 +1079,7 @@
       const sync = () => anims.forEach(a => { if (paused && a.playState === 'running') a.pause(); else if (!paused && a.playState === 'paused') a.play(); });
       const timer = setInterval(sync, 200);
       let over = false;
-      await Promise.race([hold(1300).then(() => { if (!over) sfx('beam'); }).then(() => hold(1700)), skip]);
+      await Promise.race([hold(1980).then(() => { if (!over) sfx('beam'); }).then(() => hold(1020)), skip]);
       clearInterval(timer);
       over = true;
     }
