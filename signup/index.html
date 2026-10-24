@@ -382,7 +382,7 @@
     <button type="button" class="live" id="live" data-state="loading" title="點一下立即重新讀取">
       <span class="dot" aria-hidden="true">…</span><span id="liveText">正在連線最新資料…</span>
     </button>
-    <div class="ver">版本 <span id="ver">v261024.11</span></div>
+    <div class="ver">版本 <span id="ver">v261024.12</span></div>
   </div>
 </header>
 
@@ -418,13 +418,10 @@
 
   <div class="two">
     <section class="card">
-      <h2>乾坤與學員年齡<span class="auto">⚙ 自動計算</span></h2>
-      <p class="sub">社青班的對象是 26–45 歲，範圍外的年齡層以淺色標示。乾坤比例含幹部；學員年齡分布只計學員，幹部不分析年齡。</p>
+      <h2>乾坤比例<span class="auto">⚙ 自動計算</span></h2>
+      <p class="sub">含一起報名的幹部。滑過色塊可以看到名單。</p>
       <div class="split" id="split"></div>
       <div class="split-legend" id="splitLegend"></div>
-      <div class="mini-title">學員年齡分布</div>
-      <div class="bars" id="ageBars"></div>
-      <p class="axis-note" id="ageNote">&nbsp;</p>
     </section>
 
     <section class="card">
@@ -433,6 +430,13 @@
       <div class="bars" id="unitBars"></div>
     </section>
   </div>
+
+  <section class="card">
+    <h2>學員年齡分布<span class="auto">⚙ 自動計算</span></h2>
+    <p class="sub">社青班的對象是 26–45 歲，範圍外的年齡層以淺色標示。只計學員，幹部不分析年齡。滑過長條可以看到名單。</p>
+    <div class="bars" id="ageBars"></div>
+    <p class="axis-note" id="ageNote">&nbsp;</p>
+  </section>
 
   <section class="card">
     <h2>居住地區<span class="auto">⚙ 自動計算</span></h2>
