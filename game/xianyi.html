@@ -335,14 +335,8 @@
   .birth .cap b { display: block; font-family: var(--serif); font-size: 30px; letter-spacing: .25em; text-shadow: 0 0 18px rgba(253,230,138,.7); }
   .birth .cap small { display: block; margin-top: 8px; font-size: 13px; color: rgba(254,243,199,.75); letter-spacing: .1em; }
   .birth .skip { position: absolute; right: 16px; bottom: calc(24px + env(safe-area-inset-bottom)); font-size: 12px; color: rgba(255,255,255,.45); }
-  .veil {
-    position: absolute; inset: 0; z-index: 45; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-    background: radial-gradient(circle at 50% 45%, #3B3A5C 0%, #1E1B3A 70%); color: #FDE68A;
-    opacity: 0; transition: opacity 1.5s ease; pointer-events: none;
-  }
-  .veil.on { opacity: 1; pointer-events: auto; }
-  .veil-lotus { font-size: 4rem; filter: drop-shadow(0 0 22px rgba(253,230,138,.8)); animation: breathe 2.6s ease-in-out infinite; }
-  .veil p { font-family: var(--serif); font-weight: 700; font-size: 1.2rem; letter-spacing: .2em; margin: 0; }
+  .birth.ascend .lotus { position: absolute; left: 0; top: 0; font-size: 64px; line-height: 1; filter: drop-shadow(0 0 18px rgba(253,230,138,.95)) drop-shadow(0 0 40px rgba(253,230,138,.5)); }
+  .birth.ascend .cap { top: 28%; bottom: auto; }
   #ending { position: absolute; inset: 0; overflow-y: auto; padding: 22px 16px 40px; background: var(--bg); z-index: 25; }
   /* 結局頁底部：淡霧＋漂浮的 ▼，提示下面還有內容 */
   #moreCue {
@@ -437,7 +431,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.17</span>
+    <span id="ver">v261024.18</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -1024,14 +1018,16 @@
     await birth();
   }
 
+  // 台灣近景（降生與回到理天共用）
+  const TW_SVG = `<svg viewBox="0 0 212 370"><defs><linearGradient id="twLand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4ADE80"/><stop offset="1" stop-color="#15803D"/></linearGradient></defs>
+        <path d="M147.3,16.1 Q149.0,15.3 153.7,19.1 Q158.3,23.0 160.6,23.5 Q162.9,24.0 165.6,27.0 Q168.3,30.0 176.1,31.0 Q183.8,32.0 187.5,38.0 Q191.1,44.0 183.4,51.5 Q175.6,59.0 176.5,67.0 Q177.4,75.0 178.4,80.5 Q179.3,86.0 176.1,93.0 Q172.9,100.0 170.6,107.5 Q168.3,115.0 165.2,120.0 Q162.0,125.0 159.2,135.0 Q156.5,145.0 152.0,165.0 Q147.4,185.0 141.0,210.0 Q134.7,235.0 127.4,246.0 Q120.1,257.0 116.9,263.5 Q113.8,270.0 106.9,277.5 Q100.1,285.0 95.5,297.5 Q91.0,310.0 90.1,317.5 Q89.2,325.0 89.2,335.0 Q89.2,345.0 87.8,350.0 Q86.4,355.0 81.0,353.5 Q75.5,352.0 74.2,345.0 Q72.8,338.0 70.5,329.0 Q68.2,320.0 65.1,314.0 Q61.9,308.0 56.0,303.5 Q50.0,299.0 46.9,297.0 Q43.7,295.0 38.7,289.0 Q33.7,283.0 29.6,270.0 Q25.5,257.0 24.1,251.0 Q22.8,245.0 19.6,237.5 Q16.4,230.0 17.3,227.5 Q18.2,225.0 20.5,216.0 Q22.8,207.0 22.8,203.5 Q22.8,200.0 23.7,193.5 Q24.6,187.0 28.2,176.0 Q31.8,165.0 35.0,159.0 Q38.2,153.0 41.9,146.5 Q45.5,140.0 51.0,129.0 Q56.4,118.0 59.1,111.5 Q61.9,105.0 66.0,100.0 Q70.1,95.0 78.3,85.0 Q86.4,75.0 89.6,69.0 Q92.8,63.0 95.5,58.0 Q98.3,53.0 103.7,46.5 Q109.2,40.0 118.3,36.0 Q127.4,32.0 132.9,29.5 Q138.3,27.0 142.0,22.0 Q145.6,17.0 147.3,16.1 Z" fill="url(#twLand)" stroke="#BBF7D0" stroke-width="2.5" stroke-linejoin="round" style="filter:drop-shadow(0 0 10px rgba(134,239,172,.5))"/>
+        <path d="M145.6,60.0 Q131.9,110.0 122.8,140.0 Q113.8,170.0 106.9,197.5 Q100.1,225.0 93.3,257.5 Q86.4,290.0 85.1,310.0 L83.7,330.0" fill="none" stroke="#166534" stroke-width="10" stroke-linecap="round" opacity=".45"/><circle cx="144.7" cy="279.0" r="3.5" fill="#4ADE80" stroke="#BBF7D0" stroke-width="1.2"/><circle cx="150.1" cy="340.0" r="3.5" fill="#4ADE80" stroke="#BBF7D0" stroke-width="1.2"/></svg>`;
   // 按下「出生！」之後：從外太空看地球，拉近到台灣，一顆星星從理天落到台灣（約 3 秒，不跟倍速，點一下跳過）
   async function birth() {
     const v = document.createElement('div');
     v.className = 'birth';
     v.innerHTML = `<canvas></canvas><div class="earth">🌏</div>
-      <div class="zoom"><svg viewBox="0 0 212 370"><defs><linearGradient id="twLand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4ADE80"/><stop offset="1" stop-color="#15803D"/></linearGradient></defs>
-        <path d="M147.3,16.1 Q149.0,15.3 153.7,19.1 Q158.3,23.0 160.6,23.5 Q162.9,24.0 165.6,27.0 Q168.3,30.0 176.1,31.0 Q183.8,32.0 187.5,38.0 Q191.1,44.0 183.4,51.5 Q175.6,59.0 176.5,67.0 Q177.4,75.0 178.4,80.5 Q179.3,86.0 176.1,93.0 Q172.9,100.0 170.6,107.5 Q168.3,115.0 165.2,120.0 Q162.0,125.0 159.2,135.0 Q156.5,145.0 152.0,165.0 Q147.4,185.0 141.0,210.0 Q134.7,235.0 127.4,246.0 Q120.1,257.0 116.9,263.5 Q113.8,270.0 106.9,277.5 Q100.1,285.0 95.5,297.5 Q91.0,310.0 90.1,317.5 Q89.2,325.0 89.2,335.0 Q89.2,345.0 87.8,350.0 Q86.4,355.0 81.0,353.5 Q75.5,352.0 74.2,345.0 Q72.8,338.0 70.5,329.0 Q68.2,320.0 65.1,314.0 Q61.9,308.0 56.0,303.5 Q50.0,299.0 46.9,297.0 Q43.7,295.0 38.7,289.0 Q33.7,283.0 29.6,270.0 Q25.5,257.0 24.1,251.0 Q22.8,245.0 19.6,237.5 Q16.4,230.0 17.3,227.5 Q18.2,225.0 20.5,216.0 Q22.8,207.0 22.8,203.5 Q22.8,200.0 23.7,193.5 Q24.6,187.0 28.2,176.0 Q31.8,165.0 35.0,159.0 Q38.2,153.0 41.9,146.5 Q45.5,140.0 51.0,129.0 Q56.4,118.0 59.1,111.5 Q61.9,105.0 66.0,100.0 Q70.1,95.0 78.3,85.0 Q86.4,75.0 89.6,69.0 Q92.8,63.0 95.5,58.0 Q98.3,53.0 103.7,46.5 Q109.2,40.0 118.3,36.0 Q127.4,32.0 132.9,29.5 Q138.3,27.0 142.0,22.0 Q145.6,17.0 147.3,16.1 Z" fill="url(#twLand)" stroke="#BBF7D0" stroke-width="2.5" stroke-linejoin="round" style="filter:drop-shadow(0 0 10px rgba(134,239,172,.5))"/>
-        <path d="M145.6,60.0 Q131.9,110.0 122.8,140.0 Q113.8,170.0 106.9,197.5 Q100.1,225.0 93.3,257.5 Q86.4,290.0 85.1,310.0 L83.7,330.0" fill="none" stroke="#166534" stroke-width="10" stroke-linecap="round" opacity=".45"/><circle cx="144.7" cy="279.0" r="3.5" fill="#4ADE80" stroke="#BBF7D0" stroke-width="1.2"/><circle cx="150.1" cy="340.0" r="3.5" fill="#4ADE80" stroke="#BBF7D0" stroke-width="1.2"/></svg>
+      <div class="zoom">${TW_SVG}
         <span class="lbl" style="left:10%;top:39%">台灣海峽</span><span class="lbl" style="right:9%;top:62%">太平洋</span></div>
       <div class="star"><div class="tail"></div><div class="head"></div></div><div class="halo"></div><div class="ring"></div>${'<span class="spark">✦</span>'.repeat(8)}
       <div class="cap"><b>🪷 降生台灣</b><small>全世界約 3‰ 的機率</small></div><span class="skip">點一下跳過 ›</span>`;
@@ -1669,18 +1665,54 @@
   // 人生回憶錄：一生的時間軸
   const memoHtml = log => `<ul class="memo">${log.map(([a, t]) => `<li><span>${a} 歲</span><span>${esc(t)}</span></li>`).join('')}</ul>`;
 
-  // 一生結束：畫面慢慢暗下，浮現 🪷「回到理天⋯」，再淡入結局頁
+  // 一生結束：蓮花從台灣慢慢升空，台灣越來越小，轉到宇宙俯瞰地球，再淡入結局頁（約 5 秒，點一下跳過）
   async function toEnding() {
     $('sheet').classList.remove('open');
     const v = document.createElement('div');
-    v.className = 'veil';
-    v.innerHTML = '<div class="veil-lotus">🪷</div><p>回到理天⋯</p>';
+    v.className = 'birth ascend';
+    v.style.opacity = '0';
+    v.innerHTML = `<canvas></canvas><div class="zoom" style="opacity:1">${TW_SVG}</div><div class="earth" style="opacity:0">🌏</div>
+      <div class="lotus">🪷</div><div class="cap"><b>回到理天⋯</b></div><span class="skip">點一下跳過 ›</span>`;
     $('app').appendChild(v);
+    const cv = v.querySelector('canvas'), W = cv.width = v.clientWidth * 2, H = cv.height = v.clientHeight * 2, g = cv.getContext('2d');
+    for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * .7 + .2})`; g.beginPath(); g.arc(Math.random() * W, Math.random() * H, Math.random() * 2 + .4, 0, 7); g.fill(); }
+    const box = v.getBoundingClientRect(), r = v.querySelector('svg').getBoundingClientRect();
+    const tx = r.left - box.left + 97.4 / 212 * r.width, ty = r.top - box.top + 170 / 370 * r.height;
+    const cx = box.width / 2, hy = box.height;
+    let skipped, skip = new Promise(res => { skipped = res; });
+    v.onclick = () => { sfx('tap'); skipped(); };
+    requestAnimationFrame(() => { v.style.opacity = '1'; });
     sfx('bell');
-    await new Promise(r => requestAnimationFrame(() => { v.classList.add('on'); setTimeout(r, 2700); }));
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const o = { duration: calm ? 1 : 5000, fill: 'both' };
+    const at = (x, y, k) => `translate(${x}px,${y}px) translate(-50%,-50%) scale(${k})`;
+    // 蓮花：台灣中部 26px → 升到畫面上方時 64px（最大）→ 停在宇宙上方 54px
+    const anims = [
+      v.querySelector('.lotus').animate([
+        { transform: at(tx, ty, .4), opacity: 0, offset: 0 }, { transform: at(tx, ty, .5), opacity: 1, offset: .12 },
+        { transform: at(cx, hy * .3, 1), opacity: 1, offset: .48 }, { transform: at(cx, hy * .22, .85), opacity: 1, offset: .72 },
+        { transform: at(cx, hy * .2, .85), opacity: 1, offset: 1 }], o),
+      // 台灣：原尺寸 → 縮到 0.35 倍、淡出（越飛越高）
+      v.querySelector('svg').animate([{ transform: 'scale(1)', offset: 0 }, { transform: 'scale(1)', offset: .12 }, { transform: 'scale(.35)', offset: .5 }, { transform: 'scale(.35)', offset: 1 }], o),
+      v.querySelector('.zoom').animate([{ opacity: 1, offset: 0 }, { opacity: 1, offset: .38 }, { opacity: 0, offset: .55 }, { opacity: 0, offset: 1 }], o),
+      // 地球：從近處 1.6 倍淡入 → 慢慢縮到 0.75 倍（離地球越來越遠）
+      v.querySelector('.earth').animate([{ transform: 'translate(-50%,-50%) scale(1.6)', top: '62%', opacity: 0, offset: 0 }, { transform: 'translate(-50%,-50%) scale(1.6)', top: '62%', opacity: 0, offset: .42 },
+        { transform: 'translate(-50%,-50%) scale(1.2)', top: '62%', opacity: 1, offset: .58 }, { transform: 'translate(-50%,-50%) scale(.75)', top: '62%', opacity: 1, offset: 1 }], o),
+      v.querySelector('.cap').animate([{ opacity: 0, offset: 0 }, { opacity: 0, offset: .7 }, { opacity: 1, offset: .82 }, { opacity: 1, offset: 1 }], o),
+    ];
+    if (calm) await Promise.race([wait(1500 * speed), skip]);
+    else {
+      const hold = ms => wait(ms * speed);
+      const timer = setInterval(() => anims.forEach(a => { if (paused && a.playState === 'running') a.pause(); else if (!paused && a.playState === 'paused') a.play(); }), 200);
+      let over = false;
+      await Promise.race([hold(2700).then(() => { if (!over) sfx('dao'); }).then(() => hold(2300)), skip]);
+      over = true;
+      clearInterval(timer);
+    }
     await showEnding();
-    v.classList.remove('on');
-    setTimeout(() => v.remove(), 1100);
+    v.style.transition = 'opacity .9s ease';
+    v.style.opacity = '0';
+    setTimeout(() => v.remove(), 1000);
   }
 
   async function showEnding() {
