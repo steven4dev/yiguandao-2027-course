@@ -308,6 +308,14 @@
   .life summary small { display: block; font-weight: 500; color: var(--muted); font-size: .78rem; }
 
   /* 結局頁 */
+  .veil {
+    position: absolute; inset: 0; z-index: 45; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    background: radial-gradient(circle at 50% 45%, #3B3A5C 0%, #1E1B3A 70%); color: #FDE68A;
+    opacity: 0; transition: opacity 1.5s ease; pointer-events: none;
+  }
+  .veil.on { opacity: 1; pointer-events: auto; }
+  .veil-lotus { font-size: 4rem; filter: drop-shadow(0 0 22px rgba(253,230,138,.8)); animation: breathe 2.6s ease-in-out infinite; }
+  .veil p { font-family: var(--serif); font-weight: 700; font-size: 1.2rem; letter-spacing: .2em; margin: 0; }
   #ending { position: absolute; inset: 0; overflow-y: auto; padding: 22px 16px 40px; background: var(--bg); z-index: 25; }
   /* 結局頁底部：淡霧＋漂浮的 ▼，提示下面還有內容 */
   #moreCue {
@@ -402,7 +410,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.09</span>
+    <span id="ver">v261024.10</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -1494,6 +1502,8 @@
   async function finale() {
     const t = THEMES[5];
     chapter(`終章・${t.name}｜${t.sub}`);
+    // 終章：4×、8× 快轉的人自動降到 2×，晚年的劇情才看得到（不存檔，下一局恢復原本的速度）
+    if (speed > 2) { setSpeed(2, false); addLine('🌅 終章，放慢一點（已切換到 2×）', 'sys', ''); }
     await line(46, `終章・${t.name}`, 'big');
     let death = rand(74, 88) + Math.round((S.hp - 50) / 6) + (S.fam >= 60 ? 2 : 0);
     if (Math.random() < (S.hp < 35 ? .3 : .08)) death = rand(58, 70);
@@ -1536,7 +1546,7 @@
     await line(death, '這一生，走到了終點。你褪下這身皮囊，準備回家。', 'big');
     S.age = death;
     remember(`享年 ${death} 歲，回到理天。`);
-    await wait(1200);
+    await wait(3000 * speed);
   }
 
   // ───────── 結局 ─────────
@@ -1563,6 +1573,20 @@
 
   // 人生回憶錄：一生的時間軸
   const memoHtml = log => `<ul class="memo">${log.map(([a, t]) => `<li><span>${a} 歲</span><span>${esc(t)}</span></li>`).join('')}</ul>`;
+
+  // 一生結束：畫面慢慢暗下，浮現 🪷「回到理天⋯」，再淡入結局頁
+  async function toEnding() {
+    $('sheet').classList.remove('open');
+    const v = document.createElement('div');
+    v.className = 'veil';
+    v.innerHTML = '<div class="veil-lotus">🪷</div><p>回到理天⋯</p>';
+    $('app').appendChild(v);
+    sfx('bell');
+    await new Promise(r => requestAnimationFrame(() => { v.classList.add('on'); setTimeout(r, 2700); }));
+    await showEnding();
+    v.classList.remove('on');
+    setTimeout(() => v.remove(), 1100);
+  }
 
   async function showEnding() {
     $('sheet').classList.remove('open');
@@ -1914,8 +1938,8 @@
   };
 
   // ───────── 播放控制與設定 ─────────
-  function setSpeed(v) {
-    speed = v; save('xianyi-speed', v);
+  function setSpeed(v, keep = true) {
+    speed = v; if (keep) save('xianyi-speed', v);
     document.querySelectorAll('#ctrl .spd').forEach(b => b.classList.toggle('on', +b.dataset.s === v));
   }
   // 切到其他 App 時自動暫停，回來按 ▶ 就能接著玩，聲音也一起恢復
@@ -1975,6 +1999,7 @@
     sfx('tap');
     S = newState();
     setPaused(false);
+    setSpeed(+load('xianyi-speed', 1) || 1);
     $('ending').hidden = true;
     $('moreCue').hidden = true; $('moreCue').classList.remove('on');
     $('title').hidden = true;
@@ -1988,7 +2013,7 @@
     await drawPersona();
     await ch1(); await ch2(); await ch3(); await ch4(); await ch5();
     await finale();
-    await showEnding();
+    await toEnding();
   }
 
   $('startBtn').onclick = start;
