@@ -185,6 +185,8 @@
   .chip.up { color: var(--green); background: var(--green-soft); }
   .chip.down { color: #B91C1C; background: #FEE2E2; }
   .chip.badge { color: var(--gold); background: var(--gold-soft); }
+  .pfx .chip { font-size: .9rem; padding: 3px 10px; margin: 3px; opacity: 0; transform: scale(.6); transition: opacity .2s ease, transform .25s cubic-bezier(.3,1.6,.5,1); }
+  .pfx .chip.on { opacity: 1; transform: none; }
 
   /* 底部抉擇面板 */
   #sheet {
@@ -400,7 +402,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.08</span>
+    <span id="ver">v261024.09</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -1066,8 +1068,20 @@
           b.innerHTML = `${d.em}<b>${d.name}</b>`;
           setTimeout(() => {
             sfx('win');
-            el.innerHTML = `<div style="font-size:3rem">${d.em}</div><h2>${d.name}</h2><p class="quote">${d.desc}</p><button class="btn primary" type="button">就是我了 ▶</button>`;
-            el.querySelector('.btn').onclick = () => { sfx('tap'); done(d); };
+            // 預告這張劇本的數值：加分在前、減分在後，各自依數字大小排
+            const NAME = { hp: '健康', work: '工作', gold: '資產', fam: '家人', pal: '夥伴', tian: '天幣' };
+            const fx = Object.entries(d.fx).sort(([, a], [, b]) => (b > 0) - (a > 0) || Math.abs(b) - Math.abs(a));
+            el.innerHTML = `<div style="font-size:3rem">${d.em}</div><h2>${d.name}</h2><p class="quote">${d.desc}</p>
+              <p class="hint" style="margin:12px 0 4px">這張劇本會讓你</p>
+              <div class="pfx">${fx.map(([k, v]) => `<span class="chip ${v > 0 ? 'up' : 'down'}">${ICON[k]} ${NAME[k]} ${v > 0 ? '+' : '−'}${Math.abs(v)}</span>`).join('')}</div>
+              <button class="btn primary" type="button" style="visibility:hidden">就是我了 ▶</button>`;
+            const btn = el.querySelector('.btn');
+            btn.onclick = () => { sfx('tap'); done(d); };
+            // 標籤一個接一個彈出，配升降音效；都出現後才浮現按鈕
+            const chips = [...el.querySelectorAll('.pfx .chip')];
+            const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+            chips.forEach((c, j) => setTimeout(() => { c.classList.add('on'); if (!calm) sfx(fx[j][1] > 0 ? 'up' : 'down'); }, calm ? 0 : 400 + j * 150));
+            setTimeout(() => { btn.style.visibility = ''; }, calm ? 0 : 400 + chips.length * 150 + 250);
           }, 650);
         }, 450);
       });
