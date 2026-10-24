@@ -1347,6 +1347,7 @@
   .xy-banner h3 { font-family: var(--serif); font-size: 1.3rem; margin: 0 0 6px; color: var(--text-primary); }
   .xy-banner p { margin: 0 0 4px; color: var(--text-secondary); line-height: 1.75; }
   .xy-banner .meta { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; }
+  .xy-banner .souls { margin: -4px 0 12px; color: var(--accent-gold); font-weight: 800; font-size: 0.92rem; }
   .xy-btn { display: inline-flex; gap: 6px; align-items: center; padding: 10px 22px; border-radius: 99px; background: var(--accent-green); color: #FFFFFF; font-weight: 800; box-shadow: 0 6px 14px rgba(5, 150, 105, 0.25); }
   @media (max-width: 600px) {
     .xy-banner { flex-direction: column; align-items: stretch; padding: 14px; gap: 12px; }
@@ -1460,6 +1461,7 @@
           <h3>🪷 先玩一輪：褪下仙衣</h3>
           <p>人生如戲，戲如人生。<br>遊戲裡的六個章節，就是今年的六場專題。</p>
           <p class="meta">約 12 分鐘・不用登入、不用報名<br>遊玩紀錄只存在你自己的手機</p>
+          <p class="souls" id="xySouls" hidden></p>
           <span class="xy-btn">🎮 先玩玩看 →</span>
         </div>
       </a>
@@ -1947,6 +1949,22 @@
       const up = e => { if (!down) return; down = false; sw.classList.remove('press'); set(e.type === 'pointerup' ? (moved ? sw.dataset.on : side(e)) : v, e.type === 'pointerup'); v = sw.dataset.on; };
       sw.addEventListener('pointerup', up); sw.addEventListener('pointercancel', up);
       btns.forEach(b => b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); set(b.dataset.v, true); v = b.dataset.v; } }));
+    })();
+    // 褪下仙衣：顯示已轉世的原靈人數（只讀取，不累加；連不上就不顯示）
+    (function () {
+      var fn = 'xySouls' + Date.now(), sc = document.createElement('script');
+      var done = function () { clearTimeout(t); delete window[fn]; sc.remove(); };
+      var t = setTimeout(done, 8000);
+      window[fn] = function (d) {
+        done();
+        if (!d || typeof d.value !== 'number' || !d.value) return;
+        var el = document.getElementById('xySouls');
+        el.textContent = '🪷 已有 ' + d.value.toLocaleString('en-US') + ' 位原靈轉世';
+        el.hidden = false;
+      };
+      sc.onerror = done;
+      sc.src = 'https://abacus.jasoncameron.dev/get/yiguandao-2027-course/xianyi-souls?callback=' + fn;
+      document.head.appendChild(sc);
     })();
   </script>
 
