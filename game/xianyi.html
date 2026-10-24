@@ -330,9 +330,7 @@
   .birth .star.mini .head { width: 4px; height: 4px; margin: -2px 0 0 -2px; background: #fff; box-shadow: 0 0 6px 2px rgba(253,230,138,.9); }
   .birth .star.mini .head::before { width: 18px; height: 1.5px; }
   .birth .star.mini .head::after { width: 1.5px; height: 18px; }
-  .birth .star.mini .tail { width: 70px; height: 1.5px; top: -.75px; }
-  .birth .flash { position: absolute; width: 36px; height: 36px; border-radius: 50%; opacity: 0; transform: translate(-50%, -50%);
-    background: radial-gradient(circle, #FFFFFF 0%, rgba(253,230,138,.8) 35%, rgba(253,230,138,0) 70%); }
+  .birth .star.mini .tail { width: 150px; height: 1.5px; top: -.75px; }
   .birth .spark { position: absolute; font-size: 15px; color: #FFF7D6; opacity: 0; text-shadow: 0 0 10px #FDE68A, 0 0 4px #fff; transform: translate(-50%, -50%); }
   .birth .ring { position: absolute; width: 20px; height: 20px; border-radius: 50%; border: 3px solid #FDE68A; opacity: 0; box-shadow: 0 0 20px #FDE68A; transform: translate(-50%, -50%); }
   .birth .halo { position: absolute; width: 120px; height: 120px; border-radius: 50%; opacity: 0; transform: translate(-50%, -50%);
@@ -437,7 +435,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.21</span>
+    <span id="ver">v261024.22</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -1035,7 +1033,7 @@
     v.innerHTML = `<canvas></canvas><div class="earth">🌏</div>
       <div class="zoom">${TW_SVG}
         <span class="lbl" style="left:10%;top:39%">台灣海峽</span><span class="lbl" style="right:9%;top:62%">太平洋</span></div>
-      <div class="star mini"><div class="tail"></div><div class="head"></div></div><div class="flash"></div><div class="star"><div class="tail"></div><div class="head"></div></div><div class="halo"></div><div class="ring"></div>${'<span class="spark">✦</span>'.repeat(8)}
+      <div class="star mini"><div class="tail"></div><div class="head"></div></div><div class="star"><div class="tail"></div><div class="head"></div></div><div class="halo"></div><div class="ring"></div>${'<span class="spark">✦</span>'.repeat(8)}
       <div class="cap"><b>🪷 降生台灣</b><small>全世界約 3‰ 的機率</small></div><span class="skip">點一下跳過 ›</span>`;
     $('app').appendChild(v);
     // 星空
@@ -1044,11 +1042,13 @@
     // 光束落在台灣中部
     const box = v.getBoundingClientRect(), r = v.querySelector('svg').getBoundingClientRect();
     const tx = r.left - box.left + 97.4 / 212 * r.width, ty = r.top - box.top + 170 / 370 * r.height;
+    // 宇宙中的小星星：從右上方朝地球飛去，停在地球外側不重疊，接著轉場
     const er = v.querySelector('.earth').getBoundingClientRect();
-    const ex = er.left - box.left + er.width * .57, ey = er.top - box.top + er.height * .42;
-    const mini = v.querySelector('.star.mini'), flash = v.querySelector('.flash');
-    flash.style.left = ex + 'px'; flash.style.top = ey + 'px';
-    const mx = ex + 90, my = ey - 130, mang = Math.atan2(ey - my, ex - mx) * 180 / Math.PI;
+    const ecx = er.left - box.left + er.width / 2, ecy = er.top - box.top + er.height / 2, eR = er.width * .5;
+    const ux = Math.cos(-55 * Math.PI / 180), uy = Math.sin(-55 * Math.PI / 180);
+    const ex = ecx + ux * (eR + 26), ey = ecy + uy * (eR + 26), mx = ex + ux * 230, my = ey + uy * 230;
+    const mini = v.querySelector('.star.mini');
+    const mang = Math.atan2(ey - my, ex - mx) * 180 / Math.PI;
     mini.querySelector('.tail').style.transform = `rotate(${mang}deg)`;
     const [star, halo, ring] = ['.star:not(.mini)', '.halo', '.ring'].map(q => v.querySelector(q));
     const sparks = [...v.querySelectorAll('.spark')];
@@ -1063,9 +1063,7 @@
     const o = { duration: calm ? 1 : 6000, fill: 'both' };
     const anims = [
       mini.animate([{ transform: `translate(${mx}px,${my}px)`, opacity: 0, offset: 0 }, { transform: `translate(${mx}px,${my}px)`, opacity: 1, offset: .15 },
-        { transform: `translate(${ex}px,${ey}px)`, opacity: 1, offset: .27 }, { transform: `translate(${ex}px,${ey}px)`, opacity: 0, offset: .29 }, { opacity: 0, offset: 1 }], o),
-      flash.animate([{ opacity: 0, transform: 'translate(-50%,-50%) scale(.5)', offset: 0 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(.5)', offset: .26 },
-        { opacity: 1, transform: 'translate(-50%,-50%) scale(1.2)', offset: .29 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(1.6)', offset: .36 }, { opacity: 0, offset: 1 }], o),
+        { transform: `translate(${ex}px,${ey}px)`, opacity: 1, offset: .28 }, { transform: `translate(${ex}px,${ey}px)`, opacity: 0, offset: .36 }, { opacity: 0, offset: 1 }], o),
       v.querySelector('.earth').animate([
         { transform: 'translate(-50%,-50%) scale(.85)', opacity: 1, offset: 0 },
         { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: .3 },
