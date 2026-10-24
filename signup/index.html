@@ -382,7 +382,7 @@
     <button type="button" class="live" id="live" data-state="loading" title="點一下立即重新讀取">
       <span class="dot" aria-hidden="true">…</span><span id="liveText">正在連線最新資料…</span>
     </button>
-    <div class="ver">版本 <span id="ver">v261024.12</span></div>
+    <div class="ver">版本 <span id="ver">v261024.13</span></div>
   </div>
 </header>
 
@@ -821,7 +821,8 @@
   const isKun = p => p.gender.includes('坤');
   const names = list => list.map(p => esc(p.name)).join('、') || '—';
   const fewNames = (list, max = 8) => names(list.slice(0, max)) + (list.length > max ? ` 等 ${list.length} 位` : '');
-  const areaLabel = p => p.city === HOME_CITY ? (p.dist || '桃園市（未註明區）') : p.dist && p.city !== '其他' ? p.city + p.dist : p.city === '其他' ? p.dist : p.city;
+  const areaLabel = p => p.city === HOME_CITY ? (p.dist || '桃園市（未註明區）')
+    : p.city === '其他' ? p.dist : p.city === '未填寫' ? '未填寫' : p.city + (p.dist || '（未註明區）');
 
   // 一列長條：rows = [{ label, list, cls }]；split 時依乾坤疊色
   function drawBars(el, rows, opt = {}) {
@@ -912,15 +913,13 @@
     units = groupBy(people, p => p.unit).map(g => g.label);
     drawBars($('unitBars'), groupBy(people, p => p.unit), { split: true });
 
-    // 居住地區：桃園市內細分到區，外縣市合併成縣市
-    const areas = groupBy(people, p => p.city === HOME_CITY ? areaLabel(p) : p.city);
-    drawBars($('areaBars'), areas.map(a => ({
-      ...a,
-      cls: a.list[0].city === HOME_CITY ? '' : 'out',
-      extra: a.list[0].city === HOME_CITY ? '' : [...new Set(a.list.map(areaLabel))].map(esc).join('、'),
-    })));
+    // 居住地區：每個行政區各一列，桃園市排前面，外縣市以淺色標示
+    const isHome = a => a.list[0].city === HOME_CITY;
+    const areas = groupBy(people, areaLabel).sort((a, b) => isHome(b) - isHome(a));
+    drawBars($('areaBars'), areas.map(a => ({ ...a, cls: isHome(a) ? '' : 'out' })));
     const local = people.filter(p => p.city === HOME_CITY).length;
-    $('areaSub').textContent = `${local} 位住在桃園市（${pct(local, n)}%），依行政區細分；外縣市以淺色合併顯示。`;
+    const farCities = new Set(people.filter(p => p.city !== HOME_CITY).map(p => p.city)).size;
+    $('areaSub').textContent = `${local} 位住在桃園市（${pct(local, n)}%）${n - local ? `，${n - local} 位住在其他 ${farCities} 個縣市` : ''}。每個行政區各一列，外縣市以淺色標示。`;
 
     // 介紹人：一位報名者可能有多位介紹人，每位介紹人各算一次
     const introMap = new Map();
