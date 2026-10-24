@@ -441,7 +441,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.15</span>
+    <span id="ver">v261024.16</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -557,10 +557,12 @@
     sc.src = `https://abacus.jasoncameron.dev/${kind}/yiguandao-2027-course/xianyi-souls?callback=${fn}`;
     document.head.appendChild(sc);
   }
+  // 第一位轉世的原靈從 0027 號開始（呼應 2027），至少顯示四位數
+  const soulFmt = n => String(n).padStart(4, '0');
   soulCounter('hit', n => {
-    soulNo = n;
+    soulNo = n + 26;
     const el = $('souls');
-    el.innerHTML = `🪷 已有 <b>${n.toLocaleString('en-US')}</b> 位原靈轉世`;
+    el.innerHTML = `🪷 已有 <b>${soulFmt(soulNo)}</b> 位原靈轉世`;
     el.hidden = false;
   });
   const GAME_URL = SITE + 'game/xianyi.html?v=6';   // 帶 ?v=6 讓 LINE 重新抓預覽圖
@@ -1725,7 +1727,7 @@
     el.innerHTML = `
       <div class="end-head">
         <div class="em">${E.em}</div>
-        ${soulNo ? `<p class="soulno">你是第 ${soulNo.toLocaleString('en-US')} 位轉世的原靈</p>` : ''}
+        ${soulNo ? `<p class="soulno">你是第 ${soulFmt(soulNo)} 位轉世的原靈</p>` : ''}
         <p class="kicker">${moodOf()} ${S.persona.em} ${S.persona.name}・享年 ${S.age} 歲・去社青班 ${S.visits} 次</p>
         <h2>${E.title}</h2>
         <p class="quote">${E.line}</p>

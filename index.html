@@ -1959,7 +1959,8 @@
         done();
         if (!d || typeof d.value !== 'number' || !d.value) return;
         var el = document.getElementById('xySouls');
-        el.textContent = '🪷 已有 ' + d.value.toLocaleString('en-US') + ' 位原靈轉世';
+        // 第一位轉世的原靈從 0027 號開始，至少顯示四位數（和遊戲頁一致）
+        el.textContent = '🪷 已有 ' + String(d.value + 26).padStart(4, '0') + ' 位原靈轉世';
         el.hidden = false;
       };
       sc.onerror = done;
