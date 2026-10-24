@@ -333,6 +333,7 @@
   .live[data-state="loading"] .dot { animation: pulse 1s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: 0.35; } }
   @media (prefers-reduced-motion: reduce) { .live[data-state="loading"] .dot { animation: none; } }
+  .ver { margin-top: 8px; font-size: 0.78rem; color: var(--text-muted); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
   .empty { color: var(--text-muted); font-size: 0.92rem; }
 
   /* 自動產生標註 */
@@ -380,6 +381,7 @@
     <button type="button" class="live" id="live" data-state="loading" title="點一下立即重新讀取">
       <span class="dot" aria-hidden="true">…</span><span id="liveText">正在連線最新資料…</span>
     </button>
+    <div class="ver">版本 <span id="ver">v261024.08</span></div>
   </div>
 </header>
 

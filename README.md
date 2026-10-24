@@ -29,6 +29,7 @@ https://steven4dev.github.io/yiguandao-2027-course/signup/?v=2（分享用連結
 - 個資保護：只查詢需要的欄位，手機欄位不會讀進瀏覽器；報名者姓名遮蔽中間字；生日只換算成年齡
 - 幹部邀約：介紹人是幹部時顯示全名並另外統計（各組、個人）；其他介紹人仍遮蔽。幹部名單寫在 `signup/index.html` 的 `CADRE_GROUPS`，跟首頁「同行夥伴」人事異動時要一起改
 - 試算表要維持「知道連結的任何人都能檢視」，關掉的話網頁會改顯示備份
+- 連線狀態下方有版本編號（格式同褪下仙衣），各版內容見 [`signup/CHANGELOG.md`](signup/CHANGELOG.md)
 
 ## 更新方式
 
