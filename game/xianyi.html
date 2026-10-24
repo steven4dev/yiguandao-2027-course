@@ -330,7 +330,7 @@
   .end-head .em { font-size: 3.2rem; line-height: 1.2; }
   .end-head .kicker { color: var(--muted); font-size: .85rem; margin: 6px 0 0; }
   .end-head h2 { font-family: var(--serif); font-size: 1.6rem; margin: 2px 0 10px; }
-  .end-head .desc { color: var(--ink-soft); line-height: 1.8; margin: 10px 0 6px; }
+  .end-head .desc { color: var(--ink-soft); line-height: 1.8; margin: 10px 0 6px; font-size: min(1rem, 4.4vw); }
   .end-head .coin { font-weight: 700; color: var(--gold); margin: 4px 0 0; font-variant-numeric: tabular-nums; }
   .result { margin: 14px auto 0; width: min(340px, 100%); text-align: center; }
   .card-wrap { position: relative; }
@@ -372,6 +372,7 @@
   .themes div { display: flex; gap: 10px; font-size: .9rem; align-items: baseline; }
   .themes b { color: var(--green); flex: none; font-variant-numeric: tabular-nums; }
   .themes span { color: var(--ink-soft); }
+  .themes small { display: block; font-size: .82rem; color: var(--muted); }
   .stack { display: grid; gap: 10px; }
   #endCard { display: block; width: 100%; border-radius: 14px; box-shadow: 0 10px 24px rgba(30,41,59,.2); -webkit-touch-callout: default; }
   .btn.line { background: #06C755; border-color: #06C755; color: #fff; }
@@ -399,7 +400,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.07</span>
+    <span id="ver">v261024.08</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -1535,15 +1536,15 @@
   }
   const ENDINGS = {
     true: { em: '🌟', title: '聖凡兼修・圓滿返鄉', line: '不放下世間，也不忘記回家的路。',
-      desc: '你沒有放下世間，而是把世間過成了修行。仙衣發著光，母娘在門口等你。' },
+      desc: '你沒有放下世間，<br>而是把世間過成了修行。<br>仙衣發著光，母娘在門口等你。' },
     tycoon: { em: '🏎️', title: '飛天跑車大亨', line: '賺到了全世界，卻沒帶走什麼。',
       desc: '你開著飛天跑車來到南天門前，<br>看門口立了塊牌：「車輛禁入⛔️」<br>資產在門口一點一點的化成了風⋯' },
     temple: { em: '🍃', title: '回來佛堂', line: '佛堂，是心靈充電的家。',
-      desc: '你做到了三不離：不離佛堂、不離前賢、不離經典。佛堂是你一輩子的充電站，母娘看著你笑了。下一回，記得把家人也一起帶回來，一起回鄉。' },
+      desc: '你做到了三不離：<br>不離佛堂、不離前賢、不離經典。<br>佛堂是你一輩子的充電站，<br>母娘看著你笑了。<br>下一回，記得把家人也一起帶回來，<br>一起回鄉。' },
     gate: { em: '🙏', title: '南天門外', line: '差一點點，還有好多想做的事。',
-      desc: '你站在南天門外，想起很多想做的事，總想著還有下次。濟公老師沒有放棄你——這一次，換真的你來選。' },
+      desc: '你站在南天門外，想起很多想做的事，<br>總想著還有下次。<br>濟公老師沒有放棄你——<br>這一次，換真的你來選。' },
     drift: { em: '🌊', title: '漂流到底', line: '走了很遠，還在找回家的路。',
-      desc: '你漂了一輩子，還沒想起家在哪裡。沒關係，回家的路一直都在。' },
+      desc: '你漂了一輩子，還沒想起家在哪裡。<br>沒關係，回家的路一直都在。' },
   };
 
   // 人生回憶錄：一生的時間軸
@@ -1598,8 +1599,8 @@
       </div>
       <div class="sec">
         <h3>🍃 這一次，換真的你來選</h3>
-        <p style="color:var(--ink-soft);line-height:1.8;margin:0">遊戲裡的六個章節，就是 <b>2027 全真社青班</b> 的六場專題。<br>每月給自己一天，我們一起把日子過成修行，把修行過成日子。</p>
-        <div class="themes">${THEMES.map(t => `<div><b>${t.date}</b><span>${t.name}｜${t.sub}</span></div>`).join('')}</div>
+        <p style="color:var(--ink-soft);line-height:1.8;margin:0">遊戲裡的六個章節，<br>就是 <b>2027 全真社青班</b> 的六場專題。<br>每月給自己一天，<br>我們一起把日子過成修行，<br>把修行過成日子。</p>
+        <div class="themes">${THEMES.map(t => `<div><b>${t.date}</b><span>${t.name}<small>${t.sub}</small></span></div>`).join('')}</div>
         <div class="stack">
           <a class="btn signup" href="${SIGNUP}" target="_blank" rel="noopener">✍️ 點我報名</a>
           <a class="btn primary" href="${CAL}" target="_blank" rel="noopener">📅 訂閱全真社青 2027 行事曆</a>
