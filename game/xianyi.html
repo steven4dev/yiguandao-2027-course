@@ -429,7 +429,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.12</span>
+    <span id="ver">v261024.13</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -1015,7 +1015,7 @@
     await birth();
   }
 
-  // 按下「出生！」之後：從外太空看地球，拉近到台灣，一道光從理天射下（約 8 秒，不跟倍速，點一下跳過）
+  // 按下「出生！」之後：從外太空看地球，拉近到台灣，一道光從理天射下（約 3 秒，不跟倍速，點一下跳過）
   async function birth() {
     const v = document.createElement('div');
     v.className = 'birth';
@@ -1039,20 +1039,20 @@
     let skipped, skip = new Promise(res => { skipped = res; });
     v.onclick = () => { sfx('tap'); skipped(); };
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const o = { duration: calm ? 1 : 8000, fill: 'both' };
+    const o = { duration: calm ? 1 : 3000, fill: 'both' };
     const anims = [
       v.querySelector('.earth').animate([
-        { transform: 'translate(-50%,-50%) scale(.7) rotate(-8deg)', opacity: 1, offset: 0 },
-        { transform: 'translate(-50%,-50%) scale(1) rotate(0deg)', opacity: 1, offset: .2 },
-        { transform: 'translate(-30%,-62%) scale(4.5)', opacity: 0, offset: .45 }, { opacity: 0, offset: 1 }], o),
-      v.querySelector('.zoom').animate([{ opacity: 0, offset: 0 }, { opacity: 0, offset: .3 }, { opacity: 1, offset: .48 }, { opacity: 1, offset: 1 }], o),
-      v.querySelector('svg').animate([{ transform: 'scale(.35)', offset: 0 }, { transform: 'scale(.35)', offset: .3 }, { transform: 'scale(1)', offset: .5 }, { transform: 'scale(1)', offset: 1 }], o),
-      beam.animate([{ height: '0px', opacity: 0, offset: 0 }, { height: '0px', opacity: 1, offset: .5 },
-        { height: (ty + 10) + 'px', opacity: 1, offset: .64 }, { height: (ty + 10) + 'px', opacity: .85, offset: .8 }, { height: (ty + 10) + 'px', opacity: .4, offset: 1 }], o),
-      halo.animate([{ opacity: 0, offset: 0 }, { opacity: 0, offset: .62 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.4)', offset: .7 }, { opacity: .8, transform: 'translate(-50%,-50%) scale(1.1)', offset: 1 }], o),
-      ring.animate([{ opacity: 0, offset: 0 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(1)', offset: .64 },
-        { opacity: .9, offset: .68 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(9)', offset: .85 }, { opacity: 0, offset: 1 }], o),
-      v.querySelector('.cap').animate([{ opacity: 0, transform: 'translateY(10px)', offset: 0 }, { opacity: 0, transform: 'translateY(10px)', offset: .7 }, { opacity: 1, transform: 'none', offset: .82 }, { opacity: 1, offset: 1 }], o),
+        { transform: 'translate(-50%,-50%) scale(.85)', opacity: 1, offset: 0 },
+        { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: .3 },
+        { transform: 'translate(-45%,-55%) scale(1.25)', opacity: 0, offset: .43 }, { opacity: 0, offset: 1 }], o),
+      v.querySelector('.zoom').animate([{ opacity: 0, offset: 0 }, { opacity: 0, offset: .3 }, { opacity: 1, offset: .43 }, { opacity: 1, offset: 1 }], o),
+      v.querySelector('svg').animate([{ transform: 'scale(.6)', offset: 0 }, { transform: 'scale(.6)', offset: .3 }, { transform: 'scale(1)', offset: .45 }, { transform: 'scale(1)', offset: 1 }], o),
+      beam.animate([{ height: '0px', opacity: 0, offset: 0 }, { height: '0px', opacity: 1, offset: .43 },
+        { height: (ty + 10) + 'px', opacity: 1, offset: .66 }, { height: (ty + 10) + 'px', opacity: .85, offset: .85 }, { height: (ty + 10) + 'px', opacity: .5, offset: 1 }], o),
+      halo.animate([{ opacity: 0, offset: 0 }, { opacity: 0, offset: .64 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.4)', offset: .72 }, { opacity: .8, transform: 'translate(-50%,-50%) scale(1.1)', offset: 1 }], o),
+      ring.animate([{ opacity: 0, offset: 0 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(1)', offset: .65 },
+        { opacity: .9, offset: .69 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(9)', offset: .92 }, { opacity: 0, offset: 1 }], o),
+      v.querySelector('.cap').animate([{ opacity: 0, transform: 'translateY(10px)', offset: 0 }, { opacity: 0, transform: 'translateY(10px)', offset: .66 }, { opacity: 1, transform: 'none', offset: .78 }, { opacity: 1, offset: 1 }], o),
     ];
     if (calm) await Promise.race([wait(1000), skip]);
     else {
@@ -1061,7 +1061,7 @@
       const sync = () => anims.forEach(a => { if (paused && a.playState === 'running') a.pause(); else if (!paused && a.playState === 'paused') a.play(); });
       const timer = setInterval(sync, 200);
       let over = false;
-      await Promise.race([hold(4300).then(() => { if (!over) sfx('beam'); }).then(() => hold(3700)), skip]);
+      await Promise.race([hold(1300).then(() => { if (!over) sfx('beam'); }).then(() => hold(1700)), skip]);
       clearInterval(timer);
       over = true;
     }
