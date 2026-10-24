@@ -12,78 +12,84 @@
 <style>
   :root {
     color-scheme: light;
-    --bg-main: #FBF6EE;
+    --bg-main: #EEF7F2;
     --bg-card: #FFFFFF;
-    --bg-soft: #F6EFE4;
-    --text-primary: #2B2118;
-    --text-secondary: #5B4A3A;
-    --text-muted: #7A6A5A;
-    --accent: #0F766E;
-    --accent-soft: #CCFBF1;
-    --qian: #2563EB;
-    --qian-soft: #DBEAFE;
-    --kun: #DB2777;
+    --bg-soft: #ECF7F0;
+    --text-primary: #1E293B;
+    --text-secondary: #475569;
+    --text-muted: #64748B;
+    --accent: #059669;
+    --accent-soft: #D1FAE5;
+    --qian: #0284C7;
+    --qian-soft: #E0F2FE;
+    --kun: #E11D74;
     --kun-soft: #FCE7F3;
-    --green: #15803D;
-    --green-soft: #DCFCE7;
+    --green: #059669;
+    --green-soft: #D1FAE5;
     --gold: #B45309;
     --gold-soft: #FEF3C7;
-    --line: rgba(91, 74, 58, 0.14);
-    --bar: #0F766E;
-    --bar-hover: #115E59;
-    --bar-out: #D6C7B4;
-    --shadow: 0 10px 25px -10px rgba(120, 80, 30, 0.18);
+    --line: #CFE3D8;
+    --bar: #059669;
+    --bar-hover: #047857;
+    --bar-out: #C3DDD0;
+    --hero: linear-gradient(180deg, #DCEFFB, #EEF7F2 55%, #FDF3D8);
+    --eyebrow: linear-gradient(135deg, #F59E0B, #EA580C);
+    --shadow: 0 10px 25px -10px rgba(5, 150, 105, 0.22);
     --serif: 'Noto Serif TC', serif;
     --sans: 'Noto Sans TC', sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
-      --bg-main: #17130F;
-      --bg-card: #241E18;
-      --bg-soft: #2F2820;
-      --text-primary: #F5EEE6;
-      --text-secondary: #D8CCBE;
-      --text-muted: #A89887;
-      --accent: #2DD4BF;
-      --accent-soft: rgba(45, 212, 191, 0.14);
-      --qian: #60A5FA;
-      --qian-soft: rgba(96, 165, 250, 0.16);
+      --bg-main: #0F172A;
+      --bg-card: #1E293B;
+      --bg-soft: #1B3330;
+      --text-primary: #F1F5F9;
+      --text-secondary: #CBD5E1;
+      --text-muted: #94A3B8;
+      --accent: #34D399;
+      --accent-soft: rgba(52, 211, 153, 0.14);
+      --qian: #38BDF8;
+      --qian-soft: rgba(56, 189, 248, 0.16);
       --kun: #F472B6;
       --kun-soft: rgba(244, 114, 182, 0.16);
-      --green: #4ADE80;
-      --green-soft: rgba(74, 222, 128, 0.14);
+      --green: #34D399;
+      --green-soft: rgba(52, 211, 153, 0.14);
       --gold: #FBBF24;
       --gold-soft: rgba(251, 191, 36, 0.14);
-      --line: rgba(216, 204, 190, 0.14);
-      --bar: #2DD4BF;
-      --bar-hover: #5EEAD4;
-      --bar-out: #5A4D40;
+      --line: rgba(203, 213, 225, 0.14);
+      --bar: #34D399;
+      --bar-hover: #6EE7B7;
+      --bar-out: #3B4E5E;
+      --hero: linear-gradient(180deg, #0B2A3F, #0F172A 60%, #2A2312);
+      --eyebrow: linear-gradient(135deg, #F59E0B, #EA580C);
       --shadow: 0 10px 25px -8px rgba(0, 0, 0, 0.45);
     }
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --bg-main: #17130F;
-    --bg-card: #241E18;
-    --bg-soft: #2F2820;
-    --text-primary: #F5EEE6;
-    --text-secondary: #D8CCBE;
-    --text-muted: #A89887;
-    --accent: #2DD4BF;
-    --accent-soft: rgba(45, 212, 191, 0.14);
-    --qian: #60A5FA;
-    --qian-soft: rgba(96, 165, 250, 0.16);
+    --bg-main: #0F172A;
+    --bg-card: #1E293B;
+    --bg-soft: #1B3330;
+    --text-primary: #F1F5F9;
+    --text-secondary: #CBD5E1;
+    --text-muted: #94A3B8;
+    --accent: #34D399;
+    --accent-soft: rgba(52, 211, 153, 0.14);
+    --qian: #38BDF8;
+    --qian-soft: rgba(56, 189, 248, 0.16);
     --kun: #F472B6;
     --kun-soft: rgba(244, 114, 182, 0.16);
-    --green: #4ADE80;
-    --green-soft: rgba(74, 222, 128, 0.14);
+    --green: #34D399;
+    --green-soft: rgba(52, 211, 153, 0.14);
     --gold: #FBBF24;
     --gold-soft: rgba(251, 191, 36, 0.14);
-    --line: rgba(216, 204, 190, 0.14);
-    --bar: #2DD4BF;
-    --bar-hover: #5EEAD4;
-    --bar-out: #5A4D40;
+    --line: rgba(203, 213, 225, 0.14);
+    --bar: #34D399;
+    --bar-hover: #6EE7B7;
+    --bar-out: #3B4E5E;
+    --hero: linear-gradient(180deg, #0B2A3F, #0F172A 60%, #2A2312);
+    --eyebrow: linear-gradient(135deg, #F59E0B, #EA580C);
     --shadow: 0 10px 25px -8px rgba(0, 0, 0, 0.45);
   }
 
@@ -97,12 +103,14 @@
   }
   .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
 
-  header.hero { padding: 56px 0 36px; text-align: center; }
+  header.hero { padding: 56px 0 36px; text-align: center; background: var(--hero); margin-bottom: 28px; }
   .hero .eyebrow {
     display: inline-block;
     font-size: 0.85rem;
-    color: var(--accent);
-    background: var(--accent-soft);
+    font-weight: 700;
+    color: #fff;
+    background: var(--eyebrow);
+    box-shadow: 0 6px 14px -6px rgba(234, 88, 12, 0.55);
     padding: 4px 14px;
     border-radius: 999px;
     letter-spacing: 0.08em;
@@ -177,8 +185,8 @@
   .split .q { background: var(--qian); }
   .split .k { background: var(--kun); }
   .split .o { background: var(--text-muted); }
-  :root[data-theme="dark"] .split div { color: #17130F; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .split div { color: #17130F; } }
+  :root[data-theme="dark"] .split div { color: #0F172A; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .split div { color: #0F172A; } }
   .split-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; font-size: 0.9rem; color: var(--text-secondary); }
   .split-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
   .mini-title { font-size: 0.9rem; font-weight: 700; margin: 20px 0 8px; color: var(--text-secondary); }
@@ -349,8 +357,8 @@
   .live[data-state="loading"] .dot { animation: pulse 1s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: 0.35; } }
   @media (prefers-reduced-motion: reduce) { .live[data-state="loading"] .dot { animation: none; } }
-  :root[data-theme="dark"] .live .dot { color: #17130F; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .live .dot { color: #17130F; } }
+  :root[data-theme="dark"] .live .dot { color: #0F172A; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .live .dot { color: #0F172A; } }
   .empty { color: var(--text-muted); font-size: 0.92rem; }
 
   /* 自動產生標註 */
