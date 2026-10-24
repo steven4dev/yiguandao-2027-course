@@ -115,7 +115,7 @@
   .btn.star-go { border: 0; border-radius: 99px; color: #3B2A05; font-weight: 900; letter-spacing: .12em;
     background: linear-gradient(180deg, #FDE68A, #F5C451); box-shadow: 0 0 24px rgba(253,230,138,.55), 0 6px 16px rgba(0,0,0,.35); }
   #title .btn.ghost { border-radius: 99px; color: rgba(226,232,240,.9); border-color: rgba(196,181,253,.5); }
-  #titleGear { background: transparent; border: 0; font-size: 1.25rem; filter: drop-shadow(0 0 6px rgba(196,181,253,.5)); }
+  #titleGear { filter: drop-shadow(0 0 6px rgba(196,181,253,.5)); }
   #title #ver { color: rgba(203,213,225,.8); }
   /* 母娘序章：星空中的半透明卡片 */
   .overlay.sky { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
@@ -160,8 +160,8 @@
   .hud-right { flex: none; display: grid; gap: 6px; justify-items: center; }
   #robeMini { font-size: 1.6rem; transition: filter .5s ease; }
   .gear {
-    border: 1.5px solid var(--line); background: #fff; border-radius: 99px;
-    width: 34px; height: 34px; font-size: 1rem; line-height: 1;
+    border: 0; background: transparent; border-radius: 99px;
+    width: 34px; height: 34px; font-size: 1.25rem; line-height: 1;
   }
   #titleGear { position: absolute; top: calc(14px + env(safe-area-inset-top)); right: 14px; }
 
@@ -471,7 +471,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.31</span>
+    <span id="ver">v261024.32</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
