@@ -399,7 +399,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.06</span>
+    <span id="ver">v261024.07</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -1662,7 +1662,31 @@
       cue.hidden = false;
       requestAnimationFrame(() => cue.classList.add('on'));
     });
-    cue.querySelector('button').onclick = () => { sfx('tap'); el.scrollBy({ top: el.clientHeight * .8, behavior: 'smooth' }); };
+    // 點 ▼：以每秒約 350px 慢慢捲到最下方，頭尾 0.6 秒加減速，最多 10 秒；手指一碰畫面就停
+    cue.querySelector('button').onclick = () => {
+      sfx('tap'); cueDone = true; hideCue();
+      const from = el.scrollTop, dist = el.scrollHeight - el.clientHeight - from;
+      if (dist <= 0) return;
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) { el.scrollTop = from + dist; return; }
+      const ta = 600;
+      let v = .35, dur = dist / v + ta;
+      if (dur > 10000) { dur = 10000; v = dist / (dur - ta); }
+      const pos = dist < v * ta
+        ? t => dist * (1 - Math.cos(Math.PI * Math.min(1, t / 800))) / 2
+        : t => t < ta ? v * t * t / (2 * ta) : t < dur - ta ? v * (t - ta / 2) : dist - v * (dur - t) ** 2 / (2 * ta);
+      const end = dist < v * ta ? 800 : dur;
+      let t0 = null, stop = false;
+      const halt = () => { stop = true; };
+      ['touchstart', 'wheel', 'mousedown'].forEach(ev => el.addEventListener(ev, halt, { once: true, passive: true }));
+      const step = ts => {
+        if (stop || el.hidden) return;
+        if (t0 === null) t0 = ts;
+        const t = Math.min(end, ts - t0);
+        el.scrollTop = from + pos(t);
+        if (t < end) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
     el.querySelector('#shareImg').onclick = shareToLine;
     el.querySelector('#againBtn').onclick = start;
     el.querySelector('#allMemo').onclick = () => { sfx('tap'); renderMemoirs(); $('memoirs').hidden = false; };
