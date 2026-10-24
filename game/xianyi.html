@@ -431,7 +431,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.19</span>
+    <span id="ver">v261024.20</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -1043,7 +1043,8 @@
     for (const el of [halo, ring, ...sparks]) { el.style.left = tx + 'px'; el.style.top = ty + 'px'; }
     // 星星從右上方（理天）斜斜落下；尾巴跟著方向，星芒保持正十字
     const sx = tx + 170, sy = -30, ang = Math.atan2(ty - sy, tx - sx) * 180 / Math.PI;
-    star.querySelector('.tail').style.transform = `rotate(${ang - 180}deg)`;
+    // 尾巴預設朝左；轉 ang 度後會指向飛來的方向（右上方），拖在星星後面
+    star.querySelector('.tail').style.transform = `rotate(${ang}deg)`;
     let skipped, skip = new Promise(res => { skipped = res; });
     v.onclick = () => { sfx('tap'); skipped(); };
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
