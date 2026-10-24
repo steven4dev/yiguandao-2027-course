@@ -126,6 +126,7 @@
   .two > section { margin-bottom: 0; }
   .two.inner { gap: 8px 28px; margin-top: 4px; }
   .split .c { background: var(--accent); }
+  .split .g { background: var(--gold); }
   .badge.role { color: var(--accent); background: var(--accent-soft); margin-left: 4px; }
   .two + section, section + .two { margin-top: 28px; }
 
@@ -381,7 +382,7 @@
     <button type="button" class="live" id="live" data-state="loading" title="點一下立即重新讀取">
       <span class="dot" aria-hidden="true">…</span><span id="liveText">正在連線最新資料…</span>
     </button>
-    <div class="ver">版本 <span id="ver">v261024.08</span></div>
+    <div class="ver">版本 <span id="ver">v261024.09</span></div>
   </div>
 </header>
 
@@ -399,12 +400,12 @@
       <div class="note" id="sPeopleNote">&nbsp;</div>
     </div>
     <div class="stat">
-      <div class="label">平均年齡</div>
+      <div class="label">學員平均年齡</div>
       <div class="num"><span id="sAge">–</span><small>歲</small></div>
       <div class="note" id="sAgeNote">&nbsp;</div>
     </div>
     <div class="stat">
-      <div class="label">有介紹人陪伴</div>
+      <div class="label">學員有人邀約</div>
       <div class="num"><span id="sIntro">–</span><small>%</small></div>
       <div class="note" id="sIntroNote">&nbsp;</div>
     </div>
@@ -418,7 +419,7 @@
   <div class="two">
     <section class="card">
       <h2>乾坤與年齡<span class="auto">⚙ 自動計算</span></h2>
-      <p class="sub">社青班的對象是 26–45 歲，範圍外的年齡層以淺色標示。滑過長條可以看到名單。</p>
+      <p class="sub">社青班的對象是 26–45 歲，範圍外的年齡層以淺色標示。乾坤比例含幹部，年齡分布只計學員。</p>
       <div class="split" id="split"></div>
       <div class="split-legend" id="splitLegend"></div>
       <div class="mini-title">年齡分布</div>
@@ -442,7 +443,7 @@
 
   <div class="two">
     <section class="card">
-      <h2>其他介紹人<span class="auto">⚙ 自動計算</span></h2>
+      <h2>其他介紹人與管道<span class="auto">⚙ 自動計算</span></h2>
       <p class="sub" id="introSub">&nbsp;</p>
       <div class="bars" id="introBars"></div>
     </section>
@@ -470,7 +471,7 @@
         <div class="bars" id="cadreBars"></div>
       </div>
     </div>
-    <p class="axis-note">※ 幹部名單依課程首頁「同行夥伴」；介紹人是幹部時顯示全名，其他介紹人仍遮蔽中間字。同一位新朋友有多位介紹人時，每位介紹人各算一次；身兼兩組的幹部，兩組都會計入。</p>
+    <p class="axis-note">※ 幹部名單依課程首頁「同行夥伴」；介紹人是幹部時顯示全名，其他介紹人仍遮蔽中間字；課程網頁、線上遊戲等管道直接顯示。幹部自己報名（介紹人填「幹部」）不列入邀約統計。同一位新朋友有多位介紹人時，每位介紹人各算一次；身兼兩組的幹部，兩組都會計入。</p>
   </section>
 
   <section class="card">
@@ -593,12 +594,18 @@
     return null;
   }
 
+  // 幹部自己報名時，介紹人欄會填「幹部」
+  const SELF_CADRE = /^(我是|擔任|本身是|本人是)?幹部(本人)?$/;
+  // 得知課程的管道（不是人名，不遮蔽）
+  const CHANNEL = /網頁|網站|官網|遊戲|臉書|facebook|fb|ig|instagram|line|youtube|yt|threads|網路|社群|海報|傳單|廣告|google|搜尋/i;
+
   // 介紹人可能寫「王小明講師、陳大華」，幹部顯示全名，其他人逐一遮蔽姓名、保留稱謂
   const TITLES = /(點傳師|講師|前賢|學長|學姊|學姐|壇主|老師|師兄|師姊|同修|朋友|同事|家人|媽媽|爸爸|姊姊|哥哥|弟弟|妹妹)$/;
   const NO_INTRO = /^(無|没有|沒有|無介紹人|none|no|-|－|—|x|X)?$/i;
   function parseIntro(text) {
     const seen = new Set();
     return text.split(/[、,，/／\s和跟及]+/).filter(Boolean).map(t => {
+      if (CHANNEL.test(t)) return { label: t, cadre: false, channel: true };
       const cadre = findCadre(t);
       if (cadre) return { label: cadre.name, cadre: true, groups: cadre.groups, title: cadre.titles.join('・') };
       const m = t.match(TITLES);
@@ -716,7 +723,8 @@
       people: [...byKey.values()].map(p => {
         const area = parseArea(p.area);
         const kids = parseKids(p.kids);
-        const intros = NO_INTRO.test(p.intro.trim()) ? [] : parseIntro(p.intro);
+        const selfCadre = SELF_CADRE.test(p.intro.trim());
+        const intros = selfCadre || NO_INTRO.test(p.intro.trim()) ? [] : parseIntro(p.intro);
         return {
           name: mask(p.name),
           gender: p.gender,
@@ -726,7 +734,10 @@
           unit: p.unit || '未填寫',
           intro: intros.map(x => x.label).join('、'),
           intros,
-          isCadre: CADRES.has(p.name),
+          // 介紹人填「幹部」或姓名在幹部名單裡，都視為幹部一起報名
+          isCadre: selfCadre || CADRES.has(p.name),
+          selfCadre,
+          inList: CADRES.has(p.name),
           kids: kids.n,
           kidAges: kids.ages,
           kidUnclear: kids.unclear,
@@ -847,24 +858,27 @@
     const n = people.length;
     const qian = people.filter(isQian), kun = people.filter(isKun);
     const other = people.filter(p => !isQian(p) && !isKun(p));
-    const aged = people.filter(p => p.age != null);
+    // 幹部一起報名不算學員：年齡、邀約統計只看學員
+    const students = people.filter(p => !p.isCadre);
+    const cadreRegs = people.filter(p => p.isCadre);
+    const ns = students.length;
+    const aged = students.filter(p => p.age != null);
     const out = aged.filter(needCare);
-    const cadreOut = aged.filter(p => !inRange(p.age) && p.isCadre);
-    const withIntro = people.filter(p => p.intro);
+    const withIntro = students.filter(p => p.intro);
     const withKids = people.filter(p => p.kids > 0);
     const kidTotal = withKids.reduce((s, p) => s + p.kids, 0);
     const kidAges = withKids.flatMap(p => p.kidAges).sort((a, b) => a - b);
 
     // 總覽數字
     $('sPeople').textContent = n;
-    $('sPeopleNote').textContent = `乾道 ${qian.length}・坤道 ${kun.length}${d.total !== n ? `（${d.total} 筆回覆）` : ''}`;
+    $('sPeopleNote').textContent = `學員 ${ns}・幹部 ${cadreRegs.length}${d.total !== n ? `（${d.total} 筆回覆）` : ''}`;
     const avg = aged.length ? aged.reduce((s, p) => s + p.age, 0) / aged.length : 0;
     $('sAge').textContent = aged.length ? avg.toFixed(1) : '–';
     $('sAgeNote').textContent = aged.length
-      ? (out.length ? `${out.length} 位學員不在 ${AGE_MIN}–${AGE_MAX} 歲` : cadreOut.length ? `學員都在 ${AGE_MIN}–${AGE_MAX} 歲之間` : `全部在 ${AGE_MIN}–${AGE_MAX} 歲之間`)
-      : '尚無生日資料';
-    $('sIntro').textContent = pct(withIntro.length, n);
-    $('sIntroNote').textContent = n - withIntro.length ? `${n - withIntro.length} 位自己報名` : '每位都有人陪伴';
+      ? (out.length ? `${out.length} 位不在 ${AGE_MIN}–${AGE_MAX} 歲` : `全部在 ${AGE_MIN}–${AGE_MAX} 歲之間`)
+      : ns ? '尚無生日資料' : '目前還沒有學員報名';
+    $('sIntro').textContent = ns ? pct(withIntro.length, ns) : '–';
+    $('sIntroNote').textContent = !ns ? '目前還沒有學員報名' : ns - withIntro.length ? `${ns - withIntro.length} 位自己報名` : '每位都有人陪伴';
     $('sKids').textContent = kidTotal;
     $('sKidsNote').textContent = withKids.length ? `來自 ${withKids.length} 個家庭` : '目前沒有孩童隨行';
 
@@ -886,7 +900,7 @@
       cls: g.hi < AGE_MIN || g.lo > AGE_MAX ? 'out' : '',
     })));
     const ages = aged.map(p => p.age);
-    $('ageNote').textContent = aged.length ? `※ 年齡依今天日期換算，最小 ${Math.min(...ages)} 歲、最大 ${Math.max(...ages)} 歲。` : '※ 尚無生日資料。';
+    $('ageNote').textContent = (aged.length ? `※ 學員年齡依今天日期換算，最小 ${Math.min(...ages)} 歲、最大 ${Math.max(...ages)} 歲。` : '※ 尚無學員生日資料。') + (cadreRegs.length ? `一起報名的 ${cadreRegs.length} 位幹部不列入。` : '');
 
     // 所屬單位
     units = groupBy(people, p => p.unit).map(g => g.label);
@@ -904,7 +918,7 @@
 
     // 介紹人：一位報名者可能有多位介紹人，每位介紹人各算一次
     const introMap = new Map();
-    people.forEach(p => (p.intros || []).forEach(x => {
+    students.forEach(p => (p.intros || []).forEach(x => {
       if (!introMap.has(x.label)) introMap.set(x.label, { ...x, list: [] });
       introMap.get(x.label).list.push(p);
     }));
@@ -912,28 +926,32 @@
     const introGroups = [...introMap.values()].sort(byCount);
     const cadreIntro = introGroups.filter(g => g.cadre);
     const otherIntro = introGroups.filter(g => !g.cadre);
-    const self = people.filter(p => !p.intro);
-    const byCadre = people.filter(p => (p.intros || []).some(x => x.cadre));
-    const byOther = withIntro.filter(p => !byCadre.includes(p));
+    const self = students.filter(p => !p.intro);
+    const byCadre = students.filter(p => (p.intros || []).some(x => x.cadre));
+    // 有人邀約優先於管道：同時寫朋友和課程網頁，算朋友邀約
+    const byOther = withIntro.filter(p => !byCadre.includes(p) && p.intros.some(x => !x.cadre && !x.channel));
+    const byChannel = withIntro.filter(p => !byCadre.includes(p) && !byOther.includes(p));
+    const otherPeople = otherIntro.filter(g => !g.channel).length, channels = otherIntro.filter(g => g.channel).length;
 
     $('introSub').textContent = (otherIntro.length
-      ? `幹部以外有 ${otherIntro.length} 位前賢、朋友參與邀約（姓名已遮蔽）`
+      ? `幹部以外有 ${otherPeople} 位前賢、朋友參與邀約（姓名已遮蔽）${channels ? `，另有 ${channels} 個管道` : ''}`
       : '目前沒有幹部以外的介紹人') + (self.length ? `；${self.length} 位自己報名，更需要我們主動關懷。` : '。');
     drawBars($('introBars'), [...otherIntro.slice(0, 7), ...(self.length ? [{ label: '自己報名', list: self, cls: 'out' }] : [])]);
 
     // 幹部邀約統計
     $('cadreSub').textContent = byCadre.length
-      ? `${byCadre.length} 位新朋友（${pct(byCadre.length, n)}%）由 ${cadreIntro.length} 位幹部邀約，感恩幹部們攜手成全。`
-      : '目前還沒有幹部邀約的報名，期待大家一起攜手邀約。';
+      ? `${byCadre.length} 位學員（${pct(byCadre.length, ns)}%）由 ${cadreIntro.length} 位幹部邀約，感恩幹部們攜手成全。`
+      : '目前還沒有幹部邀約的學員，期待大家一起攜手邀約。';
+    if (cadreRegs.length) $('cadreSub').textContent += `另有 ${cadreRegs.length} 位幹部一起報名，不列入以下比例。`;
     const src = $('srcSplit');
-    const srcSeg = [['c', '幹部邀約', byCadre], ['q', '其他前賢朋友', byOther], ['o', '自己報名', self]].filter(x => x[2].length);
-    src.innerHTML = srcSeg.map(([cls, label, list]) => `<div class="${cls}" style="flex:${list.length}">${pct(list.length, n)}%</div>`).join('');
+    const srcSeg = [['c', '幹部邀約', byCadre], ['q', '其他前賢朋友', byOther], ['g', '網頁・遊戲等管道', byChannel], ['o', '自己報名', self]].filter(x => x[2].length);
+    src.innerHTML = srcSeg.map(([cls, label, list]) => `<div class="${cls}" style="flex:${list.length}">${pct(list.length, ns)}%</div>`).join('');
     [...src.children].forEach((el, i) => {
       const [, label, list] = srcSeg[i];
       el.setAttribute('aria-label', `${label} ${list.length} 位`);
       bindTip(el, `<strong>${label}・${list.length} 位</strong>${fewNames(list, 12)}`);
     });
-    $('srcLegend').innerHTML = `<span><i style="background:var(--accent)"></i>幹部邀約 ${byCadre.length} 位</span><span><i style="background:var(--qian)"></i>其他前賢朋友 ${byOther.length} 位</span><span><i style="background:var(--text-muted)"></i>自己報名 ${self.length} 位</span>`;
+    $('srcLegend').innerHTML = `<span><i style="background:var(--accent)"></i>幹部邀約 ${byCadre.length} 位</span><span><i style="background:var(--qian)"></i>其他前賢朋友 ${byOther.length} 位</span>${byChannel.length ? `<span><i style="background:var(--gold)"></i>網頁・遊戲等管道 ${byChannel.length} 位</span>` : ''}<span><i style="background:var(--text-muted)"></i>自己報名 ${self.length} 位</span>`;
     // 各組：同一位新朋友被同組兩位幹部邀約時只算一次
     drawBars($('cadreGroupBars'), CADRE_GROUPS.map(({ group }) => {
       const list = byCadre.filter(p => p.intros.some(x => x.cadre && x.groups.includes(group)));
@@ -981,7 +999,7 @@
     if (self.length) advice.push(['🤝', '為自己報名的新朋友安排陪伴學長', `${self.length} 位沒有介紹人（${fewNames(self)}），建議開班前就配對一位同齡、同區的學長，第一堂課主動迎接。`]);
     const bigIntro = introGroups.filter(g => g.list.length >= 3);
     if (bigIntro.length) advice.push(['🌱', '分擔陪伴人力', `${bigIntro.map(g => `${esc(g.label)}邀約了 ${g.list.length} 位`).join('、')}，一個人照顧不完，可以請同組或同單位的學長一起分攤關懷。`]);
-    if (n >= 5 && byCadre.length / n < 0.3) advice.push(['📣', '邀請各組幹部一起邀約', `目前幹部邀約佔 ${pct(byCadre.length, n)}%，可以在幹部會議分享報名連結，請每組攜手邀約身邊的朋友。`]);
+    if (ns >= 5 && byCadre.length / ns < 0.3) advice.push(['📣', '邀請各組幹部一起邀約', `目前幹部邀約佔 ${pct(byCadre.length, ns)}%，可以在幹部會議分享報名連結，請每組攜手邀約身邊的朋友。`]);
     if (out.length) advice.push(['🧭', `關懷 ${AGE_MIN}–${AGE_MAX} 歲以外的報名者`, `${out.slice(0, 8).map(p => `${esc(p.name)}（${p.age} 歲）`).join('、')}${out.length > 8 ? ` 等 ${out.length} 位` : ''}不在社青班的年齡範圍，可以個別了解需求，或介紹更合適的班別。`]);
     if (kidTotal) advice.push(['🧸', '安排兒童照顧', `共 ${kidTotal} 位孩童隨行${toddler ? `，其中 ${toddler} 位未滿 3 歲` : ''}，建議安排兒童班或照顧人力，讓父母可以安心上課。`]);
     if (n >= 6 && Math.max(qian.length, kun.length) / n > 0.65) advice.push(['⚖️', '分組時留意乾坤比例', `${qian.length > kun.length ? '乾道' : '坤道'}佔 ${pct(Math.max(qian.length, kun.length), n)}%，分小組時可以平均分配，讓討論更多元。`]);
@@ -1019,8 +1037,11 @@
     if (noDist.length) notes.push(`${names(noDist)} 的居住地區無法判讀到行政區，可以再跟本人確認。`);
     const unclearKids = withKids.filter(p => p.kidUnclear || !p.kidAges.length);
     if (unclearKids.length) notes.push(`${names(unclearKids)} 有孩童隨行，但人數或年齡沒寫清楚，安排兒童照顧前請再確認。`);
-    const cadreSelf = people.filter(p => p.isCadre);
-    if (cadreSelf.length) notes.push(`${names(cadreSelf)} 跟幹部名單同名，視為幹部一起報名${cadreOut.length ? `；其中 ${names(cadreOut)} 年齡超出 ${AGE_MIN}–${AGE_MAX} 歲，不列入關懷名單` : ''}。如果是同名的新朋友，或只是幹部試填，請再確認。`);
+    if (cadreRegs.length) notes.push(`${cadreRegs.length} 位幹部一起報名（${names(cadreRegs)}），不列入學員的年齡、邀約統計與關懷名單。`);
+    const notInList = cadreRegs.filter(p => p.selfCadre && !p.inList);
+    if (notInList.length) notes.push(`${names(notInList)} 介紹人填「幹部」，但不在首頁「同行夥伴」名單裡，請確認名單是否要更新。`);
+    const nameOnly = cadreRegs.filter(p => !p.selfCadre);
+    if (nameOnly.length) notes.push(`${names(nameOnly)} 跟幹部名單同名，但介紹人沒有填「幹部」，目前視為幹部；如果是同名的新朋友，請再確認。`);
     if (d.tests) notes.push(`已排除 ${d.tests} 筆測試填寫（姓名含「測試」或 test），不列入任何計算。`);
     if (repeat) notes.push(`${repeat} 位重複報名（姓名＋生日相同），以最後一次為準。`);
     notes.push('為了保護個資，網頁不讀取手機欄位，也不顯示完整生日；完整資料請到試算表查看。');
@@ -1039,7 +1060,7 @@
         <td class="num">${needCare(p) ? `<span class="badge warn">${p.age}</span>` : p.age ?? '—'}</td>
         <td>${esc(areaLabel(p))}</td>
         <td>${esc(p.unit)}</td>
-        <td>${p.intro ? (p.intros || [{ label: p.intro }]).map(x => esc(x.label) + (x.cadre ? `<span class="badge role">${esc(x.title)}</span>` : '')).join('、') : '<span class="badge warn">自己報名</span>'}</td>
+        <td>${p.selfCadre ? '<span class="badge role">幹部報名</span>' : p.intro ? (p.intros || [{ label: p.intro }]).map(x => esc(x.label) + (x.cadre ? `<span class="badge role">${esc(x.title)}</span>` : '')).join('、') : '<span class="badge warn">自己報名</span>'}</td>
         <td>${p.kids ? `${p.kids} 位${p.kidAges.length ? `（${p.kidAges.map(a => a + ' 歲').join('、')}）` : ''}` : '—'}</td>
         <td class="num">${md(p.last)}</td>
       </tr>`).join('') || '<tr><td colspan="8" class="empty">—</td></tr>';

@@ -1,7 +1,7 @@
 {
-  "total": 2,
+  "total": 4,
   "tests": 0,
-  "updated": "2026-10-24T12:52:14.168Z",
+  "updated": "2026-10-24T12:59:32.856Z",
   "people": [
     {
       "name": "林○涵",
@@ -13,6 +13,8 @@
       "intro": "",
       "intros": [],
       "isCadre": true,
+      "selfCadre": true,
+      "inList": true,
       "kids": 0,
       "kidAges": [],
       "kidUnclear": false,
@@ -29,6 +31,44 @@
       "intro": "",
       "intros": [],
       "isCadre": false,
+      "selfCadre": false,
+      "inList": false,
+      "kids": 0,
+      "kidAges": [],
+      "kidUnclear": false,
+      "times": 1,
+      "last": "2026-10-24"
+    },
+    {
+      "name": "周○翔",
+      "gender": "乾道",
+      "age": 42,
+      "city": "新北市",
+      "dist": "板橋區",
+      "unit": "天選區",
+      "intro": "",
+      "intros": [],
+      "isCadre": true,
+      "selfCadre": true,
+      "inList": true,
+      "kids": 0,
+      "kidAges": [],
+      "kidUnclear": false,
+      "times": 1,
+      "last": "2026-10-24"
+    },
+    {
+      "name": "何○貞",
+      "gender": "坤道",
+      "age": 47,
+      "city": "新北市",
+      "dist": "板橋區",
+      "unit": "天選區",
+      "intro": "",
+      "intros": [],
+      "isCadre": true,
+      "selfCadre": true,
+      "inList": true,
       "kids": 0,
       "kidAges": [],
       "kidUnclear": false,
@@ -39,7 +79,7 @@
   "timeline": [
     {
       "date": "2026-10-24",
-      "n": 2
+      "n": 4
     }
   ],
   "ok": true
