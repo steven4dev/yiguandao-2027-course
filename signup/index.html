@@ -521,6 +521,8 @@
     { label: '46 歲以上', lo: 46, hi: 200 },
   ];
   const inRange = age => age >= AGE_MIN && age <= AGE_MAX;
+  // 幹部一起報名時不是學員，年齡超出範圍也不列入關懷名單
+  const needCare = p => p.age != null && !inRange(p.age) && !p.isCadre;
   const HOME_CITY = '桃園市';
 
   const $ = id => document.getElementById(id);
@@ -844,7 +846,8 @@
     const qian = people.filter(isQian), kun = people.filter(isKun);
     const other = people.filter(p => !isQian(p) && !isKun(p));
     const aged = people.filter(p => p.age != null);
-    const out = aged.filter(p => !inRange(p.age));
+    const out = aged.filter(needCare);
+    const cadreOut = aged.filter(p => !inRange(p.age) && p.isCadre);
     const withIntro = people.filter(p => p.intro);
     const withKids = people.filter(p => p.kids > 0);
     const kidTotal = withKids.reduce((s, p) => s + p.kids, 0);
@@ -855,7 +858,9 @@
     $('sPeopleNote').textContent = `乾道 ${qian.length}・坤道 ${kun.length}${d.total !== n ? `（${d.total} 筆回覆）` : ''}`;
     const avg = aged.length ? aged.reduce((s, p) => s + p.age, 0) / aged.length : 0;
     $('sAge').textContent = aged.length ? avg.toFixed(1) : '–';
-    $('sAgeNote').textContent = aged.length ? (out.length ? `${out.length} 位不在 ${AGE_MIN}–${AGE_MAX} 歲` : `全部在 ${AGE_MIN}–${AGE_MAX} 歲之間`) : '尚無生日資料';
+    $('sAgeNote').textContent = aged.length
+      ? (out.length ? `${out.length} 位學員不在 ${AGE_MIN}–${AGE_MAX} 歲` : cadreOut.length ? `學員都在 ${AGE_MIN}–${AGE_MAX} 歲之間` : `全部在 ${AGE_MIN}–${AGE_MAX} 歲之間`)
+      : '尚無生日資料';
     $('sIntro').textContent = pct(withIntro.length, n);
     $('sIntroNote').textContent = n - withIntro.length ? `${n - withIntro.length} 位自己報名` : '每位都有人陪伴';
     $('sKids').textContent = kidTotal;
@@ -1013,7 +1018,7 @@
     const unclearKids = withKids.filter(p => p.kidUnclear || !p.kidAges.length);
     if (unclearKids.length) notes.push(`${names(unclearKids)} 有孩童隨行，但人數或年齡沒寫清楚，安排兒童照顧前請再確認。`);
     const cadreSelf = people.filter(p => p.isCadre);
-    if (cadreSelf.length) notes.push(`${names(cadreSelf)} 跟幹部名單同名，請確認是幹部試填，還是同名的新朋友。`);
+    if (cadreSelf.length) notes.push(`${names(cadreSelf)} 跟幹部名單同名，視為幹部一起報名${cadreOut.length ? `；其中 ${names(cadreOut)} 年齡超出 ${AGE_MIN}–${AGE_MAX} 歲，不列入關懷名單` : ''}。如果是同名的新朋友，或只是幹部試填，請再確認。`);
     if (d.tests) notes.push(`已排除 ${d.tests} 筆測試填寫（姓名含「測試」或 test），不列入任何計算。`);
     if (repeat) notes.push(`${repeat} 位重複報名（姓名＋生日相同），以最後一次為準。`);
     notes.push('為了保護個資，網頁不讀取手機欄位，也不顯示完整生日；完整資料請到試算表查看。');
@@ -1027,9 +1032,9 @@
     const rows = people.filter(p => current === '全部' || p.unit === current);
     $('tbody').innerHTML = rows.map(p => `
       <tr>
-        <td>${esc(p.name)}${p.times > 1 ? ` <span class="badge warn">${p.times} 次</span>` : ''}</td>
+        <td>${esc(p.name)}${p.isCadre ? ' <span class="badge role">幹部</span>' : ''}${p.times > 1 ? ` <span class="badge warn">${p.times} 次</span>` : ''}</td>
         <td>${isQian(p) ? '<span class="badge q">乾道</span>' : isKun(p) ? '<span class="badge k">坤道</span>' : '—'}</td>
-        <td class="num">${p.age == null ? '—' : inRange(p.age) ? p.age : `<span class="badge warn">${p.age}</span>`}</td>
+        <td class="num">${needCare(p) ? `<span class="badge warn">${p.age}</span>` : p.age ?? '—'}</td>
         <td>${esc(areaLabel(p))}</td>
         <td>${esc(p.unit)}</td>
         <td>${p.intro ? (p.intros || [{ label: p.intro }]).map(x => esc(x.label) + (x.cadre ? `<span class="badge role">${esc(x.title)}</span>` : '')).join('、') : '<span class="badge warn">自己報名</span>'}</td>
