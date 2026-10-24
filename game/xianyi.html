@@ -312,7 +312,7 @@
   .birth { position: absolute; inset: 0; z-index: 45; overflow: hidden; cursor: pointer; transition: opacity .5s ease;
     background: radial-gradient(ellipse at 50% 40%, #1B2550 0%, #0B1026 70%); }
   .birth canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .birth .earth { position: absolute; left: 50%; top: 42%; font-size: 190px; line-height: 1; transform: translate(-50%, -50%);
+  .birth .earth { position: absolute; left: 50%; top: 42%; font-size: 190px; line-height: 1.3; padding: 24px; transform: translate(-50%, -50%);
     filter: drop-shadow(0 0 30px rgba(96,165,250,.55)); }
   .birth .zoom { position: absolute; inset: 0; opacity: 0; background: radial-gradient(ellipse at 52% 48%, #1D4E89 0%, #123463 55%, #0B1F44 100%); }
   .birth svg { position: absolute; left: 50%; top: 50%; width: 230px; margin: -201px 0 0 -115px; overflow: visible; }
@@ -440,7 +440,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.24</span>
+    <span id="ver">v261024.25</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -1027,6 +1027,13 @@
     await birth();
   }
 
+  // 台灣依螢幕高度縮放（最大 230px 寬），中心略高於畫面正中，下方留空間給字幕
+  function fitTaiwan(v, box) {
+    const svg = v.querySelector('svg'), w = Math.min(230, box.height * .32), h = w * 370 / 212;
+    svg.style.width = w + 'px';
+    svg.style.margin = `${-h / 2 - box.height * .05}px 0 0 ${-w / 2}px`;
+    return svg.getBoundingClientRect();
+  }
   // 台灣近景（降生與回到理天共用）
   const TW_SVG = `<svg viewBox="0 0 212 370"><defs><linearGradient id="twLand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4ADE80"/><stop offset="1" stop-color="#15803D"/></linearGradient></defs>
         <path d="M147.3,16.1 Q149.0,15.3 153.7,19.1 Q158.3,23.0 160.6,23.5 Q162.9,24.0 165.6,27.0 Q168.3,30.0 176.1,31.0 Q183.8,32.0 187.5,38.0 Q191.1,44.0 183.4,51.5 Q175.6,59.0 176.5,67.0 Q177.4,75.0 178.4,80.5 Q179.3,86.0 176.1,93.0 Q172.9,100.0 170.6,107.5 Q168.3,115.0 165.2,120.0 Q162.0,125.0 159.2,135.0 Q156.5,145.0 152.0,165.0 Q147.4,185.0 141.0,210.0 Q134.7,235.0 127.4,246.0 Q120.1,257.0 116.9,263.5 Q113.8,270.0 106.9,277.5 Q100.1,285.0 95.5,297.5 Q91.0,310.0 90.1,317.5 Q89.2,325.0 89.2,335.0 Q89.2,345.0 87.8,350.0 Q86.4,355.0 81.0,353.5 Q75.5,352.0 74.2,345.0 Q72.8,338.0 70.5,329.0 Q68.2,320.0 65.1,314.0 Q61.9,308.0 56.0,303.5 Q50.0,299.0 46.9,297.0 Q43.7,295.0 38.7,289.0 Q33.7,283.0 29.6,270.0 Q25.5,257.0 24.1,251.0 Q22.8,245.0 19.6,237.5 Q16.4,230.0 17.3,227.5 Q18.2,225.0 20.5,216.0 Q22.8,207.0 22.8,203.5 Q22.8,200.0 23.7,193.5 Q24.6,187.0 28.2,176.0 Q31.8,165.0 35.0,159.0 Q38.2,153.0 41.9,146.5 Q45.5,140.0 51.0,129.0 Q56.4,118.0 59.1,111.5 Q61.9,105.0 66.0,100.0 Q70.1,95.0 78.3,85.0 Q86.4,75.0 89.6,69.0 Q92.8,63.0 95.5,58.0 Q98.3,53.0 103.7,46.5 Q109.2,40.0 118.3,36.0 Q127.4,32.0 132.9,29.5 Q138.3,27.0 142.0,22.0 Q145.6,17.0 147.3,16.1 Z" fill="url(#twLand)" stroke="#BBF7D0" stroke-width="2.5" stroke-linejoin="round" style="filter:drop-shadow(0 0 10px rgba(134,239,172,.5))"/>
@@ -1045,7 +1052,7 @@
     const cv = v.querySelector('canvas'), W = cv.width = v.clientWidth * 2, H = cv.height = v.clientHeight * 2, g = cv.getContext('2d');
     for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * .7 + .2})`; g.beginPath(); g.arc(Math.random() * W, Math.random() * H, Math.random() * 2 + .4, 0, 7); g.fill(); }
     // 光束落在台灣中部
-    const box = v.getBoundingClientRect(), r = v.querySelector('svg').getBoundingClientRect();
+    const box = v.getBoundingClientRect(), r = fitTaiwan(v, box);
     const tx = r.left - box.left + 97.4 / 212 * r.width, ty = r.top - box.top + 170 / 370 * r.height;
     // 宇宙中的小星星：從右上方朝地球飛去，停在地球外側不重疊，接著轉場
     const er = v.querySelector('.earth').getBoundingClientRect();
@@ -1058,6 +1065,8 @@
     const [star, halo, ring] = ['.star:not(.mini)', '.halo', '.ring'].map(q => v.querySelector(q));
     const sparks = [...v.querySelectorAll('.spark')];
     for (const el of [halo, ring, ...sparks]) { el.style.left = tx + 'px'; el.style.top = ty + 'px'; }
+    const cap = v.querySelector('.cap');
+    cap.style.top = Math.min(r.bottom - box.top + 22, box.height - 96) + 'px'; cap.style.bottom = 'auto';
     // 星星從右上方（理天）斜斜落下；尾巴跟著方向，星芒保持正十字
     const sx = tx + 170, sy = -30, ang = Math.atan2(ty - sy, tx - sx) * 180 / Math.PI;
     // 尾巴預設朝左；轉 ang 度後會指向飛來的方向（右上方），拖在星星後面
@@ -1696,7 +1705,7 @@
     $('app').appendChild(v);
     const cv = v.querySelector('canvas'), W = cv.width = v.clientWidth * 2, H = cv.height = v.clientHeight * 2, g = cv.getContext('2d');
     for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * .7 + .2})`; g.beginPath(); g.arc(Math.random() * W, Math.random() * H, Math.random() * 2 + .4, 0, 7); g.fill(); }
-    const box = v.getBoundingClientRect(), r = v.querySelector('svg').getBoundingClientRect();
+    const box = v.getBoundingClientRect(), r = fitTaiwan(v, box);
     const tx = r.left - box.left + 97.4 / 212 * r.width, ty = r.top - box.top + 170 / 370 * r.height;
     const cx = box.width / 2, hy = box.height;
     let skipped, skip = new Promise(res => { skipped = res; });
