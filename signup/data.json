@@ -1,7 +1,7 @@
 {
   "total": 2,
   "tests": 0,
-  "updated": "2026-10-24T12:24:21.583Z",
+  "updated": "2026-10-24T12:52:14.168Z",
   "people": [
     {
       "name": "林○涵",
@@ -11,6 +11,8 @@
       "dist": "龜山區",
       "unit": "天選區",
       "intro": "",
+      "intros": [],
+      "isCadre": true,
       "kids": 0,
       "kidAges": [],
       "kidUnclear": false,
@@ -25,6 +27,8 @@
       "dist": "桃園區",
       "unit": "至善區",
       "intro": "",
+      "intros": [],
+      "isCadre": false,
       "kids": 0,
       "kidAges": [],
       "kidUnclear": false,
