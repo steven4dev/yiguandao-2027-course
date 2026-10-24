@@ -21,7 +21,7 @@ https://steven4dev.github.io/yiguandao-2027-course/
 
 ## 第四期報名分析（`signup/`）
 
-https://steven4dev.github.io/yiguandao-2027-course/signup/
+https://steven4dev.github.io/yiguandao-2027-course/signup/?v=1（分享用連結，LINE 會顯示預覽圖 `signup/og-signup.png`）
 
 直接讀取報名表的 Google 表單回覆，開啟時讀一次，之後每 5 分鐘、或切回分頁時自動更新；連不上時改顯示 `signup/data.json` 的備份。
 
