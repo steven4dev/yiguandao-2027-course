@@ -435,7 +435,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.22</span>
+    <span id="ver">v261024.23</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -1680,7 +1680,7 @@
   // 人生回憶錄：一生的時間軸
   const memoHtml = log => `<ul class="memo">${log.map(([a, t]) => `<li><span>${a} 歲</span><span>${esc(t)}</span></li>`).join('')}</ul>`;
 
-  // 一生結束：蓮花從台灣慢慢升空，台灣越來越小，轉到宇宙俯瞰地球，再淡入結局頁（約 5 秒，點一下跳過）
+  // 一生結束：蓮花從台灣慢慢升空，台灣越來越小，轉到宇宙俯瞰地球，再淡入結局頁（約 6 秒，點一下跳過）
   async function toEnding() {
     $('sheet').classList.remove('open');
     const v = document.createElement('div');
@@ -1699,28 +1699,28 @@
     requestAnimationFrame(() => { v.style.opacity = '1'; });
     sfx('bell');
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const o = { duration: calm ? 1 : 5000, fill: 'both' };
+    const o = { duration: calm ? 1 : 6000, fill: 'both' };
     const at = (x, y, k) => `translate(${x}px,${y}px) translate(-50%,-50%) scale(${k})`;
-    // 蓮花：台灣中部 26px → 升到畫面上方時 64px（最大）→ 停在宇宙上方 54px
+    // 蓮花：台灣中部 26px → 升到畫面上方時 64px（最大）→ 繼續往上升、縮小並慢慢淡出，消失在宇宙中
     const anims = [
       v.querySelector('.lotus').animate([
-        { transform: at(tx, ty, .4), opacity: 0, offset: 0 }, { transform: at(tx, ty, .5), opacity: 1, offset: .12 },
-        { transform: at(cx, hy * .3, 1), opacity: 1, offset: .48 }, { transform: at(cx, hy * .22, .85), opacity: 1, offset: .72 },
-        { transform: at(cx, hy * .2, .85), opacity: 1, offset: 1 }], o),
+        { transform: at(tx, ty, .4), opacity: 0, offset: 0 }, { transform: at(tx, ty, .5), opacity: 1, offset: .1 },
+        { transform: at(cx, hy * .3, 1), opacity: 1, offset: .45 }, { transform: at(cx, hy * .18, .7), opacity: .4, offset: .7 },
+        { transform: at(cx, hy * .1, .5), opacity: 0, offset: .85 }, { opacity: 0, offset: 1 }], o),
       // 台灣：原尺寸 → 縮到 0.35 倍、淡出（越飛越高）
       v.querySelector('svg').animate([{ transform: 'scale(1)', offset: 0 }, { transform: 'scale(1)', offset: .12 }, { transform: 'scale(.35)', offset: .5 }, { transform: 'scale(.35)', offset: 1 }], o),
       v.querySelector('.zoom').animate([{ opacity: 1, offset: 0 }, { opacity: 1, offset: .38 }, { opacity: 0, offset: .55 }, { opacity: 0, offset: 1 }], o),
       // 地球：從近處 1.6 倍淡入 → 慢慢縮到 0.75 倍（離地球越來越遠）
       v.querySelector('.earth').animate([{ transform: 'translate(-50%,-50%) scale(1.6)', top: '62%', opacity: 0, offset: 0 }, { transform: 'translate(-50%,-50%) scale(1.6)', top: '62%', opacity: 0, offset: .42 },
         { transform: 'translate(-50%,-50%) scale(1.2)', top: '62%', opacity: 1, offset: .58 }, { transform: 'translate(-50%,-50%) scale(.75)', top: '62%', opacity: 1, offset: 1 }], o),
-      v.querySelector('.cap').animate([{ opacity: 0, offset: 0 }, { opacity: 0, offset: .7 }, { opacity: 1, offset: .82 }, { opacity: 1, offset: 1 }], o),
+      v.querySelector('.cap').animate([{ opacity: 0, offset: 0 }, { opacity: 0, offset: .6 }, { opacity: 1, offset: .74 }, { opacity: 1, offset: 1 }], o),
     ];
     if (calm) await Promise.race([wait(1500 * speed), skip]);
     else {
       const hold = ms => wait(ms * speed);
       const timer = setInterval(() => anims.forEach(a => { if (paused && a.playState === 'running') a.pause(); else if (!paused && a.playState === 'paused') a.play(); }), 200);
       let over = false;
-      await Promise.race([hold(2700).then(() => { if (!over) sfx('dao'); }).then(() => hold(2300)), skip]);
+      await Promise.race([hold(3200).then(() => { if (!over) sfx('dao'); }).then(() => hold(2800)), skip]);
       over = true;
       clearInterval(timer);
     }
