@@ -12,11 +12,11 @@
 <meta property="og:site_name" content="2027 全真社青 Life Design 探索地圖">
 <meta property="og:title" content="社青班第四期報名分析｜基礎忠恕瑞周全真道院">
 <meta property="og:description" content="年齡、地區、單位、陪伴夥伴即時分析，一起攜手把開班準備得更貼心。">
-<meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/signup/?v=2">
-<meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/signup/og-signup.png?v=2">
+<meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/signup/?v=3">
+<meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/signup/og-signup.png?v=3">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="社青班第四期報名分析：乾坤比例、年齡分布與報名時間軸">
+<meta property="og:image:alt" content="社青班第四期報名分析：乾坤比例、學員年齡分布與報名時間軸">
 <meta property="og:locale" content="zh_TW">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -382,7 +382,7 @@
     <button type="button" class="live" id="live" data-state="loading" title="點一下立即重新讀取">
       <span class="dot" aria-hidden="true">…</span><span id="liveText">正在連線最新資料…</span>
     </button>
-    <div class="ver">版本 <span id="ver">v261024.10</span></div>
+    <div class="ver">版本 <span id="ver">v261024.11</span></div>
   </div>
 </header>
 
@@ -418,11 +418,11 @@
 
   <div class="two">
     <section class="card">
-      <h2>乾坤與年齡<span class="auto">⚙ 自動計算</span></h2>
-      <p class="sub">社青班的對象是 26–45 歲，範圍外的年齡層以淺色標示。乾坤比例含幹部，年齡分布只計學員。</p>
+      <h2>乾坤與學員年齡<span class="auto">⚙ 自動計算</span></h2>
+      <p class="sub">社青班的對象是 26–45 歲，範圍外的年齡層以淺色標示。乾坤比例含幹部；學員年齡分布只計學員，幹部不分析年齡。</p>
       <div class="split" id="split"></div>
       <div class="split-legend" id="splitLegend"></div>
-      <div class="mini-title">年齡分布</div>
+      <div class="mini-title">學員年齡分布</div>
       <div class="bars" id="ageBars"></div>
       <p class="axis-note" id="ageNote">&nbsp;</p>
     </section>
@@ -895,7 +895,7 @@
     });
     $('splitLegend').innerHTML = `<span><i style="background:var(--qian)"></i>乾道 ${qian.length} 位</span><span><i style="background:var(--kun)"></i>坤道 ${kun.length} 位</span>${other.length ? `<span><i style="background:var(--text-muted)"></i>未填寫 ${other.length} 位</span>` : ''}`;
 
-    // 年齡分布（固定級距，範圍外淺色）
+    // 學員年齡分布（固定級距，範圍外淺色）
     drawBars($('ageBars'), AGE_GROUPS.map(g => ({
       label: g.label,
       list: aged.filter(p => p.age >= g.lo && p.age <= g.hi),
