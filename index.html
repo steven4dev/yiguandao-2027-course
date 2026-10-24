@@ -1185,13 +1185,20 @@
     background-position: bottom center;
     background-repeat: no-repeat;
   }
-  footer p.copyright {
+  footer .footer-info {
     position: absolute;
     bottom: 5%;
     left: 0;
     right: 0;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
     padding: 0 24px;
+  }
+  footer p.copyright {
+    margin: 0;
+    text-align: center;
     font-family: var(--serif);
     letter-spacing: 0.08em;
     font-size: 1rem;
@@ -1200,6 +1207,47 @@
     text-shadow:
       0 0 10px rgba(255, 255, 255, 0.95),
       0 0 20px rgba(255, 255, 255, 0.85);
+  }
+  footer .footer-address {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px 12px;
+    margin: 0;
+    font-size: 0.95rem;
+  }
+  footer .footer-address a.addr-link {
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-decoration: none;
+    text-shadow:
+      0 0 10px rgba(255, 255, 255, 0.95),
+      0 0 20px rgba(255, 255, 255, 0.85);
+  }
+  footer .footer-address a.addr-link:hover { text-decoration: underline; }
+  footer .footer-address a.nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 14px;
+    border-radius: 99px;
+    background: var(--accent-blue);
+    color: #FFFFFF;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.25s ease;
+  }
+  footer .footer-address a.nav-btn:hover {
+    background: #0369A1;
+    transform: translateY(-2px);
+  }
+  @media (max-width: 600px) {
+    footer .footer-info { gap: 4px; padding: 0 16px; }
+    footer p.copyright { font-size: 0.85rem; letter-spacing: 0.04em; }
+    footer .footer-address { font-size: 0.8rem; gap: 4px 8px; }
+    footer .footer-address a.nav-btn { padding: 2px 10px; }
   }
 
   @media (max-width: 900px) {
@@ -1729,7 +1777,13 @@
   </div>
 
   <footer>
-    <p class="copyright">一貫道基礎忠恕瑞周全真道院｜全真社青班</p>
+    <div class="footer-info">
+      <p class="copyright">一貫道基礎忠恕瑞周全真道院｜全真社青班</p>
+      <p class="footer-address">
+        <a class="addr-link" href="https://maps.app.goo.gl/vyPY31b2fwpX9CES6" target="_blank" rel="noopener">📍 桃園市龜山區萬壽路789號</a>
+        <a class="nav-btn" href="https://www.google.com/maps/dir/?api=1&amp;destination=%E6%A1%83%E5%9C%92%E5%B8%82%E9%BE%9C%E5%B1%B1%E5%8D%80%E8%90%AC%E5%A3%BD%E8%B7%AF789%E8%99%9F" target="_blank" rel="noopener">🧭 導航</a>
+      </p>
+    </div>
   </footer>
 
   <a class="fab-signup" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">
