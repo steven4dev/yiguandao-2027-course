@@ -341,6 +341,11 @@
   .birth .skip { position: absolute; right: 16px; bottom: calc(24px + env(safe-area-inset-bottom)); font-size: 12px; color: rgba(255,255,255,.45); }
   .birth.ascend .lotus { position: absolute; left: 0; top: 0; font-size: 64px; line-height: 1; filter: drop-shadow(0 0 18px rgba(253,230,138,.95)) drop-shadow(0 0 40px rgba(253,230,138,.5)); }
   .birth.ascend .cap { top: 28%; bottom: auto; }
+  /* 蓮花像蒲公英一樣散開：一顆顆帶細絲的小光點，往上、往外飄走 */
+  .birth.ascend .seed { position: absolute; left: 0; top: 0; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; opacity: 0;
+    background: radial-gradient(circle, #FFFFFF 0%, #FFF7D6 45%, rgba(255,247,214,0) 75%); box-shadow: 0 0 6px 1px rgba(253,230,138,.8); }
+  .birth.ascend .seed::after { content: ""; position: absolute; left: 3px; top: 6px; width: 1px; height: 9px; background: linear-gradient(rgba(255,247,214,.8), rgba(255,247,214,0)); }
+  .birth.ascend .seed.pink { background: radial-gradient(circle, #FFFFFF 0%, #FBCFE8 45%, rgba(251,207,232,0) 75%); box-shadow: 0 0 6px 1px rgba(244,114,182,.6); }
   #ending { position: absolute; inset: 0; overflow-y: auto; padding: 22px 16px 40px; background: var(--bg); z-index: 25; }
   /* 結局頁底部：淡霧＋漂浮的 ▼，提示下面還有內容 */
   #moreCue {
@@ -435,7 +440,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.23</span>
+    <span id="ver">v261024.24</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -1687,7 +1692,7 @@
     v.className = 'birth ascend';
     v.style.opacity = '0';
     v.innerHTML = `<canvas></canvas><div class="zoom" style="opacity:1">${TW_SVG}</div><div class="earth" style="opacity:0">🌏</div>
-      <div class="lotus">🪷</div><div class="cap"><b>回到理天⋯</b></div><span class="skip">點一下跳過 ›</span>`;
+      <div class="lotus">🪷</div>${'<i class="seed"></i>'.repeat(28)}<div class="cap"><b>回到理天⋯</b></div><span class="skip">點一下跳過 ›</span>`;
     $('app').appendChild(v);
     const cv = v.querySelector('canvas'), W = cv.width = v.clientWidth * 2, H = cv.height = v.clientHeight * 2, g = cv.getContext('2d');
     for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * .7 + .2})`; g.beginPath(); g.arc(Math.random() * W, Math.random() * H, Math.random() * 2 + .4, 0, 7); g.fill(); }
@@ -1701,12 +1706,25 @@
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const o = { duration: calm ? 1 : 6000, fill: 'both' };
     const at = (x, y, k) => `translate(${x}px,${y}px) translate(-50%,-50%) scale(${k})`;
-    // 蓮花：台灣中部 26px → 升到畫面上方時 64px（最大）→ 繼續往上升、縮小並慢慢淡出，消失在宇宙中
+    // 蓮花：台灣中部 26px → 升到畫面上方時 64px（最大）→ 像蒲公英一樣散開成小光點，蓮花本身慢慢淡出
+    const ly = hy * .3;
+    const seeds = [...v.querySelectorAll('.seed')].map((el, k) => {
+      if (k % 5 === 1 || k % 5 === 3) el.classList.add('pink');
+      const a = -Math.PI / 2 + (Math.random() - .5) * Math.PI * 1.3, d = 90 + Math.random() * 190;
+      const dx = Math.cos(a) * d, dy = Math.sin(a) * d - 40, sway = (Math.random() - .5) * 50, rot = (Math.random() - .5) * 120;
+      const x0 = cx + (Math.random() - .5) * 30, y0 = ly + (Math.random() - .5) * 20, start = .45 + Math.random() * .12;
+      return el.animate([
+        { transform: `translate(${x0}px,${y0}px)`, opacity: 0, offset: 0 }, { transform: `translate(${x0}px,${y0}px)`, opacity: 0, offset: start },
+        { transform: `translate(${x0 + dx * .45 + sway}px,${y0 + dy * .45}px) rotate(${rot / 2}deg)`, opacity: 1, offset: start + .12 },
+        { transform: `translate(${x0 + dx - sway}px,${y0 + dy}px) rotate(${rot}deg)`, opacity: 0, offset: Math.min(1, start + .38) },
+        { opacity: 0, offset: 1 }], o);
+    });
     const anims = [
+      ...seeds,
       v.querySelector('.lotus').animate([
         { transform: at(tx, ty, .4), opacity: 0, offset: 0 }, { transform: at(tx, ty, .5), opacity: 1, offset: .1 },
-        { transform: at(cx, hy * .3, 1), opacity: 1, offset: .45 }, { transform: at(cx, hy * .18, .7), opacity: .4, offset: .7 },
-        { transform: at(cx, hy * .1, .5), opacity: 0, offset: .85 }, { opacity: 0, offset: 1 }], o),
+        { transform: at(cx, ly, 1), opacity: 1, offset: .45 }, { transform: at(cx, hy * .26, .85), opacity: .35, offset: .62 },
+        { transform: at(cx, hy * .24, .75), opacity: 0, offset: .72 }, { opacity: 0, offset: 1 }], o),
       // 台灣：原尺寸 → 縮到 0.35 倍、淡出（越飛越高）
       v.querySelector('svg').animate([{ transform: 'scale(1)', offset: 0 }, { transform: 'scale(1)', offset: .12 }, { transform: 'scale(.35)', offset: .5 }, { transform: 'scale(.35)', offset: 1 }], o),
       v.querySelector('.zoom').animate([{ opacity: 1, offset: 0 }, { opacity: 1, offset: .38 }, { opacity: 0, offset: .55 }, { opacity: 0, offset: 1 }], o),
