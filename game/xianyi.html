@@ -429,7 +429,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.11</span>
+    <span id="ver">v261024.12</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -1015,7 +1015,7 @@
     await birth();
   }
 
-  // 按下「出生！」之後：從外太空看地球，拉近到台灣，一道光從理天射下（約 5 秒，點一下跳過）
+  // 按下「出生！」之後：從外太空看地球，拉近到台灣，一道光從理天射下（約 8 秒，不跟倍速，點一下跳過）
   async function birth() {
     const v = document.createElement('div');
     v.className = 'birth';
@@ -1039,7 +1039,7 @@
     let skipped, skip = new Promise(res => { skipped = res; });
     v.onclick = () => { sfx('tap'); skipped(); };
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const o = { duration: calm ? 1 : 5000, fill: 'both' };
+    const o = { duration: calm ? 1 : 8000, fill: 'both' };
     const anims = [
       v.querySelector('.earth').animate([
         { transform: 'translate(-50%,-50%) scale(.7) rotate(-8deg)', opacity: 1, offset: 0 },
@@ -1056,10 +1056,13 @@
     ];
     if (calm) await Promise.race([wait(1000), skip]);
     else {
-      // 跟著倍速播放；光束落下時「叮——」
-      anims.forEach(a => { a.playbackRate = speed; });
+      // 不跟倍速，固定用真實時間播放，暫停時一起停；光束落下時「叮——」
+      const hold = ms => wait(ms * speed);
+      const sync = () => anims.forEach(a => { if (paused && a.playState === 'running') a.pause(); else if (!paused && a.playState === 'paused') a.play(); });
+      const timer = setInterval(sync, 200);
       let over = false;
-      await Promise.race([wait(2500).then(() => { if (!over) sfx('beam'); }).then(() => wait(2500)), skip]);
+      await Promise.race([hold(4300).then(() => { if (!over) sfx('beam'); }).then(() => hold(3700)), skip]);
+      clearInterval(timer);
       over = true;
     }
     v.style.opacity = '0';
