@@ -307,6 +307,25 @@
 
   /* 結局頁 */
   #ending { position: absolute; inset: 0; overflow-y: auto; padding: 22px 16px 40px; background: var(--bg); z-index: 25; }
+  /* 結局頁底部：淡霧＋漂浮的 ▼，提示下面還有內容 */
+  #moreCue {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 26; height: 110px;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    background: linear-gradient(to bottom, rgba(238,247,242,0), rgba(238,247,242,.92) 70%, var(--bg));
+    pointer-events: none; opacity: 0; transition: opacity .5s ease;
+  }
+  #moreCue.on { opacity: 1; }
+  #moreCue button {
+    pointer-events: auto; border: 0; background: transparent; padding: 10px 18px;
+    animation: cueBob 1.6s ease-in-out infinite;
+  }
+  #moreCue button::before {
+    content: ""; display: block; width: 0; height: 0;
+    border-left: 13px solid transparent; border-right: 13px solid transparent; border-top: 15px solid var(--green);
+    filter: drop-shadow(0 3px 4px rgba(5,150,105,.35));
+  }
+  @keyframes cueBob { 50% { transform: translateY(6px); } }
   .end-head { text-align: center; }
   .end-head .em { font-size: 3.2rem; line-height: 1.2; }
   .end-head .kicker { color: var(--muted); font-size: .85rem; margin: 6px 0 0; }
@@ -380,7 +399,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.02</span>
+    <span id="ver">v261024.03</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -415,6 +434,7 @@
   <div id="sheet" role="dialog" aria-modal="true"></div>
   <div id="overlay" class="overlay" hidden></div>
   <section id="ending" hidden></section>
+  <div id="moreCue" hidden><button type="button" aria-label="往下看更多"></button></div>
   <div id="memoirs" class="overlay" hidden>
     <div class="card">
       <h2>📖 人生回憶錄</h2>
@@ -1632,6 +1652,17 @@
         io.observe(img);
       });
     }
+    // 資產歸零後，底部浮出 ▼ 提示下面還有內容；往下滑超過半個畫面就收起來
+    const cue = $('moreCue');
+    const hideCue = () => { cue.classList.remove('on'); setTimeout(() => { if (!cue.classList.contains('on')) cue.hidden = true; }, 500); };
+    let cueDone = false;
+    el.onscroll = () => { if (el.scrollTop > el.clientHeight * .5) { cueDone = true; hideCue(); } };
+    drained.then(() => {
+      if (el.hidden || cueDone || el.scrollHeight - el.clientHeight < 40) return;
+      cue.hidden = false;
+      requestAnimationFrame(() => cue.classList.add('on'));
+    });
+    cue.querySelector('button').onclick = () => { sfx('tap'); el.scrollBy({ top: el.clientHeight * .8, behavior: 'smooth' }); };
     el.querySelector('#shareImg').onclick = shareToLine;
     el.querySelector('#againBtn').onclick = start;
     el.querySelector('#allMemo').onclick = () => { sfx('tap'); renderMemoirs(); $('memoirs').hidden = false; };
@@ -1906,6 +1937,7 @@
     S = newState();
     setPaused(false);
     $('ending').hidden = true;
+    $('moreCue').hidden = true; $('moreCue').classList.remove('on');
     $('title').hidden = true;
     feed.innerHTML = '';
     chapter('');
