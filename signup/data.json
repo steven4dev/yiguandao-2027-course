@@ -1,12 +1,12 @@
 {
   "total": 4,
   "tests": 0,
-  "updated": "2026-10-24T12:59:32.856Z",
+  "updated": "2026-10-24T13:00:05.448Z",
   "people": [
     {
       "name": "林○涵",
       "gender": "坤道",
-      "age": 39,
+      "age": null,
       "city": "桃園市",
       "dist": "龜山區",
       "unit": "天選區",
@@ -42,7 +42,7 @@
     {
       "name": "周○翔",
       "gender": "乾道",
-      "age": 42,
+      "age": null,
       "city": "新北市",
       "dist": "板橋區",
       "unit": "天選區",
@@ -60,7 +60,7 @@
     {
       "name": "何○貞",
       "gender": "坤道",
-      "age": 47,
+      "age": null,
       "city": "新北市",
       "dist": "板橋區",
       "unit": "天選區",

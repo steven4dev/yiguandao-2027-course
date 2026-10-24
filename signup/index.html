@@ -382,7 +382,7 @@
     <button type="button" class="live" id="live" data-state="loading" title="點一下立即重新讀取">
       <span class="dot" aria-hidden="true">…</span><span id="liveText">正在連線最新資料…</span>
     </button>
-    <div class="ver">版本 <span id="ver">v261024.09</span></div>
+    <div class="ver">版本 <span id="ver">v261024.10</span></div>
   </div>
 </header>
 
@@ -724,18 +724,20 @@
         const area = parseArea(p.area);
         const kids = parseKids(p.kids);
         const selfCadre = SELF_CADRE.test(p.intro.trim());
+        // 介紹人填「幹部」或姓名在幹部名單裡，都視為幹部一起報名
+        const isCadre = selfCadre || CADRES.has(p.name);
         const intros = selfCadre || NO_INTRO.test(p.intro.trim()) ? [] : parseIntro(p.intro);
         return {
           name: mask(p.name),
           gender: p.gender,
-          age: p.birth ? ageOf(p.birth, now) : null,
+          // 年齡只分析學員，幹部不換算也不保留
+          age: p.birth && !isCadre ? ageOf(p.birth, now) : null,
           city: area.city,
           dist: area.dist,
           unit: p.unit || '未填寫',
           intro: intros.map(x => x.label).join('、'),
           intros,
-          // 介紹人填「幹部」或姓名在幹部名單裡，都視為幹部一起報名
-          isCadre: selfCadre || CADRES.has(p.name),
+          isCadre,
           selfCadre,
           inList: CADRES.has(p.name),
           kids: kids.n,
@@ -1031,13 +1033,13 @@
 
     // 資料提醒
     const notes = [];
-    const noBirth = people.filter(p => p.age == null);
+    const noBirth = students.filter(p => p.age == null);
     if (noBirth.length) notes.push(`${names(noBirth)} 的出生年月日無法判讀，沒有列入年齡統計。`);
     const noDist = people.filter(p => p.city === '其他' || p.city === '未填寫' || (p.city === HOME_CITY && !p.dist));
     if (noDist.length) notes.push(`${names(noDist)} 的居住地區無法判讀到行政區，可以再跟本人確認。`);
     const unclearKids = withKids.filter(p => p.kidUnclear || !p.kidAges.length);
     if (unclearKids.length) notes.push(`${names(unclearKids)} 有孩童隨行，但人數或年齡沒寫清楚，安排兒童照顧前請再確認。`);
-    if (cadreRegs.length) notes.push(`${cadreRegs.length} 位幹部一起報名（${names(cadreRegs)}），不列入學員的年齡、邀約統計與關懷名單。`);
+    if (cadreRegs.length) notes.push(`${cadreRegs.length} 位幹部一起報名（${names(cadreRegs)}），不分析年齡，也不列入學員的邀約統計與關懷名單。`);
     const notInList = cadreRegs.filter(p => p.selfCadre && !p.inList);
     if (notInList.length) notes.push(`${names(notInList)} 介紹人填「幹部」，但不在首頁「同行夥伴」名單裡，請確認名單是否要更新。`);
     const nameOnly = cadreRegs.filter(p => !p.selfCadre);
@@ -1057,7 +1059,7 @@
       <tr>
         <td>${esc(p.name)}${p.isCadre ? ' <span class="badge role">幹部</span>' : ''}${p.times > 1 ? ` <span class="badge warn">${p.times} 次</span>` : ''}</td>
         <td>${isQian(p) ? '<span class="badge q">乾道</span>' : isKun(p) ? '<span class="badge k">坤道</span>' : '—'}</td>
-        <td class="num">${needCare(p) ? `<span class="badge warn">${p.age}</span>` : p.age ?? '—'}</td>
+        <td class="num">${p.isCadre ? '—' : needCare(p) ? `<span class="badge warn">${p.age}</span>` : p.age ?? '—'}</td>
         <td>${esc(areaLabel(p))}</td>
         <td>${esc(p.unit)}</td>
         <td>${p.selfCadre ? '<span class="badge role">幹部報名</span>' : p.intro ? (p.intros || [{ label: p.intro }]).map(x => esc(x.label) + (x.cadre ? `<span class="badge role">${esc(x.title)}</span>` : '')).join('、') : '<span class="badge warn">自己報名</span>'}</td>
