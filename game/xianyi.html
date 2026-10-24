@@ -83,24 +83,46 @@
   .btn[disabled] { opacity: .45; }
 
   /* 開始畫面 */
+  /* 天上（開始畫面、母娘序章）用銀河星空；按下「出生！」之後回到淡綠色的人間 */
+  #sky { position: absolute; inset: 0; z-index: 29; overflow: hidden; pointer-events: none;
+    background:
+      radial-gradient(ellipse 60% 22% at 50% 30%, rgba(167,139,250,.35), transparent 70%),
+      radial-gradient(ellipse 90% 30% at 60% 34%, rgba(96,165,250,.22), transparent 70%),
+      radial-gradient(ellipse at 50% 110%, #1B2550 0%, #0B1026 55%, #070A1C 100%); }
+  #sky .band { position: absolute; left: -30%; top: 6%; width: 160%; height: 260px; transform: rotate(-28deg); filter: blur(8px);
+    background: radial-gradient(ellipse 50% 40% at 50% 50%, rgba(255,247,214,.28), rgba(196,181,253,.18) 45%, transparent 75%); }
+  #sky canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   #title {
-    position: absolute; inset: 0; overflow-y: auto;
+    position: absolute; inset: 0; overflow-y: auto; z-index: 31;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     padding: 32px 24px; text-align: center; gap: 12px;
   }
   .robe {
-    font-size: 4rem; line-height: 1;
-    filter: drop-shadow(0 0 18px rgba(251,191,36,.7));
+    font-size: 4rem; line-height: 1.2;
+    filter: drop-shadow(0 0 18px rgba(253,230,138,.9)) drop-shadow(0 0 40px rgba(253,230,138,.45));
     animation: float 3.2s ease-in-out infinite;
   }
   @keyframes float { 50% { transform: translateY(-8px); } }
-  #title h1 { font-family: var(--serif); font-weight: 900; font-size: 2.3rem; margin: 4px 0 0; letter-spacing: .06em; }
-  #title .sub { font-family: var(--serif); color: var(--green); font-weight: 700; font-size: 1.15rem; letter-spacing: .3em; margin: 0; }
-  #title .intro { font-family: var(--serif); font-weight: 700; color: var(--gold); line-height: 1.9; margin: 6px 0 0; font-size: 1.05rem; }
-  #title .lede { color: var(--ink-soft); line-height: 1.8; margin: 4px 0 8px; }
-  #title .meta, #title .collect { color: var(--muted); font-size: .85rem; margin: 0; }
-  #title .home { color: var(--muted); font-size: .85rem; text-decoration: underline; }
+  #title h1 { font-family: var(--serif); font-weight: 900; font-size: 2.5rem; margin: 4px 0 0; letter-spacing: .1em; color: #FFF7D6;
+    text-shadow: 0 0 18px rgba(253,230,138,.55), 0 2px 0 rgba(0,0,0,.3); }
+  #title .sub { font-family: var(--serif); color: #C4B5FD; font-weight: 700; font-size: 1.1rem; letter-spacing: .4em; margin: 0; }
+  #title .intro { font-family: var(--serif); font-weight: 700; color: #FDE68A; line-height: 1.9; margin: 6px 0 0; font-size: 1.05rem; }
+  #title .lede { color: rgba(226,232,240,.88); line-height: 1.8; margin: 4px 0 8px; }
+  #title .meta, #title .collect { color: rgba(203,213,225,.65); font-size: .85rem; margin: 0; }
+  #title .home { color: #A7F3D0; font-size: .85rem; text-decoration: underline; text-underline-offset: 3px; }
   #title .btn { max-width: 360px; }
+  /* 天上的按鈕：主按鈕是發光的金色膠囊，次要按鈕是淡紫細框 */
+  .btn.star-go { border: 0; border-radius: 99px; color: #3B2A05; font-weight: 900; letter-spacing: .12em;
+    background: linear-gradient(180deg, #FDE68A, #F5C451); box-shadow: 0 0 24px rgba(253,230,138,.55), 0 6px 16px rgba(0,0,0,.35); }
+  #title .btn.ghost { border-radius: 99px; color: rgba(226,232,240,.9); border-color: rgba(196,181,253,.5); }
+  #titleGear { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); }
+  #title #ver { color: rgba(203,213,225,.8); }
+  /* 母娘序章：星空中的半透明卡片 */
+  .overlay.sky { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .card.heaven { background: rgba(15,20,48,.62); border-color: rgba(196,181,253,.28); box-shadow: 0 20px 50px rgba(0,0,0,.4), 0 0 40px rgba(167,139,250,.12);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .card.heaven .hint { color: #C4B5FD; letter-spacing: .2em; }
+  .card.heaven .say { color: #FFF7D6; }
   /* 版本編號：給開發者確認有沒有更新成功，刻意做得很淡 */
   #ver { position: absolute; right: 12px; bottom: calc(8px + env(safe-area-inset-bottom)); font-size: .68rem; color: var(--muted); opacity: .45; font-variant-numeric: tabular-nums; }
 
@@ -428,6 +450,7 @@
 </head>
 <body>
 <div id="app">
+  <div id="sky" aria-hidden="true"><div class="band"></div><canvas></canvas></div>
   <section id="title">
     <button class="gear" id="titleGear" type="button" aria-label="設定">⚙️</button>
     <div class="robe">🪷</div>
@@ -435,12 +458,12 @@
     <p class="sub">八十億分之一</p>
     <p class="intro">人生如戲，戲如人生。<br>玩要認真，不要入戲太深。</p>
     <p class="lede">每個人都是褪下仙衣、來到人間的原靈。<br>下凡抽籤，走完一生——<br>名利帶不走，這一生，你帶走了什麼？</p>
-    <button class="btn primary" id="startBtn" type="button">下凡去 ▶</button>
+    <button class="btn star-go" id="startBtn" type="button">下凡去 ▶</button>
     <button class="btn ghost" id="memoBtn" type="button" hidden>📖 人生回憶錄</button>
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.26</span>
+    <span id="ver">v261024.27</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -544,6 +567,16 @@
   });
 
   const SITE = 'https://steven4dev.github.io/yiguandao-2027-course/';
+
+  (function drawSky() {
+    const cv = $('sky').querySelector('canvas'), W = cv.width = cv.clientWidth * 2 || 780, H = cv.height = cv.clientHeight * 2 || 1688, g = cv.getContext('2d');
+    for (let i = 0; i < 260; i++) {
+      let x = Math.random() * W, y = Math.random() * H;
+      if (Math.random() < .55) { const t = Math.random(); x = t * W; y = H * .42 - t * W * .53 + (Math.random() - .5) * H * .19; }
+      g.fillStyle = `rgba(255,${240 + Math.random() * 15 | 0},${220 + Math.random() * 35 | 0},${Math.random() * .7 + .3})`;
+      g.beginPath(); g.arc(x, y, Math.random() < .06 ? 2.4 : Math.random() * 1.6 + .4, 0, 7); g.fill();
+    }
+  })();
 
   const GAME_URL = SITE + 'game/xianyi.html?v=6';   // 帶 ?v=6 讓 LINE 重新抓預覽圖
   const CAL = 'https://calendar.google.com/calendar/u/0?cid=NWMyYTEyNmIwYzFiOWIzMzQ4ZmM5MzM5NTFkZDNiNzQ5ZmY5ZjM5Zjc1MDkzMzE3N2Q5MDgzNDNiMTY4ZjRmY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t';
@@ -992,13 +1025,17 @@
       '記得⋯⋯⋯「資產」帶不走，<br><br>帶得走的，要靠自己「修」。',
       '去吧。別忘了回家的路。',
     ];
-    await card(`<div class="glow"></div><p class="hint">理天・母娘身邊</p><p class="say" id="say"></p><button class="btn primary" type="button">▶</button>`, (el, done) => {
+    $('overlay').classList.add('sky');
+    await card(`<div class="glow"></div><p class="hint">理天・母娘身邊</p><p class="say" id="say"></p><button class="btn star-go" type="button">▶</button>`, (el, done) => {
       let i = 0;
       const sayEl = el.querySelector('#say'), b = el.querySelector('.btn');
       const show = () => { sayEl.innerHTML = says[i]; b.textContent = i === says.length - 1 ? '褪下仙衣，下凡去 ▶' : '▶'; };
       show();
       b.onclick = () => { sfx('tap'); if (++i < says.length) show(); else done(); };
-    });
+    }, 'heaven');
+    // 離開理天：星空淡出，回到人間
+    $('overlay').classList.remove('sky');
+    $('sky').hidden = true;
   }
 
   // 下凡抽籤：先跑世界，最後揭曉台灣籤
@@ -2175,6 +2212,7 @@
     $('ending').hidden = true;
     $('moreCue').hidden = true; $('moreCue').classList.remove('on');
     $('title').hidden = true;
+    $('sky').hidden = false;
     feed.innerHTML = '';
     chapter('');
     $('game').hidden = false;
