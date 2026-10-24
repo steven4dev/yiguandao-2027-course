@@ -471,7 +471,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.29</span>
+    <span id="ver">v261024.30</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -718,7 +718,7 @@
       fade:  [[81, 0], [76, .12], [72, .24], [69, .38]],
       end:   [[62, 0], [66, .2], [69, .4], [74, .6], [78, .8], [81, 1.05]],
     };
-    // 手機訊息提示音：兩聲上揚的木琴「叮咚」，模仿通訊軟體收到訊息的感覺（自行合成，非 LINE 原音）
+    // 手機訊息提示音：木琴音色，自行合成（非 LINE 原音）
     function ping(m, t, vol) {
       tone(sfxBus, m, t, .5, { type: 'sine', vol, attack: .003 });
       tone(sfxBus, m + 24, t, .12, { type: 'sine', vol: vol * .35, attack: .002 });
@@ -739,7 +739,8 @@
     function sfx(name) {
       init(); if (!ac || !sfxVol) return;
       const t = ac.currentTime + .01;
-      if (name === 'msg') { ping(84, t, .16); ping(91, t + .11, .16); return; }
+      // 收到邀約：Do、Re、Mi 三個音往上的提示音
+      if (name === 'msg') { ping(84, t, .15); ping(86, t + .13, .15); ping(88, t + .26, .17); return; }
       if (name === 'stamp') { thump(t); return; }
       const long = name === 'end' || name === 'bell' || name === 'dao' || name === 'calm' || name === 'beam';
       for (const [m, dt] of SFX[name] || []) tone(sfxBus, m, t + dt, long ? 2.2 : .4, { type: name === 'pop' ? 'triangle' : 'sine', vol: name === 'tick' || name === 'coin' ? .04 : .09 });
