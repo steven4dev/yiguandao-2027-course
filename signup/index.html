@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#EEF7F2">
 <meta name="robots" content="noindex, nofollow">
 <title>社青班第四期報名分析</title>
 <meta name="description" content="基礎忠恕瑞周全真道院 社青班第四期 報名資料分析">
@@ -37,60 +39,6 @@
     --shadow: 0 10px 25px -10px rgba(5, 150, 105, 0.22);
     --serif: 'Noto Serif TC', serif;
     --sans: 'Noto Sans TC', sans-serif;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      color-scheme: dark;
-      --bg-main: #0F172A;
-      --bg-card: #1E293B;
-      --bg-soft: #1B3330;
-      --text-primary: #F1F5F9;
-      --text-secondary: #CBD5E1;
-      --text-muted: #94A3B8;
-      --accent: #34D399;
-      --accent-soft: rgba(52, 211, 153, 0.14);
-      --qian: #38BDF8;
-      --qian-soft: rgba(56, 189, 248, 0.16);
-      --kun: #F472B6;
-      --kun-soft: rgba(244, 114, 182, 0.16);
-      --green: #34D399;
-      --green-soft: rgba(52, 211, 153, 0.14);
-      --gold: #FBBF24;
-      --gold-soft: rgba(251, 191, 36, 0.14);
-      --line: rgba(203, 213, 225, 0.14);
-      --bar: #34D399;
-      --bar-hover: #6EE7B7;
-      --bar-out: #3B4E5E;
-      --hero: linear-gradient(180deg, #0B2A3F, #0F172A 60%, #2A2312);
-      --eyebrow: linear-gradient(135deg, #F59E0B, #EA580C);
-      --shadow: 0 10px 25px -8px rgba(0, 0, 0, 0.45);
-    }
-  }
-  :root[data-theme="dark"] {
-    color-scheme: dark;
-    --bg-main: #0F172A;
-    --bg-card: #1E293B;
-    --bg-soft: #1B3330;
-    --text-primary: #F1F5F9;
-    --text-secondary: #CBD5E1;
-    --text-muted: #94A3B8;
-    --accent: #34D399;
-    --accent-soft: rgba(52, 211, 153, 0.14);
-    --qian: #38BDF8;
-    --qian-soft: rgba(56, 189, 248, 0.16);
-    --kun: #F472B6;
-    --kun-soft: rgba(244, 114, 182, 0.16);
-    --green: #34D399;
-    --green-soft: rgba(52, 211, 153, 0.14);
-    --gold: #FBBF24;
-    --gold-soft: rgba(251, 191, 36, 0.14);
-    --line: rgba(203, 213, 225, 0.14);
-    --bar: #34D399;
-    --bar-hover: #6EE7B7;
-    --bar-out: #3B4E5E;
-    --hero: linear-gradient(180deg, #0B2A3F, #0F172A 60%, #2A2312);
-    --eyebrow: linear-gradient(135deg, #F59E0B, #EA580C);
-    --shadow: 0 10px 25px -8px rgba(0, 0, 0, 0.45);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -185,8 +133,6 @@
   .split .q { background: var(--qian); }
   .split .k { background: var(--kun); }
   .split .o { background: var(--text-muted); }
-  :root[data-theme="dark"] .split div { color: #0F172A; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .split div { color: #0F172A; } }
   .split-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; font-size: 0.9rem; color: var(--text-secondary); }
   .split-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
   .mini-title { font-size: 0.9rem; font-weight: 700; margin: 20px 0 8px; color: var(--text-secondary); }
@@ -357,8 +303,6 @@
   .live[data-state="loading"] .dot { animation: pulse 1s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: 0.35; } }
   @media (prefers-reduced-motion: reduce) { .live[data-state="loading"] .dot { animation: none; } }
-  :root[data-theme="dark"] .live .dot { color: #0F172A; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .live .dot { color: #0F172A; } }
   .empty { color: var(--text-muted); font-size: 0.92rem; }
 
   /* 自動產生標註 */
