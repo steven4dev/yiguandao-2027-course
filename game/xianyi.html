@@ -99,9 +99,6 @@
   #title .intro { font-family: var(--serif); font-weight: 700; color: var(--gold); line-height: 1.9; margin: 6px 0 0; font-size: 1.05rem; }
   #title .lede { color: var(--ink-soft); line-height: 1.8; margin: 4px 0 8px; }
   #title .meta, #title .collect { color: var(--muted); font-size: .85rem; margin: 0; }
-  #title .souls { color: var(--gold); font-weight: 700; font-size: .92rem; margin: 2px 0 0; }
-  #title .souls b { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
-  .end-head .soulno { color: var(--gold); font-weight: 700; font-size: .9rem; margin: 2px 0 0; }
   #title .home { color: var(--muted); font-size: .85rem; text-decoration: underline; }
   #title .btn { max-width: 360px; }
   /* 版本編號：給開發者確認有沒有更新成功，刻意做得很淡 */
@@ -436,12 +433,11 @@
     <p class="intro">人生如戲，戲如人生。<br>玩要認真，不要入戲太深。</p>
     <p class="lede">每個人都是褪下仙衣、來到人間的原靈。<br>下凡抽籤，走完一生——<br>名利帶不走，這一生，你帶走了什麼？</p>
     <button class="btn primary" id="startBtn" type="button">下凡去 ▶</button>
-    <p class="souls" id="souls" hidden></p>
     <button class="btn ghost" id="memoBtn" type="button" hidden>📖 人生回憶錄</button>
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261024.16</span>
+    <span id="ver">v261024.17</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -546,25 +542,6 @@
 
   const SITE = 'https://steven4dev.github.io/yiguandao-2027-course/';
 
-  // 轉世人數：每次打開遊戲頁就記一次（免費計數服務 Abacus，用 JSONP 避開跨網域限制）；連不上就不顯示
-  let soulNo = 0;
-  function soulCounter(kind, cb) {
-    const fn = 'xySoul' + Date.now() + Math.floor(Math.random() * 1e4), sc = document.createElement('script');
-    const done = () => { clearTimeout(t); delete window[fn]; sc.remove(); };
-    const t = setTimeout(done, 8000);
-    window[fn] = d => { done(); if (d && typeof d.value === 'number') cb(d.value); };
-    sc.onerror = done;
-    sc.src = `https://abacus.jasoncameron.dev/${kind}/yiguandao-2027-course/xianyi-souls?callback=${fn}`;
-    document.head.appendChild(sc);
-  }
-  // 第一位轉世的原靈從 0027 號開始（呼應 2027），至少顯示四位數
-  const soulFmt = n => String(n).padStart(4, '0');
-  soulCounter('hit', n => {
-    soulNo = n + 26;
-    const el = $('souls');
-    el.innerHTML = `🪷 已有 <b>${soulFmt(soulNo)}</b> 位原靈轉世`;
-    el.hidden = false;
-  });
   const GAME_URL = SITE + 'game/xianyi.html?v=6';   // 帶 ?v=6 讓 LINE 重新抓預覽圖
   const CAL = 'https://calendar.google.com/calendar/u/0?cid=NWMyYTEyNmIwYzFiOWIzMzQ4ZmM5MzM5NTFkZDNiNzQ5ZmY5ZjM5Zjc1MDkzMzE3N2Q5MDgzNDNiMTY4ZjRmY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t';
   const SIGNUP = 'https://forms.gle/PG7yAsyz1r4unXXZ8';
@@ -1727,7 +1704,6 @@
     el.innerHTML = `
       <div class="end-head">
         <div class="em">${E.em}</div>
-        ${soulNo ? `<p class="soulno">你是第 ${soulFmt(soulNo)} 位轉世的原靈</p>` : ''}
         <p class="kicker">${moodOf()} ${S.persona.em} ${S.persona.name}・享年 ${S.age} 歲・去社青班 ${S.visits} 次</p>
         <h2>${E.title}</h2>
         <p class="quote">${E.line}</p>
