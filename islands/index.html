@@ -144,6 +144,15 @@
   .prog li { display: grid; grid-template-columns: 4.8em 1fr; gap: 8px; line-height: 1.5; }
   .prog li span { color: var(--muted); font-size: 12px; padding-top: 1px; }
   .note { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .roster { display: grid; gap: 4px; }
+  .who { display: grid; grid-template-columns: 12px 5.2em 1fr auto; align-items: center; gap: 8px; width: 100%; text-align: left; border-radius: 10px; padding: 7px 10px; }
+  .who i { width: 10px; height: 10px; border-radius: 50%; border: 2px solid; }
+  .who span { font-size: 12px; color: var(--muted); }
+  .who b { font-weight: 500; }
+  .who em { font-style: normal; font-size: 12px; color: var(--muted); }
+  .who em[data-on="true"] { color: var(--jade); font-weight: 700; }
+  .duties { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; line-height: 1.6; }
+  .back { justify-self: start; }
   .gamecta { display: grid; gap: 10px; padding: 10px; border-radius: 14px; background: var(--chip); border: 1px solid var(--line); color: var(--ink); text-decoration: none; transition: border-color 0.2s, transform 0.2s; }
   .gamecta:hover { border-color: var(--jade); transform: translateY(-2px); }
   .gamecta:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; }
@@ -193,7 +202,7 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.04</span>
+  <span class="ver">v261025.05</span>
 </div>
 
 <div class="mapctl">
@@ -265,39 +274,74 @@ const COURSES = [
 ];
 
 // 2027 年度幹部（跟 signup/index.html 的 CADRE_GROUPS、首頁「同行夥伴」一致，人事異動時要一起改）
-// 姓名只用來比對報名表，比對完就丟掉，畫面上只顯示各組人數
+// 執掌取自首頁「同行夥伴」；畫面上的姓名一律遮蔽中間字（林○涵）
 const CADRE_GROUPS = [
-  { group: '班務團隊', members: ['周逸翔', '何珈貞', '羅健洲'] },
-  { group: '人事組', members: ['賴美芸', '林鈺蓉', '楊舒涵'] },
-  { group: '公關禮節組', members: ['林詩涵', '陳幸梅', '陳曉璇', '林淑真'] },
-  { group: '學術組', members: ['楊雅雲', '王冠博', '鄭燕玲'] },
-  { group: '輔導組', members: ['陳彥名'] },
-  { group: '總務組', members: ['張立人', '林淑梅', '許麗娟', '張馨予', '張如靈', '張懿文', '王志賢', '李書承'] },
-  { group: '影音組', members: ['王冠博', '卓子翔', '陳熙宗'] },
-  { group: '活動組', members: ['周能安', '許瀚升', '張哲瑋', '王欣渝', '林禹青'] },
+  { group: '班務團隊', members: [['周逸翔', '班長'], ['何珈貞', '坤道副班長'], ['羅健洲', '乾道副班長']] },
+  { group: '人事組', members: [['賴美芸', '組長'], ['林鈺蓉', '成員'], ['楊舒涵', '成員']],
+    duties: ['報名收件、名冊與出席紀錄', '每堂簽到、請假統計', '結班全勤與結業名單'] },
+  { group: '公關禮節組', members: [['林詩涵', '組長'], ['陳幸梅', '成員'], ['陳曉璇', '成員'], ['林淑真', '成員']],
+    duties: ['迎賓接待、引導入座', '講師邀約聯繫與致謝', '場內禮儀提醒、對外聯繫'] },
+  { group: '學術組', members: [['楊雅雲', '組長'], ['王冠博', '成員'], ['鄭燕玲', '成員']],
+    duties: ['年度主題與每堂課綱規劃', '與講師對接內容、確認大綱', '觀點分享與課後心得整理', '網站、課程預告海報視覺美編'] },
+  { group: '輔導組', members: [['陳彥名', '成員']],
+    duties: ['新學員適應與關懷陪伴', '缺席或低落學員的聯繫', '課後追蹤與疑問轉介'] },
+  { group: '總務組', members: [['張立人', '組長'], ['林淑梅', '成員'], ['許麗娟', '成員'], ['張馨予', '成員'], ['張如靈', '成員'], ['張懿文', '成員'], ['王志賢', '成員'], ['李書承', '成員']],
+    duties: ['場地佈置與復原、音響桌椅', '早午餐、午餐採買與備餐', '收支帳務與物資盤點'] },
+  { group: '影音組', members: [['王冠博', '組長'], ['卓子翔', '成員'], ['陳熙宗', '成員']],
+    duties: ['現場拍照、攝影與音響投影', '活動花絮與年度回顧影片', '海報、社群與網站素材'] },
+  { group: '活動組', members: [['周能安', '組長'], ['許瀚升', '成員'], ['張哲瑋', '成員'], ['王欣渝', '成員'], ['林禹青', '成員']],
+    duties: ['迎新、戶外、結班聯誼規劃', '暖場、破冰與遊戲主持', '法會服務人力統籌', '下午活動任務支援'] },
 ];
+// 班務團隊每個職位的執掌不同（班長的兩條由副班長的「協助班長統籌班務、班長不在時代理主持」整理而來）
+const ROLE_DUTIES = {
+  班長: ['統籌全年班務，串聯各組運作', '主持課程與臨場協調'],
+  坤道副班長: ['協助班長統籌班務，串聯各組運作', '關懷坤道學員，凝聚坤道班員向心力', '班長不在時代理主持與臨場協調', '支援法會與活動中的坤道人力調度'],
+  乾道副班長: ['協助班長統籌班務，串聯各組運作', '關懷乾道學員，凝聚乾道班員向心力', '班長不在時代理主持與臨場協調', '支援法會與活動中的乾道人力調度'],
+};
+// 「林詩涵」→「林○涵」、「王明」→「王○」
+function mask(name) {
+  const s = Array.from(name);
+  if (s.length <= 1) return name;
+  if (s.length === 2) return s[0] + '○';
+  return s[0] + '○'.repeat(s.length - 2) + s[s.length - 1];
+}
 const CADRE_LOOK = {
   班務團隊: ['hall', '#c0503f', '市政廳'], 人事組: ['post', '#3f8a6a', '郵局'], 公關禮節組: ['arch', '#d9774a', '迎賓牌樓'], 學術組: ['library', '#5b6fa8', '圖書館'],
   輔導組: ['lighthouse', '#e0a03a', '燈塔'], 總務組: ['barn', '#8f5f3c', '倉庫'], 影音組: ['tower', '#7a5aa6', '電視塔'], 活動組: ['bigtop', '#d2566a', '大帳篷'],
 };
-const CADRE = CADRE_GROUPS.map(({ group, members }, i) => {
-  const [mark, color, what] = CADRE_LOOK[group];
-  return { key: 'g' + (i + 1), group, size: members.length, mark, color, what };
-});
-// 同一人身兼多組時，每一組都算
+// 同一人身兼多組時，每一組都算；uid 是這個人在名單裡的序號，報名資料只記序號、不記姓名
 const CADRE_OF = new Map();
-CADRE_GROUPS.forEach(({ group, members }) => members.forEach((n) => CADRE_OF.set(n, [...(CADRE_OF.get(n) || []), group])));
+CADRE_GROUPS.forEach(({ group, members }) => members.forEach(([n]) => CADRE_OF.set(n, [...(CADRE_OF.get(n) || []), group])));
+const CADRE_NAMES = [...CADRE_OF.keys()];
+// 每個幹部島上的一個小人偶＝一個職位
+const SLOTS = [];
+const CADRE = CADRE_GROUPS.map(({ group, members, duties }, i) => {
+  const [mark, color, what] = CADRE_LOOK[group];
+  const key = 'g' + (i + 1);
+  const slots = members.map(([name, role]) => {
+    const slot = { id: SLOTS.length, key, group, role, uid: CADRE_NAMES.indexOf(name), masked: mask(name),
+      title: group === '班務團隊' ? role : group + role, duties: ROLE_DUTIES[role] || duties || [] };
+    SLOTS.push(slot);
+    return slot;
+  });
+  return { key, group, size: members.length, mark, color, what, slots };
+});
+// 備份資料只有遮蔽過的姓名，用「遮蔽姓名＋組別」對回名單序號
+function cadreUidsOf(masked, groups) {
+  return CADRE_NAMES.map((n, u) => [n, u]).filter(([n]) => mask(n) === masked && CADRE_OF.get(n).some((g) => groups.includes(g))).map(([, u]) => u);
+}
 
 // 報名資料備份（signup/data.json 2026/10/24 版本，只保留畫面需要的欄位，不含姓名）
 const SNAPSHOT = {
   updated: '2026-10-25T01:06:27.952Z',
   people: [
-    { g: '坤道', city: '桃園市', unit: '天選區', isCadre: true, cadre: ['公關禮節組'], date: '2026-10-24' },
+    { g: '坤道', city: '桃園市', unit: '天選區', isCadre: true, cadre: ['公關禮節組'], m: '林○涵', date: '2026-10-24' },
     { g: '乾道', city: '桃園市', unit: '至善區', isCadre: false, cadre: [], date: '2026-10-24' },
-    { g: '乾道', city: '新北市', unit: '天選區', isCadre: true, cadre: ['班務團隊'], date: '2026-10-24' },
-    { g: '坤道', city: '新北市', unit: '天選區', isCadre: true, cadre: ['班務團隊'], date: '2026-10-24' },
+    { g: '乾道', city: '新北市', unit: '天選區', isCadre: true, cadre: ['班務團隊'], m: '周○翔', date: '2026-10-24' },
+    { g: '坤道', city: '新北市', unit: '天選區', isCadre: true, cadre: ['班務團隊'], m: '何○貞', date: '2026-10-24' },
   ],
 };
+SNAPSHOT.people.forEach((p) => { p.uids = p.m ? cadreUidsOf(p.m, p.cadre) : []; delete p.m; });
 const GAMES = { start: null, finish: null, share: null };
 
 // 示範資料：60 位學員＋全部幹部，報名日期分散到開班前（固定種子，每次一樣）
@@ -308,8 +352,8 @@ function demoPeople() {
   const day = (r) => new Date(start + Math.pow(r, 1.6) * span).toISOString().slice(0, 10);
   const out = [];
   for (let i = 0; i < 60; i++) out.push({ g: rnd() < 0.55 ? '坤道' : '乾道', city: ['桃園市', '桃園市', '新北市', '臺北市'][Math.floor(rnd() * 4)],
-    unit: ['天選區', '至善區', '至善區', '其他單位'][Math.floor(rnd() * 4)], isCadre: false, cadre: [], date: day(rnd()) });
-  CADRE.forEach((c) => { for (let i = 0; i < c.size; i++) out.push({ g: rnd() < 0.5 ? '坤道' : '乾道', city: '桃園市', unit: '天選區', isCadre: true, cadre: [c.group], date: day(rnd() * 0.5) }); });
+    unit: ['天選區', '至善區', '至善區', '其他單位'][Math.floor(rnd() * 4)], isCadre: false, cadre: [], uids: [], date: day(rnd()) });
+  CADRE_NAMES.forEach((n, u) => out.push({ g: rnd() < 0.5 ? '坤道' : '乾道', city: '桃園市', unit: '天選區', isCadre: true, cadre: CADRE_OF.get(n), uids: [u], date: day(rnd() * 0.5) }));
   return out.sort((a, b) => a.date.localeCompare(b.date));
 }
 
@@ -408,13 +452,15 @@ function makeIsland(key, R, x, z, kind) {
   const g = new THREE.Group();
   g.position.set(x, 0, z);
   scene.add(g);
-  const top = mesh(new THREE.CylinderGeometry(R, R, 0.5, 6), grassMat, 0, -0.25, 0, g, false);
+  // 厚厚的草皮＋土層，像桌上的模型積木
+  const top = mesh(new THREE.CylinderGeometry(R, R, 0.8, 6), grassMat, 0, -0.4, 0, g, false);
   top.rotation.y = Math.PI / 6;
   top.userData.key = key;
   hitMeshes.push(top);
-  const s1 = mesh(new THREE.CylinderGeometry(R - 0.04, R * 0.92, R * 0.16, 6), soilMat, 0, -0.5 - R * 0.08, 0, g, false);
+  const h1 = 2.2 + R * 0.06, h2 = 1.3 + R * 0.04;
+  const s1 = mesh(new THREE.CylinderGeometry(R - 0.12, R * 0.94, h1, 6), soilMat, 0, -0.8 - h1 / 2, 0, g, false);
   s1.rotation.y = Math.PI / 6;
-  const s2 = mesh(new THREE.CylinderGeometry(R * 0.92, R * 0.78, R * 0.1, 6), soilDarkMat, 0, -0.5 - R * 0.16 - R * 0.05, 0, g, false);
+  const s2 = mesh(new THREE.CylinderGeometry(R * 0.94, R * 0.78, h2, 6), soilDarkMat, 0, -0.8 - h1 - h2 / 2, 0, g, false);
   s2.rotation.y = Math.PI / 6;
   islands[key] = { key, R, x, z, group: g, kind };
   return islands[key];
@@ -427,7 +473,7 @@ function hexEdge(R, ang) {
 
 const water = new THREE.Mesh(new THREE.CircleGeometry(700, 64), lam(C.water));
 water.rotation.x = -Math.PI / 2;
-water.position.y = -1.3;
+water.position.y = -3.4;
 water.receiveShadow = true;
 scene.add(water);
 
@@ -998,6 +1044,7 @@ function cadreBuilding(kind, g, color) {
 }
 
 const RING2 = 80, R_CADRE = 5.5;
+const cadreHit = [];   // 幹部小人偶的網格，點擊與滑鼠游標用
 let gameSpeed = 1;
 const outer = [{ key: 'game', title: '遊戲樂園', mark: 'ferris', color: '#e8b53a', R: 6.5 }, ...CADRE.map((c) => ({ ...c, title: c.group, R: R_CADRE }))];
 outer.forEach((o, i) => {
@@ -1006,18 +1053,22 @@ outer.forEach((o, i) => {
   isl.info = o;
   const b = new THREE.Group(); b.rotation.y = ang + Math.PI; isl.group.add(b);
   cadreBuilding(o.mark, b, o.color);
-  bush(o.R * 0.55, -o.R * 0.35, 0.6, isl.group);
-  bush(-o.R * 0.6, -o.R * 0.3, 0.7, isl.group);
+  bush(o.R * 0.4, -o.R * 0.39, 0.55, isl.group);
+  bush(-o.R * 0.45, -o.R * 0.33, 0.6, isl.group);
   isl.members = [];
   if (o.key !== 'game') {
     isl.memberMat = lam(o.color);
-    for (let k = 0; k < o.size; k++) {
-      const a = ang + Math.PI + (k - (o.size - 1) / 2) * 0.32, r = o.R * 0.66;
-      const p = figure(ghostPersonMat);
+    o.slots.forEach((slot, k) => {
+      // 圍著建築站一圈，從哪個角度看都看得到幾位
+      const a = ang + 0.4 + (k / o.size) * Math.PI * 2, r = o.R * 0.72;
+      const p = figure(ghostPersonMat, slot.role === '組長' || slot.role === '班長');
       placeWalker(p, isl.group, Math.sin(a) * r, Math.cos(a) * r, 0.15);
-      p.scale.setScalar(1);
+      p.userData.grow = 1.4;
+      p.scale.setScalar(1.4);
+      p.userData.slot = slot.id;
+      p.traverse((m) => { if (m.isMesh) cadreHit.push(m); });
       isl.members.push(p);
-    }
+    });
   }
 });
 
@@ -1032,7 +1083,7 @@ viaduct.rotation.y = -Math.atan2(VDIR.z, VDIR.x);
 scene.add(viaduct);
 mesh(new THREE.BoxGeometry(VL, 0.7, 3.4), lam(C.concrete), 0, DECK_Y, 0, viaduct);
 for (const s of [-1, 1]) mesh(new THREE.BoxGeometry(VL, 0.5, 0.15), lam('#e4dfd4'), 0, DECK_Y + 0.6, s * 1.65, viaduct, false);
-for (let x = -VL / 2 + 4; x < VL / 2; x += 9) mesh(new THREE.BoxGeometry(1, DECK_Y + 1.3, 1.4), lam('#c9c3b6'), x, (DECK_Y - 1.3) / 2, 0, viaduct);
+for (let x = -VL / 2 + 4; x < VL / 2; x += 9) mesh(new THREE.BoxGeometry(1, DECK_Y + 3.4, 1.4), lam('#c9c3b6'), x, (DECK_Y - 3.4) / 2, 0, viaduct);
 // 台灣高鐵：白色車身、黑色窗帶、橘色腰線
 const thsrWhite = lam('#f7f6f2'), thsrBand = lam('#2b2f36'), thsrOrange = lam('#e2763b');
 const trainWin = glow('#2b2f36', 0, 0);
@@ -1132,6 +1183,7 @@ function syncCrowd(isl, n) {
 }
 
 let lastView = '';
+let joinedUids = new Set();
 function applyDate() {
   const now = curISO();
   const list = peopleNow().filter((p) => p.date <= now);
@@ -1147,11 +1199,14 @@ function applyDate() {
     }
     syncCrowd(isl, s === 'today' ? Math.min(40, list.length) : 0);
   }
+  joinedUids = new Set(list.flatMap((p) => p.uids || []));
   for (const o of CADRE) {
     const isl = islands[o.key];
-    const n = Math.min(o.size, list.filter((p) => p.cadre.includes(o.group)).length);
-    isl.joined = n;
-    isl.members.forEach((p, k) => p.traverse((m) => { if (m.isMesh) m.material = k < n ? (m.geometry === headGeo ? skinMat : isl.memberMat) : ghostPersonMat; }));
+    isl.joined = o.slots.filter((sl) => joinedUids.has(sl.uid)).length;
+    isl.members.forEach((p, k) => {
+      const on = joinedUids.has(o.slots[k].uid);
+      p.traverse((m) => { if (m.isMesh) m.material = on ? (m.geometry === headGeo ? skinMat : m.geometry === capGeo ? capMat : isl.memberMat) : ghostPersonMat; });
+    });
   }
   // 日期列
   const d = new Date(now + 'T00:00:00+08:00');
@@ -1182,7 +1237,8 @@ function bars(title, entries, total) {
 const countBy = (list, f) => Object.entries(list.reduce((m, p) => ((m[f(p)] = (m[f(p)] || 0) + 1), m), {})).sort((a, b) => b[1] - a[1]);
 function renderPanel() {
   const now = curISO(), list = peopleNow().filter((p) => p.date <= now);
-  const isl = islands[selected];
+  const memberSlot = String(selected).startsWith('m:') ? SLOTS[+selected.slice(2)] : null;
+  const isl = memberSlot ? islands[memberSlot.key] : islands[selected];
   let html = '', title = '', info = '';
   if (!isl || isl.kind === 'temple') {
     const students = list.filter((p) => !p.isCadre), cadres = list.length - students.length;
@@ -1210,13 +1266,24 @@ function renderPanel() {
         <span class="gc"><span class="eyebrow">這座島的小遊戲</span><b>${esc(c.game.name)}</b><span>${esc(c.game.desc)}</span><span class="gc-btn">🎮 先玩玩看 →</span></span>
       </a>` : ''}
       <p class="note">${look}</p>`;
+  } else if (memberSlot) {
+    const sl = memberSlot, on = joinedUids.has(sl.uid);
+    const also = (CADRE_OF.get(CADRE_NAMES[sl.uid]) || []).filter((g) => g !== sl.group);
+    title = sl.title; info = `${sl.masked}・${on ? '已報名' : '還沒報名'}`;
+    html = `<header><span class="eyebrow">幹部島・${esc(sl.group)}</span><h2>${esc(sl.title)}</h2><p class="sub">${esc(sl.masked)}${also.length ? `・也在${esc(also.join('、'))}` : ''}</p></header>
+      <span class="pill" data-s="${on ? 'done' : 'plan'}"><i></i>${on ? '已報名' : '還沒報名'}</span>
+      <div class="bars"><h3>${sl.group === '班務團隊' ? '這個職位的執掌' : '這一組的執掌'}</h3><ul class="duties">${sl.duties.map((d) => `<li>${esc(d)}</li>`).join('')}</ul></div>
+      <button class="back" data-go="${sl.key}">← 看${esc(sl.group)}全部幹部</button>`;
   } else if (isl.kind === 'cadre') {
     const o = isl.info;
     title = o.group; info = `已報名 ${isl.joined}/${o.size}`;
     html = `<header><span class="eyebrow">幹部島・${esc(o.what)}</span><h2>${esc(o.group)}</h2></header>
-      <div class="stats"><div class="stat"><b>${isl.joined}<small style="font-size:12px;color:var(--muted)">/${o.size}</small></b><span>已報名</span></div></div>
       ${bars('報名進度', [['已報名', isl.joined], ['還沒報名', o.size - isl.joined]], o.size)}
-      <p class="note">島上的小人偶是這一組的幹部，報名後會從半透明變成這一組的顏色。這裡只顯示人數，不顯示姓名。</p>`;
+      <div class="bars"><h3>幹部名單（點一下看執掌）</h3><div class="roster">${o.slots.map((sl) => {
+        const on = joinedUids.has(sl.uid);
+        return `<button class="who" data-slot="${sl.id}"><i style="background:${on ? o.color : 'transparent'};border-color:${o.color}"></i><span>${esc(sl.role)}</span><b>${esc(sl.masked)}</b><em data-on="${on}">${on ? '已報名' : '還沒報名'}</em></button>`;
+      }).join('')}</div></div>
+      <p class="note">島上的小人偶就是這一組的幹部，報名後會從半透明變成這一組的顏色，戴金色小帽的是組長。點小人偶也可以看執掌。</p>`;
   } else if (isl.kind === 'game') {
     const n = (v) => (v == null ? '—' : v);
     title = '遊戲樂園'; info = '法會小天使・褪下仙衣';
@@ -1298,11 +1365,14 @@ function flyTo(target, pos, dur = 1.2) {
   tween = { t: 0, dur, ft: controls.target.clone(), fp: camera.position.clone(), tt: target, tp: pos };
   controls.autoRotate = false;
 }
-function select(key) {
-  selected = key;
-  setUI({ panel: 'open' });
+// sel 可以是島（'g3'）或某一位幹部（'m:12'）；同一座島上換人時鏡頭不動
+const islandOf = (sel) => (String(sel).startsWith('m:') ? SLOTS[+sel.slice(2)].key : sel);
+function select(key, sel = key) {
   const isl = islands[key];
-  {
+  const stay = islandOf(selected) === key && controls.target.distanceTo(new THREE.Vector3(isl.x, 1.5, isl.z)) < 1;
+  selected = sel;
+  setUI({ panel: 'open' });
+  if (!stay) {
     const t = new THREE.Vector3(isl.x, 1.5, isl.z);
     const dist = isl.R * 3.4 + 12;
     const dirV = camera.position.clone().sub(controls.target).setY(0).normalize();
@@ -1315,10 +1385,28 @@ function select(key) {
   applyDate();
 }
 function goHome() { flyTo(HOME.target.clone(), HOME.pos.clone()); }
+const selectMember = (id) => select(SLOTS[id].key, 'm:' + id);
+document.getElementById('panelBody').addEventListener('click', (e) => {
+  const who = e.target.closest('.who'), back = e.target.closest('.back');
+  if (who) selectMember(+who.dataset.slot);
+  else if (back) select(back.dataset.go);
+});
 
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 let downXY = null;
 renderer.domElement.addEventListener('pointerdown', (e) => { downXY = [e.clientX, e.clientY]; if (tween) tween = null; });
+// 滑鼠移到幹部小人偶上，游標變成手指
+let hoverQueued = false;
+renderer.domElement.addEventListener('pointermove', (e) => {
+  if (e.pointerType !== 'mouse' || e.buttons || hoverQueued) return;
+  hoverQueued = true;
+  requestAnimationFrame(() => {
+    hoverQueued = false;
+    ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit, false).length ? 'pointer' : '';
+  });
+});
 renderer.domElement.addEventListener('pointerup', (e) => {
   if (!downXY || Math.hypot(e.clientX - downXY[0], e.clientY - downXY[1]) > 6) return;
   ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
@@ -1328,6 +1416,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   // 點到海面：收起資訊卡和時光捲軸，把畫面還給群島
   if (!hit) { setUI({ panel: 'closed', dock: false }); return; }
   let o = hit.object;
+  for (let f = o; f; f = f.parent) if (f.userData && f.userData.slot != null) { selectMember(f.userData.slot); return; }
   while (o && !Object.values(islands).some((i) => i.group === o)) o = o.parent;
   const isl = o && Object.values(islands).find((i) => i.group === o);
   if (isl) select(isl.key);
@@ -1440,13 +1529,13 @@ function summarize(table) {
     const prev = byKey.get(key);
     const first = prev && prev.first < time ? prev.first : time;
     const latest = !prev || prev.time <= time;
-    const groups = CADRE_OF.get(name) || [];
+    const groups = CADRE_OF.get(name) || [], uid = CADRE_NAMES.indexOf(name);
     const row = latest ? { time, gender: get(c.gender), area: get(c.area), unit: get(c.unit), intro: get(c.intro) } : prev;
-    byKey.set(key, { ...row, first, groups, selfCadre: SELF_CADRE.test(row.intro) });
+    byKey.set(key, { ...row, first, groups, uids: uid >= 0 ? [uid] : [], selfCadre: SELF_CADRE.test(row.intro) });
   });
   return [...byKey.values()].map((p) => ({
     g: p.gender, city: cityOf(p.area), unit: p.unit || '未填寫',
-    isCadre: p.selfCadre || p.groups.length > 0, cadre: p.groups, date: ymd(p.first),
+    isCadre: p.selfCadre || p.groups.length > 0, cadre: p.groups, uids: p.uids, date: ymd(p.first),
   })).sort((a, b) => a.date.localeCompare(b.date));
 }
 
@@ -1478,7 +1567,8 @@ async function loadPeople() {
     const r = await fetch('../signup/data.json', { cache: 'no-store' });
     if (!r.ok) throw new Error();
     const d = await r.json();
-    realPeople = d.people.map((p) => ({ g: p.gender, city: p.city, unit: p.unit, isCadre: !!p.isCadre, cadre: p.cadreGroups || [], date: p.last }));
+    realPeople = d.people.map((p) => ({ g: p.gender, city: p.city, unit: p.unit, isCadre: !!p.isCadre, cadre: p.cadreGroups || [],
+      uids: p.cadreGroups && p.cadreGroups.length ? cadreUidsOf(p.name, p.cadreGroups) : [], date: p.last }));
     dataStamp = d.updated;
   } catch (e) {}
   liveOk = false;
@@ -1566,7 +1656,8 @@ function tick() {
 
   for (const p of walkers) {
     const u = p.userData;
-    if (p.scale.x < 1) p.scale.setScalar(Math.min(1, p.scale.x + dt * 3));
+    const full = u.grow || 1;
+    if (p.scale.x < full) p.scale.setScalar(Math.min(full, p.scale.x + dt * 3));
     if (reduceMotion) continue;
     p.position.y = Math.abs(Math.sin(t * 3 * u.speed + u.phase)) * 0.08;
     p.position.x = u.home.x + Math.sin(t * 0.3 * u.speed + u.phase) * u.roam;
