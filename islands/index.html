@@ -17,6 +17,16 @@
 <meta property="og:image:height" content="630">
 <meta property="og:locale" content="zh_TW">
 <meta name="twitter:card" content="summary_large_image">
+<!-- 加到主畫面：iPhone 用 apple-touch-icon，Android 用 manifest -->
+<link rel="manifest" href="islands.webmanifest">
+<link rel="apple-touch-icon" href="icon-islands-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-islands-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="全真群島">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#EFE6D2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#172034" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
@@ -111,6 +121,7 @@
   .navpop button.home { grid-template-columns: 18px 1fr; font-weight: 700; }
   .navpop button i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
   .navpop button i[data-s="today"] { background: var(--brick); } .navpop button i[data-s="soon"] { background: var(--gold); } .navpop button i[data-s="done"] { background: var(--jade); }
+  .navpop .tip { margin: 10px 8px 0; padding: 8px 10px; border-radius: 10px; background: var(--chip); font-size: 12px; line-height: 1.6; color: var(--muted); }
   .navpop button small { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .dock-body { display: grid; gap: 8px; }
   .chip { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; padding: 9px 16px; font-size: 14px; border-radius: 999px; }
@@ -236,7 +247,7 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.09</span>
+  <span class="ver">v261025.10</span>
 </div>
 
 <div class="mapctl">
@@ -1709,6 +1720,8 @@ function navItem(key, text, extra = '', cls = '') {
   return `<button class="${cls}" data-go="${key}"${cur ? ' aria-current="true"' : ''}><i data-s="${s}"></i><span>${esc(text)}</span><small>${esc(extra)}</small></button>`;
 }
 const islandOf2 = (sel) => (String(sel).startsWith('m:') ? SLOTS[+sel.slice(2)].key : String(sel).startsWith('p:') ? 'temple' : sel);
+// 已經從桌面圖示打開時，就不用再提示怎麼加到桌面
+const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
 function renderNav() {
   const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
@@ -1716,7 +1729,8 @@ function renderNav() {
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${md(c.date)} ${c.name}${c.game ? ' 🎮' : ''}`, STATUS_TEXT[islands[c.key].status] || '') +
       (c.pm ? navItem(c.pm.key, `下午・${c.pm.name} ${c.pm.emoji}`, '', 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o.group, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
-    <h3>遊戲</h3>${navItem('game', '遊戲樂園')}`;
+    <h3>遊戲</h3>${navItem('game', '遊戲樂園')}
+    ${standalone ? '' : '<p class="tip">📱 加到手機桌面：iPhone 用 Safari 打開，點下方「分享」→「加入主畫面」；Android 用 Chrome 打開，點右上角選單 →「加到主畫面」。</p>'}`;
 }
 function showNavPop(open) {
   if (open) { renderNav(); showSoundPop(false); }

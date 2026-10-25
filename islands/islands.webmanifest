@@ -1,0 +1,16 @@
+{
+  "name": "全真群島｜2027 全真社青",
+  "short_name": "全真群島",
+  "description": "一座島一堂課：2027 全真社青的 3D 微縮群島，看夥伴登島、課程進度與各組準備一起慢慢點亮。",
+  "lang": "zh-Hant-TW",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#EFE6D2",
+  "theme_color": "#EFE6D2",
+  "icons": [
+    { "src": "icon-islands-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-islands-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
