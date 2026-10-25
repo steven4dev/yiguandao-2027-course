@@ -183,8 +183,9 @@
   .prog li span { color: var(--muted); font-size: 12px; padding-top: 1px; }
   .note { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
   .photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  .photos a { display: block; border-radius: 8px; overflow: hidden; }
-  .photos img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; transition: transform 0.2s; }
+  .photos a { display: block; border-radius: 8px; overflow: hidden; background: var(--chip); aspect-ratio: 1; }
+  .photos img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s, transform 0.2s; }
+  .photos img.ok { opacity: 1; }
   .photos a:hover img { transform: scale(1.05); }
   .roster { display: grid; gap: 4px; }
   .who { display: grid; grid-template-columns: 12px 5.2em 1fr auto; align-items: center; gap: 8px; width: 100%; text-align: left; border-radius: 10px; padding: 7px 10px; }
@@ -249,7 +250,7 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.19</span>
+  <span class="ver">v261025.20</span>
 </div>
 
 <div class="mapctl">
@@ -319,25 +320,25 @@ import { VerticalTiltShiftShader } from 'three/addons/shaders/VerticalTiltShiftS
    ========================================================= */
 // 2027 年度課程（取自 2027.ics）
 const COURSES = [
-  { key: 'c1', date: '2027-03-27', name: '好好玩', sub: '重新找回生活的樂趣', mark: 'carousel', prog: [['上午', '開班／幹部介紹'], ['觀點分享', '天定 鄭名翔 講師'], ['下午活動', '迎新聯誼（活動組）']] },
-  { key: 'c2', date: '2027-04-24', name: '好好賺', sub: '不一定要有錢，先學會理財', mark: 'piggy', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 楊峰誌 助理'], ['下午活動', '藝術氣球（全真 林鈺蓉 講師）']],
-    pm: { key: 'p2', name: '藝術氣球', emoji: '🎈', who: '全真 林鈺蓉 講師', mark: 'balloonArt', desc: '' } },
-  { key: 'c3', date: '2027-05-29', name: '戶外聯誼', sub: '一起出去走走、認識新朋友', mark: 'camp', prog: [['全天', '戶外聯誼活動']] },
-  { key: 'c4', date: '2027-06-26', name: '好好愛', sub: '喜歡別人之前，先搞懂自己', mark: 'heart', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '天曉 李寶莉 講師'], ['下午活動', '生命靈數（全真 朱宸慧 講師）']],
-    pm: { key: 'p4', name: '生命靈數', emoji: '🔮', who: '全真 朱宸慧 講師', mark: 'numerology',
+  { key: 'c1', isle: '好玩島', date: '2027-03-27', name: '好好玩', sub: '重新找回生活的樂趣', mark: 'carousel', prog: [['上午', '開班／幹部介紹'], ['觀點分享', '天定 鄭名翔 講師'], ['下午活動', '迎新聯誼（活動組）']] },
+  { key: 'c2', isle: '好賺島', date: '2027-04-24', name: '好好賺', sub: '不一定要有錢，先學會理財', mark: 'piggy', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 楊峰誌 助理'], ['下午活動', '藝術氣球（全真 林鈺蓉 講師）']],
+    pm: { key: 'p2', isle: '氣球島', name: '藝術氣球', emoji: '🎈', who: '全真 林鈺蓉 講師', mark: 'balloonArt', desc: '' } },
+  { key: 'c3', isle: '春遊島', date: '2027-05-29', name: '戶外聯誼', sub: '一起出去走走、認識新朋友', mark: 'camp', prog: [['全天', '戶外聯誼活動']] },
+  { key: 'c4', isle: '好愛島', date: '2027-06-26', name: '好好愛', sub: '喜歡別人之前，先搞懂自己', mark: 'heart', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '天曉 李寶莉 講師'], ['下午活動', '生命靈數（全真 朱宸慧 講師）']],
+    pm: { key: 'p4', isle: '靈數島', name: '生命靈數', emoji: '🔮', who: '全真 朱宸慧 講師', mark: 'numerology',
       desc: '用一組再熟悉不過的數字——生日，解開藏在裡面的性格密碼。也可以把最在意的家人、朋友、另一半一起算進來，看看你們為什麼特別合拍、又為什麼老是卡在同一個地方。' } },
-  { key: 'c5', date: '2027-08-28', name: '新道親法會', sub: '志工陪伴體驗', mark: 'lotus', prog: [['全天', '新道親法會－志工陪伴體驗']],
+  { key: 'c5', isle: '法會島', date: '2027-08-28', name: '新道親法會', sub: '志工陪伴體驗', mark: 'lotus', prog: [['全天', '新道親法會－志工陪伴體驗']],
     game: { name: '法會小天使', url: '../game/fahui-angel-25d.html?v=2', img: '../game/og-fahui-angel-25d.png',
       desc: '法會那天，我們一起當新朋友的小天使。先在遊戲裡練習：誰的頭上冒出需求泡泡，就過去陪陪他。' } },
-  { key: 'c6', date: '2027-10-02', name: '人生重開機', sub: '人生卡關的時候，你會怎麼辦', mark: 'windmill', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 何珈貞 講師'], ['下午活動', 'V·翻轉後的人生（天曉 林信宏 講師）']],
-    pm: { key: 'p6', name: 'V·翻轉後的人生', emoji: '🎲', who: '天曉 林信宏 講師', mark: 'flipDice',
+  { key: 'c6', isle: '重開機島', date: '2027-10-02', name: '人生重開機', sub: '人生卡關的時候，你會怎麼辦', mark: 'windmill', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 何珈貞 講師'], ['下午活動', 'V·翻轉後的人生（天曉 林信宏 講師）']],
+    pm: { key: 'p6', isle: '翻轉島', name: 'V·翻轉後的人生', emoji: '🎲', who: '天曉 林信宏 講師', mark: 'flipDice',
       desc: '一場歡樂滿點的互動遊戲，主題只有一個字：「讚」！在笑聲中破冰，發現夥伴眼中的你藏著好多閃光點。你想成為什麼樣的人，就用相對的付出與行動去實踐，一起 V 出翻轉後的人生。' } },
-  { key: 'c7', date: '2027-10-30', name: '戶外聯誼', sub: '秋天的第二次出遊', mark: 'camp2', prog: [['全天', '戶外聯誼活動']] },
-  { key: 'c8', date: '2027-11-27', name: '出去走走', sub: '世界這麼大，別只活在自己的日常', mark: 'balloon', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 何思諺 講師'], ['下午活動', '蔬食料理王（啟化 蘇毓婷 講師）']],
-    pm: { key: 'p8', name: '蔬食料理王', emoji: '🥗', who: '啟化 蘇毓婷 講師', mark: 'cooking',
+  { key: 'c7', isle: '秋遊島', date: '2027-10-30', name: '戶外聯誼', sub: '秋天的第二次出遊', mark: 'camp2', prog: [['全天', '戶外聯誼活動']] },
+  { key: 'c8', isle: '走走島', date: '2027-11-27', name: '出去走走', sub: '世界這麼大，別只活在自己的日常', mark: 'balloon', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 何思諺 講師'], ['下午活動', '蔬食料理王（啟化 蘇毓婷 講師）']],
+    pm: { key: 'p8', isle: '料理島', name: '蔬食料理王', emoji: '🥗', who: '啟化 蘇毓婷 講師', mark: 'cooking',
       desc: '手把手帶你做出一道好吃的蔬食料理，完成後再教幾個超簡單的手機攝影技巧：擺盤怎麼擺、光線怎麼抓、一鍵修圖有訣竅，讓餐桌秒變攝影棚。',
       photos: ['S__193650747', 'S__193650749_0', 'S__193650750_0', 'S__193650751_0', 'S__193650752_0', 'S__193650753_0', 'S__193650754_0', 'S__193650755_0', 'S__193650756_0'] } },
-  { key: 'c9', date: '2027-12-25', name: '活成自己喜歡的樣子', sub: '人生不是交作業', mark: 'tree', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 鄔明清 講師'], ['下午活動', '結班聯誼']],
+  { key: 'c9', isle: '歡樂島', date: '2027-12-25', name: '活成自己喜歡的樣子', sub: '人生不是交作業', mark: 'tree', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 鄔明清 講師'], ['下午活動', '結班聯誼']],
     game: { name: '褪下仙衣：八十億分之一', url: '../game/xianyi.html?v=6', img: '../game/og-xianyi.png',
       desc: '結班這天，一起回頭看看想活成的樣子。下凡抽籤走完一生，遊戲的六個章節就是今年的六場專題，約 12 分鐘。' } },
 ];
@@ -431,9 +432,10 @@ renderer.toneMappingExposure = 1.05;
 stage.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-const DAY_BG = new THREE.Color('#f1ece0'), NIGHT_BG = new THREE.Color('#2c3558');
+const DAY_BG = new THREE.Color('#e4f0f3'), NIGHT_BG = new THREE.Color('#2c3558');
 scene.background = DAY_BG.clone();
-scene.fog = new THREE.Fog(DAY_BG.clone(), 260, 520);
+// 霧只在地平線附近淡淡融進天空，不要讓整片群島霧濛濛
+scene.fog = new THREE.Fog(DAY_BG.clone(), 450, 900);
 
 const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 1, 900);
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -1377,11 +1379,12 @@ function addTag(isl, text, cls, h) {
   tags.push({ el: b, isl, h });
   isl.tag = b;
 }
-addTag(TEMPLE, '全真道院・佛堂島', 'main', 9);
-COURSES.forEach((c) => addTag(islands[c.key], `${+c.date.slice(5, 7)}/${+c.date.slice(8)} ${c.name}${c.game ? ' 🎮' : ''}`, '', 7.6));
+addTag(TEMPLE, '佛堂島', 'main', 9);
+// 標籤只留島名，日期和完整課名放在資訊卡裡
+COURSES.forEach((c) => addTag(islands[c.key], `${c.isle}${c.game ? ' 🎮' : ''}`, '', 7.6));
 outer.forEach((o) => addTag(islands[o.key], o.title, 'small', 5.5));
-addTag(gateIsl, `${GATE.isle}・迎賓`, 'small', 5.5);
-COURSES.filter((c) => c.pm).forEach((c) => addTag(islands[c.pm.key], `下午・${c.pm.name}`, 'small', 3.4));
+addTag(gateIsl, GATE.isle, 'small', 5.5);
+COURSES.filter((c) => c.pm).forEach((c) => addTag(islands[c.pm.key], `${c.pm.emoji} ${c.pm.isle}`, 'small', 3.4));
 const tmpV = new THREE.Vector3();
 // 標籤避讓：依序擺放（佛堂島 → 課程島 → 外圈與下午島），會疊到前面標籤的就先藏起來
 const placed = [];
@@ -1527,12 +1530,12 @@ function renderPanel() {
   } else if (isl.kind === 'course') {
     const c = isl.course, s = courseStatus(c, now), diff = dayIndex(c.date) - dayIndex(now);
     const d = new Date(c.date + 'T00:00:00+08:00');
-    title = c.name; info = `${c.date.slice(5).replace('-', '/')}・${statusText(s)}${diff > 0 ? `・還有 ${diff} 天` : ''}`;
+    title = c.isle; info = `${c.date.slice(5).replace('-', '/')}・${statusText(s)}${diff > 0 ? `・還有 ${diff} 天` : ''}`;
     const look = { soon: '島已經蓋好了，就等大家一起登島。', today: '大家都上島了！', done: '這堂課結束了，島上開滿了花。' }[s];
-    html = `<header><span class="eyebrow">${c.date.replace(/-/g, '/')}（${'日一二三四五六'[d.getDay()]}）</span><h2>${esc(c.name)}</h2><p class="sub">${esc(c.sub)}</p></header>
+    html = `<header><span class="eyebrow">${c.date.replace(/-/g, '/')}（${'日一二三四五六'[d.getDay()]}）</span><h2>${esc(c.isle)}</h2><p class="sub">${esc(c.name)}｜${esc(c.sub)}</p></header>
       <span class="pill" data-s="${s}"><i></i>${statusText(s)}${diff > 0 ? `・還有 ${diff} 天` : diff < 0 ? `・${-diff} 天前` : ''}</span>
       <ul class="prog">${c.prog.map(([k, v]) => `<li><span>${esc(k)}</span>${esc(v)}</li>`).join('')}</ul>
-      ${c.pm ? `<button class="back" data-go="${c.pm.key}">→ 看下午的${esc(c.pm.name)}島 ${c.pm.emoji}</button>` : ''}
+      ${c.pm ? `<button class="back" data-go="${c.pm.key}">→ 看下午的${esc(c.pm.isle)} ${c.pm.emoji}</button>` : ''}
       ${c.game ? `<a class="gamecta" href="${c.game.url}" target="_blank" rel="noopener">
         <img src="${c.game.img}" alt="${esc(c.game.name)}" loading="lazy">
         <span class="gc"><span class="eyebrow">這座島的小遊戲</span><b>${esc(c.game.name)}</b><span>${esc(c.game.desc)}</span><span class="gc-btn">🎮 先玩玩看 →</span></span>
@@ -1541,13 +1544,13 @@ function renderPanel() {
   } else if (isl.kind === 'pm') {
     const c = isl.course, pm = c.pm, s = courseStatus(c, now), diff = dayIndex(c.date) - dayIndex(now);
     const d = new Date(c.date + 'T00:00:00+08:00');
-    title = pm.name; info = `${c.date.slice(5).replace('-', '/')} 下午・${statusText(s)}`;
+    title = pm.isle; info = `${c.date.slice(5).replace('-', '/')} 下午・${statusText(s)}`;
     const dir = '../img/Vegetarian%20Cooking%20Champion/';
-    html = `<header><span class="eyebrow">下午活動・${c.date.replace(/-/g, '/')}（${'日一二三四五六'[d.getDay()]}）</span><h2>${esc(pm.name)} ${pm.emoji}</h2><p class="sub">${esc(pm.who)}</p></header>
+    html = `<header><span class="eyebrow">下午活動・${c.date.replace(/-/g, '/')}（${'日一二三四五六'[d.getDay()]}）</span><h2>${pm.emoji} ${esc(pm.isle)}</h2><p class="sub">${esc(pm.name)}・${esc(pm.who)}</p></header>
       <span class="pill" data-s="${s}"><i></i>${statusText(s)}${diff > 0 ? `・還有 ${diff} 天` : diff < 0 ? `・${-diff} 天前` : ''}</span>
       ${pm.desc ? `<p class="sub">${esc(pm.desc)}</p>` : ''}
-      ${pm.photos ? `<div class="bars"><h3>講師作品（點照片看大圖）</h3><div class="photos">${pm.photos.map((f) => `<a href="${dir}${f}.jpg" target="_blank" rel="noopener"><img src="${dir}thumb/${f}.webp" alt="蔬食料理王講師作品照片" loading="lazy"></a>`).join('')}</div></div>` : ''}
-      <button class="back" data-go="${c.key}">← 回到上午：${esc(c.name)}</button>`;
+      ${pm.photos ? `<div class="bars"><h3>講師作品（點照片看大圖）</h3><div class="photos">${pm.photos.map((f) => `<a href="${dir}${f}.jpg" target="_blank" rel="noopener"><img src="photos/${f}.webp" alt="蔬食料理王講師作品照片" width="200" height="200" onload="this.classList.add('ok')"></a>`).join('')}</div></div>` : ''}
+      <button class="back" data-go="${c.key}">← 回到上午：${esc(c.isle)}</button>`;
   } else if (memberSlot) {
     const sl = memberSlot, on = joinedUids.has(sl.uid);
     const also = (CADRE_OF.get(CADRE_NAMES[sl.uid]) || []).filter((g) => g !== sl.group);
@@ -1578,6 +1581,8 @@ function renderPanel() {
       <p class="note">人次統計還沒接上（遊戲統計的網址尚未設定），先顯示「—」。</p>`;
   }
   document.getElementById('panelBody').innerHTML = html;
+  // 已經下載好（快取）的照片不會再觸發 onload，直接顯示
+  document.querySelectorAll('#panelBody .photos img').forEach((im) => { if (im.complete && im.naturalWidth) im.classList.add('ok'); });
   document.getElementById('miniTitle').textContent = title;
   document.getElementById('miniInfo').textContent = info;
 }
@@ -1717,8 +1722,8 @@ composer.addPass(new RenderPass(scene, camera));
 const hTilt = new ShaderPass(HorizontalTiltShiftShader), vTilt = new ShaderPass(VerticalTiltShiftShader);
 composer.addPass(hTilt); composer.addPass(vTilt); composer.addPass(new OutputPass());
 function sizeTilt() {
-  hTilt.uniforms.h.value = 2.4 / innerWidth;
-  vTilt.uniforms.v.value = 2.4 / innerHeight;
+  hTilt.uniforms.h.value = 1.3 / innerWidth;
+  vTilt.uniforms.v.value = 1.3 / innerHeight;
   hTilt.uniforms.r.value = vTilt.uniforms.r.value = 0.5;
 }
 sizeTilt();
@@ -1773,9 +1778,9 @@ const standalone = navigator.standalone === true || matchMedia('(display-mode: s
 function renderNav() {
   const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
-    <h3>中央</h3>${navItem('temple', '全真道院・佛堂島', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}
-    <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${md(c.date)} ${c.name}${c.game ? ' 🎮' : ''}`, statusText(islands[c.key].status)) +
-      (c.pm ? navItem(c.pm.key, `下午・${c.pm.name} ${c.pm.emoji}`, '', 'sub') : '')).join('')}
+    <h3>中央</h3>${navItem('temple', '佛堂島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}
+    <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
+      (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
     <h3>遊戲</h3>${navItem('game', '遊戲樂園')}
     ${standalone ? '' : '<p class="tip">📱 加到手機桌面：iPhone 用 Safari 打開，點下方「分享」→「加入主畫面」；Android 用 Chrome 打開，點右上角選單 →「加到主畫面」。</p>'}`;
@@ -1926,6 +1931,8 @@ async function loadData() {
 }
 $('status').addEventListener('click', () => loadData());
 setUI({});
+// 料理島的小縮圖只有 90 KB 左右，頁面閒下來就先在背景下載，點開時馬上就有
+setTimeout(() => COURSES.forEach((c) => (c.pm && c.pm.photos || []).forEach((f) => { new Image().src = `photos/${f}.webp`; })), 4000);
 applyDate();
 setStatus();
 loadData();
