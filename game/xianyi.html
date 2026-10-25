@@ -21,8 +21,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap">
+<script>
+  // 預設跟著系統的淺色／深色；自己按過切換鈕就以自己的選擇為準（只存在自己的瀏覽器）
+  (() => {
+    let saved = null;
+    try { saved = localStorage.getItem('xianyi-theme'); } catch (e) {}
+    const sys = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+    if (saved ? saved === 'dark' : sys) document.documentElement.dataset.theme = 'dark';
+  })();
+</script>
 <style>
-  /* Layout: one-screen portrait game — HUD on top, life feed in the middle, choices slide up from the bottom. Colors follow 法會小天使 (meadow green, single light theme on purpose). */
+  /* Layout: one-screen portrait game — HUD on top, life feed in the middle, choices slide up from the bottom. Colors follow 法會小天使 (meadow green); the dark theme borrows the 第49期 navy palette from signup/. */
   :root {
     --bg: #EEF7F2;
     --ink: #1E293B;
@@ -39,6 +48,12 @@
     --serif: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
     --sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
     color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F172A; --ink: #F1F5F9; --ink-soft: #CBD5E1; --muted: #94A3B8; --card: #1E293B; --soft: #273449;
+    --green: #34D399; --green-soft: rgba(52,211,153,.14); --blue: #38BDF8; --gold: #FBBF24; --gold-soft: rgba(251,191,36,.14);
+    --pink: #F472B6; --line: rgba(203,213,225,.14); --on-color: #0F172A;
+    color-scheme: dark;
   }
   [hidden] { display: none !important; }
   * { box-sizing: border-box; }
@@ -399,6 +414,44 @@
     background: radial-gradient(circle, #FFFFFF 0%, #FFF7D6 45%, rgba(255,247,214,0) 75%); box-shadow: 0 0 6px 1px rgba(253,230,138,.8); }
   .birth.ascend .seed::after { content: ""; position: absolute; left: 3px; top: 6px; width: 1px; height: 9px; background: linear-gradient(rgba(255,247,214,.8), rgba(255,247,214,0)); }
   .birth.ascend .seed.pink { background: radial-gradient(circle, #FFFFFF 0%, #FBCFE8 45%, rgba(251,207,232,0) 75%); box-shadow: 0 0 6px 1px rgba(244,114,182,.6); }
+
+  /* ───── 暗色主題：只改人間（遊戲主畫面、卡片、結局頁）；天上的星空與分享用的成績卡維持原樣 ───── */
+  :root[data-theme="dark"] body { background-image: radial-gradient(circle at 10% 0%, rgba(56,189,248,.12), transparent 45%), radial-gradient(circle at 95% 100%, rgba(129,140,248,.12), transparent 50%); }
+  :root[data-theme="dark"] #hud { background: rgba(15,23,42,.92); }
+  :root[data-theme="dark"] .bar .track { background: #334155; }
+  :root[data-theme="dark"] #ctrl { background: rgba(30,41,59,.94); box-shadow: 0 6px 16px rgba(0,0,0,.4); }
+  :root[data-theme="dark"] .overlay:not(.sky) { background: rgba(15,23,42,.82); }
+  :root[data-theme="dark"] #sheet { background: var(--card); box-shadow: 0 -12px 30px rgba(0,0,0,.45); }
+  :root[data-theme="dark"] .opt, :root[data-theme="dark"] .invite-msg, :root[data-theme="dark"] .day div, :root[data-theme="dark"] .real,
+  :root[data-theme="dark"] .num-report div, :root[data-theme="dark"] .sum div, :root[data-theme="dark"] .chip, :root[data-theme="dark"] .badges div { background: var(--soft); }
+  :root[data-theme="dark"] .badges div { color: #64748B; }
+  :root[data-theme="dark"] .badges div.got { background: var(--gold-soft); color: var(--gold); }
+  :root[data-theme="dark"] .chip.up { background: var(--green-soft); }
+  :root[data-theme="dark"] .chip.down { color: #FCA5A5; background: rgba(248,113,113,.15); }
+  :root[data-theme="dark"] .chip.badge { background: var(--gold-soft); }
+  :root[data-theme="dark"] .ingr button, :root[data-theme="dark"] .likes button, :root[data-theme="dark"] .bday select,
+  :root[data-theme="dark"] .life, :root[data-theme="dark"] .sec, :root[data-theme="dark"] .pc.face { background: var(--card); color: var(--ink); }
+  :root[data-theme="dark"] .likes button.got { background: rgba(244,114,182,.15); }
+  :root[data-theme="dark"] .ln.note .t, :root[data-theme="dark"] .dao-note { color: #FDE68A; background: rgba(251,191,36,.1); }
+  :root[data-theme="dark"] .card.dao-ok { background: radial-gradient(circle at 50% 18%, #4A3A12 0%, #2A2410 40%, #1E293B 78%); }
+  :root[data-theme="dark"] .card.dao-ok h2 { color: #FDE68A; }
+  :root[data-theme="dark"] .dao-gain { color: #C4B5FD !important; background: rgba(167,139,250,.18); }
+  :root[data-theme="dark"] .card.dao-miss { background: linear-gradient(180deg, #273449, #1E293B 60%); border-color: #475569; }
+  :root[data-theme="dark"] .card.dao-miss h2 { color: #CBD5E1; }
+  :root[data-theme="dark"] .btn.primary, :root[data-theme="dark"] #ctrl #playBtn, :root[data-theme="dark"] #sheetPill, :root[data-theme="dark"] .step .num { color: var(--on-color); }
+  :root[data-theme="dark"] .toast { color: var(--on-color); }
+  :root[data-theme="dark"] #moreCue { background: linear-gradient(to bottom, rgba(15,23,42,0), rgba(15,23,42,.92) 70%, var(--bg)); }
+
+  /* 主題切換鈕：🌙 切暗色、☀️ 切淺色 */
+  .theme-btn { border: 0; background: transparent; color: var(--muted); width: 34px; height: 34px; padding: 6px; display: grid; place-items: center; border-radius: 99px; }
+  .theme-btn svg { width: 20px; height: 20px; }
+  .theme-btn .sun { display: none; }
+  :root[data-theme="dark"] .theme-btn .sun { display: block; }
+  :root[data-theme="dark"] .theme-btn .moon { display: none; }
+  #titleTheme { position: absolute; top: calc(14px + env(safe-area-inset-top)); right: 54px; color: #E0E7FF; filter: drop-shadow(0 0 6px rgba(196,181,253,.5)); }
+  .chap-row { display: flex; align-items: center; }
+  .chap-row #chapter { flex: 1; }
+  .chap-row .theme-btn { margin-right: 8px; flex: none; }
   #ending { position: absolute; inset: 0; overflow-y: auto; padding: 22px 16px 40px; background: var(--bg); z-index: 25; }
   /* 結局頁底部：淡霧＋漂浮的 ▼，提示下面還有內容 */
   #moreCue {
@@ -484,6 +537,7 @@
   <div id="sky" aria-hidden="true"><div class="band"></div><canvas></canvas></div>
   <section id="title">
     <button class="gear" id="titleGear" type="button" aria-label="設定">⚙️</button>
+    <button class="theme-btn" id="titleTheme" type="button" aria-label="切換暗色主題" title="切換暗色／淺色主題"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
     <div class="robe">🪷</div>
     <h1>褪下仙衣</h1>
     <p class="sub">八十億分之一</p>
@@ -494,7 +548,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261025.02</span>
+    <span id="ver">v261025.03</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -513,7 +567,7 @@
         <button class="gear" id="gearBtn" type="button" aria-label="設定">⚙️</button>
       </div>
     </header>
-    <div id="chapter"></div>
+    <div class="chap-row"><div id="chapter"></div><button class="theme-btn" id="gameTheme" type="button" aria-label="切換暗色主題" title="切換暗色／淺色主題"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button></div>
     <main id="feed" aria-live="polite"></main>
     <div id="ctrl">
       <button id="playBtn" type="button" aria-label="暫停">⏸</button>
@@ -2277,6 +2331,28 @@
   bindVol('volSfx', 'oSfx', () => Sound.sfxVol, v => Sound.setSfx(v));
   $('volSfx').onchange = () => sfx('up');
   $('gearBtn').onclick = $('titleGear').onclick = openSettings;
+
+  // 暗色主題：預設跟著系統；按切換鈕以自己的選擇為準，切回跟系統一樣時恢復跟著系統
+  const themeBtns = [$('titleTheme'), $('gameTheme')];
+  function applyTheme(dark) {
+    if (dark) document.documentElement.dataset.theme = 'dark';
+    else delete document.documentElement.dataset.theme;
+    themeBtns.forEach(b => { b.setAttribute('aria-pressed', dark); b.setAttribute('aria-label', dark ? '切換淺色主題' : '切換暗色主題'); });
+    const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = dark ? '#0F172A' : '#EEF7F2';
+  }
+  const sysDark = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+  const savedTheme = () => { try { return localStorage.getItem('xianyi-theme'); } catch (e) { return null; } };
+  applyTheme(document.documentElement.dataset.theme === 'dark');
+  if (sysDark && sysDark.addEventListener) sysDark.addEventListener('change', e => { if (!savedTheme()) applyTheme(e.matches); });
+  themeBtns.forEach(b => b.onclick = () => {
+    sfx('tap');
+    const dark = document.documentElement.dataset.theme !== 'dark';
+    applyTheme(dark);
+    try {
+      if (sysDark && dark === sysDark.matches) localStorage.removeItem('xianyi-theme');
+      else localStorage.setItem('xianyi-theme', dark ? 'dark' : 'light');
+    } catch (e) {}
+  });
   $('setDone').onclick = () => {
     sfx('tap');
     $('settings').hidden = true;
