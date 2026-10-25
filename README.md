@@ -40,7 +40,9 @@ https://steven4dev.github.io/yiguandao-2027-course/islands/（LINE 預覽圖 `is
 - 中央：全真道院佛堂島（參考實景，地上四層），廣場小人偶＝已報名的夥伴
 - 內圈：9 座課程島，依 2027 年日期排列，用木橋串起一整年；時光捲軸可以看每座島從籌備中到開花
 - 外圈：8 座幹部島（只顯示各組報名人數，不顯示姓名）與遊戲樂園島；左後方是高鐵高架橋
-- 資料：讀取 `signup/data.json`（報名分析的備份）與 `game/stats.json`；課程資料寫在 `islands/index.html` 的 `COURSES`，幹部組別人數寫在 `CADRE`，人事或課程異動時要一起改
+- 資料：直接讀取報名表的 Google 表單回覆（跟報名分析頁同一份），每 5 分鐘或切回分頁時自動更新，連不上時改讀 `signup/data.json` 備份；遊戲人次讀 `game/stats.json`
+- 個資保護：手機欄位不讀進瀏覽器，姓名只用來去重複、比對幹部，畫面上只有人數
+- 課程資料寫在 `islands/index.html` 的 `COURSES`；幹部名單寫在同一檔的 `CADRE_GROUPS`，跟 `signup/index.html`、首頁「同行夥伴」人事異動時要一起改
 - 左上角有版本編號，各版內容見 [`islands/CHANGELOG.md`](islands/CHANGELOG.md)
 
 ## 更新方式

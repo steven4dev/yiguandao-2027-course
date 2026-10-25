@@ -60,7 +60,7 @@
     padding: 10px 16px 12px; max-width: min(360px, calc(100vw - 32px)); display: grid; gap: 4px; }
   .brand h1 { margin: 0; font-family: var(--font-display); font-size: 26px; letter-spacing: 0.12em; line-height: 1.1; text-wrap: balance; }
   .brand h1 small { font-size: 13px; letter-spacing: 0.08em; color: var(--muted); margin-left: 6px; font-family: var(--font-body); font-weight: 500; }
-  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; }
   .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); flex: none; }
   .status[data-state="live"] i { background: var(--jade); box-shadow: 0 0 0 3px color-mix(in srgb, var(--jade) 25%, transparent); }
   .status[data-state="demo"] i { background: var(--brick); }
@@ -143,8 +143,8 @@
 
 <div class="card brand">
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
-  <span class="status" id="status" data-state="backup"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.01</span>
+  <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
+  <span class="ver">v261025.02</span>
 </div>
 
 <aside class="card panel" id="panel" aria-live="polite"></aside>
@@ -196,26 +196,38 @@ const COURSES = [
   { key: 'c9', date: '2027-12-25', name: '活成自己喜歡的樣子', sub: '人生不是交作業', mark: 'tree', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 鄔明清 講師'], ['下午活動', '結班聯誼']] },
 ];
 
-// 幹部組別與人數（名單在 signup/index.html 的 CADRE_GROUPS，這裡只需要人數）
-const CADRE = [
-  { key: 'g1', group: '班務團隊', size: 3, mark: 'hall', color: '#c0503f', what: '市政廳' },
-  { key: 'g2', group: '人事組', size: 3, mark: 'post', color: '#3f8a6a', what: '郵局' },
-  { key: 'g3', group: '公關禮節組', size: 4, mark: 'arch', color: '#d9774a', what: '迎賓牌樓' },
-  { key: 'g4', group: '學術組', size: 3, mark: 'library', color: '#5b6fa8', what: '圖書館' },
-  { key: 'g5', group: '輔導組', size: 1, mark: 'lighthouse', color: '#e0a03a', what: '燈塔' },
-  { key: 'g6', group: '總務組', size: 8, mark: 'barn', color: '#8f5f3c', what: '倉庫' },
-  { key: 'g7', group: '影音組', size: 3, mark: 'tower', color: '#7a5aa6', what: '電視塔' },
-  { key: 'g8', group: '活動組', size: 5, mark: 'bigtop', color: '#d2566a', what: '大帳篷' },
+// 2027 年度幹部（跟 signup/index.html 的 CADRE_GROUPS、首頁「同行夥伴」一致，人事異動時要一起改）
+// 姓名只用來比對報名表，比對完就丟掉，畫面上只顯示各組人數
+const CADRE_GROUPS = [
+  { group: '班務團隊', members: ['周逸翔', '何珈貞', '羅健洲'] },
+  { group: '人事組', members: ['賴美芸', '林鈺蓉', '楊舒涵'] },
+  { group: '公關禮節組', members: ['林詩涵', '陳幸梅', '陳曉璇', '林淑真'] },
+  { group: '學術組', members: ['楊雅雲', '王冠博', '鄭燕玲'] },
+  { group: '輔導組', members: ['陳彥名'] },
+  { group: '總務組', members: ['張立人', '林淑梅', '許麗娟', '張馨予', '張如靈', '張懿文', '王志賢', '李書承'] },
+  { group: '影音組', members: ['王冠博', '卓子翔', '陳熙宗'] },
+  { group: '活動組', members: ['周能安', '許瀚升', '張哲瑋', '王欣渝', '林禹青'] },
 ];
+const CADRE_LOOK = {
+  班務團隊: ['hall', '#c0503f', '市政廳'], 人事組: ['post', '#3f8a6a', '郵局'], 公關禮節組: ['arch', '#d9774a', '迎賓牌樓'], 學術組: ['library', '#5b6fa8', '圖書館'],
+  輔導組: ['lighthouse', '#e0a03a', '燈塔'], 總務組: ['barn', '#8f5f3c', '倉庫'], 影音組: ['tower', '#7a5aa6', '電視塔'], 活動組: ['bigtop', '#d2566a', '大帳篷'],
+};
+const CADRE = CADRE_GROUPS.map(({ group, members }, i) => {
+  const [mark, color, what] = CADRE_LOOK[group];
+  return { key: 'g' + (i + 1), group, size: members.length, mark, color, what };
+});
+// 同一人身兼多組時，每一組都算
+const CADRE_OF = new Map();
+CADRE_GROUPS.forEach(({ group, members }) => members.forEach((n) => CADRE_OF.set(n, [...(CADRE_OF.get(n) || []), group])));
 
 // 報名資料備份（signup/data.json 2026/10/24 版本，只保留畫面需要的欄位，不含姓名）
 const SNAPSHOT = {
   updated: '2026-10-25T01:06:27.952Z',
   people: [
-    { g: '坤道', city: '桃園市', unit: '天選區', cadre: ['公關禮節組'], date: '2026-10-24' },
-    { g: '乾道', city: '桃園市', unit: '至善區', cadre: [], date: '2026-10-24' },
-    { g: '乾道', city: '新北市', unit: '天選區', cadre: ['班務團隊'], date: '2026-10-24' },
-    { g: '坤道', city: '新北市', unit: '天選區', cadre: ['班務團隊'], date: '2026-10-24' },
+    { g: '坤道', city: '桃園市', unit: '天選區', isCadre: true, cadre: ['公關禮節組'], date: '2026-10-24' },
+    { g: '乾道', city: '桃園市', unit: '至善區', isCadre: false, cadre: [], date: '2026-10-24' },
+    { g: '乾道', city: '新北市', unit: '天選區', isCadre: true, cadre: ['班務團隊'], date: '2026-10-24' },
+    { g: '坤道', city: '新北市', unit: '天選區', isCadre: true, cadre: ['班務團隊'], date: '2026-10-24' },
   ],
 };
 const GAMES = { start: null, finish: null, share: null };
@@ -228,8 +240,8 @@ function demoPeople() {
   const day = (r) => new Date(start + Math.pow(r, 1.6) * span).toISOString().slice(0, 10);
   const out = [];
   for (let i = 0; i < 60; i++) out.push({ g: rnd() < 0.55 ? '坤道' : '乾道', city: ['桃園市', '桃園市', '新北市', '臺北市'][Math.floor(rnd() * 4)],
-    unit: ['天選區', '至善區', '至善區', '其他單位'][Math.floor(rnd() * 4)], cadre: [], date: day(rnd()) });
-  CADRE.forEach((c) => { for (let i = 0; i < c.size; i++) out.push({ g: rnd() < 0.5 ? '坤道' : '乾道', city: '桃園市', unit: '天選區', cadre: [c.group], date: day(rnd() * 0.5) }); });
+    unit: ['天選區', '至善區', '至善區', '其他單位'][Math.floor(rnd() * 4)], isCadre: false, cadre: [], date: day(rnd()) });
+  CADRE.forEach((c) => { for (let i = 0; i < c.size; i++) out.push({ g: rnd() < 0.5 ? '坤道' : '乾道', city: '桃園市', unit: '天選區', isCadre: true, cadre: [c.group], date: day(rnd() * 0.5) }); });
   return out.sort((a, b) => a.date.localeCompare(b.date));
 }
 
@@ -606,7 +618,7 @@ function syncPlaza(list) {
   let seed = 7;
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   list.forEach((d) => {
-    const p = figure(d.g === '坤道' ? kunMat : qianMat, d.cadre.length > 0);
+    const p = figure(d.g === '坤道' ? kunMat : qianMat, d.isCadre);
     let x, z;
     do { x = plaza.x0 + rnd() * (plaza.x1 - plaza.x0); z = plaza.z0 + rnd() * (plaza.z1 - plaza.z0); }
     while (Math.abs(x) > 2.4 && z > 7.9 && z < 8.9);
@@ -1049,7 +1061,7 @@ function renderPanel() {
   const isl = islands[selected];
   let html = '';
   if (!isl || isl.kind === 'temple') {
-    const students = list.filter((p) => !p.cadre.length), cadres = list.length - students.length;
+    const students = list.filter((p) => !p.isCadre), cadres = list.length - students.length;
     const q = list.filter((p) => p.g === '乾道').length;
     const cadreTotal = CADRE.reduce((s, c) => s + c.size, 0);
     html = `<header><span class="eyebrow">中央島・第四期報名</span><h2>全真道院</h2>
@@ -1058,7 +1070,7 @@ function renderPanel() {
       ${bars('乾坤比例', [['乾道', q], ['坤道', list.length - q]], list.length)}
       ${bars('所屬單位', countBy(list, (p) => p.unit), list.length)}
       ${bars('居住縣市', countBy(list, (p) => p.city), list.length)}
-      <p class="note">${demo ? '目前是示範資料，數字不是真實報名。' : `資料來源：報名表（${dataStamp.slice(0, 10).replace(/-/g, '/')} 更新）。`}點其他小島可以看各堂課和各組的狀態。</p>`;
+      <p class="note">${demo ? '目前是示範資料，數字不是真實報名。' : `資料來源：${liveOk ? '報名表即時資料' : '報名資料備份'}（${stampText()} 更新）。`}點其他小島可以看各堂課和各組的狀態。</p>`;
   } else if (isl.kind === 'course') {
     const c = isl.course, s = courseStatus(c, now), diff = dayIndex(c.date) - dayIndex(now);
     const d = new Date(c.date + 'T00:00:00+08:00');
@@ -1182,38 +1194,125 @@ $('night').onclick = () => { nightTarget = 1 - nightTarget; root.dataset.theme =
 sysDark.addEventListener('change', (e) => { if (!root.dataset.theme) { nightTarget = e.matches ? 1 : 0; syncNight(); } });
 new MutationObserver(() => { if (root.dataset.theme) { nightTarget = root.dataset.theme === 'dark' ? 1 : 0; syncNight(); } }).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
 
-let liveOk = false;
+/* ---------- 報名資料：直接讀 Google 報名表，連不上改讀備份 ---------- */
+// 跟報名分析頁同一份表單回覆；試算表要維持「知道連結的任何人都能檢視」
+// 只查詢需要的欄位：手機（F 欄）不會被讀進瀏覽器；姓名只用來去重複、比對幹部，不會留下來
+const SHEET_ID = '1ev9Z2aIo7E2js_CozAGTpXyKOzZdBVT48T2mP0CylH0';
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('表單回覆 1')}&tq=${encodeURIComponent('select A,B,C,D,E,G,H,I')}`;
+const SELF_CADRE = /^(我是|擔任|本身是|本人是)?幹部(本人)?$/;
+const isTest = (name) => /測試|test/i.test(name);
+const ymd = (t) => `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+
+// gviz 的時間格式是「Date(2026,9,24,14,11,57)」，月份從 0 起算；也接受「2026/10/24 下午 2:11:57」
+function toDate(v) {
+  if (!v) return null;
+  let m = String(v).match(/Date\((\d+),(\d+),(\d+)(?:,(\d+),(\d+),(\d+))?\)/);
+  if (m) return new Date(+m[1], +m[2], +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0));
+  m = String(v).match(/(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})(?:\s*(上午|下午)?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (!m) return null;
+  let h = +(m[5] || 0);
+  if (m[4] === '下午' && h < 12) h += 12;
+  if (m[4] === '上午' && h === 12) h = 0;
+  return new Date(+m[1], +m[2] - 1, +m[3], h, +(m[6] || 0), +(m[7] || 0));
+}
+
+// 居住地區是自由填寫，這裡只需要縣市
+const CITIES = ['臺北市', '新北市', '桃園市', '臺中市', '臺南市', '高雄市', '基隆市', '新竹市', '嘉義市', '新竹縣', '苗栗縣', '彰化縣', '南投縣', '雲林縣', '嘉義縣', '屏東縣', '宜蘭縣', '花蓮縣', '臺東縣', '澎湖縣', '金門縣', '連江縣'];
+const CITY_HINTS = { 新北市: ['板橋', '三重', '中和', '永和', '新莊', '新店', '樹林', '鶯歌', '三峽', '淡水', '汐止', '土城', '蘆洲', '五股', '泰山', '林口'],
+  桃園市: ['中壢', '平鎮', '八德', '楊梅', '蘆竹', '大溪', '龍潭', '龜山', '大園', '觀音', '新屋', '青埔', '南崁', '內壢', '埔心', '藝文特區', '長庚', '迴龍'],
+  臺北市: ['中正', '大同', '中山', '松山', '大安', '萬華', '信義', '士林', '北投', '內湖', '南港', '文山'] };
+function cityOf(raw) {
+  const s = raw.replace(/台/g, '臺').replace(/\s+/g, '');
+  if (!s) return '未填寫';
+  for (const c of CITIES) if (s.startsWith(c) || s.startsWith(c.slice(0, 2))) return c;
+  for (const [c, list] of Object.entries(CITY_HINTS)) if (list.some((d) => s.startsWith(d) || s.includes(d))) return c;
+  return '其他';
+}
+
+// 同一人（姓名＋生日）只算一次，報名日期用第一次填表那天
+function summarize(table) {
+  const head = table.cols.map((c) => String(c.label || '').trim());
+  const col = (key) => head.findIndex((h) => h.includes(key));
+  const c = { time: col('時間戳記'), name: col('姓名'), gender: col('性別'), birth: col('出生'), area: col('居住'), unit: col('所屬單位'), intro: col('介紹人') };
+  if (c.time < 0 || c.name < 0) throw new Error('欄位不符');
+  const byKey = new Map();
+  table.rows.forEach((r) => {
+    const cell = (i) => (i >= 0 && r.c[i] ? r.c[i] : null);
+    const get = (i) => { const x = cell(i); return x && x.v != null ? String(x.v).trim() : ''; };
+    const getDate = (i) => { const x = cell(i); return x ? (x.v != null ? String(x.v) : '') || x.f || '' : ''; };
+    const name = get(c.name), time = toDate(getDate(c.time));
+    if (!name || !time || isTest(name)) return;
+    const key = name + '|' + getDate(c.birth);
+    const prev = byKey.get(key);
+    const first = prev && prev.first < time ? prev.first : time;
+    const latest = !prev || prev.time <= time;
+    const groups = CADRE_OF.get(name) || [];
+    const row = latest ? { time, gender: get(c.gender), area: get(c.area), unit: get(c.unit), intro: get(c.intro) } : prev;
+    byKey.set(key, { ...row, first, groups, selfCadre: SELF_CADRE.test(row.intro) });
+  });
+  return [...byKey.values()].map((p) => ({
+    g: p.gender, city: cityOf(p.area), unit: p.unit || '未填寫',
+    isCadre: p.selfCadre || p.groups.length > 0, cadre: p.groups, date: ymd(p.first),
+  })).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+let liveOk = false, lastLive = null, busy = false;
+const stampText = () => new Date(dataStamp).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
 function setStatus() {
   const st = $('status'), tx = $('statusText');
   if (demo) { st.dataset.state = 'demo'; tx.textContent = '示範模式：60 位學員＋全部幹部'; return; }
   st.dataset.state = liveOk ? 'live' : 'backup';
-  const when = new Date(dataStamp).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
-  tx.textContent = (liveOk ? '報名資料・' : '內建報名備份・') + when + ' 更新';
+  tx.textContent = liveOk ? `已連線即時報名資料・${stampText()} 更新` : `即時資料連線失敗，顯示 ${stampText()} 的備份`;
 }
-// 放在課程網站上時，讀同一個網站的報名分析備份；讀不到就用內建資料
-async function loadData() {
+async function loadPeople() {
+  try {
+    const r = await fetch(`${SHEET_URL}&t=${Date.now()}`, { cache: 'no-store' });
+    const text = await r.text();
+    const json = JSON.parse(text.replace(/^[\s\S]*?setResponse\(/, '').replace(/\);?\s*$/, ''));
+    const people = summarize(json.table);
+    if (!people.length) throw new Error('沒有資料');
+    realPeople = people;
+    dataStamp = new Date().toISOString();
+    liveOk = true;
+    lastLive = new Date();
+    return;
+  } catch (e) {
+    // 已經連上過就保留上次的即時資料，只是狀態改成備份
+    if (lastLive) { liveOk = false; return; }
+  }
   try {
     const r = await fetch('../signup/data.json', { cache: 'no-store' });
     if (!r.ok) throw new Error();
     const d = await r.json();
-    realPeople = d.people.map((p) => ({ g: p.gender, city: p.city, unit: p.unit, cadre: p.cadreGroups || [], date: p.last }));
+    realPeople = d.people.map((p) => ({ g: p.gender, city: p.city, unit: p.unit, isCadre: !!p.isCadre, cadre: p.cadreGroups || [], date: p.last }));
     dataStamp = d.updated;
-    liveOk = true;
-  } catch (e) { liveOk = false; }
-  try {
-    const r = await fetch('../game/stats.json', { cache: 'no-store' });
-    if (r.ok) { const s = await r.json(); if (s.updated) Object.assign(GAMES, { start: s.start, finish: s.finish, share: s.share }); }
   } catch (e) {}
-  gameSpeed = 1 + Math.min(4, (GAMES.finish || 0) / 50);
-  setStatus();
-  lastView = '';
-  applyDate();
+  liveOk = false;
 }
+async function loadData() {
+  if (busy) return;
+  busy = true;
+  try {
+    await loadPeople();
+    try {
+      const r = await fetch('../game/stats.json', { cache: 'no-store' });
+      if (r.ok) { const s = await r.json(); if (s.updated) Object.assign(GAMES, { start: s.start, finish: s.finish, share: s.share }); }
+    } catch (e) {}
+    gameSpeed = 1 + Math.min(4, (GAMES.finish || 0) / 50);
+    setStatus();
+    lastView = '';
+    applyDate();
+  } finally {
+    busy = false;
+  }
+}
+$('status').addEventListener('click', () => { if (!demo) loadData(); });
 if (innerWidth <= 720) panel.classList.add('collapsed-mobile');
 applyDate();
 setStatus();
 loadData();
 setInterval(() => { if (!document.hidden && !demo) loadData(); }, 5 * 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !demo) loadData(); });
 
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
