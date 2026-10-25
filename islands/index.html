@@ -61,15 +61,40 @@
   .brand h1 { margin: 0; font-family: var(--font-display); font-size: 26px; letter-spacing: 0.12em; line-height: 1.1; text-wrap: balance; }
   .brand h1 small { font-size: 13px; letter-spacing: 0.08em; color: var(--muted); margin-left: 6px; font-family: var(--font-body); font-weight: 500; }
   .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; }
+  .status > span { min-width: 0; }
   .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); flex: none; }
   .status[data-state="live"] i { background: var(--jade); box-shadow: 0 0 0 3px color-mix(in srgb, var(--jade) 25%, transparent); }
   .status[data-state="demo"] i { background: var(--brick); }
 
-  .bar { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
-    bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; max-width: 760px; padding: 10px 14px; display: grid; gap: 8px; }
-  .when { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  /* 介面原則：資訊卡和時光捲軸一次只展開一個，收起來時都只剩一行 */
+  .card { z-index: 2; }
+  .brand .count { margin: 2px 0 0; font-size: 13px; color: var(--ink); line-height: 1.5; }
+  .brand .count b { font-family: var(--font-display); font-size: 18px; color: var(--brick); font-variant-numeric: tabular-nums; margin-right: 2px; }
+
+  .mapctl { position: fixed; z-index: 3; top: calc(14px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: 8px; }
+  .icon { display: inline-grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; background: var(--card);
+    box-shadow: 0 4px 14px rgba(50, 30, 15, 0.14); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .icon svg { width: 20px; height: 20px; }
+  .icon.sm { width: 30px; height: 30px; box-shadow: none; background: var(--chip); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .icon.sm svg { width: 16px; height: 16px; }
+  #night .sun { display: none; }
+  #night[aria-pressed="true"] .sun { display: block; }
+  #night[aria-pressed="true"] .moon { display: none; }
+  #night[aria-pressed="true"] { background: var(--card); color: var(--ink); border-color: var(--line); }
+
+  .dock { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    width: max-content; max-width: calc(100vw - 32px); border-radius: 999px; }
+  .dock[data-open="true"] { width: min(760px, calc(100vw - 32px)); border-radius: 16px; padding: 10px 14px; display: grid; gap: 8px; }
+  .dock[data-open="true"] .chip, .dock[data-open="false"] .dock-body { display: none; }
+  .dock-body { display: grid; gap: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; padding: 9px 16px; font-size: 14px; border-radius: 999px; }
+  .chip b { font-family: var(--font-display); font-size: 16px; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+  .chip svg { width: 18px; height: 18px; color: var(--brick); flex: none; }
+  .chip .playing { font-size: 12px; color: var(--brick); }
+  .chip .hint { font-size: 12px; color: var(--muted); }
+  .when { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .when b { font-family: var(--font-display); font-size: 20px; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
-  .when span { color: var(--muted); font-size: 12px; }
+  .when span { color: var(--muted); font-size: 12px; flex: 1; min-width: 0; }
   .track { position: relative; }
   .track input { width: 100%; accent-color: var(--brick); margin: 0; }
   .ticks { position: relative; height: 14px; font-size: 11px; color: var(--muted); }
@@ -82,10 +107,21 @@
   button:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; }
   button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 
-  .panel { position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
-    width: 330px; max-height: calc(100% - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow: auto;
-    padding: 14px 16px 16px; display: grid; gap: 12px; align-content: start; }
-  .panel header { display: grid; gap: 4px; }
+  .panel { position: fixed; top: calc(64px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+    width: 330px; max-height: calc(100% - 64px - var(--dock-h, 52px) - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    display: flex; flex-direction: column; overflow: hidden; }
+  .ptop { position: relative; display: flex; align-items: center; gap: 8px; padding: 8px 8px 0 16px; min-height: 30px; }
+  .pbtns { margin-left: auto; display: flex; gap: 6px; flex: none; }
+  .pbtns .fold svg { transition: transform 0.2s; }
+  .panel.folded .pbtns .fold svg { transform: rotate(180deg); }
+  .mini { display: none; flex: 1; min-width: 0; align-items: baseline; gap: 8px; border: 0; background: transparent; padding: 2px 0; text-align: left; border-radius: 8px; }
+  .mini b { font-family: var(--font-display); font-size: 17px; letter-spacing: 0.04em; white-space: nowrap; }
+  .mini span { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel.folded .mini { display: flex; }
+  .panel.folded .ptop { padding-bottom: 8px; }
+  .panel.folded .pbody { display: none; }
+  .pbody { overflow: auto; padding: 0 16px 16px; margin-top: -30px; display: grid; gap: 12px; align-content: start; }
+  .panel header { display: grid; gap: 4px; padding-right: 72px; }
   .eyebrow { font-size: 11px; letter-spacing: 0.14em; color: var(--muted); }
   .panel h2 { margin: 0; font-family: var(--font-display); font-size: 24px; letter-spacing: 0.06em; line-height: 1.2; text-wrap: balance; }
   .panel .sub { margin: 0; color: var(--muted); line-height: 1.6; }
@@ -109,9 +145,8 @@
   .prog li span { color: var(--muted); font-size: 12px; padding-top: 1px; }
   .note { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
   .panel a { color: var(--jade); }
-  .close { position: absolute; top: 10px; right: 10px; padding: 2px 10px; }
 
-  #labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+  #labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
   .tag { position: absolute; left: 0; top: 0; pointer-events: auto; transform: translate(-50%, -100%); white-space: nowrap;
     font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--card); color: var(--ink); border: 1px solid var(--line);
     box-shadow: 0 2px 8px rgba(50, 30, 15, 0.12); display: inline-flex; gap: 6px; align-items: center; cursor: pointer; will-change: transform; }
@@ -121,11 +156,16 @@
   .tag.main { font-family: var(--font-display); font-size: 15px; padding: 4px 12px; }
 
   @media (max-width: 720px) {
+    .brand { max-width: calc(100vw - 32px - 52px); padding: 8px 12px 10px; }
+    .brand .count, .status { font-size: 12px; }
+    .mapctl { flex-direction: column; }
     .brand h1 { font-size: 22px; }
     .brand h1 small { display: block; margin: 2px 0 0; }
+    /* 手機：資訊卡是底部抽屜；展開時時光捲軸讓位，收合時疊在時光膠囊上方 */
     .panel { top: auto; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); width: auto;
-      bottom: calc(150px + env(safe-area-inset-bottom, 0px)); max-height: 42%; }
-    .panel.collapsed-mobile { display: none; }
+      bottom: calc(14px + env(safe-area-inset-bottom, 0px)); max-height: 46%; }
+    .panel.folded { bottom: calc(var(--dock-h, 52px) + 24px + env(safe-area-inset-bottom, 0px)); }
+    .chip .hint { display: none; }
     .tag.small { display: none; }
   }
   @media (prefers-reduced-motion: reduce) { body, .card { transition: none; } }
@@ -143,24 +183,40 @@
 
 <div class="card brand">
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
+  <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.02</span>
+  <span class="ver">v261025.03</span>
 </div>
 
-<aside class="card panel" id="panel" aria-live="polite"></aside>
+<div class="mapctl">
+  <button class="icon" id="night" aria-pressed="false" aria-label="切換夜晚" title="切換夜晚"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
+  <button class="icon" id="home" aria-label="回到全景" title="回到全景"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/><circle cx="12" cy="12" r="2.5"/></svg></button>
+</div>
 
-<div class="card bar">
-  <div class="when"><b id="dateText">2026/10/25</b><span id="dateHint"></span></div>
-  <div class="track">
-    <input id="day" type="range" min="0" max="450" value="0" aria-label="時光捲軸：選擇日期">
-    <div class="ticks" id="ticks"></div>
+<aside class="card panel" id="panel" aria-live="polite" hidden>
+  <div class="ptop">
+    <button class="mini" id="panelMini" aria-label="展開資訊卡"><b id="miniTitle"></b><span id="miniInfo"></span></button>
+    <div class="pbtns">
+      <button class="icon sm fold" id="panelFold" aria-expanded="true" aria-label="收合資訊卡" title="收合"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button class="icon sm" id="panelClose" aria-label="關閉資訊卡" title="關閉"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
   </div>
-  <div class="tools">
-    <button id="today">回到今天</button>
-    <button id="play" aria-pressed="false">▶ 播放一年</button>
-    <button id="demo" aria-pressed="false">示範：滿班 60 人</button>
-    <button id="night" aria-pressed="false">夜晚</button>
-    <button id="home">全景</button>
+  <div class="pbody" id="panelBody"></div>
+</aside>
+
+<div class="card dock" id="dock" data-open="false">
+  <button class="chip" id="dockChip" aria-expanded="false" aria-controls="dockBody" title="打開時光捲軸"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><b id="chipDate"></b><span class="playing" id="chipPlay" hidden>▶ 播放中</span><span class="hint">時光捲軸</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+  <div class="dock-body" id="dockBody">
+    <div class="when"><b id="dateText">2026/10/25</b><span id="dateHint"></span><button class="icon sm" id="dockFold" aria-label="收合時光捲軸" title="收合"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></div>
+    <div class="track">
+      <input id="day" type="range" min="0" max="450" value="0" aria-label="時光捲軸：選擇日期">
+      <div class="ticks" id="ticks"></div>
+    </div>
+    <div class="tools">
+      <button id="today">回到今天</button>
+      <button id="play" aria-pressed="false">▶ 播放一年</button>
+      <button id="demo" aria-pressed="false">示範：滿班 60 人</button>
+    </div>
   </div>
 </div>
 
@@ -1036,10 +1092,13 @@ function applyDate() {
   }
   // 日期列
   const d = new Date(now + 'T00:00:00+08:00');
-  document.getElementById('dateText').textContent = now.replace(/-/g, '/') + ' （' + '日一二三四五六'[d.getDay()] + '）';
-  const next = COURSES.find((c) => c.date >= now);
-  document.getElementById('dateHint').textContent = (now === todayISO ? '今天・' : '') + `已報名 ${list.length} 人` +
-    (next ? `・距離「${next.name}」${dayIndex(next.date) - dayIndex(now) === 0 ? '就是今天' : '還有 ' + (dayIndex(next.date) - dayIndex(now)) + ' 天'}` : '・全年課程結束');
+  const dateLabel = now.replace(/-/g, '/') + '（' + '日一二三四五六'[d.getDay()] + '）';
+  const next = COURSES.find((c) => c.date >= now), left = next ? dayIndex(next.date) - dayIndex(now) : 0;
+  const nextText = next ? (left === 0 ? `今天就是「${next.name}」` : `距離「${next.name}」還有 ${left} 天`) : '全年課程結束';
+  document.getElementById('dateText').textContent = dateLabel;
+  document.getElementById('dateHint').textContent = (now === todayISO ? '今天・' : '') + nextText;
+  document.getElementById('chipDate').textContent = dateLabel + (now === todayISO ? '・今天' : '');
+  document.getElementById('brandCount').innerHTML = `<b>${list.length}</b> 位夥伴已報名・${esc(nextText)}`;
   const view = now + '|' + demo + '|' + (selected || '');
   if (view !== lastView) { lastView = view; renderPanel(); }
 }
@@ -1049,6 +1108,8 @@ function applyDate() {
    ========================================================= */
 const panel = document.getElementById('panel');
 let selected = 'temple';
+let panelMode = 'closed';   // closed：不顯示｜open：展開｜mini：收成一行
+let dockOpen = false;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function bars(title, entries, total) {
   if (!entries.length) return '';
@@ -1059,11 +1120,12 @@ const countBy = (list, f) => Object.entries(list.reduce((m, p) => ((m[f(p)] = (m
 function renderPanel() {
   const now = curISO(), list = peopleNow().filter((p) => p.date <= now);
   const isl = islands[selected];
-  let html = '';
+  let html = '', title = '', info = '';
   if (!isl || isl.kind === 'temple') {
     const students = list.filter((p) => !p.isCadre), cadres = list.length - students.length;
     const q = list.filter((p) => p.g === '乾道').length;
     const cadreTotal = CADRE.reduce((s, c) => s + c.size, 0);
+    title = '全真道院'; info = `已報名 ${list.length} 人・學員 ${students.length}・幹部 ${cadres}`;
     html = `<header><span class="eyebrow">中央島・第四期報名</span><h2>全真道院</h2>
       <p class="sub">廣場上每個小人偶就是一位已報名的夥伴：藍色乾道、橘色坤道，戴金色小帽的是幹部。</p></header>
       <div class="stats"><div class="stat"><b>${list.length}</b><span>總報名</span></div><div class="stat"><b>${students.length}</b><span>學員</span></div><div class="stat"><b>${cadres}<small style="font-size:12px;color:var(--muted)">/${cadreTotal}</small></b><span>幹部</span></div></div>
@@ -1075,6 +1137,7 @@ function renderPanel() {
     const c = isl.course, s = courseStatus(c, now), diff = dayIndex(c.date) - dayIndex(now);
     const d = new Date(c.date + 'T00:00:00+08:00');
     const order = COURSES.indexOf(c) + 1;
+    title = c.name; info = `${c.date.slice(5).replace('-', '/')}・${STATUS_TEXT[s]}${diff > 0 ? `・還有 ${diff} 天` : ''}`;
     const look = { plan: '島上還搭著鷹架，地標是半透明的，等課程接近就會蓋好。', soon: '地標已經蓋好，就等大家上島。', today: '大家都上島了！', done: '這堂課結束了，島上開滿了花。' }[s];
     html = `<header><span class="eyebrow">第 ${order} 站・${c.date.replace(/-/g, '/')}（${'日一二三四五六'[d.getDay()]}）</span><h2>${esc(c.name)}</h2><p class="sub">${esc(c.sub)}</p></header>
       <span class="pill" data-s="${s}"><i></i>${STATUS_TEXT[s]}${diff > 0 ? `・還有 ${diff} 天` : diff < 0 ? `・${-diff} 天前` : ''}</span>
@@ -1082,21 +1145,82 @@ function renderPanel() {
       <p class="note">${look}</p>`;
   } else if (isl.kind === 'cadre') {
     const o = isl.info;
+    title = o.group; info = `已報名 ${isl.joined}/${o.size}`;
     html = `<header><span class="eyebrow">幹部島・${esc(o.what)}</span><h2>${esc(o.group)}</h2></header>
       <div class="stats"><div class="stat"><b>${isl.joined}<small style="font-size:12px;color:var(--muted)">/${o.size}</small></b><span>已報名</span></div></div>
       ${bars('報名進度', [['已報名', isl.joined], ['還沒報名', o.size - isl.joined]], o.size)}
       <p class="note">島上的小人偶是這一組的幹部，報名後會從半透明變成這一組的顏色。這裡只顯示人數，不顯示姓名。</p>`;
   } else if (isl.kind === 'game') {
     const n = (v) => (v == null ? '—' : v);
+    title = '遊戲樂園'; info = '法會小天使・褪下仙衣';
     html = `<header><span class="eyebrow">外圈・互動小遊戲</span><h2>遊戲樂園</h2><p class="sub">玩的人越多，摩天輪轉得越快。</p></header>
       <div class="stats"><div class="stat"><b>${n(GAMES.start)}</b><span>開始</span></div><div class="stat"><b>${n(GAMES.finish)}</b><span>完成</span></div><div class="stat"><b>${n(GAMES.share)}</b><span>分享</span></div></div>
       <ul class="prog"><li><span>小遊戲</span><a href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel-25d.html" target="_blank" rel="noopener">法會小天使</a></li>
       <li><span>小遊戲</span><a href="https://steven4dev.github.io/yiguandao-2027-course/game/xianyi.html" target="_blank" rel="noopener">褪下仙衣：八十億分之一</a></li></ul>
       <p class="note">人次統計還沒接上（遊戲統計的網址尚未設定），先顯示「—」。</p>`;
   }
-  panel.innerHTML = (isl && isl.kind !== 'temple' ? '<button class="close" id="closeBtn" aria-label="回到佛堂島">✕</button>' : '') + html;
-  const cb = document.getElementById('closeBtn');
-  if (cb) cb.onclick = () => { select('temple'); goHome(); };
+  document.getElementById('panelBody').innerHTML = html;
+  document.getElementById('miniTitle').textContent = title;
+  document.getElementById('miniInfo').textContent = info;
+}
+
+// 資訊卡和時光捲軸一次只展開一個
+const dock = document.getElementById('dock');
+const MOBILE_UI = matchMedia('(max-width: 720px)');
+function setUI(next) {
+  if (next.panel) panelMode = next.panel;
+  if (next.dock != null) dockOpen = next.dock;
+  if (next.panel === 'open') dockOpen = false;
+  if (next.dock === true && panelMode === 'open') panelMode = 'mini';
+  panel.hidden = panelMode === 'closed';
+  panel.classList.toggle('folded', panelMode === 'mini');
+  const fold = document.getElementById('panelFold');
+  fold.setAttribute('aria-expanded', String(panelMode === 'open'));
+  fold.setAttribute('aria-label', panelMode === 'open' ? '收合資訊卡' : '展開資訊卡');
+  fold.title = panelMode === 'open' ? '收合' : '展開';
+  dock.dataset.open = String(dockOpen);
+  document.getElementById('dockChip').setAttribute('aria-expanded', String(dockOpen));
+  // 手機上資訊卡展開時，時光捲軸先讓位
+  dock.hidden = MOBILE_UI.matches && panelMode === 'open';
+  requestAnimationFrame(measureFree);
+}
+document.getElementById('panelFold').onclick = () => setUI({ panel: panelMode === 'open' ? 'mini' : 'open' });
+document.getElementById('panelMini').onclick = () => setUI({ panel: 'open' });
+document.getElementById('panelClose').onclick = () => setUI({ panel: 'closed' });
+document.getElementById('dockChip').onclick = () => setUI({ dock: true });
+document.getElementById('dockFold').onclick = () => setUI({ dock: false });
+addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (dockOpen) setUI({ dock: false });
+  else if (panelMode !== 'closed') setUI({ panel: 'closed' });
+});
+MOBILE_UI.addEventListener('change', () => setUI({}));
+
+// 鏡頭的取景中心對準「沒被卡片擋住的那一塊」，島就不會躲在資訊卡後面
+const view = { x: 0, y: 0, tx: 0, ty: 0 };
+function measureFree() {
+  const W = innerWidth, H = innerHeight;
+  let right = W, top = 0, bottom = H;
+  if (panelMode === 'open') {
+    const r = panel.getBoundingClientRect();
+    if (r.left > W * 0.4 && r.top < H * 0.5) right = r.left - 8;
+    else bottom = Math.min(bottom, r.top - 8);
+  } else if (panelMode === 'mini' && MOBILE_UI.matches) bottom = Math.min(bottom, panel.getBoundingClientRect().top - 8);
+  if (!dock.hidden) bottom = Math.min(bottom, dock.getBoundingClientRect().top - 8);
+  if (MOBILE_UI.matches) top = document.querySelector('.brand').getBoundingClientRect().bottom + 4;
+  view.tx = W / 2 - right / 2;
+  view.ty = H / 2 - (top + bottom) / 2;
+  document.documentElement.style.setProperty('--dock-h', (dock.hidden ? 0 : dock.offsetHeight) + 'px');
+}
+new ResizeObserver(() => measureFree()).observe(panel);
+new ResizeObserver(() => measureFree()).observe(dock);
+function applyView(k) {
+  const nx = view.x + (view.tx - view.x) * k, ny = view.y + (view.ty - view.y) * k;
+  if (Math.abs(nx - view.x) < 0.05 && Math.abs(ny - view.y) < 0.05 && k < 1) return;
+  view.x = nx; view.y = ny;
+  camera.setViewOffset(innerWidth, innerHeight, view.x, view.y, innerWidth, innerHeight);
+  // 微縮鏡頭的清楚帶也跟著移到島的位置
+  hTilt.uniforms.r.value = vTilt.uniforms.r.value = 0.5 + view.y / innerHeight;
 }
 
 /* =========================================================
@@ -1109,9 +1233,9 @@ function flyTo(target, pos, dur = 1.2) {
 }
 function select(key) {
   selected = key;
-  panel.classList.remove('collapsed-mobile');
+  setUI({ panel: 'open' });
   const isl = islands[key];
-  if (key !== 'temple' || tween == null) {
+  {
     const t = new THREE.Vector3(isl.x, 1.5, isl.z);
     const dist = isl.R * 3.4 + 12;
     const dirV = camera.position.clone().sub(controls.target).setY(0).normalize();
@@ -1134,7 +1258,8 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   ray.setFromCamera(ndc, camera);
   // 先打到任何物件，再往上找它屬於哪座島
   const hit = ray.intersectObjects(Object.values(islands).map((i) => i.group), true)[0];
-  if (!hit) return;
+  // 點到海面：收起資訊卡和時光捲軸，把畫面還給群島
+  if (!hit) { setUI({ panel: 'closed', dock: false }); return; }
   let o = hit.object;
   while (o && !Object.values(islands).some((i) => i.group === o)) o = o.parent;
   const isl = o && Object.values(islands).find((i) => i.group === o);
@@ -1162,7 +1287,7 @@ const $ = (id) => document.getElementById(id);
 // 時間軸刻度：每堂課一個
 $('ticks').innerHTML = [['2027-01-01', '2027'], ...COURSES.filter((_, i) => i % 2 === 0).map((c) => [c.date, `${+c.date.slice(5, 7)}月`])]
   .map(([d, t]) => `<span style="left:${(dayIndex(d) / +dayInput.max) * 100}%">${t}</span>`).join('');
-dayInput.addEventListener('input', () => { playing = false; $('play').setAttribute('aria-pressed', 'false'); $('play').textContent = '▶ 播放一年'; applyDate(); });
+dayInput.addEventListener('input', () => { playing = false; $('play').setAttribute('aria-pressed', 'false'); $('play').textContent = '▶ 播放一年'; $('chipPlay').hidden = true; applyDate(); });
 $('today').onclick = () => { dayInput.value = Math.max(0, dayIndex(todayISO)); applyDate(); };
 let playing = false;
 $('play').onclick = () => {
@@ -1170,6 +1295,7 @@ $('play').onclick = () => {
   if (playing && +dayInput.value >= +dayInput.max) dayInput.value = 0;
   $('play').setAttribute('aria-pressed', String(playing));
   $('play').textContent = playing ? '❚❚ 暫停' : '▶ 播放一年';
+  $('chipPlay').hidden = !playing;
 };
 $('demo').onclick = () => {
   demo = !demo;
@@ -1178,7 +1304,7 @@ $('demo').onclick = () => {
   lastView = '';
   applyDate();
 };
-$('home').onclick = () => { select('temple'); goHome(); };
+$('home').onclick = () => { setUI({ panel: 'closed', dock: false }); goHome(); };
 
 // 晝夜跟著頁面主題，按鈕可以切換
 const root = document.documentElement;
@@ -1187,7 +1313,8 @@ let nightTarget = root.dataset.theme ? (root.dataset.theme === 'dark' ? 1 : 0) :
 let nightT = nightTarget;
 function syncNight() {
   $('night').setAttribute('aria-pressed', String(nightTarget === 1));
-  $('night').textContent = nightTarget ? '白天' : '夜晚';
+  $('night').setAttribute('aria-label', nightTarget ? '切換白天' : '切換夜晚');
+  $('night').title = nightTarget ? '切換白天' : '切換夜晚';
 }
 syncNight();
 $('night').onclick = () => { nightTarget = 1 - nightTarget; root.dataset.theme = nightTarget ? 'dark' : 'light'; syncNight(); };
@@ -1307,7 +1434,7 @@ async function loadData() {
   }
 }
 $('status').addEventListener('click', () => { if (!demo) loadData(); });
-if (innerWidth <= 720) panel.classList.add('collapsed-mobile');
+setUI({});
 applyDate();
 setStatus();
 loadData();
@@ -1320,6 +1447,8 @@ addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
   composer.setSize(innerWidth, innerHeight);
   sizeTilt();
+  measureFree();
+  applyView(1);
 });
 
 /* =========================================================
@@ -1384,6 +1513,7 @@ function tick() {
     camera.position.lerpVectors(tween.fp, tween.tp, k);
     if (tween.t >= 1) tween = null;
   }
+  applyView(1 - Math.exp(-rawDt * 6));
   controls.update();
   composer.render();
   placeTags();
