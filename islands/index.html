@@ -91,6 +91,17 @@
   .navpop a.board-item { display: grid; grid-template-columns: 18px 1fr; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 10px;
     font-size: 14px; font-weight: 700; color: var(--brick); text-decoration: none; }
   .navpop a.board-item:hover { background: var(--chip); }
+  /* 點開島時，品牌卡自動收成左上角一顆小膠囊；點膠囊可以暫時展開 */
+  .brand-toggle { display: none; position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border: 0; border-radius: 50%;
+    background: transparent; color: var(--muted); font-size: 14px; cursor: pointer; }
+  .brand-toggle:hover { background: var(--chip); }
+  .brand-toggle:focus-visible { outline: 2px solid var(--jade); outline-offset: 1px; }
+  .brand.foldable { padding-right: 40px; }
+  .brand.foldable .brand-toggle { display: grid; place-items: center; }
+  .brand.brand-mini { padding: 6px 40px 6px 14px; cursor: pointer; }
+  .brand.brand-mini h1 { font-size: 17px; }
+  .brand.brand-mini h1 small, .brand.brand-mini .count, .brand.brand-mini .board, .brand.brand-mini .status, .brand.brand-mini .ver { display: none; }
+  .brand.brand-mini .brand-toggle { top: 50%; transform: translateY(-50%); }
   .brand .count b { font-family: var(--font-display); font-size: 18px; color: var(--brick); font-variant-numeric: tabular-nums; margin-right: 2px; }
 
   #sound .on, #sound[aria-pressed="true"] .off { display: none; }
@@ -241,6 +252,7 @@
     .ptour .pos { display: none; }
     .brand h1 { font-size: 22px; }
     .brand h1 small { display: block; margin: 2px 0 0; }
+    .brand.brand-mini h1 { font-size: 16px; }
     /* 手機：資訊卡是底部抽屜；展開時時光捲軸讓位，收合時疊在時光膠囊上方 */
     .panel { top: auto; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); width: auto;
       bottom: calc(14px + env(safe-area-inset-bottom, 0px)); max-height: 46%; }
@@ -261,12 +273,13 @@
 <div id="stage"></div>
 <div id="labels"></div>
 
-<div class="card brand">
+<div class="card brand" id="brand">
+  <button class="brand-toggle" id="brandToggle" type="button" aria-expanded="true" aria-label="收合品牌卡" title="收合">▴</button>
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島<small>填寫報名表</small></a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.25</span>
+  <span class="ver">v261025.26</span>
 </div>
 
 <div class="mapctl">
@@ -1683,8 +1696,21 @@ function renderPanel() {
 // 資訊卡和時光捲軸一次只展開一個
 const dock = document.getElementById('dock');
 const MOBILE_UI = matchMedia('(max-width: 720px)');
+const brand = document.getElementById('brand');
+let brandPeek = false;   // 資訊卡開著時，使用者自己把品牌卡展開
 function setUI(next) {
   if (next.panel) panelMode = next.panel;
+  if (next.panel === 'open' || panelMode === 'closed') brandPeek = false;
+  if (next.brand != null) brandPeek = next.brand;
+  // 點開島（資訊卡出現）時，左上角品牌卡自動收成小膠囊；資訊卡關掉就恢復
+  const foldable = panelMode !== 'closed', mini = foldable && !brandPeek;
+  brand.classList.toggle('foldable', foldable);
+  brand.classList.toggle('brand-mini', mini);
+  const bt = document.getElementById('brandToggle');
+  bt.textContent = mini ? '▾' : '▴';
+  bt.setAttribute('aria-expanded', String(!mini));
+  bt.setAttribute('aria-label', mini ? '展開品牌卡' : '收合品牌卡');
+  bt.title = mini ? '展開' : '收合';
   if (next.dock != null) dockOpen = next.dock;
   if (next.panel === 'open') dockOpen = false;
   if (next.dock === true && panelMode === 'open') panelMode = 'mini';
@@ -1700,6 +1726,8 @@ function setUI(next) {
   dock.hidden = MOBILE_UI.matches && panelMode === 'open';
   requestAnimationFrame(measureFree);
 }
+document.getElementById('brandToggle').onclick = (e) => { e.stopPropagation(); setUI({ brand: brand.classList.contains('brand-mini') }); };
+brand.addEventListener('click', (e) => { if (brand.classList.contains('brand-mini') && !e.target.closest('a')) setUI({ brand: true }); });
 document.getElementById('panelFold').onclick = () => setUI({ panel: panelMode === 'open' ? 'mini' : 'open' });
 document.getElementById('panelMini').onclick = () => setUI({ panel: 'open' });
 document.getElementById('panelClose').onclick = () => setUI({ panel: 'closed' });
@@ -1730,6 +1758,7 @@ function measureFree() {
 }
 new ResizeObserver(() => measureFree()).observe(panel);
 new ResizeObserver(() => measureFree()).observe(dock);
+new ResizeObserver(() => measureFree()).observe(brand);
 function applyView(k) {
   const nx = view.x + (view.tx - view.x) * k, ny = view.y + (view.ty - view.y) * k;
   if (Math.abs(nx - view.x) < 0.05 && Math.abs(ny - view.y) < 0.05 && k < 1) return;
