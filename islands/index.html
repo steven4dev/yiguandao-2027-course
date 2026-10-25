@@ -18,14 +18,14 @@
 <meta property="og:locale" content="zh_TW">
 <meta name="twitter:card" content="summary_large_image">
 <!-- 加到主畫面：iPhone 用 apple-touch-icon，Android 用 manifest -->
-<link rel="manifest" href="islands.webmanifest">
-<link rel="apple-touch-icon" href="icon-islands-180.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-islands-192.png">
+<link rel="manifest" href="islands.webmanifest?v=2">
+<link rel="apple-touch-icon" href="icon-islands-180.png?v=2">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-islands-192.png?v=2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="全真群島">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#EFE6D2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#E4F0F3" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#172034" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -250,7 +250,7 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.20</span>
+  <span class="ver">v261025.21</span>
 </div>
 
 <div class="mapctl">
@@ -330,7 +330,7 @@ const COURSES = [
   { key: 'c5', isle: '法會島', date: '2027-08-28', name: '新道親法會', sub: '志工陪伴體驗', mark: 'lotus', prog: [['全天', '新道親法會－志工陪伴體驗']],
     game: { name: '法會小天使', url: '../game/fahui-angel-25d.html?v=2', img: '../game/og-fahui-angel-25d.png',
       desc: '法會那天，我們一起當新朋友的小天使。先在遊戲裡練習：誰的頭上冒出需求泡泡，就過去陪陪他。' } },
-  { key: 'c6', isle: '重開機島', date: '2027-10-02', name: '人生重開機', sub: '人生卡關的時候，你會怎麼辦', mark: 'windmill', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 何珈貞 講師'], ['下午活動', 'V·翻轉後的人生（天曉 林信宏 講師）']],
+  { key: 'c6', isle: '重置島', date: '2027-10-02', name: '人生重開機', sub: '人生卡關的時候，你會怎麼辦', mark: 'windmill', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 何珈貞 講師'], ['下午活動', 'V·翻轉後的人生（天曉 林信宏 講師）']],
     pm: { key: 'p6', isle: '翻轉島', name: 'V·翻轉後的人生', emoji: '🎲', who: '天曉 林信宏 講師', mark: 'flipDice',
       desc: '一場歡樂滿點的互動遊戲，主題只有一個字：「讚」！在笑聲中破冰，發現夥伴眼中的你藏著好多閃光點。你想成為什麼樣的人，就用相對的付出與行動去實踐，一起 V 出翻轉後的人生。' } },
   { key: 'c7', isle: '秋遊島', date: '2027-10-30', name: '戶外聯誼', sub: '秋天的第二次出遊', mark: 'camp2', prog: [['全天', '戶外聯誼活動']] },
