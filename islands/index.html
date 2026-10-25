@@ -70,6 +70,15 @@
   .brand .count { margin: 2px 0 0; font-size: 13px; color: var(--ink); line-height: 1.5; }
   .brand .count b { font-family: var(--font-display); font-size: 18px; color: var(--brick); font-variant-numeric: tabular-nums; margin-right: 2px; }
 
+  #sound .on, #sound[aria-pressed="true"] .off { display: none; }
+  #sound[aria-pressed="true"] .on { display: block; }
+  .soundpop { position: fixed; z-index: 4; top: calc(64px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+    width: 250px; padding: 12px 14px; display: grid; gap: 10px; }
+  .soundpop > b { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.06em; }
+  .sw { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; cursor: pointer; }
+  .sw input { margin: 3px 0 0; width: 18px; height: 18px; accent-color: var(--jade); }
+  .sw span { display: grid; gap: 2px; font-size: 14px; }
+  .sw small { font-size: 12px; color: var(--muted); line-height: 1.5; }
   .mapctl { position: fixed; z-index: 3; top: calc(14px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: 8px; }
   .icon { display: inline-grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; background: var(--card);
     box-shadow: 0 4px 14px rgba(50, 30, 15, 0.14); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
@@ -175,6 +184,7 @@
     .brand { max-width: calc(100vw - 32px - 52px); padding: 8px 12px 10px; }
     .brand .count, .status { font-size: 12px; }
     .mapctl { flex-direction: column; }
+    .soundpop { top: calc(14px + env(safe-area-inset-top, 0px)); right: calc(64px + env(safe-area-inset-right, 0px)); }
     .brand h1 { font-size: 22px; }
     .brand h1 small { display: block; margin: 2px 0 0; }
     /* 手機：資訊卡是底部抽屜；展開時時光捲軸讓位，收合時疊在時光膠囊上方 */
@@ -201,12 +211,19 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.06</span>
+  <span class="ver">v261025.07</span>
 </div>
 
 <div class="mapctl">
+  <button class="icon" id="sound" aria-pressed="false" aria-expanded="false" aria-controls="soundPop" aria-label="聲音設定" title="聲音"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg></button>
   <button class="icon" id="night" aria-pressed="false" aria-label="切換夜晚" title="切換夜晚"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
   <button class="icon" id="home" aria-label="回到全景" title="回到全景"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/><circle cx="12" cy="12" r="2.5"/></svg></button>
+</div>
+
+<div class="card soundpop" id="soundPop" hidden>
+  <b>聲音</b>
+  <label class="sw"><input type="checkbox" id="sfxOn"><span>環境音效<small>白天鳥叫、晚上蟋蟀和青蛙、高鐵經過</small></span></label>
+  <label class="sw"><input type="checkbox" id="musicOn"><span>輕音樂<small>五聲音階的撥弦小品，晚上會更輕</small></span></label>
 </div>
 
 <aside class="card panel" id="panel" aria-live="polite" hidden>
@@ -1575,6 +1592,200 @@ loadData();
 setInterval(() => { if (!document.hidden) loadData(); }, 5 * 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) loadData(); });
 
+/* =========================================================
+   聲音：全部用 Web Audio 即時合成，不用下載音檔
+   環境音效跟著畫面走：白天鳥叫、晚上蟋蟀和青蛙、水波微風、高鐵經過；
+   輕音樂是五聲音階（宮商角徵羽）的撥弦，白天輕快、晚上低而稀疏
+   ========================================================= */
+const SND = { ctx: null, sfx: false, music: false };
+const SOUND_KEY = 'islands-sound';
+function audioInit() {
+  if (SND.ctx) { if (SND.ctx.state === 'suspended') SND.ctx.resume(); return; }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  const ctx = (SND.ctx = new AC());
+  const comp = ctx.createDynamicsCompressor();
+  comp.connect(ctx.destination);
+  const bus = () => { const g = ctx.createGain(); g.gain.value = 0; g.connect(comp); return g; };
+  SND.sfxBus = bus();
+  SND.musicBus = bus();
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  SND.noise = buf;
+  // 水波與微風：低通過的噪音，音量慢慢起伏
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 420;
+  SND.waves = ctx.createGain(); SND.waves.gain.value = 0;
+  const src = noiseSrc(); src.connect(lp).connect(SND.waves).connect(SND.sfxBus); src.start();
+  // 音樂的空間感：一點回聲
+  SND.musicIn = ctx.createGain();
+  const delay = ctx.createDelay(1), fb = ctx.createGain(), wet = ctx.createGain();
+  delay.delayTime.value = 0.36; fb.gain.value = 0.3; wet.gain.value = 0.35;
+  SND.musicIn.connect(SND.musicBus);
+  SND.musicIn.connect(delay); delay.connect(fb).connect(delay); delay.connect(wet).connect(SND.musicBus);
+  const now = ctx.currentTime;
+  Object.assign(SND, { nextBird: now + 1, nextCricket: now, nextFrog: now + 3, nextNote: now + 0.6, nextPad: now + 0.2, padIdx: 0 });
+}
+const noiseSrc = () => { const s = SND.ctx.createBufferSource(); s.buffer = SND.noise; s.loop = true; return s; };
+function env(g, t, attack, peak, dur) {
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+}
+function panTo(p) {
+  const n = SND.ctx.createStereoPanner ? SND.ctx.createStereoPanner() : SND.ctx.createGain();
+  if (n.pan) n.pan.value = p;
+  n.connect(SND.sfxBus);
+  return n;
+}
+function tone(type, freq, t, dur, out) {
+  const o = SND.ctx.createOscillator();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  o.connect(out); o.start(t); o.stop(t + dur + 0.05);
+  return o;
+}
+// 鳥叫：幾聲快速上下滑音的短哨
+function bird(t, level) {
+  const out = panTo(Math.random() * 1.6 - 0.8), base = 2600 + Math.random() * 1400;
+  const n = 2 + Math.floor(Math.random() * 4);
+  for (let i = 0; i < n; i++) {
+    const st = t + i * (0.09 + Math.random() * 0.05), g = SND.ctx.createGain();
+    g.connect(out); env(g, st, 0.01, 0.05 * level, 0.09);
+    const o = tone('sine', base * (0.9 + Math.random() * 0.2), st, 0.1, g);
+    o.frequency.exponentialRampToValueAtTime(base * (1.3 + Math.random() * 0.3), st + 0.04);
+    o.frequency.exponentialRampToValueAtTime(base * 0.85, st + 0.08);
+  }
+}
+// 蟋蟀：4.5kHz 左右的短脈衝，一串三四聲
+function cricket(t, level) {
+  const out = panTo(Math.random() * 1.4 - 0.7), f = 4300 + Math.random() * 500;
+  for (let i = 0, n = 3 + Math.floor(Math.random() * 2); i < n; i++) {
+    const st = t + i * 0.07, g = SND.ctx.createGain();
+    g.connect(out); env(g, st, 0.005, 0.03 * level, 0.05);
+    tone('sine', f, st, 0.06, g);
+  }
+}
+// 青蛙：低沉的咕呱兩聲
+function frog(t, level) {
+  const out = panTo(Math.random() * 1.2 - 0.6);
+  for (let i = 0; i < 2; i++) {
+    const st = t + i * 0.18, g = SND.ctx.createGain(), lp = SND.ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 700;
+    lp.connect(g).connect(out); env(g, st, 0.01, 0.06 * level, 0.14);
+    tone('sawtooth', 190, st, 0.16, lp).frequency.linearRampToValueAtTime(150, st + 0.12);
+  }
+}
+// 撥弦：三角波加上泛音，亮亮的起音、慢慢變悶，像古箏
+const PENTA = [0, 2, 4, 7, 9];
+const midiHz = (m) => 440 * Math.pow(2, (m - 69) / 12);
+function pluck(t, midi, level) {
+  const ctx = SND.ctx, g = ctx.createGain(), lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.setValueAtTime(3200, t); lp.frequency.exponentialRampToValueAtTime(900, t + 1.2);
+  lp.connect(g).connect(SND.musicIn); env(g, t, 0.008, 0.12 * level, 2.6);
+  [[1, 'triangle', 1], [2, 'sine', 0.35], [3, 'sine', 0.12]].forEach(([m, type, v]) => {
+    const og = ctx.createGain(); og.gain.value = v; og.connect(lp);
+    tone(type, midiHz(midi) * m, t, 2.8, og);
+  });
+}
+// 和聲長音：慢慢浮出來、慢慢退下去
+function pad(t, root, level) {
+  [0, 7, 16].forEach((iv) => {
+    const g = SND.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.022 * level, t + 2.5); g.gain.linearRampToValueAtTime(0.0001, t + 9);
+    g.connect(SND.musicIn); tone('sine', midiHz(root + iv), t, 9, g);
+  });
+}
+// 高鐵：每列車一組噪音，依距離調音量、依左右調聲道，靠近時音色亮、遠離時悶
+const tv = new THREE.Vector3(), toCam = new THREE.Vector3(), camRight = new THREE.Vector3();
+function trainSound(tr, now) {
+  const ctx = SND.ctx;
+  if (!tr.userData.snd) {
+    const src = noiseSrc(), hp = ctx.createBiquadFilter(), lp = ctx.createBiquadFilter(), g = ctx.createGain(), pan = panTo(0);
+    hp.type = 'highpass'; hp.frequency.value = 120; lp.type = 'lowpass'; lp.frequency.value = 900; g.gain.value = 0.0001;
+    src.connect(hp).connect(lp).connect(g).connect(pan); src.start();
+    tr.userData.snd = { src, lp, g, pan };
+  }
+  const s = tr.userData.snd, dir = tr.userData.dir;
+  tv.set(tr.position.x - (dir * tr.userData.len) / 2, tr.position.y, tr.position.z);
+  viaduct.localToWorld(tv);
+  toCam.subVectors(camera.position, tv);
+  const dist = toCam.length();
+  toCam.normalize();
+  const vol = 0.7 * Math.pow(Math.max(0, 1 - dist / 320), 2);
+  const approach = VDIR.x * dir * toCam.x + VDIR.z * dir * toCam.z;
+  camRight.setFromMatrixColumn(camera.matrixWorld, 0);
+  s.g.gain.setTargetAtTime(Math.max(0.0001, vol), now, 0.08);
+  s.lp.frequency.setTargetAtTime(750 + 550 * approach, now, 0.1);
+  if (s.pan.pan) s.pan.pan.setTargetAtTime(THREE.MathUtils.clamp(-toCam.dot(camRight), -1, 1) * 0.85, now, 0.08);
+}
+function stopTrainSound(tr) {
+  const s = tr.userData.snd;
+  if (s) { try { s.src.stop(); } catch (e) {} s.pan.disconnect(); }
+}
+function audioTick() {
+  const ctx = SND.ctx;
+  if (!ctx || ctx.state !== 'running') return;
+  const now = ctx.currentTime, ahead = now + 0.3, day = 1 - nightT, night = nightT > 0.5;
+  // 鏡頭拉近時環境音大一點，拉遠時小一點
+  const near = THREE.MathUtils.clamp(1.5 - camera.position.distanceTo(controls.target) / 200, 0.35, 1);
+  SND.sfxBus.gain.setTargetAtTime(SND.sfx ? 0.9 * near : 0, now, 0.4);
+  SND.musicBus.gain.setTargetAtTime(SND.music ? 0.8 : 0, now, 0.6);
+  SND.waves.gain.setTargetAtTime(0.05 + 0.02 * Math.sin(now * 0.4), now, 0.5);
+  if (SND.sfx) {
+    for (; SND.nextBird < ahead; SND.nextBird += 1.2 + Math.random() * 3.5) if (Math.random() < day) bird(SND.nextBird, day);
+    for (; SND.nextCricket < ahead; SND.nextCricket += 0.5 + Math.random() * 0.9) if (Math.random() < nightT) cricket(SND.nextCricket, nightT);
+    for (; SND.nextFrog < ahead; SND.nextFrog += 3 + Math.random() * 6) if (Math.random() < nightT * 0.7) frog(SND.nextFrog, nightT);
+    for (const tr of trains) trainSound(tr, now);
+  } else SND.nextBird = SND.nextCricket = SND.nextFrog = ahead;
+  if (SND.music) {
+    const root = night ? 50 : 62, beat = 60 / 66;
+    for (; SND.nextNote < ahead; SND.nextNote += beat * (Math.random() < 0.25 ? 2 : 1)) {
+      if (Math.random() < (night ? 0.45 : 0.6)) pluck(SND.nextNote, root + PENTA[Math.floor(Math.random() * 5)] + (Math.random() < 0.3 ? 12 : 0), night ? 0.7 : 1);
+    }
+    for (; SND.nextPad < ahead; SND.nextPad += 8) pad(SND.nextPad, [38, 43, 45, 40][SND.padIdx++ % 4] + (night ? 0 : 12), night ? 0.8 : 1);
+  } else SND.nextNote = SND.nextPad = ahead;
+}
+
+// 聲音開關：預設靜音；開過一次會記住（只存在自己的瀏覽器），下次碰一下畫面就開始
+const soundBtn = $('sound'), soundPop = $('soundPop');
+function syncSound() {
+  $('sfxOn').checked = SND.sfx;
+  $('musicOn').checked = SND.music;
+  soundBtn.setAttribute('aria-pressed', String(SND.sfx || SND.music));
+  try { localStorage.setItem(SOUND_KEY, JSON.stringify({ sfx: SND.sfx, music: SND.music })); } catch (e) {}
+}
+function showSoundPop(open) {
+  soundPop.hidden = !open;
+  soundBtn.setAttribute('aria-expanded', String(open));
+}
+soundBtn.addEventListener('click', () => {
+  if (!SND.sfx && !SND.music) { SND.sfx = SND.music = true; audioInit(); syncSound(); showSoundPop(true); }
+  else showSoundPop(soundPop.hidden);
+});
+$('sfxOn').addEventListener('change', (e) => { SND.sfx = e.target.checked; if (SND.sfx) audioInit(); syncSound(); });
+$('musicOn').addEventListener('change', (e) => { SND.music = e.target.checked; if (SND.music) audioInit(); syncSound(); });
+document.addEventListener('pointerdown', (e) => { if (!soundPop.hidden && !soundPop.contains(e.target) && !soundBtn.contains(e.target)) showSoundPop(false); });
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && !soundPop.hidden) showSoundPop(false); });
+try {
+  const pref = JSON.parse(localStorage.getItem(SOUND_KEY) || 'null');
+  if (pref && (pref.sfx || pref.music)) {
+    SND.sfx = !!pref.sfx; SND.music = !!pref.music;
+    soundBtn.setAttribute('aria-pressed', 'true');
+    $('sfxOn').checked = SND.sfx; $('musicOn').checked = SND.music;
+    const wake = () => { audioInit(); removeEventListener('pointerdown', wake, true); removeEventListener('keydown', wake, true); };
+    addEventListener('pointerdown', wake, true);
+    addEventListener('keydown', wake, true);
+  }
+} catch (e) {}
+// 切到別的分頁就暫停聲音
+document.addEventListener('visibilitychange', () => {
+  if (!SND.ctx) return;
+  if (document.hidden) SND.ctx.suspend();
+  else if (SND.sfx || SND.music) SND.ctx.resume();
+});
+
+
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
@@ -1621,13 +1832,14 @@ function tick() {
   }
 
   if (!reduceMotion) for (const a of animators) a(t);
+  audioTick();
 
   nextTrain -= dt;
   if (nextTrain <= 0) { spawnTrain(); nextTrain = 6 + Math.random() * 14; }
   for (let i = trains.length - 1; i >= 0; i--) {
     const tr = trains[i], d = tr.userData.dir;
     tr.position.x += d * tr.userData.speed * dt;
-    if (d * tr.position.x > VL / 2 + tr.userData.len) { viaduct.remove(tr); trains.splice(i, 1); }
+    if (d * tr.position.x > VL / 2 + tr.userData.len) { viaduct.remove(tr); trains.splice(i, 1); stopTrainSound(tr); }
     else tr.visible = Math.abs(tr.position.x) < VL / 2 + 2;
   }
 
