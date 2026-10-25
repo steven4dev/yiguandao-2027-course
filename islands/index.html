@@ -249,7 +249,7 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.15</span>
+  <span class="ver">v261025.16</span>
 </div>
 
 <div class="mapctl">
@@ -431,7 +431,7 @@ renderer.toneMappingExposure = 1.05;
 stage.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-const DAY_BG = new THREE.Color('#efe6d2'), NIGHT_BG = new THREE.Color('#1c2740');
+const DAY_BG = new THREE.Color('#f1ece0'), NIGHT_BG = new THREE.Color('#2c3558');
 scene.background = DAY_BG.clone();
 scene.fog = new THREE.Fog(DAY_BG.clone(), 260, 520);
 
@@ -491,7 +491,7 @@ const stripes = (a, b, n = 8) => canvasTex(128, 32, (g) => { for (let i = 0; i <
 const C = {
   wall: '#a9473b', wallDark: '#8e3a30', slab: '#f4efe6', railGreen: '#3f8a6a', tile: '#d9774a', tileDark: '#b65a36',
   ridge: '#c4603a', gourd: '#9b4a2c', glass: '#3d4c55', frame: '#f4efe6', grass: '#9cc46b', soil: '#b47c50', soilDark: '#8f5f3c',
-  pave: '#ece2cc', hedge: '#6fa35a', pine: '#3f7a4a', pineLight: '#4f8f56', hill: '#6d9f52', water: '#9fd0da', concrete: '#d8d3c8',
+  pave: '#ece2cc', hedge: '#6fa35a', pine: '#3f7a4a', pineLight: '#4f8f56', hill: '#6d9f52', water: '#5fbfee', concrete: '#d8d3c8',
   globe: '#f2a93b', wood: '#c89a6a', trunk: '#7a5236',
 };
 const whiteMat = lam(C.slab), trunkMat = lam(C.trunk), hedgeMat = lam(C.hedge), hillMat = lam(C.hill), hillMat2 = lam('#7fb05e');
@@ -526,10 +526,16 @@ function hexEdge(R, ang) {
   return (R * COS30) / Math.cos(((a <= 30 ? a : 60 - a) * Math.PI) / 180);
 }
 
-const water = new THREE.Mesh(new THREE.CircleGeometry(700, 64), lam(C.water));
+// 粉藍色的海：不吃光照，顏色才不會被壓暗；畫面最後統一做色調處理會把顏色壓灰，所以設定值刻意飽和一點
+// 島嶼的影子另外疊一層透明面
+const water = new THREE.Mesh(new THREE.CircleGeometry(700, 64), new THREE.MeshBasicMaterial({ color: C.water }));
+const waterShadow = new THREE.Mesh(new THREE.CircleGeometry(700, 64), new THREE.ShadowMaterial({ opacity: 0.16 }));
+waterShadow.rotation.x = -Math.PI / 2;
+waterShadow.position.y = -3.38;
+waterShadow.receiveShadow = true;
+scene.add(waterShadow);
 water.rotation.x = -Math.PI / 2;
 water.position.y = -3.4;
-water.receiveShadow = true;
 scene.add(water);
 
 /* =========================================================
@@ -2200,7 +2206,8 @@ function updateHighlight(t) {
 }
 
 const clock = new THREE.Clock();
-const WATER_DAY = new THREE.Color(C.water), WATER_NIGHT = new THREE.Color('#2c3d5c');
+// 夜晚的海是柔和的灰藍紫，不是黑壓壓的深藍
+const WATER_DAY = new THREE.Color(C.water), WATER_NIGHT = new THREE.Color('#5a6190');
 const SUN_DAY = new THREE.Color('#fff1d6'), SUN_NIGHT = new THREE.Color('#9fb3ff');
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
