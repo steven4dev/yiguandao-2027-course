@@ -266,7 +266,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島<small>填寫報名表</small></a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.23</span>
+  <span class="ver">v261025.24</span>
 </div>
 
 <div class="mapctl">
@@ -2400,6 +2400,14 @@ function tick() {
   requestAnimationFrame(tick);
 }
 tick();
+
+// 網址帶 #島代號（例如 islands/#c5）就直接打開那座島；小遊戲結尾的「回到全真群島」用這個
+function openFromHash() {
+  const key = decodeURIComponent(location.hash.slice(1));
+  if (islands[key]) select(key);
+}
+openFromHash();
+addEventListener('hashchange', openFromHash);
 </script>
 </body>
 </html>
