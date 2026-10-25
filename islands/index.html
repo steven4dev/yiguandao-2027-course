@@ -162,6 +162,16 @@
   .navpop button i[data-s="today"] { background: var(--brick); } .navpop button i[data-s="soon"] { background: var(--gold); } .navpop button i[data-s="done"] { background: var(--jade); }
   .navpop .tip { margin: 10px 8px 0; padding: 8px 10px; border-radius: 10px; background: var(--chip); font-size: 12px; line-height: 1.6; color: var(--muted); }
   .navpop button small { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  /* 搜尋：沿用島嶼目錄的樣式，上面多一個輸入框 */
+  .searchpop { width: 300px; }
+  .sbox { display: flex; align-items: center; gap: 8px; margin: 0 2px 4px; padding: 8px 12px; border-radius: 12px; background: var(--chip); color: var(--muted); border: 1px solid var(--line); }
+  .sbox:focus-within { border-color: var(--jade); }
+  .sbox input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 16px; outline: none; }
+  #searchResults { display: grid; gap: 2px; }
+  #searchResults button { grid-template-columns: 22px 1fr; }
+  #searchResults button span { display: grid; gap: 1px; }
+  #searchResults button small { white-space: normal; line-height: 1.5; }
+  .searchpop .tip { margin-top: 4px; }
   .dock-body { display: grid; gap: 8px; }
   .chip { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; padding: 9px 16px; font-size: 14px; border-radius: 999px; }
   .chip b { font-family: var(--font-display); font-size: 16px; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
@@ -265,6 +275,9 @@
     .navpop { top: auto; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); width: auto;
       bottom: calc(14px + env(safe-area-inset-bottom, 0px)); max-height: 62%; z-index: 5; }
     .ptour .pos { display: none; }
+    /* 手機：搜尋框放上面，打字時才不會被鍵盤蓋住 */
+    .searchpop { top: calc(14px + env(safe-area-inset-top, 0px)); bottom: auto; left: max(16px, env(safe-area-inset-left, 0px));
+      right: calc(64px + env(safe-area-inset-right, 0px)); width: auto; max-height: 58%; }
     .brand h1 { font-size: 22px; }
     .brand h1 small { display: block; margin: 2px 0 0; }
     .brand.brand-mini h1 { font-size: 16px; }
@@ -295,7 +308,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.31</span>
+  <span class="ver">v261025.32</span>
   </div></div>
 </div>
 
@@ -303,10 +316,17 @@
   <button class="icon" id="menu" aria-expanded="false" aria-controls="navPop" aria-label="導覽：島嶼目錄" title="導覽"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   <button class="icon" id="sound" aria-pressed="false" aria-expanded="false" aria-controls="soundPop" aria-label="聲音設定" title="聲音"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg></button>
   <button class="icon" id="night" aria-pressed="false" aria-label="切換夜晚" title="切換夜晚"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
+  <button class="icon" id="search" aria-expanded="false" aria-controls="searchPop" aria-label="搜尋課程或夥伴" title="搜尋"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg></button>
   <button class="icon" id="home" aria-label="回到初始視角" title="回到初始視角"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></svg></button>
 </div>
 
 <nav class="card navpop" id="navPop" aria-label="島嶼目錄" hidden></nav>
+
+<div class="card navpop searchpop" id="searchPop" role="search" hidden>
+  <label class="sbox"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg>
+    <input id="searchInput" type="search" enterkeyhint="search" autocomplete="off" placeholder="課程、島名，或輸入全名找自己" aria-label="搜尋課程、島名或夥伴全名"></label>
+  <div id="searchResults" aria-live="polite"></div>
+</div>
 
 <div class="card soundpop" id="soundPop" hidden>
   <b>聲音</b>
@@ -414,6 +434,12 @@ const ROLE_DUTIES = {
   坤道副班長: ['協助班長統籌班務，串聯各組運作', '關懷坤道學員，凝聚坤道班員向心力', '班長不在時代理主持與臨場協調', '支援法會與活動中的坤道人力調度'],
   乾道副班長: ['協助班長統籌班務，串聯各組運作', '關懷乾道學員，凝聚乾道班員向心力', '班長不在時代理主持與臨場協調', '支援法會與活動中的乾道人力調度'],
 };
+// 搜尋用：只留全名算出來的指紋，比對時再把輸入的全名算一次，記憶體裡不另外存全名
+function nameKey(name) {
+  let h = 2166136261;
+  for (const ch of String(name).replace(/\s+/g, '').replace(/台/g, '臺')) h = Math.imul(h ^ ch.codePointAt(0), 16777619);
+  return (h >>> 0).toString(36);
+}
 // 「林詩涵」→「林○涵」、「王明」→「王○」
 function mask(name) {
   const s = Array.from(name);
@@ -1683,7 +1709,7 @@ function renderPanel() {
   if (personRec) {
     const pr = personRec, name = pr.m || '學員';
     title = name; info = `${pr.g}・${pr.unit}`;
-    html = `<header><span class="eyebrow">中央島・${pr.isCadre ? '幹部' : '學員'}</span><h2>${esc(name)}</h2><p class="sub">${esc(pr.g)}・${esc(pr.unit)}・${esc(pr.city)}</p></header>
+    html = `<header><span class="eyebrow">全真島・${pr.isCadre ? '幹部' : '學員'}</span><h2>${esc(name)}</h2><p class="sub">${esc(pr.g)}・${esc(pr.unit)}・${esc(pr.city)}</p></header>
       <span class="pill" data-s="done"><i></i>已登島・${+pr.date.slice(5, 7)}/${+pr.date.slice(8)}</span>
       <p class="note">姓名只顯示頭尾，中間遮蔽。藍色是乾道、橘色是坤道。</p>
       <button class="back" data-go="temple">← 回到全真島</button>`;
@@ -1976,7 +2002,7 @@ function renderNav() {
     ${standalone ? '' : '<p class="tip">📱 加到手機桌面：iPhone 用 Safari 打開，點下方「分享」→「加入主畫面」；Android 用 Chrome 打開，點右上角選單 →「加到主畫面」。</p>'}`;
 }
 function showNavPop(open) {
-  if (open) { renderNav(); showSoundPop(false); }
+  if (open) { renderNav(); showSoundPop(false); showSearchPop(false); }
   navPop.hidden = !open;
   menuBtn.setAttribute('aria-expanded', String(open));
 }
@@ -1991,6 +2017,90 @@ navPop.addEventListener('click', (e) => {
 });
 document.addEventListener('pointerdown', (e) => { if (!navPop.hidden && !navPop.contains(e.target) && !menuBtn.contains(e.target)) showNavPop(false); });
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && !navPop.hidden) showNavPop(false); });
+
+/* ---------- 搜尋：課程、島名、講師；夥伴要輸入全名才找得到，結果只顯示遮蔽後的名字 ---------- */
+const searchPop = $('searchPop'), searchBtn = $('search'), searchInput = $('searchInput'), searchResults = $('searchResults');
+const norm = (t) => String(t).toLowerCase().replace(/\s+/g, '').replace(/台/g, '臺');
+const md2 = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
+const PLACES = [
+  { key: 'temple', icon: '🏯', title: '全真島', sub: '全真道院・廣場上是已登島的夥伴', words: ['全真島', '全真道院', '佛堂', '中央'] },
+  { key: 'dock', icon: '🛶', title: '渡口島', sub: '登島報名處', words: ['渡口島', '登島', '報名', '竹筏'] },
+  ...COURSES.flatMap((c) => [
+    { key: c.key, icon: c.game ? '🎮' : '📅', title: c.isle, sub: `${md2(c.date)} ${c.name}｜${c.sub}`,
+      words: [c.isle, c.name, c.sub, c.date, md2(c.date), ...(c.prog || []).flat()] },
+    ...(c.pm ? [{ key: c.pm.key, icon: c.pm.emoji, title: c.pm.isle, sub: `${md2(c.date)} 下午・${c.pm.name}`, words: [c.pm.isle, c.pm.name, c.pm.who || '', c.date, md2(c.date)] }] : []),
+  ]),
+  ...CADRE.map((o) => ({ key: o.key, icon: '🏠', title: o === GATE ? `${o.isle}・迎賓` : o.isle, sub: `${o.group}・${o.size} 個職位`, words: [o.isle, o.group, o.what, ...(o === GATE ? ['迎賓'] : [])] })),
+];
+let searchHits = [];
+function findPeople(q) {
+  const raw = q.replace(/\s+/g, '');
+  // 全名至少兩個字，而且整個名字要完全相同；打一半的名字不會列出任何人
+  if (Array.from(raw).length < 2 || /[○＊*]/.test(raw)) return [];
+  const k = nameKey(raw), out = [];
+  const u = CADRE_NAMES.findIndex((n) => nameKey(n) === k);
+  if (u >= 0) {
+    const slot = SLOTS.filter((sl) => sl.uid === u).sort((a, b) => ROLE_RANK[a.role] - ROLE_RANK[b.role])[0];
+    const joined = realPeople.some((d) => (d.uids || []).includes(u));
+    out.push({ kind: 'm', slot, icon: '👤', title: slot.masked, sub: `${slot.title}・${joined ? '已登島' : '還沒登島'}` });
+    return out;
+  }
+  realPeople.forEach((d, i) => {
+    if (d.nk !== k) return;
+    const slot = mainSlotOf(d);
+    out.push(slot ? { kind: 'm', slot, icon: '👤', title: slot.masked, sub: `${slot.title}・已登島` }
+      : { kind: 'p', i, d, icon: '👤', title: d.m, sub: `${d.isCadre ? '幹部' : '學員'}・${md2(d.date)} 登島` });
+  });
+  return out;
+}
+function runSearch() {
+  const q = searchInput.value.trim(), n = norm(q);
+  if (!n) {
+    searchHits = [];
+    searchResults.innerHTML = '<p class="tip">可以搜尋課程名稱、島名、日期（例如 4/24）或講師。<br>想找自己：輸入完整的姓名，畫面會飛到你的小人偶，名字一樣只顯示遮蔽後的樣子。</p>';
+    return;
+  }
+  const people = findPeople(q);
+  const places = PLACES.filter((p) => p.words.some((w) => norm(w).includes(n)));
+  searchHits = [...people, ...places.map((p) => ({ kind: 'i', ...p }))].slice(0, 30);
+  const row = (h, i) => `<button data-hit="${i}"><span aria-hidden="true">${h.icon}</span><span><b>${esc(h.title)}</b><small>${esc(h.sub)}</small></span></button>`;
+  searchResults.innerHTML = searchHits.length ? searchHits.map(row).join('')
+    : `<p class="tip">找不到「${esc(q)}」。<br>找人要輸入完整的姓名；還沒登島的夥伴，報名後就找得到了。${liveOk ? '' : '<br>（目前沒連上即時報名資料，暫時只能找到幹部。）'}</p>`;
+}
+// 飛到這個人偶旁邊，就像直接點了他
+function focusFigure(sel) {
+  // 幹部優先飛到他那組的島上；學員在全真島廣場
+  const slot = String(sel).startsWith('m:') ? +sel.slice(2) : -1;
+  const f = (slot >= 0 && islands[SLOTS[slot].key].members.find((x) => x.userData.slot === slot)) || figuresFor(sel)[0];
+  if (!f) return;
+  const t = f.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0.8, 0));
+  const dirV = camera.position.clone().sub(controls.target).setY(0).normalize();
+  if (dirV.lengthSq() < 0.01) dirV.set(0.6, 0, 0.8);
+  const p = t.clone().addScaledVector(dirV, 17).setY(t.y + 14);
+  if (innerWidth < innerHeight) p.sub(t).multiplyScalar(1.3).add(t);
+  flyTo(t, p);
+}
+function pickHit(h) {
+  showSearchPop(false);
+  if (h.kind === 'i') { if (TOUR.includes(h.key)) goTo(h.key); else select(h.key); return; }
+  // 時光捲軸停在他登島之前的日子，就先拉回今天，人偶才會在廣場上
+  if (h.kind === 'p' && h.d.date > curISO()) { dayInput.value = Math.max(0, dayIndex(todayISO)); applyDate(); }
+  const sel = h.kind === 'm' ? 'm:' + h.slot.id : 'p:' + h.i;
+  select(h.kind === 'm' ? h.slot.key : 'temple', sel);
+  focusFigure(sel);
+}
+function showSearchPop(open) {
+  if (open) { if (!navPop.hidden) showNavPop(false); if (!soundPop.hidden) showSoundPop(false); runSearch(); }
+  searchPop.hidden = !open;
+  searchBtn.setAttribute('aria-expanded', String(open));
+  if (open) setTimeout(() => searchInput.focus(), 0);
+}
+searchBtn.addEventListener('click', () => showSearchPop(searchPop.hidden));
+searchInput.addEventListener('input', runSearch);
+searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && searchHits[0]) { e.preventDefault(); pickHit(searchHits[0]); } });
+searchResults.addEventListener('click', (e) => { const b = e.target.closest('button[data-hit]'); if (b) pickHit(searchHits[+b.dataset.hit]); });
+document.addEventListener('pointerdown', (e) => { if (!searchPop.hidden && !searchPop.contains(e.target) && !searchBtn.contains(e.target)) showSearchPop(false); });
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && !searchPop.hidden) showSearchPop(false); });
 
 // 晝夜跟著頁面主題，按鈕可以切換
 const root = document.documentElement;
@@ -2061,11 +2171,11 @@ function summarize(table) {
     const latest = !prev || prev.time <= time;
     const groups = CADRE_OF.get(name) || [], uid = CADRE_NAMES.indexOf(name);
     const row = latest ? { time, gender: get(c.gender), area: get(c.area), unit: get(c.unit), intro: get(c.intro) } : prev;
-    byKey.set(key, { ...row, first, groups, m: mask(name), uids: uid >= 0 ? [uid] : [], selfCadre: SELF_CADRE.test(row.intro) });
+    byKey.set(key, { ...row, first, groups, m: mask(name), nk: nameKey(name), uids: uid >= 0 ? [uid] : [], selfCadre: SELF_CADRE.test(row.intro) });
   });
   return [...byKey.values()].map((p) => ({
     g: p.gender, city: cityOf(p.area), unit: p.unit || '未填寫',
-    isCadre: p.selfCadre || p.groups.length > 0, cadre: p.groups, uids: p.uids, m: p.m, date: ymd(p.first),
+    isCadre: p.selfCadre || p.groups.length > 0, cadre: p.groups, uids: p.uids, m: p.m, nk: p.nk, date: ymd(p.first),
   })).sort((a, b) => a.date.localeCompare(b.date));
 }
 
@@ -2329,6 +2439,7 @@ function syncSound() {
 }
 function showSoundPop(open) {
   if (open && !navPop.hidden) showNavPop(false);
+  if (open) showSearchPop(false);
   soundPop.hidden = !open;
   soundBtn.setAttribute('aria-expanded', String(open));
 }
