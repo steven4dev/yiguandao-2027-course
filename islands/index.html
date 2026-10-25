@@ -249,7 +249,7 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.14</span>
+  <span class="ver">v261025.15</span>
 </div>
 
 <div class="mapctl">
@@ -393,7 +393,7 @@ const CADRE = CADRE_GROUPS.map(({ group, members, duties }, i) => {
     SLOTS.push(slot);
     return slot;
   });
-  return { key, group, size: members.length, mark, color, what, slots };
+  return { key, group, isle: group.replace(/(組|團隊)$/, '') + '島', size: members.length, mark, color, what, slots };
 });
 // 備份資料只有遮蔽過的姓名，用「遮蔽姓名＋組別」對回名單序號
 function cadreUidsOf(masked, groups) {
@@ -1156,7 +1156,6 @@ function bridge(a, b) {
     r.rotation.x = -Math.atan2(y1 - y0, len / N);
   }
 }
-bridge(TEMPLE, islands.c1);
 for (let i = 0; i < COURSES.length - 1; i++) bridge(islands[COURSES[i].key], islands[COURSES[i + 1].key]);
 
 /* =========================================================
@@ -1180,7 +1179,11 @@ function cadreBuilding(kind, g, color) {
     const red = lam('#c0503f');
     for (const x of [-1.5, 1.5]) mesh(new THREE.CylinderGeometry(0.18, 0.2, 2.6, 10), red, x, 1.3, 0, g);
     mesh(new THREE.BoxGeometry(3.6, 0.3, 0.4), red, 0, 2.4, 0, g);
-    mesh(new THREE.BoxGeometry(1.4, 0.5, 0.08), lam('#e8b53a'), 0, 2.05, 0.2, g);
+    const plaque = canvasTex(128, 48, (c) => {
+      c.fillStyle = '#e8b53a'; c.fillRect(0, 0, 128, 48);
+      c.fillStyle = '#a3322a'; c.font = 'bold 30px "Noto Serif TC", "PingFang TC", serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('迎　賓', 64, 26);
+    });
+    mesh(new THREE.BoxGeometry(1.4, 0.5, 0.08), [lam('#e8b53a'), lam('#e8b53a'), lam('#e8b53a'), lam('#e8b53a'), new THREE.MeshLambertMaterial({ map: plaque }), lam('#e8b53a')], 0, 2.05, 0.2, g);
     roof(4.4, 1.2, 0.8, 1.4, 0.2, 0, 2.55, 0, g);
     mesh(new THREE.BoxGeometry(1.4, 0.03, 4.4), lam('#c0503f'), 0, 0.02, 1.4, g, false);
   } else if (kind === 'library') {
@@ -1238,12 +1241,12 @@ function cadreBuilding(kind, g, color) {
 const RING2 = 80, R_CADRE = 5.5;
 const cadreHit = [];   // 幹部小人偶的網格，點擊與滑鼠游標用
 let gameSpeed = 1;
-const outer = [{ key: 'game', title: '遊戲樂園', mark: 'ferris', color: '#e8b53a', R: 6.5 }, ...CADRE.map((c) => ({ ...c, title: c.group, R: R_CADRE }))];
-outer.forEach((o, i) => {
-  const ang = ((i * 40 + 20) * Math.PI) / 180;
-  const isl = makeIsland(o.key, o.R, Math.sin(ang) * RING2, Math.cos(ang) * RING2, o.key === 'game' ? 'game' : 'cadre');
+const GATE = CADRE.find((c) => c.mark === 'arch');   // 公關禮節組負責迎賓
+const outer = [{ key: 'game', title: '遊戲樂園', mark: 'ferris', color: '#e8b53a', R: 6.5 }, ...CADRE.filter((c) => c !== GATE).map((c) => ({ ...c, title: c.isle, R: R_CADRE }))];
+function buildOuter(o, x, z, ang, faceY) {
+  const isl = makeIsland(o.key, o.R, x, z, o.key === 'game' ? 'game' : 'cadre');
   isl.info = o;
-  const b = new THREE.Group(); b.rotation.y = faceCam(isl.x, isl.z); isl.group.add(b);
+  const b = new THREE.Group(); b.rotation.y = faceY; isl.group.add(b);
   cadreBuilding(o.mark, b, o.color);
   bush(o.R * 0.4, -o.R * 0.39, 0.55, isl.group);
   bush(-o.R * 0.45, -o.R * 0.33, 0.6, isl.group);
@@ -1262,7 +1265,17 @@ outer.forEach((o, i) => {
       isl.members.push(p);
     });
   }
+  return isl;
+}
+outer.forEach((o, i) => {
+  const ang = ((i * 45 + 20) * Math.PI) / 180, x = Math.sin(ang) * RING2, z = Math.cos(ang) * RING2;
+  buildOuter(o, x, z, ang, faceCam(x, z));
 });
+// 迎賓島：佛堂大門 → 木橋 → 迎賓牌樓與紅地毯 → 木橋 → 第一堂課；牌樓橫跨在路線上
+const gateIsl = buildOuter({ ...GATE, title: GATE.isle, R: R_CADRE }, 0, FRONT_Z + 7 + R_CADRE * COS30, 0, 0);
+mesh(new THREE.BoxGeometry(1.4, 0.04, R_CADRE * COS30 * 2 - 0.2), lam('#c0503f'), 0, 0.02, 0, gateIsl.group, false);
+bridge(TEMPLE, gateIsl);
+bridge(gateIsl, islands.c1);
 
 /* =========================================================
    高鐵高架橋（照片左側那座），列車隨機雙向出現
@@ -1359,6 +1372,7 @@ function addTag(isl, text, cls, h) {
 addTag(TEMPLE, '全真道院・佛堂島', 'main', 9);
 COURSES.forEach((c) => addTag(islands[c.key], `${+c.date.slice(5, 7)}/${+c.date.slice(8)} ${c.name}${c.game ? ' 🎮' : ''}`, '', 7.6));
 outer.forEach((o) => addTag(islands[o.key], o.title, 'small', 5.5));
+addTag(gateIsl, `${GATE.isle}・迎賓`, 'small', 5.5);
 COURSES.filter((c) => c.pm).forEach((c) => addTag(islands[c.pm.key], `下午・${c.pm.name}`, 'small', 3.4));
 const tmpV = new THREE.Vector3();
 // 標籤避讓：依序擺放（佛堂島 → 課程島 → 外圈與下午島），會疊到前面標籤的就先藏起來
@@ -1530,14 +1544,16 @@ function renderPanel() {
     const sl = memberSlot, on = joinedUids.has(sl.uid);
     const also = (CADRE_OF.get(CADRE_NAMES[sl.uid]) || []).filter((g) => g !== sl.group);
     title = sl.title; info = `${sl.masked}・${on ? '已登島' : '還沒登島'}`;
-    html = `<header><span class="eyebrow">幹部島・${esc(sl.group)}</span><h2>${esc(sl.title)}</h2><p class="sub">${esc(sl.masked)}${also.length ? `・也在${esc(also.join('、'))}` : ''}</p></header>
+    const home = CADRE.find((o) => o.key === sl.key);
+    html = `<header><span class="eyebrow">${esc(home.isle)}・${esc(sl.group)}</span><h2>${esc(sl.title)}</h2><p class="sub">${esc(sl.masked)}${also.length ? `・也在${esc(also.join('、'))}` : ''}</p></header>
       <span class="pill" data-s="${on ? 'done' : 'plan'}"><i></i>${on ? '已登島' : '還沒登島'}</span>
       <div class="bars"><h3>${sl.group === '班務團隊' ? '這個職位的執掌' : '這一組的執掌'}</h3><ul class="duties">${sl.duties.map((d) => `<li>${esc(d)}</li>`).join('')}</ul></div>
-      <button class="back" data-go="${sl.key}">← 看${esc(sl.group)}全部幹部</button>`;
+      <button class="back" data-go="${sl.key}">← 看${esc(home.isle)}全部幹部</button>`;
   } else if (isl.kind === 'cadre') {
     const o = isl.info;
-    title = o.group; info = `已登島 ${isl.joined}/${o.size}`;
-    html = `<header><span class="eyebrow">幹部島・${esc(o.what)}</span><h2>${esc(o.group)}</h2></header>
+    title = o.isle; info = `已登島 ${isl.joined}/${o.size}`;
+    html = `<header><span class="eyebrow">幹部島・${esc(o.what)}</span><h2>${esc(o.isle)}</h2>
+      <p class="sub">${o.key === GATE.key ? '站在佛堂正門前，第一個迎接大家登島。' : `${esc(o.group)}的 ${o.size} 位幹部`}</p></header>
       ${bars('登島進度', [['已登島', isl.joined], ['還沒登島', o.size - isl.joined]], o.size)}
       <div class="bars"><h3>幹部名單（點一下看執掌）</h3><div class="roster">${o.slots.map((sl) => {
         const on = joinedUids.has(sl.uid);
@@ -1711,7 +1727,7 @@ $('today').onclick = () => { dayInput.value = Math.max(0, dayIndex(todayISO)); a
 $('home').onclick = () => { setUI({ panel: 'closed', dock: false }); showNavPop(false); goHome(); };
 
 /* ---------- 一年的課程路線：佛堂島 → 每堂課（有下午副課就接著下午島） ---------- */
-const TOUR = ['temple', ...COURSES.flatMap((c) => (c.pm ? [c.key, c.pm.key] : [c.key]))];
+const TOUR = ['temple', GATE.key, ...COURSES.flatMap((c) => (c.pm ? [c.key, c.pm.key] : [c.key]))];
 const tourIndex = () => TOUR.indexOf(String(selected).startsWith('p:') ? 'temple' : selected);
 // 走到某一站：只換島、不動日期，每座島顯示的都是時光捲軸那一天（預設今天）的真實狀態
 const goTo = (key) => select(key);
@@ -1752,7 +1768,7 @@ function renderNav() {
     <h3>中央</h3>${navItem('temple', '全真道院・佛堂島', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${md(c.date)} ${c.name}${c.game ? ' 🎮' : ''}`, statusText(islands[c.key].status)) +
       (c.pm ? navItem(c.pm.key, `下午・${c.pm.name} ${c.pm.emoji}`, '', 'sub') : '')).join('')}
-    <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o.group, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
+    <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
     <h3>遊戲</h3>${navItem('game', '遊戲樂園')}
     ${standalone ? '' : '<p class="tip">📱 加到手機桌面：iPhone 用 Safari 打開，點下方「分享」→「加入主畫面」；Android 用 Chrome 打開，點右上角選單 →「加到主畫面」。</p>'}`;
 }
