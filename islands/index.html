@@ -249,7 +249,7 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.13</span>
+  <span class="ver">v261025.14</span>
 </div>
 
 <div class="mapctl">
@@ -773,19 +773,37 @@ const lampLights = [];
    ========================================================= */
 const skinMat = lam('#f3d2b3'), qianMat = lam('#3d5a80'), kunMat = lam('#e07a5f'), capMat = lam('#e8b53a');
 const ghostPersonMat = new THREE.MeshLambertMaterial({ color: '#ffffff', transparent: true, opacity: 0.35 });
-const bodyGeo = new THREE.CylinderGeometry(0.16, 0.22, 0.5, 10), headGeo = new THREE.SphereGeometry(0.17, 12, 10), capGeo = new THREE.ConeGeometry(0.15, 0.16, 10);
+// Q 版人物（參考法會小天使）：大大的圓頭約佔全身一半，豆豆眼、粉紅腮紅，上窄下寬的小衣服、短手短腳
+const bodyGeo = new THREE.CylinderGeometry(0.12, 0.19, 0.3, 14), legGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.14, 8);
+const armGeo = new THREE.CapsuleGeometry(0.045, 0.14, 3, 8), headGeo = new THREE.SphereGeometry(0.24, 22, 16);
+const hairTopGeo = new THREE.SphereGeometry(0.255, 22, 10, 0, Math.PI * 2, 0, Math.PI * 0.4);
+// 坤道的鮑伯頭：除了臉之外，側邊和後面都包住
+const hairBobGeo = new THREE.SphereGeometry(0.262, 22, 14, Math.PI / 2 + 0.95, Math.PI * 2 - 1.9, 0, Math.PI * 0.64);
+const capGeo = new THREE.ConeGeometry(0.15, 0.16, 12);
+const hairMat = lam('#4a3328'), pantsMat = lam('#4a4a58');
+// 臉畫在頭的貼圖上：球體的正面（+z）在貼圖的 1/4 寬處
+const faceMat = new THREE.MeshLambertMaterial({ map: canvasTex(256, 128, (c) => {
+  c.fillStyle = '#f3d2b3'; c.fillRect(0, 0, 256, 128);
+  c.fillStyle = '#3a2a22';
+  for (const x of [55, 73]) { c.beginPath(); c.ellipse(x, 64, 3.2, 4.6, 0, 0, 7); c.fill(); }
+  c.fillStyle = 'rgba(236, 120, 130, 0.55)';
+  for (const x of [46, 82]) { c.beginPath(); c.ellipse(x, 74, 6, 3.5, 0, 0, 7); c.fill(); }
+}) });
 // 職位配件：班長拿小旗、副班長斜背彩帶、組長戴金色小帽
 const flagMat = lam('#c0503f'), poleMat = lam('#5a3b30'), sashMat = lam('#c0503f');
-const poleGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.95, 6), flagGeo = new THREE.BoxGeometry(0.34, 0.22, 0.02), sashGeo = new THREE.TorusGeometry(0.2, 0.035, 6, 18);
-function figure(mat, role = '') {
-  const p = new THREE.Group();
-  mesh(bodyGeo, mat, 0, 0.25, 0, p);
-  const head = mesh(headGeo, mat === ghostPersonMat ? mat : skinMat, 0, 0.65, 0, p);
-  head.userData.onMat = skinMat;
-  const part = (geo, m, x, y, z) => { const o = mesh(geo, m, x, y, z, p); o.userData.onMat = m; return o; };
-  if (role === true || role === '組長' || role === '班長') part(capGeo, capMat, 0, 0.86, 0);
-  if (role === '班長') { part(poleGeo, poleMat, 0.26, 0.55, 0); part(flagGeo, flagMat, 0.44, 0.9, 0); }
-  if (String(role).includes('副班長')) part(sashGeo, sashMat, 0, 0.3, 0).rotation.set(Math.PI / 2, 0.55, 0);
+const poleGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.95, 6), flagGeo = new THREE.BoxGeometry(0.3, 0.2, 0.02), sashGeo = new THREE.TorusGeometry(0.17, 0.03, 6, 18);
+function figure(mat, role = '', bob = false) {
+  const p = new THREE.Group(), ghost = mat === ghostPersonMat;
+  const part = (geo, m, x, y, z) => { const o = mesh(geo, ghost ? ghostPersonMat : m, x, y, z, p); o.userData.onMat = m; return o; };
+  for (const sx of [-1, 1]) part(legGeo, pantsMat, sx * 0.065, 0.07, 0);
+  mesh(bodyGeo, mat, 0, 0.29, 0, p);
+  for (const sx of [-1, 1]) { const a = mesh(armGeo, mat, sx * 0.19, 0.3, 0, p); a.rotation.z = sx * 0.35; }
+  part(headGeo, faceMat, 0, 0.66, 0);
+  part(hairTopGeo, hairMat, 0, 0.66, 0).rotation.x = -0.12;
+  if (bob) part(hairBobGeo, hairMat, 0, 0.66, 0);
+  if (role === true || role === '組長' || role === '班長') part(capGeo, capMat, 0, 0.96, 0);
+  if (role === '班長') { part(poleGeo, poleMat, 0.27, 0.5, 0); part(flagGeo, flagMat, 0.43, 0.86, 0); }
+  if (String(role).includes('副班長')) part(sashGeo, sashMat, 0, 0.3, 0).rotation.set(Math.PI / 2, 0.5, 0);
   p.userData = { phase: Math.random() * 6, speed: 0.6 + Math.random() * 0.6 };
   return p;
 }
@@ -819,7 +837,7 @@ function syncPlaza(list) {
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   list.forEach((d) => {
     const slot = mainSlotOf(d);
-    const p = slot ? figure(islands[slot.key].memberMat, slot.role) : figure(d.g === '坤道' ? kunMat : qianMat, d.isCadre);
+    const p = slot ? figure(islands[slot.key].memberMat, slot.role, d.g === '坤道') : figure(d.g === '坤道' ? kunMat : qianMat, d.isCadre, d.g === '坤道');
     if (slot) Object.assign(p.userData, { slot: slot.id, at: 'temple' });
     else p.userData.person = realPeople.indexOf(d);
     p.traverse((m) => { if (m.isMesh) plazaHit.push(m); });
@@ -852,13 +870,17 @@ function carousel(g) {
   });
   animators.push((t) => { spin.rotation.y = t * 0.6; spin.children.forEach((m) => { if (m.userData.bob != null) m.position.y = 1.2 + Math.sin(t * 2 + m.userData.bob) * 0.18; }); });
 }
-function piggy(g) {
+function piggy(root) {
+  // 撲滿原本鼻子朝 +x，轉成朝正面（+z）
+  const g = new THREE.Group(); g.rotation.y = -Math.PI / 2; root.add(g);
   const pink = lam('#f2a7b0');
   const body = mesh(new THREE.SphereGeometry(1, 20, 16), pink, 0, 1.4, 0, g); body.scale.set(1.5, 1.15, 1.15);
   const snout = mesh(new THREE.CylinderGeometry(0.38, 0.4, 0.3, 16), lam('#ec8f9c'), 1.55, 1.4, 0, g); snout.rotation.z = Math.PI / 2;
   for (const z of [-0.45, 0.45]) { const e = mesh(new THREE.ConeGeometry(0.22, 0.4, 8), pink, 0.8, 2.4, z, g); e.rotation.z = -0.4; }
   for (const [x, z] of [[-0.7, -0.5], [-0.7, 0.5], [0.7, -0.5], [0.7, 0.5]]) mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.5, 10), pink, x, 0.25, z, g);
   mesh(new THREE.BoxGeometry(0.6, 0.06, 0.12), lam('#5a3b30'), 0, 2.55, 0, g);
+  for (const z of [-0.18, 0.18]) mesh(new THREE.SphereGeometry(0.07, 8, 6), lam('#3a2a22'), 1.32, 1.85, z, g);
+  const tail = mesh(new THREE.TorusGeometry(0.16, 0.05, 6, 14, Math.PI * 1.6), pink, -1.55, 1.6, 0, g); tail.rotation.y = Math.PI / 2;
   const gold = lam('#e8b53a'), coinGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.1, 18);
   [[-2.6, 1.6, 7], [-2.2, -1.8, 4], [2.6, -1.5, 5], [2.3, 1.9, 3]].forEach(([x, z, n]) => { for (let i = 0; i < n; i++) mesh(coinGeo, gold, x + (i % 2) * 0.03, 0.05 + i * 0.11, z, g); });
   const fly = mesh(coinGeo, gold, 0, 3.4, 0, g); fly.rotation.x = Math.PI / 2;
@@ -911,7 +933,7 @@ function lotus(g) {
   });
   // 池邊的新朋友，頭上的需求泡泡
   const bubbles = [[-2.9, 1.2], [2.4, 1.9], [0.6, -3.0]].map(([x, z], i) => {
-    const p = figure(i % 2 ? kunMat : qianMat); p.position.set(x, 0, z); g.add(p);
+    const p = figure(i % 2 ? kunMat : qianMat, '', i % 2 === 1); p.position.set(x, 0, z); g.add(p);
     const b = new THREE.Group(); b.position.set(x, 1.25, z); g.add(b);
     mesh(new THREE.SphereGeometry(0.2, 12, 10), lam('#ffffff'), 0, 0, 0, b, false);
     mesh(new THREE.SphereGeometry(0.08, 8, 6), lam(['#e2626b', '#e8b53a', '#5b8fc9'][i]), 0, 0, 0.17, b, false);
@@ -1065,13 +1087,13 @@ function cooking(g) {
   mesh(new THREE.SphereGeometry(0.1, 10, 8), lam('#e2626b'), 0.9, 1.05, -0.45, g);
   [[-1.6, 1.0, '#7fb05e', 0.3], [-1.9, 0.6, '#e2763b', 0.2], [-1.4, 1.5, '#e2626b', 0.18]].forEach(([x, z, col, r]) => mesh(new THREE.SphereGeometry(r, 10, 8), lam(col), x, r, z, g));
   const chef = figure(lam('#f4f1ea'));
-  chef.position.set(0.1, 0, 0.4); chef.scale.setScalar(1.6); g.add(chef);
-  mesh(new THREE.CylinderGeometry(0.17, 0.14, 0.22, 12), lam('#ffffff'), 0, 0.86, 0, chef);
-  mesh(new THREE.SphereGeometry(0.2, 12, 8), lam('#ffffff'), 0, 1.0, 0, chef);
+  chef.position.set(0.1, 0, -1.55); chef.scale.setScalar(1.6); g.add(chef);
+  mesh(new THREE.CylinderGeometry(0.2, 0.17, 0.2, 14), lam('#ffffff'), 0, 0.97, 0, chef);
+  mesh(new THREE.SphereGeometry(0.23, 14, 10), lam('#ffffff'), 0, 1.12, 0, chef);
   const steam = [0, 1, 2].map((i) => mesh(new THREE.SphereGeometry(0.18, 10, 8), new THREE.MeshLambertMaterial({ color: '#ffffff', transparent: true, opacity: 0.6 }), -0.5, 1.6, -0.6, g, false));
   animators.push((t) => {
     steam.forEach((m, i) => { const k = (t * 0.5 + i / 3) % 1; m.position.set(-0.5 + Math.sin(t + i) * 0.1, 1.55 + k * 1.4, -0.6); m.scale.setScalar(0.6 + k); m.material.opacity = 0.6 * (1 - k); });
-    chef.rotation.y = Math.sin(t * 1.1) * 0.5;
+    chef.rotation.y = Math.sin(t * 1.1) * 0.35;
   });
 }
 const MARKS = {
@@ -1080,6 +1102,9 @@ const MARKS = {
   camp: (g) => camp(g, ['#e2763b', '#4f8f56', '#f4d35e']),
   camp2: (g) => camp(g, ['#5b6fa8', '#c0503f', '#e8b53a']),
 };
+
+// 地標的正面（+z）朝向一開始的鏡頭，再斜一點成 3/4 角度，看起來比較立體
+const faceCam = (x, z) => Math.atan2(HOME.pos.x - x, HOME.pos.z - z) + 0.45;
 
 /* ---------- 課程島：內圈依日期順時針排列 ---------- */
 const RING1 = 46, R_COURSE = 8;
@@ -1090,7 +1115,7 @@ COURSES.forEach((c, i) => {
   isl.ang = ang;
   const g = isl.group;
   // 地標面向群島中心
-  const mark = new THREE.Group(); mark.rotation.y = ang + Math.PI; g.add(mark);
+  const mark = new THREE.Group(); mark.rotation.y = faceCam(isl.x, isl.z); g.add(mark);
   MARKS[c.mark](mark);
   isl.mark = mark;
   // 小步道與樹
@@ -1133,25 +1158,6 @@ function bridge(a, b) {
 }
 bridge(TEMPLE, islands.c1);
 for (let i = 0; i < COURSES.length - 1; i++) bridge(islands[COURSES[i].key], islands[COURSES[i + 1].key]);
-
-/* ---------- 下午副課島：放在課程島正外側，上午 → 木橋 → 下午 ---------- */
-const RING_PM = 63, R_PM = 5;
-COURSES.filter((c) => c.pm).forEach((c) => {
-  const parent = islands[c.key], ang = parent.ang;
-  const isl = makeIsland(c.pm.key, R_PM, Math.sin(ang) * RING_PM, Math.cos(ang) * RING_PM, 'pm');
-  isl.course = c;
-  const mark = new THREE.Group(); mark.rotation.y = ang + Math.PI; isl.group.add(mark);
-  MARKS[c.pm.mark](mark);
-  isl.mark = mark;
-  bush(Math.sin(ang + 1.9) * R_PM * 0.66, Math.cos(ang + 1.9) * R_PM * 0.66, 0.6, isl.group);
-  bush(Math.sin(ang - 1.9) * R_PM * 0.66, Math.cos(ang - 1.9) * R_PM * 0.66, 0.7, isl.group);
-  const flowers = new THREE.Group(); isl.group.add(flowers);
-  const petals = ['#f2a7b0', '#f4d35e', '#ffffff', '#c9a2e0'];
-  for (let k = 0; k < 14; k++) { const a = k * 2.39996, r = 2.6 + (k % 4) * 0.4; mesh(new THREE.SphereGeometry(0.12, 8, 6), lam(petals[k % 4]), Math.sin(a) * r, 0.12, Math.cos(a) * r, flowers, false); }
-  isl.flowers = flowers;
-  isl.crowd = [];
-  bridge(parent, isl);
-});
 
 /* =========================================================
    外圈：幹部島＋遊戲樂園島
@@ -1237,7 +1243,7 @@ outer.forEach((o, i) => {
   const ang = ((i * 40 + 20) * Math.PI) / 180;
   const isl = makeIsland(o.key, o.R, Math.sin(ang) * RING2, Math.cos(ang) * RING2, o.key === 'game' ? 'game' : 'cadre');
   isl.info = o;
-  const b = new THREE.Group(); b.rotation.y = ang + Math.PI; isl.group.add(b);
+  const b = new THREE.Group(); b.rotation.y = faceCam(isl.x, isl.z); isl.group.add(b);
   cadreBuilding(o.mark, b, o.color);
   bush(o.R * 0.4, -o.R * 0.39, 0.55, isl.group);
   bush(-o.R * 0.45, -o.R * 0.33, 0.6, isl.group);
@@ -1247,7 +1253,7 @@ outer.forEach((o, i) => {
     o.slots.forEach((slot, k) => {
       // 圍著建築站一圈，從哪個角度看都看得到幾位
       const a = ang + 0.4 + (k / o.size) * Math.PI * 2, r = o.R * 0.72;
-      const p = figure(ghostPersonMat, slot.role);
+      const p = figure(ghostPersonMat, slot.role, slot.role.includes('坤道'));
       placeWalker(p, isl.group, Math.sin(a) * r, Math.cos(a) * r, 0.15);
       p.userData.grow = 1.4;
       p.scale.setScalar(1.4);
@@ -1301,6 +1307,39 @@ function spawnTrain() {
   viaduct.add(t);
   trains.push(t);
 }
+
+/* ---------- 下午副課島：從課程島朝外的一條邊長出去，兩座島的邊平行、木橋垂直接在兩邊中間 ---------- */
+const R_PM = 5, PM_GAP = 7;
+const angGap = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+function pmSpot(parent) {
+  const out = Math.atan2(parent.x, parent.z), dist = parent.R * COS30 + PM_GAP + R_PM * COS30;
+  // 六條邊的方向是 0°、60°…；先試最朝外的邊，會撞到高架橋或其他島就換下一條
+  const edges = [0, 1, 2, 3, 4, 5].map((k) => (k * Math.PI) / 3).sort((a, b) => angGap(a, out) - angGap(b, out));
+  for (const a of edges) {
+    const x = parent.x + Math.sin(a) * dist, z = parent.z + Math.cos(a) * dist;
+    if (Math.hypot(x, z) < Math.hypot(parent.x, parent.z) + 4) continue;
+    if (Math.abs(x * VNORMAL.x + z * VNORMAL.z - 22) < R_PM + 4) continue;
+    if (Object.values(islands).some((o) => Math.hypot(o.x - x, o.z - z) < o.R + R_PM + 4)) continue;
+    return [x, z];
+  }
+  return [parent.x + Math.sin(out) * dist, parent.z + Math.cos(out) * dist];
+}
+COURSES.filter((c) => c.pm).forEach((c) => {
+  const parent = islands[c.key], [px, pz] = pmSpot(parent), ang = Math.atan2(px, pz);
+  const isl = makeIsland(c.pm.key, R_PM, px, pz, 'pm');
+  isl.course = c;
+  const mark = new THREE.Group(); mark.rotation.y = faceCam(px, pz); isl.group.add(mark);
+  MARKS[c.pm.mark](mark);
+  isl.mark = mark;
+  bush(Math.sin(ang + 1.9) * R_PM * 0.66, Math.cos(ang + 1.9) * R_PM * 0.66, 0.6, isl.group);
+  bush(Math.sin(ang - 1.9) * R_PM * 0.66, Math.cos(ang - 1.9) * R_PM * 0.66, 0.7, isl.group);
+  const flowers = new THREE.Group(); isl.group.add(flowers);
+  const petals = ['#f2a7b0', '#f4d35e', '#ffffff', '#c9a2e0'];
+  for (let k = 0; k < 14; k++) { const a = k * 2.39996, r = 2.6 + (k % 4) * 0.4; mesh(new THREE.SphereGeometry(0.12, 8, 6), lam(petals[k % 4]), Math.sin(a) * r, 0.12, Math.cos(a) * r, flowers, false); }
+  isl.flowers = flowers;
+  isl.crowd = [];
+  bridge(parent, isl);
+});
 
 /* =========================================================
    標籤（HTML，跟著 3D 位置移動，可以點）
@@ -1376,7 +1415,7 @@ function syncCrowd(isl, n) {
   clearWalkers(isl.crowd);
   for (let k = 0; k < n; k++) {
     const a = k * 2.39996, r = isl.R * (0.33 + (k % 6) * 0.06);
-    const p = figure(k % 2 ? kunMat : qianMat);
+    const p = figure(k % 2 ? kunMat : qianMat, '', k % 2 === 1);
     placeWalker(p, isl.group, Math.sin(a) * r, Math.cos(a) * r, 0.3);
     isl.crowd.push(p);
   }
