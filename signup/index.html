@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="light">
+<meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#EEF7F2">
 <meta name="robots" content="noindex, nofollow">
 <title>社青班第四期報名分析</title>
@@ -23,8 +23,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
 <script>
-  // 記住上次選的主題（只存在自己的瀏覽器），預設淺色
-  try { if (localStorage.getItem('signup-theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch (e) {}
+  // 預設跟著系統的淺色／深色；自己按過切換鈕就以自己的選擇為準（只存在自己的瀏覽器）
+  (() => {
+    let saved = null;
+    try { saved = localStorage.getItem('signup-theme'); } catch (e) {}
+    const sys = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+    if (saved ? saved === 'dark' : sys) document.documentElement.dataset.theme = 'dark';
+  })();
 </script>
 <style>
   :root {
@@ -450,7 +455,7 @@
     <button type="button" class="live" id="live" data-state="loading" title="點一下立即重新讀取">
       <span class="dot" aria-hidden="true">…</span><span id="liveText">正在連線最新資料…</span>
     </button>
-    <div class="ver">版本 <span id="ver">v261025.04</span></div>
+    <div class="ver">版本 <span id="ver">v261025.05</span></div>
   </div>
 </header>
 
@@ -855,11 +860,19 @@
     themeBtn.setAttribute('aria-label', dark ? '切換淺色主題' : '切換暗色主題');
     document.querySelector('meta[name="theme-color"]').content = dark ? '#0F172A' : '#EEF7F2';
   }
+  const sysDark = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+  const savedTheme = () => { try { return localStorage.getItem('signup-theme'); } catch (e) { return null; } };
   applyTheme(document.documentElement.dataset.theme === 'dark');
+  // 沒按過切換鈕時，系統切換深淺色也跟著變
+  if (sysDark) sysDark.addEventListener('change', e => { if (!savedTheme()) applyTheme(e.matches); });
   themeBtn.addEventListener('click', () => {
     const dark = document.documentElement.dataset.theme !== 'dark';
     applyTheme(dark);
-    try { localStorage.setItem('signup-theme', dark ? 'dark' : 'light'); } catch (e) {}
+    // 切回跟系統一樣時就不再記住，之後繼續跟著系統
+    try {
+      if (sysDark && dark === sysDark.matches) localStorage.removeItem('signup-theme');
+      else localStorage.setItem('signup-theme', dark ? 'dark' : 'light');
+    } catch (e) {}
   });
 
   /* ---------- 提示框 ---------- */
