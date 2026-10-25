@@ -249,7 +249,7 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.16</span>
+  <span class="ver">v261025.17</span>
 </div>
 
 <div class="mapctl">
@@ -550,8 +550,9 @@ function facade(widthU, floors, { round = false, door = false, floorH = 1 } = {}
     for (let i = 0; i < n; i++) {
       const x = (start + i * step) * PX, isEdge = i === 0 || i === n - 1;
       if (door && f === 0 && Math.abs(x / PX + 0.45 - widthU / 2) < 1.4) continue;
-      if (round && isEdge && f > 0) wins.push({ kind: 'round', cx: x + 0.45 * PX, cy: top + floorH * PX * 0.45, r: 0.28 * PX });
-      else wins.push({ kind: 'rect', x, y: top + floorH * PX * 0.2, w: 0.9 * PX, h: floorH * PX * 0.52 });
+      const pair = Math.min(i, n - 1 - i);   // 左右對稱的同一對窗戶
+      if (round && isEdge && f > 0) wins.push({ kind: 'round', f, pair, cx: x + 0.45 * PX, cy: top + floorH * PX * 0.45, r: 0.28 * PX });
+      else wins.push({ kind: 'rect', f, pair, x, y: top + floorH * PX * 0.2, w: 0.9 * PX, h: floorH * PX * 0.52 });
     }
   }
   if (door) wins.push({ kind: 'door', x: (widthU / 2 - 1.2) * PX, y: (floors - 1) * floorH * PX + floorH * PX * 0.18, w: 2.4 * PX, h: floorH * PX * 0.82 });
@@ -580,7 +581,8 @@ function facade(widthU, floors, { round = false, door = false, floorH = 1 } = {}
   const emissiveMap = canvasTex(W, H, (g) => {
     g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
     for (const w of wins) {
-      if (Math.random() < 0.18 && w.kind !== 'door') continue;
+      // 有幾對窗戶沒開燈比較自然；左右成對地暗，立面才會對稱
+      if (w.kind !== 'door' && (w.f * 5 + w.pair * 3 + Math.round(widthU)) % 6 === 0) continue;
       g.fillStyle = w.kind === 'door' ? '#ffd38a' : '#ffc874';
       if (w.kind === 'round') { g.beginPath(); g.arc(w.cx, w.cy, w.r, 0, 7); g.fill(); } else g.fillRect(w.x, w.y, w.w, w.h);
     }
@@ -1947,6 +1949,7 @@ function audioInit() {
   const bus = () => { const g = ctx.createGain(); g.gain.value = 0; g.connect(comp); return g; };
   SND.sfxBus = bus();
   SND.musicBus = bus();
+  SND.trainBus = bus();   // 高鐵另外一條音量，不受鏡頭遠近的環境音縮放影響
   const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), d = buf.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
   SND.noise = buf;
@@ -1970,10 +1973,10 @@ function env(g, t, attack, peak, dur) {
   g.gain.exponentialRampToValueAtTime(peak, t + attack);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
 }
-function panTo(p) {
+function panTo(p, out = SND.sfxBus) {
   const n = SND.ctx.createStereoPanner ? SND.ctx.createStereoPanner() : SND.ctx.createGain();
   if (n.pan) n.pan.value = p;
-  n.connect(SND.sfxBus);
+  n.connect(out);
   return n;
 }
 function tone(type, freq, t, dur, out) {
@@ -2039,27 +2042,40 @@ const tv = new THREE.Vector3(), toCam = new THREE.Vector3(), camRight = new THRE
 function trainSound(tr, now) {
   const ctx = SND.ctx;
   if (!tr.userData.snd) {
-    const src = noiseSrc(), hp = ctx.createBiquadFilter(), lp = ctx.createBiquadFilter(), g = ctx.createGain(), pan = panTo(0);
-    hp.type = 'highpass'; hp.frequency.value = 120; lp.type = 'lowpass'; lp.frequency.value = 900; g.gain.value = 0.0001;
-    src.connect(hp).connect(lp).connect(g).connect(pan); src.start();
-    tr.userData.snd = { src, lp, g, pan };
+    // 呼嘯聲：帶通過的噪音；軌道轟隆聲：低頻的鋸齒波
+    const src = noiseSrc(), bp = ctx.createBiquadFilter(), g = ctx.createGain(), pan = panTo(0, SND.trainBus);
+    bp.type = 'bandpass'; bp.Q.value = 0.7; bp.frequency.value = 900;
+    const rum = ctx.createOscillator(), rlp = ctx.createBiquadFilter(), rg = ctx.createGain();
+    rum.type = 'sawtooth'; rum.frequency.value = 46; rlp.type = 'lowpass'; rlp.frequency.value = 160; rg.gain.value = 0.45;
+    // 帶通濾波會削掉噪音大部分的能量，濾完再放大，呼嘯聲才聽得清楚
+    const boost = ctx.createGain(); boost.gain.value = 5;
+    g.gain.value = 0.0001;
+    src.connect(bp).connect(boost).connect(g); rum.connect(rlp).connect(rg).connect(g); g.connect(pan);
+    src.start(); rum.start();
+    tr.userData.snd = { src, rum, bp, g, pan };
   }
   const s = tr.userData.snd, dir = tr.userData.dir;
   tv.set(tr.position.x - (dir * tr.userData.len) / 2, tr.position.y, tr.position.z);
   viaduct.localToWorld(tv);
+  // 沿著軌道、離鏡頭最近那一點的距離：接近 0 就是正在呼嘯而過
+  const along = (tv.x - camera.position.x) * VDIR.x + (tv.z - camera.position.z) * VDIR.z;
   toCam.subVectors(camera.position, tv);
   const dist = toCam.length();
   toCam.normalize();
-  const vol = 0.7 * Math.pow(Math.max(0, 1 - dist / 320), 2);
   const approach = VDIR.x * dir * toCam.x + VDIR.z * dir * toCam.z;
+  const whoosh = Math.exp(-Math.pow(along / 32, 2));
+  // 最大音量封頂：靠近佛堂時明顯呼嘯而過，但不會刺耳
+  const vol = Math.min(0.5, (0.15 + 0.95 * whoosh) * Math.pow(Math.max(0, 1 - dist / 480), 1.3) * 1.2);
   camRight.setFromMatrixColumn(camera.matrixWorld, 0);
-  s.g.gain.setTargetAtTime(Math.max(0.0001, vol), now, 0.08);
-  s.lp.frequency.setTargetAtTime(750 + 550 * approach, now, 0.1);
+  s.g.gain.setTargetAtTime(Math.max(0.0001, vol), now, 0.06);
+  // 靠近時音高往上、遠離時往下，像真的掠過
+  s.bp.frequency.setTargetAtTime(650 + 450 * (approach + 1) + 500 * whoosh, now, 0.08);
+  s.rum.frequency.setTargetAtTime(44 + 10 * approach, now, 0.1);
   if (s.pan.pan) s.pan.pan.setTargetAtTime(THREE.MathUtils.clamp(-toCam.dot(camRight), -1, 1) * 0.85, now, 0.08);
 }
 function stopTrainSound(tr) {
   const s = tr.userData.snd;
-  if (s) { try { s.src.stop(); } catch (e) {} s.pan.disconnect(); }
+  if (s) { try { s.src.stop(); s.rum.stop(); } catch (e) {} s.pan.disconnect(); }
 }
 function audioTick() {
   const ctx = SND.ctx;
@@ -2071,6 +2087,7 @@ function audioTick() {
   // 鏡頭拉近時環境音大一點，拉遠時小一點
   const near = THREE.MathUtils.clamp(1.5 - camera.position.distanceTo(controls.target) / 200, 0.35, 1);
   SND.sfxBus.gain.setTargetAtTime(SND.sfx ? 0.9 * near : 0, now, 0.4);
+  SND.trainBus.gain.setTargetAtTime(SND.sfx ? 1 : 0, now, 0.3);
   SND.musicBus.gain.setTargetAtTime(SND.music ? 0.8 : 0, now, 0.6);
   SND.waves.gain.setTargetAtTime(0.05 + 0.02 * Math.sin(now * 0.4), now, 0.5);
   if (SND.sfx) {
