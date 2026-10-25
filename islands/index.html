@@ -86,7 +86,10 @@
   .board:focus-visible, .cta a:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; }
   .cta { display: grid; gap: 8px; padding: 12px; border-radius: 14px; background: color-mix(in srgb, var(--brick) 10%, var(--chip)); border: 1px solid color-mix(in srgb, var(--brick) 30%, transparent); }
   .cta p { margin: 0; font-size: 13px; line-height: 1.6; }
-  .cta a { justify-self: start; padding: 6px 14px; border-radius: 999px; background: var(--brick); color: #fff; font-weight: 700; font-size: 13px; text-decoration: none; }
+  /* 寫成 .panel .cta a，才不會被後面「資訊卡連結一律綠色」的 .panel a 蓋掉，跟品牌卡的「我要登島」一樣紅底白字 */
+  .panel .cta a { justify-self: start; display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 14px; border-radius: 999px; background: var(--brick); color: #fff;
+    font-weight: 700; font-size: 13px; text-decoration: none; box-shadow: 0 4px 12px color-mix(in srgb, var(--brick) 30%, transparent); transition: transform 0.2s; }
+  .panel .cta a:hover { transform: translateY(-1px); }
   .cta-link { font-size: 13px; color: var(--brick) !important; font-weight: 700; text-decoration: none; }
   .navpop a.board-item { display: grid; grid-template-columns: 18px 1fr; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 10px;
     font-size: 14px; font-weight: 700; color: var(--brick); text-decoration: none; }
@@ -292,7 +295,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島<small>填寫報名表</small></a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.28</span>
+  <span class="ver">v261025.29</span>
   </div></div>
 </div>
 
