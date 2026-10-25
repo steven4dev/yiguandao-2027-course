@@ -1349,6 +1349,9 @@
   .xy-pill:hover { transform: translateY(-2px); }
   .xy-mob { display: none; }
   @media (max-width: 900px) { .xy-desk { display: none; } .xy-mob { display: inline-flex; } }
+  /* 平板寬度導覽列放不下五顆，全真群島改由年度企劃的卡片進入；手機漢堡選單裡照常顯示 */
+  @media (min-width: 601px) and (max-width: 899px) { .nav-islands { display: none; } .nav-links a { padding: 7px 14px; white-space: nowrap; } }
+  @media (min-width: 601px) and (max-width: 760px) { .nav-links { gap: 6px; } .nav-links a { padding: 6px 10px; font-size: 0.85rem; } }
   .xy-banner { display: flex; gap: 22px; align-items: center; background: linear-gradient(135deg, #FFFFFF 0%, var(--bg-sun) 100%); border: 1.5px solid var(--border-gold); border-radius: 22px; padding: 18px; box-shadow: var(--shadow-soft); margin: 0 0 28px; transition: transform 0.25s ease, box-shadow 0.25s ease; }
   .xy-banner:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
   .xy-banner img { width: 300px; flex: none; aspect-ratio: 1200 / 630; object-fit: cover; border-radius: 14px; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08); }
@@ -1427,6 +1430,7 @@
         <a href="#flow">🔋 每日流程</a>
         <a href="#schedule">📅 年度企劃</a>
         <a href="#org">🤝 同行夥伴</a>
+        <a class="nav-islands" href="islands/?v=2">🏝️ 全真群島</a>
       </div>
       <button type="button" class="theme-btn" id="themeBtn" aria-label="切換暗色主題" aria-pressed="false" title="切換暗色／淺色主題"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
       <button class="nav-toggle" id="navToggle" aria-label="開啟選單" aria-expanded="false" aria-controls="navLinks" onclick="toggleNav()">
@@ -1525,6 +1529,18 @@
           <p>人生如戲，戲如人生。<br>遊戲裡的六個章節，就是今年的六場專題。</p>
           <p class="meta">約 12 分鐘・不用登入、不用報名<br>遊玩紀錄只存在你自己的手機</p>
           <span class="xy-btn">🎮 先玩玩看 →</span>
+        </div>
+      </a>
+
+      <!-- 全真群島：九座課程島串起一整年，跟著報名人數慢慢熱鬧起來 -->
+      <a class="xy-banner" href="islands/?v=2">
+        <img src="islands/og-islands.png" alt="全真群島：中央是全真道院，九座課程島用木橋串起 2027 一整年" loading="lazy">
+        <div>
+          <span class="tag">🏝️ 3D 互動地圖</span>
+          <h3>一座島一堂課：全真群島</h3>
+          <p>中央是我們的全真道院，九座課程島用木橋串起 2027 一整年。<br>每多一位夥伴報名，島上就多一個小人偶，我們一起把它點亮。</p>
+          <p class="meta">拖動時光捲軸，看每座島從籌備到開花<br>報名人數即時更新・只顯示人數，不顯示姓名</p>
+          <span class="xy-btn">🏝️ 上島看看 →</span>
         </div>
       </a>
 
