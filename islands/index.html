@@ -93,12 +93,29 @@
   .dock { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     width: max-content; max-width: calc(100vw - 32px); border-radius: 999px; }
   .dock[data-open="true"] { width: min(760px, calc(100vw - 32px)); border-radius: 16px; padding: 10px 14px; display: grid; gap: 8px; }
-  .dock[data-open="true"] .chip, .dock[data-open="false"] .dock-body { display: none; }
+  .dock[data-open="true"] .dock-row, .dock[data-open="false"] .dock-body { display: none; }
+  .dock-row { display: flex; align-items: center; gap: 2px; padding: 0 6px; }
+  .dock-row .chip { padding: 9px 10px; }
+  .tools { align-items: center; }
+  .tour { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+  .pos { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ptour { display: inline-flex; align-items: center; gap: 4px; margin-right: 4px; }
+  .navpop { position: fixed; z-index: 4; top: calc(64px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+    width: 290px; max-height: calc(100% - 64px - var(--dock-h, 52px) - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow: auto;
+    padding: 10px 8px 12px; display: grid; gap: 2px; align-content: start; }
+  .navpop h3 { margin: 10px 8px 4px; font-size: 11px; letter-spacing: 0.14em; color: var(--muted); font-weight: 500; }
+  .navpop button { display: grid; grid-template-columns: 10px 1fr auto; align-items: center; gap: 8px; width: 100%; text-align: left;
+    border: 0; background: transparent; border-radius: 10px; padding: 7px 10px; font-size: 14px; }
+  .navpop button:hover, .navpop button[aria-current="true"] { background: var(--chip); }
+  .navpop button.sub { padding-left: 28px; font-size: 13px; }
+  .navpop button.home { grid-template-columns: 18px 1fr; font-weight: 700; }
+  .navpop button i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .navpop button i[data-s="today"] { background: var(--brick); } .navpop button i[data-s="soon"] { background: var(--gold); } .navpop button i[data-s="done"] { background: var(--jade); }
+  .navpop button small { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .dock-body { display: grid; gap: 8px; }
   .chip { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; padding: 9px 16px; font-size: 14px; border-radius: 999px; }
   .chip b { font-family: var(--font-display); font-size: 16px; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
   .chip svg { width: 18px; height: 18px; color: var(--brick); flex: none; }
-  .chip .playing { font-size: 12px; color: var(--brick); }
   .chip .hint { font-size: 12px; color: var(--muted); }
   .when { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .when b { font-family: var(--font-display); font-size: 20px; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
@@ -189,6 +206,10 @@
     .brand .count, .status { font-size: 12px; }
     .mapctl { flex-direction: column; }
     .soundpop { top: calc(14px + env(safe-area-inset-top, 0px)); right: calc(64px + env(safe-area-inset-right, 0px)); }
+    /* 手機：島嶼目錄從底部滑出，好點選 */
+    .navpop { top: auto; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); width: auto;
+      bottom: calc(14px + env(safe-area-inset-bottom, 0px)); max-height: 62%; z-index: 5; }
+    .ptour .pos { display: none; }
     .brand h1 { font-size: 22px; }
     .brand h1 small { display: block; margin: 2px 0 0; }
     /* 手機：資訊卡是底部抽屜；展開時時光捲軸讓位，收合時疊在時光膠囊上方 */
@@ -215,14 +236,17 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.08</span>
+  <span class="ver">v261025.09</span>
 </div>
 
 <div class="mapctl">
+  <button class="icon" id="menu" aria-expanded="false" aria-controls="navPop" aria-label="導覽：島嶼目錄" title="導覽"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   <button class="icon" id="sound" aria-pressed="false" aria-expanded="false" aria-controls="soundPop" aria-label="聲音設定" title="聲音"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg></button>
   <button class="icon" id="night" aria-pressed="false" aria-label="切換夜晚" title="切換夜晚"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
-  <button class="icon" id="home" aria-label="回到全景" title="回到全景"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/><circle cx="12" cy="12" r="2.5"/></svg></button>
+  <button class="icon" id="home" aria-label="回到初始視角" title="回到初始視角"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></svg></button>
 </div>
+
+<nav class="card navpop" id="navPop" aria-label="島嶼目錄" hidden></nav>
 
 <div class="card soundpop" id="soundPop" hidden>
   <b>聲音</b>
@@ -234,6 +258,7 @@
   <div class="ptop">
     <button class="mini" id="panelMini" aria-label="展開資訊卡"><b id="miniTitle"></b><span id="miniInfo"></span></button>
     <div class="pbtns">
+      <span class="ptour" id="panelTour" hidden><button class="icon sm" id="panelPrev" aria-label="前一座島" title="前一座島"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><span class="pos" id="panelPos"></span><button class="icon sm" id="panelNext" aria-label="下一座島" title="下一座島"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></span>
       <button class="icon sm fold" id="panelFold" aria-expanded="true" aria-label="收合資訊卡" title="收合"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
       <button class="icon sm" id="panelClose" aria-label="關閉資訊卡" title="關閉"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
@@ -242,7 +267,11 @@
 </aside>
 
 <div class="card dock" id="dock" data-open="false">
-  <button class="chip" id="dockChip" aria-expanded="false" aria-controls="dockBody" title="打開時光捲軸"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><b id="chipDate"></b><span class="playing" id="chipPlay" hidden>▶ 播放中</span><span class="hint">時光捲軸</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+  <div class="dock-row">
+  <button class="icon sm" id="prevChip" aria-label="前一座島" title="前一座島"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+  <button class="chip" id="dockChip" aria-expanded="false" aria-controls="dockBody" title="打開時光捲軸"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><b id="chipDate"></b><span class="hint">時光捲軸</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+  <button class="icon sm" id="nextChip" aria-label="下一座島" title="下一座島"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
   <div class="dock-body" id="dockBody">
     <div class="when"><b id="dateText">2026/10/25</b><span id="dateHint"></span><button class="icon sm" id="dockFold" aria-label="收合時光捲軸" title="收合"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></div>
     <div class="track">
@@ -251,7 +280,7 @@
     </div>
     <div class="tools">
       <button id="today">回到今天</button>
-      <button id="play" aria-pressed="false">▶ 播放一年</button>
+      <span class="tour"><button id="prev">‹ 前一座島</button><span class="pos" id="tourPos"></span><button id="next">下一座島 ›</button></span>
     </div>
   </div>
 </div>
@@ -556,10 +585,22 @@ function railSide(x1, z1, x2, z2, y, parent, h = 0.36) {
   mesh(scaleUV(new THREE.BoxGeometry(len, h - 0.07, 0.05), len / 0.55), railPanelMat, 0, (h - 0.07) / 2, 0, g);
   parent.add(g);
 }
-function railRect(cx, cz, w, d, y, parent) {
+function railRect(cx, cz, w, d, y, parent, frontGap = 0) {
   const x0 = cx - w / 2, x1 = cx + w / 2, z0 = cz - d / 2, z1 = cz + d / 2;
   railSide(x0, z0, x1, z0, y, parent); railSide(x1, z0, x1, z1, y, parent);
-  railSide(x0, z0, x0, z1, y, parent); railSide(x0, z1, x1, z1, y, parent);
+  railSide(x0, z0, x0, z1, y, parent);
+  // frontGap：前面留一個缺口給樓梯
+  if (frontGap) { railSide(x0, z1, cx - frontGap / 2, z1, y, parent); railSide(cx + frontGap / 2, z1, x1, z1, y, parent); }
+  else railSide(x0, z1, x1, z1, y, parent);
+}
+// 斜的欄杆（樓梯用）：沿著 x 方向從 (x1, y1) 爬到 (x2, y2)
+function railSlope(x1, y1, x2, y2, z, parent, h = 0.36) {
+  const len = Math.hypot(x2 - x1, y2 - y1), g = new THREE.Group();
+  g.position.set((x1 + x2) / 2, (y1 + y2) / 2, z);
+  g.rotation.z = Math.atan2(y2 - y1, x2 - x1);
+  mesh(new THREE.BoxGeometry(len + 0.08, 0.07, 0.12), whiteMat, 0, h, 0, g);
+  mesh(scaleUV(new THREE.BoxGeometry(len, h - 0.07, 0.05), len / 0.55), railPanelMat, 0, (h - 0.07) / 2, 0, g);
+  parent.add(g);
 }
 
 // 曲面屋頂：簷口平緩、屋脊陡、四角起翹
@@ -645,7 +686,7 @@ const lampLights = [];
   for (let f = 1; f <= FLOORS; f++) {
     const out = f === FLOORS ? 0.5 : 0.7, w = BW + out * 2, d = BD + out * 2;
     mesh(new THREE.BoxGeometry(w, 0.14, d), whiteMat, 0, f * FH - 0.07, BZ, T);
-    railRect(0, BZ, w - 0.1, d - 0.1, f * FH, T);
+    railRect(0, BZ, w - 0.1, d - 0.1, f * FH, T, f === 1 ? 2.8 : 0);
   }
   // 第四層：頂樓大殿（一整層樓高）＋歇山屋頂
   const HW = 8.4, HD = 4.4, HH = FH, HZ = BZ - 0.3;
@@ -659,13 +700,21 @@ const lampLights = [];
     roof(1.7, 1.7, 0.95, 0, 0.2, px, TOP + 1.0, pz, T);
   }
   mesh(new THREE.BoxGeometry(1.4, 1.7, 1.4), whiteMat, BW / 2 - 1.6, TOP + 0.85, BZ - BD / 2 + 1.0, T);
-  const stairZ = BZ + BD / 2 + 0.9;
-  mesh(new THREE.BoxGeometry(3.2, 0.6, 1.1), whiteMat, 0, 0.3, stairZ, T);
-  for (const sx of [-1, 1]) for (let i = 0; i < 4; i++)
-    mesh(new THREE.BoxGeometry(0.5, 0.15 * (i + 1), 1.1), whiteMat, sx * (1.85 + (3 - i) * 0.5), 0.075 * (i + 1), stairZ, T);
-  railSide(-1.6, stairZ + 0.55, 1.6, stairZ + 0.55, 0.6, T);
+  // 正門前左右對稱的白色樓梯：從地面兩側往中間爬，接到二樓外挑平台；一樓大門在平台底下
+  const edgeZ = BZ + BD / 2 + 0.7, SW = 0.95, stairZ = edgeZ + SW / 2, STEPS = 9, X_IN = 1.4, X_OUT = 5.6;
+  const run = (X_OUT - X_IN) / STEPS;
+  mesh(new THREE.BoxGeometry(X_IN * 2, 0.14, SW), whiteMat, 0, FH - 0.07, stairZ, T);
+  for (const sx of [-1, 1]) {
+    mesh(new THREE.BoxGeometry(0.16, FH - 0.14, 0.16), whiteMat, sx * (X_IN - 0.1), (FH - 0.14) / 2, edgeZ + SW - 0.1, T);
+    for (let i = 1; i <= STEPS; i++) {
+      const h = (FH * i) / STEPS, x = sx * (X_OUT - (i - 0.5) * run);
+      mesh(new THREE.BoxGeometry(run + 0.01, h, SW), whiteMat, x, h / 2, stairZ, T);
+    }
+    railSlope(sx * X_OUT, 0.15, sx * X_IN, FH, edgeZ + SW - 0.04, T);
+  }
+  railSide(-X_IN, edgeZ + SW - 0.04, X_IN, edgeZ + SW - 0.04, FH, T);
 
-  const treeZ = BZ + BD / 2 + 1.5;
+  const treeZ = BZ + BD / 2 + 2.6;
   [-6.6, -5.1, -3.6, 3.6, 5.1, 6.6].forEach((x, i) => pine(x, treeZ + (i % 2) * 0.3, 2.8 + ((i * 7) % 3) * 0.35, T));
   [-7.8, 7.8].forEach((x) => pine(x, treeZ - 1.6, 3.2, T));
   for (const sx of [-1, 1]) {
@@ -1370,9 +1419,9 @@ function applyDate() {
   document.getElementById('dateText').textContent = dateLabel;
   document.getElementById('dateHint').textContent = (now === todayISO ? '今天・' : '') + nextText;
   document.getElementById('chipDate').textContent = dateLabel + (now === todayISO ? '・今天' : '');
-  document.getElementById('brandCount').innerHTML = `<b>${list.length}</b> 位夥伴已報名・${esc(nextText)}`;
+  document.getElementById('brandCount').innerHTML = `<b>${list.length}</b> 位夥伴已登島・${esc(nextText)}`;
   const view = now + '|' + dataStamp + '|' + (selected || '');
-  if (view !== lastView) { lastView = view; renderPanel(); }
+  if (view !== lastView) { lastView = view; renderPanel(); syncTour(); }
 }
 
 /* =========================================================
@@ -1399,17 +1448,17 @@ function renderPanel() {
     const pr = personRec, name = pr.m || '學員';
     title = name; info = `${pr.g}・${pr.unit}`;
     html = `<header><span class="eyebrow">中央島・${pr.isCadre ? '幹部' : '學員'}</span><h2>${esc(name)}</h2><p class="sub">${esc(pr.g)}・${esc(pr.unit)}・${esc(pr.city)}</p></header>
-      <span class="pill" data-s="done"><i></i>已報名・${+pr.date.slice(5, 7)}/${+pr.date.slice(8)}</span>
+      <span class="pill" data-s="done"><i></i>已登島・${+pr.date.slice(5, 7)}/${+pr.date.slice(8)}</span>
       <p class="note">姓名只顯示頭尾，中間遮蔽。藍色是乾道、橘色是坤道。</p>
       <button class="back" data-go="temple">← 回到全真道院</button>`;
   } else if (!isl || isl.kind === 'temple') {
     const students = list.filter((p) => !p.isCadre), cadres = list.length - students.length;
     const q = list.filter((p) => p.g === '乾道').length;
     const cadreTotal = CADRE.reduce((s, c) => s + c.size, 0);
-    title = '全真道院'; info = `已報名 ${list.length} 人・學員 ${students.length}・幹部 ${cadres}`;
+    title = '全真道院'; info = `已登島 ${list.length} 人・學員 ${students.length}・幹部 ${cadres}`;
     html = `<header><span class="eyebrow">中央島・第四期報名</span><h2>全真道院</h2>
-      <p class="sub">廣場上每個小人偶就是一位已報名的夥伴：學員藍色是乾道、橘色是坤道，幹部穿著自己這一組的顏色。</p></header>
-      <div class="stats"><div class="stat"><b>${list.length}</b><span>總報名</span></div><div class="stat"><b>${students.length}</b><span>學員</span></div><div class="stat"><b>${cadres}<small style="font-size:12px;color:var(--muted)">/${cadreTotal}</small></b><span>幹部</span></div></div>
+      <p class="sub">廣場上每個小人偶就是一位已登島的夥伴：學員藍色是乾道、橘色是坤道，幹部穿著自己這一組的顏色。</p></header>
+      <div class="stats"><div class="stat"><b>${list.length}</b><span>總登島</span></div><div class="stat"><b>${students.length}</b><span>學員</span></div><div class="stat"><b>${cadres}<small style="font-size:12px;color:var(--muted)">/${cadreTotal}</small></b><span>幹部</span></div></div>
       ${bars('乾坤比例', [['乾道', q], ['坤道', list.length - q]], list.length)}
       ${bars('所屬單位', countBy(list, (p) => p.unit), list.length)}
       ${bars('居住縣市', countBy(list, (p) => p.city), list.length)}
@@ -1442,21 +1491,21 @@ function renderPanel() {
   } else if (memberSlot) {
     const sl = memberSlot, on = joinedUids.has(sl.uid);
     const also = (CADRE_OF.get(CADRE_NAMES[sl.uid]) || []).filter((g) => g !== sl.group);
-    title = sl.title; info = `${sl.masked}・${on ? '已報名' : '還沒報名'}`;
+    title = sl.title; info = `${sl.masked}・${on ? '已登島' : '還沒登島'}`;
     html = `<header><span class="eyebrow">幹部島・${esc(sl.group)}</span><h2>${esc(sl.title)}</h2><p class="sub">${esc(sl.masked)}${also.length ? `・也在${esc(also.join('、'))}` : ''}</p></header>
-      <span class="pill" data-s="${on ? 'done' : 'plan'}"><i></i>${on ? '已報名' : '還沒報名'}</span>
+      <span class="pill" data-s="${on ? 'done' : 'plan'}"><i></i>${on ? '已登島' : '還沒登島'}</span>
       <div class="bars"><h3>${sl.group === '班務團隊' ? '這個職位的執掌' : '這一組的執掌'}</h3><ul class="duties">${sl.duties.map((d) => `<li>${esc(d)}</li>`).join('')}</ul></div>
       <button class="back" data-go="${sl.key}">← 看${esc(sl.group)}全部幹部</button>`;
   } else if (isl.kind === 'cadre') {
     const o = isl.info;
-    title = o.group; info = `已報名 ${isl.joined}/${o.size}`;
+    title = o.group; info = `已登島 ${isl.joined}/${o.size}`;
     html = `<header><span class="eyebrow">幹部島・${esc(o.what)}</span><h2>${esc(o.group)}</h2></header>
-      ${bars('報名進度', [['已報名', isl.joined], ['還沒報名', o.size - isl.joined]], o.size)}
+      ${bars('登島進度', [['已登島', isl.joined], ['還沒登島', o.size - isl.joined]], o.size)}
       <div class="bars"><h3>幹部名單（點一下看執掌）</h3><div class="roster">${o.slots.map((sl) => {
         const on = joinedUids.has(sl.uid);
-        return `<button class="who" data-slot="${sl.id}"><i style="background:${on ? o.color : 'transparent'};border-color:${o.color}"></i><span>${esc(sl.role)}</span><b>${esc(sl.masked)}</b><em data-on="${on}">${on ? '已報名' : '還沒報名'}</em></button>`;
+        return `<button class="who" data-slot="${sl.id}"><i style="background:${on ? o.color : 'transparent'};border-color:${o.color}"></i><span>${esc(sl.role)}</span><b>${esc(sl.masked)}</b><em data-on="${on}">${on ? '已登島' : '還沒登島'}</em></button>`;
       }).join('')}</div></div>
-      <p class="note">島上的小人偶就是這一組的幹部，報名後會從半透明變成這一組的顏色，戴金色小帽的是組長。點小人偶也可以看執掌。</p>`;
+      <p class="note">島上的小人偶就是這一組的幹部，登島後會從半透明變成這一組的顏色，戴金色小帽的是組長。點小人偶也可以看執掌。</p>`;
   } else if (isl.kind === 'game') {
     const n = (v) => (v == null ? '—' : v);
     title = '遊戲樂園'; info = '法會小天使・褪下仙衣';
@@ -1619,17 +1668,72 @@ const $ = (id) => document.getElementById(id);
 // 時間軸刻度：每堂課一個
 $('ticks').innerHTML = [['2027-01-01', '2027'], ...COURSES.filter((_, i) => i % 2 === 0).map((c) => [c.date, `${+c.date.slice(5, 7)}月`])]
   .map(([d, t]) => `<span style="left:${(dayIndex(d) / +dayInput.max) * 100}%">${t}</span>`).join('');
-dayInput.addEventListener('input', () => { playing = false; $('play').setAttribute('aria-pressed', 'false'); $('play').textContent = '▶ 播放一年'; $('chipPlay').hidden = true; applyDate(); });
+dayInput.addEventListener('input', () => applyDate());
 $('today').onclick = () => { dayInput.value = Math.max(0, dayIndex(todayISO)); applyDate(); };
-let playing = false;
-$('play').onclick = () => {
-  playing = !playing;
-  if (playing && +dayInput.value >= +dayInput.max) dayInput.value = 0;
-  $('play').setAttribute('aria-pressed', String(playing));
-  $('play').textContent = playing ? '❚❚ 暫停' : '▶ 播放一年';
-  $('chipPlay').hidden = !playing;
-};
-$('home').onclick = () => { setUI({ panel: 'closed', dock: false }); goHome(); };
+$('home').onclick = () => { setUI({ panel: 'closed', dock: false }); showNavPop(false); goHome(); };
+
+/* ---------- 一年的課程路線：佛堂島 → 每堂課（有下午副課就接著下午島） ---------- */
+const TOUR = ['temple', ...COURSES.flatMap((c) => (c.pm ? [c.key, c.pm.key] : [c.key]))];
+const courseOf = (key) => COURSES.find((c) => c.key === key || (c.pm && c.pm.key === key));
+const tourIndex = () => TOUR.indexOf(String(selected).startsWith('p:') ? 'temple' : selected);
+// 走到某一站：日期跟著跳到那堂課（看得到上課當天的樣子），佛堂島回到今天
+function goTo(key) {
+  const c = courseOf(key);
+  dayInput.value = Math.max(0, dayIndex(c ? c.date : todayISO));
+  select(key);
+}
+function step(d) {
+  const i = tourIndex(), n = TOUR.length;
+  goTo(TOUR[i < 0 ? (d > 0 ? 0 : n - 1) : (i + d + n) % n]);
+}
+['prev', 'prevChip', 'panelPrev'].forEach((id) => $(id).addEventListener('click', () => step(-1)));
+['next', 'nextChip', 'panelNext'].forEach((id) => $(id).addEventListener('click', () => step(1)));
+addEventListener('keydown', (e) => {
+  if ((e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') || e.target.closest('input, textarea, select')) return;
+  e.preventDefault();
+  step(e.key === 'ArrowLeft' ? -1 : 1);
+});
+function syncTour() {
+  const i = tourIndex(), on = i >= 0, label = on ? `第 ${i + 1} / ${TOUR.length} 站` : `共 ${TOUR.length} 站`;
+  $('tourPos').textContent = label;
+  $('panelPos').textContent = on ? `${i + 1}/${TOUR.length}` : '';
+  $('panelTour').hidden = !on;
+}
+
+/* ---------- 導覽：島嶼目錄 ---------- */
+const navPop = $('navPop'), menuBtn = $('menu');
+function navItem(key, text, extra = '', cls = '') {
+  const isl = islands[key];
+  const s = isl && (isl.kind === 'course' || isl.kind === 'pm') ? isl.status : isl && isl.kind === 'temple' ? 'today' : '';
+  const cur = islandOf2(selected) === key;
+  return `<button class="${cls}" data-go="${key}"${cur ? ' aria-current="true"' : ''}><i data-s="${s}"></i><span>${esc(text)}</span><small>${esc(extra)}</small></button>`;
+}
+const islandOf2 = (sel) => (String(sel).startsWith('m:') ? SLOTS[+sel.slice(2)].key : String(sel).startsWith('p:') ? 'temple' : sel);
+function renderNav() {
+  const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
+  navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
+    <h3>中央</h3>${navItem('temple', '全真道院・佛堂島', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}
+    <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${md(c.date)} ${c.name}${c.game ? ' 🎮' : ''}`, STATUS_TEXT[islands[c.key].status] || '') +
+      (c.pm ? navItem(c.pm.key, `下午・${c.pm.name} ${c.pm.emoji}`, '', 'sub') : '')).join('')}
+    <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o.group, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
+    <h3>遊戲</h3>${navItem('game', '遊戲樂園')}`;
+}
+function showNavPop(open) {
+  if (open) { renderNav(); showSoundPop(false); }
+  navPop.hidden = !open;
+  menuBtn.setAttribute('aria-expanded', String(open));
+}
+menuBtn.addEventListener('click', () => showNavPop(navPop.hidden));
+navPop.addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  showNavPop(false);
+  if (b.hasAttribute('data-home')) { setUI({ panel: 'closed', dock: false }); goHome(); return; }
+  const key = b.dataset.go;
+  if (TOUR.includes(key)) goTo(key); else select(key);
+});
+document.addEventListener('pointerdown', (e) => { if (!navPop.hidden && !navPop.contains(e.target) && !menuBtn.contains(e.target)) showNavPop(false); });
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && !navPop.hidden) showNavPop(false); });
 
 // 晝夜跟著頁面主題，按鈕可以切換
 const root = document.documentElement;
@@ -1901,6 +2005,9 @@ function audioTick() {
   const ctx = SND.ctx;
   if (!ctx || ctx.state !== 'running') return;
   const now = ctx.currentTime, ahead = now + 0.3, day = 1 - nightT, night = nightT > 0.5;
+  // 畫面暫停一陣子（切到別的 App、分頁沒有被偵測到隱藏）再回來時，聲音時鐘已經走遠了；
+  // 錯過的鳥叫和音符直接跳過，不要一口氣補排幾千個聲音把瀏覽器卡住
+  for (const k of ['nextBird', 'nextCricket', 'nextFrog', 'nextNote', 'nextPad']) if (SND[k] < now - 1) SND[k] = now;
   // 鏡頭拉近時環境音大一點，拉遠時小一點
   const near = THREE.MathUtils.clamp(1.5 - camera.position.distanceTo(controls.target) / 200, 0.35, 1);
   SND.sfxBus.gain.setTargetAtTime(SND.sfx ? 0.9 * near : 0, now, 0.4);
@@ -1930,6 +2037,7 @@ function syncSound() {
   try { localStorage.setItem(SOUND_KEY, JSON.stringify({ sfx: SND.sfx, music: SND.music })); } catch (e) {}
 }
 function showSoundPop(open) {
+  if (open && !navPop.hidden) showNavPop(false);
   soundPop.hidden = !open;
   soundBtn.setAttribute('aria-expanded', String(open));
 }
@@ -1978,7 +2086,6 @@ const WATER_DAY = new THREE.Color(C.water), WATER_NIGHT = new THREE.Color('#2c3d
 const SUN_DAY = new THREE.Color('#fff1d6'), SUN_NIGHT = new THREE.Color('#9fb3ff');
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
-let playAcc = 0;
 function tick() {
   const rawDt = clock.getDelta(), dt = Math.min(rawDt, 0.05), t = clock.elapsedTime;
 
@@ -1994,16 +2101,6 @@ function tick() {
   for (const m of nightFacades) m.emissiveIntensity = nightT * 1.1;
   for (const g of glowMats) g.mat.emissiveIntensity = g.base + (g.night - g.base) * nightT;
   for (const l of lampLights) l.intensity = nightT * 6;
-
-  if (playing) {
-    playAcc += dt * 18;
-    if (playAcc >= 1) {
-      const step = Math.floor(playAcc); playAcc -= step;
-      dayInput.value = Math.min(+dayInput.max, +dayInput.value + step);
-      applyDate();
-      if (+dayInput.value >= +dayInput.max) $('play').click();
-    }
-  }
 
   if (!reduceMotion) for (const a of animators) a(t);
   audioTick();
