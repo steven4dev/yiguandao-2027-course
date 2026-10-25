@@ -231,10 +231,10 @@
     z-index: 20;
   }
   #sheet.open { transform: none; }
-  #sheet h3 { margin: 0 0 4px; font-family: var(--serif); font-size: 1.15rem; padding-right: 64px; }
+  #sheet h3 { margin: 0 0 4px; font-family: var(--serif); font-size: 1.15rem; }
   /* 收起面板：讀得比較慢的人可以先回頭看劇情，再展開選擇 */
-  #sheet .fold { position: absolute; top: 14px; right: 12px; border: 0; background: var(--green-soft); color: var(--green);
-    font-size: .8rem; font-weight: 700; border-radius: 99px; padding: 5px 11px; }
+  #sheet .fold { display: block; margin: -6px 0 8px auto; border: 0; background: var(--green-soft); color: var(--green);
+    font-size: .8rem; font-weight: 700; border-radius: 99px; padding: 5px 12px; }
   #sheetPill { position: absolute; left: 50%; bottom: calc(66px + env(safe-area-inset-bottom)); z-index: 21; transform: translateX(-50%);
     border: 0; border-radius: 99px; padding: 10px 18px; white-space: nowrap; font-weight: 800; font-size: .92rem;
     color: #fff; background: var(--green); box-shadow: 0 8px 20px rgba(5,150,105,.35); animation: pillGlow 1.8s ease-in-out infinite; }
@@ -494,7 +494,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261025.01</span>
+    <span id="ver">v261025.02</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -953,7 +953,7 @@
   function choose(title, q, opts) {
     return new Promise(resolve => {
       const sh = $('sheet'), pill = $('sheetPill');
-      sh.innerHTML = `<button class="fold" type="button" aria-label="先收起，回頭看劇情">▾ 收起</button><h3>${title}</h3><p class="q">${q}</p>`;
+      sh.innerHTML = `<button class="fold" type="button" >▾ 收起｜先看一下劇情</button><h3>${title}</h3><p class="q">${q}</p>`;
       // 收起：面板滑下去，只留一顆膠囊；點膠囊再展開
       const fold = v => {
         sfx('tap');
