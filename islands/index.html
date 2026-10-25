@@ -295,7 +295,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島<small>填寫報名表</small></a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.29</span>
+  <span class="ver">v261025.30</span>
   </div></div>
 </div>
 
@@ -586,7 +586,7 @@ water.position.y = -3.4;
 scene.add(water);
 
 /* =========================================================
-   中央：全真道院佛堂島（地上四層：三層本體＋頂樓大殿）
+   中央：全真島＝全真道院（地上四層：三層本體＋頂樓大殿）
    ========================================================= */
 const nightFacades = [];
 function facade(widthU, floors, { round = false, door = false, floorH = 1 } = {}) {
@@ -1547,18 +1547,18 @@ function addTag(isl, text, cls, h) {
   tags.push({ el: b, isl, h });
   isl.tag = b;
 }
-addTag(TEMPLE, '佛堂島', 'main', 9);
+addTag(TEMPLE, '全真島', 'main', 9);
 // 標籤只留島名，日期和完整課名放在資訊卡裡
 COURSES.forEach((c) => addTag(islands[c.key], `${c.isle}${c.game ? ' 🎮' : ''}`, '', 7.6));
 outer.forEach((o) => addTag(islands[o.key], o.title, 'small', 5.5));
 addTag(gateIsl, GATE.isle, 'small', 5.5);
 COURSES.filter((c) => c.pm).forEach((c) => addTag(islands[c.pm.key], `${c.pm.emoji} ${c.pm.isle}`, 'small', 3.4));
 addTag(dockIsl, '🛶 渡口島・登島', 'small dock-tag', 4.5);
-// 登島是重要入口：渡口島的標籤排在佛堂島和課程島之後、其他小標籤之前
+// 登島是重要入口：渡口島的標籤排在全真島和課程島之後、其他小標籤之前
 tags.splice(1 + COURSES.length, 0, tags.pop());
 
 const tmpV = new THREE.Vector3();
-// 標籤避讓：依序擺放（佛堂島 → 課程島 → 外圈與下午島），會疊到前面標籤的就先藏起來
+// 標籤避讓：依序擺放（全真島 → 課程島 → 外圈與下午島），會疊到前面標籤的就先藏起來
 const placed = [];
 function placeTags() {
   const w = innerWidth, h = innerHeight;
@@ -1686,13 +1686,13 @@ function renderPanel() {
     html = `<header><span class="eyebrow">中央島・${pr.isCadre ? '幹部' : '學員'}</span><h2>${esc(name)}</h2><p class="sub">${esc(pr.g)}・${esc(pr.unit)}・${esc(pr.city)}</p></header>
       <span class="pill" data-s="done"><i></i>已登島・${+pr.date.slice(5, 7)}/${+pr.date.slice(8)}</span>
       <p class="note">姓名只顯示頭尾，中間遮蔽。藍色是乾道、橘色是坤道。</p>
-      <button class="back" data-go="temple">← 回到全真道院</button>`;
+      <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (!isl || isl.kind === 'temple') {
     const students = list.filter((p) => !p.isCadre), cadres = list.length - students.length;
     const q = list.filter((p) => p.g === '乾道').length;
     const cadreTotal = CADRE.reduce((s, c) => s + c.size, 0);
     title = '全真道院'; info = `已登島 ${list.length} 人・學員 ${students.length}・幹部 ${cadres}`;
-    html = `<header><span class="eyebrow">中央島・第四期報名</span><h2>全真道院</h2>
+    html = `<header><span class="eyebrow">全真島・第四期報名</span><h2>全真道院</h2>
       <p class="sub">廣場上每個小人偶就是一位已登島的夥伴：學員藍色是乾道、橘色是坤道，幹部穿著自己這一組的顏色。</p></header>
       <div class="stats"><div class="stat"><b>${list.length}</b><span>總登島</span></div><div class="stat"><b>${students.length}</b><span>學員</span></div><div class="stat"><b>${cadres}<small style="font-size:12px;color:var(--muted)">/${cadreTotal}</small></b><span>幹部</span></div></div>
       ${bars('乾坤比例', [['乾道', q], ['坤道', list.length - q]], list.length)}
@@ -1928,7 +1928,7 @@ dayInput.addEventListener('input', () => applyDate());
 $('today').onclick = () => { dayInput.value = Math.max(0, dayIndex(todayISO)); applyDate(); };
 $('home').onclick = () => { setUI({ panel: 'closed', dock: false }); showNavPop(false); goHome(); };
 
-/* ---------- 一年的課程路線：佛堂島 → 每堂課（有下午副課就接著下午島） ---------- */
+/* ---------- 一年的課程路線：全真島 → 每堂課（有下午副課就接著下午島） ---------- */
 const TOUR = ['temple', GATE.key, ...COURSES.flatMap((c) => (c.pm ? [c.key, c.pm.key] : [c.key]))];
 const tourIndex = () => TOUR.indexOf(String(selected).startsWith('p:') ? 'temple' : selected);
 // 走到某一站：只換島、不動日期，每座島顯示的都是時光捲軸那一天（預設今天）的真實狀態
@@ -1968,7 +1968,7 @@ function renderNav() {
   const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島・填寫報名表</span></a>
-    <h3>中央</h3>${navItem('temple', '佛堂島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('dock', '🛶 渡口島・登島報名處')}
+    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
