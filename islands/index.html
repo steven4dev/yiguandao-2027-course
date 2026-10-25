@@ -293,9 +293,9 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <div class="brand-more"><div>
   <p class="count" id="brandCount"></p>
-  <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島<small>填寫報名表</small></a>
+  <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.30</span>
+  <span class="ver">v261025.31</span>
   </div></div>
 </div>
 
@@ -1750,7 +1750,7 @@ function renderPanel() {
     title = '渡口島'; info = '登島報名處・竹筏往返迎賓島';
     html = `<header><span class="eyebrow">登島報名處</span><h2>🛶 渡口島</h2>
       <p class="sub">還沒登島的夥伴，從這裡搭竹筏，穿過好玩島和歡樂島之間的開口，到迎賓島上岸，再穿過迎賓牌樓就登島了。</p></header>
-      <div class="cta"><p>填好報名表，就是買好船票。報名後，你的小人偶會出現在佛堂廣場上。</p><a href="${SIGNUP_URL}" target="_blank" rel="noopener">🛶 填寫報名表</a></div>
+      <div class="cta"><p>填好報名表，就是買好船票。報名後，你的小人偶會出現在佛堂廣場上。</p><a href="${SIGNUP_URL}" target="_blank" rel="noopener">🛶 我要登島</a></div>
       <p class="note">竹筏在渡口島和公關禮節島之間固定往返，每趟大約 12 秒，靠岸停 3 秒。點竹筏也可以直接打開報名表。</p>`;
   }
   document.getElementById('panelBody').innerHTML = html;
@@ -1967,7 +1967,7 @@ const standalone = navigator.standalone === true || matchMedia('(display-mode: s
 function renderNav() {
   const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
-    <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島・填寫報名表</span></a>
+    <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島</span></a>
     <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
