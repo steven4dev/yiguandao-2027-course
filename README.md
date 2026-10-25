@@ -31,6 +31,18 @@ https://steven4dev.github.io/yiguandao-2027-course/signup/?v=3（分享用連結
 - 試算表要維持「知道連結的任何人都能檢視」，關掉的話網頁會改顯示備份
 - 連線狀態下方有版本編號（格式同褪下仙衣），各版內容見 [`signup/CHANGELOG.md`](signup/CHANGELOG.md)
 
+## 全真群島（`islands/`）
+
+https://steven4dev.github.io/yiguandao-2027-course/islands/（LINE 預覽圖 `islands/og-islands.png`）
+
+溫暖玩具模型風格的 3D 微縮群島，用 Three.js 繪製，不需要建置。
+
+- 中央：全真道院佛堂島（參考實景，地上四層），廣場小人偶＝已報名的夥伴
+- 內圈：9 座課程島，依 2027 年日期排列，用木橋串起一整年；時光捲軸可以看每座島從籌備中到開花
+- 外圈：8 座幹部島（只顯示各組報名人數，不顯示姓名）與遊戲樂園島；左後方是高鐵高架橋
+- 資料：讀取 `signup/data.json`（報名分析的備份）與 `game/stats.json`；課程資料寫在 `islands/index.html` 的 `COURSES`，幹部組別人數寫在 `CADRE`，人事或課程異動時要一起改
+- 左上角有版本編號，各版內容見 [`islands/CHANGELOG.md`](islands/CHANGELOG.md)
+
 ## 更新方式
 
 直接編輯 `index.html` 並 commit 到 main 分支，GitHub Pages 會自動重新建置。

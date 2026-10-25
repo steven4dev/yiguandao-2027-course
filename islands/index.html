@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex, nofollow">
+<title>全真群島｜2027 全真社青</title>
+<meta name="description" content="一座島一堂課：2027 全真社青的 3D 微縮群島，看報名夥伴、課程進度與各組準備一起慢慢點亮。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="2027 全真社青 Life Design 探索地圖">
+<meta property="og:title" content="全真群島｜一座島一堂課">
+<meta property="og:description" content="中央是全真道院，九座課程島串起 2027 一整年。報名的夥伴越多，島上越熱鬧，一起攜手把它點亮。">
+<meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/islands/">
+<meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/islands/og-islands.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="zh_TW">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+  /* 版面：全螢幕 3D 群島，左上品牌、右側（手機為底部）資訊卡、底部時光捲軸 */
+  :root {
+    --bg: #efe6d2;
+    --sea: #b9d6d6;
+    --card: rgba(255, 251, 243, 0.9);
+    --ink: #3f2c22;
+    --muted: #846a58;
+    --line: rgba(63, 44, 34, 0.14);
+    --brick: #a9473b;
+    --jade: #3f8a6a;
+    --gold: #d99a2b;
+    --chip: rgba(63, 44, 34, 0.06);
+    --font-display: "LXGW WenKai TC", "Kaiti TC", "STKaiti", "BiauKai", serif;
+    --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #172034; --sea: #1f2d45; --card: rgba(28, 37, 58, 0.88); --ink: #f2e5d0; --muted: #b3a18b;
+      --line: rgba(242, 229, 208, 0.16); --brick: #e07a63; --jade: #6cc39a; --gold: #f0b54d; --chip: rgba(242, 229, 208, 0.08);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #172034; --sea: #1f2d45; --card: rgba(28, 37, 58, 0.88); --ink: #f2e5d0; --muted: #b3a18b;
+    --line: rgba(242, 229, 208, 0.16); --brick: #e07a63; --jade: #6cc39a; --gold: #f0b54d; --chip: rgba(242, 229, 208, 0.08);
+    color-scheme: dark;
+  }
+  html, body { height: 100%; overflow: hidden; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; transition: background 0.6s linear, color 0.6s linear; }
+  #stage { position: fixed; inset: 0; }
+  #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 8px 28px rgba(50, 30, 15, 0.14);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: background 0.6s linear, border-color 0.6s linear; }
+
+  .brand { position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px));
+    padding: 10px 16px 12px; max-width: min(360px, calc(100vw - 32px)); display: grid; gap: 4px; }
+  .brand h1 { margin: 0; font-family: var(--font-display); font-size: 26px; letter-spacing: 0.12em; line-height: 1.1; text-wrap: balance; }
+  .brand h1 small { font-size: 13px; letter-spacing: 0.08em; color: var(--muted); margin-left: 6px; font-family: var(--font-body); font-weight: 500; }
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); flex: none; }
+  .status[data-state="live"] i { background: var(--jade); box-shadow: 0 0 0 3px color-mix(in srgb, var(--jade) 25%, transparent); }
+  .status[data-state="demo"] i { background: var(--brick); }
+
+  .bar { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; max-width: 760px; padding: 10px 14px; display: grid; gap: 8px; }
+  .when { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .when b { font-family: var(--font-display); font-size: 20px; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+  .when span { color: var(--muted); font-size: 12px; }
+  .track { position: relative; }
+  .track input { width: 100%; accent-color: var(--brick); margin: 0; }
+  .ticks { position: relative; height: 14px; font-size: 11px; color: var(--muted); }
+  .ticks span { position: absolute; transform: translateX(-50%); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .ticks span::before { content: ""; display: block; width: 1px; height: 4px; background: currentColor; margin: 0 auto 1px; opacity: 0.6; }
+  .tools { display: flex; gap: 6px; flex-wrap: wrap; }
+  button { font: inherit; font-size: 13px; color: var(--ink); background: var(--chip); border: 1px solid var(--line); border-radius: 999px;
+    padding: 5px 12px; cursor: pointer; transition: background 0.2s, color 0.2s; }
+  button:hover { border-color: var(--muted); }
+  button:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .panel { position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+    width: 330px; max-height: calc(100% - 200px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow: auto;
+    padding: 14px 16px 16px; display: grid; gap: 12px; align-content: start; }
+  .panel header { display: grid; gap: 4px; }
+  .eyebrow { font-size: 11px; letter-spacing: 0.14em; color: var(--muted); }
+  .panel h2 { margin: 0; font-family: var(--font-display); font-size: 24px; letter-spacing: 0.06em; line-height: 1.2; text-wrap: balance; }
+  .panel .sub { margin: 0; color: var(--muted); line-height: 1.6; }
+  .pill { justify-self: start; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 3px 10px; border-radius: 999px;
+    background: var(--chip); border: 1px solid var(--line); }
+  .pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  .pill[data-s="today"] i { background: var(--brick); } .pill[data-s="soon"] i { background: var(--gold); }
+  .pill[data-s="done"] i { background: var(--jade); } .pill[data-s="plan"] i { background: var(--muted); }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { display: grid; gap: 2px; padding: 8px 10px; border-radius: 12px; background: var(--chip); }
+  .stat b { font-size: 22px; font-variant-numeric: tabular-nums; font-family: var(--font-display); }
+  .stat span { font-size: 11px; color: var(--muted); }
+  .bars { display: grid; gap: 6px; }
+  .bars h3, .panel h3 { margin: 0; font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: 0.08em; }
+  .barrow { display: grid; grid-template-columns: 5.5em 1fr 2.5em; align-items: center; gap: 8px; font-size: 13px; }
+  .barrow .b { height: 8px; border-radius: 4px; background: var(--chip); overflow: hidden; }
+  .barrow .b i { display: block; height: 100%; background: var(--jade); border-radius: 4px; }
+  .barrow .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .prog { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+  .prog li { display: grid; grid-template-columns: 4.8em 1fr; gap: 8px; line-height: 1.5; }
+  .prog li span { color: var(--muted); font-size: 12px; padding-top: 1px; }
+  .note { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .panel a { color: var(--jade); }
+  .close { position: absolute; top: 10px; right: 10px; padding: 2px 10px; }
+
+  #labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+  .tag { position: absolute; left: 0; top: 0; pointer-events: auto; transform: translate(-50%, -100%); white-space: nowrap;
+    font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--card); color: var(--ink); border: 1px solid var(--line);
+    box-shadow: 0 2px 8px rgba(50, 30, 15, 0.12); display: inline-flex; gap: 6px; align-items: center; cursor: pointer; will-change: transform; }
+  .tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  .tag[data-s="today"] i { background: var(--brick); } .tag[data-s="soon"] i { background: var(--gold); } .tag[data-s="done"] i { background: var(--jade); }
+  .tag.small { font-size: 11px; padding: 2px 8px; opacity: 0.92; }
+  .tag.main { font-family: var(--font-display); font-size: 15px; padding: 4px 12px; }
+
+  @media (max-width: 720px) {
+    .brand h1 { font-size: 22px; }
+    .brand h1 small { display: block; margin: 2px 0 0; }
+    .panel { top: auto; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); width: auto;
+      bottom: calc(150px + env(safe-area-inset-bottom, 0px)); max-height: 42%; }
+    .panel.collapsed-mobile { display: none; }
+    .tag.small { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { body, .card { transition: none; } }
+</style>
+<style>
+  body { margin: 0; }
+  [hidden] { display: none !important; }
+  .ver { font-size: 11px; color: var(--muted); opacity: 0.7; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+
+<div id="stage"></div>
+<div id="labels"></div>
+
+<div class="card brand">
+  <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
+  <span class="status" id="status" data-state="backup"><i></i><span id="statusText">讀取資料中…</span></span>
+  <span class="ver">v261025.01</span>
+</div>
+
+<aside class="card panel" id="panel" aria-live="polite"></aside>
+
+<div class="card bar">
+  <div class="when"><b id="dateText">2026/10/25</b><span id="dateHint"></span></div>
+  <div class="track">
+    <input id="day" type="range" min="0" max="450" value="0" aria-label="時光捲軸：選擇日期">
+    <div class="ticks" id="ticks"></div>
+  </div>
+  <div class="tools">
+    <button id="today">回到今天</button>
+    <button id="play" aria-pressed="false">▶ 播放一年</button>
+    <button id="demo" aria-pressed="false">示範：滿班 60 人</button>
+    <button id="night" aria-pressed="false">夜晚</button>
+    <button id="home">全景</button>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { HorizontalTiltShiftShader } from 'three/addons/shaders/HorizontalTiltShiftShader.js';
+import { VerticalTiltShiftShader } from 'three/addons/shaders/VerticalTiltShiftShader.js';
+
+/* =========================================================
+   資料
+   ========================================================= */
+// 2027 年度課程（取自 2027.ics）
+const COURSES = [
+  { key: 'c1', date: '2027-03-27', name: '好好玩', sub: '重新找回生活的樂趣', mark: 'carousel', prog: [['上午', '開班／幹部介紹'], ['觀點分享', '天定 鄭名翔 講師'], ['下午活動', '迎新聯誼（活動組）']] },
+  { key: 'c2', date: '2027-04-24', name: '好好賺', sub: '不一定要有錢，先學會理財', mark: 'piggy', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 楊峰誌 助理'], ['下午活動', '藝術氣球（全真 林鈺蓉 講師）']] },
+  { key: 'c3', date: '2027-05-29', name: '戶外聯誼', sub: '一起出去走走、認識新朋友', mark: 'camp', prog: [['全天', '戶外聯誼活動']] },
+  { key: 'c4', date: '2027-06-26', name: '好好愛', sub: '喜歡別人之前，先搞懂自己', mark: 'heart', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '天曉 李寶莉 講師'], ['下午活動', '生命靈數（全真 朱宸慧 講師）']] },
+  { key: 'c5', date: '2027-08-28', name: '新道親法會', sub: '志工陪伴體驗', mark: 'lotus', prog: [['全天', '新道親法會－志工陪伴體驗']] },
+  { key: 'c6', date: '2027-10-02', name: '人生重開機', sub: '人生卡關的時候，你會怎麼辦', mark: 'windmill', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 何珈貞 講師'], ['下午活動', 'V·翻轉後的人生（天曉 林信宏 講師）']] },
+  { key: 'c7', date: '2027-10-30', name: '戶外聯誼', sub: '秋天的第二次出遊', mark: 'camp2', prog: [['全天', '戶外聯誼活動']] },
+  { key: 'c8', date: '2027-11-27', name: '出去走走', sub: '世界這麼大，別只活在自己的日常', mark: 'balloon', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 何思諺 講師'], ['下午活動', '蔬食料理王（啟化 蘇毓婷 講師）']] },
+  { key: 'c9', date: '2027-12-25', name: '活成自己喜歡的樣子', sub: '人生不是交作業', mark: 'tree', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 鄔明清 講師'], ['下午活動', '結班聯誼']] },
+];
+
+// 幹部組別與人數（名單在 signup/index.html 的 CADRE_GROUPS，這裡只需要人數）
+const CADRE = [
+  { key: 'g1', group: '班務團隊', size: 3, mark: 'hall', color: '#c0503f', what: '市政廳' },
+  { key: 'g2', group: '人事組', size: 3, mark: 'post', color: '#3f8a6a', what: '郵局' },
+  { key: 'g3', group: '公關禮節組', size: 4, mark: 'arch', color: '#d9774a', what: '迎賓牌樓' },
+  { key: 'g4', group: '學術組', size: 3, mark: 'library', color: '#5b6fa8', what: '圖書館' },
+  { key: 'g5', group: '輔導組', size: 1, mark: 'lighthouse', color: '#e0a03a', what: '燈塔' },
+  { key: 'g6', group: '總務組', size: 8, mark: 'barn', color: '#8f5f3c', what: '倉庫' },
+  { key: 'g7', group: '影音組', size: 3, mark: 'tower', color: '#7a5aa6', what: '電視塔' },
+  { key: 'g8', group: '活動組', size: 5, mark: 'bigtop', color: '#d2566a', what: '大帳篷' },
+];
+
+// 報名資料備份（signup/data.json 2026/10/24 版本，只保留畫面需要的欄位，不含姓名）
+const SNAPSHOT = {
+  updated: '2026-10-25T01:06:27.952Z',
+  people: [
+    { g: '坤道', city: '桃園市', unit: '天選區', cadre: ['公關禮節組'], date: '2026-10-24' },
+    { g: '乾道', city: '桃園市', unit: '至善區', cadre: [], date: '2026-10-24' },
+    { g: '乾道', city: '新北市', unit: '天選區', cadre: ['班務團隊'], date: '2026-10-24' },
+    { g: '坤道', city: '新北市', unit: '天選區', cadre: ['班務團隊'], date: '2026-10-24' },
+  ],
+};
+const GAMES = { start: null, finish: null, share: null };
+
+// 示範資料：60 位學員＋全部幹部，報名日期分散到開班前（固定種子，每次一樣）
+function demoPeople() {
+  let s = 20270327;
+  const rnd = () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296);
+  const start = new Date('2026-10-24').getTime(), span = new Date('2027-03-20').getTime() - start;
+  const day = (r) => new Date(start + Math.pow(r, 1.6) * span).toISOString().slice(0, 10);
+  const out = [];
+  for (let i = 0; i < 60; i++) out.push({ g: rnd() < 0.55 ? '坤道' : '乾道', city: ['桃園市', '桃園市', '新北市', '臺北市'][Math.floor(rnd() * 4)],
+    unit: ['天選區', '至善區', '至善區', '其他單位'][Math.floor(rnd() * 4)], cadre: [], date: day(rnd()) });
+  CADRE.forEach((c) => { for (let i = 0; i < c.size; i++) out.push({ g: rnd() < 0.5 ? '坤道' : '乾道', city: '桃園市', unit: '天選區', cadre: [c.group], date: day(rnd() * 0.5) }); });
+  return out.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+let realPeople = SNAPSHOT.people, dataStamp = SNAPSHOT.updated, demo = false;
+const peopleNow = () => (demo ? DEMO : realPeople);
+const DEMO = demoPeople();
+
+/* =========================================================
+   場景
+   ========================================================= */
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+const MOBILE = Math.min(innerWidth, innerHeight) < 600;
+renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE ? 1.5 : 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const DAY_BG = new THREE.Color('#efe6d2'), NIGHT_BG = new THREE.Color('#1c2740');
+scene.background = DAY_BG.clone();
+scene.fog = new THREE.Fog(DAY_BG.clone(), 260, 520);
+
+const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 1, 900);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.25;
+controls.minDistance = 16;
+controls.maxDistance = 360;
+controls.maxPolarAngle = Math.PI * 0.45;
+controls.screenSpacePanning = false;
+
+const HOME = { target: new THREE.Vector3(0, 2, 6), pos: new THREE.Vector3(118, 112, 168) };
+if (innerWidth < innerHeight) HOME.pos.multiplyScalar(1.55);
+camera.position.copy(HOME.pos);
+controls.target.copy(HOME.target);
+
+const hemi = new THREE.HemisphereLight('#fff6e6', '#b9a27f', 1.6);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight('#fff1d6', 2.4);
+sun.position.set(60, 110, 50);
+sun.castShadow = true;
+sun.shadow.mapSize.set(MOBILE ? 2048 : 4096, MOBILE ? 2048 : 4096);
+Object.assign(sun.shadow.camera, { left: -110, right: 110, top: 110, bottom: -110, near: 1, far: 320 });
+sun.shadow.bias = -0.0006;
+scene.add(sun);
+
+/* ---------- 小工具 ---------- */
+const lam = (color, extra = {}) => new THREE.MeshLambertMaterial({ color, ...extra });
+function mesh(geo, mat, x = 0, y = 0, z = 0, parent = scene, shadow = true) {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x, y, z);
+  m.castShadow = shadow;
+  m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
+function canvasTex(w, h, draw, repeat = false) {
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  draw(cv.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(cv);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  if (repeat) t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+function scaleUV(geo, su, sv = 1) {
+  const uv = geo.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * su, uv.getY(i) * sv);
+  return geo;
+}
+const stripes = (a, b, n = 8) => canvasTex(128, 32, (g) => { for (let i = 0; i < n; i++) { g.fillStyle = i % 2 ? b : a; g.fillRect((i * 128) / n, 0, 128 / n + 1, 32); } });
+
+/* ---------- 色票（取自全真道院照片） ---------- */
+const C = {
+  wall: '#a9473b', wallDark: '#8e3a30', slab: '#f4efe6', railGreen: '#3f8a6a', tile: '#d9774a', tileDark: '#b65a36',
+  ridge: '#c4603a', gourd: '#9b4a2c', glass: '#3d4c55', frame: '#f4efe6', grass: '#9cc46b', soil: '#b47c50', soilDark: '#8f5f3c',
+  pave: '#ece2cc', hedge: '#6fa35a', pine: '#3f7a4a', pineLight: '#4f8f56', hill: '#6d9f52', water: '#9fd0da', concrete: '#d8d3c8',
+  globe: '#f2a93b', wood: '#c89a6a', trunk: '#7a5236',
+};
+const whiteMat = lam(C.slab), trunkMat = lam(C.trunk), hedgeMat = lam(C.hedge), hillMat = lam(C.hill), hillMat2 = lam('#7fb05e');
+const glowMats = [];   // 夜晚會發光的材質：{ mat, base, night }
+const glow = (color, base = 0.1, night = 1.4) => { const m = new THREE.MeshLambertMaterial({ color, emissive: color, emissiveIntensity: base }); glowMats.push({ mat: m, base, night }); return m; };
+
+/* ---------- 六角形小島（平邊朝前） ---------- */
+const COS30 = Math.cos(Math.PI / 6);
+const grassMat = lam(C.grass), soilMat = lam(C.soil), soilDarkMat = lam(C.soilDark);
+const islands = {};
+const hitMeshes = [];
+function makeIsland(key, R, x, z, kind) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  scene.add(g);
+  const top = mesh(new THREE.CylinderGeometry(R, R, 0.5, 6), grassMat, 0, -0.25, 0, g, false);
+  top.rotation.y = Math.PI / 6;
+  top.userData.key = key;
+  hitMeshes.push(top);
+  const s1 = mesh(new THREE.CylinderGeometry(R - 0.04, R * 0.92, R * 0.16, 6), soilMat, 0, -0.5 - R * 0.08, 0, g, false);
+  s1.rotation.y = Math.PI / 6;
+  const s2 = mesh(new THREE.CylinderGeometry(R * 0.92, R * 0.78, R * 0.1, 6), soilDarkMat, 0, -0.5 - R * 0.16 - R * 0.05, 0, g, false);
+  s2.rotation.y = Math.PI / 6;
+  islands[key] = { key, R, x, z, group: g, kind };
+  return islands[key];
+}
+// 從島中心往某個方向，走到六角形邊緣的距離
+function hexEdge(R, ang) {
+  const a = ((ang * 180) / Math.PI % 60 + 60) % 60;
+  return (R * COS30) / Math.cos(((a <= 30 ? a : 60 - a) * Math.PI) / 180);
+}
+
+const water = new THREE.Mesh(new THREE.CircleGeometry(700, 64), lam(C.water));
+water.rotation.x = -Math.PI / 2;
+water.position.y = -1.3;
+water.receiveShadow = true;
+scene.add(water);
+
+/* =========================================================
+   中央：全真道院佛堂島（地上四層：三層本體＋頂樓大殿）
+   ========================================================= */
+const nightFacades = [];
+function facade(widthU, floors, { round = false, door = false, floorH = 1 } = {}) {
+  const PX = 56, W = Math.round(widthU * PX), H = Math.round(floors * floorH * PX), wins = [];
+  for (let f = 0; f < floors; f++) {
+    const top = (floors - f - 1) * floorH * PX, step = 1.3, n = Math.max(1, Math.floor((widthU - 0.6) / step));
+    const start = (widthU - n * step) / 2 + (step - 0.9) / 2;
+    for (let i = 0; i < n; i++) {
+      const x = (start + i * step) * PX, isEdge = i === 0 || i === n - 1;
+      if (door && f === 0 && Math.abs(x / PX + 0.45 - widthU / 2) < 1.4) continue;
+      if (round && isEdge && f > 0) wins.push({ kind: 'round', cx: x + 0.45 * PX, cy: top + floorH * PX * 0.45, r: 0.28 * PX });
+      else wins.push({ kind: 'rect', x, y: top + floorH * PX * 0.2, w: 0.9 * PX, h: floorH * PX * 0.52 });
+    }
+  }
+  if (door) wins.push({ kind: 'door', x: (widthU / 2 - 1.2) * PX, y: (floors - 1) * floorH * PX + floorH * PX * 0.18, w: 2.4 * PX, h: floorH * PX * 0.82 });
+  const map = canvasTex(W, H, (g) => {
+    g.fillStyle = C.wall; g.fillRect(0, 0, W, H);
+    g.globalAlpha = 0.08;
+    for (let i = 0; i < 700; i++) { g.fillStyle = i % 2 ? '#000' : '#fff'; g.fillRect(Math.random() * W, Math.random() * H, 3, 2); }
+    g.globalAlpha = 1;
+    for (let f = 0; f < floors; f++) { g.fillStyle = C.wallDark; g.fillRect(0, (floors - f) * floorH * PX - 5, W, 5); }
+    for (const w of wins) {
+      if (w.kind === 'round') {
+        g.fillStyle = C.frame; g.beginPath(); g.arc(w.cx, w.cy, w.r + 5, 0, 7); g.fill();
+        g.fillStyle = C.glass; g.beginPath(); g.arc(w.cx, w.cy, w.r, 0, 7); g.fill();
+        g.strokeStyle = C.frame; g.lineWidth = 3; g.beginPath();
+        g.moveTo(w.cx - w.r, w.cy); g.lineTo(w.cx + w.r, w.cy); g.moveTo(w.cx, w.cy - w.r); g.lineTo(w.cx, w.cy + w.r); g.stroke();
+      } else {
+        g.fillStyle = C.frame; g.fillRect(w.x - 4, w.y - 4, w.w + 8, w.h + 8);
+        g.fillStyle = w.kind === 'door' ? '#2c2622' : C.glass; g.fillRect(w.x, w.y, w.w, w.h);
+        g.strokeStyle = C.frame; g.lineWidth = 3;
+        const cols = w.kind === 'door' ? 4 : 3;
+        for (let c = 1; c < cols; c++) { g.beginPath(); g.moveTo(w.x + (w.w * c) / cols, w.y); g.lineTo(w.x + (w.w * c) / cols, w.y + w.h); g.stroke(); }
+        g.beginPath(); g.moveTo(w.x, w.y + w.h * 0.35); g.lineTo(w.x + w.w, w.y + w.h * 0.35); g.stroke();
+      }
+    }
+  });
+  const emissiveMap = canvasTex(W, H, (g) => {
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    for (const w of wins) {
+      if (Math.random() < 0.18 && w.kind !== 'door') continue;
+      g.fillStyle = w.kind === 'door' ? '#ffd38a' : '#ffc874';
+      if (w.kind === 'round') { g.beginPath(); g.arc(w.cx, w.cy, w.r, 0, 7); g.fill(); } else g.fillRect(w.x, w.y, w.w, w.h);
+    }
+  });
+  const m = new THREE.MeshLambertMaterial({ map, emissiveMap, emissive: '#ffffff', emissiveIntensity: 0 });
+  nightFacades.push(m);
+  return m;
+}
+
+const balusterTex = canvasTex(64, 64, (g) => {
+  g.fillStyle = C.slab; g.fillRect(0, 0, 64, 64);
+  g.fillStyle = C.railGreen;
+  for (const x of [10, 38]) { g.beginPath(); g.ellipse(x + 8, 32, 8, 26, 0, 0, 7); g.fill(); }
+}, true);
+const railPanelMat = new THREE.MeshLambertMaterial({ map: balusterTex });
+function railSide(x1, z1, x2, z2, y, parent, h = 0.36) {
+  const len = Math.hypot(x2 - x1, z2 - z1), g = new THREE.Group();
+  g.position.set((x1 + x2) / 2, y, (z1 + z2) / 2);
+  g.rotation.y = -Math.atan2(z2 - z1, x2 - x1);
+  mesh(new THREE.BoxGeometry(len + 0.08, 0.07, 0.12), whiteMat, 0, h, 0, g);
+  mesh(scaleUV(new THREE.BoxGeometry(len, h - 0.07, 0.05), len / 0.55), railPanelMat, 0, (h - 0.07) / 2, 0, g);
+  parent.add(g);
+}
+function railRect(cx, cz, w, d, y, parent) {
+  const x0 = cx - w / 2, x1 = cx + w / 2, z0 = cz - d / 2, z1 = cz + d / 2;
+  railSide(x0, z0, x1, z0, y, parent); railSide(x1, z0, x1, z1, y, parent);
+  railSide(x0, z0, x0, z1, y, parent); railSide(x0, z1, x1, z1, y, parent);
+}
+
+// 曲面屋頂：簷口平緩、屋脊陡、四角起翹
+const tileTex = canvasTex(64, 64, (g) => {
+  g.fillStyle = C.tile; g.fillRect(0, 0, 64, 64);
+  g.fillStyle = C.tileDark; g.fillRect(0, 0, 10, 64);
+  g.fillStyle = 'rgba(255,255,255,0.12)'; g.fillRect(30, 0, 6, 64);
+}, true);
+const tileMat = new THREE.MeshLambertMaterial({ map: tileTex, side: THREE.DoubleSide });
+function curvedRoof(w, d, h, ridgeHalf, lift) {
+  const M = 10, R = 8, per = 4 * M, pos = [], uv = [], idx = [];
+  for (let r = 0; r <= R; r++) {
+    const t = r / R, hx = w / 2 + (ridgeHalf - w / 2) * t, hz = (d / 2) * (1 - t), y = h * Math.pow(t, 1.7);
+    const corners = [[-hx, hz], [hx, hz], [hx, -hz], [-hx, -hz]];
+    for (let k = 0; k <= per; k++) {
+      const kk = k % per, s = Math.floor(kk / M), u = (kk % M) / M, a = corners[s], b = corners[(s + 1) % 4];
+      const lt = lift * Math.pow(1 - t, 2) * Math.pow(Math.abs(2 * u - 1), 4);
+      pos.push(a[0] + (b[0] - a[0]) * u, y + lt, a[1] + (b[1] - a[1]) * u);
+      uv.push((k / per) * ((2 * (w + d)) / 0.45), t * 3);
+    }
+  }
+  const row = per + 1;
+  for (let r = 0; r < R; r++) for (let k = 0; k < per; k++) { const a = r * row + k, b = a + 1, c = a + row, e = c + 1; idx.push(a, b, c, b, e, c); }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  return geo;
+}
+const ridgeMat = lam(C.ridge), gourdMat = lam(C.gourd);
+function gourd(x, y, z, s, parent) {
+  mesh(new THREE.SphereGeometry(0.16 * s, 12, 10), gourdMat, x, y + 0.14 * s, z, parent);
+  mesh(new THREE.SphereGeometry(0.11 * s, 12, 10), gourdMat, x, y + 0.38 * s, z, parent);
+  mesh(new THREE.ConeGeometry(0.04 * s, 0.18 * s, 8), gourdMat, x, y + 0.55 * s, z, parent);
+}
+function roof(w, d, h, ridgeHalf, lift, x, y, z, parent, mat = tileMat) {
+  const g = new THREE.Group();
+  g.position.set(x, y, z);
+  mesh(curvedRoof(w, d, h, ridgeHalf, lift), mat, 0, 0, 0, g);
+  for (const [sx, sz] of [[-1, 1], [1, 1], [1, -1], [-1, -1]]) {
+    const tip = mesh(new THREE.ConeGeometry(0.06, 0.45, 6), ridgeMat, (sx * w) / 2 * 1.01, lift + 0.12, (sz * d) / 2 * 1.01, g);
+    tip.rotation.set(sz * 0.7, 0, -sx * 0.7);
+  }
+  if (ridgeHalf > 0) {
+    mesh(new THREE.BoxGeometry(ridgeHalf * 2 + 0.3, 0.18, 0.18), ridgeMat, 0, h + 0.05, 0, g);
+    for (const sx of [-1, 1]) {
+      const curl = mesh(new THREE.TorusGeometry(0.24, 0.07, 6, 12, Math.PI * 1.3), ridgeMat, sx * (ridgeHalf + 0.1), h + 0.32, 0, g);
+      curl.rotation.y = sx > 0 ? Math.PI : 0;
+    }
+    gourd(0, h + 0.12, 0, 1.6, g);
+  } else gourd(0, h - 0.05, 0, 1, g);
+  parent.add(g);
+  return g;
+}
+
+function pine(x, z, h, parent) {
+  mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.5, 6), trunkMat, x, 0.25, z, parent);
+  for (let i = 0; i < 3; i++) {
+    const r = 0.75 - i * 0.18, hh = h * 0.45;
+    mesh(new THREE.ConeGeometry(r, hh, 8), lam(i % 2 ? C.pineLight : C.pine), x, 0.4 + i * h * 0.24 + hh / 2, z, parent);
+  }
+}
+function bush(x, z, s, parent, mat = hillMat2) {
+  mesh(new THREE.CylinderGeometry(0.1, 0.14, 0.8 * s, 6), trunkMat, x, 0.4 * s, z, parent);
+  mesh(new THREE.IcosahedronGeometry(0.8 * s, 1), mat, x, 0.8 * s + 0.6 * s, z, parent);
+}
+
+const TEMPLE = makeIsland('temple', 16, 0, 0, 'temple');
+const FRONT_Z = 16 * COS30;
+const plaza = { x0: -7.5, x1: 7.5, z0: 4.6, z1: FRONT_Z - 1.6 };
+const lampLights = [];
+(function buildTemple() {
+  const T = TEMPLE.group;
+  const paveMat = lam(C.pave);
+  mesh(new THREE.BoxGeometry(17, 0.06, 5), paveMat, 0, 0.03, 5.6, T, false);
+  mesh(new THREE.BoxGeometry(6, 0.06, FRONT_Z - 8), paveMat, 0, 0.03, (FRONT_Z + 8) / 2, T, false);
+
+  const BW = 14, BD = 7, BZ = -1, FLOORS = 3, FH = 1.35, TOP = FLOORS * FH;
+  const frontMat = facade(BW, FLOORS, { round: true, door: true, floorH: FH });
+  const backMat = facade(BW, FLOORS, { floorH: FH }), sideMat = facade(BD, FLOORS, { floorH: FH });
+  mesh(new THREE.BoxGeometry(BW, TOP, BD), [sideMat, sideMat, whiteMat, lam(C.wall), frontMat, backMat], 0, TOP / 2, BZ, T);
+  for (let f = 1; f <= FLOORS; f++) {
+    const out = f === FLOORS ? 0.5 : 0.7, w = BW + out * 2, d = BD + out * 2;
+    mesh(new THREE.BoxGeometry(w, 0.14, d), whiteMat, 0, f * FH - 0.07, BZ, T);
+    railRect(0, BZ, w - 0.1, d - 0.1, f * FH, T);
+  }
+  // 第四層：頂樓大殿（一整層樓高）＋歇山屋頂
+  const HW = 8.4, HD = 4.4, HH = FH, HZ = BZ - 0.3;
+  const hallMat = facade(HW, 1, { floorH: HH }), hallSide = facade(HD, 1, { floorH: HH });
+  mesh(new THREE.BoxGeometry(HW, HH, HD), [hallSide, hallSide, lam(C.wall), lam(C.wall), hallMat, hallMat], 0, TOP + HH / 2, HZ, T);
+  roof(HW + 1.4, HD + 1.4, 1.7, 2.7, 0.35, 0, TOP + HH, HZ, T);
+  for (const sx of [-1, 1]) {
+    const px = sx * (BW / 2 - 1.1), pz = BZ + BD / 2 - 1.0;
+    for (const [ox, oz] of [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]])
+      mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.0, 8), lam(C.wall), px + ox, TOP + 0.5, pz + oz, T);
+    roof(1.7, 1.7, 0.95, 0, 0.2, px, TOP + 1.0, pz, T);
+  }
+  mesh(new THREE.BoxGeometry(1.4, 1.7, 1.4), whiteMat, BW / 2 - 1.6, TOP + 0.85, BZ - BD / 2 + 1.0, T);
+  const stairZ = BZ + BD / 2 + 0.9;
+  mesh(new THREE.BoxGeometry(3.2, 0.6, 1.1), whiteMat, 0, 0.3, stairZ, T);
+  for (const sx of [-1, 1]) for (let i = 0; i < 4; i++)
+    mesh(new THREE.BoxGeometry(0.5, 0.15 * (i + 1), 1.1), whiteMat, sx * (1.85 + (3 - i) * 0.5), 0.075 * (i + 1), stairZ, T);
+  railSide(-1.6, stairZ + 0.55, 1.6, stairZ + 0.55, 0.6, T);
+
+  const treeZ = BZ + BD / 2 + 1.5;
+  [-6.6, -5.1, -3.6, 3.6, 5.1, 6.6].forEach((x, i) => pine(x, treeZ + (i % 2) * 0.3, 2.8 + ((i * 7) % 3) * 0.35, T));
+  [-7.8, 7.8].forEach((x) => pine(x, treeZ - 1.6, 3.2, T));
+  for (const sx of [-1, 1]) {
+    mesh(new THREE.BoxGeometry(5.5, 0.5, 0.7), hedgeMat, sx * 5.6, 0.25, 8.4, T);
+    mesh(new THREE.BoxGeometry(0.7, 0.5, 4.2), hedgeMat, sx * 8.4, 0.25, 10.6, T);
+  }
+  const globeMat = glow(C.globe, 0.15, 1.8);
+  for (const x of [-3.6, 3.6]) {
+    mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.8, 8), lam('#55585c'), x, 0.9, 7.6, T);
+    mesh(new THREE.SphereGeometry(0.18, 12, 10), globeMat, x, 1.9, 7.6, T);
+    const l = new THREE.PointLight('#ffbf6b', 0, 8, 1.6);
+    l.position.set(x, 1.9, 7.6);
+    T.add(l);
+    lampLights.push(l);
+  }
+  // 大門：紅柱＋橘色燈球，左側直書「全真道院」
+  const pillarMat = lam(C.wall);
+  const sign = canvasTex(64, 256, (g) => {
+    g.fillStyle = C.wall; g.fillRect(0, 0, 64, 256);
+    g.fillStyle = '#e6c46b'; g.font = 'bold 44px "Noto Serif TC", "PingFang TC", serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    [...'全真道院'].forEach((ch, i) => g.fillText(ch, 32, 34 + i * 50));
+  });
+  const gateZ = FRONT_Z - 1.0;
+  [[-2.9, 2.1, true], [2.9, 2.1, false], [-4.6, 1.4, false], [4.6, 1.4, false]].forEach(([x, h, text]) => {
+    const mats = Array(6).fill(pillarMat);
+    if (text) mats[4] = new THREE.MeshLambertMaterial({ map: sign });
+    mesh(new THREE.BoxGeometry(0.55, h, 0.55), mats, x, h / 2, gateZ, T);
+    mesh(new THREE.BoxGeometry(0.66, 0.1, 0.66), pillarMat, x, h + 0.05, gateZ, T);
+    mesh(new THREE.SphereGeometry(h > 1.5 ? 0.32 : 0.22, 16, 12), globeMat, x, h + 0.1 + (h > 1.5 ? 0.3 : 0.2), gateZ, T);
+  });
+  const fenceMat = lam('#9aa0a6');
+  for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(1.3, 0.7, 0.06), fenceMat, sx * 3.75, 0.35, gateZ, T);
+  [[8.5, -7.5, 3.6, 2.4, 3], [3.5, -10, 3, 1.6, 2.2], [11, -2.5, 2.4, 1.5, 2.4], [-9, -8, 2.6, 1.3, 2.2]].forEach(([x, z, sx, sy, sz], i) => {
+    const h = mesh(new THREE.SphereGeometry(1, 20, 14, 0, Math.PI * 2, 0, Math.PI / 2), i % 2 ? hillMat2 : hillMat, x, 0, z, T);
+    h.scale.set(sx, sy, sz);
+  });
+  bush(-11, 2, 1.1, T); bush(-12, 5, 0.9, T); bush(11, 4, 1, T); bush(12, 7, 0.8, T); bush(-6, -12, 1, T);
+})();
+
+/* =========================================================
+   小人偶
+   ========================================================= */
+const skinMat = lam('#f3d2b3'), qianMat = lam('#3d5a80'), kunMat = lam('#e07a5f'), capMat = lam('#e8b53a');
+const ghostPersonMat = new THREE.MeshLambertMaterial({ color: '#ffffff', transparent: true, opacity: 0.35 });
+const bodyGeo = new THREE.CylinderGeometry(0.16, 0.22, 0.5, 10), headGeo = new THREE.SphereGeometry(0.17, 12, 10), capGeo = new THREE.ConeGeometry(0.15, 0.16, 10);
+function figure(mat, cap = false) {
+  const p = new THREE.Group();
+  mesh(bodyGeo, mat, 0, 0.25, 0, p);
+  mesh(headGeo, mat === ghostPersonMat ? mat : skinMat, 0, 0.65, 0, p);
+  if (cap) mesh(capGeo, capMat, 0, 0.86, 0, p);
+  p.userData = { phase: Math.random() * 6, speed: 0.6 + Math.random() * 0.6 };
+  return p;
+}
+const walkers = [];
+function placeWalker(p, parent, x, z, roam = 0.6) {
+  p.position.set(x, 0, z);
+  p.userData.home = new THREE.Vector3(x, 0, z);
+  p.userData.roam = roam;
+  p.scale.setScalar(0.001);
+  parent.add(p);
+  walkers.push(p);
+}
+function clearWalkers(list) {
+  for (const p of list) { p.parent && p.parent.remove(p); const i = walkers.indexOf(p); if (i >= 0) walkers.splice(i, 1); }
+  list.length = 0;
+}
+
+// 佛堂廣場上的報名者（乾道藍、坤道橘，幹部戴金色小帽）
+const plazaPeople = [];
+let plazaSig = '';
+function syncPlaza(list) {
+  const sig = list.length + '|' + demo;
+  if (sig === plazaSig) return;
+  plazaSig = sig;
+  clearWalkers(plazaPeople);
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  list.forEach((d) => {
+    const p = figure(d.g === '坤道' ? kunMat : qianMat, d.cadre.length > 0);
+    let x, z;
+    do { x = plaza.x0 + rnd() * (plaza.x1 - plaza.x0); z = plaza.z0 + rnd() * (plaza.z1 - plaza.z0); }
+    while (Math.abs(x) > 2.4 && z > 7.9 && z < 8.9);
+    placeWalker(p, TEMPLE.group, x, z);
+    plazaPeople.push(p);
+  });
+}
+
+/* =========================================================
+   課程島的地標
+   ========================================================= */
+const ghostMat = new THREE.MeshLambertMaterial({ color: '#ffffff', transparent: true, opacity: 0.38, depthWrite: false });
+const animators = [];
+function carousel(g) {
+  const spin = new THREE.Group(); g.add(spin);
+  mesh(new THREE.CylinderGeometry(2.2, 2.3, 0.3, 24), whiteMat, 0, 0.15, 0, g);
+  mesh(new THREE.CylinderGeometry(0.18, 0.18, 2.6, 10), lam('#e8b53a'), 0, 1.6, 0, spin);
+  const roofT = stripes('#c0503f', '#f4efe6', 12);
+  mesh(new THREE.ConeGeometry(2.6, 1.3, 24), new THREE.MeshLambertMaterial({ map: roofT }), 0, 3.4, 0, spin);
+  mesh(new THREE.SphereGeometry(0.2, 10, 8), lam('#e8b53a'), 0, 4.1, 0, spin);
+  const horses = ['#f4efe6', '#e8b53a', '#9cc4e4', '#f2a0a0', '#b8d89a', '#f4efe6'];
+  horses.forEach((c, i) => {
+    const a = (i / horses.length) * Math.PI * 2, x = Math.sin(a) * 1.6, z = Math.cos(a) * 1.6;
+    mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.5, 6), lam('#e8b53a'), x, 1.6, z, spin);
+    const h = mesh(new THREE.BoxGeometry(0.7, 0.4, 0.25), lam(c), x, 1.2, z, spin);
+    h.rotation.y = -a; h.userData.bob = i;
+  });
+  animators.push((t) => { spin.rotation.y = t * 0.6; spin.children.forEach((m) => { if (m.userData.bob != null) m.position.y = 1.2 + Math.sin(t * 2 + m.userData.bob) * 0.18; }); });
+}
+function piggy(g) {
+  const pink = lam('#f2a7b0');
+  const body = mesh(new THREE.SphereGeometry(1, 20, 16), pink, 0, 1.4, 0, g); body.scale.set(1.5, 1.15, 1.15);
+  const snout = mesh(new THREE.CylinderGeometry(0.38, 0.4, 0.3, 16), lam('#ec8f9c'), 1.55, 1.4, 0, g); snout.rotation.z = Math.PI / 2;
+  for (const z of [-0.45, 0.45]) { const e = mesh(new THREE.ConeGeometry(0.22, 0.4, 8), pink, 0.8, 2.4, z, g); e.rotation.z = -0.4; }
+  for (const [x, z] of [[-0.7, -0.5], [-0.7, 0.5], [0.7, -0.5], [0.7, 0.5]]) mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.5, 10), pink, x, 0.25, z, g);
+  mesh(new THREE.BoxGeometry(0.6, 0.06, 0.12), lam('#5a3b30'), 0, 2.55, 0, g);
+  const gold = lam('#e8b53a'), coinGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.1, 18);
+  [[-2.6, 1.6, 7], [-2.2, -1.8, 4], [2.6, -1.5, 5], [2.3, 1.9, 3]].forEach(([x, z, n]) => { for (let i = 0; i < n; i++) mesh(coinGeo, gold, x + (i % 2) * 0.03, 0.05 + i * 0.11, z, g); });
+  const fly = mesh(coinGeo, gold, 0, 3.4, 0, g); fly.rotation.x = Math.PI / 2;
+  animators.push((t) => { fly.position.y = 3.2 + Math.abs(Math.sin(t * 1.4)) * 0.8; fly.rotation.z = t * 3; });
+}
+function camp(g, tones) {
+  [[-1.6, -0.6, 0], [1.4, -1.2, 1], [0.2, 1.6, 2]].forEach(([x, z, i]) => {
+    const tent = mesh(new THREE.ConeGeometry(1.2, 1.6, 4), lam(tones[i]), x, 0.8, z, g); tent.rotation.y = Math.PI / 4 + i * 0.4;
+    mesh(new THREE.BoxGeometry(0.05, 0.9, 0.42), lam('#3a2a22'), x + Math.sin(Math.PI / 4 + i * 0.4) * 0.6, 0.45, z + Math.cos(Math.PI / 4 + i * 0.4) * 0.6, g);
+  });
+  for (let i = 0; i < 3; i++) { const log = mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.9, 6), trunkMat, 0.6, 0.1, 0.1, g); log.rotation.set(Math.PI / 2, 0, (i * Math.PI) / 3); }
+  const flame = mesh(new THREE.ConeGeometry(0.28, 0.7, 8), glow('#f39a3a', 0.6, 2), 0.6, 0.45, 0.1, g, false);
+  animators.push((t) => { flame.scale.set(1, 0.8 + Math.sin(t * 9) * 0.15 + Math.sin(t * 13) * 0.1, 1); });
+}
+function heart(g) {
+  const s = new THREE.Shape();
+  s.moveTo(0, -1); s.bezierCurveTo(-1.6, 0.1, -0.9, 1.3, 0, 0.6); s.bezierCurveTo(0.9, 1.3, 1.6, 0.1, 0, -1);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: 0.4, bevelEnabled: true, bevelThickness: 0.12, bevelSize: 0.12, bevelSegments: 3, curveSegments: 16 });
+  geo.center();
+  mesh(new THREE.CylinderGeometry(0.9, 1.1, 0.6, 16), whiteMat, 0, 0.3, 0, g);
+  const h = mesh(geo, glow('#e2626b', 0.05, 0.7), 0, 2.2, 0, g); h.scale.setScalar(1.3);
+  [[-2.2, 1.4], [2.1, 1.6], [-1.8, -1.9], [2.3, -1.4], [0, 2.6]].forEach(([x, z], i) => {
+    mesh(new THREE.IcosahedronGeometry(0.45, 1), hedgeMat, x, 0.4, z, g);
+    mesh(new THREE.SphereGeometry(0.13, 8, 6), lam(i % 2 ? '#e2626b' : '#f2a7b0'), x + 0.2, 0.75, z + 0.15, g);
+  });
+  animators.push((t) => { h.rotation.y = t * 0.8; h.position.y = 2.2 + Math.sin(t * 1.5) * 0.12; });
+}
+function lotus(g) {
+  mesh(new THREE.CylinderGeometry(2.6, 2.6, 0.12, 32), lam('#7fc0cf'), 0, 0.06, 0, g, false);
+  mesh(new THREE.TorusGeometry(2.6, 0.18, 8, 40), whiteMat, 0, 0.12, 0, g).rotation.x = Math.PI / 2;
+  [[-1.4, 1], [1.5, -0.8], [0.9, 1.6], [-1.2, -1.4]].forEach(([x, z]) => mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.04, 14), lam('#6fa35a'), x, 0.15, z, g, false));
+  const flower = new THREE.Group(); flower.position.y = 0.3; g.add(flower);
+  const petal = glow('#f6b6c4', 0.05, 0.9), petalIn = glow('#fbd3dc', 0.05, 0.9);
+  [[8, 1.0, 0.35, petal], [6, 0.6, 0.85, petalIn]].forEach(([n, r, tilt, mat]) => {
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2, p = mesh(new THREE.SphereGeometry(0.5, 12, 8), mat, Math.sin(a) * r * 0.6, 0.45, Math.cos(a) * r * 0.6, flower);
+      p.scale.set(0.45, 1, 0.22); p.rotation.set(Math.cos(a) * tilt, 0, -Math.sin(a) * tilt); p.rotation.order = 'YXZ'; p.rotation.y = a;
+    }
+  });
+  mesh(new THREE.CylinderGeometry(0.3, 0.25, 0.3, 14), lam('#e8c25a'), 0, 0.55, 0, flower);
+  animators.push((t) => { flower.rotation.y = t * 0.3; });
+}
+function windmill(g) {
+  mesh(new THREE.CylinderGeometry(0.7, 1.1, 3.6, 12), whiteMat, 0, 1.8, 0, g);
+  mesh(new THREE.ConeGeometry(0.95, 1, 12), lam(C.tile), 0, 4.1, 0, g);
+  mesh(new THREE.BoxGeometry(0.4, 0.7, 0.05), lam('#5a3b30'), 0, 0.35, 1.08, g);
+  const hub = new THREE.Group(); hub.position.set(0, 3.4, 0.95); g.add(hub);
+  for (let i = 0; i < 4; i++) {
+    const arm = new THREE.Group(); arm.rotation.z = (i * Math.PI) / 2; hub.add(arm);
+    mesh(new THREE.BoxGeometry(0.12, 2.3, 0.06), lam(C.wood), 0, 1.15, 0, arm);
+    mesh(new THREE.BoxGeometry(0.55, 1.6, 0.03), lam('#f4efe6'), 0.32, 1.4, 0, arm);
+  }
+  mesh(new THREE.SphereGeometry(0.18, 10, 8), lam('#c0503f'), 0, 0, 0.05, hub);
+  animators.push((t) => { hub.rotation.z = -t * 1.2; });
+}
+function balloon(g) {
+  const b = new THREE.Group(); g.add(b);
+  const env = mesh(new THREE.SphereGeometry(1.4, 24, 18), new THREE.MeshLambertMaterial({ map: stripes('#e2763b', '#f4d35e', 10) }), 0, 0, 0, b); env.scale.set(1, 1.2, 1);
+  mesh(new THREE.ConeGeometry(0.7, 0.9, 24, 1, true), new THREE.MeshLambertMaterial({ map: stripes('#e2763b', '#f4d35e', 10), side: THREE.DoubleSide }), 0, -1.75, 0, b).rotation.x = Math.PI;
+  mesh(new THREE.BoxGeometry(0.6, 0.45, 0.6), lam(C.wood), 0, -2.7, 0, b);
+  for (const [x, z] of [[-0.25, -0.25], [0.25, -0.25], [0.25, 0.25], [-0.25, 0.25]]) mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.7, 4), lam('#5a3b30'), x, -2.25, z, b, false);
+  mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.05, 20), lam('#c9c3b6'), 0, 0.03, 0, g, false);
+  // 地上的小地球儀：世界這麼大
+  mesh(new THREE.SphereGeometry(0.5, 16, 12), lam('#5b8fc9'), 2.2, 1.0, 1.4, g);
+  mesh(new THREE.CylinderGeometry(0.06, 0.25, 0.5, 8), lam(C.wood), 2.2, 0.25, 1.4, g);
+  animators.push((t) => { b.position.set(Math.sin(t * 0.3) * 0.6, 4.6 + Math.sin(t * 0.8) * 0.4, Math.cos(t * 0.3) * 0.6); });
+}
+function wishTree(g) {
+  mesh(new THREE.CylinderGeometry(0.35, 0.55, 2.2, 10), trunkMat, 0, 1.1, 0, g);
+  [[0, 3.0, 0, 1.7], [-1.1, 2.5, 0.4, 1.1], [1.1, 2.6, -0.3, 1.2], [0.3, 2.4, 1.1, 1.0], [-0.2, 2.6, -1.1, 1.0]].forEach(([x, y, z, r], i) =>
+    mesh(new THREE.IcosahedronGeometry(r, 1), i % 2 ? hillMat2 : hillMat, x, y, z, g));
+  const lantern = glow('#e2563b', 0.2, 1.8);
+  for (let i = 0; i < 9; i++) {
+    const a = i * 2.4, r = 1.3 + (i % 3) * 0.3;
+    mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.35, 4), lam('#5a3b30'), Math.sin(a) * r, 2.0 - (i % 2) * 0.2 + 0.18, Math.cos(a) * r, g, false);
+    mesh(new THREE.SphereGeometry(0.15, 10, 8), lantern, Math.sin(a) * r, 2.0 - (i % 2) * 0.2, Math.cos(a) * r, g);
+  }
+  const seat = mesh(new THREE.BoxGeometry(0.8, 0.06, 0.3), lam(C.wood), 1.6, 0.7, 1.2, g);
+  animators.push((t) => { seat.position.z = 1.2 + Math.sin(t * 1.6) * 0.25; });
+}
+const MARKS = {
+  carousel, piggy, heart, lotus, windmill, balloon, tree: wishTree,
+  camp: (g) => camp(g, ['#e2763b', '#4f8f56', '#f4d35e']),
+  camp2: (g) => camp(g, ['#5b6fa8', '#c0503f', '#e8b53a']),
+};
+
+/* ---------- 課程島：內圈依日期順時針排列 ---------- */
+const RING1 = 46, R_COURSE = 8;
+const scaffoldMat = lam('#c9a77a');
+COURSES.forEach((c, i) => {
+  const ang = (i * 40 * Math.PI) / 180;
+  const isl = makeIsland(c.key, R_COURSE, Math.sin(ang) * RING1, Math.cos(ang) * RING1, 'course');
+  isl.course = c;
+  isl.ang = ang;
+  const g = isl.group;
+  // 地標面向群島中心
+  const mark = new THREE.Group(); mark.rotation.y = ang + Math.PI; g.add(mark);
+  MARKS[c.mark](mark);
+  isl.mark = mark;
+  // 小步道與樹
+  mesh(new THREE.BoxGeometry(1.4, 0.05, R_COURSE * 0.8), lam(C.pave), 0, 0.03, 0, g, false).rotation.y = ang;
+  for (let k = 0; k < 4; k++) { const a = ang + 1.0 + k * 1.3, r = R_COURSE * 0.68; bush(Math.sin(a) * r, Math.cos(a) * r, 0.7 + (k % 2) * 0.2, g); }
+  // 籌備中：鷹架
+  const scaf = new THREE.Group(); g.add(scaf);
+  for (const [x, z] of [[-2.6, -2.6], [2.6, -2.6], [2.6, 2.6], [-2.6, 2.6]]) mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.4, 6), scaffoldMat, x, 1.7, z, scaf);
+  for (const y of [1.2, 2.6]) for (const [x, z, ry] of [[0, -2.6, 0], [0, 2.6, 0], [-2.6, 0, Math.PI / 2], [2.6, 0, Math.PI / 2]]) mesh(new THREE.BoxGeometry(5.2, 0.08, 0.08), scaffoldMat, x, y, z, scaf).rotation.y = ry;
+  isl.scaffold = scaf;
+  // 完成後：開花
+  const flowers = new THREE.Group(); g.add(flowers);
+  const petals = ['#f2a7b0', '#f4d35e', '#ffffff', '#c9a2e0'];
+  for (let k = 0; k < 26; k++) {
+    const a = k * 2.39996, r = 3.4 + (k % 5) * 0.6;
+    mesh(new THREE.SphereGeometry(0.14, 8, 6), lam(petals[k % 4]), Math.sin(a) * r, 0.14, Math.cos(a) * r, flowers, false);
+  }
+  isl.flowers = flowers;
+  // 上課當天：人潮
+  isl.crowd = [];
+  // 記住地標原本的材質，籌備中時換成半透明
+  mark.traverse((m) => { if (m.isMesh) m.userData.mat = m.material; });
+});
+
+/* ---------- 木橋：佛堂 → 第一堂課，之後依序串起一年 ---------- */
+const woodMat = lam(C.wood);
+function bridge(a, b) {
+  const dx = b.x - a.x, dz = b.z - a.z, ang = Math.atan2(dx, dz);
+  const da = hexEdge(a.R, ang) - 0.3, db = hexEdge(b.R, ang + Math.PI) - 0.3;
+  const sx = a.x + Math.sin(ang) * da, sz = a.z + Math.cos(ang) * da, ex = b.x - Math.sin(ang) * db, ez = b.z - Math.cos(ang) * db;
+  const len = Math.hypot(ex - sx, ez - sz), g = new THREE.Group();
+  g.position.set((sx + ex) / 2, 0, (sz + ez) / 2);
+  g.rotation.y = ang;
+  scene.add(g);
+  const N = 10;
+  for (let i = 0; i < N; i++) {
+    const t0 = i / N, t1 = (i + 1) / N, y0 = Math.sin(t0 * Math.PI) * 1.2, y1 = Math.sin(t1 * Math.PI) * 1.2;
+    const seg = mesh(new THREE.BoxGeometry(2.2, 0.16, len / N + 0.05), woodMat, 0, (y0 + y1) / 2, (t0 + t1) / 2 * len - len / 2, g);
+    seg.rotation.x = -Math.atan2(y1 - y0, len / N);
+    if (i % 2 === 0) for (const s of [-1, 1]) mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.6, 6), trunkMat, s * 1.05, y0 + 0.3, t0 * len - len / 2, g);
+  }
+  for (const s of [-1, 1]) for (let i = 0; i < N; i++) {
+    const t0 = i / N, t1 = (i + 1) / N, y0 = Math.sin(t0 * Math.PI) * 1.2 + 0.6, y1 = Math.sin(t1 * Math.PI) * 1.2 + 0.6;
+    const r = mesh(new THREE.BoxGeometry(0.06, 0.06, len / N + 0.05), trunkMat, s * 1.05, (y0 + y1) / 2, (t0 + t1) / 2 * len - len / 2, g, false);
+    r.rotation.x = -Math.atan2(y1 - y0, len / N);
+  }
+}
+bridge(TEMPLE, islands.c1);
+for (let i = 0; i < COURSES.length - 1; i++) bridge(islands[COURSES[i].key], islands[COURSES[i + 1].key]);
+
+/* =========================================================
+   外圈：幹部島＋遊戲樂園島
+   ========================================================= */
+function cadreBuilding(kind, g, color) {
+  const col = lam(color), cream = lam('#f4ead6'), dark = lam('#4a3a32');
+  if (kind === 'hall') {
+    mesh(new THREE.BoxGeometry(3.4, 1.8, 2.2), cream, 0, 0.9, 0, g);
+    for (let i = 0; i < 4; i++) mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.6, 8), whiteMat, -1.2 + i * 0.8, 0.8, 1.25, g);
+    mesh(new THREE.BoxGeometry(3.6, 0.2, 2.6), col, 0, 1.9, 0.1, g);
+    mesh(new THREE.BoxGeometry(1, 1.4, 1), cream, 0, 2.7, 0, g);
+    mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.05, 20), whiteMat, 0, 2.8, 0.52, g).rotation.x = Math.PI / 2;
+    mesh(new THREE.ConeGeometry(0.85, 0.9, 4), col, 0, 3.85, 0, g).rotation.y = Math.PI / 4;
+  } else if (kind === 'post') {
+    mesh(new THREE.BoxGeometry(3, 1.5, 2.2), lam('#3f8a6a'), 0, 0.75, 0, g);
+    mesh(new THREE.BoxGeometry(3.3, 0.2, 2.5), cream, 0, 1.6, 0, g);
+    mesh(new THREE.BoxGeometry(0.9, 1, 0.05), dark, 0, 0.5, 1.12, g);
+    for (const [x, c] of [[1.9, '#c0503f'], [2.4, '#3f8a6a']]) { mesh(new THREE.BoxGeometry(0.4, 0.8, 0.4), lam(c), x, 0.4, 1.3, g); mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 12, 1, false, 0, Math.PI), lam(c), x, 0.8, 1.3, g).rotation.z = Math.PI / 2; }
+  } else if (kind === 'arch') {
+    const red = lam('#c0503f');
+    for (const x of [-1.5, 1.5]) mesh(new THREE.CylinderGeometry(0.18, 0.2, 2.6, 10), red, x, 1.3, 0, g);
+    mesh(new THREE.BoxGeometry(3.6, 0.3, 0.4), red, 0, 2.4, 0, g);
+    mesh(new THREE.BoxGeometry(1.4, 0.5, 0.08), lam('#e8b53a'), 0, 2.05, 0.2, g);
+    roof(4.4, 1.2, 0.8, 1.4, 0.2, 0, 2.55, 0, g);
+    mesh(new THREE.BoxGeometry(1.4, 0.03, 4.4), lam('#c0503f'), 0, 0.02, 1.4, g, false);
+  } else if (kind === 'library') {
+    mesh(new THREE.BoxGeometry(3.4, 0.3, 2.6), whiteMat, 0, 0.15, 0, g);
+    mesh(new THREE.BoxGeometry(3, 1.7, 1.8), lam('#e9dcc4'), 0, 1.15, -0.2, g);
+    for (let i = 0; i < 5; i++) mesh(new THREE.CylinderGeometry(0.13, 0.13, 1.7, 10), whiteMat, -1.2 + i * 0.6, 1.15, 1.0, g);
+    mesh(new THREE.BoxGeometry(3.2, 0.2, 2.5), whiteMat, 0, 2.1, 0.1, g);
+    const ped = mesh(new THREE.CylinderGeometry(0.9, 0.9, 3.2, 3), col, 0, 2.5, 0.1, g); ped.rotation.set(0, 0, Math.PI / 2); ped.scale.set(0.6, 1, 1.4);
+    ['#c0503f', '#3f8a6a', '#e8b53a', '#5b6fa8'].forEach((c, i) => mesh(new THREE.BoxGeometry(0.22, 0.6, 0.45), lam(c), 2.2 + i * 0.25, 0.3, 1.2, g));
+  } else if (kind === 'lighthouse') {
+    const tex = canvasTex(32, 128, (c) => { for (let i = 0; i < 6; i++) { c.fillStyle = i % 2 ? '#f4efe6' : '#c0503f'; c.fillRect(0, i * 22, 32, 22); } });
+    mesh(new THREE.CylinderGeometry(0.55, 0.9, 3.6, 16), new THREE.MeshLambertMaterial({ map: tex }), 0, 1.8, 0, g);
+    mesh(new THREE.CylinderGeometry(0.75, 0.75, 0.12, 16), dark, 0, 3.65, 0, g);
+    mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.6, 12), glow('#ffe39a', 0.3, 2.2), 0, 4.0, 0, g);
+    mesh(new THREE.ConeGeometry(0.6, 0.6, 12), lam('#c0503f'), 0, 4.6, 0, g);
+    const beam = new THREE.Mesh(new THREE.ConeGeometry(0.9, 6, 16, 1, true), new THREE.MeshBasicMaterial({ color: '#fff3c4', transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }));
+    beam.rotation.z = Math.PI / 2; beam.position.set(3, 0, 0);
+    const pivot = new THREE.Group(); pivot.position.y = 4.0; pivot.add(beam); g.add(pivot);
+    animators.push((t) => { pivot.rotation.y = t * 0.9; beam.material.opacity = nightT * 0.35; });
+  } else if (kind === 'barn') {
+    mesh(new THREE.BoxGeometry(3, 1.6, 2.2), lam('#a9473b'), 0, 0.8, 0, g);
+    const r = mesh(new THREE.CylinderGeometry(1.3, 1.3, 3.2, 3), cream, 0, 1.6 + 0.62, 0, g); r.rotation.set(0, 0, Math.PI / 2); r.scale.set(0.95, 1, 1.25);
+    mesh(new THREE.BoxGeometry(1, 1.1, 0.05), cream, 0, 0.55, 1.12, g);
+    [[1.9, 0.9], [2.3, 0.3], [1.95, 0.3, 1]].forEach(([x, z, up]) => mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), lam(C.wood), x, up ? 0.75 : 0.25, z, g));
+  } else if (kind === 'tower') {
+    mesh(new THREE.CylinderGeometry(0.22, 0.4, 4.4, 10), cream, 0, 2.2, 0, g);
+    mesh(new THREE.SphereGeometry(0.6, 16, 12), col, 0, 3.4, 0, g);
+    mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.3, 6), dark, 0, 4.9, 0, g);
+    mesh(new THREE.SphereGeometry(0.09, 8, 6), glow('#ff6a5a', 0.4, 2.4), 0, 5.6, 0, g);
+    const dish = mesh(new THREE.SphereGeometry(0.5, 14, 8, 0, Math.PI * 2, 0, Math.PI / 3), whiteMat, 1.3, 0.6, 0.8, g); dish.rotation.x = -0.9;
+  } else if (kind === 'bigtop') {
+    mesh(new THREE.CylinderGeometry(1.9, 1.9, 1.1, 20), new THREE.MeshLambertMaterial({ map: stripes('#d2566a', '#f4efe6', 16) }), 0, 0.55, 0, g);
+    mesh(new THREE.ConeGeometry(2.1, 1.7, 20), new THREE.MeshLambertMaterial({ map: stripes('#d2566a', '#f4efe6', 16) }), 0, 1.95, 0, g);
+    mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.7, 6), dark, 0, 3.1, 0, g);
+    const flag = mesh(new THREE.BoxGeometry(0.5, 0.3, 0.02), lam('#e8b53a'), 0.25, 3.3, 0, g);
+    animators.push((t) => { flag.rotation.y = Math.sin(t * 4) * 0.4; });
+  } else if (kind === 'ferris') {
+    const frame = lam('#f4efe6');
+    for (const z of [-0.5, 0.5]) for (const s of [-1, 1]) { const leg = mesh(new THREE.BoxGeometry(0.14, 3.4, 0.14), frame, s * 0.9, 1.6, z, g); leg.rotation.z = s * 0.28; }
+    const wheel = new THREE.Group(); wheel.position.y = 3.2; g.add(wheel);
+    for (const z of [-0.45, 0.45]) mesh(new THREE.TorusGeometry(2.4, 0.06, 6, 40), frame, 0, 0, z, wheel);
+    const cabins = [];
+    const cols = ['#c0503f', '#e8b53a', '#3f8a6a', '#5b6fa8', '#d2566a', '#e2763b', '#7a5aa6', '#9cc46b'];
+    cols.forEach((c, i) => {
+      const a = (i / cols.length) * Math.PI * 2;
+      const sp = mesh(new THREE.BoxGeometry(0.05, 2.4, 0.05), frame, Math.sin(a) * 1.2, Math.cos(a) * 1.2, 0, wheel, false); sp.rotation.z = -a;
+      const cab = mesh(new THREE.BoxGeometry(0.5, 0.5, 0.6), glow(c, 0.05, 1.2), Math.sin(a) * 2.4, Math.cos(a) * 2.4 - 0.35, 0, wheel);
+      cabins.push(cab);
+    });
+    mesh(new THREE.SphereGeometry(0.22, 12, 10), lam('#e8b53a'), 0, 0, 0.55, wheel);
+    animators.push((t) => { wheel.rotation.z = t * 0.25 * gameSpeed; cabins.forEach((c) => (c.rotation.z = -wheel.rotation.z)); });
+  }
+}
+
+const RING2 = 80, R_CADRE = 5.5;
+let gameSpeed = 1;
+const outer = [{ key: 'game', title: '遊戲樂園', mark: 'ferris', color: '#e8b53a', R: 6.5 }, ...CADRE.map((c) => ({ ...c, title: c.group, R: R_CADRE }))];
+outer.forEach((o, i) => {
+  const ang = ((i * 40 + 20) * Math.PI) / 180;
+  const isl = makeIsland(o.key, o.R, Math.sin(ang) * RING2, Math.cos(ang) * RING2, o.key === 'game' ? 'game' : 'cadre');
+  isl.info = o;
+  const b = new THREE.Group(); b.rotation.y = ang + Math.PI; isl.group.add(b);
+  cadreBuilding(o.mark, b, o.color);
+  bush(o.R * 0.55, -o.R * 0.35, 0.6, isl.group);
+  bush(-o.R * 0.6, -o.R * 0.3, 0.7, isl.group);
+  isl.members = [];
+  if (o.key !== 'game') {
+    isl.memberMat = lam(o.color);
+    for (let k = 0; k < o.size; k++) {
+      const a = ang + Math.PI + (k - (o.size - 1) / 2) * 0.32, r = o.R * 0.66;
+      const p = figure(ghostPersonMat);
+      placeWalker(p, isl.group, Math.sin(a) * r, Math.cos(a) * r, 0.15);
+      p.scale.setScalar(1);
+      isl.members.push(p);
+    }
+  }
+});
+
+/* =========================================================
+   高鐵高架橋（照片左側那座），列車隨機雙向出現
+   ========================================================= */
+const VNORMAL = new THREE.Vector3(-0.866, 0, -0.5), VDIR = new THREE.Vector3(0.5, 0, -0.866);
+const VL = 420, DECK_Y = 6.5;
+const viaduct = new THREE.Group();
+viaduct.position.copy(VNORMAL.clone().multiplyScalar(22));
+viaduct.rotation.y = -Math.atan2(VDIR.z, VDIR.x);
+scene.add(viaduct);
+mesh(new THREE.BoxGeometry(VL, 0.7, 3.4), lam(C.concrete), 0, DECK_Y, 0, viaduct);
+for (const s of [-1, 1]) mesh(new THREE.BoxGeometry(VL, 0.5, 0.15), lam('#e4dfd4'), 0, DECK_Y + 0.6, s * 1.65, viaduct, false);
+for (let x = -VL / 2 + 4; x < VL / 2; x += 9) mesh(new THREE.BoxGeometry(1, DECK_Y + 1.3, 1.4), lam('#c9c3b6'), x, (DECK_Y - 1.3) / 2, 0, viaduct);
+// 台灣高鐵：白色車身、黑色窗帶、橘色腰線
+const thsrWhite = lam('#f7f6f2'), thsrBand = lam('#2b2f36'), thsrOrange = lam('#e2763b');
+const trainWin = glow('#2b2f36', 0, 0);
+function makeTrain() {
+  const t = new THREE.Group();
+  const cars = 6, L = 3.2;
+  for (let i = 0; i < cars; i++) {
+    const c = new THREE.Group(); c.position.x = -i * (L + 0.08); t.add(c);
+    mesh(new THREE.BoxGeometry(L, 0.9, 1.1), thsrWhite, 0, 0.45, 0, c);
+    mesh(new THREE.BoxGeometry(L + 0.01, 0.22, 1.12), thsrBand, 0, 0.6, 0, c, false);
+    mesh(new THREE.BoxGeometry(L + 0.01, 0.07, 1.12), thsrOrange, 0, 0.38, 0, c, false);
+    if (i === 0 || i === cars - 1) {
+      const s = i === 0 ? 1 : -1;
+      const nose = mesh(new THREE.SphereGeometry(0.55, 16, 12), thsrWhite, s * L / 2, 0.42, 0, c); nose.scale.set(3.2, 0.82, 1);
+      const n2 = mesh(new THREE.SphereGeometry(0.56, 16, 12), thsrBand, s * (L / 2 + 0.25), 0.55, 0, c, false); n2.scale.set(1.6, 0.45, 0.9);
+    }
+  }
+  t.userData.len = cars * (L + 0.08) + 3;
+  return t;
+}
+const trains = [];
+let nextTrain = 2;
+function spawnTrain() {
+  const t = makeTrain(), dir = Math.random() < 0.5 ? 1 : -1;
+  t.userData.dir = dir;
+  t.userData.speed = 34 + Math.random() * 10;
+  t.rotation.y = dir > 0 ? 0 : Math.PI;
+  t.position.set(-dir * (VL / 2 + t.userData.len), DECK_Y + 0.35, dir * 0.75);
+  viaduct.add(t);
+  trains.push(t);
+}
+
+/* =========================================================
+   標籤（HTML，跟著 3D 位置移動，可以點）
+   ========================================================= */
+const labelsEl = document.getElementById('labels');
+const tags = [];
+function addTag(isl, text, cls, h) {
+  const b = document.createElement('button');
+  b.className = 'tag ' + cls;
+  b.innerHTML = '<i></i><span></span>';
+  b.querySelector('span').textContent = text;
+  b.addEventListener('click', (e) => { e.stopPropagation(); select(isl.key); });
+  labelsEl.appendChild(b);
+  tags.push({ el: b, isl, h });
+  isl.tag = b;
+}
+addTag(TEMPLE, '全真道院・佛堂島', 'main', 9);
+COURSES.forEach((c) => addTag(islands[c.key], `${+c.date.slice(5, 7)}/${+c.date.slice(8)} ${c.name}`, '', 5.5));
+outer.forEach((o) => addTag(islands[o.key], o.title, 'small', 5.5));
+const tmpV = new THREE.Vector3();
+function placeTags() {
+  const w = innerWidth, h = innerHeight;
+  for (const t of tags) {
+    tmpV.set(t.isl.x, t.h, t.isl.z).project(camera);
+    const vis = tmpV.z < 1 && Math.abs(tmpV.x) < 1.1 && Math.abs(tmpV.y) < 1.1;
+    t.el.style.visibility = vis ? 'visible' : 'hidden';
+    if (vis) t.el.style.transform = `translate(${((tmpV.x + 1) / 2) * w}px, ${((1 - tmpV.y) / 2) * h}px) translate(-50%, -100%)`;
+  }
+}
+
+/* =========================================================
+   狀態：依時光捲軸的日期決定每座島的樣子
+   ========================================================= */
+const DAY0 = new Date('2026-10-01T00:00:00+08:00');
+const MS_DAY = 86400000;
+const iso = (d) => new Date(d.getTime() + 8 * 3600000).toISOString().slice(0, 10);
+const todayISO = iso(new Date());
+const dayIndex = (s) => Math.round((new Date(s + 'T00:00:00+08:00') - DAY0) / MS_DAY);
+const dayInput = document.getElementById('day');
+dayInput.max = dayIndex('2027-12-31');
+dayInput.value = Math.min(+dayInput.max, Math.max(0, dayIndex(todayISO)));
+const curISO = () => iso(new Date(DAY0.getTime() + +dayInput.value * MS_DAY));
+
+const STATUS_TEXT = { plan: '籌備中', soon: '即將開始', today: '今天上課', done: '已完成' };
+function courseStatus(c, now) {
+  const diff = dayIndex(c.date) - dayIndex(now);
+  if (diff > 30) return 'plan';
+  if (diff > 0) return 'soon';
+  if (diff === 0) return 'today';
+  return 'done';
+}
+function setGhost(group, on) {
+  group.traverse((m) => { if (m.isMesh && m.userData.mat) { m.material = on ? ghostMat : m.userData.mat; m.castShadow = !on; } });
+}
+
+// 課程當天聚在島上的人（示範：當時已報名的人數，最多 40 位）
+function syncCrowd(isl, n) {
+  if (isl.crowd.length === n) return;
+  clearWalkers(isl.crowd);
+  for (let k = 0; k < n; k++) {
+    const a = k * 2.39996, r = 2.6 + (k % 6) * 0.5;
+    const p = figure(k % 2 ? kunMat : qianMat);
+    placeWalker(p, isl.group, Math.sin(a) * r, Math.cos(a) * r, 0.3);
+    isl.crowd.push(p);
+  }
+}
+
+let lastView = '';
+function applyDate() {
+  const now = curISO();
+  const list = peopleNow().filter((p) => p.date <= now);
+  syncPlaza(list);
+  for (const c of COURSES) {
+    const isl = islands[c.key], s = courseStatus(c, now);
+    if (isl.status !== s) {
+      isl.status = s;
+      setGhost(isl.mark, s === 'plan');
+      isl.scaffold.visible = s === 'plan';
+      isl.flowers.visible = s === 'done';
+      isl.tag.dataset.s = s;
+    }
+    syncCrowd(isl, s === 'today' ? Math.min(40, list.length) : 0);
+  }
+  for (const o of CADRE) {
+    const isl = islands[o.key];
+    const n = Math.min(o.size, list.filter((p) => p.cadre.includes(o.group)).length);
+    isl.joined = n;
+    isl.members.forEach((p, k) => p.traverse((m) => { if (m.isMesh) m.material = k < n ? (m.geometry === headGeo ? skinMat : isl.memberMat) : ghostPersonMat; }));
+  }
+  // 日期列
+  const d = new Date(now + 'T00:00:00+08:00');
+  document.getElementById('dateText').textContent = now.replace(/-/g, '/') + ' （' + '日一二三四五六'[d.getDay()] + '）';
+  const next = COURSES.find((c) => c.date >= now);
+  document.getElementById('dateHint').textContent = (now === todayISO ? '今天・' : '') + `已報名 ${list.length} 人` +
+    (next ? `・距離「${next.name}」${dayIndex(next.date) - dayIndex(now) === 0 ? '就是今天' : '還有 ' + (dayIndex(next.date) - dayIndex(now)) + ' 天'}` : '・全年課程結束');
+  const view = now + '|' + demo + '|' + (selected || '');
+  if (view !== lastView) { lastView = view; renderPanel(); }
+}
+
+/* =========================================================
+   資訊卡
+   ========================================================= */
+const panel = document.getElementById('panel');
+let selected = 'temple';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function bars(title, entries, total) {
+  if (!entries.length) return '';
+  return `<div class="bars"><h3>${title}</h3>${entries.map(([k, n]) =>
+    `<div class="barrow"><span>${esc(k)}</span><span class="b"><i style="width:${total ? Math.round((n / total) * 100) : 0}%"></i></span><span class="n">${n}</span></div>`).join('')}</div>`;
+}
+const countBy = (list, f) => Object.entries(list.reduce((m, p) => ((m[f(p)] = (m[f(p)] || 0) + 1), m), {})).sort((a, b) => b[1] - a[1]);
+function renderPanel() {
+  const now = curISO(), list = peopleNow().filter((p) => p.date <= now);
+  const isl = islands[selected];
+  let html = '';
+  if (!isl || isl.kind === 'temple') {
+    const students = list.filter((p) => !p.cadre.length), cadres = list.length - students.length;
+    const q = list.filter((p) => p.g === '乾道').length;
+    const cadreTotal = CADRE.reduce((s, c) => s + c.size, 0);
+    html = `<header><span class="eyebrow">中央島・第四期報名</span><h2>全真道院</h2>
+      <p class="sub">廣場上每個小人偶就是一位已報名的夥伴：藍色乾道、橘色坤道，戴金色小帽的是幹部。</p></header>
+      <div class="stats"><div class="stat"><b>${list.length}</b><span>總報名</span></div><div class="stat"><b>${students.length}</b><span>學員</span></div><div class="stat"><b>${cadres}<small style="font-size:12px;color:var(--muted)">/${cadreTotal}</small></b><span>幹部</span></div></div>
+      ${bars('乾坤比例', [['乾道', q], ['坤道', list.length - q]], list.length)}
+      ${bars('所屬單位', countBy(list, (p) => p.unit), list.length)}
+      ${bars('居住縣市', countBy(list, (p) => p.city), list.length)}
+      <p class="note">${demo ? '目前是示範資料，數字不是真實報名。' : `資料來源：報名表（${dataStamp.slice(0, 10).replace(/-/g, '/')} 更新）。`}點其他小島可以看各堂課和各組的狀態。</p>`;
+  } else if (isl.kind === 'course') {
+    const c = isl.course, s = courseStatus(c, now), diff = dayIndex(c.date) - dayIndex(now);
+    const d = new Date(c.date + 'T00:00:00+08:00');
+    const order = COURSES.indexOf(c) + 1;
+    const look = { plan: '島上還搭著鷹架，地標是半透明的，等課程接近就會蓋好。', soon: '地標已經蓋好，就等大家上島。', today: '大家都上島了！', done: '這堂課結束了，島上開滿了花。' }[s];
+    html = `<header><span class="eyebrow">第 ${order} 站・${c.date.replace(/-/g, '/')}（${'日一二三四五六'[d.getDay()]}）</span><h2>${esc(c.name)}</h2><p class="sub">${esc(c.sub)}</p></header>
+      <span class="pill" data-s="${s}"><i></i>${STATUS_TEXT[s]}${diff > 0 ? `・還有 ${diff} 天` : diff < 0 ? `・${-diff} 天前` : ''}</span>
+      <ul class="prog">${c.prog.map(([k, v]) => `<li><span>${esc(k)}</span>${esc(v)}</li>`).join('')}</ul>
+      <p class="note">${look}</p>`;
+  } else if (isl.kind === 'cadre') {
+    const o = isl.info;
+    html = `<header><span class="eyebrow">幹部島・${esc(o.what)}</span><h2>${esc(o.group)}</h2></header>
+      <div class="stats"><div class="stat"><b>${isl.joined}<small style="font-size:12px;color:var(--muted)">/${o.size}</small></b><span>已報名</span></div></div>
+      ${bars('報名進度', [['已報名', isl.joined], ['還沒報名', o.size - isl.joined]], o.size)}
+      <p class="note">島上的小人偶是這一組的幹部，報名後會從半透明變成這一組的顏色。這裡只顯示人數，不顯示姓名。</p>`;
+  } else if (isl.kind === 'game') {
+    const n = (v) => (v == null ? '—' : v);
+    html = `<header><span class="eyebrow">外圈・互動小遊戲</span><h2>遊戲樂園</h2><p class="sub">玩的人越多，摩天輪轉得越快。</p></header>
+      <div class="stats"><div class="stat"><b>${n(GAMES.start)}</b><span>開始</span></div><div class="stat"><b>${n(GAMES.finish)}</b><span>完成</span></div><div class="stat"><b>${n(GAMES.share)}</b><span>分享</span></div></div>
+      <ul class="prog"><li><span>小遊戲</span><a href="https://steven4dev.github.io/yiguandao-2027-course/game/fahui-angel-25d.html" target="_blank" rel="noopener">法會小天使</a></li>
+      <li><span>小遊戲</span><a href="https://steven4dev.github.io/yiguandao-2027-course/game/xianyi.html" target="_blank" rel="noopener">褪下仙衣：八十億分之一</a></li></ul>
+      <p class="note">人次統計還沒接上（遊戲統計的網址尚未設定），先顯示「—」。</p>`;
+  }
+  panel.innerHTML = (isl && isl.kind !== 'temple' ? '<button class="close" id="closeBtn" aria-label="回到佛堂島">✕</button>' : '') + html;
+  const cb = document.getElementById('closeBtn');
+  if (cb) cb.onclick = () => { select('temple'); goHome(); };
+}
+
+/* =========================================================
+   鏡頭：點島飛過去
+   ========================================================= */
+let tween = null;
+function flyTo(target, pos, dur = 1.2) {
+  tween = { t: 0, dur, ft: controls.target.clone(), fp: camera.position.clone(), tt: target, tp: pos };
+  controls.autoRotate = false;
+}
+function select(key) {
+  selected = key;
+  panel.classList.remove('collapsed-mobile');
+  const isl = islands[key];
+  if (key !== 'temple' || tween == null) {
+    const t = new THREE.Vector3(isl.x, 1.5, isl.z);
+    const dist = isl.R * 3.4 + 12;
+    const dirV = camera.position.clone().sub(controls.target).setY(0).normalize();
+    if (dirV.lengthSq() < 0.01) dirV.set(0.6, 0, 0.8);
+    const p = t.clone().add(dirV.multiplyScalar(dist * 0.78)).setY(dist * 0.62 + 2);
+    if (innerWidth < innerHeight) p.sub(t).multiplyScalar(1.35).add(t);
+    flyTo(t, p);
+  }
+  lastView = '';
+  applyDate();
+}
+function goHome() { flyTo(HOME.target.clone(), HOME.pos.clone()); }
+
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let downXY = null;
+renderer.domElement.addEventListener('pointerdown', (e) => { downXY = [e.clientX, e.clientY]; if (tween) tween = null; });
+renderer.domElement.addEventListener('pointerup', (e) => {
+  if (!downXY || Math.hypot(e.clientX - downXY[0], e.clientY - downXY[1]) > 6) return;
+  ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  // 先打到任何物件，再往上找它屬於哪座島
+  const hit = ray.intersectObjects(Object.values(islands).map((i) => i.group), true)[0];
+  if (!hit) return;
+  let o = hit.object;
+  while (o && !Object.values(islands).some((i) => i.group === o)) o = o.parent;
+  const isl = o && Object.values(islands).find((i) => i.group === o);
+  if (isl) select(isl.key);
+});
+
+/* =========================================================
+   後製：微縮（移軸）效果
+   ========================================================= */
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const hTilt = new ShaderPass(HorizontalTiltShiftShader), vTilt = new ShaderPass(VerticalTiltShiftShader);
+composer.addPass(hTilt); composer.addPass(vTilt); composer.addPass(new OutputPass());
+function sizeTilt() {
+  hTilt.uniforms.h.value = 2.4 / innerWidth;
+  vTilt.uniforms.v.value = 2.4 / innerHeight;
+  hTilt.uniforms.r.value = vTilt.uniforms.r.value = 0.5;
+}
+sizeTilt();
+
+/* =========================================================
+   介面
+   ========================================================= */
+const $ = (id) => document.getElementById(id);
+// 時間軸刻度：每堂課一個
+$('ticks').innerHTML = [['2027-01-01', '2027'], ...COURSES.filter((_, i) => i % 2 === 0).map((c) => [c.date, `${+c.date.slice(5, 7)}月`])]
+  .map(([d, t]) => `<span style="left:${(dayIndex(d) / +dayInput.max) * 100}%">${t}</span>`).join('');
+dayInput.addEventListener('input', () => { playing = false; $('play').setAttribute('aria-pressed', 'false'); $('play').textContent = '▶ 播放一年'; applyDate(); });
+$('today').onclick = () => { dayInput.value = Math.max(0, dayIndex(todayISO)); applyDate(); };
+let playing = false;
+$('play').onclick = () => {
+  playing = !playing;
+  if (playing && +dayInput.value >= +dayInput.max) dayInput.value = 0;
+  $('play').setAttribute('aria-pressed', String(playing));
+  $('play').textContent = playing ? '❚❚ 暫停' : '▶ 播放一年';
+};
+$('demo').onclick = () => {
+  demo = !demo;
+  $('demo').setAttribute('aria-pressed', String(demo));
+  setStatus();
+  lastView = '';
+  applyDate();
+};
+$('home').onclick = () => { select('temple'); goHome(); };
+
+// 晝夜跟著頁面主題，按鈕可以切換
+const root = document.documentElement;
+const sysDark = matchMedia('(prefers-color-scheme: dark)');
+let nightTarget = root.dataset.theme ? (root.dataset.theme === 'dark' ? 1 : 0) : (sysDark.matches ? 1 : 0);
+let nightT = nightTarget;
+function syncNight() {
+  $('night').setAttribute('aria-pressed', String(nightTarget === 1));
+  $('night').textContent = nightTarget ? '白天' : '夜晚';
+}
+syncNight();
+$('night').onclick = () => { nightTarget = 1 - nightTarget; root.dataset.theme = nightTarget ? 'dark' : 'light'; syncNight(); };
+sysDark.addEventListener('change', (e) => { if (!root.dataset.theme) { nightTarget = e.matches ? 1 : 0; syncNight(); } });
+new MutationObserver(() => { if (root.dataset.theme) { nightTarget = root.dataset.theme === 'dark' ? 1 : 0; syncNight(); } }).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+
+let liveOk = false;
+function setStatus() {
+  const st = $('status'), tx = $('statusText');
+  if (demo) { st.dataset.state = 'demo'; tx.textContent = '示範模式：60 位學員＋全部幹部'; return; }
+  st.dataset.state = liveOk ? 'live' : 'backup';
+  const when = new Date(dataStamp).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+  tx.textContent = (liveOk ? '報名資料・' : '內建報名備份・') + when + ' 更新';
+}
+// 放在課程網站上時，讀同一個網站的報名分析備份；讀不到就用內建資料
+async function loadData() {
+  try {
+    const r = await fetch('../signup/data.json', { cache: 'no-store' });
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    realPeople = d.people.map((p) => ({ g: p.gender, city: p.city, unit: p.unit, cadre: p.cadreGroups || [], date: p.last }));
+    dataStamp = d.updated;
+    liveOk = true;
+  } catch (e) { liveOk = false; }
+  try {
+    const r = await fetch('../game/stats.json', { cache: 'no-store' });
+    if (r.ok) { const s = await r.json(); if (s.updated) Object.assign(GAMES, { start: s.start, finish: s.finish, share: s.share }); }
+  } catch (e) {}
+  gameSpeed = 1 + Math.min(4, (GAMES.finish || 0) / 50);
+  setStatus();
+  lastView = '';
+  applyDate();
+}
+if (innerWidth <= 720) panel.classList.add('collapsed-mobile');
+applyDate();
+setStatus();
+loadData();
+setInterval(() => { if (!document.hidden && !demo) loadData(); }, 5 * 60000);
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  composer.setSize(innerWidth, innerHeight);
+  sizeTilt();
+});
+
+/* =========================================================
+   動畫
+   ========================================================= */
+const clock = new THREE.Clock();
+const WATER_DAY = new THREE.Color(C.water), WATER_NIGHT = new THREE.Color('#2c3d5c');
+const SUN_DAY = new THREE.Color('#fff1d6'), SUN_NIGHT = new THREE.Color('#9fb3ff');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+let playAcc = 0;
+function tick() {
+  const rawDt = clock.getDelta(), dt = Math.min(rawDt, 0.05), t = clock.elapsedTime;
+
+  // 晝夜 0.6 秒線性切換，和網站主題一致
+  const stepN = dt / 0.6;
+  nightT = nightT < nightTarget ? Math.min(nightTarget, nightT + stepN) : Math.max(nightTarget, nightT - stepN);
+  scene.background.copy(DAY_BG).lerp(NIGHT_BG, nightT);
+  scene.fog.color.copy(scene.background);
+  water.material.color.copy(WATER_DAY).lerp(WATER_NIGHT, nightT);
+  hemi.intensity = 1.6 - 0.95 * nightT;
+  sun.intensity = 2.4 - 1.75 * nightT;
+  sun.color.copy(SUN_DAY).lerp(SUN_NIGHT, nightT);
+  for (const m of nightFacades) m.emissiveIntensity = nightT * 1.1;
+  for (const g of glowMats) g.mat.emissiveIntensity = g.base + (g.night - g.base) * nightT;
+  for (const l of lampLights) l.intensity = nightT * 6;
+
+  if (playing) {
+    playAcc += dt * 18;
+    if (playAcc >= 1) {
+      const step = Math.floor(playAcc); playAcc -= step;
+      dayInput.value = Math.min(+dayInput.max, +dayInput.value + step);
+      applyDate();
+      if (+dayInput.value >= +dayInput.max) $('play').click();
+    }
+  }
+
+  if (!reduceMotion) for (const a of animators) a(t);
+
+  nextTrain -= dt;
+  if (nextTrain <= 0) { spawnTrain(); nextTrain = 6 + Math.random() * 14; }
+  for (let i = trains.length - 1; i >= 0; i--) {
+    const tr = trains[i], d = tr.userData.dir;
+    tr.position.x += d * tr.userData.speed * dt;
+    if (d * tr.position.x > VL / 2 + tr.userData.len) { viaduct.remove(tr); trains.splice(i, 1); }
+    else tr.visible = Math.abs(tr.position.x) < VL / 2 + 2;
+  }
+
+  for (const p of walkers) {
+    const u = p.userData;
+    if (p.scale.x < 1) p.scale.setScalar(Math.min(1, p.scale.x + dt * 3));
+    if (reduceMotion) continue;
+    p.position.y = Math.abs(Math.sin(t * 3 * u.speed + u.phase)) * 0.08;
+    p.position.x = u.home.x + Math.sin(t * 0.3 * u.speed + u.phase) * u.roam;
+    p.rotation.y = Math.cos(t * 0.3 * u.speed + u.phase) > 0 ? Math.PI / 2 : -Math.PI / 2;
+  }
+
+  if (tween) {
+    tween.t += Math.min(rawDt, 0.25) / tween.dur;
+    const k = ease(Math.min(1, tween.t));
+    controls.target.lerpVectors(tween.ft, tween.tt, k);
+    camera.position.lerpVectors(tween.fp, tween.tp, k);
+    if (tween.t >= 1) tween = null;
+  }
+  controls.update();
+  composer.render();
+  placeTags();
+  requestAnimationFrame(tick);
+}
+tick();
+</script>
+</body>
+</html>
