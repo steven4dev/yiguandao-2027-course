@@ -388,7 +388,7 @@
     <button type="button" class="live" id="live" data-state="loading" title="點一下立即重新讀取">
       <span class="dot" aria-hidden="true">…</span><span id="liveText">正在連線最新資料…</span>
     </button>
-    <div class="ver">版本 <span id="ver">v261025.02</span></div>
+    <div class="ver">版本 <span id="ver">v261025.03</span></div>
   </div>
 </header>
 
@@ -483,7 +483,7 @@
         <div class="chips" id="cadreChips"></div>
       </div>
     </div>
-    <p class="axis-note">※ 介紹人欄填「幹部」代表本人是幹部；姓名一律遮蔽中間字；幹部名單依課程首頁「同行夥伴」，身兼兩組的幹部兩組都會計入。</p>
+    <p class="axis-note">※ 介紹人欄填「幹部」代表本人是幹部；姓名一律遮蔽中間字；幹部名單依課程首頁「同行夥伴」（不含主班點傳師、帶班助理），身兼兩組的幹部兩組都會計入。</p>
   </section>
 
   <section class="card">
@@ -569,8 +569,9 @@
     return s[0] + '○'.repeat(s.length - 2) + s[s.length - 1];
   }
   // 2027 年度幹部（跟課程首頁「同行夥伴」一致，人事異動時兩邊一起改）
+  // 主班點傳師、帶班助理不列入幹部報名統計
   const CADRE_GROUPS = [
-    { group: '班務團隊', members: [['林明山', '主班點傳師'], ['張碧雲', '主班點傳師'], ['蕭仁德', '主班點傳師'], ['賴錦坤', '帶班助理'], ['周逸翔', '班長'], ['何珈貞', '坤道副班長'], ['羅健洲', '乾道副班長']] },
+    { group: '班務團隊', members: [['周逸翔', '班長'], ['何珈貞', '坤道副班長'], ['羅健洲', '乾道副班長']] },
     { group: '人事組', members: [['賴美芸', '組長'], ['林鈺蓉', '成員'], ['楊舒涵', '成員']] },
     { group: '公關禮節組', members: [['林詩涵', '組長'], ['陳幸梅', '成員'], ['陳曉璇', '成員'], ['林淑真', '成員']] },
     { group: '學術組', members: [['楊雅雲', '組長'], ['王冠博', '成員'], ['鄭燕玲', '成員']] },
