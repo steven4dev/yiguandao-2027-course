@@ -388,7 +388,7 @@
     <button type="button" class="live" id="live" data-state="loading" title="點一下立即重新讀取">
       <span class="dot" aria-hidden="true">…</span><span id="liveText">正在連線最新資料…</span>
     </button>
-    <div class="ver">版本 <span id="ver">v261024.15</span></div>
+    <div class="ver">版本 <span id="ver">v261025.01</span></div>
   </div>
 </header>
 
@@ -483,7 +483,7 @@
         <div class="chips" id="cadreChips"></div>
       </div>
     </div>
-    <p class="axis-note">※ 介紹人欄填「幹部」代表本人是幹部，姓名不遮蔽；幹部名單依課程首頁「同行夥伴」，身兼兩組的幹部兩組都會計入。</p>
+    <p class="axis-note">※ 介紹人欄填「幹部」代表本人是幹部；姓名一律遮蔽中間字；幹部名單依課程首頁「同行夥伴」，身兼兩組的幹部兩組都會計入。</p>
   </section>
 
   <section class="card">
@@ -722,8 +722,7 @@
         const intros = selfCadre || NO_INTRO.test(p.intro.trim()) ? [] : parseIntro(p.intro);
         const info = CADRES.get(p.name);
         return {
-          // 幹部姓名不遮蔽
-          name: isCadre ? p.name : mask(p.name),
+          name: mask(p.name),
           gender: p.gender,
           // 年齡只分析學員，幹部不換算也不保留
           age: p.birth && !isCadre ? ageOf(p.birth, now) : null,
@@ -735,6 +734,8 @@
           isCadre,
           selfCadre,
           inList: !!info,
+          // 對照幹部名單用的序號，畫面上不需要全名
+          cadreId: info ? [...CADRES.keys()].indexOf(p.name) : -1,
           cadreGroups: info ? info.groups : [],
           cadreTitle: info ? info.titles.join('・') : '',
           kids: kids.n,
@@ -951,7 +952,7 @@
     const gb = $('cadreGroupBars');
     gb.innerHTML = '';
     CADRE_GROUPS.forEach(({ group, members }) => {
-      const done = members.filter(([name]) => inListRegs.some(p => p.name === name));
+      const done = members.filter(([name]) => inListRegs.some(p => p.cadreId === [...CADRES.keys()].indexOf(name)));
       const todo = members.filter(m => !done.includes(m));
       const row = document.createElement('div');
       row.className = 'bar-row';
@@ -960,7 +961,7 @@
         <div class="bar-name">${esc(group)}</div>
         <div class="bar-track prog">${done.length ? `<div class="bar-fill" style="width:${done.length / members.length * 100}%"></div>` : ''}</div>
         <div class="bar-val"><b>${done.length}</b><small> / ${members.length} 位</small></div>`;
-      bindTip(row, `<strong>${esc(group)}・已報名 ${done.length} / ${members.length} 位</strong>${done.length ? `已報名：${done.map(([n]) => esc(n)).join('、')}` : ''}${todo.length ? `${done.length ? '<br>' : ''}還沒報名：${todo.map(([n]) => esc(n)).join('、')}` : ''}`);
+      bindTip(row, `<strong>${esc(group)}・已報名 ${done.length} / ${members.length} 位</strong>${done.length ? `已報名：${done.map(([n]) => esc(mask(n))).join('、')}` : ''}${todo.length ? `${done.length ? '<br>' : ''}還沒報名：${todo.map(([n]) => esc(mask(n))).join('、')}` : ''}`);
       gb.appendChild(row);
     });
     $('cadreChips').innerHTML = cadreRegs.map(p =>
@@ -1042,7 +1043,7 @@
     if (noDist.length) notes.push(`${names(noDist)} 的居住地區無法判讀到行政區，可以再跟本人確認。`);
     const unclearKids = withKids.filter(p => p.kidUnclear || !p.kidAges.length);
     if (unclearKids.length) notes.push(`${names(unclearKids)} 有孩童隨行，但人數或年齡沒寫清楚，安排兒童照顧前請再確認。`);
-    if (cadreRegs.length) notes.push(`${cadreRegs.length} 位幹部一起報名（${names(cadreRegs)}），姓名不遮蔽、不分析年齡，也不列入學員的介紹人統計與關懷名單。`);
+    if (cadreRegs.length) notes.push(`${cadreRegs.length} 位幹部一起報名（${names(cadreRegs)}），不分析年齡，也不列入學員的介紹人統計與關懷名單。`);
     const notInList = cadreRegs.filter(p => p.selfCadre && !p.inList);
     if (notInList.length) notes.push(`${names(notInList)} 介紹人填「幹部」，但不在首頁「同行夥伴」名單裡，請確認名單是否要更新。`);
     const nameOnly = cadreRegs.filter(p => !p.selfCadre);

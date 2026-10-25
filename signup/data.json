@@ -1,10 +1,10 @@
 {
   "total": 4,
   "tests": 0,
-  "updated": "2026-10-24T13:08:51.910Z",
+  "updated": "2026-10-25T01:06:27.952Z",
   "people": [
     {
-      "name": "林詩涵",
+      "name": "林○涵",
       "gender": "坤道",
       "age": null,
       "city": "桃園市",
@@ -15,6 +15,7 @@
       "isCadre": true,
       "selfCadre": true,
       "inList": true,
+      "cadreId": 10,
       "cadreGroups": [
         "公關禮節組"
       ],
@@ -37,6 +38,7 @@
       "isCadre": false,
       "selfCadre": false,
       "inList": false,
+      "cadreId": -1,
       "cadreGroups": [],
       "cadreTitle": "",
       "kids": 0,
@@ -46,7 +48,7 @@
       "last": "2026-10-24"
     },
     {
-      "name": "周逸翔",
+      "name": "周○翔",
       "gender": "乾道",
       "age": null,
       "city": "新北市",
@@ -57,6 +59,7 @@
       "isCadre": true,
       "selfCadre": true,
       "inList": true,
+      "cadreId": 4,
       "cadreGroups": [
         "班務團隊"
       ],
@@ -68,7 +71,7 @@
       "last": "2026-10-24"
     },
     {
-      "name": "何珈貞",
+      "name": "何○貞",
       "gender": "坤道",
       "age": null,
       "city": "新北市",
@@ -79,6 +82,7 @@
       "isCadre": true,
       "selfCadre": true,
       "inList": true,
+      "cadreId": 5,
       "cadreGroups": [
         "班務團隊"
       ],
