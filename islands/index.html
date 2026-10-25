@@ -249,7 +249,7 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.12</span>
+  <span class="ver">v261025.13</span>
 </div>
 
 <div class="mapctl">
@@ -1408,7 +1408,7 @@ function applyDate() {
     isl.joined = o.slots.filter((sl) => joinedUids.has(sl.uid)).length;
     isl.members.forEach((p, k) => {
       const on = joinedUids.has(o.slots[k].uid);
-      p.traverse((m) => { if (m.isMesh) m.material = on ? m.userData.onMat || isl.memberMat : ghostPersonMat; });
+      p.traverse((m) => { if (m.isMesh && !m.userData.ring) m.material = on ? m.userData.onMat || isl.memberMat : ghostPersonMat; });
     });
   }
   // 日期列
@@ -2080,6 +2080,70 @@ addEventListener('resize', () => {
 /* =========================================================
    動畫
    ========================================================= */
+/* ---------- 選到的人偶：微微發光＋腳下一圈光環＋頭頂浮著一顆金色小菱形 ----------
+   同一組幹部共用材質，所以只幫被選到的那一位複製一份來發光，熄掉時再換回原本的材質 */
+const HI_COLOR = new THREE.Color('#ffd36b');
+const ringGeo = new THREE.TorusGeometry(0.5, 0.055, 8, 36), gemGeo = new THREE.OctahedronGeometry(0.13);
+const ringPool = [];
+let hiFigs = [];
+function figuresFor(sel) {
+  const id = String(sel);
+  if (id.startsWith('m:')) {
+    const slot = +id.slice(2);
+    return [...islands[SLOTS[slot].key].members, ...plazaPeople].filter((f) => f.userData.slot === slot);
+  }
+  if (id.startsWith('p:')) return plazaPeople.filter((f) => f.userData.person === +id.slice(2));
+  return [];
+}
+function unglow(f) {
+  f.traverse((m) => {
+    const u = m.userData;
+    if (!m.isMesh || !u.hiMat) return;
+    if (m.material === u.hiMat) m.material = u.baseMat;
+    u.hiMat.dispose();
+    delete u.hiMat; delete u.baseMat;
+  });
+}
+function updateHighlight(t) {
+  const want = panelMode === 'closed' ? [] : figuresFor(selected);
+  for (const f of hiFigs) if (!want.includes(f)) unglow(f);
+  hiFigs = want;
+  const k = 0.28 + 0.14 * Math.sin(t * 4);
+  want.forEach((f, i) => {
+    f.traverse((m) => {
+      if (!m.isMesh || m.userData.ring) return;
+      const u = m.userData;
+      // 材質被換掉（例如登島狀態更新）就重新複製一份
+      if (!u.hiMat || m.material !== u.hiMat) {
+        if (u.hiMat) u.hiMat.dispose();
+        u.baseMat = m.material;
+        u.hiMat = m.material.clone();
+        u.hiMat.emissive = HI_COLOR.clone();
+        m.material = u.hiMat;
+      }
+      m.material.emissiveIntensity = k;
+    });
+    let ring = ringPool[i];
+    if (!ring) {
+      const mat = new THREE.MeshBasicMaterial({ color: HI_COLOR, transparent: true, depthWrite: false });
+      ring = new THREE.Group();
+      const halo = new THREE.Mesh(ringGeo, mat); halo.rotation.x = Math.PI / 2; halo.userData.ring = true;
+      const gem = new THREE.Mesh(gemGeo, mat); gem.userData.ring = true;
+      ring.add(halo, gem);
+      ring.userData = { ring: true, halo, gem, mat };
+      ringPool[i] = ring;
+    }
+    if (ring.parent !== f) f.add(ring);
+    const r = ring.userData;
+    r.halo.position.y = 0.03;
+    r.halo.scale.setScalar(1 + 0.12 * Math.sin(t * 4));
+    r.gem.position.y = 1.35 + 0.08 * Math.sin(t * 3);
+    r.gem.rotation.y = t * 2;
+    r.mat.opacity = 0.65 + 0.3 * Math.sin(t * 4);
+  });
+  for (let i = want.length; i < ringPool.length; i++) if (ringPool[i].parent) ringPool[i].parent.remove(ringPool[i]);
+}
+
 const clock = new THREE.Clock();
 const WATER_DAY = new THREE.Color(C.water), WATER_NIGHT = new THREE.Color('#2c3d5c');
 const SUN_DAY = new THREE.Color('#fff1d6'), SUN_NIGHT = new THREE.Color('#9fb3ff');
@@ -2103,6 +2167,7 @@ function tick() {
 
   if (!reduceMotion) for (const a of animators) a(t);
   audioTick();
+  updateHighlight(t);
 
   nextTrain -= dt;
   if (nextTrain <= 0) { spawnTrain(); nextTrain = 6 + Math.random() * 14; }
