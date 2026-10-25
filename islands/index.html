@@ -226,8 +226,8 @@
   .tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
   .tag[data-s="today"] i { background: var(--brick); } .tag[data-s="soon"] i { background: var(--gold); } .tag[data-s="done"] i { background: var(--jade); }
   .tag.small { font-size: 11px; padding: 2px 8px; opacity: 0.92; }
-  .tag.ferry-tag { background: var(--brick); color: #fff; border-color: transparent; font-weight: 700; text-decoration: none; }
-  .tag.ferry-tag i { background: #fff; }
+  .tag.dock-tag { background: var(--brick); color: #fff; border-color: transparent; font-weight: 700; }
+  .tag.dock-tag i { background: #fff; }
   .tag.main { font-family: var(--font-display); font-size: 15px; padding: 4px 12px; }
 
   @media (max-width: 720px) {
@@ -246,7 +246,7 @@
       bottom: calc(14px + env(safe-area-inset-bottom, 0px)); max-height: 46%; }
     .panel.folded { bottom: calc(var(--dock-h, 52px) + 24px + env(safe-area-inset-bottom, 0px)); }
     .chip .hint { display: none; }
-    .tag.small { display: none; }
+    .tag.small:not(.dock-tag) { display: none; }
   }
   @media (prefers-reduced-motion: reduce) { body, .card { transition: none; } }
 </style>
@@ -266,7 +266,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島<small>填寫報名表</small></a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.22</span>
+  <span class="ver">v261025.23</span>
 </div>
 
 <div class="mapctl">
@@ -428,7 +428,6 @@ const SNAPSHOT = {
   ],
 };
 SNAPSHOT.people.forEach((p) => { p.uids = p.isCadre ? cadreUidsOf(p.m, p.cadre) : []; });
-const GAMES = { start: null, finish: null, share: null };
 
 let realPeople = SNAPSHOT.people, dataStamp = SNAPSHOT.updated;
 const peopleNow = () => realPeople;
@@ -1246,38 +1245,40 @@ function cadreBuilding(kind, g, color) {
     mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.7, 6), dark, 0, 3.1, 0, g);
     const flag = mesh(new THREE.BoxGeometry(0.5, 0.3, 0.02), lam('#e8b53a'), 0.25, 3.3, 0, g);
     animators.push((t) => { flag.rotation.y = Math.sin(t * 4) * 0.4; });
-  } else if (kind === 'ferris') {
-    const frame = lam('#f4efe6');
-    for (const z of [-0.5, 0.5]) for (const s of [-1, 1]) { const leg = mesh(new THREE.BoxGeometry(0.14, 3.4, 0.14), frame, s * 0.9, 1.6, z, g); leg.rotation.z = s * 0.28; }
-    const wheel = new THREE.Group(); wheel.position.y = 3.2; g.add(wheel);
-    for (const z of [-0.45, 0.45]) mesh(new THREE.TorusGeometry(2.4, 0.06, 6, 40), frame, 0, 0, z, wheel);
-    const cabins = [];
-    const cols = ['#c0503f', '#e8b53a', '#3f8a6a', '#5b6fa8', '#d2566a', '#e2763b', '#7a5aa6', '#9cc46b'];
-    cols.forEach((c, i) => {
-      const a = (i / cols.length) * Math.PI * 2;
-      const sp = mesh(new THREE.BoxGeometry(0.05, 2.4, 0.05), frame, Math.sin(a) * 1.2, Math.cos(a) * 1.2, 0, wheel, false); sp.rotation.z = -a;
-      const cab = mesh(new THREE.BoxGeometry(0.5, 0.5, 0.6), glow(c, 0.05, 1.2), Math.sin(a) * 2.4, Math.cos(a) * 2.4 - 0.35, 0, wheel);
-      cabins.push(cab);
+  } else if (kind === 'dock') {
+    // 渡口島的售票亭：紅屋頂小亭子、「登島報名處」招牌、兩盞燈籠
+    const red = lam('#c0503f');
+    mesh(new THREE.BoxGeometry(2.4, 1.5, 1.8), lam('#f4ead6'), 0, 0.75, 0, g);
+    mesh(new THREE.BoxGeometry(1.4, 0.7, 0.06), lam('#3d4c55'), 0, 0.95, 0.91, g);
+    mesh(new THREE.BoxGeometry(2.6, 0.12, 0.5), lam(C.wood), 0, 0.55, 1.15, g);
+    roof(3.2, 2.6, 1.0, 0.8, 0.18, 0, 1.5, 0, g);
+    const signTex = canvasTex(256, 64, (c) => {
+      c.fillStyle = '#e8b53a'; c.fillRect(0, 0, 256, 64);
+      c.fillStyle = '#a3322a'; c.font = 'bold 40px "Noto Serif TC", "PingFang TC", serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('登島報名處', 128, 34);
     });
-    mesh(new THREE.SphereGeometry(0.22, 12, 10), lam('#e8b53a'), 0, 0, 0.55, wheel);
-    animators.push((t) => { wheel.rotation.z = t * 0.25 * gameSpeed; cabins.forEach((c) => (c.rotation.z = -wheel.rotation.z)); });
+    const gold = lam('#e8b53a');
+    mesh(new THREE.BoxGeometry(2.0, 0.5, 0.06), [gold, gold, gold, gold, new THREE.MeshLambertMaterial({ map: signTex }), gold], 0, 1.75, 0.95, g);
+    const lantern = glow('#e2563b', 0.2, 1.8);
+    for (const sx of [-1, 1]) {
+      mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.6, 6), lam('#5a3b30'), sx * 1.6, 0.8, 1.3, g);
+      mesh(new THREE.SphereGeometry(0.2, 12, 10), lantern, sx * 1.6, 1.7, 1.3, g);
+    }
   }
 }
 
 const RING2 = 80, R_CADRE = 5.5;
 const cadreHit = [];   // 幹部小人偶的網格，點擊與滑鼠游標用
-let gameSpeed = 1;
 const GATE = CADRE.find((c) => c.mark === 'arch');   // 公關禮節組負責迎賓
-const outer = [{ key: 'game', title: '遊戲樂園', mark: 'ferris', color: '#e8b53a', R: 6.5 }, ...CADRE.filter((c) => c !== GATE).map((c) => ({ ...c, title: c.isle, R: R_CADRE }))];
+const outer = CADRE.filter((c) => c !== GATE).map((c) => ({ ...c, title: c.isle, R: R_CADRE }));
 function buildOuter(o, x, z, ang, faceY) {
-  const isl = makeIsland(o.key, o.R, x, z, o.key === 'game' ? 'game' : 'cadre');
+  const isl = makeIsland(o.key, o.R, x, z, o.kind || 'cadre');
   isl.info = o;
   const b = new THREE.Group(); b.rotation.y = faceY; isl.group.add(b);
   cadreBuilding(o.mark, b, o.color);
   bush(o.R * 0.4, -o.R * 0.39, 0.55, isl.group);
   bush(-o.R * 0.45, -o.R * 0.33, 0.6, isl.group);
   isl.members = [];
-  if (o.key !== 'game') {
+  if (o.slots) {
     isl.memberMat = lam(o.color);
     o.slots.forEach((slot, k) => {
       // 圍著建築站一圈，從哪個角度看都看得到幾位
@@ -1294,7 +1295,7 @@ function buildOuter(o, x, z, ang, faceY) {
   return isl;
 }
 outer.forEach((o, i) => {
-  const ang = ((i * 45 + 20) * Math.PI) / 180, x = Math.sin(ang) * RING2, z = Math.cos(ang) * RING2;
+  const ang = ((i * 45 + 65) * Math.PI) / 180, x = Math.sin(ang) * RING2, z = Math.cos(ang) * RING2;
   buildOuter(o, x, z, ang, faceCam(x, z));
 });
 // 迎賓島：佛堂大門 → 木橋 → 迎賓牌樓與紅地毯 → 木橋 → 第一堂課；牌樓橫跨在路線上
@@ -1303,33 +1304,76 @@ mesh(new THREE.BoxGeometry(1.4, 0.04, R_CADRE * COS30 * 2 - 0.2), lam('#c0503f')
 bridge(TEMPLE, gateIsl);
 bridge(gateIsl, islands.c1);
 
-// 登島＝報名：迎賓島旁停著一艘渡船，點了打開報名表
+/* ---------- 登島＝報名：渡口島 ⇄ 迎賓島的竹筏航班 ----------
+   課程島從好玩島一路接到歡樂島，但歡樂島和好玩島之間沒有木橋，剛好留下一個開口；
+   竹筏從迎賓島穿過這個開口，往返外海的渡口島 */
 const SIGNUP_URL = 'https://forms.gle/PG7yAsyz1r4unXXZ8';
-const ferry = new THREE.Group();
-// 停在迎賓島右後方的開闊海面，標籤不會擠到課程島的標籤
-ferry.position.set(gateIsl.x + 10, -3.25, gateIsl.z - 4);
-ferry.rotation.y = 0.5;
-scene.add(ferry);
+const openSignup = () => window.open(SIGNUP_URL, '_blank', 'noopener');
+const gapMid = new THREE.Vector3((islands.c1.x + islands.c9.x) / 2, 0, (islands.c1.z + islands.c9.z) / 2);
+const ROUTE_DIR = gapMid.clone().sub(new THREE.Vector3(gateIsl.x, 0, gateIsl.z)).normalize();
+const R_DOCK = 6;
+const dockIsl = buildOuter({ key: 'dock', kind: 'dock', title: '渡口島', mark: 'dock', color: '#c0503f', R: R_DOCK },
+  gateIsl.x + ROUTE_DIR.x * 58, gateIsl.z + ROUTE_DIR.z * 58, 0, Math.atan2(-ROUTE_DIR.x, -ROUTE_DIR.z));
+// 木棧橋：從島的邊緣伸進海裡，竹筏停在棧橋末端
+const plankMat = lam(C.wood);
+function pier(isl, dir) {
+  const a = Math.atan2(dir.x, dir.z), d0 = hexEdge(isl.R, a) - 0.4, LEN = 3.2;
+  const g = new THREE.Group();
+  g.position.set(isl.x + dir.x * (d0 + LEN / 2), 0, isl.z + dir.z * (d0 + LEN / 2));
+  g.rotation.y = a;
+  scene.add(g);
+  mesh(new THREE.BoxGeometry(1.6, 0.14, LEN), plankMat, 0, -0.07, 0, g);
+  for (const sx of [-0.7, 0.7]) for (const sz of [-LEN / 2 + 0.2, LEN / 2 - 0.2]) mesh(new THREE.CylinderGeometry(0.09, 0.09, 3.5, 6), trunkMat, sx, -1.75, sz, g);
+  return new THREE.Vector3(isl.x + dir.x * (d0 + LEN + 1.6), 0, isl.z + dir.z * (d0 + LEN + 1.6));
+}
+const stopGate = pier(gateIsl, ROUTE_DIR);
+const stopDock = pier(dockIsl, ROUTE_DIR.clone().negate());
+
+// 竹筏：一排竹子、小篷子、「登島」小旗，船夫撐著長篙
+const raft = new THREE.Group();
+scene.add(raft);
 {
-  const hullMat = lam('#c0503f'), deck = lam(C.wood);
-  const hull = mesh(new THREE.CylinderGeometry(1.1, 0.75, 0.7, 20, 1, false, 0, Math.PI), hullMat, 0, 0.25, 0, ferry);
-  hull.rotation.set(Math.PI / 2, 0, Math.PI / 2); hull.scale.set(1, 2.2, 1);
-  mesh(new THREE.BoxGeometry(1.9, 0.12, 4.2), deck, 0, 0.55, 0, ferry);
-  mesh(new THREE.BoxGeometry(1.2, 0.8, 1.2), lam('#f4efe6'), 0, 1.0, -0.6, ferry);
-  mesh(new THREE.BoxGeometry(1.4, 0.12, 1.4), hullMat, 0, 1.45, -0.6, ferry);
-  mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.2, 6), lam('#5a3b30'), 0, 1.6, 1.2, ferry);
+  const bamboo = lam('#c9c36c'), tie = lam('#7a5236');
+  for (let i = -3; i <= 3; i++) { const b = mesh(new THREE.CylinderGeometry(0.17, 0.17, 4.2, 10), bamboo, i * 0.34, 0, 0, raft); b.rotation.x = Math.PI / 2; }
+  for (const z of [-1.5, 0, 1.5]) mesh(new THREE.BoxGeometry(2.5, 0.08, 0.18), tie, 0, 0.17, z, raft);
+  const thatch = lam('#d9b56b');
+  for (const sx of [-0.85, 0.85]) for (const z of [-1.1, 0.5]) mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.3, 6), tie, sx, 0.8, z, raft);
+  const canopy = mesh(new THREE.CylinderGeometry(1.05, 1.05, 1.9, 16, 1, true, -Math.PI / 2, Math.PI), new THREE.MeshLambertMaterial({ color: '#d9b56b', side: THREE.DoubleSide }), 0, 1.45, -0.3, raft);
+  canopy.rotation.x = Math.PI / 2;
   const flagTex = canvasTex(128, 64, (c) => {
     c.fillStyle = '#e8b53a'; c.fillRect(0, 0, 128, 64);
     c.fillStyle = '#a3322a'; c.font = 'bold 38px "Noto Serif TC", "PingFang TC", serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('登島', 64, 34);
   });
-  const flag = mesh(new THREE.BoxGeometry(1.0, 0.5, 0.03), [lam('#e8b53a'), lam('#e8b53a'), lam('#e8b53a'), lam('#e8b53a'), new THREE.MeshLambertMaterial({ map: flagTex }), new THREE.MeshLambertMaterial({ map: flagTex })], 0.52, 2.4, 1.2, ferry);
-  const sailor = figure(lam('#3d5a80'));
-  sailor.position.set(0, 0.6, 0.4); ferry.add(sailor);
-  animators.push((t) => { ferry.position.y = -3.25 + Math.sin(t * 1.3) * 0.08; ferry.rotation.z = Math.sin(t * 0.9) * 0.04; flag.rotation.y = Math.sin(t * 3) * 0.2; });
+  const fm = new THREE.MeshLambertMaterial({ map: flagTex }), fy = lam('#e8b53a');
+  mesh(new THREE.CylinderGeometry(0.035, 0.035, 2.4, 6), tie, 0.9, 1.3, -1.8, raft);
+  raft.userData.flag = mesh(new THREE.BoxGeometry(0.02, 0.5, 0.9), [fm, fm, fy, fy, fy, fy], 0.9, 2.25, -1.4, raft);
+  const boatman = figure(lam('#3d5a80'));
+  boatman.position.set(0, 0.2, 1.4); boatman.scale.setScalar(1.3); raft.add(boatman);
+  const pole = mesh(new THREE.CylinderGeometry(0.03, 0.03, 4.2, 6), tie, 0.45, 1.0, 1.6, raft);
+  raft.userData.pole = pole;
+  // 兩位等著上岸的小人偶
+  for (const [x, z, k] of [[-0.45, -0.4, 0], [0.4, -0.2, 1]]) { const f = figure(k ? kunMat : qianMat, '', k === 1); f.position.set(x, 0.2, z); raft.add(f); }
 }
-const ferryHit = [];
-ferry.traverse((m) => { if (m.isMesh) ferryHit.push(m); });
-const openSignup = () => window.open(SIGNUP_URL, '_blank', 'noopener');
+const raftHit = [];
+raft.traverse((m) => { if (m.isMesh) raftHit.push(m); });
+// 航班：每趟約 12 秒、靠岸停 3 秒；從渡口島出發 → 穿過開口 → 迎賓島 → 再回去
+const LEG = 12, DWELL = 3, CYCLE = 2 * (LEG + DWELL);
+const smooth = (x) => x * x * (3 - 2 * x);
+animators.push((t) => {
+  const c = t % CYCLE;
+  let k, back;
+  if (c < DWELL) { k = 0; back = false; }
+  else if (c < DWELL + LEG) { k = smooth((c - DWELL) / LEG); back = false; }
+  else if (c < 2 * DWELL + LEG) { k = 1; back = true; }
+  else { k = 1 - smooth((c - 2 * DWELL - LEG) / LEG); back = true; }
+  raft.position.lerpVectors(stopDock, stopGate, k);
+  raft.position.y = -3.22 + Math.sin(t * 1.3) * 0.06;
+  // 船頭朝著要去的方向：去程朝迎賓島，回程朝渡口島
+  raft.rotation.y = Math.atan2(ROUTE_DIR.x, ROUTE_DIR.z) + (back ? Math.PI : 0) + Math.PI;
+  raft.rotation.z = Math.sin(t * 0.9) * 0.03;
+  raft.userData.flag.rotation.y = Math.sin(t * 3) * 0.25;
+  raft.userData.pole.rotation.x = 0.5 + Math.sin(t * 1.6) * 0.25;
+});
 
 /* =========================================================
    高鐵高架橋（照片左側那座），列車隨機雙向出現
@@ -1429,15 +1473,10 @@ COURSES.forEach((c) => addTag(islands[c.key], `${c.isle}${c.game ? ' 🎮' : ''}
 outer.forEach((o) => addTag(islands[o.key], o.title, 'small', 5.5));
 addTag(gateIsl, GATE.isle, 'small', 5.5);
 COURSES.filter((c) => c.pm).forEach((c) => addTag(islands[c.pm.key], `${c.pm.emoji} ${c.pm.isle}`, 'small', 3.4));
-{
-  const b = document.createElement('a');
-  b.className = 'tag ferry-tag';
-  b.href = SIGNUP_URL; b.target = '_blank'; b.rel = 'noopener';
-  b.innerHTML = '<i></i><span>🛶 搭船登島</span>';
-  labelsEl.appendChild(b);
-  // 登島是重要入口：標籤排在佛堂島和課程島之後、其他小標籤之前，疊到時讓小標籤先藏起來
-  tags.splice(1 + COURSES.length, 0, { el: b, isl: { x: ferry.position.x, z: ferry.position.z }, h: 0 });
-}
+addTag(dockIsl, '🛶 渡口島・登島', 'small dock-tag', 4.5);
+// 登島是重要入口：渡口島的標籤排在佛堂島和課程島之後、其他小標籤之前
+tags.splice(1 + COURSES.length, 0, tags.pop());
+
 const tmpV = new THREE.Vector3();
 // 標籤避讓：依序擺放（佛堂島 → 課程島 → 外圈與下午島），會疊到前面標籤的就先藏起來
 const placed = [];
@@ -1620,21 +1659,19 @@ function renderPanel() {
     title = o.isle; info = `已登島 ${isl.joined}/${o.size}`;
     html = `<header><span class="eyebrow">幹部島・${esc(o.what)}</span><h2>${esc(o.isle)}</h2>
       <p class="sub">${o.key === GATE.key ? '站在佛堂正門前，第一個迎接大家登島。' : `${esc(o.group)}的 ${o.size} 位幹部`}</p></header>
-      ${o.key === GATE.key ? `<div class="cta"><p>歡迎登島！從這裡穿過迎賓牌樓，就是一整年的課程路線。</p><a href="${SIGNUP_URL}" target="_blank" rel="noopener">🛶 我要登島</a></div>` : ''}
+      ${o.key === GATE.key ? `<div class="cta"><p>歡迎登島！竹筏從渡口島載大家到這裡上岸，穿過迎賓牌樓，就是一整年的課程路線。</p><a href="${SIGNUP_URL}" target="_blank" rel="noopener">🛶 我要登島</a></div>` : ''}
       ${bars('登島進度', [['已登島', isl.joined], ['還沒登島', o.size - isl.joined]], o.size)}
       <div class="bars"><h3>幹部名單（點一下看執掌）</h3><div class="roster">${o.slots.map((sl) => {
         const on = joinedUids.has(sl.uid);
         return `<button class="who" data-slot="${sl.id}"><i style="background:${on ? o.color : 'transparent'};border-color:${o.color}"></i><span>${esc(sl.role)}</span><b>${esc(sl.masked)}</b><em data-on="${on}">${on ? '已登島' : '還沒登島'}</em></button>`;
       }).join('')}</div></div>
       <p class="note">島上的小人偶就是這一組的幹部，登島後會從半透明變成這一組的顏色，戴金色小帽的是組長。點小人偶也可以看執掌。</p>`;
-  } else if (isl.kind === 'game') {
-    const n = (v) => (v == null ? '—' : v);
-    title = '遊戲樂園'; info = '法會小天使・褪下仙衣';
-    html = `<header><span class="eyebrow">外圈・互動小遊戲</span><h2>遊戲樂園</h2><p class="sub">玩的人越多，摩天輪轉得越快。</p></header>
-      <div class="stats"><div class="stat"><b>${n(GAMES.start)}</b><span>開始</span></div><div class="stat"><b>${n(GAMES.finish)}</b><span>完成</span></div><div class="stat"><b>${n(GAMES.share)}</b><span>分享</span></div></div>
-      <ul class="prog"><li><span>小遊戲</span><a href="../game/fahui-angel-25d.html?v=2" target="_blank" rel="noopener">法會小天使</a>（新道親法會島）</li>
-      <li><span>小遊戲</span><a href="../game/xianyi.html?v=6" target="_blank" rel="noopener">褪下仙衣：八十億分之一</a>（活成自己喜歡的樣子島）</li></ul>
-      <p class="note">人次統計還沒接上（遊戲統計的網址尚未設定），先顯示「—」。</p>`;
+  } else if (isl.kind === 'dock') {
+    title = '渡口島'; info = '登島報名處・竹筏往返迎賓島';
+    html = `<header><span class="eyebrow">登島報名處</span><h2>🛶 渡口島</h2>
+      <p class="sub">還沒登島的夥伴，從這裡搭竹筏，穿過好玩島和歡樂島之間的開口，到迎賓島上岸，再穿過迎賓牌樓就登島了。</p></header>
+      <div class="cta"><p>填好報名表，就是買好船票。報名後，你的小人偶會出現在佛堂廣場上。</p><a href="${SIGNUP_URL}" target="_blank" rel="noopener">🛶 填寫報名表</a></div>
+      <p class="note">竹筏在渡口島和公關禮節島之間固定往返，每趟大約 12 秒，靠岸停 3 秒。點竹筏也可以直接打開報名表。</p>`;
   }
   document.getElementById('panelBody').innerHTML = html;
   // 已經下載好（快取）的照片不會再觸發 onload，直接顯示
@@ -1748,7 +1785,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
     hoverQueued = false;
     ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, ferryHit), false).length ? 'pointer' : '';
+    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit), false).length ? 'pointer' : '';
   });
 });
 renderer.domElement.addEventListener('pointerup', (e) => {
@@ -1756,7 +1793,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   ray.setFromCamera(ndc, camera);
   // 先打到任何物件，再往上找它屬於哪座島
-  if (ray.intersectObjects(ferryHit, false).length) { openSignup(); return; }
+  if (ray.intersectObjects(raftHit, false).length) { openSignup(); return; }
   const hit = ray.intersectObjects(Object.values(islands).map((i) => i.group), true)[0];
   // 點到海面：收起資訊卡和時光捲軸，把畫面還給群島
   if (!hit) { setUI({ panel: 'closed', dock: false }); return; }
@@ -1836,11 +1873,11 @@ function renderNav() {
   const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島・填寫報名表</span></a>
-    <h3>中央</h3>${navItem('temple', '佛堂島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}
+    <h3>中央</h3>${navItem('temple', '佛堂島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
-    <h3>遊戲</h3>${navItem('game', '遊戲樂園')}
+    <h3>小遊戲</h3>${navItem('c5', '法會小天使 🎮', '法會島')}${navItem('c9', '褪下仙衣 🎮', '歡樂島')}
     ${standalone ? '' : '<p class="tip">📱 加到手機桌面：iPhone 用 Safari 打開，點下方「分享」→「加入主畫面」；Android 用 Chrome 打開，點右上角選單 →「加到主畫面」。</p>'}`;
 }
 function showNavPop(open) {
@@ -1975,11 +2012,6 @@ async function loadData() {
   busy = true;
   try {
     await loadPeople();
-    try {
-      const r = await fetch('../game/stats.json', { cache: 'no-store' });
-      if (r.ok) { const s = await r.json(); if (s.updated) Object.assign(GAMES, { start: s.start, finish: s.finish, share: s.share }); }
-    } catch (e) {}
-    gameSpeed = 1 + Math.min(4, (GAMES.finish || 0) / 50);
     setStatus();
     lastView = '';
     applyDate();
