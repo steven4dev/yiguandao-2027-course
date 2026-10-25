@@ -92,15 +92,27 @@
     font-size: 14px; font-weight: 700; color: var(--brick); text-decoration: none; }
   .navpop a.board-item:hover { background: var(--chip); }
   /* 點開島時，品牌卡自動收成左上角一顆小膠囊；點膠囊可以暫時展開 */
-  .brand-toggle { display: none; position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border: 0; border-radius: 50%;
-    background: transparent; color: var(--muted); font-size: 14px; cursor: pointer; }
+  /* 收合／展開都用同一段 0.32 秒的線性轉場：卡片縮放、文字淡出、底下幾行往上收 */
+  .brand { --bt: 0.32s linear; transition: background 0.6s linear, border-color 0.6s linear, padding var(--bt), max-width var(--bt); }
+  .brand { overflow: hidden; }
+  .brand h1 { white-space: nowrap; transition: font-size var(--bt); }
+  .brand h1 small { display: inline-block; max-width: 22em; max-height: 2em; overflow: hidden; white-space: nowrap; vertical-align: -0.2em;
+    transition: max-width var(--bt), max-height var(--bt), margin var(--bt), opacity var(--bt); }
+  .brand-more { display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--bt), opacity var(--bt), margin var(--bt), visibility 0s; }
+  .brand-more > div { display: grid; gap: 4px; min-height: 0; overflow: hidden; padding: 0 8px 8px; margin: 0 -8px -8px; }
+  .brand-toggle { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border: 0; border-radius: 50%; display: grid; place-items: center;
+    background: transparent; color: var(--muted); font-size: 14px; cursor: pointer; opacity: 0; visibility: hidden;
+    transition: opacity var(--bt), top var(--bt), transform var(--bt), visibility 0s linear 0.32s; transform: rotate(180deg); }
   .brand-toggle:hover { background: var(--chip); }
   .brand-toggle:focus-visible { outline: 2px solid var(--jade); outline-offset: 1px; }
   .brand.foldable { padding-right: 40px; }
-  .brand.foldable .brand-toggle { display: grid; place-items: center; }
-  .brand.brand-mini { padding: 6px 40px 6px 14px; cursor: pointer; }
+  .brand.foldable .brand-toggle { opacity: 1; visibility: visible; transition: opacity var(--bt), top var(--bt), transform var(--bt), visibility 0s; }
+  .brand.brand-mini { padding: 6px 40px 6px 14px; max-width: 84px; cursor: pointer; }
+  .brand.brand-mini .brand-more > div { white-space: nowrap; }
   .brand.brand-mini h1 { font-size: 17px; }
-  .brand.brand-mini h1 small, .brand.brand-mini .count, .brand.brand-mini .board, .brand.brand-mini .status, .brand.brand-mini .ver { display: none; }
+  .brand.brand-mini h1 small { max-width: 0; max-height: 0; margin: 0; opacity: 0; }
+  .brand.brand-mini .brand-more { grid-template-rows: 0fr; opacity: 0; margin-top: -4px; visibility: hidden;
+    transition: grid-template-rows var(--bt), opacity var(--bt), margin var(--bt), visibility 0s linear 0.32s; }
   .brand.brand-mini .brand-toggle { top: 50%; transform: translateY(-50%); }
   .brand .count b { font-family: var(--font-display); font-size: 18px; color: var(--brick); font-variant-numeric: tabular-nums; margin-right: 2px; }
 
@@ -260,7 +272,7 @@
     .chip .hint { display: none; }
     .tag.small:not(.dock-tag) { display: none; }
   }
-  @media (prefers-reduced-motion: reduce) { body, .card { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { body, .card, .brand *, .brand-more { transition: none !important; } }
 </style>
 <style>
   body { margin: 0; }
@@ -274,12 +286,14 @@
 <div id="labels"></div>
 
 <div class="card brand" id="brand">
-  <button class="brand-toggle" id="brandToggle" type="button" aria-expanded="true" aria-label="收合品牌卡" title="收合">▴</button>
+  <button class="brand-toggle" id="brandToggle" type="button" aria-expanded="true" aria-label="收合品牌卡" title="收合">▾</button>
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
+  <div class="brand-more"><div>
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島<small>填寫報名表</small></a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.27</span>
+  <span class="ver">v261025.28</span>
+  </div></div>
 </div>
 
 <div class="mapctl">
@@ -1757,7 +1771,6 @@ function setUI(next) {
   brand.classList.toggle('foldable', foldable);
   brand.classList.toggle('brand-mini', mini);
   const bt = document.getElementById('brandToggle');
-  bt.textContent = mini ? '▾' : '▴';
   bt.setAttribute('aria-expanded', String(!mini));
   bt.setAttribute('aria-label', mini ? '展開品牌卡' : '收合品牌卡');
   bt.title = mini ? '展開' : '收合';
