@@ -247,7 +247,7 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.10</span>
+  <span class="ver">v261025.11</span>
 </div>
 
 <div class="mapctl">
@@ -1368,6 +1368,8 @@ dayInput.value = Math.min(+dayInput.max, Math.max(0, dayIndex(todayISO)));
 const curISO = () => iso(new Date(DAY0.getTime() + +dayInput.value * MS_DAY));
 
 const STATUS_TEXT = { plan: '籌備中', soon: '即將開始', today: '今天上課', done: '已完成' };
+// 時光捲軸拖到別的日期時，「今天上課」改說「上課當天」，免得以為真的是今天
+const statusText = (s) => (s === 'today' && curISO() !== todayISO ? '上課當天' : STATUS_TEXT[s] || '');
 function courseStatus(c, now) {
   const diff = dayIndex(c.date) - dayIndex(now);
   if (diff > 30) return 'plan';
@@ -1426,7 +1428,7 @@ function applyDate() {
   const d = new Date(now + 'T00:00:00+08:00');
   const dateLabel = now.replace(/-/g, '/') + '（' + '日一二三四五六'[d.getDay()] + '）';
   const next = COURSES.find((c) => c.date >= now), left = next ? dayIndex(next.date) - dayIndex(now) : 0;
-  const nextText = next ? (left === 0 ? `今天就是「${next.name}」` : `距離「${next.name}」還有 ${left} 天`) : '全年課程結束';
+  const nextText = next ? (left === 0 ? (now === todayISO ? `今天就是「${next.name}」` : `這一天是「${next.name}」`) : `距離「${next.name}」還有 ${left} 天`) : '全年課程結束';
   document.getElementById('dateText').textContent = dateLabel;
   document.getElementById('dateHint').textContent = (now === todayISO ? '今天・' : '') + nextText;
   document.getElementById('chipDate').textContent = dateLabel + (now === todayISO ? '・今天' : '');
@@ -1478,10 +1480,10 @@ function renderPanel() {
     const c = isl.course, s = courseStatus(c, now), diff = dayIndex(c.date) - dayIndex(now);
     const d = new Date(c.date + 'T00:00:00+08:00');
     const order = COURSES.indexOf(c) + 1;
-    title = c.name; info = `${c.date.slice(5).replace('-', '/')}・${STATUS_TEXT[s]}${diff > 0 ? `・還有 ${diff} 天` : ''}`;
+    title = c.name; info = `${c.date.slice(5).replace('-', '/')}・${statusText(s)}${diff > 0 ? `・還有 ${diff} 天` : ''}`;
     const look = { plan: '島上還搭著鷹架，地標是半透明的，等課程接近就會蓋好。', soon: '地標已經蓋好，就等大家上島。', today: '大家都上島了！', done: '這堂課結束了，島上開滿了花。' }[s];
     html = `<header><span class="eyebrow">第 ${order} 站・${c.date.replace(/-/g, '/')}（${'日一二三四五六'[d.getDay()]}）</span><h2>${esc(c.name)}</h2><p class="sub">${esc(c.sub)}</p></header>
-      <span class="pill" data-s="${s}"><i></i>${STATUS_TEXT[s]}${diff > 0 ? `・還有 ${diff} 天` : diff < 0 ? `・${-diff} 天前` : ''}</span>
+      <span class="pill" data-s="${s}"><i></i>${statusText(s)}${diff > 0 ? `・還有 ${diff} 天` : diff < 0 ? `・${-diff} 天前` : ''}</span>
       <ul class="prog">${c.prog.map(([k, v]) => `<li><span>${esc(k)}</span>${esc(v)}</li>`).join('')}</ul>
       ${c.pm ? `<button class="back" data-go="${c.pm.key}">→ 看下午的${esc(c.pm.name)}島 ${c.pm.emoji}</button>` : ''}
       ${c.game ? `<a class="gamecta" href="${c.game.url}" target="_blank" rel="noopener">
@@ -1492,10 +1494,10 @@ function renderPanel() {
   } else if (isl.kind === 'pm') {
     const c = isl.course, pm = c.pm, s = courseStatus(c, now), diff = dayIndex(c.date) - dayIndex(now);
     const d = new Date(c.date + 'T00:00:00+08:00');
-    title = pm.name; info = `${c.date.slice(5).replace('-', '/')} 下午・${STATUS_TEXT[s]}`;
+    title = pm.name; info = `${c.date.slice(5).replace('-', '/')} 下午・${statusText(s)}`;
     const dir = '../img/Vegetarian%20Cooking%20Champion/';
     html = `<header><span class="eyebrow">第 ${COURSES.indexOf(c) + 1} 站・下午活動・${c.date.replace(/-/g, '/')}（${'日一二三四五六'[d.getDay()]}）</span><h2>${esc(pm.name)} ${pm.emoji}</h2><p class="sub">${esc(pm.who)}</p></header>
-      <span class="pill" data-s="${s}"><i></i>${STATUS_TEXT[s]}${diff > 0 ? `・還有 ${diff} 天` : diff < 0 ? `・${-diff} 天前` : ''}</span>
+      <span class="pill" data-s="${s}"><i></i>${statusText(s)}${diff > 0 ? `・還有 ${diff} 天` : diff < 0 ? `・${-diff} 天前` : ''}</span>
       ${pm.desc ? `<p class="sub">${esc(pm.desc)}</p>` : ''}
       ${pm.photos ? `<div class="bars"><h3>講師作品（點照片看大圖）</h3><div class="photos">${pm.photos.map((f) => `<a href="${dir}${f}.jpg" target="_blank" rel="noopener"><img src="${dir}thumb/${f}.webp" alt="蔬食料理王講師作品照片" loading="lazy"></a>`).join('')}</div></div>` : ''}
       <button class="back" data-go="${c.key}">← 回到上午：${esc(c.name)}</button>`;
@@ -1685,14 +1687,9 @@ $('home').onclick = () => { setUI({ panel: 'closed', dock: false }); showNavPop(
 
 /* ---------- 一年的課程路線：佛堂島 → 每堂課（有下午副課就接著下午島） ---------- */
 const TOUR = ['temple', ...COURSES.flatMap((c) => (c.pm ? [c.key, c.pm.key] : [c.key]))];
-const courseOf = (key) => COURSES.find((c) => c.key === key || (c.pm && c.pm.key === key));
 const tourIndex = () => TOUR.indexOf(String(selected).startsWith('p:') ? 'temple' : selected);
-// 走到某一站：日期跟著跳到那堂課（看得到上課當天的樣子），佛堂島回到今天
-function goTo(key) {
-  const c = courseOf(key);
-  dayInput.value = Math.max(0, dayIndex(c ? c.date : todayISO));
-  select(key);
-}
+// 走到某一站：只換島、不動日期，每座島顯示的都是時光捲軸那一天（預設今天）的真實狀態
+const goTo = (key) => select(key);
 function step(d) {
   const i = tourIndex(), n = TOUR.length;
   goTo(TOUR[i < 0 ? (d > 0 ? 0 : n - 1) : (i + d + n) % n]);
@@ -1726,7 +1723,7 @@ function renderNav() {
   const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <h3>中央</h3>${navItem('temple', '全真道院・佛堂島', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}
-    <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${md(c.date)} ${c.name}${c.game ? ' 🎮' : ''}`, STATUS_TEXT[islands[c.key].status] || '') +
+    <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${md(c.date)} ${c.name}${c.game ? ' 🎮' : ''}`, statusText(islands[c.key].status)) +
       (c.pm ? navItem(c.pm.key, `下午・${c.pm.name} ${c.pm.emoji}`, '', 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o.group, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
     <h3>遊戲</h3>${navItem('game', '遊戲樂園')}
