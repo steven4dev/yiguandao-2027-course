@@ -158,6 +158,8 @@
   .panel.folded .pbody { display: none; }
   .pbody { overflow: auto; padding: 0 16px 16px; margin-top: -30px; display: grid; gap: 12px; align-content: start; }
   .panel header { display: grid; gap: 4px; padding-right: 72px; }
+  .panel.touring header { padding-right: 168px; }
+  @media (max-width: 720px) { .panel.touring header { padding-right: 140px; } }
   .eyebrow { font-size: 11px; letter-spacing: 0.14em; color: var(--muted); }
   .panel h2 { margin: 0; font-family: var(--font-display); font-size: 24px; letter-spacing: 0.06em; line-height: 1.2; text-wrap: balance; }
   .panel .sub { margin: 0; color: var(--muted); line-height: 1.6; }
@@ -247,7 +249,7 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.11</span>
+  <span class="ver">v261025.12</span>
 </div>
 
 <div class="mapctl">
@@ -833,7 +835,6 @@ function syncPlaza(list) {
 /* =========================================================
    課程島的地標
    ========================================================= */
-const ghostMat = new THREE.MeshLambertMaterial({ color: '#ffffff', transparent: true, opacity: 0.38, depthWrite: false });
 const animators = [];
 function carousel(g) {
   const spin = new THREE.Group(); g.add(spin);
@@ -1082,7 +1083,6 @@ const MARKS = {
 
 /* ---------- 課程島：內圈依日期順時針排列 ---------- */
 const RING1 = 46, R_COURSE = 8;
-const scaffoldMat = lam('#c9a77a');
 COURSES.forEach((c, i) => {
   const ang = (-i * 40 * Math.PI) / 180;
   const isl = makeIsland(c.key, R_COURSE, Math.sin(ang) * RING1, Math.cos(ang) * RING1, 'course');
@@ -1096,11 +1096,6 @@ COURSES.forEach((c, i) => {
   // 小步道與樹
   mesh(new THREE.BoxGeometry(1.4, 0.05, R_COURSE * 0.8), lam(C.pave), 0, 0.03, 0, g, false).rotation.y = ang;
   for (let k = 0; k < 4; k++) { const a = ang + 1.0 + k * 1.3, r = R_COURSE * 0.68; bush(Math.sin(a) * r, Math.cos(a) * r, 0.7 + (k % 2) * 0.2, g); }
-  // 籌備中：鷹架
-  const scaf = new THREE.Group(); g.add(scaf);
-  for (const [x, z] of [[-2.6, -2.6], [2.6, -2.6], [2.6, 2.6], [-2.6, 2.6]]) mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.4, 6), scaffoldMat, x, 1.7, z, scaf);
-  for (const y of [1.2, 2.6]) for (const [x, z, ry] of [[0, -2.6, 0], [0, 2.6, 0], [-2.6, 0, Math.PI / 2], [2.6, 0, Math.PI / 2]]) mesh(new THREE.BoxGeometry(5.2, 0.08, 0.08), scaffoldMat, x, y, z, scaf).rotation.y = ry;
-  isl.scaffold = scaf;
   // 完成後：開花
   const flowers = new THREE.Group(); g.add(flowers);
   const petals = ['#f2a7b0', '#f4d35e', '#ffffff', '#c9a2e0'];
@@ -1111,8 +1106,6 @@ COURSES.forEach((c, i) => {
   isl.flowers = flowers;
   // 上課當天：人潮
   isl.crowd = [];
-  // 記住地標原本的材質，籌備中時換成半透明
-  mark.traverse((m) => { if (m.isMesh) m.userData.mat = m.material; });
 });
 
 /* ---------- 木橋：佛堂 → 第一堂課，之後依序串起一年 ---------- */
@@ -1157,7 +1150,6 @@ COURSES.filter((c) => c.pm).forEach((c) => {
   for (let k = 0; k < 14; k++) { const a = k * 2.39996, r = 2.6 + (k % 4) * 0.4; mesh(new THREE.SphereGeometry(0.12, 8, 6), lam(petals[k % 4]), Math.sin(a) * r, 0.12, Math.cos(a) * r, flowers, false); }
   isl.flowers = flowers;
   isl.crowd = [];
-  mark.traverse((m) => { if (m.isMesh) m.userData.mat = m.material; });
   bridge(parent, isl);
 });
 
@@ -1367,18 +1359,15 @@ dayInput.max = dayIndex('2027-12-31');
 dayInput.value = Math.min(+dayInput.max, Math.max(0, dayIndex(todayISO)));
 const curISO = () => iso(new Date(DAY0.getTime() + +dayInput.value * MS_DAY));
 
-const STATUS_TEXT = { plan: '籌備中', soon: '即將開始', today: '今天上課', done: '已完成' };
+// 每座島一開始就是蓋好的樣子；狀態只分還沒上、上課當天、上過了
+const STATUS_TEXT = { soon: '即將到來', today: '今天上課', done: '已完成' };
 // 時光捲軸拖到別的日期時，「今天上課」改說「上課當天」，免得以為真的是今天
 const statusText = (s) => (s === 'today' && curISO() !== todayISO ? '上課當天' : STATUS_TEXT[s] || '');
 function courseStatus(c, now) {
   const diff = dayIndex(c.date) - dayIndex(now);
-  if (diff > 30) return 'plan';
   if (diff > 0) return 'soon';
   if (diff === 0) return 'today';
   return 'done';
-}
-function setGhost(group, on) {
-  group.traverse((m) => { if (m.isMesh && m.userData.mat) { m.material = on ? ghostMat : m.userData.mat; m.castShadow = !on; } });
 }
 
 // 課程當天聚在島上的人：當時已報名的人數，最多 40 位
@@ -1403,15 +1392,13 @@ function applyDate() {
     const isl = islands[c.key], s = courseStatus(c, now);
     if (isl.status !== s) {
       isl.status = s;
-      setGhost(isl.mark, s === 'plan');
-      isl.scaffold.visible = s === 'plan';
       isl.flowers.visible = s === 'done';
       isl.tag.dataset.s = s;
     }
     syncCrowd(isl, s === 'today' ? Math.min(40, list.length) : 0);
     if (c.pm) {
       const pi = islands[c.pm.key];
-      if (pi.status !== s) { pi.status = s; setGhost(pi.mark, s === 'plan'); pi.flowers.visible = s === 'done'; pi.tag.dataset.s = s; }
+      if (pi.status !== s) { pi.status = s; pi.flowers.visible = s === 'done'; pi.tag.dataset.s = s; }
       syncCrowd(pi, s === 'today' ? Math.min(16, list.length) : 0);
     }
   }
@@ -1479,10 +1466,9 @@ function renderPanel() {
   } else if (isl.kind === 'course') {
     const c = isl.course, s = courseStatus(c, now), diff = dayIndex(c.date) - dayIndex(now);
     const d = new Date(c.date + 'T00:00:00+08:00');
-    const order = COURSES.indexOf(c) + 1;
     title = c.name; info = `${c.date.slice(5).replace('-', '/')}・${statusText(s)}${diff > 0 ? `・還有 ${diff} 天` : ''}`;
-    const look = { plan: '島上還搭著鷹架，地標是半透明的，等課程接近就會蓋好。', soon: '地標已經蓋好，就等大家上島。', today: '大家都上島了！', done: '這堂課結束了，島上開滿了花。' }[s];
-    html = `<header><span class="eyebrow">第 ${order} 站・${c.date.replace(/-/g, '/')}（${'日一二三四五六'[d.getDay()]}）</span><h2>${esc(c.name)}</h2><p class="sub">${esc(c.sub)}</p></header>
+    const look = { soon: '島已經蓋好了，就等大家一起登島。', today: '大家都上島了！', done: '這堂課結束了，島上開滿了花。' }[s];
+    html = `<header><span class="eyebrow">${c.date.replace(/-/g, '/')}（${'日一二三四五六'[d.getDay()]}）</span><h2>${esc(c.name)}</h2><p class="sub">${esc(c.sub)}</p></header>
       <span class="pill" data-s="${s}"><i></i>${statusText(s)}${diff > 0 ? `・還有 ${diff} 天` : diff < 0 ? `・${-diff} 天前` : ''}</span>
       <ul class="prog">${c.prog.map(([k, v]) => `<li><span>${esc(k)}</span>${esc(v)}</li>`).join('')}</ul>
       ${c.pm ? `<button class="back" data-go="${c.pm.key}">→ 看下午的${esc(c.pm.name)}島 ${c.pm.emoji}</button>` : ''}
@@ -1496,7 +1482,7 @@ function renderPanel() {
     const d = new Date(c.date + 'T00:00:00+08:00');
     title = pm.name; info = `${c.date.slice(5).replace('-', '/')} 下午・${statusText(s)}`;
     const dir = '../img/Vegetarian%20Cooking%20Champion/';
-    html = `<header><span class="eyebrow">第 ${COURSES.indexOf(c) + 1} 站・下午活動・${c.date.replace(/-/g, '/')}（${'日一二三四五六'[d.getDay()]}）</span><h2>${esc(pm.name)} ${pm.emoji}</h2><p class="sub">${esc(pm.who)}</p></header>
+    html = `<header><span class="eyebrow">下午活動・${c.date.replace(/-/g, '/')}（${'日一二三四五六'[d.getDay()]}）</span><h2>${esc(pm.name)} ${pm.emoji}</h2><p class="sub">${esc(pm.who)}</p></header>
       <span class="pill" data-s="${s}"><i></i>${statusText(s)}${diff > 0 ? `・還有 ${diff} 天` : diff < 0 ? `・${-diff} 天前` : ''}</span>
       ${pm.desc ? `<p class="sub">${esc(pm.desc)}</p>` : ''}
       ${pm.photos ? `<div class="bars"><h3>講師作品（點照片看大圖）</h3><div class="photos">${pm.photos.map((f) => `<a href="${dir}${f}.jpg" target="_blank" rel="noopener"><img src="${dir}thumb/${f}.webp" alt="蔬食料理王講師作品照片" loading="lazy"></a>`).join('')}</div></div>` : ''}
@@ -1706,6 +1692,8 @@ function syncTour() {
   $('tourPos').textContent = label;
   $('panelPos').textContent = on ? `${i + 1}/${TOUR.length}` : '';
   $('panelTour').hidden = !on;
+  // 右上角有切換按鈕時，標題區讓出空間
+  panel.classList.toggle('touring', on);
 }
 
 /* ---------- 導覽：島嶼目錄 ---------- */
