@@ -22,6 +22,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+<script>
+  // 記住上次選的主題（只存在自己的瀏覽器），預設淺色
+  try { if (localStorage.getItem('signup-theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch (e) {}
+</script>
 <style>
   :root {
     color-scheme: light;
@@ -48,9 +52,62 @@
     --hero: linear-gradient(180deg, #DCEFFB, #EEF7F2 55%, #FDF3D8);
     --eyebrow: linear-gradient(135deg, #F59E0B, #EA580C);
     --shadow: 0 10px 25px -10px rgba(5, 150, 105, 0.22);
+    --on-color: #FFFFFF;
     --serif: 'Noto Serif TC', serif;
     --sans: 'Noto Sans TC', sans-serif;
   }
+
+  /* 暗色主題：配色參考第49期幹部續任分析 */
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg-main: #0F172A;
+    --bg-card: #1E293B;
+    --bg-soft: #273449;
+    --text-primary: #F1F5F9;
+    --text-secondary: #CBD5E1;
+    --text-muted: #94A3B8;
+    --accent: #38BDF8;
+    --accent-soft: rgba(56, 189, 248, 0.14);
+    --qian: #818CF8;
+    --qian-soft: rgba(129, 140, 248, 0.16);
+    --kun: #F472B6;
+    --kun-soft: rgba(244, 114, 182, 0.16);
+    --green: #34D399;
+    --green-soft: rgba(52, 211, 153, 0.14);
+    --gold: #FBBF24;
+    --gold-soft: rgba(251, 191, 36, 0.14);
+    --line: rgba(203, 213, 225, 0.14);
+    --bar: #38BDF8;
+    --bar-hover: #7DD3FC;
+    --bar-out: #3B4A63;
+    --hero: linear-gradient(180deg, #0B1B36, #0F172A 70%);
+    --shadow: 0 10px 25px -8px rgba(0, 0, 0, 0.4);
+    --on-color: #0F172A;
+  }
+
+  /* 主題切換鈕 */
+  .theme-btn {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 30;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+  }
+  .theme-btn:hover { color: var(--accent); }
+  .theme-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .theme-btn svg { width: 20px; height: 20px; }
+  .theme-btn .sun { display: none; }
+  :root[data-theme="dark"] .theme-btn .sun { display: block; }
+  :root[data-theme="dark"] .theme-btn .moon { display: none; }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -90,7 +147,7 @@
     font-family: var(--sans);
     font-size: 0.5em;
     font-weight: 900;
-    color: #fff;
+    color: var(--on-color);
     background: var(--accent);
     padding: 2px 16px 3px;
     border-radius: 999px;
@@ -161,7 +218,7 @@
   .split div {
     display: grid;
     place-items: center;
-    color: #fff;
+    color: var(--on-color);
     font-weight: 700;
     font-size: 0.92rem;
     min-width: 2.6em;
@@ -329,7 +386,7 @@
     place-items: center;
     font-size: 0.8rem;
     font-weight: 900;
-    color: #fff;
+    color: var(--on-color);
     background: var(--text-muted);
     flex: none;
   }
@@ -380,6 +437,11 @@
 </head>
 <body>
 
+<button type="button" class="theme-btn" id="themeBtn" aria-label="切換暗色主題" aria-pressed="false" title="切換暗色／淺色主題">
+  <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+  <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+</button>
+
 <header class="hero">
   <div class="wrap">
     <span class="eyebrow">報名資料・即時分析</span>
@@ -388,7 +450,7 @@
     <button type="button" class="live" id="live" data-state="loading" title="點一下立即重新讀取">
       <span class="dot" aria-hidden="true">…</span><span id="liveText">正在連線最新資料…</span>
     </button>
-    <div class="ver">版本 <span id="ver">v261025.03</span></div>
+    <div class="ver">版本 <span id="ver">v261025.04</span></div>
   </div>
 </header>
 
@@ -783,6 +845,22 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
   setInterval(() => { if (!document.hidden) load(); }, REFRESH_MS);
   load();
+
+  /* ---------- 主題切換 ---------- */
+  const themeBtn = $('themeBtn');
+  function applyTheme(dark) {
+    if (dark) document.documentElement.dataset.theme = 'dark';
+    else delete document.documentElement.dataset.theme;
+    themeBtn.setAttribute('aria-pressed', dark);
+    themeBtn.setAttribute('aria-label', dark ? '切換淺色主題' : '切換暗色主題');
+    document.querySelector('meta[name="theme-color"]').content = dark ? '#0F172A' : '#EEF7F2';
+  }
+  applyTheme(document.documentElement.dataset.theme === 'dark');
+  themeBtn.addEventListener('click', () => {
+    const dark = document.documentElement.dataset.theme !== 'dark';
+    applyTheme(dark);
+    try { localStorage.setItem('signup-theme', dark ? 'dark' : 'light'); } catch (e) {}
+  });
 
   /* ---------- 提示框 ---------- */
   const tip = $('tip');
