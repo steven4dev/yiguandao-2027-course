@@ -443,6 +443,11 @@
   :root[data-theme="dark"] .toast { color: var(--on-color); }
   :root[data-theme="dark"] #moreCue { background: linear-gradient(to bottom, rgba(15,23,42,0), rgba(15,23,42,.92) 70%, var(--bg)); }
 
+  /* 切換主題時用 0.6 秒線性淡入淡出，不會一下子刺眼 */
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .6s; animation-timing-function: linear; }
+  html.theme-anim, html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after {
+    transition: background-color .6s linear, color .6s linear, border-color .6s linear, box-shadow .6s linear, fill .6s linear, stroke .6s linear !important;
+  }
   /* 主題切換鈕：🌙 切暗色、☀️ 切淺色 */
   .theme-btn { border: 0; background: transparent; color: var(--muted); width: 34px; height: 34px; padding: 6px; display: grid; place-items: center; border-radius: 99px; }
   .theme-btn svg { width: 20px; height: 20px; }
@@ -549,7 +554,7 @@
     <p class="meta">約 12 分鐘・可暫停、可調整播放速度</p>
     <p class="collect" id="collect"></p>
     <a class="home" href="../index.html">🍃 認識 2027 全真社青班</a>
-    <span id="ver">v261025.05</span>
+    <span id="ver">v261025.06</span>
   </section>
 
   <div id="game" hidden style="display:flex;flex-direction:column;height:100%">
@@ -2344,11 +2349,19 @@
   const sysDark = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
   const savedTheme = () => { try { return localStorage.getItem('xianyi-theme'); } catch (e) { return null; } };
   applyTheme(document.documentElement.dataset.theme === 'dark');
-  if (sysDark && sysDark.addEventListener) sysDark.addEventListener('change', e => { if (!savedTheme()) applyTheme(e.matches); });
+  // 切換時 0.6 秒線性淡入淡出；支援的瀏覽器用整頁交叉淡化，其他用顏色漸變
+  function fadeTheme(dark) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return applyTheme(dark);
+    if (document.startViewTransition) return document.startViewTransition(() => applyTheme(dark));
+    const root = document.documentElement;
+    root.classList.add('theme-anim'); applyTheme(dark);
+    clearTimeout(fadeTheme.t); fadeTheme.t = setTimeout(() => root.classList.remove('theme-anim'), 700);
+  }
+  if (sysDark && sysDark.addEventListener) sysDark.addEventListener('change', e => { if (!savedTheme()) fadeTheme(e.matches); });
   themeBtns.forEach(b => b.onclick = () => {
     sfx('tap');
     const dark = document.documentElement.dataset.theme !== 'dark';
-    applyTheme(dark);
+    fadeTheme(dark);
     try {
       if (sysDark && dark === sysDark.matches) localStorage.removeItem('xianyi-theme');
       else localStorage.setItem('xianyi-theme', dark ? 'dark' : 'light');

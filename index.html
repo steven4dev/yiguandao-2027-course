@@ -22,6 +22,15 @@
 <link rel="preconnect" href="https://fontsapi.zeoseven.com" crossorigin>
 <link rel="stylesheet" href="https://fontsapi.zeoseven.com/52/main/result.css">
 <link rel="preload" as="image" href="img/hero.webp" type="image/webp" fetchpriority="high">
+<script>
+  // 預設跟著系統的淺色／深色；自己按過切換鈕就以自己的選擇為準（只存在自己的瀏覽器）
+  (() => {
+    let saved = null;
+    try { saved = localStorage.getItem('home-theme'); } catch (e) {}
+    const sys = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+    if (saved ? saved === 'dark' : sys) document.documentElement.dataset.theme = 'dark';
+  })();
+</script>
 <style>
   :root {
     /* 宮崎駿明亮天空與草原清新配色 (Ghibli Sky & Meadow) */
@@ -1352,6 +1361,60 @@
     .xy-banner { flex-direction: column; align-items: stretch; padding: 14px; gap: 12px; }
     .xy-banner img { width: 100%; }
   }
+
+  /* ───── 暗色主題（配色參考第49期：深藍底、天藍重點） ───── */
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg-main: #0F172A; --bg-card: #1E293B; --bg-panel: #273449; --bg-card-sub: #183029; --bg-sky: #10263A; --bg-sun: #2A2410;
+    --text-primary: #F1F5F9; --text-secondary: #CBD5E1; --text-muted: #94A3B8;
+    --accent-blue: #38BDF8; --accent-blue-light: rgba(56,189,248,.14); --accent-green: #34D399; --accent-green-light: rgba(52,211,153,.14);
+    --accent-gold: #FBBF24; --accent-gold-light: rgba(251,191,36,.14); --accent-teal: #2DD4BF; --accent-teal-light: rgba(45,212,191,.14);
+    --accent-kun: #2DD4BF; --accent-kun-bg: rgba(45,212,191,.1); --accent-qian: #818CF8; --accent-qian-bg: rgba(129,140,248,.12);
+    --border-color: rgba(148,163,184,.22); --border-gold: rgba(251,191,36,.3); --line-color: rgba(203,213,225,.14);
+    --shadow-soft: 0 10px 25px -8px rgba(0,0,0,.45); --shadow-hover: 0 20px 35px -10px rgba(0,0,0,.6);
+  }
+  :root[data-theme="dark"] body { background-image: radial-gradient(circle at 12% 10%, rgba(56,189,248,.1) 0%, transparent 40%), radial-gradient(circle at 88% 60%, rgba(129,140,248,.08) 0%, transparent 45%); }
+  :root[data-theme="dark"] nav.navbar { background: rgba(15,23,42,.9); border-bottom-color: rgba(56,189,248,.2); }
+  :root[data-theme="dark"] header.hero { background-image: linear-gradient(180deg, rgba(15,23,42,0) 78%, rgba(15,23,42,.95) 100%), url("img/hero.webp"); }
+  /* 大圖本身是明亮插畫，上面的標題維持深色字＋白光暈 */
+  :root[data-theme="dark"] header.hero .hero-caption h1 { color: #1E293B; }
+  :root[data-theme="dark"] header.hero .hero-caption .hero-sub { color: #0284C7; }
+  :root[data-theme="dark"] header.hero .hero-tagline { color: #475569; }
+  /* 頁尾也是明亮插畫，文字維持深色 */
+  :root[data-theme="dark"] footer p.copyright, :root[data-theme="dark"] footer .footer-address a.addr-link { color: #475569; }
+  :root[data-theme="dark"] .nav-links a, :root[data-theme="dark"] .phil-card, :root[data-theme="dark"] .org-container, :root[data-theme="dark"] .duty-btn,
+  :root[data-theme="dark"] .flow-box, :root[data-theme="dark"] .sched-card, :root[data-theme="dark"] .tag-more-btn, :root[data-theme="dark"] .cal-subscribe-btn,
+  :root[data-theme="dark"] .signup-modal, :root[data-theme="dark"] .fh-banner { background: var(--bg-card); }
+  :root[data-theme="dark"] .sched-card.special { background: linear-gradient(135deg, #1E293B 0%, #3A1E2B 100%); }
+  :root[data-theme="dark"] .xy-pill { background: rgba(30,41,59,.94); }
+  :root[data-theme="dark"] .xy-banner { background: linear-gradient(135deg, #1E293B 0%, var(--bg-sun) 100%); }
+  :root[data-theme="dark"] .cal-chooser-box { background: #1E293B; color: #F1F5F9; }
+  :root[data-theme="dark"] .cal-chooser-box p, :root[data-theme="dark"] .cal-chooser-box button { color: #94A3B8; }
+  :root[data-theme="dark"] .cal-chooser-box p.cal-hint { color: #FDE68A; background: rgba(251,191,36,.1); }
+  /* 亮色按鈕上的白字改成深色字，才看得清楚 */
+  :root[data-theme="dark"] .team-toggle-btn:hover, :root[data-theme="dark"] .duty-btn:hover, :root[data-theme="dark"] .duty-btn[aria-expanded="true"],
+  :root[data-theme="dark"] .more-btn:hover, :root[data-theme="dark"] .tag-more-btn:hover, :root[data-theme="dark"] .cal-subscribe-btn:hover,
+  :root[data-theme="dark"] .signup-modal-close, :root[data-theme="dark"] footer .footer-address a.nav-btn, :root[data-theme="dark"] .cal-chooser-box a.primary,
+  :root[data-theme="dark"] .xy-btn { color: #0F172A; }
+  :root[data-theme="dark"] .signup-modal-close:hover, :root[data-theme="dark"] footer .footer-address a.nav-btn:hover { background: #7DD3FC; }
+  :root[data-theme="dark"] img:not([src$=".svg"]) { filter: brightness(.92); }
+
+  /* 主題切換鈕：🌙 切暗色、☀️ 切淺色 */
+  .theme-btn { position: absolute; top: 50%; right: 0; transform: translateY(-50%); width: 40px; height: 40px; border: 0; border-radius: 50%;
+    display: grid; place-items: center; background: transparent; color: var(--accent-blue); cursor: pointer; }
+  .theme-btn svg { width: 21px; height: 21px; }
+  .theme-btn .sun { display: none; }
+  :root[data-theme="dark"] .theme-btn .sun { display: block; }
+  :root[data-theme="dark"] .theme-btn .moon { display: none; }
+  .theme-btn:focus-visible { outline: 3px solid var(--accent-blue); outline-offset: 2px; }
+  nav.navbar .nav-links { right: 52px; }
+  @media (max-width: 600px) { .theme-btn { right: 70px; } }
+
+  /* 切換主題時用 0.6 秒線性淡入淡出，不會一下子刺眼 */
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .6s; animation-timing-function: linear; }
+  html.theme-anim, html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after {
+    transition: background-color .6s linear, color .6s linear, border-color .6s linear, box-shadow .6s linear, fill .6s linear, stroke .6s linear !important;
+  }
 </style>
 </head>
 <body>
@@ -1365,6 +1428,7 @@
         <a href="#schedule">📅 年度企劃</a>
         <a href="#org">🤝 同行夥伴</a>
       </div>
+      <button type="button" class="theme-btn" id="themeBtn" aria-label="切換暗色主題" aria-pressed="false" title="切換暗色／淺色主題"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
       <button class="nav-toggle" id="navToggle" aria-label="開啟選單" aria-expanded="false" aria-controls="navLinks" onclick="toggleNav()">
         <span></span><span></span><span></span>
       </button>
@@ -1982,6 +2046,35 @@
       swap(document.body);
       new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) swap(n); else if (n.nodeType === 3 && n.parentNode) swap(n.parentNode); }))).observe(document.body, { childList: true, subtree: true });
     }
+    })();
+
+    // 暗色主題：預設跟著系統；按切換鈕以自己的選擇為準，切回跟系統一樣時恢復跟著系統
+    (function () {
+      var root = document.documentElement, btn = document.getElementById('themeBtn');
+      var sysDark = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+      function saved() { try { return localStorage.getItem('home-theme'); } catch (e) { return null; } }
+      function set(dark) {
+        if (dark) root.dataset.theme = 'dark'; else delete root.dataset.theme;
+        btn.setAttribute('aria-pressed', dark);
+        btn.setAttribute('aria-label', dark ? '切換淺色主題' : '切換暗色主題');
+      }
+      // 切換時 0.6 秒線性淡入淡出；支援的瀏覽器用整頁交叉淡化，其他用顏色漸變
+      function apply(dark) {
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) return set(dark);
+        if (document.startViewTransition) return document.startViewTransition(function () { set(dark); });
+        root.classList.add('theme-anim'); set(dark);
+        clearTimeout(apply.t); apply.t = setTimeout(function () { root.classList.remove('theme-anim'); }, 700);
+      }
+      set(root.dataset.theme === 'dark');
+      if (sysDark && sysDark.addEventListener) sysDark.addEventListener('change', function (e) { if (!saved()) apply(e.matches); });
+      btn.addEventListener('click', function () {
+        var dark = root.dataset.theme !== 'dark';
+        apply(dark);
+        try {
+          if (sysDark && dark === sysDark.matches) localStorage.removeItem('home-theme');
+          else localStorage.setItem('home-theme', dark ? 'dark' : 'light');
+        } catch (e) {}
+      });
     })();
   </script>
 
