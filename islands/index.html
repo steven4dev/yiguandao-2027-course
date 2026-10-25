@@ -279,7 +279,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島<small>填寫報名表</small></a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.26</span>
+  <span class="ver">v261025.27</span>
 </div>
 
 <div class="mapctl">
@@ -1386,6 +1386,56 @@ animators.push((t) => {
   raft.rotation.z = Math.sin(t * 0.9) * 0.03;
   raft.userData.flag.rotation.y = Math.sin(t * 3) * 0.25;
   raft.userData.pole.rotation.x = 0.5 + Math.sin(t * 1.6) * 0.25;
+});
+// 竹筏划過的水花：船尾一路留下白色浪花，兩側推出 V 字小尾浪，慢慢散開、淡掉；靠岸停著時就沒有
+const foamGeo = new THREE.CircleGeometry(0.5, 12).rotateX(-Math.PI / 2);
+const foam = [];
+for (let i = 0; i < 160; i++) {
+  const m = new THREE.Mesh(foamGeo, new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false }));
+  m.visible = false;
+  scene.add(m);
+  foam.push({ m, age: 0, life: 1, size: 1, drift: new THREE.Vector3() });
+}
+let foamI = 0, foamT = null, foamAcc = 0;
+const foamPrev = new THREE.Vector3();
+function puff(pos, size, life, drift) {
+  const f = foam[foamI++ % foam.length];
+  f.m.position.set(pos.x, -3.36, pos.z);
+  f.age = 0; f.life = life; f.size = size; f.drift.copy(drift);
+  f.m.scale.setScalar(size);
+  f.m.visible = true;
+}
+animators.push((t) => {
+  const dt = foamT == null ? 0 : Math.min(0.1, t - foamT);
+  foamT = t;
+  const from = foamPrev.clone(), v = raft.position.clone().sub(from).setY(0);
+  foamPrev.copy(raft.position);
+  const speed = dt > 0 ? v.length() / dt : 0;
+  if (speed > 0.3) {
+    const dir = v.clone().normalize(), side = new THREE.Vector3(-dir.z, 0, dir.x);
+    foamAcc += dt * (6 + speed * 3);
+    const n = Math.floor(foamAcc);
+    foamAcc -= n;
+    // 這一格走過的路平均撒開，畫面卡一下也不會變成一顆一顆斷開的點
+    for (let i = 1; i <= n; i++) {
+      const at = from.clone().addScaledVector(v, i / n);
+      const stern = at.clone().addScaledVector(dir, -2.3).addScaledVector(side, (Math.random() - 0.5) * 1.4);
+      puff(stern, 0.4 + Math.random() * 0.3, 1.6 + Math.random() * 0.8, side.clone().multiplyScalar((Math.random() - 0.5) * 0.5));
+      for (const k of [-1, 1]) {
+        const p = at.clone().addScaledVector(dir, -1.4).addScaledVector(side, k * 1.35);
+        puff(p, 0.25 + Math.random() * 0.15, 1.2 + Math.random() * 0.6, side.clone().multiplyScalar(k * 0.9).addScaledVector(dir, -0.2));
+      }
+    }
+  }
+  for (const f of foam) {
+    if (!f.m.visible) continue;
+    f.age += dt;
+    const a = f.age / f.life;
+    if (a >= 1) { f.m.visible = false; continue; }
+    f.m.position.addScaledVector(f.drift, dt);
+    f.m.scale.setScalar(f.size * (1 + a * 1.4));
+    f.m.material.opacity = 0.85 * (1 - a) * Math.min(1, a * 8);
+  }
 });
 
 /* =========================================================
