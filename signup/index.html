@@ -388,7 +388,7 @@
     <button type="button" class="live" id="live" data-state="loading" title="點一下立即重新讀取">
       <span class="dot" aria-hidden="true">…</span><span id="liveText">正在連線最新資料…</span>
     </button>
-    <div class="ver">版本 <span id="ver">v261025.01</span></div>
+    <div class="ver">版本 <span id="ver">v261025.02</span></div>
   </div>
 </header>
 
@@ -992,8 +992,8 @@
     // 孩童隨行
     const toddler = kidAges.filter(a => a < 3).length, preschool = kidAges.filter(a => a >= 3 && a < 6).length, school = kidAges.filter(a => a >= 6).length;
     $('kidSub').textContent = withKids.length
-      ? `${withKids.length} 位學員攜帶共 ${kidTotal} 位孩童${kidAges.length ? `：0–2 歲 ${toddler} 位、3–5 歲 ${preschool} 位、6 歲以上 ${school} 位` : ''}，可以提早安排兒童照顧與場地。`
-      : '目前沒有學員攜帶孩童隨行。';
+      ? `${withKids.length} 位報名者攜帶共 ${kidTotal} 位孩童${kidAges.length ? `：0–2 歲 ${toddler} 位、3–5 歲 ${preschool} 位、6 歲以上 ${school} 位` : ''}，可以提早安排兒童照顧與場地。`
+      : '目前沒有人攜帶孩童隨行。';
     $('kids').innerHTML = withKids.map(p => `
       <article class="kid">
         <div class="who">${esc(p.name)}</div>
