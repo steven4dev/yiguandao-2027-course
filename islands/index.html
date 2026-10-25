@@ -249,7 +249,7 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.18</span>
+  <span class="ver">v261025.19</span>
 </div>
 
 <div class="mapctl">
@@ -264,7 +264,7 @@
 <div class="card soundpop" id="soundPop" hidden>
   <b>聲音</b>
   <label class="sw"><input type="checkbox" id="sfxOn"><span>環境音效<small>白天鳥叫、晚上蟋蟀和青蛙、高鐵經過</small></span></label>
-  <label class="sw"><input type="checkbox" id="musicOn"><span>輕音樂<small>五聲音階的撥弦小品，晚上會更輕</small></span></label>
+  <label class="sw"><input type="checkbox" id="musicOn"><span>輕音樂<small>音樂盒小曲，晚上會變慢、變輕</small></span></label>
 </div>
 
 <aside class="card panel" id="panel" aria-live="polite" hidden>
@@ -1958,14 +1958,16 @@ function audioInit() {
   lp.type = 'lowpass'; lp.frequency.value = 320;
   SND.waves = ctx.createGain(); SND.waves.gain.value = 0;
   const src = noiseSrc(); src.connect(lp).connect(SND.waves).connect(SND.sfxBus); src.start();
-  // 音樂的空間感：一點回聲
+  // 音樂的空間感：用衰減的噪音做一段殘響，像在小房間裡播放
   SND.musicIn = ctx.createGain();
-  const delay = ctx.createDelay(1), fb = ctx.createGain(), wet = ctx.createGain();
-  delay.delayTime.value = 0.36; fb.gain.value = 0.3; wet.gain.value = 0.35;
+  const rev = ctx.createConvolver(), wet = ctx.createGain(), len = Math.floor(ctx.sampleRate * 2.2);
+  const ir = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
+  rev.buffer = ir; wet.gain.value = 0.3;
   SND.musicIn.connect(SND.musicBus);
-  SND.musicIn.connect(delay); delay.connect(fb).connect(delay); delay.connect(wet).connect(SND.musicBus);
+  SND.musicIn.connect(rev).connect(wet).connect(SND.musicBus);
   const now = ctx.currentTime;
-  Object.assign(SND, { nextBird: now + 1, nextCricket: now, nextFrog: now + 3, nextNote: now + 0.6, nextPad: now + 0.2, padIdx: 0 });
+  Object.assign(SND, { nextBird: now + 1, nextCricket: now, nextFrog: now + 3, nextNote: now + 0.6, step: 0 });
 }
 const noiseSrc = () => { const s = SND.ctx.createBufferSource(); s.buffer = SND.noise; s.loop = true; return s; };
 function env(g, t, attack, peak, dur) {
@@ -2016,26 +2018,39 @@ function frog(t, level) {
     tone('sawtooth', 190, st, 0.16, lp).frequency.linearRampToValueAtTime(150, st + 0.12);
   }
 }
-// 撥弦：三角波加上泛音，亮亮的起音、慢慢變悶，像古箏
-const PENTA = [0, 2, 4, 7, 9];
+// 原創的音樂盒小曲：C 大調、每小節一個和弦，16 小節一輪（A 段＋B 段）
 const midiHz = (m) => 440 * Math.pow(2, (m - 69) / 12);
-function pluck(t, midi, level) {
-  const ctx = SND.ctx, g = ctx.createGain(), lp = ctx.createBiquadFilter();
-  lp.type = 'lowpass';
-  lp.frequency.setValueAtTime(3200, t); lp.frequency.exponentialRampToValueAtTime(900, t + 1.2);
-  lp.connect(g).connect(SND.musicIn); env(g, t, 0.008, 0.12 * level, 2.6);
-  [[1, 'triangle', 1], [2, 'sine', 0.35], [3, 'sine', 0.12]].forEach(([m, type, v]) => {
-    const og = ctx.createGain(); og.gain.value = v; og.connect(lp);
-    tone(type, midiHz(midi) * m, t, 2.8, og);
-  });
+const CHORD_NOTES = { C: [48, 52, 55], Am: [45, 48, 52], F: [41, 45, 48], G: [43, 47, 50], Em: [40, 43, 47] };
+const BARS = ['C', 'Am', 'F', 'G', 'C', 'Am', 'F|G', 'C', 'F', 'G', 'Em', 'Am', 'F', 'G', 'C', 'C'];
+// 旋律：每小節是 [音名, 拍數]，0 是休止；每個音都落在那一小節的和弦裡或旁邊
+const NOTE = { G4: 67, A4: 69, B4: 71, C5: 72, D5: 74, E5: 76, F5: 77, G5: 79, A5: 81 };
+const TUNE = [
+  [['E5', 1], ['G5', 1], ['E5', 1], ['D5', 1]], [['C5', 1], ['E5', 1], ['A4', 2]], [['A4', 1], ['C5', 1], ['F5', 1], ['E5', 1]], [['D5', 3], [0, 1]],
+  [['E5', 1], ['G5', 1], ['A5', 1], ['G5', 1]], [['E5', 1], ['D5', 1], ['C5', 2]], [['C5', 1], ['A4', 1], ['B4', 1], ['D5', 1]], [['C5', 4]],
+  [['F5', 1], ['A5', 1], ['G5', 1], ['F5', 1]], [['E5', 1], ['D5', 1], ['D5', 2]], [['G5', 1], ['E5', 1], ['B4', 2]], [['C5', 1], ['E5', 1], ['A5', 2]],
+  [['A5', 1], ['G5', 1], ['F5', 1], ['E5', 1]], [['D5', 1], ['E5', 1], ['D5', 2]], [['E5', 1], ['D5', 1], ['C5', 1], ['E5', 1]], [['C5', 4]],
+];
+// 把旋律攤成以八分音符為單位的格子：MELODY[第幾格] = { midi, len }
+const MELODY = [];
+TUNE.forEach((bar, b) => { let pos = b * 8; for (const [n, beats] of bar) { if (n) MELODY[pos] = { midi: NOTE[n], len: beats * 2 }; pos += beats * 2; } });
+// 音樂盒：純淨的正弦波加上高音泛音，叮一聲、慢慢消失
+function musicBox(t, midi, vel) {
+  const ctx = SND.ctx, g = ctx.createGain(), f = midiHz(midi);
+  g.connect(SND.musicIn); env(g, t, 0.004, 0.16 * vel, 1.9);
+  [[1, 1], [2, 0.26], [3.98, 0.08]].forEach(([m, v]) => { const og = ctx.createGain(); og.gain.value = v; og.connect(g); tone('sine', f * m, t, 2, og); });
 }
-// 和聲長音：慢慢浮出來、慢慢退下去
-function pad(t, root, level) {
-  [0, 7, 16].forEach((iv) => {
-    const g = SND.ctx.createGain();
-    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.022 * level, t + 2.5); g.gain.linearRampToValueAtTime(0.0001, t + 9);
-    g.connect(SND.musicIn); tone('sine', midiHz(root + iv), t, 9, g);
-  });
+// 木琴：三角波加一點四倍泛音，短短的、圓圓的
+function marimba(t, midi, vel) {
+  const ctx = SND.ctx, g = ctx.createGain(), f = midiHz(midi);
+  g.connect(SND.musicIn); env(g, t, 0.005, 0.07 * vel, 0.55);
+  tone('triangle', f, t, 0.6, g);
+  const og = ctx.createGain(); og.gain.value = 0.12; og.connect(g); tone('sine', f * 4, t, 0.25, og);
+}
+// 低音：柔和的正弦波，每小節第一拍
+function bassNote(t, midi, vel) {
+  const g = SND.ctx.createGain();
+  g.connect(SND.musicIn); env(g, t, 0.02, 0.11 * vel, 1.8);
+  tone('sine', midiHz(midi), t, 1.9, g);
 }
 // 高鐵：每列車一組噪音，依距離調音量、依左右調聲道，靠近時音色亮、遠離時悶
 const tv = new THREE.Vector3(), toCam = new THREE.Vector3(), camRight = new THREE.Vector3();
@@ -2083,7 +2098,7 @@ function audioTick() {
   const now = ctx.currentTime, ahead = now + 0.3, day = 1 - nightT, night = nightT > 0.5;
   // 畫面暫停一陣子（切到別的 App、分頁沒有被偵測到隱藏）再回來時，聲音時鐘已經走遠了；
   // 錯過的鳥叫和音符直接跳過，不要一口氣補排幾千個聲音把瀏覽器卡住
-  for (const k of ['nextBird', 'nextCricket', 'nextFrog', 'nextNote', 'nextPad']) if (SND[k] < now - 1) SND[k] = now;
+  for (const k of ['nextBird', 'nextCricket', 'nextFrog', 'nextNote']) if (SND[k] < now - 1) SND[k] = now;
   // 鏡頭拉近時環境音大一點，拉遠時小一點
   const near = THREE.MathUtils.clamp(1.5 - camera.position.distanceTo(controls.target) / 200, 0.35, 1);
   SND.sfxBus.gain.setTargetAtTime(SND.sfx ? 0.9 * near : 0, now, 0.4);
@@ -2099,12 +2114,17 @@ function audioTick() {
     for (const tr of trains) trainSound(tr, now);
   } else SND.nextBird = SND.nextCricket = SND.nextFrog = ahead;
   if (SND.music) {
-    const root = night ? 50 : 62, beat = 60 / 66;
-    for (; SND.nextNote < ahead; SND.nextNote += beat * (Math.random() < 0.25 ? 2 : 1)) {
-      if (Math.random() < (night ? 0.45 : 0.6)) pluck(SND.nextNote, root + PENTA[Math.floor(Math.random() * 5)] + (Math.random() < 0.3 ? 12 : 0), night ? 0.7 : 1);
+    // 白天每分鐘 80 拍、木琴一直彈分解和弦；晚上放慢到 64 拍、旋律低一個八度、木琴只在每拍點一下，像搖籃曲
+    const eighth = 60 / (night ? 64 : 80) / 2, ARP = [0, 2, 1, 2, 0, 2, 1, 2];
+    for (; SND.nextNote < ahead; SND.nextNote += eighth, SND.step++) {
+      const t = SND.nextNote, st = SND.step % 128, bar = st >> 3, pos = st & 7;
+      const name = BARS[bar].includes('|') ? BARS[bar].split('|')[pos < 4 ? 0 : 1] : BARS[bar], ch = CHORD_NOTES[name];
+      const m = MELODY[st];
+      if (m) musicBox(t, m.midi - (night ? 12 : 0), night ? 0.6 : 0.85);
+      if (!night || pos % 2 === 0) marimba(t, ch[ARP[pos]] + 12, night ? 0.6 : (pos === 0 ? 1 : 0.75));
+      if (pos === 0 || (pos === 4 && BARS[bar].includes('|'))) bassNote(t, ch[0] - 12, night ? 0.8 : 1);
     }
-    for (; SND.nextPad < ahead; SND.nextPad += 8) pad(SND.nextPad, [38, 43, 45, 40][SND.padIdx++ % 4] + (night ? 0 : 12), night ? 0.8 : 1);
-  } else SND.nextNote = SND.nextPad = ahead;
+  } else SND.nextNote = ahead;
 }
 
 // 聲音開關：預設靜音；開過一次會記住（只存在自己的瀏覽器），下次碰一下畫面就開始
