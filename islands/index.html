@@ -266,7 +266,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島<small>填寫報名表</small></a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.24</span>
+  <span class="ver">v261025.25</span>
 </div>
 
 <div class="mapctl">
@@ -2052,7 +2052,7 @@ function audioInit() {
   SND.noise = buf;
   // 水波與微風：很輕的低通噪音，一波一波湧上來再退下去，像小浪拍岸
   const lp = ctx.createBiquadFilter();
-  lp.type = 'lowpass'; lp.frequency.value = 320;
+  lp.type = 'lowpass'; lp.frequency.value = 220;
   SND.waves = ctx.createGain(); SND.waves.gain.value = 0;
   const src = noiseSrc(); src.connect(lp).connect(SND.waves).connect(SND.sfxBus); src.start();
   // 音樂的空間感：用衰減的噪音做一段殘響，像在小房間裡播放
@@ -2201,9 +2201,9 @@ function audioTick() {
   SND.sfxBus.gain.setTargetAtTime(SND.sfx ? 0.9 * near : 0, now, 0.4);
   SND.trainBus.gain.setTargetAtTime(SND.sfx ? 1 : 0, now, 0.3);
   SND.musicBus.gain.setTargetAtTime(SND.music ? 0.8 : 0, now, 0.6);
-  // 大約每 10 秒一波：平常幾乎聽不到，浪頭過來時才輕輕浮出來
+  // 大約每 10 秒一波：壓到最低，只留浪頭過來時一點點底噪，不蓋過蟲鳴鳥叫和音樂
   const swell = Math.pow(0.5 + 0.5 * Math.sin(now * 0.63), 3);
-  SND.waves.gain.setTargetAtTime(0.004 + 0.016 * swell, now, 0.6);
+  SND.waves.gain.setTargetAtTime(0.0006 + 0.0024 * swell, now, 0.6);
   if (SND.sfx) {
     for (; SND.nextBird < ahead; SND.nextBird += 1.2 + Math.random() * 3.5) if (Math.random() < day) bird(SND.nextBird, day);
     for (; SND.nextCricket < ahead; SND.nextCricket += 0.5 + Math.random() * 0.9) if (Math.random() < nightT) cricket(SND.nextCricket, nightT);
