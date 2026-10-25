@@ -90,6 +90,12 @@
     --on-color: #0F172A;
   }
 
+  /* 切換主題時用 0.6 秒線性淡入淡出，不會一下子刺眼 */
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .6s; animation-timing-function: linear; }
+  html.theme-anim, html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after {
+    transition: background-color .6s linear, color .6s linear, border-color .6s linear, box-shadow .6s linear, fill .6s linear, stroke .6s linear !important;
+  }
+
   /* 主題切換鈕 */
   .theme-btn {
     position: fixed;
@@ -455,7 +461,7 @@
     <button type="button" class="live" id="live" data-state="loading" title="點一下立即重新讀取">
       <span class="dot" aria-hidden="true">…</span><span id="liveText">正在連線最新資料…</span>
     </button>
-    <div class="ver">版本 <span id="ver">v261025.05</span></div>
+    <div class="ver">版本 <span id="ver">v261025.06</span></div>
   </div>
 </header>
 
@@ -864,10 +870,18 @@
   const savedTheme = () => { try { return localStorage.getItem('signup-theme'); } catch (e) { return null; } };
   applyTheme(document.documentElement.dataset.theme === 'dark');
   // 沒按過切換鈕時，系統切換深淺色也跟著變
-  if (sysDark) sysDark.addEventListener('change', e => { if (!savedTheme()) applyTheme(e.matches); });
+  // 切換時 0.6 秒線性淡入淡出；支援的瀏覽器用整頁交叉淡化，其他用顏色漸變
+  function fadeTheme(dark) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return applyTheme(dark);
+    if (document.startViewTransition) return document.startViewTransition(() => applyTheme(dark));
+    const root = document.documentElement;
+    root.classList.add('theme-anim'); applyTheme(dark);
+    clearTimeout(fadeTheme.t); fadeTheme.t = setTimeout(() => root.classList.remove('theme-anim'), 700);
+  }
+  if (sysDark) sysDark.addEventListener('change', e => { if (!savedTheme()) fadeTheme(e.matches); });
   themeBtn.addEventListener('click', () => {
     const dark = document.documentElement.dataset.theme !== 'dark';
-    applyTheme(dark);
+    fadeTheme(dark);
     // 切回跟系統一樣時就不再記住，之後繼續跟著系統
     try {
       if (sysDark && dark === sysDark.matches) localStorage.removeItem('signup-theme');
