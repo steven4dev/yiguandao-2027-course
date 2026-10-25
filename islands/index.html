@@ -64,7 +64,6 @@
   .status > span { min-width: 0; }
   .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); flex: none; }
   .status[data-state="live"] i { background: var(--jade); box-shadow: 0 0 0 3px color-mix(in srgb, var(--jade) 25%, transparent); }
-  .status[data-state="demo"] i { background: var(--brick); }
 
   /* 介面原則：資訊卡和時光捲軸一次只展開一個，收起來時都只剩一行 */
   .card { z-index: 2; }
@@ -202,7 +201,7 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <p class="count" id="brandCount"></p>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.05</span>
+  <span class="ver">v261025.06</span>
 </div>
 
 <div class="mapctl">
@@ -232,7 +231,6 @@
     <div class="tools">
       <button id="today">回到今天</button>
       <button id="play" aria-pressed="false">▶ 播放一年</button>
-      <button id="demo" aria-pressed="false">示範：滿班 60 人</button>
     </div>
   </div>
 </div>
@@ -344,22 +342,8 @@ const SNAPSHOT = {
 SNAPSHOT.people.forEach((p) => { p.uids = p.m ? cadreUidsOf(p.m, p.cadre) : []; delete p.m; });
 const GAMES = { start: null, finish: null, share: null };
 
-// 示範資料：60 位學員＋全部幹部，報名日期分散到開班前（固定種子，每次一樣）
-function demoPeople() {
-  let s = 20270327;
-  const rnd = () => ((s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296);
-  const start = new Date('2026-10-24').getTime(), span = new Date('2027-03-20').getTime() - start;
-  const day = (r) => new Date(start + Math.pow(r, 1.6) * span).toISOString().slice(0, 10);
-  const out = [];
-  for (let i = 0; i < 60; i++) out.push({ g: rnd() < 0.55 ? '坤道' : '乾道', city: ['桃園市', '桃園市', '新北市', '臺北市'][Math.floor(rnd() * 4)],
-    unit: ['天選區', '至善區', '至善區', '其他單位'][Math.floor(rnd() * 4)], isCadre: false, cadre: [], uids: [], date: day(rnd()) });
-  CADRE_NAMES.forEach((n, u) => out.push({ g: rnd() < 0.5 ? '坤道' : '乾道', city: '桃園市', unit: '天選區', isCadre: true, cadre: CADRE_OF.get(n), uids: [u], date: day(rnd() * 0.5) }));
-  return out.sort((a, b) => a.date.localeCompare(b.date));
-}
-
-let realPeople = SNAPSHOT.people, dataStamp = SNAPSHOT.updated, demo = false;
-const peopleNow = () => (demo ? DEMO : realPeople);
-const DEMO = demoPeople();
+let realPeople = SNAPSHOT.people, dataStamp = SNAPSHOT.updated;
+const peopleNow = () => realPeople;
 
 /* =========================================================
    場景
@@ -725,7 +709,8 @@ function clearWalkers(list) {
 const plazaPeople = [];
 let plazaSig = '';
 function syncPlaza(list) {
-  const sig = list.length + '|' + demo;
+  // 人數或乾坤、幹部組成有變才重新擺人偶
+  const sig = list.map((p) => p.g + (p.isCadre ? '*' : '')).join('');
   if (sig === plazaSig) return;
   plazaSig = sig;
   clearWalkers(plazaPeople);
@@ -1170,7 +1155,7 @@ function setGhost(group, on) {
   group.traverse((m) => { if (m.isMesh && m.userData.mat) { m.material = on ? ghostMat : m.userData.mat; m.castShadow = !on; } });
 }
 
-// 課程當天聚在島上的人（示範：當時已報名的人數，最多 40 位）
+// 課程當天聚在島上的人：當時已報名的人數，最多 40 位
 function syncCrowd(isl, n) {
   if (isl.crowd.length === n) return;
   clearWalkers(isl.crowd);
@@ -1217,7 +1202,7 @@ function applyDate() {
   document.getElementById('dateHint').textContent = (now === todayISO ? '今天・' : '') + nextText;
   document.getElementById('chipDate').textContent = dateLabel + (now === todayISO ? '・今天' : '');
   document.getElementById('brandCount').innerHTML = `<b>${list.length}</b> 位夥伴已報名・${esc(nextText)}`;
-  const view = now + '|' + demo + '|' + (selected || '');
+  const view = now + '|' + dataStamp + '|' + (selected || '');
   if (view !== lastView) { lastView = view; renderPanel(); }
 }
 
@@ -1251,7 +1236,7 @@ function renderPanel() {
       ${bars('乾坤比例', [['乾道', q], ['坤道', list.length - q]], list.length)}
       ${bars('所屬單位', countBy(list, (p) => p.unit), list.length)}
       ${bars('居住縣市', countBy(list, (p) => p.city), list.length)}
-      <p class="note">${demo ? '目前是示範資料，數字不是真實報名。' : `資料來源：${liveOk ? '報名表即時資料' : '報名資料備份'}（${stampText()} 更新）。`}點其他小島可以看各堂課和各組的狀態。</p>`;
+      <p class="note">資料來源：${liveOk ? '報名表即時資料' : '報名資料備份'}（${stampText()} 更新）。點其他小島可以看各堂課和各組的狀態。</p>`;
   } else if (isl.kind === 'course') {
     const c = isl.course, s = courseStatus(c, now), diff = dayIndex(c.date) - dayIndex(now);
     const d = new Date(c.date + 'T00:00:00+08:00');
@@ -1453,13 +1438,6 @@ $('play').onclick = () => {
   $('play').textContent = playing ? '❚❚ 暫停' : '▶ 播放一年';
   $('chipPlay').hidden = !playing;
 };
-$('demo').onclick = () => {
-  demo = !demo;
-  $('demo').setAttribute('aria-pressed', String(demo));
-  setStatus();
-  lastView = '';
-  applyDate();
-};
 $('home').onclick = () => { setUI({ panel: 'closed', dock: false }); goHome(); };
 
 // 晝夜跟著頁面主題，按鈕可以切換
@@ -1543,7 +1521,6 @@ let liveOk = false, lastLive = null, busy = false;
 const stampText = () => new Date(dataStamp).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
 function setStatus() {
   const st = $('status'), tx = $('statusText');
-  if (demo) { st.dataset.state = 'demo'; tx.textContent = '示範模式：60 位學員＋全部幹部'; return; }
   st.dataset.state = liveOk ? 'live' : 'backup';
   tx.textContent = liveOk ? `已連線即時報名資料・${stampText()} 更新` : `即時資料連線失敗，顯示 ${stampText()} 的備份`;
 }
@@ -1590,13 +1567,13 @@ async function loadData() {
     busy = false;
   }
 }
-$('status').addEventListener('click', () => { if (!demo) loadData(); });
+$('status').addEventListener('click', () => loadData());
 setUI({});
 applyDate();
 setStatus();
 loadData();
-setInterval(() => { if (!document.hidden && !demo) loadData(); }, 5 * 60000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden && !demo) loadData(); });
+setInterval(() => { if (!document.hidden) loadData(); }, 5 * 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) loadData(); });
 
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
