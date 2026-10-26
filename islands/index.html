@@ -334,7 +334,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.17</span>
+  <span class="ver">v261026.18</span>
   </div></div>
 </div>
 
@@ -350,7 +350,7 @@
 
 <div class="card navpop searchpop" id="searchPop" role="search" hidden>
   <label class="sbox"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg>
-    <input id="searchInput" type="search" enterkeyhint="search" autocomplete="off" placeholder="課程、島名，或輸入全名找自己" aria-label="搜尋課程、島名或夥伴全名"></label>
+    <input id="searchInput" type="search" enterkeyhint="search" autocomplete="off" placeholder="用望遠鏡找課程、名字" aria-label="用瞭望氣球的望遠鏡搜尋課程、島名或夥伴名字"></label>
   <button class="icon sm sclose" id="searchClose" type="button" aria-label="關閉搜尋" title="關閉"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   <div id="searchResults" aria-live="polite"></div>
 </div>
@@ -2225,7 +2225,7 @@ function runSearch() {
   if (!n) {
     searchHits = [];
     markHits();
-    searchResults.innerHTML = '<p class="tip">可以搜尋課程名稱、島名、日期（例如 4/24）、講師，或幹部職稱（例如班長、學術組長）。<br>想找自己或朋友：輸入名字（全名或其中幾個字），畫面會飛到那個小人偶。</p>';
+    searchResults.innerHTML = '<p class="tip">🔭 歡迎登上瞭望氣球！瞭望員已經架好望遠鏡，陪你從高空一起找。<br>輸入課程、島名、日期（例如 4/24）、講師，或幹部職稱（例如班長、學術組長），望遠鏡看到的島標籤會亮起來。<br>想找自己或朋友：輸入名字（全名或其中幾個字），就帶你飛到那個小人偶身邊，他還會揮手跟你打招呼。</p>';
     return;
   }
   const people = findPeople(q);
@@ -2240,7 +2240,7 @@ function runSearch() {
   const row = (h, i) => `<button data-hit="${i}"><span aria-hidden="true">${h.icon}</span><span><b>${esc(h.title)}</b><small>${esc(h.sub)}</small></span></button>`;
   markHits();
   searchResults.innerHTML = searchHits.length ? searchHits.map(row).join('')
-    : `<p class="tip">找不到「${esc(q)}」。<br>找人要輸入完整的姓名；還沒登島的夥伴，報名後就找得到了。${liveOk ? '' : '<br>（目前沒連上即時報名資料，暫時只能找到幹部。）'}</p>`;
+    : `<p class="tip">🔭 望遠鏡繞了群島一圈，還沒看到「${esc(q)}」。<br>換個關鍵字試試看；還沒登島的夥伴，報名後就會出現在島上了。${liveOk ? '' : '<br>（目前沒連上即時報名資料，望遠鏡暫時只看得到幹部。）'}</p>`;
 }
 // 飛到這個人偶旁邊，就像直接點了他
 function focusFigure(sel) {
