@@ -198,6 +198,10 @@
   #searchResults button small { white-space: normal; line-height: 1.5; }
   .searchpop .tip { margin-top: 4px; }
   .alsoT { display: flex; flex-wrap: wrap; gap: 6px; }
+  .letter { padding: 14px 16px; border-radius: 12px; background: #fff8e6; color: #3f2c22; font-size: 15px; line-height: 1.8; box-shadow: inset 0 0 0 1px rgba(160, 120, 60, 0.25); white-space: normal; word-break: break-word; }
+  .letter span { display: block; margin-top: 8px; text-align: right; font-size: 13px; color: #7a6455; }
+  .bottle-row { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; margin-bottom: 4px; }
+  .bottle-row i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
   .prog .go-yoga { padding: 1px 8px; font-size: 11px; margin-left: 4px; }
   .bars .prog { display: grid; grid-template-columns: 44px 1fr; gap: 8px; font-size: 13px; padding: 2px 0; }
   .bars .prog span:first-child { color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -338,7 +342,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.36</span>
+  <span class="ver">v261026.37</span>
   </div></div>
 </div>
 
@@ -2306,6 +2310,79 @@ const newIsl = makeIsland('newisle', 21, NEW_DIR.x * 118, NEW_DIR.y * 118, 'buil
   mesh(new THREE.BoxGeometry(4.6, 2, 0.12), [lam('#f2b632'), lam('#f2b632'), lam('#f2b632'), lam('#f2b632'), signMat, lam('#f2b632')], 0, 2.6, 9.2, mark);
 }
 
+/* ---------- 漂流瓶島：大家匿名留言的地方；每則審核通過的留言是一個漂在島邊的玻璃瓶 ---------- */
+const BOTTLE_FORM = 'https://forms.gle/bBxgYkA4GXhmviRLA';
+// 公開用的試算表：只放審核通過的留言（用 IMPORTRANGE＋QUERY 從表單回覆帶過來）；還沒設定時島上只有裝飾用的空瓶
+const BOTTLE_SHEET_ID = '';
+const MOOD_COLOR = { 開心: '#ffd23f', 加油: '#ff9f43', 感謝: '#ff8fab', 心事: '#6fb7ff', 期待: '#7ed957' };
+const moodColor = (m) => { for (const [k, c] of Object.entries(MOOD_COLOR)) if (String(m).includes(k)) return c; return '#9fe3e0'; };
+const bottleIsl = makeIsland('bottle', 5.5, -12, 66, 'bottle');
+let bottles = [];   // { text, to, mood, sign, date }
+const bottleHit = [], bottleMeshes = [];
+{
+  const g = bottleIsl.group;
+  // 沙灘：一圈淡黃色的沙，加一棵椰子樹
+  const sand = mesh(new THREE.CylinderGeometry(5.2, 5.2, 0.1, 6), lam('#f2dfae'), 0, 0.03, 0, g, false); sand.rotation.y = Math.PI / 6;
+  mesh(new THREE.CylinderGeometry(0.16, 0.24, 3.2, 8), trunkMat, -2.6, 1.6, -1.6, g).rotation.z = 0.15;
+  for (let i = 0; i < 6; i++) { const lf = mesh(new THREE.BoxGeometry(1.8, 0.06, 0.5), lam('#4f9a4a'), -2.4, 3.2, -1.6, g); lf.rotation.set(0, (i / 6) * Math.PI * 2, -0.45); lf.translateX(0.8); }
+  addObst(g, { x: -2.6, z: -1.6, r: 0.6 });
+  // 地標：一個斜躺在沙灘上的大玻璃瓶，裡面捲著一封信
+  const mark = new THREE.Group(); mark.rotation.y = faceCam(bottleIsl.x, bottleIsl.z); g.add(mark);
+  bottleIsl.mark = mark;
+  const big = new THREE.Group(); big.position.set(0.6, 0.75, 0.4); big.rotation.set(0, 0.4, Math.PI / 2 - 0.25); mark.add(big);
+  const glass = new THREE.MeshLambertMaterial({ color: '#bfeee9', transparent: true, opacity: 0.45, depthWrite: false });
+  mesh(new THREE.CylinderGeometry(0.75, 0.75, 2.2, 24), glass, 0, 0, 0, big, false);
+  mesh(new THREE.SphereGeometry(0.75, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), glass, 0, 1.1, 0, big, false);
+  mesh(new THREE.CylinderGeometry(0.28, 0.5, 0.6, 20), glass, 0, 1.95, 0, big, false);
+  mesh(new THREE.CylinderGeometry(0.3, 0.27, 0.35, 16), lam('#a8794f'), 0, 2.4, 0, big);
+  mesh(new THREE.CylinderGeometry(0.32, 0.32, 1.5, 16), lam('#fff4dc'), 0, -0.1, 0, big);
+  mesh(new THREE.TorusGeometry(0.33, 0.04, 6, 18), lam('#c0503f'), 0, -0.1, 0, big).rotation.x = Math.PI / 2;
+  addObst(g, { x: 0, z: 0, r: 2.2 });
+  // 「丟一個漂流瓶」小木牌
+  const signTex = canvasTex(256, 96, (c) => { c.fillStyle = '#c89a6a'; c.fillRect(0, 0, 256, 96); c.fillStyle = '#3f2c22'; c.font = 'bold 40px "Noto Sans TC", "PingFang TC", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🍾 丟一個瓶子', 128, 50); });
+  mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.4, 6), lam('#7a5236'), 2.6, 0.7, 2.2, mark);
+  mesh(new THREE.BoxGeometry(1.6, 0.6, 0.08), [lam('#c89a6a'), lam('#c89a6a'), lam('#c89a6a'), lam('#c89a6a'), new THREE.MeshLambertMaterial({ map: signTex }), lam('#c89a6a')], 2.6, 1.4, 2.25, mark);
+}
+// 一個漂流瓶：瓶身顏色跟著心情，裡面捲一張紙
+const bottleGlassGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.7, 12), bottleNeckGeo = new THREE.CylinderGeometry(0.1, 0.2, 0.25, 10), bottleCorkGeo = new THREE.CylinderGeometry(0.1, 0.09, 0.14, 8);
+function makeBottle(color, i) {
+  const b = new THREE.Group();
+  const gl = new THREE.MeshLambertMaterial({ color, transparent: true, opacity: 0.7, emissive: color, emissiveIntensity: 0.12 });
+  mesh(bottleGlassGeo, gl, 0, 0, 0, b, false);
+  mesh(bottleNeckGeo, gl, 0, 0.47, 0, b, false);
+  mesh(bottleCorkGeo, lam('#a8794f'), 0, 0.66, 0, b, false);
+  mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.5, 8), lam('#fff4dc'), 0, 0, 0, b, false);
+  b.rotation.z = Math.PI / 2 - 0.3;
+  b.userData.bottle = i;
+  b.traverse((m) => { if (m.isMesh) { m.userData.bottle = i; bottleHit.push(m); } });
+  scene.add(b);
+  return b;
+}
+// 依留言數量把瓶子排在島的周圍，最新的離島最近；沒有留言時放幾個裝飾用的空瓶
+function placeBottles() {
+  for (const b of bottleMeshes) scene.remove(b);
+  bottleMeshes.length = 0; bottleHit.length = 0;
+  const list = bottles.length ? bottles.slice(0, 30) : [0, 1, 2, 3, 4].map(() => null);
+  list.forEach((m, i) => {
+    const a = i * 2.39996 + 0.6, r = 7.2 + (i % 4) * 1.5 + Math.floor(i / 12) * 1.2;
+    const b = makeBottle(m ? moodColor(m.mood) : '#bfeee9', m ? i : -1);
+    b.userData.home = new THREE.Vector3(bottleIsl.x + Math.sin(a) * r, -3.15, bottleIsl.z + Math.cos(a) * r);
+    b.userData.phase = i * 1.7;
+    b.position.copy(b.userData.home);
+    bottleMeshes.push(b);
+  });
+}
+placeBottles();
+animators.push((t) => {
+  const sel = String(selected).startsWith('b:') ? +String(selected).slice(2) : -9;
+  for (const b of bottleMeshes) {
+    const u = b.userData, h = u.home;
+    b.position.set(h.x + Math.sin(t * 0.3 + u.phase) * 0.4, h.y + Math.sin(t * 1.4 + u.phase) * 0.08, h.z + Math.cos(t * 0.25 + u.phase) * 0.4);
+    b.rotation.y = t * 0.15 + u.phase;
+    b.scale.setScalar(u.bottle === sel && panelMode !== 'closed' ? 1.5 + Math.sin(t * 4) * 0.1 : 1);
+  }
+});
+
 // 瑜伽動作：雙手合十 → 雙手往上伸展 → 往左側彎 → 往右側彎 → 雙手平舉；大家跟著講師一起慢慢換動作
 const POSE = [[0.25, -1.3, 0], [2.9, 0, 0], [2.9, 0, 0.35], [2.9, 0, -0.35], [1.57, 0, 0]];
 animators.push((t) => {
@@ -2345,6 +2422,7 @@ COURSES.filter((c) => c.pm).forEach((c) => addTag(islands[c.pm.key], `${c.pm.emo
 addTag(dockIsl, '🛶 渡口島・登島', 'small dock-tag', 4.5);
 addTag(yogaIsl, '🧘 瑜伽島', '', 5.2);
 addTag(newIsl, '🚧 建置中的新島', 'small', 15);
+addTag(bottleIsl, '🍾 漂流瓶島', 'small', 4.8);
 // 登島是重要入口：渡口島的標籤排在全真島和課程島之後、其他小標籤之前
 tags.splice(1 + COURSES.length, 0, tags.pop());
 // 瞭望氣球的小標籤跟著氣球飄，點了就是搜尋
@@ -2526,6 +2604,20 @@ function renderPanel() {
     html = `<header><span class="eyebrow">全真島・${pr.isCadre ? '幹部' : '學員'}</span><h2>${esc(name)}</h2><p class="sub">${esc(pr.g)}・${esc(pr.unit)}・${esc(pr.city)}</p></header>
       <span class="pill" data-s="done"><i></i>已登島・${+pr.date.slice(5, 7)}/${+pr.date.slice(8)}</span>
       <p class="note">藍色是乾道、橘色是坤道。</p>
+      <button class="back" data-go="temple">← 回到全真島</button>`;
+  } else if (String(selected).startsWith('b:') && bottles[+String(selected).slice(2)]) {
+    const m = bottles[+String(selected).slice(2)];
+    title = '漂流瓶'; info = m.sign ? `來自 ${m.sign}` : '匿名的瓶子';
+    html = `<header><span class="eyebrow">漂流瓶島・${esc(m.mood || '一個瓶子')}</span><h2>🍾 撿到一個漂流瓶</h2><p class="sub">寫給：${esc(m.to || '大家')}${m.date ? `・${+m.date.slice(5, 7)}/${+m.date.slice(8)}` : ''}</p></header>
+      <div class="letter">${esc(m.text).replace(/\n/g, '<br>')}<span>—— ${esc(m.sign || '匿名的夥伴')}</span></div>
+      <div class="cta"><p>也有話想說嗎？把它裝進瓶子，丟進全真群島的海裡。</p><a href="${BOTTLE_FORM}" target="_blank" rel="noopener">🍾 丟一個漂流瓶</a></div>
+      <button class="back" data-go="bottle">← 看漂流瓶島</button>`;
+  } else if (isl && isl.kind === 'bottle') {
+    title = '漂流瓶島'; info = bottles.length ? `${bottles.length} 個瓶子漂上岸` : '等第一個瓶子漂過來';
+    html = `<header><span class="eyebrow">交流・留言</span><h2>🍾 漂流瓶島</h2><p class="sub">${bottles.length ? `已經有 ${bottles.length} 個瓶子漂上岸` : '海面上還很安靜，等你丟第一個瓶子'}</p></header>
+      <p class="note">把想說的話裝進瓶子：一句鼓勵、一個心情、對課程的期待，或想對某位夥伴說的話。不用登入、可以匿名，審核通過後瓶子就會漂到島邊，點瓶子就能打開來看。</p>
+      ${bottles.length ? `<div class="bars"><h3>最近漂上岸的瓶子</h3>${bottles.slice(0, 5).map((m, i) => `<button class="back bottle-row" data-bottle="${i}"><i style="background:${moodColor(m.mood)}"></i>${esc(m.text.length > 22 ? m.text.slice(0, 22) + '…' : m.text)}</button>`).join('')}</div>` : ''}
+      <div class="cta"><p>瓶子的顏色跟著心情：開心黃、加油橘、感謝粉、心事藍、期待綠。</p><a href="${BOTTLE_FORM}" target="_blank" rel="noopener">🍾 丟一個漂流瓶</a></div>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'build') {
     title = '建置中的新島'; info = '施工中・敬請期待';
@@ -2745,6 +2837,7 @@ function goHome() { flyTo(HOME.target.clone(), HOME.pos.clone()); }
 const selectMember = (id) => select(SLOTS[id].key, 'm:' + id);
 document.getElementById('panelBody').addEventListener('click', (e) => {
   const who = e.target.closest('.who'), back = e.target.closest('.back');
+  if (back && back.dataset.bottle != null) { select('bottle', 'b:' + back.dataset.bottle); return; }
   if (back && back.dataset.teacher != null) { const tr = TEACHERS[+back.dataset.teacher]; select(tr.key, 't:' + tr.id); return; }
   if (who) selectMember(+who.dataset.slot);
   else if (back) select(back.dataset.go);
@@ -2762,7 +2855,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
     hoverQueued = false;
     ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit, lookoutHit, teacherHit, masterHit), false).length ? 'pointer' : '';
+    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit, lookoutHit, teacherHit, masterHit, bottleHit), false).length ? 'pointer' : '';
   });
 });
 renderer.domElement.addEventListener('pointerup', (e) => {
@@ -2771,6 +2864,8 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   ray.setFromCamera(ndc, camera);
   // 先打到任何物件，再往上找它屬於哪座島
   if (ray.intersectObjects(raftHit, false).length) { openSignup(); return; }
+  const bh = ray.intersectObjects(bottleHit, false)[0];
+  if (bh) { const i = bh.object.userData.bottle; select('bottle', i >= 0 ? 'b:' + i : 'bottle'); return; }
   if (!searching && ray.intersectObjects(lookoutHit, false).length) { openSearch(); return; }
   const hit = ray.intersectObjects(Object.values(islands).map((i) => i.group), true)[0];
   // 點到海面：收起資訊卡和時光捲軸，把畫面還給群島
@@ -2846,14 +2941,14 @@ function navItem(key, text, extra = '', cls = '') {
   const cur = islandOf2(selected) === key;
   return `<button class="${cls}" data-go="${key}"${cur ? ' aria-current="true"' : ''}><i data-s="${s}"></i><span>${esc(text)}</span><small>${esc(extra)}</small></button>`;
 }
-const islandOf2 = (sel) => { const s = String(sel); return s.startsWith('m:') ? SLOTS[+s.slice(2)].key : s.startsWith('p:') || s.startsWith('d:') ? 'temple' : s.startsWith('t:') ? TEACHERS[+s.slice(2)].key : s; };
+const islandOf2 = (sel) => { const s = String(sel); return s.startsWith('m:') ? SLOTS[+s.slice(2)].key : s.startsWith('p:') || s.startsWith('d:') ? 'temple' : s.startsWith('b:') ? 'bottle' : s.startsWith('t:') ? TEACHERS[+s.slice(2)].key : s; };
 // 已經從桌面圖示打開時，就不用再提示怎麼加到桌面
 const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
 function renderNav() {
   const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島</span></a>
-    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('newisle', '🚧 建置中的新島')}${navItem('dock', '🛶 渡口島・登島報名處')}
+    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${navItem('newisle', '🚧 建置中的新島')}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
@@ -2884,6 +2979,7 @@ const md2 = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
 const PLACES = [
   { key: 'temple', icon: '🏯', title: '全真島', sub: '全真道院・廣場上是已登島的夥伴', words: ['全真島', '全真道院', '佛堂', '中央'] },
   { key: 'dock', icon: '🛶', title: '渡口島', sub: '登島報名處', words: ['渡口島', '登島', '報名', '竹筏'] },
+  { key: 'bottle', icon: '🍾', title: '漂流瓶島', sub: '匿名留言、交換訊息的地方', words: ['漂流瓶島', '漂流瓶', '留言', '交流', '匿名', '瓶子', '心聲'] },
   { key: 'newisle', icon: '🚧', title: '建置中的新島', sub: '外海的新島，正在施工中', words: ['建置中', '新島', '施工', '工地'] },
   { key: 'yoga', icon: '🧘', title: '瑜伽島', sub: '每堂課早上的第一堂：古典瑜伽', words: ['瑜伽島', '瑜伽', '古典瑜伽', '早上', '晨間'] },
   ...COURSES.flatMap((c) => [
@@ -3192,10 +3288,30 @@ async function loadPeople() {
   } catch (e) {}
   liveOk = false;
 }
+// 漂流瓶：讀公開用試算表（只有審核通過的留言），欄位依標題找，順序換了也沒關係
+async function loadBottles() {
+  if (!BOTTLE_SHEET_ID) return;
+  try {
+    const r = await fetch(`https://docs.google.com/spreadsheets/d/${BOTTLE_SHEET_ID}/gviz/tq?tqx=out:json&headers=1&t=${Date.now()}`, { cache: 'no-store' });
+    const json = JSON.parse((await r.text()).replace(/^[\s\S]*?setResponse\(/, '').replace(/\);?\s*$/, ''));
+    const head = json.table.cols.map((c) => String(c.label || ''));
+    const col = (k) => head.findIndex((h) => h.includes(k));
+    const c = { time: col('時間'), text: col('話'), to: col('誰'), mood: col('心情'), sign: col('署名'), ok: col('審核') };
+    const list = json.table.rows.map((row) => {
+      const get = (i) => (i >= 0 && row.c[i] && row.c[i].v != null ? String(row.c[i].v).trim() : '');
+      const t = i => (i >= 0 && row.c[i] ? row.c[i].v : null);
+      const tm = toDate(t(c.time) != null ? String(t(c.time)) : '');
+      return { text: get(c.text), to: get(c.to), mood: get(c.mood), sign: get(c.sign), ok: c.ok < 0 || /true|✅|v|是|通過/i.test(get(c.ok)), date: tm ? ymd(tm) : '' };
+    }).filter((m) => m.text && m.ok).reverse();
+    const sig = list.map((m) => m.text + m.date).join('|');
+    if (sig !== bottles.sig) { bottles = list; bottles.sig = sig; placeBottles(); lastView = ''; }
+  } catch (e) {}
+}
 async function loadData() {
   if (busy) return;
   busy = true;
   try {
+    loadBottles();
     await loadPeople();
     setStatus();
     lastView = '';
@@ -3348,6 +3464,11 @@ const ISLE_SFX = {
     if (Math.random() < 0.6) for (let i = 0; i < 3; i++) { ping(t + i * 0.5, o, 820, 0.12 * v, 0.14); ping(t + i * 0.5, o, 1690, 0.03 * v, 0.06); }
     else bell(t, o, 660, 0.07 * v, 3.5);
   } },
+  // 漂流瓶島：玻璃瓶互相輕輕碰一下「叮」，加上小浪拍沙灘
+  bottle: { every: [4, 7], play(t, o, v) {
+    for (const d of [0, 0.18]) bell(t + d, o, 2800 + Math.random() * 600, 0.025 * v, 0.6, [[1, 1], [2.4, 0.3]]);
+    noiseHit(t + 0.4, o, { type: 'lowpass', f: 650, peak: 0.04 * v, attack: 0.5, dur: 1.6 });
+  } },
   // 瑜伽島：輕柔的頌缽，接一口慢慢的呼吸
   yoga: { every: [7, 11], play(t, o, v) {
     bell(t, o, 330, 0.06 * v, 5, [[1, 1], [1.005, 0.6], [2.71, 0.25]]);
@@ -3465,7 +3586,7 @@ const ISLE_SFX = {
   } },
 };
 // 每座島對到哪一種音效
-const ISLE_MARK = { temple: 'temple', dock: 'dock', yoga: 'yoga' };
+const ISLE_MARK = { temple: 'temple', dock: 'dock', yoga: 'yoga', bottle: 'bottle' };
 COURSES.forEach((c) => { ISLE_MARK[c.key] = c.mark; if (c.pm) ISLE_MARK[c.pm.key] = c.pm.mark; });
 CADRE.forEach((o) => { ISLE_MARK[o.key] = o.mark; });
 const isleNext = {};
