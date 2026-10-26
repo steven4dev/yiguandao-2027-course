@@ -334,7 +334,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.15</span>
+  <span class="ver">v261026.16</span>
   </div></div>
 </div>
 
@@ -902,14 +902,19 @@ function figure(mat, role = '', bob = false) {
   const part = (geo, m, x, y, z) => { const o = mesh(geo, ghost ? ghostPersonMat : m, x, y, z, p); o.userData.onMat = m; return o; };
   for (const sx of [-1, 1]) part(legGeo, pantsMat, sx * 0.065, 0.07, 0);
   mesh(bodyGeo, mat, 0, 0.29, 0, p);
-  for (const sx of [-1, 1]) { const a = mesh(armGeo, mat, sx * 0.19, 0.3, 0, p); a.rotation.z = sx * 0.35; }
+  // 手臂掛在肩膀上（樞紐在肩膀），被點到時才能舉起來揮手
+  p.userData.arms = [-1, 1].map((sx) => {
+    const sh = new THREE.Group(); sh.position.set(sx * 0.151, 0.408, 0); sh.rotation.z = sx * 0.35; p.add(sh);
+    mesh(armGeo, mat, 0, -0.115, 0, sh);
+    return sh;
+  });
   part(headGeo, faceMat, 0, 0.66, 0);
   part(hairTopGeo, hairMat, 0, 0.66, 0).rotation.x = -0.12;
   if (bob) part(hairBobGeo, hairMat, 0, 0.66, 0);
   if (role === true || role === '組長' || role === '班長') part(capGeo, capMat, 0, 0.96, 0);
   if (role === '班長') { part(poleGeo, poleMat, 0.27, 0.5, 0); part(flagGeo, flagMat, 0.43, 0.86, 0); }
   if (String(role).includes('副班長')) part(sashGeo, sashMat, 0, 0.3, 0).rotation.set(Math.PI / 2, 0.5, 0);
-  p.userData = { phase: Math.random() * 6, speed: 0.6 + Math.random() * 0.6 };
+  Object.assign(p.userData, { phase: Math.random() * 6, speed: 0.6 + Math.random() * 0.6 });
   return p;
 }
 const walkers = [];
@@ -2969,10 +2974,31 @@ function unglow(f) {
     delete u.hiMat; delete u.baseMat;
   });
 }
+// 被點到（或搜尋到）的人偶：轉身面向鏡頭，舉起右手揮一揮，揮完放下、繼續看著鏡頭
+const waveTmp = new THREE.Vector3(), waveCam = new THREE.Vector3();
+function poseFocus(f, t) {
+  const u = f.userData;
+  if (u.focusT == null) u.focusT = t;
+  f.getWorldPosition(waveTmp);
+  waveCam.set(camera.position.x, waveTmp.y, camera.position.z);
+  f.lookAt(waveCam);
+  f.position.y = 0;
+  const e = t - u.focusT, [, right] = u.arms || [];
+  if (!right) return;
+  // 前 0.3 秒舉手、接著左右揮 2 秒、最後 0.4 秒放下
+  const up = reduceMotion ? 1 : Math.min(1, e / 0.3) * Math.min(1, Math.max(0, (2.7 - e) / 0.4));
+  right.rotation.z = 0.35 + up * (2.3 + (reduceMotion ? 0 : 0.35 * Math.sin(e * 11)));
+}
+function unfocus(f) {
+  const u = f.userData;
+  u.focusT = null;
+  if (u.arms) u.arms[1].rotation.z = 0.35;
+}
 function updateHighlight(t) {
   const want = panelMode === 'closed' ? [] : figuresFor(selected);
-  for (const f of hiFigs) if (!want.includes(f)) unglow(f);
+  for (const f of hiFigs) if (!want.includes(f)) { unglow(f); unfocus(f); }
   hiFigs = want;
+  want.forEach((f) => poseFocus(f, t));
   const k = 0.28 + 0.14 * Math.sin(t * 4);
   want.forEach((f, i) => {
     f.traverse((m) => {
@@ -3059,7 +3085,7 @@ function tick() {
     const u = p.userData;
     const full = u.grow || 1;
     if (p.scale.x < full) p.scale.setScalar(Math.min(full, p.scale.x + dt * 3));
-    if (reduceMotion) continue;
+    if (reduceMotion || u.focusT != null) continue;   // 被點到的人偶站好面向鏡頭，不再走來走去
     p.position.y = Math.abs(Math.sin(t * 3 * u.speed + u.phase)) * 0.08;
     p.position.x = u.home.x + Math.sin(t * 0.3 * u.speed + u.phase) * u.roam;
     p.rotation.y = Math.cos(t * 0.3 * u.speed + u.phase) > 0 ? Math.PI / 2 : -Math.PI / 2;
