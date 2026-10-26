@@ -81,23 +81,13 @@
   /* 介面原則：資訊卡和時光捲軸一次只展開一個，收起來時都只剩一行 */
   .card { z-index: 2; }
   .brand .count { margin: 2px 0 0; font-size: 13px; color: var(--ink); line-height: 1.5; }
-  /* 品牌卡的行動列：主要按鈕「我要登島」＋次要的「瓶中信」膠囊（海水藍，帶一點波光） */
-  .brand-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 2px 0; }
-  .brand-actions .board { margin: 0; }
-  .bottle-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 6px; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 700;
-    color: #1f6f78; background: linear-gradient(135deg, #e3f7f5, #cdeef0); border: 1px solid #9fd8d6; cursor: pointer; position: relative; overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s; }
-  .bottle-chip:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(31, 111, 120, 0.2); }
-  .bottle-chip:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; }
-  .bottle-chip .bc-ico { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #fff; font-size: 13px; animation: bobble 3s ease-in-out infinite; }
-  .bottle-chip b { font-family: var(--font-display); font-size: 15px; color: #d9770a; margin: 0 1px; font-variant-numeric: tabular-nums; }
-  .bottle-chip .bc-go { font-size: 16px; line-height: 1; opacity: 0.7; }
-  .bottle-chip::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.7) 50%, transparent 70%); transform: translateX(-120%); animation: shimmer 4.5s ease-in-out infinite 1.5s; pointer-events: none; }
-  .bottle-chip.new .bc-ico { animation: bobble 0.6s ease-in-out 3; }
-  @keyframes bobble { 0%, 100% { transform: rotate(-8deg) translateY(0); } 50% { transform: rotate(8deg) translateY(-2px); } }
-  @keyframes shimmer { 0%, 70% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
-  :root[data-theme="dark"] .bottle-chip { color: #9fe3e0; background: linear-gradient(135deg, #1d3a44, #234a52); border-color: #2f6b72; }
-  :root[data-theme="dark"] .bottle-chip .bc-ico { background: #2b4f57; }
+  /* 瓶中信數量：跟登島人數同一種寫法，整行可以點，點了飛到漂流瓶島 */
+  .bottle-count { cursor: pointer; margin-top: -6px !important; }
+  .bottle-count .go { color: var(--brick); font-weight: 700; margin-left: 2px; white-space: nowrap; }
+  .bottle-count:hover .go { text-decoration: underline; }
+  .bottle-count:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; border-radius: 6px; }
+  .bottle-count.new b { animation: bump 0.5s ease-in-out 2; display: inline-block; }
+  @keyframes bump { 50% { transform: scale(1.3); } }
   .board { justify-self: start; display: inline-flex; align-items: baseline; gap: 6px; margin: 2px 0; padding: 6px 14px; border-radius: 999px;
     background: var(--brick); color: #fff; font-weight: 700; font-size: 14px; text-decoration: none; box-shadow: 0 4px 12px color-mix(in srgb, var(--brick) 35%, transparent);
     transition: transform 0.2s; }
@@ -339,7 +329,6 @@
     .tag.small:not(.dock-tag):not(.look-tag) { display: none; }
     .tag.small.hit { display: inline-flex; }
   }
-  @media (prefers-reduced-motion: reduce) { .bottle-chip .bc-ico, .bottle-chip::after { animation: none !important; } }
   @media (prefers-reduced-motion: reduce) { body, .card, .brand *, .brand-more, .mapctl .icon, #labels .tag { transition: none !important; } }
 </style>
 <style>
@@ -358,12 +347,10 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <div class="brand-more"><div>
   <p class="count" id="brandCount"></p>
-  <div class="brand-actions">
-    <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
-    <button class="bottle-chip" id="bottleChip" type="button" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span class="bc-ico" aria-hidden="true">🍾</span><span class="bc-txt" id="bottleChipText">瓶中信</span><span class="bc-go" aria-hidden="true">›</span></button>
-  </div>
+  <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
+  <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.41</span>
+  <span class="ver">v261026.42</span>
   </div></div>
 </div>
 
@@ -2454,12 +2441,13 @@ placeBottles();
 // 品牌卡的瓶中信膠囊：顯示漂上岸的瓶子數量；點了飛到漂流瓶島
 function syncBottleChip(fresh) {
   const n = bottles.length, el = document.getElementById('bottleChipText'), chip = document.getElementById('bottleChip');
-  el.innerHTML = n ? `<b>${n}</b> 封瓶中信・寫一封` : '寫第一封瓶中信';
+  el.innerHTML = n ? `<b>${n}</b> 封瓶中信漂上岸・<span class="go">去看看 ›</span>` : `🍾 還沒有瓶中信・<span class="go">寫第一封 ›</span>`;
   chip.setAttribute('aria-label', n ? `漂流瓶島有 ${n} 封瓶中信，點了去看或寫一封` : '前往漂流瓶島，寫第一封瓶中信');
   if (fresh) { chip.classList.remove('new'); void chip.offsetWidth; chip.classList.add('new'); }
 }
 syncBottleChip();
 document.getElementById('bottleChip').addEventListener('click', () => select('bottle'));
+document.getElementById('bottleChip').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select('bottle'); } });
 animators.push((t) => {
   const sel = String(selected).startsWith('b:') ? +String(selected).slice(2) : -9;
   for (const b of bottleMeshes) {
