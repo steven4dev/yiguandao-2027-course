@@ -337,7 +337,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.24</span>
+  <span class="ver">v261026.25</span>
   </div></div>
 </div>
 
@@ -932,7 +932,8 @@ const petalMat = lam('#f6a5b8'), pistilMat = lam('#f4d35e');
 // 職位配件：班長拿小旗、副班長斜背金色彩帶
 const flagMat = lam('#c0503f'), poleMat = lam('#7a5236'), sashMat = lam('#e8b53a');
 const poleGeo = new THREE.CylinderGeometry(0.018, 0.018, 1.1, 6), flagGeo = new THREE.BoxGeometry(0.02, 0.24, 0.36), sashGeo = new THREE.TorusGeometry(0.34, 0.035, 6, 24);
-const ARM_REST = 0.9;   // 手臂平常往外下垂的角度；揮手時從這裡舉起來
+const ARM_REST = 0.9;
+const robeGeo = new THREE.LatheGeometry([[0, 0], [0.42, 0], [0.44, 0.05], [0.38, 0.3], [0.33, 0.5], [0.34, 0.58], [0, 0.6]].map(([r, y]) => new THREE.Vector2(r, y)), 28);   // 手臂平常往外下垂的角度；揮手時從這裡舉起來
 // extra：hat 斗笠顏色、pack 背包顏色、scarf 圍巾顏色、glasses 大圓眼鏡、book 拿書（瞭望員、船夫、講師用）
 function figure(mat, role = '', bob = false, extra = {}) {
   const p = new THREE.Group(), ghost = mat === ghostPersonMat;
@@ -980,6 +981,22 @@ function figure(mat, role = '', bob = false, extra = {}) {
     part(new THREE.CylinderGeometry(0.012, 0.012, 0.08, 6), inkMat, 0, 1.0, 0.53).rotation.z = Math.PI / 2;
   }
   if (extra.book) part(new THREE.BoxGeometry(0.22, 0.28, 0.06), flagMat, -0.48, 0.4, 0.14).rotation.z = 0.3;
+  // 點傳師：長袍蓋住腳、白色交領、寬袖，加一對溫和的眉毛；坤道梳髮髻插金簪
+  if (extra.robe) {
+    const rm = lam(extra.robe), trim = lam('#ffffff');
+    part(robeGeo, rm, 0, 0, 0);
+    part(new THREE.TorusGeometry(0.43, 0.025, 6, 28), trim, 0, 0.03, 0).rotation.x = Math.PI / 2;
+    for (const sx of [-1, 1]) part(new THREE.BoxGeometry(0.05, 0.3, 0.03), trim, sx * 0.07, 0.46, 0.33).rotation.z = sx * 0.55;
+    p.userData.arms.forEach((sh) => {
+      part(new THREE.CylinderGeometry(0.1, 0.17, 0.26, 12), rm, 0, -0.16, 0, sh);
+      part(new THREE.TorusGeometry(0.17, 0.018, 6, 18), trim, 0, -0.29, 0, sh).rotation.x = Math.PI / 2;
+    });
+    for (const sx of [-1, 1]) part(new THREE.TorusGeometry(0.06, 0.012, 6, 12, Math.PI * 0.8), inkMat, sx * 0.15, 1.1, 0.47).rotation.set(0, sx * 0.3, Math.PI * 0.1);
+  }
+  if (extra.bun) {
+    part(dotGeo, lam('#3a2a22'), 0, 1.47, -0.06).scale.set(0.17, 0.15, 0.17);
+    part(new THREE.CylinderGeometry(0.012, 0.012, 0.36, 6), sashMat, 0, 1.5, -0.06).rotation.z = Math.PI / 2.4;
+  }
   Object.assign(p.userData, { phase: Math.random() * 6, speed: 0.6 + Math.random() * 0.6 });
   return p;
 }
@@ -1001,6 +1018,21 @@ function clearWalkers(list) {
   }
   list.length = 0;
 }
+
+// 點傳師：一坤二乾站在全真道院正門樓梯前，面向廣場迎接大家；坤道穿藍色道袍、乾道穿灰色道袍
+const MASTERS = [{ g: '坤道', robe: '#2f4a7a', x: -1.4 }, { g: '乾道', robe: '#7d8494', x: 0 }, { g: '乾道', robe: '#7d8494', x: 1.4 }];
+const masterHit = [];
+MASTERS.forEach((m, i) => {
+  const fig = figure(lam('#f6eedd'), '', false, { robe: m.robe, bun: m.g === '坤道' });
+  fig.scale.setScalar(1.55);
+  fig.position.set(m.x, 0, 5.1);
+  fig.userData.master = i;
+  fig.userData.restRotY = 0;
+  TEMPLE.group.add(fig);
+  addObst(TEMPLE.group, { x: m.x, z: 5.1, r: 0.75 });
+  fig.traverse((o) => { if (o.isMesh) masterHit.push(o); });
+  m.fig = fig;
+});
 
 // 佛堂廣場上的報名者：學員乾道藍、坤道橘；幹部穿該組顏色並帶職位配件，點了可以看是誰
 const plazaPeople = [], plazaHit = [];
@@ -1981,8 +2013,14 @@ function renderPanel() {
   const personRec = String(selected).startsWith('p:') ? realPeople[+selected.slice(2)] : null;
   const teacher = String(selected).startsWith('t:') ? TEACHERS[+selected.slice(2)] : null;
   const isl = memberSlot ? islands[memberSlot.key] : teacher ? islands[teacher.key] : islands[selected];
+  const master = String(selected).startsWith('d:') ? MASTERS[+selected.slice(2)] : null;
   let html = '', title = '', info = '';
-  if (teacher) {
+  if (master) {
+    title = master.g + '點傳師'; info = '全真島・全真道院';
+    html = `<header><span class="eyebrow">全真島・點傳師</span><h2>${master.g}點傳師</h2><p class="sub">${master.g === '坤道' ? '藍色道袍' : '灰色道袍'}・在全真道院正門前迎接大家</p></header>
+      <p class="note">一坤二乾三位點傳師站在道院正門的樓梯前，陪著登島的夥伴一起走過 2027。</p>
+      <button class="back" data-go="temple">← 回到全真島</button>`;
+  } else if (teacher) {
     const c = isl.course, pm = isl.kind === 'pm', when = `${+c.date.slice(5, 7)}/${+c.date.slice(8)}`;
     const home = pm ? c.pm.isle : c.isle;
     // 同一位講師在其他島也有課，一起列出來
@@ -2220,7 +2258,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
     hoverQueued = false;
     ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit, lookoutHit, teacherHit), false).length ? 'pointer' : '';
+    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit, lookoutHit, teacherHit, masterHit), false).length ? 'pointer' : '';
   });
 });
 renderer.domElement.addEventListener('pointerup', (e) => {
@@ -2239,6 +2277,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
     if (u.slot != null) { select(u.at || SLOTS[u.slot].key, 'm:' + u.slot); return; }
     if (u.person != null && u.person >= 0) { select('temple', 'p:' + u.person); return; }
     if (u.teacher != null) { select(TEACHERS[u.teacher].key, 't:' + u.teacher); return; }
+    if (u.master != null) { select('temple', 'd:' + u.master); return; }
   }
   while (o && !Object.values(islands).some((i) => i.group === o)) o = o.parent;
   const isl = o && Object.values(islands).find((i) => i.group === o);
@@ -2303,7 +2342,7 @@ function navItem(key, text, extra = '', cls = '') {
   const cur = islandOf2(selected) === key;
   return `<button class="${cls}" data-go="${key}"${cur ? ' aria-current="true"' : ''}><i data-s="${s}"></i><span>${esc(text)}</span><small>${esc(extra)}</small></button>`;
 }
-const islandOf2 = (sel) => { const s = String(sel); return s.startsWith('m:') ? SLOTS[+s.slice(2)].key : s.startsWith('p:') ? 'temple' : s.startsWith('t:') ? TEACHERS[+s.slice(2)].key : s; };
+const islandOf2 = (sel) => { const s = String(sel); return s.startsWith('m:') ? SLOTS[+s.slice(2)].key : s.startsWith('p:') || s.startsWith('d:') ? 'temple' : s.startsWith('t:') ? TEACHERS[+s.slice(2)].key : s; };
 // 已經從桌面圖示打開時，就不用再提示怎麼加到桌面
 const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
 function renderNav() {
@@ -2358,6 +2397,11 @@ function findPeople(q) {
     seen.add(slot.uid);
     const joined = realPeople.some((d) => (d.uids || []).includes(slot.uid));
     out.push({ kind: 'm', slot, icon: '👤', title: slot.name, sub: `${slot.title}・${joined ? '已登島' : '還沒登島'}` });
+  });
+  // 點傳師
+  if (['點傳師', '點傳', '傳師', '坤道點傳師', '乾道點傳師'].some((w) => norm(w).includes(n) || n.includes(norm(w)))) MASTERS.forEach((m, i) => {
+    if (n.includes(norm('坤道')) && m.g !== '坤道' || n.includes(norm('乾道')) && m.g !== '乾道') return;
+    out.push({ kind: 'd', i, icon: '🙏', title: m.g + '點傳師', sub: '全真島・道院正門前' });
   });
   // 講師
   TEACHERS.filter((t) => norm(t.name).includes(n)).forEach((t) => {
@@ -2415,7 +2459,7 @@ function pickHit(h) {
   if (h.kind === 'i') { if (TOUR.includes(h.key)) goTo(h.key); else select(h.key); return; }
   // 時光捲軸停在他登島之前的日子，就先拉回今天，人偶才會在廣場上
   if (h.kind === 'p' && h.d.date > curISO()) { dayInput.value = Math.max(0, dayIndex(todayISO)); applyDate(); }
-  const sel = h.kind === 'm' ? 'm:' + h.slot.id : h.kind === 't' ? 't:' + h.t.id : 'p:' + h.i;
+  const sel = h.kind === 'm' ? 'm:' + h.slot.id : h.kind === 't' ? 't:' + h.t.id : h.kind === 'd' ? 'd:' + h.i : 'p:' + h.i;
   select(h.kind === 'm' ? h.slot.key : h.kind === 't' ? h.t.key : 'temple', sel);
   focusFigure(sel);
 }
@@ -3118,6 +3162,7 @@ function figuresFor(sel) {
   }
   if (id.startsWith('p:')) return plazaPeople.filter((f) => f.userData.person === +id.slice(2));
   if (id.startsWith('t:')) return [TEACHERS[+id.slice(2)].fig];
+  if (id.startsWith('d:')) return [MASTERS[+id.slice(2)].fig];
   return [];
 }
 // 被點到（或搜尋到）的人偶：轉身面向鏡頭，舉起右手揮一揮，揮完放下、繼續看著鏡頭
@@ -3138,6 +3183,7 @@ function poseFocus(f, t) {
 function unfocus(f) {
   const u = f.userData;
   u.focusT = null;
+  if (u.restRotY != null) f.rotation.y = u.restRotY;
   if (u.arms) u.arms[1].rotation.z = ARM_REST;
 }
 function updateHighlight(t) {
