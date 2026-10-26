@@ -352,7 +352,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.44</span>
+  <span class="ver">v261026.45</span>
   </div></div>
 </div>
 
@@ -2429,6 +2429,77 @@ const newIsl = makeIsland('newisle', 21, NEW_DIR.x * 118, NEW_DIR.y * 118, 'zhon
   for (const [x, z, k] of [[-11, 8, 1], [-4, 8.5, 0.9], [-12, 2, 0.8], [8.5, 7.5, 1], [10.5, 3, 0.85], [-2.5, 9.5, 0.7]]) bush(x, z, k, mark, k > 0.85 ? pink : pink2);
   for (const [x, z] of [[11, -3], [-13, -6], [12, 9]]) pine(x, z, 3, mark);
   addObst(g, { x: 0, z: 0, r: 20 });
+
+  // ===== 還在施工：整座島用紅白條紋的施工圍籬圍起來，島上一台塔式起重機，島邊停一艘起重船 =====
+  const fenceTex = canvasTex(256, 64, (c) => {
+    c.fillStyle = '#f4f1ea'; c.fillRect(0, 0, 256, 64);
+    c.fillStyle = '#e0602a'; for (let i = -1; i < 9; i++) { c.beginPath(); c.moveTo(i * 32, 64); c.lineTo(i * 32 + 16, 64); c.lineTo(i * 32 + 40, 0); c.lineTo(i * 32 + 24, 0); c.fill(); }
+    c.fillStyle = '#2f6b45'; c.fillRect(0, 0, 256, 6); c.fillRect(0, 58, 256, 6);
+  }, true);
+  const fenceMatC = new THREE.MeshLambertMaterial({ map: fenceTex, side: THREE.DoubleSide }), postMat = lam('#5f6b73');
+  const RF = 21 * 0.97;
+  for (let k = 0; k < 6; k++) {
+    const a0 = Math.PI / 6 + (k * Math.PI) / 3, a1 = a0 + Math.PI / 3;
+    const p0 = new THREE.Vector3(Math.sin(a0) * RF, 0, Math.cos(a0) * RF), p1 = new THREE.Vector3(Math.sin(a1) * RF, 0, Math.cos(a1) * RF);
+    const len = p0.distanceTo(p1), mid = p0.clone().add(p1).multiplyScalar(0.5);
+    const panel = mesh(new THREE.PlaneGeometry(len, 1.6), fenceMatC.clone(), mid.x, 0.8, mid.z, g, false);
+    panel.material.map = fenceTex.clone(); panel.material.map.repeat.set(len / 4, 1); panel.material.map.needsUpdate = true;
+    panel.rotation.y = Math.atan2(p1.x - p0.x, p1.z - p0.z) + Math.PI / 2;
+    for (let i = 0; i <= Math.round(len / 3); i++) { const q = p0.clone().lerp(p1, i / Math.round(len / 3)); mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.8, 6), postMat, q.x, 0.9, q.z, g, false); }
+  }
+  // 圍籬正面掛一塊「施工中」告示牌
+  const sTex = canvasTex(512, 200, (c) => {
+    c.fillStyle = '#f2b632'; c.fillRect(0, 0, 512, 200);
+    c.fillStyle = '#1f1a1a'; c.font = 'bold 60px "Noto Sans TC", "PingFang TC", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText('🚧 忠恕島 施工中', 256, 80); c.font = 'bold 40px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText('完工後開放・敬請期待', 256, 154);
+  });
+  const sy = new THREE.Group(); sy.rotation.y = faceCam(newIsl.x, newIsl.z); g.add(sy);
+  mesh(new THREE.BoxGeometry(5.2, 2, 0.1), [lam('#f2b632'), lam('#f2b632'), lam('#f2b632'), lam('#f2b632'), new THREE.MeshLambertMaterial({ map: sTex }), lam('#f2b632')], 0, 2.2, RF * 0.87 + 0.3, sy);
+  for (const x of [-2.2, 2.2]) mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.2, 6), postMat, x, 1.6, RF * 0.87 + 0.25, sy);
+  // 高塔外面包著鷹架和綠色防塵網（還在蓋）
+  const scaf = lam('#4f5b66'), net = new THREE.MeshLambertMaterial({ color: '#3f8a5a', transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false });
+  for (const [x, z] of [[-2.4, -2.4], [2.4, -2.4], [2.4, 2.4], [-2.4, 2.4]]) mesh(new THREE.CylinderGeometry(0.06, 0.06, 13, 6), scaf, x, 6.5, z, TW);
+  for (let y = 7; y <= 13; y += 2) for (const [w, d, x, z] of [[4.9, 0.08, 0, 2.4], [4.9, 0.08, 0, -2.4], [0.08, 4.9, 2.4, 0], [0.08, 4.9, -2.4, 0]]) mesh(new THREE.BoxGeometry(w, 0.06, d), scaf, x, y, z, TW);
+  for (const [w, x, z, r] of [[4.8, 0, 2.42, 0], [4.8, 2.42, 0, Math.PI / 2]]) mesh(new THREE.PlaneGeometry(w, 6), net, x, 10, z, TW, false).rotation.y = r;
+  // 島上的黃色塔式起重機：吊臂慢慢轉，吊鉤上下晃
+  const yellow = lam('#f2b632'), yellow2 = lam('#e09a1e');
+  const TC = new THREE.Group(); TC.position.set(13, 0, -6); mark.add(TC);
+  mesh(new THREE.BoxGeometry(1.6, 0.5, 1.6), lam('#c9c6bf'), 0, 0.25, 0, TC);
+  for (let i = 0; i < 8; i++) mesh(new THREE.BoxGeometry(0.9, 2, 0.9), i % 2 ? yellow : yellow2, 0, 1.5 + i * 2, 0, TC);
+  const jib = new THREE.Group(); jib.position.set(0, 17, 0); TC.add(jib);
+  mesh(new THREE.BoxGeometry(1.3, 1.1, 1.3), lam('#e8eef2'), 0, 0.2, 0, jib);
+  mesh(new THREE.BoxGeometry(17, 0.55, 0.65), yellow, -6, 0.95, 0, jib);
+  mesh(new THREE.BoxGeometry(2.4, 1.1, 1.1), lam('#c9c6bf'), 3.6, 0.6, 0, jib);
+  const hook = new THREE.Group(); hook.position.set(-11, 0.6, 0); jib.add(hook);
+  const cable = mesh(new THREE.CylinderGeometry(0.03, 0.03, 1, 4), lam('#333333'), 0, -0.5, 0, hook, false);
+  const load = mesh(new THREE.BoxGeometry(2, 0.5, 0.8), lam('#c0503f'), 0, -1, 0, hook);
+  // 起重船：停在島的正前方外海，船上一支 A 字形吊臂伸向島上，吊著一根橫梁慢慢上下
+  const toHome = Math.atan2(HOME.pos.x - newIsl.x, HOME.pos.z - newIsl.z) - 0.7;
+  const BG = new THREE.Group(); BG.position.set(newIsl.x + Math.sin(toHome) * 29, -3.05, newIsl.z + Math.cos(toHome) * 29); BG.rotation.y = toHome + Math.PI; scene.add(BG);
+  const hull = lam('#b5412f'), deck = lam('#5f6b73');
+  mesh(new THREE.BoxGeometry(6.5, 1.6, 12), hull, 0, 0, 0, BG);
+  mesh(new THREE.BoxGeometry(6.6, 0.25, 12.1), lam('#f4f1ea'), 0, 0.7, 0, BG);
+  mesh(new THREE.BoxGeometry(6.2, 0.15, 11.6), deck, 0, 0.88, 0, BG);
+  mesh(new THREE.BoxGeometry(3.2, 2.2, 2.6), lam('#f4f1ea'), 0, 2.05, -4.2, BG);
+  mesh(new THREE.BoxGeometry(3.4, 0.25, 2.8), hull, 0, 3.25, -4.2, BG);
+  mesh(new THREE.BoxGeometry(2.8, 0.5, 0.05), lam('#4fa8c8'), 0, 2.5, -2.88, BG);
+  for (const [x, z] of [[-2, 4.6], [2, 4.6], [-2, 2], [2, 2]]) mesh(new THREE.BoxGeometry(1.2, 0.8, 1.6), lam(['#2f6b9a', '#e0a03a', '#3f8a6a', '#c0503f'][Math.abs(x + z) % 4 | 0]), x, 1.3, z, BG);
+  const boom = new THREE.Group(); boom.position.set(0, 1.0, 0.5); BG.add(boom);
+  for (const sx of [-1.2, 1.2]) mesh(new THREE.CylinderGeometry(0.16, 0.2, 15, 8), yellow, sx, 7.5, 0, boom).rotation.z = sx * -0.05;
+  for (let y = 2; y < 15; y += 2.5) mesh(new THREE.BoxGeometry(2.4, 0.12, 0.12), yellow2, 0, y, 0, boom);
+  const bhook = new THREE.Group(); bhook.position.set(0, 15, 0); boom.add(bhook);
+  const bcable = mesh(new THREE.CylinderGeometry(0.035, 0.035, 1, 4), lam('#333333'), 0, -0.5, 0, bhook, false);
+  const beam = mesh(new THREE.BoxGeometry(4.5, 0.4, 0.4), lam('#7a8590'), 0, -1, 0, bhook);
+  animators.push((t) => {
+    jib.rotation.y = Math.sin(t * 0.12) * 1.0;
+    const L = 6 + Math.sin(t * 0.4) * 3;
+    cable.scale.y = L; cable.position.y = -L / 2; load.position.y = -L - 0.3;
+    BG.position.y = -3.05 + Math.sin(t * 0.9) * 0.12; BG.rotation.z = Math.sin(t * 0.7) * 0.02;
+    boom.rotation.x = 0.55 + Math.sin(t * 0.18) * 0.12;
+    bhook.rotation.x = -boom.rotation.x;
+    const BL = 7 + Math.sin(t * 0.33 + 1) * 2.5;
+    bcable.scale.y = BL; bcable.position.y = -BL / 2; beam.position.y = -BL - 0.2;
+  });
 }
 
 /* ---------- 漂流瓶島：大家匿名留言的地方；每則審核通過的留言是一個漂在島邊的玻璃瓶 ---------- */
@@ -2556,7 +2627,7 @@ addTag(gateIsl, GATE.isle, 'small', 5.5);
 COURSES.filter((c) => c.pm).forEach((c) => addTag(islands[c.pm.key], `${c.pm.emoji} ${c.pm.isle}`, 'small', 3.4));
 addTag(dockIsl, '🛶 渡口島・登島', 'small dock-tag', 4.5);
 addTag(yogaIsl, '🧘 瑜伽島', '', 5.2);
-addTag(newIsl, '忠恕島', 'main', 15);
+addTag(newIsl, '🚧 忠恕島・施工中', 'main', 15);
 addTag(bottleIsl, '🍾 漂流瓶島', 'small', 4.8);
 // 登島是重要入口：渡口島的標籤排在全真島和課程島之後、其他小標籤之前
 tags.splice(1 + COURSES.length, 0, tags.pop());
@@ -2755,9 +2826,9 @@ function renderPanel() {
       <div class="cta"><p>瓶子的顏色跟著心情：開心黃、加油橘、感謝粉、心事藍、期待綠。</p><a href="${BOTTLE_FORM}" target="_blank" rel="noopener">🍾 丟一個漂流瓶</a></div>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongshu') {
-    title = '忠恕島'; info = '忠恕道院';
-    html = `<header><span class="eyebrow">外海・忠恕道院</span><h2>🏯 忠恕島</h2><p class="sub">比全真島還大一點的島，島上是忠恕道院</p></header>
-      <p class="note">正前方是八層樓的忠恕道院大樓：米色磁磚、拱形藍綠玻璃窗、中間一整面玻璃帷幕，橘色琉璃瓦門廊下掛著「忠恕道院」匾額，門口一對石獅。後面墊高的平台上是兩層的宮殿式大殿，左邊是一座橘紅磚色的高塔，前面有圓形花圃和粉紅色的花樹。</p>
+    title = '忠恕島'; info = '施工中・敬請期待';
+    html = `<header><span class="eyebrow">外海・施工中</span><h2>🚧 忠恕島</h2><p class="sub">忠恕道院正在興建，整座島用施工圍籬圍起來，完工後開放</p></header>
+      <p class="note">島上的塔式起重機和島邊的起重船正忙著把建材吊上去。正前方是八層樓的忠恕道院大樓：米色磁磚、拱形藍綠玻璃窗、中間一整面玻璃帷幕，橘色琉璃瓦門廊下掛著「忠恕道院」匾額，門口一對石獅。後面墊高的平台上是兩層的宮殿式大殿，左邊是一座橘紅磚色的高塔，前面有圓形花圃和粉紅色的花樹。</p>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'yoga') {
     const yt = TEACHERS.find((x) => x.key === 'yoga');
@@ -3083,7 +3154,7 @@ function renderNav() {
   const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島</span></a>
-    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${navItem('newisle', '忠恕島・忠恕道院')}${navItem('dock', '🛶 渡口島・登島報名處')}
+    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
@@ -3115,7 +3186,7 @@ const PLACES = [
   { key: 'temple', icon: '🏯', title: '全真島', sub: '全真道院・廣場上是已登島的夥伴', words: ['全真島', '全真道院', '佛堂', '中央'] },
   { key: 'dock', icon: '🛶', title: '渡口島', sub: '登島報名處', words: ['渡口島', '登島', '報名', '竹筏'] },
   { key: 'bottle', icon: '🍾', title: '漂流瓶島', sub: '匿名留言、交換訊息的地方', words: ['漂流瓶島', '漂流瓶', '留言', '交流', '匿名', '瓶子', '心聲'] },
-  { key: 'newisle', icon: '🏯', title: '忠恕島', sub: '忠恕道院・大樓、大殿與高塔', words: ['忠恕島', '忠恕道院', '忠恕', '大殿'] },
+  { key: 'newisle', icon: '🚧', title: '忠恕島', sub: '忠恕道院・施工中', words: ['忠恕島', '忠恕道院', '忠恕', '大殿', '施工', '建置中'] },
   { key: 'yoga', icon: '🧘', title: '瑜伽島', sub: '每堂課早上的第一堂：古典瑜伽', words: ['瑜伽島', '瑜伽', '古典瑜伽', '早上', '晨間'] },
   ...COURSES.flatMap((c) => [
     { key: c.key, icon: c.game ? '🎮' : '📅', title: c.isle, sub: `${md2(c.date)} ${c.name}｜${c.sub}`,
