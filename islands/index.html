@@ -342,7 +342,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.37</span>
+  <span class="ver">v261026.38</span>
   </div></div>
 </div>
 
@@ -2312,8 +2312,9 @@ const newIsl = makeIsland('newisle', 21, NEW_DIR.x * 118, NEW_DIR.y * 118, 'buil
 
 /* ---------- 漂流瓶島：大家匿名留言的地方；每則審核通過的留言是一個漂在島邊的玻璃瓶 ---------- */
 const BOTTLE_FORM = 'https://forms.gle/bBxgYkA4GXhmviRLA';
-// 公開用的試算表：只放審核通過的留言（用 IMPORTRANGE＋QUERY 從表單回覆帶過來）；還沒設定時島上只有裝飾用的空瓶
-const BOTTLE_SHEET_ID = '';
+// 留言的試算表；網頁只顯示「審核通過」有打勾的瓶子。
+// 目前暫時直接讀表單的原始回覆，之後換成只放審核通過留言的公開試算表（IMPORTRANGE＋QUERY），改這一行就好
+const BOTTLE_SHEET_ID = '19FzGRdWNhVKCJ19_KNd2g7HbDS6ThNhZV0nSBwEx6L0';
 const MOOD_COLOR = { 開心: '#ffd23f', 加油: '#ff9f43', 感謝: '#ff8fab', 心事: '#6fb7ff', 期待: '#7ed957' };
 const moodColor = (m) => { for (const [k, c] of Object.entries(MOOD_COLOR)) if (String(m).includes(k)) return c; return '#9fe3e0'; };
 const bottleIsl = makeIsland('bottle', 5.5, -12, 66, 'bottle');
