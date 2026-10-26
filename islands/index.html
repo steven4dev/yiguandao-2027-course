@@ -207,6 +207,11 @@
   #searchResults button small { white-space: normal; line-height: 1.5; }
   .searchpop .tip { margin-top: 4px; }
   .alsoT { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ideas { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 8px; }
+  .ideas li { display: grid; grid-template-columns: 26px 1fr; column-gap: 6px; font-size: 13px; line-height: 1.6; color: var(--ink); }
+  .ideas li span { grid-row: span 2; font-size: 18px; line-height: 1.4; }
+  .ideas li b { font-weight: 700; color: var(--brick); }
+  .tip-small { margin: 8px 0 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
   .letter { padding: 14px 16px; border-radius: 12px; background: #fff8e6; color: #3f2c22; font-size: 15px; line-height: 1.8; box-shadow: inset 0 0 0 1px rgba(160, 120, 60, 0.25); white-space: normal; word-break: break-word; }
   .letter span { display: block; margin-top: 8px; text-align: right; font-size: 13px; color: #7a6455; }
   .bottle-row { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; margin-bottom: 4px; }
@@ -352,7 +357,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.47</span>
+  <span class="ver">v261026.48</span>
   </div></div>
 </div>
 
@@ -2833,14 +2838,23 @@ function renderPanel() {
     title = '漂流瓶'; info = m.sign ? `來自 ${m.sign}` : '匿名的瓶子';
     html = `<header><span class="eyebrow">漂流瓶島・${esc(m.mood || '一個瓶子')}</span><h2>🍾 撿到一個漂流瓶</h2><p class="sub">寫給：${esc(m.to || '大家')}${m.date ? `・${+m.date.slice(5, 7)}/${+m.date.slice(8)}` : ''}</p></header>
       <div class="letter">${esc(m.text).replace(/\n/g, '<br>')}<span>—— ${esc(m.sign || '匿名的夥伴')}</span></div>
-      <div class="cta"><p>也有話想說嗎？把它裝進瓶子，丟進全真群島的海裡。</p><a href="${BOTTLE_FORM}" target="_blank" rel="noopener">🍾 丟一個漂流瓶</a></div>
+      <div class="cta"><p>也有話想說、或有讓群島更好玩的點子嗎？把它裝進瓶子，丟進全真群島的海裡。</p><a href="${BOTTLE_FORM}" target="_blank" rel="noopener">🍾 丟一個漂流瓶</a></div>
       <button class="back" data-go="bottle">← 看漂流瓶島</button>`;
   } else if (isl && isl.kind === 'bottle') {
     title = '漂流瓶島'; info = bottles.length ? `${bottles.length} 個瓶子漂上岸` : '等第一個瓶子漂過來';
     html = `<header><span class="eyebrow">交流・留言</span><h2>🍾 漂流瓶島</h2><p class="sub">${bottles.length ? `已經有 ${bottles.length} 個瓶子漂上岸` : '海面上還很安靜，等你丟第一個瓶子'}</p></header>
-      <p class="note">把想說的話裝進瓶子：一句鼓勵、一個心情、對課程的期待，或想對某位夥伴說的話。不用登入、可以匿名，送出後幾分鐘瓶子就會漂到島邊，點瓶子就能打開來看。</p>
+      <p class="note">把想說的話塞進瓶子、蓋上軟木塞，丟進全真群島的海裡吧！不用登入、可以匿名，送出後幾分鐘瓶子就會漂到島邊，點瓶子就能打開來看。</p>
+      <div class="bars"><h3>瓶子裡可以裝什麼？</h3>
+        <ul class="ideas">
+          <li><span>💌</span><b>想說的話</b>一句鼓勵、一個心情、對課程的期待，或想偷偷對某位夥伴說的話</li>
+          <li><span>🏝️</span><b>許願蓋島</b>覺得哪座島還少了什麼？想要一座新島？瑜伽島想多一隻海豚？儘管許願</li>
+          <li><span>🧑‍🎨</span><b>幫人偶換造型</b>想讓班長戴墨鏡、讓講師披披風？說說你心目中的造型</li>
+          <li><span>🕺</span><b>點播動作</b>想看哪位幹部跳舞、翻跟斗、比愛心？寫下來，說不定下次登島就看到了</li>
+        </ul>
+        <p class="tip-small">群島的島主每週都會撈瓶子，被選中的點子會真的蓋進島上 🛠️</p>
+      </div>
       ${bottles.length ? `<div class="bars"><h3>最近漂上岸的瓶子</h3>${bottles.slice(0, 5).map((m, i) => `<button class="back bottle-row" data-bottle="${i}"><i style="background:${moodColor(m.mood)}"></i>${esc(m.text.length > 22 ? m.text.slice(0, 22) + '…' : m.text)}</button>`).join('')}</div>` : ''}
-      <div class="cta"><p>瓶子的顏色跟著心情：開心黃、加油橘、感謝粉、心事藍、期待綠。</p><a href="${BOTTLE_FORM}" target="_blank" rel="noopener">🍾 丟一個漂流瓶</a></div>
+      <div class="cta"><p>瓶子的顏色跟著心情：開心黃、加油橘、感謝粉、心事藍、期待綠。今天想丟哪一種顏色？</p><a href="${BOTTLE_FORM}" target="_blank" rel="noopener">🍾 丟一個漂流瓶</a></div>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongshu') {
     title = '忠恕島'; info = '施工中・敬請期待';
@@ -3202,7 +3216,7 @@ const md2 = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
 const PLACES = [
   { key: 'temple', icon: '🏯', title: '全真島', sub: '全真道院・廣場上是已登島的夥伴', words: ['全真島', '全真道院', '佛堂', '中央'] },
   { key: 'dock', icon: '🛶', title: '渡口島', sub: '登島報名處', words: ['渡口島', '登島', '報名', '竹筏'] },
-  { key: 'bottle', icon: '🍾', title: '漂流瓶島', sub: '匿名留言、交換訊息的地方', words: ['漂流瓶島', '漂流瓶', '留言', '交流', '匿名', '瓶子', '心聲'] },
+  { key: 'bottle', icon: '🍾', title: '漂流瓶島', sub: '匿名留言、交換訊息的地方', words: ['漂流瓶島', '漂流瓶', '瓶中信', '留言', '交流', '匿名', '瓶子', '心聲', '建議', '許願', '點子'] },
   { key: 'newisle', icon: '🚧', title: '忠恕島', sub: '忠恕道院・施工中', words: ['忠恕島', '忠恕道院', '忠恕', '大殿', '施工', '建置中'] },
   { key: 'yoga', icon: '🧘', title: '瑜伽島', sub: '每堂課早上的第一堂：古典瑜伽', words: ['瑜伽島', '瑜伽', '古典瑜伽', '早上', '晨間'] },
   ...COURSES.flatMap((c) => [
