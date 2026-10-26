@@ -197,6 +197,9 @@
   #searchResults button span { display: grid; gap: 1px; }
   #searchResults button small { white-space: normal; line-height: 1.5; }
   .searchpop .tip { margin-top: 4px; }
+  .alsoT { display: flex; flex-wrap: wrap; gap: 6px; }
+  .bars .prog { display: grid; grid-template-columns: 44px 1fr; gap: 8px; font-size: 13px; padding: 2px 0; }
+  .bars .prog span:first-child { color: var(--muted); font-variant-numeric: tabular-nums; }
   .dock-body { display: grid; gap: 8px; }
   .chip { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; padding: 9px 16px; font-size: 14px; border-radius: 999px; }
   .chip b { font-family: var(--font-display); font-size: 16px; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
@@ -334,7 +337,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.18</span>
+  <span class="ver">v261026.19</span>
   </div></div>
 </div>
 
@@ -1684,6 +1687,49 @@ COURSES.filter((c) => c.pm).forEach((c) => {
   bridge(parent, isl);
 });
 
+/* ---------- 講師：站在課程島前緣的小黑板旁，面向鏡頭；點了看是誰、教什麼，也搜尋得到 ---------- */
+// 從課表文字抓出講師，例如「全真 鄔明清 講師」「藝術氣球（全真 林鈺蓉 講師）」
+const TEACHER_RE = /(\S+)\s+(\S{2,4})\s+(講師|助理)/;
+const TEACHERS = [], teacherHit = [];
+const teacherMat = lam('#2f6f73'), boardMat = lam('#2f4a3a'), easelMat = lam('#8a6a48');
+function addTeachers(isl, list, dist, spread) {
+  // 同一位講師在同一座島教兩堂（例如瑜伽＋觀點分享）就合成一位
+  const byName = new Map();
+  list.forEach(({ text, topic }) => {
+    const m = String(text).match(TEACHER_RE);
+    if (!m) return;
+    const t = byName.get(m[2]) || { name: m[2], unit: m[1], title: m[3], topics: [] };
+    t.topics.push(topic);
+    byName.set(m[2], t);
+  });
+  const all = [...byName.values()];
+  const a = Math.atan2(HOME.pos.x - isl.x, HOME.pos.z - isl.z) + 0.6, side = new THREE.Vector3(Math.cos(a), 0, -Math.sin(a));
+  all.forEach((t, k) => {
+    const off = (k - (all.length - 1) / 2) * spread;
+    const g = new THREE.Group();
+    g.position.set(Math.sin(a) * dist + side.x * off, 0, Math.cos(a) * dist + side.z * off);
+    g.rotation.y = a;
+    g.scale.setScalar(1.3);
+    isl.group.add(g);
+    // 身後的小黑板，看得出是老師
+    const board = new THREE.Group(); board.position.set(0.55, 0, -0.45); board.rotation.y = -0.35; g.add(board);
+    mesh(new THREE.BoxGeometry(0.9, 0.6, 0.05), boardMat, 0, 1.05, 0, board);
+    mesh(new THREE.BoxGeometry(0.98, 0.07, 0.07), easelMat, 0, 0.72, 0.03, board, false);
+    for (const sx of [-0.38, 0.38]) mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.4, 5), easelMat, sx, 0.65, -0.06, board, false).rotation.x = 0.12;
+    const fig = figure(teacherMat);
+    fig.scale.setScalar(1.45);
+    g.add(fig);
+    const rec = { id: TEACHERS.length, key: isl.key, fig, ...t };
+    fig.userData.teacher = g.userData.teacher = rec.id;
+    g.traverse((m) => { if (m.isMesh) teacherHit.push(m); });
+    TEACHERS.push(rec);
+  });
+}
+COURSES.forEach((c) => {
+  addTeachers(islands[c.key], (c.prog || []).filter(([label]) => label !== '下午活動').map(([topic, text]) => ({ topic, text })), 5.2, 2.3);
+  if (c.pm) addTeachers(islands[c.pm.key], [{ topic: c.pm.name, text: c.pm.who || '' }], 3.2, 2);
+});
+
 /* =========================================================
    標籤（HTML，跟著 3D 位置移動，可以點）
    ========================================================= */
@@ -1858,9 +1904,20 @@ function renderPanel() {
   const now = curISO(), list = peopleNow().filter((p) => p.date <= now);
   const memberSlot = String(selected).startsWith('m:') ? SLOTS[+selected.slice(2)] : null;
   const personRec = String(selected).startsWith('p:') ? realPeople[+selected.slice(2)] : null;
-  const isl = memberSlot ? islands[memberSlot.key] : islands[selected];
+  const teacher = String(selected).startsWith('t:') ? TEACHERS[+selected.slice(2)] : null;
+  const isl = memberSlot ? islands[memberSlot.key] : teacher ? islands[teacher.key] : islands[selected];
   let html = '', title = '', info = '';
-  if (personRec) {
+  if (teacher) {
+    const c = isl.course, pm = isl.kind === 'pm', when = `${+c.date.slice(5, 7)}/${+c.date.slice(8)}`;
+    const home = pm ? c.pm.isle : c.isle;
+    // 同一位講師在其他島也有課，一起列出來
+    const also = TEACHERS.filter((o) => o.name === teacher.name && o !== teacher);
+    title = teacher.name; info = `${home}・${teacher.topics.join('、')}`;
+    html = `<header><span class="eyebrow">${esc(home)}・${teacher.title}</span><h2>${esc(teacher.name)}</h2><p class="sub">${esc(teacher.unit)}・${esc(teacher.title)}</p></header>
+      <div class="bars"><h3>這堂課</h3>${teacher.topics.map((tp) => `<div class="prog"><span>${esc(when)}</span><span>${esc(tp)}</span></div>`).join('')}</div>
+      ${also.length ? `<div class="bars"><h3>也在這些島上課</h3><div class="alsoT">${also.map((o) => { const oi = islands[o.key], oc = oi.course; return `<button class="back" data-go="${o.key}">${esc(oi.kind === 'pm' ? oc.pm.isle : oc.isle)}・${+oc.date.slice(5, 7)}/${+oc.date.slice(8)}</button>`; }).join('')}</div></div>` : ''}
+      <button class="back" data-go="${teacher.key}">← 看${esc(home)}的課程</button>`;
+  } else if (personRec) {
     const pr = personRec, name = pr.m || '學員';
     title = name; info = `${pr.g}・${pr.unit}`;
     html = `<header><span class="eyebrow">全真島・${pr.isCadre ? '幹部' : '學員'}</span><h2>${esc(name)}</h2><p class="sub">${esc(pr.g)}・${esc(pr.unit)}・${esc(pr.city)}</p></header>
@@ -2075,7 +2132,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
     hoverQueued = false;
     ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit, lookoutHit), false).length ? 'pointer' : '';
+    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit, lookoutHit, teacherHit), false).length ? 'pointer' : '';
   });
 });
 renderer.domElement.addEventListener('pointerup', (e) => {
@@ -2093,6 +2150,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
     const u = f.userData || {};
     if (u.slot != null) { select(u.at || SLOTS[u.slot].key, 'm:' + u.slot); return; }
     if (u.person != null && u.person >= 0) { select('temple', 'p:' + u.person); return; }
+    if (u.teacher != null) { select(TEACHERS[u.teacher].key, 't:' + u.teacher); return; }
   }
   while (o && !Object.values(islands).some((i) => i.group === o)) o = o.parent;
   const isl = o && Object.values(islands).find((i) => i.group === o);
@@ -2157,7 +2215,7 @@ function navItem(key, text, extra = '', cls = '') {
   const cur = islandOf2(selected) === key;
   return `<button class="${cls}" data-go="${key}"${cur ? ' aria-current="true"' : ''}><i data-s="${s}"></i><span>${esc(text)}</span><small>${esc(extra)}</small></button>`;
 }
-const islandOf2 = (sel) => (String(sel).startsWith('m:') ? SLOTS[+sel.slice(2)].key : String(sel).startsWith('p:') ? 'temple' : sel);
+const islandOf2 = (sel) => { const s = String(sel); return s.startsWith('m:') ? SLOTS[+s.slice(2)].key : s.startsWith('p:') ? 'temple' : s.startsWith('t:') ? TEACHERS[+s.slice(2)].key : s; };
 // 已經從桌面圖示打開時，就不用再提示怎麼加到桌面
 const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
 function renderNav() {
@@ -2213,6 +2271,11 @@ function findPeople(q) {
     const joined = realPeople.some((d) => (d.uids || []).includes(slot.uid));
     out.push({ kind: 'm', slot, icon: '👤', title: slot.name, sub: `${slot.title}・${joined ? '已登島' : '還沒登島'}` });
   });
+  // 講師
+  TEACHERS.filter((t) => norm(t.name).includes(n)).forEach((t) => {
+    const oi = islands[t.key], oc = oi.course;
+    out.push({ kind: 't', t, icon: '🧑‍🏫', title: t.name, sub: `${oi.kind === 'pm' ? oc.pm.isle : oc.isle}・${+oc.date.slice(5, 7)}/${+oc.date.slice(8)} ${t.topics.join('、')}` });
+  });
   // 學員：已經登島的夥伴
   realPeople.forEach((d, i) => {
     if (!d.m || !norm(d.m).includes(n) || mainSlotOf(d)) return;
@@ -2249,7 +2312,11 @@ function focusFigure(sel) {
   const f = (slot >= 0 && islands[SLOTS[slot].key].members.find((x) => x.userData.slot === slot)) || figuresFor(sel)[0];
   if (!f) return;
   const t = f.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0.8, 0));
-  const dirV = camera.position.clone().sub(controls.target).setY(0).normalize();
+  // 從島的外側往內看這個人，島中央的地標、建築就在他身後，不會擋在中間
+  const isl = islands[islandOf2(sel)];
+  const dirV = isl ? t.clone().sub(new THREE.Vector3(isl.x, t.y, isl.z)).setY(0) : new THREE.Vector3();
+  if (dirV.lengthSq() < 0.5) dirV.copy(camera.position).sub(controls.target).setY(0);
+  dirV.normalize();
   if (dirV.lengthSq() < 0.01) dirV.set(0.6, 0, 0.8);
   const p = t.clone().addScaledVector(dirV, 20).setY(t.y + 9);
   if (innerWidth < innerHeight) p.sub(t).multiplyScalar(1.3).add(t);
@@ -2260,13 +2327,13 @@ function pickHit(h) {
   if (h.kind === 'i') { if (TOUR.includes(h.key)) goTo(h.key); else select(h.key); return; }
   // 時光捲軸停在他登島之前的日子，就先拉回今天，人偶才會在廣場上
   if (h.kind === 'p' && h.d.date > curISO()) { dayInput.value = Math.max(0, dayIndex(todayISO)); applyDate(); }
-  const sel = h.kind === 'm' ? 'm:' + h.slot.id : 'p:' + h.i;
-  select(h.kind === 'm' ? h.slot.key : 'temple', sel);
+  const sel = h.kind === 'm' ? 'm:' + h.slot.id : h.kind === 't' ? 't:' + h.t.id : 'p:' + h.i;
+  select(h.kind === 'm' ? h.slot.key : h.kind === 't' ? h.t.key : 'temple', sel);
   focusFigure(sel);
 }
 // 打字時，畫面上符合的島標籤亮起來，其他的變淡
 function markHits() {
-  const keys = new Set(searchHits.map((h) => (h.kind === 'i' ? h.key : h.kind === 'm' ? h.slot.key : 'temple')));
+  const keys = new Set(searchHits.map((h) => (h.kind === 'i' ? h.key : h.kind === 'm' ? h.slot.key : h.kind === 't' ? h.t.key : 'temple')));
   const on = searching && searchInput.value.trim() !== '';
   labelsEl.classList.toggle('dim', on);
   for (const t of tags) t.el.classList.toggle('hit', on && keys.has(t.isl.key));
@@ -2962,6 +3029,7 @@ function figuresFor(sel) {
     return [...islands[SLOTS[slot].key].members, ...plazaPeople].filter((f) => f.userData.slot === slot);
   }
   if (id.startsWith('p:')) return plazaPeople.filter((f) => f.userData.person === +id.slice(2));
+  if (id.startsWith('t:')) return [TEACHERS[+id.slice(2)].fig];
   return [];
 }
 // 被點到（或搜尋到）的人偶：轉身面向鏡頭，舉起右手揮一揮，揮完放下、繼續看著鏡頭
