@@ -337,7 +337,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.30</span>
+  <span class="ver">v261026.31</span>
   </div></div>
 </div>
 
@@ -933,7 +933,8 @@ const petalMat = lam('#f6a5b8'), pistilMat = lam('#f4d35e');
 const flagMat = lam('#c0503f'), poleMat = lam('#7a5236'), sashMat = lam('#e8b53a');
 const poleGeo = new THREE.CylinderGeometry(0.018, 0.018, 1.1, 6), flagGeo = new THREE.BoxGeometry(0.02, 0.24, 0.36), sashGeo = new THREE.TorusGeometry(0.34, 0.035, 6, 24);
 const ARM_REST = 0.9;
-const JUGGLERS = [];
+const JUGGLERS = [], POPPERS = [];
+const popperGeo = new THREE.ConeGeometry(0.1, 0.32, 12), popperMat = lam('#e8b53a', { emissive: '#3a2500' });
 const robeGeo = new THREE.LatheGeometry([[0, 0], [0.42, 0], [0.44, 0.05], [0.38, 0.3], [0.33, 0.5], [0.34, 0.58], [0, 0.6]].map(([r, y]) => new THREE.Vector2(r, y)), 28);   // 手臂平常往外下垂的角度；揮手時從這裡舉起來
 // extra：hat 斗笠顏色、pack 背包顏色、scarf 圍巾顏色、glasses 大圓眼鏡、book 拿書（瞭望員、船夫、講師用）
 function figure(mat, role = '', bob = false, extra = {}) {
@@ -992,7 +993,18 @@ function figure(mat, role = '', bob = false, extra = {}) {
     p.userData.balls.forEach((b) => b.scale.setScalar(0.085));
     p.userData.arms.forEach((sh, i) => { sh.rotation.x = -1.0; sh.rotation.z = (i ? 1 : -1) * 0.35; });
     p.userData.armRestZ = 0.35;
+    p.userData.armRestX = -1.0;
     JUGGLERS.push(p);
+  }
+  // 公關禮節組：手拿金色拉炮，不時「砰！」一聲噴出彩色紙花（噴發在下面的 POPPERS 動畫）
+  if (extra.popper) {
+    const cone = part(popperGeo, popperMat, 0.22, 0.72, 0.42);
+    cone.rotation.set(0.75, 0, -0.35);
+    p.userData.cone = cone;
+    p.userData.arms.forEach((sh, i) => { sh.rotation.x = -0.7; sh.rotation.z = (i ? 1 : -1) * 0.45; });
+    p.userData.armRestZ = 0.45;
+    p.userData.armRestX = -0.7;
+    POPPERS.push(p);
   }
   if (extra.robe) {
     const rm = lam(extra.robe), trim = lam('#ffffff');
@@ -1066,7 +1078,7 @@ function syncPlaza(list) {
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   list.forEach((d) => {
     const slot = mainSlotOf(d);
-    const p = slot ? figure(d.g === '坤道' ? kunMat : qianMat, slot.role, d.g === '坤道', { juggle: slot.group === '活動組' && slot.role === '組長', scarf: islands[slot.key].info.color }) : figure(d.g === '坤道' ? kunMat : qianMat, d.isCadre, d.g === '坤道');
+    const p = slot ? figure(d.g === '坤道' ? kunMat : qianMat, slot.role, d.g === '坤道', { juggle: slot.group === '活動組' && slot.role === '組長', popper: slot.group === '公關禮節組', scarf: islands[slot.key].info.color }) : figure(d.g === '坤道' ? kunMat : qianMat, d.isCadre, d.g === '坤道');
     if (slot) Object.assign(p.userData, { slot: slot.id, at: 'temple' });
     else p.userData.person = realPeople.indexOf(d);
     p.traverse((m) => { if (m.isMesh) plazaHit.push(m); });
@@ -1086,6 +1098,62 @@ function syncPlaza(list) {
    課程島的地標
    ========================================================= */
 const animators = [];
+// 拉拉炮：每個人每 4～7 秒拉一次，彼此錯開；紙花往錐口方向噴出，受重力飄落、旋轉、淡掉
+const CONFETTI_COLORS = ['#e63946', '#f4c430', '#ff8fab', '#3a86ff', '#2ec27e', '#ffffff'];
+const confettiGeo = new THREE.PlaneGeometry(0.16, 0.1), streamerGeo = new THREE.BoxGeometry(0.035, 0.6, 0.01);
+const confetti = [];
+for (let i = 0; i < 420; i++) {
+  const streamer = i % 12 === 0;
+  const m = new THREE.Mesh(streamer ? streamerGeo : confettiGeo, new THREE.MeshBasicMaterial({ color: CONFETTI_COLORS[i % CONFETTI_COLORS.length], transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
+  m.visible = false;
+  scene.add(m);
+  confetti.push({ m, v: new THREE.Vector3(), spin: new THREE.Vector3(), age: 0, life: 1, fade: 1 });
+}
+let confettiI = 0, confettiT = null;
+const popTip = new THREE.Vector3(), popDir = new THREE.Vector3(), popQ = new THREE.Quaternion();
+function popConfetti(f) {
+  const u = f.userData, cone = u.cone;
+  cone.getWorldPosition(popTip);
+  cone.getWorldQuaternion(popQ);
+  popDir.set(0, 1, 0).applyQuaternion(popQ).normalize();
+  popTip.addScaledVector(popDir, 0.2 * f.scale.x);
+  const ghost = cone.material === ghostPersonMat, size = f.scale.x / 1.4;
+  for (let k = 0; k < 26; k++) {
+    const c = confetti[confettiI++ % confetti.length];
+    c.m.position.copy(popTip);
+    c.v.copy(popDir).multiplyScalar(3.2 + Math.random() * 2.6).add(new THREE.Vector3(Math.random() - 0.5, Math.random() * 0.8, Math.random() - 0.5).multiplyScalar(2.2)).multiplyScalar(size);
+    c.spin.set(Math.random() * 8 - 4, Math.random() * 8 - 4, Math.random() * 8 - 4);
+    c.age = 0; c.life = 1.8 + Math.random() * 1.2; c.fade = ghost ? 0.4 : 1;
+    c.m.scale.setScalar(size);
+    c.m.visible = true;
+  }
+  u.pullT = confettiT || 0;
+  popSound(popTip);
+}
+animators.push((t) => {
+  const dt = confettiT == null ? 0 : Math.min(0.1, t - confettiT);
+  confettiT = t;
+  for (const f of POPPERS) {
+    const u = f.userData;
+    if (!f.parent) continue;
+    if (u.nextPop == null) u.nextPop = t + 1 + Math.random() * 5;
+    if (u.focusT == null && t > u.nextPop) { popConfetti(f); u.nextPop = t + 4 + Math.random() * 3; }
+    // 左手往後一拉
+    const e = t - (u.pullT ?? -9), [l] = u.arms;
+    l.rotation.x = -0.7 + (e < 0.5 ? Math.sin((e / 0.5) * Math.PI) * 0.9 : 0);
+  }
+  for (const c of confetti) {
+    if (!c.m.visible) continue;
+    c.age += dt;
+    if (c.age > c.life) { c.m.visible = false; continue; }
+    c.v.y -= 4.2 * dt;
+    c.v.multiplyScalar(1 - 1.6 * dt);
+    if (c.v.y < -1.2) c.v.y = -1.2;   // 紙花很輕，掉到一個速度就慢慢飄
+    c.m.position.addScaledVector(c.v, dt);
+    c.m.rotation.x += c.spin.x * dt; c.m.rotation.y += c.spin.y * dt; c.m.rotation.z += c.spin.z * dt;
+    c.m.material.opacity = c.fade * Math.min(1, (c.life - c.age) / 0.6);
+  }
+});
 // 拋球：三顆球輪流從一手拋到另一手，畫出交叉的拋物線（小丑的三球拋接）；兩手跟著一上一下
 animators.push((t) => {
   for (const f of JUGGLERS) {
@@ -1555,7 +1623,7 @@ function buildOuter(o, x, z, ang, faceY) {
     o.slots.forEach((slot, k) => {
       // 圍著建築站一圈，從哪個角度看都看得到幾位
       const a = ang + 0.4 + (k / o.size) * Math.PI * 2, r = o.R * 0.72;
-      const p = figure(ghostPersonMat, slot.role, false, { juggle: slot.group === '活動組' && slot.role === '組長', scarf: o.color, flowerSlot: true });
+      const p = figure(ghostPersonMat, slot.role, false, { juggle: slot.group === '活動組' && slot.role === '組長', popper: slot.group === '公關禮節組', scarf: o.color, flowerSlot: true });
       placeWalker(p, isl.group, Math.sin(a) * r, Math.cos(a) * r, 0.15, o.R * COS30 - 0.6);
       p.userData.grow = 1.4;
       p.scale.setScalar(1.4);
@@ -1630,6 +1698,15 @@ const raftHit = [];
 raft.traverse((m) => { if (m.isMesh) raftHit.push(m); });
 // 航班：每趟約 12 秒、靠岸停 3 秒；從渡口島出發 → 穿過開口 → 迎賓島 → 再回去
 const LEG = 12, DWELL = 3, CYCLE = 2 * (LEG + DWELL);
+// 竹筏靠岸迎賓島的那一刻，公關組一起拉拉炮歡迎新夥伴上岸
+let raftPrevC = 0;
+animators.push((t) => {
+  const c = t % CYCLE;
+  if (raftPrevC < DWELL + LEG && c >= DWELL + LEG) {
+    islands[GATE.key].members.forEach((f, i) => { const u = f.userData; if (u.cone && u.focusT == null) u.nextPop = t + i * 0.12; });
+  }
+  raftPrevC = c;
+});
 const smooth = (x) => x * x * (3 - 2 * x);
 animators.push((t) => {
   const c = t % CYCLE;
@@ -3026,6 +3103,16 @@ function isleSounds(now) {
 }
 // 熱氣球噴火：一陣低低的「呼——」，鏡頭離氣球越近越大聲
 const burnerTmp = new THREE.Vector3();
+// 拉炮：一聲清脆的「啪！」，接一點紙花飄落的沙沙聲；鏡頭離得近才聽得清楚
+function popSound(pos) {
+  if (!SND.ctx || !SND.sfx || SND.ctx.state !== 'running') return;
+  const level = THREE.MathUtils.clamp(1.3 - camera.position.distanceTo(pos) / 90, 0, 1);
+  if (level < 0.05) return;
+  const t = SND.ctx.currentTime + Math.random() * 0.03, out = SND.sfxBus;
+  noiseHit(t, out, { type: 'highpass', f: 1800, peak: 0.16 * level, attack: 0.002, dur: 0.07 });
+  ping(t, out, 220, 0.08 * level, 0.06);
+  noiseHit(t + 0.08, out, { f: 6000, q: 0.8, peak: 0.025 * level, attack: 0.1, dur: 1.0 });
+}
 function burnerSound(dur, obj, size) {
   if (!SND.ctx || !SND.sfx || SND.ctx.state !== 'running') return;
   const dist = camera.position.distanceTo(obj.getWorldPosition(burnerTmp)), level = size * THREE.MathUtils.clamp(1.3 - dist / 110, 0, 1);
@@ -3227,7 +3314,7 @@ function poseFocus(f, t) {
   f.position.y = 0;
   const e = t - u.focusT, [, right] = u.arms || [];
   if (!right) return;
-  // 拋球的人先把右手放回身側再揮手，球停在空中左手邊
+  // 拋球、拉拉炮的人先把右手放回身側再揮手
   right.rotation.x = 0;
   // 前 0.3 秒舉手、接著左右揮 2 秒、最後 0.4 秒放下
   const up = reduceMotion ? 1 : Math.min(1, e / 0.3) * Math.min(1, Math.max(0, (2.7 - e) / 0.4));
@@ -3238,7 +3325,7 @@ function unfocus(f) {
   u.focusT = null;
   if (u.restRotY != null) f.rotation.y = u.restRotY;
   if (u.arms) u.arms[1].rotation.z = u.armRestZ ?? ARM_REST;
-  if (u.balls && u.arms) u.arms[1].rotation.x = -1.0;
+  if (u.armRestX != null && u.arms) u.arms[1].rotation.x = u.armRestX;
 }
 function updateHighlight(t) {
   const want = panelMode === 'closed' ? [] : figuresFor(selected);
