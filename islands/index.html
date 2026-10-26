@@ -331,7 +331,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.12</span>
+  <span class="ver">v261026.13</span>
   </div></div>
 </div>
 
@@ -356,7 +356,7 @@
 
 <div class="card soundpop" id="soundPop" hidden>
   <b>聲音</b>
-  <label class="sw"><input type="checkbox" id="sfxOn"><span>音效<small>高鐵呼嘯而過、熱氣球噴火，還有每座島的特色聲音（點進那座島就聽得到）</small></span></label>
+  <label class="sw"><input type="checkbox" id="sfxOn"><span>音效<small>高鐵轟隆轟隆經過、熱氣球噴火，還有每座島的特色聲音（點進那座島就聽得到）</small></span></label>
   <label class="sw"><input type="checkbox" id="musicOn"><span>輕音樂<small>漫步調的電鋼琴小曲，晚上會變慢、變輕</small></span></label>
 </div>
 
@@ -2509,7 +2509,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) load
 
 /* =========================================================
    聲音：全部用 Web Audio 即時合成，不用下載音檔
-   音效：高鐵呼嘯而過、熱氣球噴火，還有每座島自己的特色音效（鏡頭到那座島附近才聽得到）；
+   音效：高鐵轟隆轟隆經過、熱氣球噴火，還有每座島自己的特色音效（鏡頭到那座島附近才聽得到）；
    輕音樂是漫步調：電鋼琴和弦＋散步貝斯＋輕輕的旋律，晚上放慢、變輕
    ========================================================= */
 const SND = { ctx: null, sfx: false, music: false };
@@ -2781,41 +2781,50 @@ function burnerSound(dur, obj, size) {
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.25);
   src.start(t); src.stop(t + dur + 0.3);
 }
-// 高鐵：每列車一組噪音，依距離調音量、依左右調聲道，靠近時音色亮、遠離時悶
+// 高鐵：改成老火車那種「轟隆、轟隆」——低沉的滾動聲，加上車輪壓過鐵軌接縫一下一下的節奏；
+// 依距離調音量、依左右調聲道，不再有尖銳的呼嘯聲
 const tv = new THREE.Vector3(), toCam = new THREE.Vector3(), camRight = new THREE.Vector3();
 function trainSound(tr, now) {
   const ctx = SND.ctx;
   if (!tr.userData.snd) {
-    // 呼嘯聲：帶通過的噪音；軌道轟隆聲：低頻的鋸齒波
-    const src = noiseSrc(), bp = ctx.createBiquadFilter(), g = ctx.createGain(), pan = panTo(0, SND.trainBus);
-    bp.type = 'bandpass'; bp.Q.value = 0.7; bp.frequency.value = 900;
+    const pan = panTo(0, SND.trainBus), g = ctx.createGain();
+    g.gain.value = 0.0001; g.connect(pan);
+    // 底下一直滾動的低沉轟轟聲
+    const src = noiseSrc(), lp = ctx.createBiquadFilter(), ng = ctx.createGain();
+    lp.type = 'lowpass'; lp.frequency.value = 260; ng.gain.value = 1.6;
     const rum = ctx.createOscillator(), rlp = ctx.createBiquadFilter(), rg = ctx.createGain();
-    rum.type = 'sawtooth'; rum.frequency.value = 46; rlp.type = 'lowpass'; rlp.frequency.value = 160; rg.gain.value = 0.45;
-    // 帶通濾波會削掉噪音大部分的能量，濾完再放大，呼嘯聲才聽得清楚
-    const boost = ctx.createGain(); boost.gain.value = 5;
-    g.gain.value = 0.0001;
-    src.connect(bp).connect(boost).connect(g); rum.connect(rlp).connect(rg).connect(g); g.connect(pan);
+    rum.type = 'sawtooth'; rum.frequency.value = 48; rlp.type = 'lowpass'; rlp.frequency.value = 140; rg.gain.value = 0.35;
+    src.connect(lp).connect(ng).connect(g); rum.connect(rlp).connect(rg).connect(g);
     src.start(); rum.start();
-    tr.userData.snd = { src, rum, bp, g, pan };
+    tr.userData.snd = { src, rum, g, pan, next: now + 0.1, vol: 0 };
   }
   const s = tr.userData.snd, dir = tr.userData.dir;
   tv.set(tr.position.x - (dir * tr.userData.len) / 2, tr.position.y, tr.position.z);
   viaduct.localToWorld(tv);
-  // 沿著軌道、離鏡頭最近那一點的距離：接近 0 就是正在呼嘯而過
+  // 沿著軌道、離鏡頭最近那一點的距離：接近 0 就是正從面前經過
   const along = (tv.x - camera.position.x) * VDIR.x + (tv.z - camera.position.z) * VDIR.z;
   toCam.subVectors(camera.position, tv);
   const dist = toCam.length();
   toCam.normalize();
-  const approach = VDIR.x * dir * toCam.x + VDIR.z * dir * toCam.z;
-  const whoosh = Math.exp(-Math.pow(along / 32, 2));
-  // 最大音量封頂：靠近佛堂時明顯呼嘯而過，但不會刺耳
-  const vol = Math.min(0.5, (0.15 + 0.95 * whoosh) * Math.pow(Math.max(0, 1 - dist / 480), 1.3) * 1.2);
+  const pass = Math.exp(-Math.pow(along / 40, 2));
+  // 音量封頂比以前低：經過面前時聽得出來，但是悶悶的、不刺耳
+  s.vol = Math.min(0.3, (0.2 + 0.8 * pass) * Math.pow(Math.max(0, 1 - dist / 480), 1.3));
   camRight.setFromMatrixColumn(camera.matrixWorld, 0);
-  s.g.gain.setTargetAtTime(Math.max(0.0001, vol), now, 0.06);
-  // 靠近時音高往上、遠離時往下，像真的掠過
-  s.bp.frequency.setTargetAtTime(650 + 450 * (approach + 1) + 500 * whoosh, now, 0.08);
-  s.rum.frequency.setTargetAtTime(44 + 10 * approach, now, 0.1);
-  if (s.pan.pan) s.pan.pan.setTargetAtTime(THREE.MathUtils.clamp(-toCam.dot(camRight), -1, 1) * 0.85, now, 0.08);
+  s.g.gain.setTargetAtTime(Math.max(0.0001, s.vol * 0.5), now, 0.08);
+  if (s.pan.pan) s.pan.pan.setTargetAtTime(THREE.MathUtils.clamp(-toCam.dot(camRight), -1, 1) * 0.8, now, 0.08);
+  // 轟隆、轟隆：每 0.6 秒左右兩下，前重後輕
+  if (s.next < now) s.next = now;
+  for (; s.next < now + 0.3; s.next += 0.58) {
+    if (s.vol < 0.01) continue;
+    for (const [d, k] of [[0, 1], [0.14, 0.7]]) {
+      const t = s.next + d, cg = ctx.createGain(), clp = ctx.createBiquadFilter(), n = noiseSrc();
+      clp.type = 'lowpass'; clp.frequency.value = 550;
+      n.connect(clp).connect(cg).connect(s.pan); env(cg, t, 0.008, 0.9 * s.vol * k, 0.11);
+      n.start(t, Math.random()); n.stop(t + 0.15);
+      const tg = ctx.createGain(); tg.connect(s.pan); env(tg, t, 0.005, 0.5 * s.vol * k, 0.13);
+      tone('sine', 78, t, 0.15, tg);
+    }
+  }
 }
 function stopTrainSound(tr) {
   const s = tr.userData.snd;
