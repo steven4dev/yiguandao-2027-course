@@ -342,7 +342,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.38</span>
+  <span class="ver">v261026.39</span>
   </div></div>
 </div>
 
@@ -2315,6 +2315,8 @@ const BOTTLE_FORM = 'https://forms.gle/bBxgYkA4GXhmviRLA';
 // 留言的試算表；網頁只顯示「審核通過」有打勾的瓶子。
 // 目前暫時直接讀表單的原始回覆，之後換成只放審核通過留言的公開試算表（IMPORTRANGE＋QUERY），改這一行就好
 const BOTTLE_SHEET_ID = '19FzGRdWNhVKCJ19_KNd2g7HbDS6ThNhZV0nSBwEx6L0';
+// 先不審核：所有留言都直接漂上島；之後要審核時改成 true，就只顯示「審核通過」有打勾的瓶子
+const BOTTLE_REVIEW = false;
 const MOOD_COLOR = { 開心: '#ffd23f', 加油: '#ff9f43', 感謝: '#ff8fab', 心事: '#6fb7ff', 期待: '#7ed957' };
 const moodColor = (m) => { for (const [k, c] of Object.entries(MOOD_COLOR)) if (String(m).includes(k)) return c; return '#9fe3e0'; };
 const bottleIsl = makeIsland('bottle', 5.5, -12, 66, 'bottle');
@@ -2616,7 +2618,7 @@ function renderPanel() {
   } else if (isl && isl.kind === 'bottle') {
     title = '漂流瓶島'; info = bottles.length ? `${bottles.length} 個瓶子漂上岸` : '等第一個瓶子漂過來';
     html = `<header><span class="eyebrow">交流・留言</span><h2>🍾 漂流瓶島</h2><p class="sub">${bottles.length ? `已經有 ${bottles.length} 個瓶子漂上岸` : '海面上還很安靜，等你丟第一個瓶子'}</p></header>
-      <p class="note">把想說的話裝進瓶子：一句鼓勵、一個心情、對課程的期待，或想對某位夥伴說的話。不用登入、可以匿名，審核通過後瓶子就會漂到島邊，點瓶子就能打開來看。</p>
+      <p class="note">把想說的話裝進瓶子：一句鼓勵、一個心情、對課程的期待，或想對某位夥伴說的話。不用登入、可以匿名，送出後幾分鐘瓶子就會漂到島邊，點瓶子就能打開來看。</p>
       ${bottles.length ? `<div class="bars"><h3>最近漂上岸的瓶子</h3>${bottles.slice(0, 5).map((m, i) => `<button class="back bottle-row" data-bottle="${i}"><i style="background:${moodColor(m.mood)}"></i>${esc(m.text.length > 22 ? m.text.slice(0, 22) + '…' : m.text)}</button>`).join('')}</div>` : ''}
       <div class="cta"><p>瓶子的顏色跟著心情：開心黃、加油橘、感謝粉、心事藍、期待綠。</p><a href="${BOTTLE_FORM}" target="_blank" rel="noopener">🍾 丟一個漂流瓶</a></div>
       <button class="back" data-go="temple">← 回到全真島</button>`;
@@ -3302,7 +3304,7 @@ async function loadBottles() {
       const get = (i) => (i >= 0 && row.c[i] && row.c[i].v != null ? String(row.c[i].v).trim() : '');
       const t = i => (i >= 0 && row.c[i] ? row.c[i].v : null);
       const tm = toDate(t(c.time) != null ? String(t(c.time)) : '');
-      return { text: get(c.text), to: get(c.to), mood: get(c.mood), sign: get(c.sign), ok: c.ok < 0 || /true|✅|v|是|通過/i.test(get(c.ok)), date: tm ? ymd(tm) : '' };
+      return { text: get(c.text), to: get(c.to), mood: get(c.mood), sign: get(c.sign), ok: !BOTTLE_REVIEW || c.ok < 0 || /true|✅|是|通過/i.test(get(c.ok)), date: tm ? ymd(tm) : '' };
     }).filter((m) => m.text && m.ok).reverse();
     const sig = list.map((m) => m.text + m.date).join('|');
     if (sig !== bottles.sig) { bottles = list; bottles.sig = sig; placeBottles(); lastView = ''; }
