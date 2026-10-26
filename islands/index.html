@@ -337,7 +337,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.33</span>
+  <span class="ver">v261026.34</span>
   </div></div>
 </div>
 
@@ -475,8 +475,8 @@ function mask(name) {
   return s[0] + '○'.repeat(s.length - 2) + s[s.length - 1];
 }
 const CADRE_LOOK = {
-  班務團隊: ['hall', '#c0503f', '市政廳'], 人事組: ['post', '#3f8a6a', '郵局'], 公關禮節組: ['arch', '#d9774a', '迎賓牌樓'], 學術組: ['library', '#5b6fa8', '圖書館'],
-  輔導組: ['lighthouse', '#e0a03a', '燈塔'], 總務組: ['barn', '#8f5f3c', '倉庫'], 影音組: ['tower', '#7a5aa6', '電視塔'], 活動組: ['bigtop', '#d2566a', '大帳篷'],
+  班務團隊: ['hall', '#c0503f', '班旗指揮台'], 人事組: ['post', '#3f8a6a', '大印章名冊'], 公關禮節組: ['arch', '#d9774a', '迎賓牌樓'], 學術組: ['library', '#5b6fa8', '圖書館'],
+  輔導組: ['lighthouse', '#e0a03a', '燈塔'], 總務組: ['barn', '#8f5f3c', '倉庫和大工具箱'], 影音組: ['tower', '#7a5aa6', '三腳架攝影機'], 活動組: ['bigtop', '#d2566a', '大帳篷'],
 };
 // 同一人身兼多組時，每一組都算；uid 是這個人在名單裡的序號，報名資料只記序號、不記姓名
 const CADRE_OF = new Map();
@@ -1687,17 +1687,51 @@ for (let i = 0; i < COURSES.length - 1; i++) bridge(islands[COURSES[i].key], isl
 function cadreBuilding(kind, g, color) {
   const col = lam(color), cream = lam('#f4ead6'), dark = lam('#4a3a32');
   if (kind === 'hall') {
-    mesh(new THREE.BoxGeometry(3.4, 1.8, 2.2), cream, 0, 0.9, 0, g);
-    for (let i = 0; i < 4; i++) mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.6, 8), whiteMat, -1.2 + i * 0.8, 0.8, 1.25, g);
-    mesh(new THREE.BoxGeometry(3.6, 0.2, 2.6), col, 0, 1.9, 0.1, g);
-    mesh(new THREE.BoxGeometry(1, 1.4, 1), cream, 0, 2.7, 0, g);
-    mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.05, 20), whiteMat, 0, 2.8, 0.52, g).rotation.x = Math.PI / 2;
-    mesh(new THREE.ConeGeometry(0.85, 0.9, 4), col, 0, 3.85, 0, g).rotation.y = Math.PI / 4;
+    // 班務島：高高的班旗旗桿＋一座小指揮台，台上放一支擴音器；旗子跟班長手上的是同一面
+    const pole = lam('#d9d4c8');
+    mesh(new THREE.CylinderGeometry(0.5, 0.6, 0.25, 16), cream, -0.9, 0.12, -0.3, g);
+    mesh(new THREE.CylinderGeometry(0.08, 0.1, 5.6, 10), pole, -0.9, 2.9, -0.3, g);
+    mesh(new THREE.SphereGeometry(0.16, 12, 10), lam('#e8b53a'), -0.9, 5.75, -0.3, g);
+    const fl = new THREE.Group(); fl.position.set(-0.9, 5.2, -0.3); g.add(fl);
+    const flagCloth = mesh(new THREE.BoxGeometry(1.9, 1.1, 0.04), col, 0.98, -0.1, 0, fl);
+    animators.push((t) => { fl.rotation.y = Math.sin(t * 1.4) * 0.35 + 0.2; flagCloth.rotation.y = Math.sin(t * 3.2) * 0.12; });
+    // 指揮台：兩階小平台，正面紅色滾邊，台上一支擴音器
+    mesh(new THREE.BoxGeometry(2.4, 0.35, 1.7), cream, 0.8, 0.18, 0.4, g);
+    mesh(new THREE.BoxGeometry(1.6, 0.35, 1.2), cream, 0.8, 0.53, 0.3, g);
+    mesh(new THREE.BoxGeometry(2.42, 0.08, 0.05), col, 0.8, 0.32, 1.26, g);
+    mesh(new THREE.BoxGeometry(1.62, 0.08, 0.05), col, 0.8, 0.67, 0.91, g);
+    mesh(new THREE.BoxGeometry(0.5, 0.75, 0.4), lam('#7a5236'), 0.8, 1.08, 0.2, g);
+    const mega = new THREE.Group(); mega.position.set(0.8, 1.55, 0.25); mega.rotation.set(-0.35, 0, 0); g.add(mega);
+    mesh(new THREE.ConeGeometry(0.28, 0.55, 16, 1, true), new THREE.MeshLambertMaterial({ color: '#e8b53a', side: THREE.DoubleSide }), 0, 0, 0.3, mega).rotation.x = -Math.PI / 2;
+    mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.3, 10), lam('#f4ead6'), 0, 0, -0.08, mega).rotation.x = Math.PI / 2;
   } else if (kind === 'post') {
-    mesh(new THREE.BoxGeometry(3, 1.5, 2.2), lam('#3f8a6a'), 0, 0.75, 0, g);
-    mesh(new THREE.BoxGeometry(3.3, 0.2, 2.5), cream, 0, 1.6, 0, g);
-    mesh(new THREE.BoxGeometry(0.9, 1, 0.05), dark, 0, 0.5, 1.12, g);
-    for (const [x, c] of [[1.9, '#c0503f'], [2.4, '#3f8a6a']]) { mesh(new THREE.BoxGeometry(0.4, 0.8, 0.4), lam(c), x, 0.4, 1.3, g); mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 12, 1, false, 0, Math.PI), lam(c), x, 0.8, 1.3, g).rotation.z = Math.PI / 2; }
+    // 人事島：巨大的紅色印章壓在一本攤開的名冊上，名冊上一排打勾
+    const book = new THREE.Group(); book.position.set(0, 0, 0.2); g.add(book);
+    for (const sx of [-1, 1]) {
+      const half = new THREE.Group(); half.rotation.z = sx * -0.1; book.add(half);
+      mesh(new THREE.BoxGeometry(1.7, 0.16, 2.3), col, sx * 0.86, 0.12, 0, half);
+      mesh(new THREE.BoxGeometry(1.58, 0.12, 2.15), lam('#fffaf0'), sx * 0.84, 0.24, 0, half);
+      for (let i = 0; i < 5; i++) {
+        mesh(new THREE.BoxGeometry(0.9, 0.02, 0.06), lam('#7a6455'), sx * 0.95, 0.31, -0.75 + i * 0.36, half, false);
+        if (sx < 0) { // 左頁每一行前面一個綠色的勾
+          const ck = new THREE.Group(); ck.position.set(-1.5, 0.32, -0.75 + i * 0.36); half.add(ck);
+          mesh(new THREE.BoxGeometry(0.1, 0.03, 0.04), lam('#2e9b5f'), -0.04, 0, 0.02, ck, false).rotation.y = -0.8;
+          mesh(new THREE.BoxGeometry(0.2, 0.03, 0.04), lam('#2e9b5f'), 0.06, 0, -0.02, ck, false).rotation.y = 0.9;
+        }
+      }
+    }
+    // 印章：每隔幾秒抬起來再「咚」一聲蓋下去
+    const stamp = new THREE.Group(); stamp.position.set(0.9, 0.3, 0.2); g.add(stamp);
+    mesh(new THREE.CylinderGeometry(0.7, 0.75, 0.55, 24), lam('#c0503f'), 0, 0.28, 0, stamp);
+    mesh(new THREE.CylinderGeometry(0.3, 0.42, 0.5, 16), lam('#a3322a'), 0, 0.8, 0, stamp);
+    mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.0, 12), lam('#7a5236'), 0, 1.5, 0, stamp);
+    mesh(new THREE.SphereGeometry(0.34, 16, 12), lam('#7a5236'), 0, 2.15, 0, stamp);
+    const inkMark = mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.01, 24), new THREE.MeshBasicMaterial({ color: '#d0312d', transparent: true, opacity: 0 }), 0.9, 0.315, 0.2, g, false);
+    animators.push((t) => {
+      const c = t % 5, up = c < 0.6 ? Math.sin((c / 0.6) * Math.PI) : 0;
+      stamp.position.y = 0.3 + up * 0.9; stamp.rotation.z = up * 0.12;
+      inkMark.material.opacity = c > 0.55 && c < 3 ? 0.55 * Math.min(1, (3 - c) / 1.5) : 0;
+    });
   } else if (kind === 'arch') {
     const red = lam('#c0503f');
     for (const x of [-1.5, 1.5]) mesh(new THREE.CylinderGeometry(0.18, 0.2, 2.6, 10), red, x, 1.3, 0, g);
@@ -1731,12 +1765,51 @@ function cadreBuilding(kind, g, color) {
     const r = mesh(new THREE.CylinderGeometry(1.3, 1.3, 3.2, 3), cream, 0, 1.6 + 0.62, 0, g); r.rotation.set(0, 0, Math.PI / 2); r.scale.set(0.95, 1, 1.25);
     mesh(new THREE.BoxGeometry(1, 1.1, 0.05), cream, 0, 0.55, 1.12, g);
     [[1.9, 0.9], [2.3, 0.3], [1.95, 0.3, 1]].forEach(([x, z, up]) => mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), lam(C.wood), x, up ? 0.75 : 0.25, z, g));
+    // 門口一個巨大的工具箱，打開的蓋子露出扳手和鐵鎚：什麼都能搞定的總務
+    const tb = new THREE.Group(); tb.position.set(-1.8, 0, 1.2); tb.rotation.y = 0.35; g.add(tb);
+    mesh(new THREE.BoxGeometry(1.3, 0.6, 0.7), lam('#c0392b'), 0, 0.3, 0, tb);
+    mesh(new THREE.BoxGeometry(1.32, 0.08, 0.72), dark, 0, 0.62, 0, tb);
+    const lid = mesh(new THREE.BoxGeometry(1.3, 0.06, 0.7), lam('#c0392b'), 0, 0.85, -0.5, tb); lid.rotation.x = -1.1;
+    mesh(new THREE.BoxGeometry(0.5, 0.06, 0.06), dark, 0, 0.75, 0, tb);
+    const wr = new THREE.Group(); wr.position.set(-0.3, 0.75, 0.05); wr.rotation.z = 0.35; tb.add(wr);
+    mesh(new THREE.BoxGeometry(0.1, 0.8, 0.05), lam('#b8bec4'), 0, 0.35, 0, wr);
+    mesh(new THREE.TorusGeometry(0.12, 0.05, 6, 12, Math.PI * 1.4), lam('#b8bec4'), 0, 0.8, 0, wr).rotation.z = -0.45;
+    const hm = new THREE.Group(); hm.position.set(0.3, 0.75, 0); hm.rotation.z = -0.3; tb.add(hm);
+    mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.85, 8), lam(C.wood), 0, 0.35, 0, hm);
+    mesh(new THREE.BoxGeometry(0.36, 0.14, 0.14), lam('#5f6b73'), 0, 0.8, 0, hm);
   } else if (kind === 'tower') {
-    mesh(new THREE.CylinderGeometry(0.22, 0.4, 4.4, 10), cream, 0, 2.2, 0, g);
-    mesh(new THREE.SphereGeometry(0.6, 16, 12), col, 0, 3.4, 0, g);
-    mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.3, 6), dark, 0, 4.9, 0, g);
-    mesh(new THREE.SphereGeometry(0.09, 8, 6), glow('#ff6a5a', 0.4, 2.4), 0, 5.6, 0, g);
-    const dish = mesh(new THREE.SphereGeometry(0.5, 14, 8, 0, Math.PI * 2, 0, Math.PI / 3), whiteMat, 1.3, 0.6, 0.8, g); dish.rotation.x = -0.9;
+    // 影音島：巨大的三腳架＋攝影機，常常在幫大家拍合照；錄影燈一閃一閃，偶爾「喀嚓」閃一下白光
+    const legMat = lam('#3a3a46'), H = 3.4;
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI * 2 + Math.PI / 3, foot = new THREE.Vector3(Math.sin(a) * 1.4, 0, Math.cos(a) * 1.4 - 0.3), top = new THREE.Vector3(0, H, -0.3);
+      const d = top.clone().sub(foot), leg = mesh(new THREE.CylinderGeometry(0.07, 0.1, d.length(), 8), legMat, (foot.x + top.x) / 2, (foot.y + top.y) / 2, (foot.z + top.z) / 2, g);
+      leg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
+      mesh(new THREE.SphereGeometry(0.13, 10, 8), dark, foot.x, 0.08, foot.z, g);
+    }
+    mesh(new THREE.CylinderGeometry(0.35, 0.3, 0.25, 16), legMat, 0, H + 0.1, -0.3, g);
+    const cam = new THREE.Group(); cam.position.set(0, H + 0.75, -0.3); g.add(cam);
+    mesh(new THREE.BoxGeometry(1.0, 0.9, 1.7), col, 0, 0, 0, cam);
+    mesh(new THREE.BoxGeometry(1.02, 0.12, 1.72), dark, 0, -0.42, 0, cam);
+    const lens = mesh(new THREE.CylinderGeometry(0.38, 0.45, 0.7, 20), dark, 0, 0, 1.15, cam); lens.rotation.x = Math.PI / 2;
+    mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.02, 20), lam('#7fb8e0', { emissive: '#1a3b55' }), 0, 0, 1.51, cam).rotation.x = Math.PI / 2;
+    mesh(new THREE.BoxGeometry(0.5, 0.35, 0.5), dark, 0.3, 0.55, -0.4, cam);
+    mesh(new THREE.BoxGeometry(0.12, 0.12, 0.9), dark, 0, 0.55, 0.3, cam);
+    for (const sz of [-0.1, 0.7]) mesh(new THREE.BoxGeometry(0.08, 0.2, 0.08), dark, 0, 0.5, sz, cam);
+    const rec = mesh(new THREE.SphereGeometry(0.08, 10, 8), new THREE.MeshBasicMaterial({ color: '#ff3b3b' }), 0.35, 0.3, 0.86, cam);
+    const flash = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false }));
+    flash.position.set(0, 0, 1.7); cam.add(flash);
+    // 地上一塊場記板
+    const clap = new THREE.Group(); clap.position.set(1.6, 0, 1.2); clap.rotation.set(-0.25, -0.5, 0); g.add(clap);
+    mesh(new THREE.BoxGeometry(0.9, 0.7, 0.06), lam('#1f1a1a'), 0, 0.38, 0, clap);
+    const bar = canvasTex(128, 16, (c) => { for (let i = 0; i < 8; i++) { c.fillStyle = i % 2 ? '#1f1a1a' : '#ffffff'; c.beginPath(); c.moveTo(i * 16, 16); c.lineTo(i * 16 + 8, 0); c.lineTo(i * 16 + 24, 0); c.lineTo(i * 16 + 16, 16); c.fill(); } });
+    mesh(new THREE.BoxGeometry(0.92, 0.14, 0.07), new THREE.MeshLambertMaterial({ map: bar }), 0, 0.8, 0, clap).rotation.z = 0.15;
+    animators.push((t) => {
+      cam.rotation.y = Math.sin(t * 0.35) * 0.35;
+      rec.visible = Math.sin(t * 5) > 0;
+      const c = t % 6.5;
+      flash.material.opacity = c < 0.3 ? 1 - c / 0.3 : 0;
+      flash.scale.setScalar(0.3 + c * 3);
+    });
   } else if (kind === 'bigtop') {
     mesh(new THREE.CylinderGeometry(1.9, 1.9, 1.1, 20), new THREE.MeshLambertMaterial({ map: stripes('#d2566a', '#f4efe6', 16) }), 0, 0.55, 0, g);
     mesh(new THREE.ConeGeometry(2.1, 1.7, 20), new THREE.MeshLambertMaterial({ map: stripes('#d2566a', '#f4efe6', 16) }), 0, 1.95, 0, g);
@@ -3223,11 +3296,11 @@ const ISLE_SFX = {
   barn: { every: [4, 7], play(t, o, v) {
     for (let i = 0; i < 3; i++) { ping(t + i * 0.28, o, 420, 0.09 * v, 0.07); noiseHit(t + i * 0.28, o, { f: 1800, q: 2, peak: 0.04 * v, dur: 0.04 }); }
   } },
-  // 影音島（電視塔）：收音機轉台的沙沙聲，最後對到頻道「嗶」
+  // 影音島（三腳架攝影機）：拍合照前的「嗶」，接著快門「喀嚓」
   tower: { every: [5, 8], play(t, o, v) {
-    const f = noiseHit(t, o, { f: 600, q: 4, peak: 0.09 * v, attack: 0.05, dur: 0.8 });
-    f.frequency.setValueAtTime(600, t); f.frequency.exponentialRampToValueAtTime(3200, t + 0.75);
-    ping(t + 0.85, o, 1000, 0.04 * v, 0.15);
+    for (const d of [0, 0.35]) ping(t + d, o, 1760, 0.035 * v, 0.12);
+    noiseHit(t + 0.8, o, { f: 3000, q: 2, peak: 0.1 * v, dur: 0.03 });
+    noiseHit(t + 0.87, o, { f: 2200, q: 2, peak: 0.09 * v, dur: 0.05 });
   } },
   // 活動島（大帳篷）：派對吹笛「嘟～嘟～」
   bigtop: { every: [4, 7], play(t, o, v) {
