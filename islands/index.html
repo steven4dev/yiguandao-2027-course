@@ -325,7 +325,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.04</span>
+  <span class="ver">v261026.05</span>
   </div></div>
 </div>
 
@@ -1060,12 +1060,48 @@ function windmill(g) {
   mesh(new THREE.SphereGeometry(0.18, 10, 8), lam('#c0503f'), 0, 0, 0.05, hub);
   animators.push((t) => { hub.rotation.z = -t * 1.2; });
 }
+// 熱氣球：球皮上面圓胖、往下收成小開口（車床曲線轉一圈），開口下面掛燃燒器，不時噴火打氣
+const ENVELOPE = [[0.55, 0], [0.75, 0.35], [1.25, 1.0], [1.95, 1.9], [2.55, 2.9], [2.95, 3.9], [3.1, 4.7], [3.0, 5.5], [2.65, 6.2], [2.0, 6.8], [1.1, 7.2], [0, 7.32]]
+  .map(([r, y]) => new THREE.Vector2(r, y));
+const envelopeGeo = new THREE.LatheGeometry(ENVELOPE, 32);
+const flameGeo = new THREE.ConeGeometry(0.34, 1.6, 10).translate(0, 0.8, 0), coreGeo = new THREE.ConeGeometry(0.17, 1.0, 8).translate(0, 0.5, 0);
+const ropeMat = lam('#5a3b30');
+const burners = [];
+// y0：球皮開口離籃子頂多高；w：籃子半寬，四條吊繩從籃角拉到開口
+function hotAirBalloon(parent, a, b, y0, w, onFire = null) {
+  const mat = new THREE.MeshLambertMaterial({ map: stripes(a, b, 12), side: THREE.DoubleSide, emissive: '#ff8a2a', emissiveIntensity: 0 });
+  mesh(envelopeGeo, mat, 0, y0, 0, parent);
+  mesh(new THREE.TorusGeometry(0.56, 0.05, 6, 20), ropeMat, 0, y0, 0, parent, false).rotation.x = Math.PI / 2;
+  for (const [x, z] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+    const p0 = new THREE.Vector3(x * w, 0.05, z * w), p1 = new THREE.Vector3(x * 0.4, y0, z * 0.4), d = p1.clone().sub(p0);
+    const r = mesh(new THREE.CylinderGeometry(0.02, 0.02, d.length(), 4), ropeMat, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2, (p0.z + p1.z) / 2, parent, false);
+    r.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
+  }
+  mesh(new THREE.CylinderGeometry(0.2, 0.24, 0.3, 10), lam('#4a4a4a'), 0, y0 - 0.95, 0, parent, false);
+  const flame = mesh(flameGeo, new THREE.MeshBasicMaterial({ color: '#ff9a3c', transparent: true, opacity: 0.85, depthWrite: false }), 0, y0 - 0.8, 0, parent, false);
+  const core = mesh(coreGeo, new THREE.MeshBasicMaterial({ color: '#fff1b8', transparent: true, opacity: 0.95, depthWrite: false }), 0, y0 - 0.8, 0, parent, false);
+  flame.visible = core.visible = false;
+  burners.push({ mat, flame, core, next: 1.5 + Math.random() * 5, until: 0, onFire });
+}
+animators.push((t) => {
+  for (const s of burners) {
+    // 每 4～10 秒噴一次火，每次不到一秒半；噴火時球皮被照得微微發亮
+    if (t > s.next) { s.until = t + 0.7 + Math.random() * 0.7; s.next = s.until + 4 + Math.random() * 6; if (s.onFire) s.onFire(s.until - t); }
+    const on = t < s.until;
+    s.flame.visible = s.core.visible = on;
+    if (on) {
+      const f = 0.8 + Math.random() * 0.4;
+      s.flame.scale.set(1, f, 1);
+      s.core.scale.set(1, 0.7 + Math.random() * 0.5, 1);
+    }
+    s.mat.emissiveIntensity += ((on ? 0.3 : 0) - s.mat.emissiveIntensity) * 0.2;
+  }
+});
 function balloon(g) {
   const b = new THREE.Group(); g.add(b);
-  const env = mesh(new THREE.SphereGeometry(1.4, 24, 18), new THREE.MeshLambertMaterial({ map: stripes('#e2763b', '#f4d35e', 10) }), 0, 0, 0, b); env.scale.set(1, 1.2, 1);
-  mesh(new THREE.ConeGeometry(0.7, 0.9, 24, 1, true), new THREE.MeshLambertMaterial({ map: stripes('#e2763b', '#f4d35e', 10), side: THREE.DoubleSide }), 0, -1.75, 0, b).rotation.x = Math.PI;
   mesh(new THREE.BoxGeometry(0.6, 0.45, 0.6), lam(C.wood), 0, -2.7, 0, b);
-  for (const [x, z] of [[-0.25, -0.25], [0.25, -0.25], [0.25, 0.25], [-0.25, 0.25]]) mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.7, 4), lam('#5a3b30'), x, -2.25, z, b, false);
+  const rig = new THREE.Group(); rig.position.y = -2.475; rig.scale.setScalar(0.45); b.add(rig);
+  hotAirBalloon(rig, '#e2763b', '#f4d35e', 1.4, 0.6);
   mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.05, 20), lam('#c9c3b6'), 0, 0.03, 0, g, false);
   // 地上的小地球儀：世界這麼大
   mesh(new THREE.SphereGeometry(0.5, 16, 12), lam('#5b8fc9'), 2.2, 1.0, 1.4, g);
@@ -1516,17 +1552,13 @@ const LOOK_BASE = new THREE.Vector3(-50, 22, -6);
 const lookoutHit = [];
 {
   const b = lookout;
-  const envMat = new THREE.MeshLambertMaterial({ map: stripes('#c0503f', '#f4e9d8', 12) });
-  const env = mesh(new THREE.SphereGeometry(3.2, 28, 20), envMat, 0, 6.2, 0, b); env.scale.set(1, 1.18, 1);
-  mesh(new THREE.ConeGeometry(1.7, 2.1, 28, 1, true), new THREE.MeshLambertMaterial({ map: stripes('#c0503f', '#f4e9d8', 12), side: THREE.DoubleSide }), 0, 2.15, 0, b).rotation.x = Math.PI;
-  mesh(new THREE.TorusGeometry(1.0, 0.07, 6, 20), lam('#e8b53a'), 0, 1.05, 0, b, false).rotation.x = Math.PI / 2;
+  hotAirBalloon(b, '#c0503f', '#f4e9d8', 1.7, 0.85, (dur) => burnerSound(dur));
   // 籃子：藤編的方籃，上緣一圈木框
   mesh(new THREE.BoxGeometry(1.7, 1.0, 1.7), lam('#b98b55'), 0, -0.5, 0, b);
   mesh(new THREE.BoxGeometry(1.86, 0.14, 1.86), lam('#7a5236'), 0, 0.02, 0, b);
-  for (const [x, z] of [[-0.75, -0.75], [0.75, -0.75], [0.75, 0.75], [-0.75, 0.75]]) mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.1, 4), lam('#5a3b30'), x, 0.6, z, b, false);
   // 瞭望員和望遠鏡：鏡筒朝著群島中央
   const man = figure(lam('#3f8a6a'));
-  man.position.set(-0.25, 0.05, 0.25); man.rotation.y = Math.PI; man.scale.setScalar(1.15); b.add(man);
+  man.position.set(-0.45, 0.05, 0.45); man.rotation.y = Math.PI; man.scale.setScalar(1.15); b.add(man);
   const scope = new THREE.Group(); scope.position.set(0.35, 0.55, -0.35); b.add(scope);
   const brass = new THREE.MeshLambertMaterial({ color: '#d8a845', emissive: '#3a2500' });
   const tube = mesh(new THREE.CylinderGeometry(0.11, 0.17, 1.9, 14), brass, 0, 0, 0, scope); tube.rotation.x = Math.PI / 2;
@@ -2457,6 +2489,19 @@ function tone(type, freq, t, dur, out) {
   o.type = type; o.frequency.setValueAtTime(freq, t);
   o.connect(out); o.start(t); o.stop(t + dur + 0.05);
   return o;
+}
+// 瞭望氣球的燃燒器：一陣低低的「呼——」，鏡頭離氣球越近越大聲
+function burnerSound(dur) {
+  if (!SND.ctx || !SND.sfx) return;
+  const dist = camera.position.distanceTo(lookout.position), level = THREE.MathUtils.clamp(1.4 - dist / 120, 0.15, 1);
+  const t = SND.ctx.currentTime, g = SND.ctx.createGain(), lp = SND.ctx.createBiquadFilter(), src = noiseSrc();
+  lp.type = 'lowpass'; lp.frequency.value = 700;
+  src.connect(lp).connect(g).connect(panTo(0));
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.09 * level, t + 0.12);
+  g.gain.setValueAtTime(0.09 * level, t + dur - 0.2);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.25);
+  src.start(t); src.stop(t + dur + 0.3);
 }
 // 鳥叫：幾聲快速上下滑音的短哨
 function bird(t, level) {
