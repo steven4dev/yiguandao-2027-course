@@ -103,20 +103,20 @@
     transition: max-width var(--bt), max-height var(--bt), margin var(--bt), opacity var(--bt); }
   .brand-more { display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--bt), opacity var(--bt), margin var(--bt), visibility 0s; }
   .brand-more > div { display: grid; gap: 4px; min-height: 0; overflow: hidden; padding: 0 8px 8px; margin: 0 -8px -8px; }
-  .brand-toggle { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border: 0; border-radius: 50%; display: grid; place-items: center;
-    background: transparent; color: var(--muted); font-size: 14px; cursor: pointer; opacity: 0; visibility: hidden;
-    transition: opacity var(--bt), top var(--bt), transform var(--bt), visibility 0s linear 0.32s; transform: rotate(180deg); }
-  .brand-toggle:hover { background: var(--chip); }
-  .brand-toggle:focus-visible { outline: 2px solid var(--jade); outline-offset: 1px; }
-  .brand.foldable { padding-right: 40px; }
+  /* 收合鈕跟資訊卡、時光捲軸用同一顆：小圓鈕＋箭頭；展開時 ⌄（收合），收起來時轉成 ⌃（展開） */
+  .brand-toggle { position: absolute; top: 8px; right: 8px; opacity: 0; visibility: hidden;
+    transition: opacity var(--bt), top var(--bt), transform var(--bt), visibility 0s linear 0.32s; }
+  .brand-toggle svg { transition: transform 0.2s; }
+  .brand.brand-mini .brand-toggle svg { transform: rotate(180deg); }
+  .brand.foldable { padding-right: 46px; }
   .brand.foldable .brand-toggle { opacity: 1; visibility: visible; transition: opacity var(--bt), top var(--bt), transform var(--bt), visibility 0s; }
-  .brand.brand-mini { padding: 6px 40px 6px 14px; max-width: 84px; cursor: pointer; }
+  .brand.brand-mini { padding: 6px 42px 6px 14px; max-width: 84px; cursor: pointer; }
   .brand.brand-mini .brand-more > div { white-space: nowrap; }
   .brand.brand-mini h1 { font-size: 17px; }
   .brand.brand-mini h1 small { max-width: 0; max-height: 0; margin: 0; opacity: 0; }
   .brand.brand-mini .brand-more { grid-template-rows: 0fr; opacity: 0; margin-top: -4px; visibility: hidden;
     transition: grid-template-rows var(--bt), opacity var(--bt), margin var(--bt), visibility 0s linear 0.32s; }
-  .brand.brand-mini .brand-toggle { top: 50%; transform: translateY(-50%); }
+  .brand.brand-mini .brand-toggle { top: 50%; right: 5px; transform: translateY(-50%); }
   .brand .count b { font-family: var(--font-display); font-size: 18px; color: var(--brick); font-variant-numeric: tabular-nums; margin-right: 2px; }
 
   #sound .on, #sound[aria-pressed="true"] .off { display: none; }
@@ -319,13 +319,13 @@
 <div id="labels"></div>
 
 <div class="card brand" id="brand">
-  <button class="brand-toggle" id="brandToggle" type="button" aria-expanded="true" aria-label="收合品牌卡" title="收合">▾</button>
+  <button class="icon sm brand-toggle" id="brandToggle" type="button" aria-expanded="true" aria-label="收合品牌卡" title="收合"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <div class="brand-more"><div>
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.03</span>
+  <span class="ver">v261026.04</span>
   </div></div>
 </div>
 
