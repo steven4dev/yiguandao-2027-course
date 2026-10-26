@@ -1844,18 +1844,21 @@
     if (S.flags.retire) await L(68, S.flags.retire);
     await L(70, S.hp >= 55 ? '你還能爬上年輕時那座山，風還是一樣。' : '藥盒分成早、中、晚三格，你常常忘記今天吃了沒。');
     if (S.pal >= 50) await L(72, `${S.mates[0] || '老朋友'}揪大家吃飯，一桌坐不下，又開了一桌。`);
-    await line(death, '這一生，走到了終點。你褪下這身皮囊，準備回家。', 'big');
+    // 依一貫道的說法，求道是回理天的憑證；沒求道的人，原靈還在找回家的路
+    await line(death, S.flags.qiudao ? '這一生，走到了終點。你褪下這身皮囊，準備回家。' : '這一生，走到了終點。你褪下這身皮囊⋯⋯', 'big');
     S.age = death;
-    remember(`享年 ${death} 歲，回到理天。`);
+    remember(S.flags.qiudao ? `享年 ${death} 歲，回到理天。` : `享年 ${death} 歲，這一生走完了。`);
     await wait(3000 * speed);
   }
 
   // ───────── 結局 ─────────
+  // 「聖凡兼修」「回來佛堂」都是回到理天的結局，要求過道才打得出；沒求道卻達標的人，停在南天門外
   function judge() {
     const fan = avg(FAN), low = Math.min(...FAN.map(k => S[k])), t = S.tian;
-    if (fan >= 50 && low >= 25 && t >= 50) return 'true';
+    S.flags.almost = false;
+    if (fan >= 50 && low >= 25 && t >= 50) { if (S.flags.qiudao) return 'true'; S.flags.almost = true; return 'gate'; }
     if (S.gold >= 55 && t < 30) return 'tycoon';
-    if (t >= 55) return 'temple';
+    if (t >= 55) { if (S.flags.qiudao) return 'temple'; S.flags.almost = true; return 'gate'; }
     if (fan < 40 && t < 35) return 'drift';
     return 'gate';
   }
@@ -1882,7 +1885,7 @@
     v.className = 'birth ascend';
     v.style.opacity = '0';
     v.innerHTML = `<canvas></canvas><div class="zoom" style="opacity:1">${TW_SVG}</div><div class="earth" style="opacity:0">🌏</div>
-      <div class="lotus">🪷</div>${'<i class="seed"></i>'.repeat(28)}<div class="cap"><b>回到理天⋯</b></div><span class="skip">點一下跳過 ›</span>`;
+      <div class="lotus">🪷</div>${S.flags.qiudao ? '<i class="seed"></i>'.repeat(28) : ''}<div class="cap"><b>${S.flags.qiudao ? '回到理天⋯' : '還在找回家的路⋯'}</b></div><span class="skip">點一下跳過 ›</span>`;
     $('app').appendChild(v);
     const cv = v.querySelector('canvas'), W = cv.width = v.clientWidth * 2, H = cv.height = v.clientHeight * 2, g = cv.getContext('2d');
     for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * .7 + .2})`; g.beginPath(); g.arc(Math.random() * W, Math.random() * H, Math.random() * 2 + .4, 0, 7); g.fill(); }
@@ -1911,10 +1914,13 @@
     });
     const anims = [
       ...seeds,
-      v.querySelector('.lotus').animate([
+      v.querySelector('.lotus').animate(S.flags.qiudao ? [
         { transform: at(tx, ty, .4), opacity: 0, offset: 0 }, { transform: at(tx, ty, .5), opacity: 1, offset: .1 },
         { transform: at(cx, ly, 1), opacity: 1, offset: .45 }, { transform: at(cx, hy * .26, .85), opacity: .35, offset: .62 },
-        { transform: at(cx, hy * .24, .75), opacity: 0, offset: .72 }, { opacity: 0, offset: 1 }], o),
+        { transform: at(cx, hy * .24, .75), opacity: 0, offset: .72 }, { opacity: 0, offset: 1 }] : [
+        // 沒求道：升到半空就慢慢淡入星海
+        { transform: at(tx, ty, .4), opacity: 0, offset: 0 }, { transform: at(tx, ty, .5), opacity: 1, offset: .1 },
+        { transform: at(cx, hy * .45, .8), opacity: .9, offset: .42 }, { transform: at(cx, hy * .4, .6), opacity: 0, offset: .78 }, { opacity: 0, offset: 1 }], o),
       // 台灣：原尺寸 → 縮到 0.35 倍、淡出（越飛越高）
       v.querySelector('svg').animate([{ transform: 'scale(1)', offset: 0 }, { transform: 'scale(1)', offset: .12 }, { transform: 'scale(.35)', offset: .5 }, { transform: 'scale(.35)', offset: 1 }], o),
       v.querySelector('.zoom').animate([{ opacity: 1, offset: 0 }, { opacity: 1, offset: .38 }, { opacity: 0, offset: .55 }, { opacity: 0, offset: 1 }], o),
@@ -1928,7 +1934,7 @@
       const hold = ms => wait(ms * speed);
       const timer = setInterval(() => anims.forEach(a => { if (paused && a.playState === 'running') a.pause(); else if (!paused && a.playState === 'paused') a.play(); }), 200);
       let over = false;
-      await Promise.race([hold(3200).then(() => { if (!over) sfx('dao'); }).then(() => hold(2800)), skip]);
+      await Promise.race([hold(3200).then(() => { if (!over) sfx(S.flags.qiudao ? 'dao' : 'calm'); }).then(() => hold(2800)), skip]);
       over = true;
       clearInterval(timer);
     }
@@ -1942,7 +1948,7 @@
     $('sheet').classList.remove('open');
     const key = judge();
     if (key === 'true') { S.badges.add('圓滿人生'); remember('解鎖人生成就「圓滿人生」'); }
-    const E = ENDINGS[key];
+    const E = S.flags.almost ? { ...ENDINGS[key], desc: '你這一生活得很好，<br>好到連南天門都為你亮了燈。<br>只差一張回家的「通行證」——<br>濟公老師沒有放棄你，<br>這一次，換真的你來選。' } : ENDINGS[key];
     const c = loadCollect();
     c.plays++;
     for (const [list, v] of [[c.endings, key], [c.personas, S.persona.id], ...[...S.badges].map(b => [c.badges, b])]) if (!list.includes(v)) list.push(v);
