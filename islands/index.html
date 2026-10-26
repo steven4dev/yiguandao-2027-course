@@ -337,7 +337,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.20</span>
+  <span class="ver">v261026.21</span>
   </div></div>
 </div>
 
@@ -879,44 +879,69 @@ const lampLights = [];
 /* =========================================================
    小人偶
    ========================================================= */
-const skinMat = lam('#f3d2b3'), qianMat = lam('#3d5a80'), kunMat = lam('#e07a5f'), capMat = lam('#e8b53a');
+// 粉嫩的身體顏色：乾道淡藍、坤道淡粉；幹部用組別顏色調淡（見 memberMat）
+const qianMat = lam('#b3d4f2'), kunMat = lam('#f8cfd9');
 const ghostPersonMat = new THREE.MeshLambertMaterial({ color: '#ffffff', transparent: true, opacity: 0.35 });
-// Q 版人物（參考法會小天使）：大大的圓頭約佔全身一半，豆豆眼、粉紅腮紅，上窄下寬的小衣服、短手短腳
-const bodyGeo = new THREE.CylinderGeometry(0.12, 0.19, 0.3, 14), legGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.14, 8);
-const armGeo = new THREE.CapsuleGeometry(0.045, 0.14, 3, 8), headGeo = new THREE.SphereGeometry(0.24, 22, 16);
-const hairTopGeo = new THREE.SphereGeometry(0.255, 22, 10, 0, Math.PI * 2, 0, Math.PI * 0.4);
-// 坤道的鮑伯頭：除了臉之外，側邊和後面都包住
-const hairBobGeo = new THREE.SphereGeometry(0.262, 22, 14, Math.PI / 2 + 0.95, Math.PI * 2 - 1.9, 0, Math.PI * 0.64);
-const capGeo = new THREE.ConeGeometry(0.15, 0.16, 12);
-const hairMat = lam('#4a3328'), pantsMat = lam('#4a4a58');
-// 臉畫在頭的貼圖上：球體的正面（+z）在貼圖的 1/4 寬處
-const faceMat = new THREE.MeshLambertMaterial({ map: canvasTex(256, 128, (c) => {
-  c.fillStyle = '#f3d2b3'; c.fillRect(0, 0, 256, 128);
-  c.fillStyle = '#3a2a22';
-  for (const x of [55, 73]) { c.beginPath(); c.ellipse(x, 64, 3.2, 4.6, 0, 0, 7); c.fill(); }
-  c.fillStyle = 'rgba(236, 120, 130, 0.55)';
-  for (const x of [46, 82]) { c.beginPath(); c.ellipse(x, 74, 6, 3.5, 0, 0, 7); c.fill(); }
-}) });
-// 職位配件：班長拿小旗、副班長斜背彩帶、組長戴金色小帽
-const flagMat = lam('#c0503f'), poleMat = lam('#5a3b30'), sashMat = lam('#c0503f');
-const poleGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.95, 6), flagGeo = new THREE.BoxGeometry(0.3, 0.2, 0.02), sashGeo = new THREE.TorusGeometry(0.17, 0.03, 6, 18);
-function figure(mat, role = '', bob = false) {
+const pastel = (c) => new THREE.Color(c).lerp(new THREE.Color('#ffffff'), 0.45);
+// Q 版吉祥物：大大的豆子頭和身體連成一體（沒有脖子），短短圓圓的手腳，黑色直立橢圓眼睛＋大笑臉＋淡淡腮紅
+const PERSON_PROFILE = [[0, 0.16], [0.2, 0.17], [0.28, 0.22], [0.31, 0.32], [0.31, 0.45], [0.33, 0.55], [0.42, 0.66], [0.49, 0.8], [0.51, 0.96], [0.48, 1.12], [0.4, 1.26], [0.26, 1.36], [0.12, 1.41], [0, 1.42]]
+  .map(([r, y]) => new THREE.Vector2(r, y));
+const personGeo = new THREE.LatheGeometry(PERSON_PROFILE, 28);
+const limbGeo = new THREE.CapsuleGeometry(0.09, 0.16, 4, 10), legGeo = new THREE.CapsuleGeometry(0.11, 0.12, 4, 10);
+const dotGeo = new THREE.SphereGeometry(1, 12, 10), smileGeo = new THREE.TorusGeometry(0.12, 0.026, 6, 16, Math.PI);
+const inkMat = lam('#1f1a1a'), blushMat = lam('#f4a9b5', { transparent: true, opacity: 0.75 });
+const petalMat = lam('#f6a5b8'), pistilMat = lam('#f4d35e');
+// 職位配件：班長拿小旗、副班長斜背金色彩帶
+const flagMat = lam('#c0503f'), poleMat = lam('#7a5236'), sashMat = lam('#e8b53a');
+const poleGeo = new THREE.CylinderGeometry(0.018, 0.018, 1.1, 6), flagGeo = new THREE.BoxGeometry(0.02, 0.24, 0.36), sashGeo = new THREE.TorusGeometry(0.34, 0.035, 6, 24);
+const ARM_REST = 0.9;   // 手臂平常往外下垂的角度；揮手時從這裡舉起來
+// extra：hat 斗笠顏色、pack 背包顏色、scarf 圍巾顏色、glasses 大圓眼鏡、book 拿書（瞭望員、船夫、講師用）
+function figure(mat, role = '', bob = false, extra = {}) {
   const p = new THREE.Group(), ghost = mat === ghostPersonMat;
-  const part = (geo, m, x, y, z) => { const o = mesh(geo, ghost ? ghostPersonMat : m, x, y, z, p); o.userData.onMat = m; return o; };
-  for (const sx of [-1, 1]) part(legGeo, pantsMat, sx * 0.065, 0.07, 0);
-  mesh(bodyGeo, mat, 0, 0.29, 0, p);
+  const g = new THREE.Group(); g.scale.setScalar(0.66); p.add(g);   // 吉祥物原始高 1.42，縮到跟以前的人偶差不多高
+  const part = (geo, m, x, y, z, parent = g) => { const o = mesh(geo, ghost ? ghostPersonMat : m, x, y, z, parent); o.userData.onMat = m; return o; };
+  mesh(personGeo, mat, 0, 0, 0, g);
+  for (const sx of [-1, 1]) { const l = mesh(legGeo, mat, sx * 0.15, 0.13, 0.02, g); l.rotation.z = sx * 0.2; }
   // 手臂掛在肩膀上（樞紐在肩膀），被點到時才能舉起來揮手
   p.userData.arms = [-1, 1].map((sx) => {
-    const sh = new THREE.Group(); sh.position.set(sx * 0.151, 0.408, 0); sh.rotation.z = sx * 0.35; p.add(sh);
-    mesh(armGeo, mat, 0, -0.115, 0, sh);
+    const sh = new THREE.Group(); sh.position.set(sx * 0.3, 0.52, 0); sh.rotation.z = sx * ARM_REST; g.add(sh);
+    mesh(limbGeo, mat, 0, -0.14, 0, sh);
     return sh;
   });
-  part(headGeo, faceMat, 0, 0.66, 0);
-  part(hairTopGeo, hairMat, 0, 0.66, 0).rotation.x = -0.12;
-  if (bob) part(hairBobGeo, hairMat, 0, 0.66, 0);
-  if (role === true || role === '組長' || role === '班長') part(capGeo, capMat, 0, 0.96, 0);
-  if (role === '班長') { part(poleGeo, poleMat, 0.27, 0.5, 0); part(flagGeo, flagMat, 0.43, 0.86, 0); }
-  if (String(role).includes('副班長')) part(sashGeo, sashMat, 0, 0.3, 0).rotation.set(Math.PI / 2, 0.5, 0);
+  for (const sx of [-1, 1]) {
+    const e = part(dotGeo, inkMat, sx * 0.15, 0.99, 0.48); e.scale.set(0.052, 0.078, 0.03); e.rotation.y = sx * 0.3;
+    const b = part(dotGeo, blushMat, sx * 0.3, 0.88, 0.41); b.scale.set(0.06, 0.04, 0.02); b.rotation.y = sx * 0.6;
+  }
+  const sm = part(smileGeo, inkMat, 0, 0.88, 0.5); sm.rotation.set(-0.15, 0, Math.PI); sm.scale.set(1.15, 0.85, 1);
+  // 坤道：頭上一朵小花髮夾
+  if (bob) {
+    const f = new THREE.Group(); f.position.set(0.33, 1.24, 0.14); g.add(f);
+    for (let i = 0; i < 5; i++) { const a = i * 1.257; part(dotGeo, petalMat, Math.cos(a) * 0.08, Math.sin(a) * 0.08, 0, f).scale.setScalar(0.06); }
+    part(dotGeo, pistilMat, 0, 0, 0.02, f).scale.setScalar(0.045);
+  }
+  if (role === '班長') { part(poleGeo, poleMat, -0.55, 0.8, 0.05); part(flagGeo, flagMat, -0.55, 1.23, 0.23); p.userData.arms[0].rotation.z = -1.6; }
+  if (String(role).includes('副班長')) part(sashGeo, sashMat, 0, 0.44, 0.02).rotation.set(Math.PI / 2, 0.55, 0);
+  if (extra.hat) {
+    const hm = lam(extra.hat);
+    part(new THREE.SphereGeometry(0.36, 18, 8, 0, Math.PI * 2, 0, Math.PI / 2), hm, 0, 1.22, 0).scale.y = 0.75;
+    part(new THREE.CylinderGeometry(0.66, 0.7, 0.06, 24), hm, 0, 1.24, 0.02).rotation.x = 0.12;
+  }
+  if (extra.pack) {
+    const pm = lam(extra.pack);
+    part(new THREE.CapsuleGeometry(0.2, 0.12, 4, 10), pm, 0, 0.7, -0.42).scale.z = 0.6;
+    for (const sx of [-1, 1]) part(new THREE.TorusGeometry(0.2, 0.03, 5, 12, Math.PI), pm, sx * 0.2, 0.7, -0.12).rotation.y = Math.PI / 2;
+  }
+  if (extra.scarf) {
+    const sm2 = lam(extra.scarf);
+    part(new THREE.TorusGeometry(0.345, 0.06, 6, 24), sm2, 0, 0.58, 0).rotation.x = Math.PI / 2;
+    part(new THREE.BoxGeometry(0.1, 0.22, 0.05), sm2, 0.12, 0.45, 0.33).rotation.z = 0.2;
+  }
+  // 講師的眼鏡要比眼睛大一圈，框住眼睛，才不會看起來像黑眼圈
+  if (extra.glasses) {
+    for (const sx of [-1, 1]) part(new THREE.TorusGeometry(0.135, 0.016, 6, 24), inkMat, sx * 0.17, 0.99, 0.5).rotation.y = sx * 0.3;
+    part(new THREE.CylinderGeometry(0.012, 0.012, 0.08, 6), inkMat, 0, 1.0, 0.53).rotation.z = Math.PI / 2;
+  }
+  if (extra.book) part(new THREE.BoxGeometry(0.22, 0.28, 0.06), flagMat, -0.48, 0.4, 0.14).rotation.z = 0.3;
   Object.assign(p.userData, { phase: Math.random() * 6, speed: 0.6 + Math.random() * 0.6 });
   return p;
 }
@@ -1037,7 +1062,7 @@ function lotus(g) {
   // 法會小天使：白袍、金色光環、會拍動的翅膀
   const angel = new THREE.Group(); g.add(angel);
   mesh(new THREE.ConeGeometry(0.32, 0.7, 14), lam('#fffaf0'), 0, 0, 0, angel);
-  mesh(new THREE.SphereGeometry(0.2, 14, 10), skinMat, 0, 0.5, 0, angel);
+  mesh(new THREE.SphereGeometry(0.2, 14, 10), lam('#f3d2b3'), 0, 0.5, 0, angel);
   mesh(new THREE.TorusGeometry(0.2, 0.035, 8, 20), glow('#f2c14e', 0.4, 2), 0, 0.8, 0, angel).rotation.x = Math.PI / 2;
   const wings = [-1, 1].map((sx) => {
     const pivot = new THREE.Group(); pivot.position.set(sx * 0.08, 0.18, -0.16); angel.add(pivot);
@@ -1403,7 +1428,7 @@ function buildOuter(o, x, z, ang, faceY) {
   bush(-o.R * 0.45, -o.R * 0.33, 0.6, isl.group);
   isl.members = [];
   if (o.slots) {
-    isl.memberMat = lam(o.color);
+    isl.memberMat = lam(pastel(o.color));
     o.slots.forEach((slot, k) => {
       // 圍著建築站一圈，從哪個角度看都看得到幾位
       const a = ang + 0.4 + (k / o.size) * Math.PI * 2, r = o.R * 0.72;
@@ -1471,7 +1496,7 @@ scene.add(raft);
   const fm = new THREE.MeshLambertMaterial({ map: flagTex }), fy = lam('#e8b53a');
   mesh(new THREE.CylinderGeometry(0.035, 0.035, 2.4, 6), tie, 0.9, 1.3, -1.8, raft);
   raft.userData.flag = mesh(new THREE.BoxGeometry(0.02, 0.5, 0.9), [fm, fm, fy, fy, fy, fy], 0.9, 2.25, -1.4, raft);
-  const boatman = figure(lam('#3d5a80'));
+  const boatman = figure(lam('#cfe0f0'), '', false, { hat: '#e0a632' });
   boatman.position.set(0, 0.2, 1.4); boatman.scale.setScalar(1.3); raft.add(boatman);
   const pole = mesh(new THREE.CylinderGeometry(0.03, 0.03, 4.2, 6), tie, 0.45, 1.0, 1.6, raft);
   raft.userData.pole = pole;
@@ -1571,7 +1596,7 @@ const lookoutHit = [];
   mesh(new THREE.BoxGeometry(1.7, 1.0, 1.7), lam('#b98b55'), 0, -0.5, 0, b);
   mesh(new THREE.BoxGeometry(1.86, 0.14, 1.86), lam('#7a5236'), 0, 0.02, 0, b);
   // 瞭望員和望遠鏡：鏡筒朝著群島中央
-  const man = figure(lam('#3f8a6a'));
+  const man = figure(lam('#efe4f2'), '', false, { hat: '#e0a632', pack: '#b9d98a' });
   man.position.set(-0.45, 0.05, 0.45); man.rotation.y = Math.PI; man.scale.setScalar(1.15); b.add(man);
   const scope = new THREE.Group(); scope.position.set(0.35, 0.55, -0.35); b.add(scope);
   const brass = new THREE.MeshLambertMaterial({ color: '#d8a845', emissive: '#3a2500' });
@@ -1691,7 +1716,7 @@ COURSES.filter((c) => c.pm).forEach((c) => {
 // 從課表文字抓出講師，例如「全真 鄔明清 講師」「藝術氣球（全真 林鈺蓉 講師）」
 const TEACHER_RE = /(\S+)\s+(\S{2,4})\s+(講師|助理)/;
 const TEACHERS = [], teacherHit = [];
-const teacherMat = lam('#2f6f73'), boardMat = lam('#2f4a3a'), easelMat = lam('#8a6a48');
+const teacherMat = lam('#f6eedd'), boardMat = lam('#2f4a3a'), easelMat = lam('#8a6a48');
 function addTeachers(isl, list, dist, spread) {
   // 同一位講師在同一座島教兩堂（例如瑜伽＋觀點分享）就合成一位
   const byName = new Map();
@@ -1716,7 +1741,7 @@ function addTeachers(isl, list, dist, spread) {
     mesh(new THREE.BoxGeometry(0.9, 0.6, 0.05), boardMat, 0, 1.05, 0, board);
     mesh(new THREE.BoxGeometry(0.98, 0.07, 0.07), easelMat, 0, 0.72, 0.03, board, false);
     for (const sx of [-0.38, 0.38]) mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.4, 5), easelMat, sx, 0.65, -0.06, board, false).rotation.x = 0.12;
-    const fig = figure(teacherMat);
+    const fig = figure(teacherMat, '', false, { scarf: '#2f6f73', glasses: true, book: true });
     fig.scale.setScalar(1.45);
     g.add(fig);
     const rec = { id: TEACHERS.length, key: isl.key, fig, ...t };
@@ -3058,12 +3083,12 @@ function poseFocus(f, t) {
   if (!right) return;
   // 前 0.3 秒舉手、接著左右揮 2 秒、最後 0.4 秒放下
   const up = reduceMotion ? 1 : Math.min(1, e / 0.3) * Math.min(1, Math.max(0, (2.7 - e) / 0.4));
-  right.rotation.z = 0.35 + up * (2.3 + (reduceMotion ? 0 : 0.35 * Math.sin(e * 11)));
+  right.rotation.z = ARM_REST + up * (1.25 + (reduceMotion ? 0 : 0.35 * Math.sin(e * 11)));
 }
 function unfocus(f) {
   const u = f.userData;
   u.focusT = null;
-  if (u.arms) u.arms[1].rotation.z = 0.35;
+  if (u.arms) u.arms[1].rotation.z = ARM_REST;
 }
 function updateHighlight(t) {
   const want = panelMode === 'closed' ? [] : figuresFor(selected);
