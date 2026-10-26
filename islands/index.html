@@ -337,7 +337,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.31</span>
+  <span class="ver">v261026.32</span>
   </div></div>
 </div>
 
@@ -1640,7 +1640,7 @@ outer.forEach((o, i) => {
 });
 // 迎賓島：佛堂大門 → 木橋 → 迎賓牌樓與紅地毯 → 木橋 → 第一堂課；牌樓橫跨在路線上
 const gateIsl = buildOuter({ ...GATE, title: GATE.isle, R: R_CADRE }, 0, FRONT_Z + 7 + R_CADRE * COS30, 0, 0);
-mesh(new THREE.BoxGeometry(1.4, 0.04, R_CADRE * COS30 * 2 - 0.2), lam('#c0503f'), 0, 0.02, 0, gateIsl.group, false);
+mesh(new THREE.BoxGeometry(1.4, 0.04, R_CADRE * COS30 * 2 - 0.2), lam('#c0503f'), 0, 0.05, 0, gateIsl.group, false);
 bridge(TEMPLE, gateIsl);
 bridge(gateIsl, islands.c1);
 
@@ -1662,7 +1662,8 @@ function pier(isl, dir) {
   g.position.set(isl.x + dir.x * (d0 + LEN / 2), 0, isl.z + dir.z * (d0 + LEN / 2));
   g.rotation.y = a;
   scene.add(g);
-  mesh(new THREE.BoxGeometry(1.6, 0.14, LEN), plankMat, 0, -0.07, 0, g);
+  // 棧板的頂面要比草地高一點，兩個面一樣高時會互相搶著顯示、一直閃爍
+  mesh(new THREE.BoxGeometry(1.6, 0.18, LEN), plankMat, 0, 0.02, 0, g);
   for (const sx of [-0.7, 0.7]) for (const sz of [-LEN / 2 + 0.2, LEN / 2 - 0.2]) mesh(new THREE.CylinderGeometry(0.09, 0.09, 3.5, 6), trunkMat, sx, -1.75, sz, g);
   return new THREE.Vector3(isl.x + dir.x * (d0 + LEN + 1.6), 0, isl.z + dir.z * (d0 + LEN + 1.6));
 }
