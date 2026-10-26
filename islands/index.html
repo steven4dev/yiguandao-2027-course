@@ -134,10 +134,13 @@
   .icon svg { width: 20px; height: 20px; }
   .icon.sm { width: 30px; height: 30px; box-shadow: none; background: var(--chip); backdrop-filter: none; -webkit-backdrop-filter: none; }
   .icon.sm svg { width: 16px; height: 16px; }
-  #night .sun { display: none; }
-  #night[aria-pressed="true"] .sun { display: block; }
-  #night[aria-pressed="true"] .moon { display: none; }
-  #night[aria-pressed="true"] { background: var(--card); color: var(--ink); border-color: var(--line); }
+  /* 日夜按鈕顯示目前的模式：自動（半日半月）、固定白天（太陽）、固定夜晚（月亮） */
+  #night svg { display: none; }
+  #night[data-mode="auto"] .auto, #night[data-mode="day"] .sun, #night[data-mode="night"] .moon { display: block; }
+  .skytip { position: fixed; z-index: 5; left: 50%; bottom: calc(var(--dock-h, 52px) + 28px + env(safe-area-inset-bottom, 0px));
+    transform: translate(-50%, 6px); padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap;
+    opacity: 0; pointer-events: none; transition: opacity 0.32s linear, transform 0.32s linear; }
+  .skytip.on { opacity: 1; transform: translate(-50%, 0); }
 
   .dock { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     width: max-content; max-width: calc(100vw - 32px); border-radius: 999px; }
@@ -325,14 +328,14 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.07</span>
+  <span class="ver">v261026.08</span>
   </div></div>
 </div>
 
 <div class="mapctl">
   <button class="icon" id="menu" aria-expanded="false" aria-controls="navPop" aria-label="導覽：島嶼目錄" title="導覽"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   <button class="icon" id="sound" aria-pressed="false" aria-expanded="false" aria-controls="soundPop" aria-label="聲音設定" title="聲音"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg></button>
-  <button class="icon" id="night" aria-pressed="false" aria-label="切換夜晚" title="切換夜晚"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
+  <button class="icon" id="night" data-mode="auto" aria-label="日夜：自動" title="日夜：自動"><svg class="auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><path d="M12 4.5a7.5 7.5 0 0 0 0 15z" fill="currentColor"/></svg><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
   <button class="icon" id="search" aria-expanded="false" aria-controls="searchPop" aria-label="搜尋課程或夥伴" title="搜尋"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg></button>
   <button class="icon" id="home" aria-label="回到初始視角" title="回到初始視角"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></svg></button>
 </div>
@@ -345,6 +348,8 @@
   <button class="icon sm sclose" id="searchClose" type="button" aria-label="關閉搜尋" title="關閉"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   <div id="searchResults" aria-live="polite"></div>
 </div>
+
+<div class="card skytip" id="skyTip" role="status" aria-live="polite"></div>
 
 <div class="card soundpop" id="soundPop" hidden>
   <b>聲音</b>
@@ -2325,20 +2330,62 @@ document.addEventListener('pointerdown', (e) => {
 });
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && searching) showSearchPop(false); });
 
-// 晝夜跟著頁面主題，按鈕可以切換
+// 晝夜跟著台灣時間：日出、白天、夕陽、黃昏、夜晚；右上角按鈕可以切換「自動／固定白天／固定夜晚」，選擇會記在這台裝置上
 const root = document.documentElement;
-const sysDark = matchMedia('(prefers-color-scheme: dark)');
-let nightTarget = root.dataset.theme ? (root.dataset.theme === 'dark' ? 1 : 0) : (sysDark.matches ? 1 : 0);
-let nightT = nightTarget;
-function syncNight() {
-  $('night').setAttribute('aria-pressed', String(nightTarget === 1));
-  $('night').setAttribute('aria-label', nightTarget ? '切換白天' : '切換夜晚');
-  $('night').title = nightTarget ? '切換白天' : '切換夜晚';
+const SKY_KEY = 'islands-sky', SKY_MODES = ['auto', 'day', 'night'];
+const SKY_TEXT = { auto: '🌗 自動・跟著台灣時間變換', day: '☀️ 固定白天', night: '🌙 固定夜晚' };
+const SKY_LABEL = { auto: '自動（跟著台灣時間）', day: '固定白天', night: '固定夜晚' };
+let skyMode = 'auto';
+try { const m = localStorage.getItem(SKY_KEY); if (SKY_MODES.includes(m)) skyMode = m; } catch (e) {}
+// 網址加 ?t=17:30 可以預覽某個時間的天色
+const skyTest = (new URLSearchParams(location.search).get('t') || '').match(/^(\d{1,2}):?(\d{2})$/);
+function taipeiMinutes() {
+  if (skyTest) return (+skyTest[1] % 24) * 60 + +skyTest[2];
+  const d = new Date(Date.now() + 8 * 3600000);
+  return d.getUTCHours() * 60 + d.getUTCMinutes();
 }
-syncNight();
-$('night').onclick = () => { nightTarget = 1 - nightTarget; root.dataset.theme = nightTarget ? 'dark' : 'light'; syncNight(); };
-sysDark.addEventListener('change', (e) => { if (!root.dataset.theme) { nightTarget = e.matches ? 1 : 0; syncNight(); } });
-new MutationObserver(() => { if (root.dataset.theme) { nightTarget = root.dataset.theme === 'dark' ? 1 : 0; syncNight(); } }).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+const ramp = (m, a, b) => Math.min(1, Math.max(0, (m - a) / (b - a)));
+// n：夜晚程度；w：霞光（日出偏粉橘、夕陽偏金橘、黃昏轉紫）；am：是不是早上
+function skyAt(m) {
+  if (m < 300) return { n: 1, w: 0, am: true };
+  if (m < 345) { const k = ramp(m, 300, 345); return { n: 1 - 0.55 * k, w: k, am: true }; }              // 05:00–05:45 天邊泛粉
+  if (m < 390) return { n: 0.45 * (1 - ramp(m, 345, 390)), w: 1, am: true };                              // 05:45–06:30 日出
+  if (m < 450) return { n: 0, w: 1 - ramp(m, 390, 450), am: true };                                       // 06:30–07:30 晨光退去
+  if (m < 990) return { n: 0, w: 0, am: false };                                                         // 白天
+  if (m < 1035) return { n: 0, w: ramp(m, 990, 1035), am: false };                                        // 16:30–17:15 夕陽
+  if (m < 1080) return { n: 0.2 * ramp(m, 1035, 1080), w: 1, am: false };                                 // 17:15–18:00 夕陽最濃
+  if (m < 1140) { const k = ramp(m, 1080, 1140); return { n: 0.2 + 0.8 * k, w: 1 - 0.6 * k, am: false }; } // 18:00–19:00 黃昏轉紫
+  if (m < 1170) return { n: 1, w: 0.4 * (1 - ramp(m, 1140, 1170)), am: false };
+  return { n: 1, w: 0, am: false };
+}
+let nightTarget = 0, warmTarget = 0, skyAM = false;
+function updateSky() {
+  const m = taipeiMinutes();
+  const sky = skyMode === 'auto' ? skyAt(m) : { n: skyMode === 'night' ? 1 : 0, w: 0, am: false };
+  nightTarget = sky.n; warmTarget = sky.w; skyAM = sky.am;
+  // 資訊卡、搜尋面板：自動模式晚上 7 點到清晨 5:45 用深色
+  const dark = skyMode === 'auto' ? m >= 1140 || m < 345 : skyMode === 'night';
+  root.dataset.theme = dark ? 'dark' : 'light';
+  const b = $('night');
+  b.dataset.mode = skyMode;
+  b.setAttribute('aria-label', '日夜：' + SKY_LABEL[skyMode] + '，點一下切換');
+  b.title = '日夜：' + SKY_LABEL[skyMode] + '（點一下切換）';
+}
+updateSky();
+let nightT = nightTarget, warmT = warmTarget;
+setInterval(updateSky, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) updateSky(); });
+let skyTipTimer = 0;
+$('night').onclick = () => {
+  skyMode = SKY_MODES[(SKY_MODES.indexOf(skyMode) + 1) % SKY_MODES.length];
+  try { localStorage.setItem(SKY_KEY, skyMode); } catch (e) {}
+  updateSky();
+  const tip = $('skyTip');
+  tip.textContent = SKY_TEXT[skyMode];
+  tip.classList.add('on');
+  clearTimeout(skyTipTimer);
+  skyTipTimer = setTimeout(() => tip.classList.remove('on'), 1800);
+};
 
 /* ---------- 報名資料：直接讀 Google 報名表，連不上改讀備份 ---------- */
 // 跟報名分析頁同一份表單回覆；試算表要維持「知道連結的任何人都能檢視」
@@ -2787,6 +2834,12 @@ const clock = new THREE.Clock();
 // 夜晚的海是柔和的灰藍紫，不是黑壓壓的深藍
 const WATER_DAY = new THREE.Color(C.water), WATER_NIGHT = new THREE.Color('#5a6190');
 const SUN_DAY = new THREE.Color('#fff1d6'), SUN_NIGHT = new THREE.Color('#9fb3ff');
+// 霞光：日出粉橘、夕陽金橘，天色暗下來時轉成黃昏的紫
+const WARM_AM = new THREE.Color('#ffc4a6'), WARM_PM = new THREE.Color('#ffb066'), DUSK = new THREE.Color('#b083c4'), SUN_WARM = new THREE.Color('#ff9d52');
+// 海不直接混橘色（會變灰），改往粉紫、藍紫偏
+const SEA_AM = new THREE.Color('#b9b2ea'), SEA_PM = new THREE.Color('#86aee0'), SEA_DUSK = new THREE.Color('#7b6db4');
+const HEMI_DAY = new THREE.Color('#fff6e6');
+const warmC = new THREE.Color(), seaC = new THREE.Color();
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 function tick() {
@@ -2795,12 +2848,17 @@ function tick() {
   // 晝夜 0.6 秒線性切換，和網站主題一致
   const stepN = dt / 0.6;
   nightT = nightT < nightTarget ? Math.min(nightTarget, nightT + stepN) : Math.max(nightTarget, nightT - stepN);
-  scene.background.copy(DAY_BG).lerp(NIGHT_BG, nightT);
+  warmT = warmT < warmTarget ? Math.min(warmTarget, warmT + stepN) : Math.max(warmTarget, warmT - stepN);
+  if (skyAM) { warmC.copy(WARM_AM); seaC.copy(SEA_AM); } else { warmC.copy(WARM_PM).lerp(DUSK, nightT); seaC.copy(SEA_PM).lerp(SEA_DUSK, nightT); }
+  scene.background.copy(DAY_BG).lerp(NIGHT_BG, nightT).lerp(warmC, warmT * 0.8);
   scene.fog.color.copy(scene.background);
-  water.material.color.copy(WATER_DAY).lerp(WATER_NIGHT, nightT);
-  hemi.intensity = 1.6 - 0.95 * nightT;
+  water.material.color.copy(WATER_DAY).lerp(WATER_NIGHT, nightT).lerp(seaC, warmT * 0.65);
+  hemi.intensity = 1.6 - 0.95 * nightT - 0.2 * warmT;
+  hemi.color.copy(HEMI_DAY).lerp(warmC, warmT * 0.55);
   sun.intensity = 2.4 - 1.75 * nightT;
-  sun.color.copy(SUN_DAY).lerp(SUN_NIGHT, nightT);
+  sun.color.copy(SUN_DAY).lerp(SUN_NIGHT, nightT).lerp(SUN_WARM, warmT * 0.9);
+  // 日出、夕陽時太陽壓低，影子拉長；早上從右邊照過來，傍晚從左邊
+  sun.position.set(60 + ((skyAM ? 110 : -130) - 60) * warmT, 110 - 70 * warmT, 50);
   for (const m of nightFacades) m.emissiveIntensity = nightT * 1.1;
   for (const g of glowMats) g.mat.emissiveIntensity = g.base + (g.night - g.base) * nightT;
   for (const l of lampLights) l.intensity = nightT * 6;
