@@ -162,10 +162,30 @@
   .navpop button i[data-s="today"] { background: var(--brick); } .navpop button i[data-s="soon"] { background: var(--gold); } .navpop button i[data-s="done"] { background: var(--jade); }
   .navpop .tip { margin: 10px 8px 0; padding: 8px 10px; border-radius: 10px; background: var(--chip); font-size: 12px; line-height: 1.6; color: var(--muted); }
   .navpop button small { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  /* 搜尋：沿用島嶼目錄的樣式，上面多一個輸入框 */
-  .searchpop { width: 300px; }
-  .sbox { display: flex; align-items: center; gap: 8px; margin: 0 2px 4px; padding: 8px 12px; border-radius: 12px; background: var(--chip); color: var(--muted); border: 1px solid var(--line); }
+  /* 搜尋：沿用島嶼目錄的樣式，上面多一個輸入框；半透明磨砂，透得出底下的群島 */
+  .searchpop { width: 320px; grid-template-columns: minmax(0, 1fr) auto; column-gap: 6px; background: color-mix(in srgb, var(--card) 62%, transparent);
+    backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); opacity: 0; transform: translateY(-6px); transition: opacity 0.32s linear, transform 0.32s linear; }
+  .searchpop.on { opacity: 1; transform: none; }
+  .searchpop > #searchResults { grid-column: 1 / -1; }
+  .sclose { align-self: center; margin-bottom: 4px; }
+  /* 望遠鏡的視野：四周一圈淡淡的圓形暗角 */
+  #scope { position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0; transition: opacity 0.6s linear;
+    background: radial-gradient(ellipse 72% 78% at var(--sx, 50%) var(--sy, 50%), transparent 62%, rgba(18, 36, 52, 0.18) 82%, rgba(18, 36, 52, 0.42) 100%); }
+  #scope.on { opacity: 1; }
+  /* 搜尋時其他面板縮小、變淡，讓出鳥瞰畫面 */
+  .panel, .dock, .mapctl .icon { transition: opacity 0.32s linear, transform 0.32s linear; }
+  body.searching .panel { opacity: 0; transform: scale(0.92); pointer-events: none; }
+  body.searching .dock { opacity: 0.45; transform: translateX(-50%) scale(0.86); transform-origin: 50% 100%; }
+  body.searching .mapctl .icon:not(#search) { opacity: 0.4; transform: scale(0.88); }
+  body.searching #search { background: var(--brick); color: #fff; }
+  #labels .tag { transition: opacity 0.32s linear; }
+  #labels.dim .tag:not(.hit) { opacity: 0.3; }
+  .tag.hit { background: #f6d77a; color: #3a2a10; border-color: #e8b53a; font-weight: 700; box-shadow: 0 0 0 4px rgba(232, 181, 58, 0.35), 0 4px 12px rgba(50, 30, 15, 0.18); z-index: 1; }
+  .tag.hit i { background: #a3322a !important; }
+  body.searching .look-tag { display: none !important; }
+  .sbox { min-width: 0; display: flex; align-items: center; gap: 8px; margin: 0 2px 4px; padding: 8px 12px; border-radius: 12px; background: var(--chip); color: var(--muted); border: 1px solid var(--line); }
   .sbox:focus-within { border-color: var(--jade); }
+  .sbox input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
   .sbox input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 16px; outline: none; }
   #searchResults { display: grid; gap: 2px; }
   #searchResults button { grid-template-columns: 22px 1fr; }
@@ -286,9 +306,10 @@
       bottom: calc(14px + env(safe-area-inset-bottom, 0px)); max-height: 46%; }
     .panel.folded { bottom: calc(var(--dock-h, 52px) + 24px + env(safe-area-inset-bottom, 0px)); }
     .chip .hint { display: none; }
-    .tag.small:not(.dock-tag) { display: none; }
+    .tag.small:not(.dock-tag):not(.look-tag) { display: none; }
+    .tag.small.hit { display: inline-flex; }
   }
-  @media (prefers-reduced-motion: reduce) { body, .card, .brand *, .brand-more { transition: none !important; } }
+  @media (prefers-reduced-motion: reduce) { body, .card, .brand *, .brand-more, #scope, .mapctl .icon, #labels .tag { transition: none !important; } }
 </style>
 <style>
   body { margin: 0; }
@@ -299,6 +320,7 @@
 <body>
 
 <div id="stage"></div>
+<div id="scope" aria-hidden="true"></div>
 <div id="labels"></div>
 
 <div class="card brand" id="brand">
@@ -308,7 +330,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261025.32</span>
+  <span class="ver">v261026.01</span>
   </div></div>
 </div>
 
@@ -325,6 +347,7 @@
 <div class="card navpop searchpop" id="searchPop" role="search" hidden>
   <label class="sbox"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg>
     <input id="searchInput" type="search" enterkeyhint="search" autocomplete="off" placeholder="課程、島名，或輸入全名找自己" aria-label="搜尋課程、島名或夥伴全名"></label>
+  <button class="icon sm sclose" id="searchClose" type="button" aria-label="關閉搜尋" title="關閉"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   <div id="searchResults" aria-live="polite"></div>
 </div>
 
@@ -1482,6 +1505,84 @@ animators.push((t) => {
 });
 
 /* =========================================================
+   瞭望氣球：飄在群島上空，籃子邊架著望遠鏡；按搜尋時鏡頭會飛上來，從這裡鳥瞰整個群島
+   ========================================================= */
+// 鳥瞰的取景：把所有島都框進來，方位跟一開始的視角一樣，只是從高處往下看
+const BIRD = (() => {
+  const all = Object.values(islands);
+  const x0 = Math.min(...all.map((i) => i.x - i.R)), x1 = Math.max(...all.map((i) => i.x + i.R));
+  const z0 = Math.min(...all.map((i) => i.z - i.R)), z1 = Math.max(...all.map((i) => i.z + i.R));
+  const target = new THREE.Vector3((x0 + x1) / 2, 0, (z0 + z1) / 2);
+  const r = Math.max(...all.map((i) => Math.hypot(i.x - target.x, i.z - target.z) + i.R));
+  const hd = HOME.pos.clone().sub(HOME.target).setY(0).normalize();
+  return { target, r, hd };
+})();
+const BASE_FOV = camera.fov;
+let fovTarget = BASE_FOV;
+const birdFov = () => (innerWidth < innerHeight ? 50 : BASE_FOV);
+function birdPose() {
+  const half = THREE.MathUtils.degToRad(birdFov() / 2), aspect = innerWidth / innerHeight;
+  const fit = Math.min(half, Math.atan(Math.tan(half) * aspect));
+  const D = Math.min(350, (BIRD.r / Math.tan(fit)) * 0.92);
+  const tilt = THREE.MathUtils.degToRad(28);   // 離正上方 28 度，看得出島的立體感
+  const pos = BIRD.target.clone().addScaledVector(BIRD.hd, Math.sin(tilt) * D).setY(Math.cos(tilt) * D);
+  return { target: BIRD.target.clone(), pos };
+}
+const lookout = new THREE.Group();
+scene.add(lookout);
+const LOOK_BASE = new THREE.Vector3(-50, 22, -6);
+const lookoutHit = [];
+{
+  const b = lookout;
+  const envMat = new THREE.MeshLambertMaterial({ map: stripes('#c0503f', '#f4e9d8', 12) });
+  const env = mesh(new THREE.SphereGeometry(3.2, 28, 20), envMat, 0, 6.2, 0, b); env.scale.set(1, 1.18, 1);
+  mesh(new THREE.ConeGeometry(1.7, 2.1, 28, 1, true), new THREE.MeshLambertMaterial({ map: stripes('#c0503f', '#f4e9d8', 12), side: THREE.DoubleSide }), 0, 2.15, 0, b).rotation.x = Math.PI;
+  mesh(new THREE.TorusGeometry(1.0, 0.07, 6, 20), lam('#e8b53a'), 0, 1.05, 0, b, false).rotation.x = Math.PI / 2;
+  // 籃子：藤編的方籃，上緣一圈木框
+  mesh(new THREE.BoxGeometry(1.7, 1.0, 1.7), lam('#b98b55'), 0, -0.5, 0, b);
+  mesh(new THREE.BoxGeometry(1.86, 0.14, 1.86), lam('#7a5236'), 0, 0.02, 0, b);
+  for (const [x, z] of [[-0.75, -0.75], [0.75, -0.75], [0.75, 0.75], [-0.75, 0.75]]) mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.1, 4), lam('#5a3b30'), x, 0.6, z, b, false);
+  // 瞭望員和望遠鏡：鏡筒朝著群島中央
+  const man = figure(lam('#3f8a6a'));
+  man.position.set(-0.25, 0.05, 0.25); man.rotation.y = Math.PI; man.scale.setScalar(1.15); b.add(man);
+  const scope = new THREE.Group(); scope.position.set(0.35, 0.55, -0.35); b.add(scope);
+  const brass = new THREE.MeshLambertMaterial({ color: '#d8a845', emissive: '#3a2500' });
+  const tube = mesh(new THREE.CylinderGeometry(0.11, 0.17, 1.9, 14), brass, 0, 0, 0, scope); tube.rotation.x = Math.PI / 2;
+  mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.18, 14), brass, 0, 0, -0.95, scope).rotation.x = Math.PI / 2;
+  mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6, 6), lam('#5a3b30'), 0, -0.32, 0.1, scope, false);
+  b.userData.scope = scope;
+  // 小旗子：放大鏡圖案，看得出點它可以搜尋
+  const flagTex = canvasTex(96, 64, (c) => {
+    c.fillStyle = '#f4e9d8'; c.fillRect(0, 0, 96, 64);
+    c.strokeStyle = '#a3322a'; c.lineWidth = 7; c.lineCap = 'round';
+    c.beginPath(); c.arc(42, 28, 14, 0, Math.PI * 2); c.stroke();
+    c.beginPath(); c.moveTo(52, 38); c.lineTo(64, 50); c.stroke();
+  });
+  mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.6, 6), lam('#5a3b30'), -0.85, 0.75, -0.85, b, false);
+  b.userData.flag = mesh(new THREE.BoxGeometry(0.02, 0.5, 0.75), [new THREE.MeshLambertMaterial({ map: flagTex }), new THREE.MeshLambertMaterial({ map: flagTex }), lam('#f4e9d8'), lam('#f4e9d8'), lam('#f4e9d8'), lam('#f4e9d8')], -0.85, 1.35, -0.48, b);
+  b.traverse((m) => { if (m.isMesh) lookoutHit.push(m); });
+  b.scale.setScalar(1.6);
+}
+// 鏡筒指向群島中央；整顆氣球慢慢繞小圈、上下浮動
+const lookTmp = new THREE.Vector3();
+animators.push((t) => {
+  lookout.position.set(LOOK_BASE.x + Math.sin(t * 0.12) * 4, LOOK_BASE.y + Math.sin(t * 0.5) * 0.8, LOOK_BASE.z + Math.cos(t * 0.12) * 4);
+  lookout.rotation.y = Math.atan2(BIRD.target.x - lookout.position.x, BIRD.target.z - lookout.position.z) + Math.PI;
+  const sc = lookout.userData.scope;
+  sc.lookAt(lookTmp.copy(BIRD.target));
+  sc.rotateY(Math.PI);
+  lookout.userData.flag.rotation.y = Math.sin(t * 2.2) * 0.3;
+});
+lookout.position.copy(LOOK_BASE);
+// 鏡頭先停在望遠鏡後面（從籃子這裡看出去），再往上拉成鳥瞰
+function lookoutEye() {
+  const eyepiece = lookout.userData.scope.getWorldPosition(new THREE.Vector3());
+  const away = eyepiece.clone().sub(BIRD.target).setY(0).normalize(), side = new THREE.Vector3(-away.z, 0, away.x);
+  // 站在瞭望員的肩膀後面一點、高一點：鏡筒在畫面一角，前方就是整片群島
+  return eyepiece.clone().addScaledVector(away, 12).addScaledVector(side, 2.2).add(new THREE.Vector3(0, 3.6, 0));
+}
+
+/* =========================================================
    高鐵高架橋（照片左側那座），列車隨機雙向出現
    ========================================================= */
 const VNORMAL = new THREE.Vector3(-0.866, 0, -0.5), VDIR = new THREE.Vector3(0.5, 0, -0.866);
@@ -1563,12 +1664,12 @@ COURSES.filter((c) => c.pm).forEach((c) => {
    ========================================================= */
 const labelsEl = document.getElementById('labels');
 const tags = [];
-function addTag(isl, text, cls, h) {
+function addTag(isl, text, cls, h, onClick = () => select(isl.key)) {
   const b = document.createElement('button');
   b.className = 'tag ' + cls;
   b.innerHTML = '<i></i><span></span>';
   b.querySelector('span').textContent = text;
-  b.addEventListener('click', (e) => { e.stopPropagation(); select(isl.key); });
+  b.addEventListener('click', (e) => { e.stopPropagation(); onClick(); });
   labelsEl.appendChild(b);
   tags.push({ el: b, isl, h });
   isl.tag = b;
@@ -1582,6 +1683,11 @@ COURSES.filter((c) => c.pm).forEach((c) => addTag(islands[c.pm.key], `${c.pm.emo
 addTag(dockIsl, '🛶 渡口島・登島', 'small dock-tag', 4.5);
 // 登島是重要入口：渡口島的標籤排在全真島和課程島之後、其他小標籤之前
 tags.splice(1 + COURSES.length, 0, tags.pop());
+// 瞭望氣球的小標籤跟著氣球飄，點了就是搜尋
+const lookIsl = { key: 'lookout', x: LOOK_BASE.x, z: LOOK_BASE.z };
+addTag(lookIsl, '🔭 搜尋', 'small look-tag', LOOK_BASE.y, () => openSearch());
+const lookTag = tags[tags.length - 1];
+animators.push(() => { lookIsl.x = lookout.position.x; lookIsl.z = lookout.position.z; lookTag.h = lookout.position.y + 13; });
 
 const tmpV = new THREE.Vector3();
 // 標籤避讓：依序擺放（全真島 → 課程島 → 外圈與下午島），會疊到前面標籤的就先藏起來
@@ -1596,7 +1702,9 @@ function placeTags() {
     if (vis) {
       if (!t.w) { t.w = t.el.offsetWidth; t.hh = t.el.offsetHeight; }
       const r = { l: x - t.w / 2 - 2, r: x + t.w / 2 + 2, t: y - t.hh - 2, b: y + 2 };
-      if (t.w && placed.some((o) => r.l < o.r && r.r > o.l && r.t < o.b && r.b > o.t)) vis = false;
+      // 搜尋時符合的島一定要露出來，不參與避讓
+      if (t.el.classList.contains('hit')) placed.push(r);
+      else if (t.w && placed.some((o) => r.l < o.r && r.r > o.l && r.t < o.b && r.b > o.t)) vis = false;
       else if (t.w) placed.push(r);
     }
     t.el.style.visibility = vis ? 'visible' : 'hidden';
@@ -1790,13 +1898,14 @@ function renderPanel() {
 const dock = document.getElementById('dock');
 const MOBILE_UI = matchMedia('(max-width: 720px)');
 const brand = document.getElementById('brand');
-let brandPeek = false;   // 資訊卡開著時，使用者自己把品牌卡展開
+let brandPeek = false;
+let searching = false;   // 搜尋模式：鏡頭在瞭望氣球上鳥瞰，其他面板縮小   // 資訊卡開著時，使用者自己把品牌卡展開
 function setUI(next) {
   if (next.panel) panelMode = next.panel;
   if (next.panel === 'open' || panelMode === 'closed') brandPeek = false;
   if (next.brand != null) brandPeek = next.brand;
   // 點開島（資訊卡出現）時，左上角品牌卡自動收成小膠囊；資訊卡關掉就恢復
-  const foldable = panelMode !== 'closed', mini = foldable && !brandPeek;
+  const foldable = panelMode !== 'closed' || searching, mini = foldable && (!brandPeek || searching);
   brand.classList.toggle('foldable', foldable);
   brand.classList.toggle('brand-mini', mini);
   const bt = document.getElementById('brandToggle');
@@ -1826,7 +1935,7 @@ document.getElementById('panelClose').onclick = () => setUI({ panel: 'closed' })
 document.getElementById('dockChip').onclick = () => setUI({ dock: true });
 document.getElementById('dockFold').onclick = () => setUI({ dock: false });
 addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape') return;
+  if (e.key !== 'Escape' || searching) return;
   if (dockOpen) setUI({ dock: false });
   else if (panelMode !== 'closed') setUI({ panel: 'closed' });
 });
@@ -1837,6 +1946,17 @@ const view = { x: 0, y: 0, tx: 0, ty: 0 };
 function measureFree() {
   const W = innerWidth, H = innerHeight;
   let right = W, top = 0, bottom = H;
+  if (searching) {
+    // 搜尋時資訊卡已經縮起來，改成避開搜尋面板
+    if (!searchPop.hidden) {
+      const r = searchPop.getBoundingClientRect();
+      if (MOBILE_UI.matches) top = r.bottom + 4; else right = r.left - 8;
+    }
+    if (!dock.hidden) bottom = Math.min(bottom, dock.getBoundingClientRect().top - 8);
+    view.tx = W / 2 - right / 2;
+    view.ty = H / 2 - (top + bottom) / 2;
+    return;
+  }
   if (panelMode === 'open') {
     const r = panel.getBoundingClientRect();
     if (r.left > W * 0.4 && r.top < H * 0.5) right = r.left - 8;
@@ -1864,9 +1984,11 @@ function applyView(k) {
    鏡頭：點島飛過去
    ========================================================= */
 let tween = null;
-function flyTo(target, pos, dur = 1.2) {
-  tween = { t: 0, dur, ft: controls.target.clone(), fp: camera.position.clone(), tt: target, tp: pos };
+// arc：飛行路線中段往上拱多高（數字），或往哪個方向繞（向量），避免直線穿過建築物或氣球
+function flyTo(target, pos, dur = 1.2, then = null, arc = 0) {
+  tween = { t: 0, dur, ft: controls.target.clone(), fp: camera.position.clone(), tt: target, tp: pos, then, arc };
   controls.autoRotate = false;
+  return tween;
 }
 // sel 可以是島（'g3'）、某一位幹部（'m:12'）或廣場上的學員（'p:3'）；鏡頭已經在那座島上就不動
 function select(key, sel = key) {
@@ -1906,7 +2028,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
     hoverQueued = false;
     ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit), false).length ? 'pointer' : '';
+    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit, lookoutHit), false).length ? 'pointer' : '';
   });
 });
 renderer.domElement.addEventListener('pointerup', (e) => {
@@ -1915,6 +2037,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   ray.setFromCamera(ndc, camera);
   // 先打到任何物件，再往上找它屬於哪座島
   if (ray.intersectObjects(raftHit, false).length) { openSignup(); return; }
+  if (!searching && ray.intersectObjects(lookoutHit, false).length) { openSearch(); return; }
   const hit = ray.intersectObjects(Object.values(islands).map((i) => i.group), true)[0];
   // 點到海面：收起資訊卡和時光捲軸，把畫面還給群島
   if (!hit) { setUI({ panel: 'closed', dock: false }); return; }
@@ -2057,6 +2180,7 @@ function runSearch() {
   const q = searchInput.value.trim(), n = norm(q);
   if (!n) {
     searchHits = [];
+    markHits();
     searchResults.innerHTML = '<p class="tip">可以搜尋課程名稱、島名、日期（例如 4/24）或講師。<br>想找自己：輸入完整的姓名，畫面會飛到你的小人偶，名字一樣只顯示遮蔽後的樣子。</p>';
     return;
   }
@@ -2064,6 +2188,7 @@ function runSearch() {
   const places = PLACES.filter((p) => p.words.some((w) => norm(w).includes(n)));
   searchHits = [...people, ...places.map((p) => ({ kind: 'i', ...p }))].slice(0, 30);
   const row = (h, i) => `<button data-hit="${i}"><span aria-hidden="true">${h.icon}</span><span><b>${esc(h.title)}</b><small>${esc(h.sub)}</small></span></button>`;
+  markHits();
   searchResults.innerHTML = searchHits.length ? searchHits.map(row).join('')
     : `<p class="tip">找不到「${esc(q)}」。<br>找人要輸入完整的姓名；還沒登島的夥伴，報名後就找得到了。${liveOk ? '' : '<br>（目前沒連上即時報名資料，暫時只能找到幹部。）'}</p>`;
 }
@@ -2081,7 +2206,7 @@ function focusFigure(sel) {
   flyTo(t, p);
 }
 function pickHit(h) {
-  showSearchPop(false);
+  showSearchPop(false, false);
   if (h.kind === 'i') { if (TOUR.includes(h.key)) goTo(h.key); else select(h.key); return; }
   // 時光捲軸停在他登島之前的日子，就先拉回今天，人偶才會在廣場上
   if (h.kind === 'p' && h.d.date > curISO()) { dayInput.value = Math.max(0, dayIndex(todayISO)); applyDate(); }
@@ -2089,18 +2214,84 @@ function pickHit(h) {
   select(h.kind === 'm' ? h.slot.key : 'temple', sel);
   focusFigure(sel);
 }
-function showSearchPop(open) {
-  if (open) { if (!navPop.hidden) showNavPop(false); if (!soundPop.hidden) showSoundPop(false); runSearch(); }
-  searchPop.hidden = !open;
-  searchBtn.setAttribute('aria-expanded', String(open));
-  if (open) setTimeout(() => searchInput.focus(), 0);
+// 打字時，鳥瞰畫面上符合的島標籤亮起來，其他的變淡
+function markHits() {
+  const keys = new Set(searchHits.map((h) => (h.kind === 'i' ? h.key : h.kind === 'm' ? h.slot.key : 'temple')));
+  const on = searching && searchInput.value.trim() !== '';
+  labelsEl.classList.toggle('dim', on);
+  for (const t of tags) t.el.classList.toggle('hit', on && keys.has(t.isl.key));
 }
-searchBtn.addEventListener('click', () => showSearchPop(searchPop.hidden));
+const scopeEl = $('scope');
+let searchFrom = null, searchFly = 0;
+// 打開搜尋：鏡頭飛到瞭望氣球的望遠鏡後面，再往上拉成鳥瞰；到定位後搜尋面板才淡入
+function openSearch() {
+  if (searching) return;
+  if (!navPop.hidden) showNavPop(false);
+  if (!soundPop.hidden) showSoundPop(false);
+  searching = true;
+  searchFrom = { target: controls.target.clone(), pos: camera.position.clone(), autoRotate: controls.autoRotate };
+  document.body.classList.add('searching');
+  searchBtn.setAttribute('aria-expanded', 'true');
+  controls.enabled = false;
+  setUI({});
+  searchInput.value = '';
+  runSearch();
+  const fly = ++searchFly;
+  const reveal = () => {
+    if (fly !== searchFly || !searching) return;
+    searchPop.hidden = false;
+    requestAnimationFrame(() => searchPop.classList.add('on'));
+    requestAnimationFrame(measureFree);
+    setTimeout(() => searchInput.focus(), 0);
+  };
+  const bird = () => {
+    if (fly !== searchFly || !searching) return;
+    scopeEl.classList.add('on');
+    fovTarget = birdFov();
+    const b = birdPose();
+    if (reduceMotion) { controls.target.copy(b.target); camera.position.copy(b.pos); reveal(); return; }
+    flyTo(b.target, b.pos, 1.1, reveal);
+    setTimeout(reveal, 700);
+  };
+  if (reduceMotion) { bird(); return; }
+  // 從氣球旁邊繞過去，不要穿過籃子：路線中段往遠離氣球的一側、往上拱
+  const eye = lookoutEye(), mid = camera.position.clone().add(eye).multiplyScalar(0.5);
+  const off = mid.clone().sub(lookout.position).setY(0);
+  const arc = (off.lengthSq() < 1 ? new THREE.Vector3(1, 0, 0) : off.normalize()).multiplyScalar(14).setY(16);
+  flyTo(BIRD.target.clone(), eye, 1.1, bird, arc);
+}
+// 關掉搜尋：選了結果就交給 select 飛過去；沒選就回到打開搜尋之前的位置
+function showSearchPop(open, restore = true) {
+  if (open) { openSearch(); return; }
+  if (!searching) return;
+  searching = false;
+  searchFly++;
+  fovTarget = BASE_FOV;
+  searchPop.classList.remove('on');
+  searchPop.hidden = true;
+  scopeEl.classList.remove('on');
+  document.body.classList.remove('searching');
+  searchBtn.setAttribute('aria-expanded', 'false');
+  controls.enabled = true;
+  searchHits = [];
+  markHits();
+  setUI({});
+  if (restore && searchFrom) {
+    if (reduceMotion) { controls.target.copy(searchFrom.target); camera.position.copy(searchFrom.pos); }
+    else flyTo(searchFrom.target, searchFrom.pos, 1.2, null, 20);
+  }
+}
+searchBtn.addEventListener('click', () => (searching ? showSearchPop(false) : openSearch()));
+$('searchClose').addEventListener('click', () => showSearchPop(false));
 searchInput.addEventListener('input', runSearch);
 searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && searchHits[0]) { e.preventDefault(); pickHit(searchHits[0]); } });
 searchResults.addEventListener('click', (e) => { const b = e.target.closest('button[data-hit]'); if (b) pickHit(searchHits[+b.dataset.hit]); });
-document.addEventListener('pointerdown', (e) => { if (!searchPop.hidden && !searchPop.contains(e.target) && !searchBtn.contains(e.target)) showSearchPop(false); });
-addEventListener('keydown', (e) => { if (e.key === 'Escape' && !searchPop.hidden) showSearchPop(false); });
+// 點海面或其他地方就關掉；點到島的標籤等於選了那座島，不用先飛回去
+document.addEventListener('pointerdown', (e) => {
+  if (!searching || searchPop.contains(e.target) || searchBtn.contains(e.target)) return;
+  showSearchPop(false, !e.target.closest('.tag'));
+});
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && searching) showSearchPop(false); });
 
 // 晝夜跟著頁面主題，按鈕可以切換
 const root = document.documentElement;
@@ -2597,7 +2788,16 @@ function tick() {
     const k = ease(Math.min(1, tween.t));
     controls.target.lerpVectors(tween.ft, tween.tt, k);
     camera.position.lerpVectors(tween.fp, tween.tp, k);
-    if (tween.t >= 1) tween = null;
+    if (tween.arc) {
+      if (tween.arc.isVector3) camera.position.addScaledVector(tween.arc, Math.sin(k * Math.PI));
+      else camera.position.y += Math.sin(k * Math.PI) * tween.arc;
+    }
+    if (tween.t >= 1) { const then = tween.then; tween = null; if (then) then(); }
+  }
+  // 搜尋鳥瞰時手機的鏡頭稍微廣角一點，整個群島才裝得下
+  if (Math.abs(camera.fov - fovTarget) > 0.01) {
+    camera.fov += (fovTarget - camera.fov) * (reduceMotion ? 1 : 1 - Math.exp(-rawDt * 3.5));
+    camera.updateProjectionMatrix();
   }
   applyView(1 - Math.exp(-rawDt * 6));
   controls.update();
