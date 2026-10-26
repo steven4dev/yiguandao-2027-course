@@ -325,7 +325,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.05</span>
+  <span class="ver">v261026.06</span>
   </div></div>
 </div>
 
@@ -1706,18 +1706,39 @@ animators.push(() => { lookIsl.x = lookout.position.x; lookIsl.z = lookout.posit
 const tmpV = new THREE.Vector3();
 // 標籤避讓：依序擺放（全真島 → 課程島 → 外圈與下午島），會疊到前面標籤的就先藏起來
 const placed = [];
+// 標籤是疊在畫面最上層的 HTML，不會被 3D 物件擋住；
+// 所以先算出瞭望氣球在畫面上佔的範圍，在氣球後面、又被它蓋到的標籤就先藏起來
+const lookBox = new THREE.Box3(), boxPts = Array.from({ length: 8 }, () => new THREE.Vector3());
+function balloonRect(w, h) {
+  lookBox.setFromObject(lookout);
+  let l = Infinity, r = -Infinity, tp = Infinity, b = -Infinity, near = Infinity;
+  boxPts.forEach((v, i) => {
+    v.set(i & 1 ? lookBox.max.x : lookBox.min.x, i & 2 ? lookBox.max.y : lookBox.min.y, i & 4 ? lookBox.max.z : lookBox.min.z);
+    near = Math.min(near, v.distanceTo(camera.position));
+    v.project(camera);
+    const x = ((v.x + 1) / 2) * w, y = ((1 - v.y) / 2) * h;
+    l = Math.min(l, x); r = Math.max(r, x); tp = Math.min(tp, y); b = Math.max(b, y);
+  });
+  // 外框比球皮大一圈，往內縮一點比較貼近實際的形狀
+  const dx = (r - l) * 0.12, dy = (b - tp) * 0.04;
+  return { l: l + dx, r: r - dx, t: tp + dy, b: b - dy, near };
+}
 function placeTags() {
   const w = innerWidth, h = innerHeight;
   placed.length = 0;
+  const bal = balloonRect(w, h);
   for (const t of tags) {
-    tmpV.set(t.isl.x, t.h, t.isl.z).project(camera);
+    tmpV.set(t.isl.x, t.h, t.isl.z);
+    const behind = t !== lookTag && tmpV.distanceTo(camera.position) > bal.near;
+    tmpV.project(camera);
     let vis = tmpV.z < 1 && Math.abs(tmpV.x) < 1.1 && Math.abs(tmpV.y) < 1.1;
     const x = ((tmpV.x + 1) / 2) * w, y = ((1 - tmpV.y) / 2) * h;
     if (vis) {
       if (!t.w) { t.w = t.el.offsetWidth; t.hh = t.el.offsetHeight; }
       const r = { l: x - t.w / 2 - 2, r: x + t.w / 2 + 2, t: y - t.hh - 2, b: y + 2 };
-      // 搜尋時符合的島一定要露出來，不參與避讓
-      if (t.el.classList.contains('hit')) placed.push(r);
+      // 搜尋時符合的島一定要露出來，不參與避讓（但被氣球擋住時還是藏起來）
+      if (behind && r.l < bal.r && r.r > bal.l && r.t < bal.b && r.b > bal.t) vis = false;
+      else if (t.el.classList.contains('hit')) placed.push(r);
       else if (t.w && placed.some((o) => r.l < o.r && r.r > o.l && r.t < o.b && r.b > o.t)) vis = false;
       else if (t.w) placed.push(r);
     }
