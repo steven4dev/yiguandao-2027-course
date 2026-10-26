@@ -144,6 +144,9 @@
     transform: translate(-50%, 6px); padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap;
     opacity: 0; pointer-events: none; transition: opacity 0.32s linear, transform 0.32s linear; }
   .skytip.on { opacity: 1; transform: translate(-50%, 0); }
+  .soundhint { border: 1px solid var(--line); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .soundhint.on { pointer-events: auto; animation: hintPulse 2.4s ease-in-out infinite; }
+  @keyframes hintPulse { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--gold) 30%, transparent), 0 8px 28px rgba(50, 30, 15, 0.14); } }
 
   .dock { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     width: max-content; max-width: calc(100vw - 32px); border-radius: 999px; }
@@ -331,7 +334,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.13</span>
+  <span class="ver">v261026.14</span>
   </div></div>
 </div>
 
@@ -353,6 +356,7 @@
 </div>
 
 <div class="card skytip" id="skyTip" role="status" aria-live="polite"></div>
+<button class="card skytip soundhint" id="soundHint" type="button">🔊 點一下畫面，打開音樂和音效</button>
 
 <div class="card soundpop" id="soundPop" hidden>
   <b>聲音</b>
@@ -2514,11 +2518,19 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) load
    ========================================================= */
 const SND = { ctx: null, sfx: false, music: false };
 const SOUND_KEY = 'islands-sound-v2';   // 換了預設值（改成預設開），舊的記錄不沿用
+// iPhone 的靜音鍵會把網頁聲音整個關掉；新版 Safari 可以宣告這是「播放音樂」，靜音模式下也聽得到
+try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+// iPhone 要在手勢裡真的播出一個聲音才算解鎖，這裡播一段聽不到的極短靜音
+function unlockAudio(ctx) {
+  try { const src = ctx.createBufferSource(); src.buffer = ctx.createBuffer(1, 1, 22050); src.connect(ctx.destination); src.start(0); } catch (e) {}
+}
 function audioInit() {
-  if (SND.ctx) { if (SND.ctx.state === 'suspended') SND.ctx.resume(); return; }
+  if (SND.ctx) { if (SND.ctx.state !== 'running') { unlockAudio(SND.ctx); SND.ctx.resume(); } return; }
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) return;
   const ctx = (SND.ctx = new AC());
+  unlockAudio(ctx);
+  ctx.addEventListener('statechange', syncSoundHint);
   const comp = ctx.createDynamicsCompressor();
   comp.connect(ctx.destination);
   const bus = () => { const g = ctx.createGain(); g.gain.value = 0; g.connect(comp); return g; };
@@ -2873,6 +2885,7 @@ function audioTick() {
 // 關掉的話會記住（只存在自己的瀏覽器）
 const soundBtn = $('sound'), soundPop = $('soundPop');
 function syncSound() {
+  syncSoundHint();
   $('sfxOn').checked = SND.sfx;
   $('musicOn').checked = SND.music;
   soundBtn.setAttribute('aria-pressed', String(SND.sfx || SND.music));
@@ -2900,17 +2913,26 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape' && !soundPop.hidden)
   soundBtn.setAttribute('aria-pressed', String(SND.sfx || SND.music));
   $('sfxOn').checked = SND.sfx; $('musicOn').checked = SND.music;
   if (SND.sfx || SND.music) {
-    // iPhone 要在手指放開（touchend／click）時才肯解鎖聲音，幾種事件都聽，真的開始播放才拆掉
+    // 手機要在手指「放開」時才算真的點了（按下時解鎖不了），所以觸控只聽 pointerup／touchend／click；
+    // 滑鼠和鍵盤按下就算。真的開始播放才拆掉
     const EVS = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'];
-    const wake = () => {
+    const wake = (e) => {
       if (!SND.sfx && !SND.music) return;
+      if (e && e.type === 'pointerdown' && e.pointerType !== 'mouse') return;
       audioInit();
       if (SND.ctx && SND.ctx.state === 'running') EVS.forEach((ev) => removeEventListener(ev, wake, true));
       else if (SND.ctx) SND.ctx.resume().then(() => { if (SND.ctx.state === 'running') EVS.forEach((ev) => removeEventListener(ev, wake, true)); });
     };
     EVS.forEach((ev) => addEventListener(ev, wake, true));
   }
+  syncSoundHint();
 }
+// 還沒出聲之前，畫面下方提示「點一下畫面就有聲音」；開始播放、或兩種聲音都關掉時就收起來
+function syncSoundHint() {
+  const on = (SND.sfx || SND.music) && !(SND.ctx && SND.ctx.state === 'running') && !document.hidden;
+  $('soundHint').classList.toggle('on', on);
+}
+$('soundHint').addEventListener('click', () => { audioInit(); });
 // 切到別的分頁就暫停聲音
 document.addEventListener('visibilitychange', () => {
   if (!SND.ctx) return;
