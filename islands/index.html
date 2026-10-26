@@ -198,6 +198,7 @@
   #searchResults button small { white-space: normal; line-height: 1.5; }
   .searchpop .tip { margin-top: 4px; }
   .alsoT { display: flex; flex-wrap: wrap; gap: 6px; }
+  .prog .go-yoga { padding: 1px 8px; font-size: 11px; margin-left: 4px; }
   .bars .prog { display: grid; grid-template-columns: 44px 1fr; gap: 8px; font-size: 13px; padding: 2px 0; }
   .bars .prog span:first-child { color: var(--muted); font-variant-numeric: tabular-nums; }
   .dock-body { display: grid; gap: 8px; }
@@ -337,7 +338,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.34</span>
+  <span class="ver">v261026.35</span>
   </div></div>
 </div>
 
@@ -476,7 +477,7 @@ function mask(name) {
 }
 const CADRE_LOOK = {
   班務團隊: ['hall', '#c0503f', '班旗指揮台'], 人事組: ['post', '#3f8a6a', '大印章名冊'], 公關禮節組: ['arch', '#d9774a', '迎賓牌樓'], 學術組: ['library', '#5b6fa8', '圖書館'],
-  輔導組: ['lighthouse', '#e0a03a', '燈塔'], 總務組: ['barn', '#8f5f3c', '倉庫和大工具箱'], 影音組: ['tower', '#7a5aa6', '三腳架攝影機'], 活動組: ['bigtop', '#d2566a', '大帳篷'],
+  輔導組: ['lighthouse', '#e0a03a', '燈塔'], 總務組: ['barn', '#8f5f3c', '倉庫和大工具箱'], 影音組: ['tower', '#7a5aa6', '三腳架單眼相機'], 活動組: ['bigtop', '#d2566a', '大帳篷'],
 };
 // 同一人身兼多組時，每一組都算；uid 是這個人在名單裡的序號，報名資料只記序號、不記姓名
 const CADRE_OF = new Map();
@@ -1047,14 +1048,16 @@ function figure(mat, role = '', bob = false, extra = {}) {
     part(new THREE.BoxGeometry(0.26, 0.18, 0.24), lam('#b8865a'), 0.02, 0.56, 0.12, ct);
     p.userData.arms.forEach((sh, i) => { sh.rotation.x = -1.2; sh.rotation.z = (i ? 1 : -1) * 0.3; });
     p.userData.armRestX = -1.2; p.userData.armRestZ = 0.3;
-  } else if (T === 'camera') {   // 影音組：右肩扛攝影機，紅色錄影燈一閃一閃
-    const cm = new THREE.Group(); cm.position.set(0.36, 0.86, 0.12); g.add(cm);
-    part(new THREE.BoxGeometry(0.2, 0.2, 0.42), lam('#3a3a46'), 0, 0, 0, cm);
-    part(new THREE.CylinderGeometry(0.09, 0.1, 0.16, 14), inkMat, 0, 0, 0.27, cm).rotation.x = Math.PI / 2;
-    const rec = part(dotGeo, new THREE.MeshBasicMaterial({ color: '#ff3b3b' }), 0.06, 0.12, 0.12, cm); rec.scale.setScalar(0.03);
+  } else if (T === 'camera') {   // 影音組：雙手捧著單眼相機舉在臉前，自拍燈一閃一閃
+    const cm = new THREE.Group(); cm.position.set(0, 0.92, 0.52); g.add(cm);
+    part(new THREE.BoxGeometry(0.42, 0.26, 0.16), lam('#26262c'), 0, 0, 0, cm);
+    part(new THREE.CylinderGeometry(0.1, 0.11, 0.2, 14), lam('#26262c'), -0.02, 0, 0.17, cm).rotation.x = Math.PI / 2;
+    part(new THREE.CylinderGeometry(0.11, 0.11, 0.03, 14), lam('#9aa0a6'), -0.02, 0, 0.12, cm).rotation.x = Math.PI / 2;
+    const pr = part(new THREE.CylinderGeometry(0.07, 0.12, 0.1, 4), lam('#26262c'), 0, 0.17, 0, cm); pr.rotation.y = Math.PI / 4;
+    const rec = part(dotGeo, new THREE.MeshBasicMaterial({ color: '#ff3b3b' }), 0.15, 0.08, 0.09, cm); rec.scale.setScalar(0.025);
     p.userData.rec = rec; p.userData.prop = cm;
-    p.userData.arms[1].rotation.set(-0.3, 0, 2.3);
-    p.userData.armRestX = -0.3; p.userData.armRestZ = 2.3;
+    p.userData.arms.forEach((sh, i) => sh.rotation.set(-1.5, 0, (i ? 1 : -1) * 0.25));
+    p.userData.armRestX = -1.5; p.userData.armRestZ = 0.25;
   } else if (T === 'tambourine') {   // 活動組員：搖鈴鼓
     const tb = new THREE.Group(); tb.position.set(0.42, 0.75, 0.25); g.add(tb);
     part(new THREE.TorusGeometry(0.15, 0.03, 6, 20), lam('#d2566a'), 0, 0, 0, tb);
@@ -1299,8 +1302,8 @@ animators.push((t) => {
       u.rec.visible = Math.sin(t * 6) > 0;
       if (due) { u.actT = t; u.nextTrick = t + 4 + Math.random() * 3; bubble(f, '📸'); trickSound('shutter', f); }
       const e = t - (u.actT ?? -9);
-      u.prop.rotation.y = Math.sin(t * 0.8 + u.phase) * 0.35;
-      if (!u.flash) { u.flash = new THREE.Mesh(dotGeo, new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, depthWrite: false })); u.flash.userData.ring = true; u.prop.add(u.flash); u.flash.position.set(0, 0, 0.4); }
+      u.prop.rotation.y = Math.sin(t * 0.8 + u.phase) * 0.2;
+      if (!u.flash) { u.flash = new THREE.Mesh(dotGeo, new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, depthWrite: false })); u.flash.userData.ring = true; u.prop.add(u.flash); u.flash.position.set(0, 0.15, 0.25); }
       u.flash.visible = e < 0.25;
       if (u.flash.visible) { u.flash.scale.setScalar(0.15 + e * 1.2); u.flash.material.opacity = 1 - e / 0.25; }
     } else if (tr.kind === 'tambourine') {
@@ -1787,17 +1790,22 @@ function cadreBuilding(kind, g, color) {
       mesh(new THREE.SphereGeometry(0.13, 10, 8), dark, foot.x, 0.08, foot.z, g);
     }
     mesh(new THREE.CylinderGeometry(0.35, 0.3, 0.25, 16), legMat, 0, H + 0.1, -0.3, g);
-    const cam = new THREE.Group(); cam.position.set(0, H + 0.75, -0.3); g.add(cam);
-    mesh(new THREE.BoxGeometry(1.0, 0.9, 1.7), col, 0, 0, 0, cam);
-    mesh(new THREE.BoxGeometry(1.02, 0.12, 1.72), dark, 0, -0.42, 0, cam);
-    const lens = mesh(new THREE.CylinderGeometry(0.38, 0.45, 0.7, 20), dark, 0, 0, 1.15, cam); lens.rotation.x = Math.PI / 2;
-    mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.02, 20), lam('#7fb8e0', { emissive: '#1a3b55' }), 0, 0, 1.51, cam).rotation.x = Math.PI / 2;
-    mesh(new THREE.BoxGeometry(0.5, 0.35, 0.5), dark, 0.3, 0.55, -0.4, cam);
-    mesh(new THREE.BoxGeometry(0.12, 0.12, 0.9), dark, 0, 0.55, 0.3, cam);
-    for (const sz of [-0.1, 0.7]) mesh(new THREE.BoxGeometry(0.08, 0.2, 0.08), dark, 0, 0.5, sz, cam);
-    const rec = mesh(new THREE.SphereGeometry(0.08, 10, 8), new THREE.MeshBasicMaterial({ color: '#ff3b3b' }), 0.35, 0.3, 0.86, cam);
+    // 單眼相機：黑色機身、右手握把、頂上的稜鏡凸起、大鏡頭、快門鈕和轉盤
+    const cam = new THREE.Group(); cam.position.set(0, H + 0.72, -0.3); g.add(cam);
+    const body = lam('#26262c'), metal = lam('#9aa0a6');
+    mesh(new THREE.BoxGeometry(1.7, 1.05, 0.7), body, 0, 0, 0, cam);
+    mesh(new THREE.BoxGeometry(0.42, 1.0, 0.95), body, 0.68, -0.02, 0.1, cam);
+    const prism = mesh(new THREE.CylinderGeometry(0.28, 0.5, 0.45, 4), body, 0, 0.7, -0.02, cam); prism.rotation.y = Math.PI / 4; prism.scale.set(1, 1, 0.75);
+    mesh(new THREE.BoxGeometry(1.72, 0.1, 0.72), col, 0, -0.35, 0, cam);
+    const lens = mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.85, 24), body, -0.08, -0.02, 0.75, cam); lens.rotation.x = Math.PI / 2;
+    for (const z of [0.55, 0.9]) { const r = mesh(new THREE.CylinderGeometry(0.47, 0.47, 0.08, 24), metal, -0.08, -0.02, z, cam); r.rotation.x = Math.PI / 2; }
+    mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.02, 24), lam('#6fa8d8', { emissive: '#1a3b55' }), -0.08, -0.02, 1.18, cam).rotation.x = Math.PI / 2;
+    mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.08, 14), metal, 0.62, 0.56, 0.12, cam);
+    mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.1, 16), metal, -0.55, 0.57, 0, cam);
+    mesh(new THREE.BoxGeometry(0.2, 0.08, 0.14), metal, 0, 0.94, -0.02, cam);
+    const rec = mesh(new THREE.SphereGeometry(0.05, 10, 8), new THREE.MeshBasicMaterial({ color: '#ff3b3b' }), 0.45, 0.35, 0.36, cam);
     const flash = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false }));
-    flash.position.set(0, 0, 1.7); cam.add(flash);
+    flash.position.set(-0.08, 0, 1.4); cam.add(flash);
     // 地上一塊場記板
     const clap = new THREE.Group(); clap.position.set(1.6, 0, 1.2); clap.rotation.set(-0.25, -0.5, 0); g.add(clap);
     mesh(new THREE.BoxGeometry(0.9, 0.7, 0.06), lam('#1f1a1a'), 0, 0.38, 0, clap);
@@ -2149,6 +2157,9 @@ COURSES.filter((c) => c.pm).forEach((c) => {
 /* ---------- 講師：站在課程島前緣的小黑板旁，面向鏡頭；點了看是誰、教什麼，也搜尋得到 ---------- */
 // 從課表文字抓出講師，例如「全真 鄔明清 講師」「藝術氣球（全真 林鈺蓉 講師）」
 const TEACHER_RE = /(\S+)\s+(\S{2,4})\s+(講師|助理)/;
+// 島的名字和日期（瑜伽島不屬於某一堂課，是每堂課早上都去）
+const isleName = (k) => { const i = islands[k]; return i.kind === 'yoga' ? '瑜伽島' : i.kind === 'pm' ? i.course.pm.isle : i.course.isle; };
+const isleWhen = (k) => { const i = islands[k]; return i.kind === 'yoga' ? '每堂課早上' : `${+i.course.date.slice(5, 7)}/${+i.course.date.slice(8)}`; };
 const TEACHERS = [], teacherHit = [];
 const teacherMat = lam('#f6eedd'), boardMat = lam('#2f4a3a'), easelMat = lam('#8a6a48');
 function addTeachers(isl, list, dist, spread) {
@@ -2185,9 +2196,73 @@ function addTeachers(isl, list, dist, spread) {
     TEACHERS.push(rec);
   });
 }
+// 古典瑜伽是每堂課早上的第一堂，集中在瑜伽島，課程島上只留觀點分享的講師
 COURSES.forEach((c) => {
-  addTeachers(islands[c.key], (c.prog || []).filter(([label]) => label !== '下午活動').map(([topic, text]) => ({ topic, text })), 5.2, 2.3);
+  addTeachers(islands[c.key], (c.prog || []).filter(([label]) => label !== '下午活動' && label !== '古典瑜伽').map(([topic, text]) => ({ topic, text })), 5.2, 2.3);
   if (c.pm) addTeachers(islands[c.pm.key], [{ topic: c.pm.name, text: c.pm.who || '' }], 3.2, 2);
+});
+
+/* ---------- 瑜伽島：在全真島、走走島、歡樂島之間；每堂課早上大家先來這裡做古典瑜伽 ---------- */
+const YOGA_COURSES = COURSES.filter((c) => (c.prog || []).some(([k]) => k === '古典瑜伽'));
+const YOGA_WHO = ((YOGA_COURSES[0] || {}).prog || []).find(([k]) => k === '古典瑜伽')?.[1] || '';
+const yogaIsl = makeIsland('yoga', 6, 26, 14, 'yoga');
+const YOGA_POSES = [];   // 墊子上跟著講師做動作的人偶（講師也在裡面）
+{
+  const g = yogaIsl.group;
+  bridge(TEMPLE, yogaIsl);
+  const mark = new THREE.Group(); mark.rotation.y = faceCam(yogaIsl.x, yogaIsl.z); g.add(mark);
+  yogaIsl.mark = mark;
+  // 講台後面一顆朝陽：每天早上的第一堂課
+  const sun = mesh(new THREE.CircleGeometry(1.3, 32), new THREE.MeshBasicMaterial({ color: '#ffb54d' }), 0, 3.3, -3.9, mark, false);
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2, ray = mesh(new THREE.PlaneGeometry(0.16, 0.6), new THREE.MeshBasicMaterial({ color: '#ffd27a' }), Math.cos(a) * 1.75, 3.3 + Math.sin(a) * 1.75, -3.92, mark, false);
+    ray.rotation.z = a - Math.PI / 2;
+  }
+  animators.push((t) => { sun.scale.setScalar(1 + Math.sin(t * 0.8) * 0.04); });
+  // 木頭講台
+  mesh(new THREE.BoxGeometry(3.2, 0.35, 1.8), lam(C.wood), 0, 0.18, -2.7, mark);
+  mesh(new THREE.BoxGeometry(3.3, 0.06, 1.9), lam('#a77b4f'), 0, 0.38, -2.7, mark);
+  addObst(g, { x: 0, z: 0, r: 0.1 });
+  // 彩色瑜伽墊：三排、每排三張
+  const MAT = ['#8fd3c1', '#f7b6c2', '#b9a7e8', '#ffd58a', '#9ec9f5', '#c3e59a'];
+  const spots = [];
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+    const x = (c - 1) * 1.55, z = -0.7 + r * 1.35;
+    mesh(new THREE.BoxGeometry(0.85, 0.03, 1.2), lam(MAT[(r * 3 + c) % MAT.length]), x, 0.02, z, mark, false);
+    spots.push([x, z]);
+  }
+  // 講師鄔明清站在講台上帶動作
+  const m = String(YOGA_WHO).match(TEACHER_RE);
+  const teacher = figure(teacherMat, '', false, { scarf: '#2f6f73', glasses: true });
+  teacher.scale.setScalar(1.45); teacher.position.set(0, 0.41, -2.7); teacher.userData.baseY = 0.41; mark.add(teacher);
+  if (m) {
+    const rec = { id: TEACHERS.length, key: 'yoga', fig: teacher, name: m[2], unit: m[1], title: m[3], topics: ['古典瑜伽（每堂課早上的第一堂）'] };
+    teacher.userData.teacher = rec.id;
+    teacher.traverse((o) => { if (o.isMesh) teacherHit.push(o); });
+    TEACHERS.push(rec);
+  }
+  YOGA_POSES.push(teacher);
+  // 墊子上示範的夥伴（乾道淡藍、坤道淡粉）
+  spots.forEach(([x, z], i) => {
+    if (i === 4) return;
+    const kun = i % 2 === 1, f = figure(kun ? kunMat : qianMat, '', kun);
+    f.scale.setScalar(1.25); f.position.set(x, 0.03, z + 0.1); f.userData.baseY = 0.03; mark.add(f);
+    YOGA_POSES.push(f);
+  });
+}
+// 瑜伽動作：雙手合十 → 雙手往上伸展 → 往左側彎 → 往右側彎 → 雙手平舉；大家跟著講師一起慢慢換動作
+const POSE = [[0.25, -1.3, 0], [2.9, 0, 0], [2.9, 0, 0.35], [2.9, 0, -0.35], [1.57, 0, 0]];
+animators.push((t) => {
+  const step = 3.2, k = t / step, i = Math.floor(k) % POSE.length, j = (i + 1) % POSE.length;
+  const mix = Math.min(1, (k % 1) / 0.35), e = mix * mix * (3 - 2 * mix);
+  const z = POSE[i][0] + (POSE[j][0] - POSE[i][0]) * e, x = POSE[i][1] + (POSE[j][1] - POSE[i][1]) * e, lean = POSE[i][2] + (POSE[j][2] - POSE[i][2]) * e;
+  for (const f of YOGA_POSES) {
+    const u = f.userData;
+    if (u.focusT != null) continue;
+    const [l, r] = u.arms;
+    l.rotation.set(x, 0, -z); r.rotation.set(x, 0, z);
+    f.rotation.set(0, 0, lean);
+  }
 });
 
 /* =========================================================
@@ -2212,6 +2287,7 @@ outer.forEach((o) => addTag(islands[o.key], o.title, 'small', 5.5));
 addTag(gateIsl, GATE.isle, 'small', 5.5);
 COURSES.filter((c) => c.pm).forEach((c) => addTag(islands[c.pm.key], `${c.pm.emoji} ${c.pm.isle}`, 'small', 3.4));
 addTag(dockIsl, '🛶 渡口島・登島', 'small dock-tag', 4.5);
+addTag(yogaIsl, '🧘 瑜伽島', '', 5.2);
 // 登島是重要入口：渡口島的標籤排在全真島和課程島之後、其他小標籤之前
 tags.splice(1 + COURSES.length, 0, tags.pop());
 // 瞭望氣球的小標籤跟著氣球飄，點了就是搜尋
@@ -2379,14 +2455,13 @@ function renderPanel() {
       <p class="note">${MASTERS.map((m) => m.name).join('、')}三位主班點傳師站在道院正門的樓梯前，陪著登島的夥伴一起走過 2027。</p>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (teacher) {
-    const c = isl.course, pm = isl.kind === 'pm', when = `${+c.date.slice(5, 7)}/${+c.date.slice(8)}`;
-    const home = pm ? c.pm.isle : c.isle;
+    const when = isleWhen(teacher.key), home = isleName(teacher.key);
     // 同一位講師在其他島也有課，一起列出來
     const also = TEACHERS.filter((o) => o.name === teacher.name && o !== teacher);
     title = teacher.name; info = `${home}・${teacher.topics.join('、')}`;
     html = `<header><span class="eyebrow">${esc(home)}・${teacher.title}</span><h2>${esc(teacher.name)}</h2><p class="sub">${esc(teacher.unit)}・${esc(teacher.title)}</p></header>
       <div class="bars"><h3>這堂課</h3>${teacher.topics.map((tp) => `<div class="prog"><span>${esc(when)}</span><span>${esc(tp)}</span></div>`).join('')}</div>
-      ${also.length ? `<div class="bars"><h3>也在這些島上課</h3><div class="alsoT">${also.map((o) => { const oi = islands[o.key], oc = oi.course; return `<button class="back" data-go="${o.key}">${esc(oi.kind === 'pm' ? oc.pm.isle : oc.isle)}・${+oc.date.slice(5, 7)}/${+oc.date.slice(8)}</button>`; }).join('')}</div></div>` : ''}
+      ${also.length ? `<div class="bars"><h3>也在這些島上課</h3><div class="alsoT">${also.map((o) => `<button class="back" data-go="${o.key}">${esc(isleName(o.key))}・${esc(isleWhen(o.key))}</button>`).join('')}</div></div>` : ''}
       <button class="back" data-go="${teacher.key}">← 看${esc(home)}的課程</button>`;
   } else if (personRec) {
     const pr = personRec, name = pr.m || '學員';
@@ -2394,6 +2469,14 @@ function renderPanel() {
     html = `<header><span class="eyebrow">全真島・${pr.isCadre ? '幹部' : '學員'}</span><h2>${esc(name)}</h2><p class="sub">${esc(pr.g)}・${esc(pr.unit)}・${esc(pr.city)}</p></header>
       <span class="pill" data-s="done"><i></i>已登島・${+pr.date.slice(5, 7)}/${+pr.date.slice(8)}</span>
       <p class="note">藍色是乾道、橘色是坤道。</p>
+      <button class="back" data-go="temple">← 回到全真島</button>`;
+  } else if (isl && isl.kind === 'yoga') {
+    const yt = TEACHERS.find((x) => x.key === 'yoga');
+    title = '瑜伽島'; info = '每堂課早上的第一堂・古典瑜伽';
+    html = `<header><span class="eyebrow">每堂課早上的第一堂</span><h2>🧘 瑜伽島</h2><p class="sub">古典瑜伽${yt ? `・${esc(yt.unit)} ${esc(yt.name)} ${esc(yt.title)}` : ''}</p></header>
+      <p class="note">每次上課，大家先從全真島走過木橋來到瑜伽島，跟著講師伸展、調息，把身體和心都打開，再出發到當天的課程島。</p>
+      <div class="bars"><h3>有古典瑜伽的課（點日期到那一堂課）</h3><div class="alsoT">${YOGA_COURSES.map((c) => `<button class="back" data-go="${c.key}">${+c.date.slice(5, 7)}/${+c.date.slice(8)} ${esc(c.isle)}</button>`).join('')}</div></div>
+      ${yt ? `<button class="back" data-teacher="${yt.id}">🧑‍🏫 看講師 ${esc(yt.name)}</button>` : ''}
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (!isl || isl.kind === 'temple') {
     const students = list.filter((p) => !p.isCadre), cadres = list.length - students.length;
@@ -2415,7 +2498,7 @@ function renderPanel() {
     const look = { soon: '島已經蓋好了，就等大家一起登島。', today: '大家都上島了！', done: '這堂課結束了，島上開滿了花。' }[s];
     html = `<header><span class="eyebrow">${c.date.replace(/-/g, '/')}（${'日一二三四五六'[d.getDay()]}）</span><h2>${esc(c.isle)}</h2><p class="sub">${esc(c.name)}｜${esc(c.sub)}</p></header>
       <span class="pill" data-s="${s}"><i></i>${statusText(s)}${diff > 0 ? `・還有 ${diff} 天` : diff < 0 ? `・${-diff} 天前` : ''}</span>
-      <ul class="prog">${c.prog.map(([k, v]) => `<li><span>${esc(k)}</span>${esc(v)}</li>`).join('')}</ul>
+      <ul class="prog">${c.prog.map(([k, v]) => `<li><span>${esc(k)}</span>${esc(v)}${k === '古典瑜伽' ? ' <button class="back go-yoga" data-go="yoga">→ 瑜伽島</button>' : ''}</li>`).join('')}</ul>
       ${c.pm ? `<button class="back" data-go="${c.pm.key}">→ 看下午的${esc(c.pm.isle)} ${c.pm.emoji}</button>` : ''}
       ${c.game ? `<a class="gamecta" href="${c.game.url}" target="_blank" rel="noopener">
         <img src="${c.game.img}" alt="${esc(c.game.name)}" loading="lazy">
@@ -2600,6 +2683,7 @@ function goHome() { flyTo(HOME.target.clone(), HOME.pos.clone()); }
 const selectMember = (id) => select(SLOTS[id].key, 'm:' + id);
 document.getElementById('panelBody').addEventListener('click', (e) => {
   const who = e.target.closest('.who'), back = e.target.closest('.back');
+  if (back && back.dataset.teacher != null) { const tr = TEACHERS[+back.dataset.teacher]; select(tr.key, 't:' + tr.id); return; }
   if (who) selectMember(+who.dataset.slot);
   else if (back) select(back.dataset.go);
 });
@@ -2668,7 +2752,7 @@ $('today').onclick = () => { dayInput.value = Math.max(0, dayIndex(todayISO)); a
 $('home').onclick = () => { setUI({ panel: 'closed', dock: false }); showNavPop(false); goHome(); };
 
 /* ---------- 一年的課程路線：全真島 → 每堂課（有下午副課就接著下午島） ---------- */
-const TOUR = ['temple', GATE.key, ...COURSES.flatMap((c) => (c.pm ? [c.key, c.pm.key] : [c.key]))];
+const TOUR = ['temple', 'yoga', GATE.key, ...COURSES.flatMap((c) => (c.pm ? [c.key, c.pm.key] : [c.key]))];
 const tourIndex = () => TOUR.indexOf(String(selected).startsWith('p:') ? 'temple' : selected);
 // 走到某一站：只換島、不動日期，每座島顯示的都是時光捲軸那一天（預設今天）的真實狀態
 const goTo = (key) => select(key);
@@ -2707,7 +2791,7 @@ function renderNav() {
   const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島</span></a>
-    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('dock', '🛶 渡口島・登島報名處')}
+    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
@@ -2738,6 +2822,7 @@ const md2 = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
 const PLACES = [
   { key: 'temple', icon: '🏯', title: '全真島', sub: '全真道院・廣場上是已登島的夥伴', words: ['全真島', '全真道院', '佛堂', '中央'] },
   { key: 'dock', icon: '🛶', title: '渡口島', sub: '登島報名處', words: ['渡口島', '登島', '報名', '竹筏'] },
+  { key: 'yoga', icon: '🧘', title: '瑜伽島', sub: '每堂課早上的第一堂：古典瑜伽', words: ['瑜伽島', '瑜伽', '古典瑜伽', '早上', '晨間'] },
   ...COURSES.flatMap((c) => [
     { key: c.key, icon: c.game ? '🎮' : '📅', title: c.isle, sub: `${md2(c.date)} ${c.name}｜${c.sub}`,
       words: [c.isle, c.name, c.sub, c.date, md2(c.date), ...(c.prog || []).flat()] },
@@ -2766,8 +2851,7 @@ function findPeople(q) {
   });
   // 講師
   TEACHERS.filter((t) => norm(t.name).includes(n)).forEach((t) => {
-    const oi = islands[t.key], oc = oi.course;
-    out.push({ kind: 't', t, icon: '🧑‍🏫', title: t.name, sub: `${oi.kind === 'pm' ? oc.pm.isle : oc.isle}・${+oc.date.slice(5, 7)}/${+oc.date.slice(8)} ${t.topics.join('、')}` });
+    out.push({ kind: 't', t, icon: '🧑‍🏫', title: t.name, sub: `${isleName(t.key)}・${isleWhen(t.key)} ${t.topics.join('、')}` });
   });
   // 學員：已經登島的夥伴
   realPeople.forEach((d, i) => {
@@ -3201,6 +3285,11 @@ const ISLE_SFX = {
     if (Math.random() < 0.6) for (let i = 0; i < 3; i++) { ping(t + i * 0.5, o, 820, 0.12 * v, 0.14); ping(t + i * 0.5, o, 1690, 0.03 * v, 0.06); }
     else bell(t, o, 660, 0.07 * v, 3.5);
   } },
+  // 瑜伽島：輕柔的頌缽，接一口慢慢的呼吸
+  yoga: { every: [7, 11], play(t, o, v) {
+    bell(t, o, 330, 0.06 * v, 5, [[1, 1], [1.005, 0.6], [2.71, 0.25]]);
+    noiseHit(t + 1.2, o, { type: 'lowpass', f: 500, peak: 0.03 * v, attack: 1.2, dur: 2.6 });
+  } },
   // 好玩島：旋轉木馬的風琴小樂句
   carousel: { every: [5, 8], play(t, o, v) {
     [72, 76, 79, 84, 79, 76, 72].forEach((m, i) => { ping(t + i * 0.17, o, midiHz(m), 0.05 * v, 0.3, 'triangle'); ping(t + i * 0.17, o, midiHz(m + 12), 0.015 * v, 0.2); });
@@ -3296,7 +3385,7 @@ const ISLE_SFX = {
   barn: { every: [4, 7], play(t, o, v) {
     for (let i = 0; i < 3; i++) { ping(t + i * 0.28, o, 420, 0.09 * v, 0.07); noiseHit(t + i * 0.28, o, { f: 1800, q: 2, peak: 0.04 * v, dur: 0.04 }); }
   } },
-  // 影音島（三腳架攝影機）：拍合照前的「嗶」，接著快門「喀嚓」
+  // 影音島（三腳架單眼相機）：拍合照前的「嗶」，接著快門「喀嚓」
   tower: { every: [5, 8], play(t, o, v) {
     for (const d of [0, 0.35]) ping(t + d, o, 1760, 0.035 * v, 0.12);
     noiseHit(t + 0.8, o, { f: 3000, q: 2, peak: 0.1 * v, dur: 0.03 });
@@ -3313,7 +3402,7 @@ const ISLE_SFX = {
   } },
 };
 // 每座島對到哪一種音效
-const ISLE_MARK = { temple: 'temple', dock: 'dock' };
+const ISLE_MARK = { temple: 'temple', dock: 'dock', yoga: 'yoga' };
 COURSES.forEach((c) => { ISLE_MARK[c.key] = c.mark; if (c.pm) ISLE_MARK[c.pm.key] = c.pm.mark; });
 CADRE.forEach((o) => { ISLE_MARK[o.key] = o.mark; });
 const isleNext = {};
@@ -3557,7 +3646,7 @@ function poseFocus(f, t) {
   f.getWorldPosition(waveTmp);
   waveCam.set(camera.position.x, waveTmp.y, camera.position.z);
   f.lookAt(waveCam);
-  f.position.y = 0;
+  f.position.y = u.baseY || 0;
   const e = t - u.focusT, [, right] = u.arms || [];
   if (!right) return;
   // 拋球、拉拉炮的人先把右手放回身側再揮手
