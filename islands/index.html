@@ -334,7 +334,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.14</span>
+  <span class="ver">v261026.15</span>
   </div></div>
 </div>
 
@@ -440,7 +440,7 @@ const COURSES = [
 ];
 
 // 2027 年度幹部（跟 signup/index.html 的 CADRE_GROUPS、首頁「同行夥伴」一致，人事異動時要一起改）
-// 執掌取自首頁「同行夥伴」；畫面上的姓名一律遮蔽中間字（林○涵）
+// 執掌取自首頁「同行夥伴」；畫面上直接顯示全名
 const CADRE_GROUPS = [
   { group: '班務團隊', members: [['周逸翔', '班長'], ['何珈貞', '坤道副班長'], ['羅健洲', '乾道副班長']] },
   { group: '人事組', members: [['賴美芸', '組長'], ['林鈺蓉', '成員'], ['楊舒涵', '成員']],
@@ -464,13 +464,7 @@ const ROLE_DUTIES = {
   坤道副班長: ['協助班長統籌班務，串聯各組運作', '關懷坤道學員，凝聚坤道班員向心力', '班長不在時代理主持與臨場協調', '支援法會與活動中的坤道人力調度'],
   乾道副班長: ['協助班長統籌班務，串聯各組運作', '關懷乾道學員，凝聚乾道班員向心力', '班長不在時代理主持與臨場協調', '支援法會與活動中的乾道人力調度'],
 };
-// 搜尋用：只留全名算出來的指紋，比對時再把輸入的全名算一次，記憶體裡不另外存全名
-function nameKey(name) {
-  let h = 2166136261;
-  for (const ch of String(name).replace(/\s+/g, '').replace(/台/g, '臺')) h = Math.imul(h ^ ch.codePointAt(0), 16777619);
-  return (h >>> 0).toString(36);
-}
-// 「林詩涵」→「林○涵」、「王明」→「王○」
+// 備份資料（signup/data.json）裡的姓名是遮蔽過的：「林詩涵」→「林○涵」、「王明」→「王○」，比對幹部時要用同樣的規則
 function mask(name) {
   const s = Array.from(name);
   if (s.length <= 1) return name;
@@ -491,7 +485,7 @@ const CADRE = CADRE_GROUPS.map(({ group, members, duties }, i) => {
   const [mark, color, what] = CADRE_LOOK[group];
   const key = 'g' + (i + 1);
   const slots = members.map(([name, role]) => {
-    const slot = { id: SLOTS.length, key, group, role, uid: CADRE_NAMES.indexOf(name), masked: mask(name),
+    const slot = { id: SLOTS.length, key, group, role, uid: CADRE_NAMES.indexOf(name), name,
       title: group === '班務團隊' ? role : group + role, duties: ROLE_DUTIES[role] || duties || [] };
     SLOTS.push(slot);
     return slot;
@@ -1866,7 +1860,7 @@ function renderPanel() {
     title = name; info = `${pr.g}・${pr.unit}`;
     html = `<header><span class="eyebrow">全真島・${pr.isCadre ? '幹部' : '學員'}</span><h2>${esc(name)}</h2><p class="sub">${esc(pr.g)}・${esc(pr.unit)}・${esc(pr.city)}</p></header>
       <span class="pill" data-s="done"><i></i>已登島・${+pr.date.slice(5, 7)}/${+pr.date.slice(8)}</span>
-      <p class="note">姓名只顯示頭尾，中間遮蔽。藍色是乾道、橘色是坤道。</p>
+      <p class="note">藍色是乾道、橘色是坤道。</p>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (!isl || isl.kind === 'temple') {
     const students = list.filter((p) => !p.isCadre), cadres = list.length - students.length;
@@ -1909,9 +1903,9 @@ function renderPanel() {
   } else if (memberSlot) {
     const sl = memberSlot, on = joinedUids.has(sl.uid);
     const also = (CADRE_OF.get(CADRE_NAMES[sl.uid]) || []).filter((g) => g !== sl.group);
-    title = sl.title; info = `${sl.masked}・${on ? '已登島' : '還沒登島'}`;
+    title = sl.title; info = `${sl.name}・${on ? '已登島' : '還沒登島'}`;
     const home = CADRE.find((o) => o.key === sl.key);
-    html = `<header><span class="eyebrow">${esc(home.isle)}・${esc(sl.group)}</span><h2>${esc(sl.title)}</h2><p class="sub">${esc(sl.masked)}${also.length ? `・也在${esc(also.join('、'))}` : ''}</p></header>
+    html = `<header><span class="eyebrow">${esc(home.isle)}・${esc(sl.group)}</span><h2>${esc(sl.title)}</h2><p class="sub">${esc(sl.name)}${also.length ? `・也在${esc(also.join('、'))}` : ''}</p></header>
       <span class="pill" data-s="${on ? 'done' : 'plan'}"><i></i>${on ? '已登島' : '還沒登島'}</span>
       <div class="bars"><h3>${sl.group === '班務團隊' ? '這個職位的執掌' : '這一組的執掌'}</h3><ul class="duties">${sl.duties.map((d) => `<li>${esc(d)}</li>`).join('')}</ul></div>
       <button class="back" data-go="${sl.key}">← 看${esc(home.isle)}全部幹部</button>`;
@@ -1924,7 +1918,7 @@ function renderPanel() {
       ${bars('登島進度', [['已登島', isl.joined], ['還沒登島', o.size - isl.joined]], o.size)}
       <div class="bars"><h3>幹部名單（點一下看執掌）</h3><div class="roster">${o.slots.map((sl) => {
         const on = joinedUids.has(sl.uid);
-        return `<button class="who" data-slot="${sl.id}"><i style="background:${on ? o.color : 'transparent'};border-color:${o.color}"></i><span>${esc(sl.role)}</span><b>${esc(sl.masked)}</b><em data-on="${on}">${on ? '已登島' : '還沒登島'}</em></button>`;
+        return `<button class="who" data-slot="${sl.id}"><i style="background:${on ? o.color : 'transparent'};border-color:${o.color}"></i><span>${esc(sl.role)}</span><b>${esc(sl.name)}</b><em data-on="${on}">${on ? '已登島' : '還沒登島'}</em></button>`;
       }).join('')}</div></div>
       <p class="note">島上的小人偶就是這一組的幹部，登島後會從半透明變成這一組的顏色，戴金色小帽的是組長。點小人偶也可以看執掌。</p>`;
   } else if (isl.kind === 'dock') {
@@ -2189,7 +2183,7 @@ navPop.addEventListener('click', (e) => {
 document.addEventListener('pointerdown', (e) => { if (!navPop.hidden && !navPop.contains(e.target) && !menuBtn.contains(e.target)) showNavPop(false); });
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && !navPop.hidden) showNavPop(false); });
 
-/* ---------- 搜尋：課程、島名、講師；夥伴要輸入全名才找得到，結果只顯示遮蔽後的名字 ---------- */
+/* ---------- 搜尋：課程、島名、講師、幹部職稱，也可以打名字（全名或其中幾個字）找人 ---------- */
 const searchPop = $('searchPop'), searchBtn = $('search'), searchInput = $('searchInput'), searchResults = $('searchResults');
 const norm = (t) => String(t).toLowerCase().replace(/\s+/g, '').replace(/台/g, '臺');
 const md2 = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
@@ -2205,22 +2199,19 @@ const PLACES = [
 ];
 let searchHits = [];
 function findPeople(q) {
-  const raw = q.replace(/\s+/g, '');
-  // 全名至少兩個字，而且整個名字要完全相同；打一半的名字不會列出任何人
-  if (Array.from(raw).length < 2 || /[○＊*]/.test(raw)) return [];
-  const k = nameKey(raw), out = [];
-  const u = CADRE_NAMES.findIndex((n) => nameKey(n) === k);
-  if (u >= 0) {
-    const slot = SLOTS.filter((sl) => sl.uid === u).sort((a, b) => ROLE_RANK[a.role] - ROLE_RANK[b.role])[0];
-    const joined = realPeople.some((d) => (d.uids || []).includes(u));
-    out.push({ kind: 'm', slot, icon: '👤', title: slot.masked, sub: `${slot.title}・${joined ? '已登島' : '還沒登島'}` });
-    return out;
-  }
+  const n = norm(q), out = [], seen = new Set();
+  if (!n) return out;
+  // 幹部：名單上的每一位都找得到（還沒登島也找得到）；身兼多職的人只列最主要的職位
+  SLOTS.filter((sl) => norm(sl.name).includes(n)).sort((a, b) => ROLE_RANK[a.role] - ROLE_RANK[b.role] || a.id - b.id).forEach((slot) => {
+    if (seen.has(slot.uid)) return;
+    seen.add(slot.uid);
+    const joined = realPeople.some((d) => (d.uids || []).includes(slot.uid));
+    out.push({ kind: 'm', slot, icon: '👤', title: slot.name, sub: `${slot.title}・${joined ? '已登島' : '還沒登島'}` });
+  });
+  // 學員：已經登島的夥伴
   realPeople.forEach((d, i) => {
-    if (d.nk !== k) return;
-    const slot = mainSlotOf(d);
-    out.push(slot ? { kind: 'm', slot, icon: '👤', title: slot.masked, sub: `${slot.title}・已登島` }
-      : { kind: 'p', i, d, icon: '👤', title: d.m, sub: `${d.isCadre ? '幹部' : '學員'}・${md2(d.date)} 登島` });
+    if (!d.m || !norm(d.m).includes(n) || mainSlotOf(d)) return;
+    out.push({ kind: 'p', i, d, icon: '👤', title: d.m, sub: `${d.isCadre ? '幹部' : '學員'}・${md2(d.date)} 登島` });
   });
   return out;
 }
@@ -2229,15 +2220,15 @@ function runSearch() {
   if (!n) {
     searchHits = [];
     markHits();
-    searchResults.innerHTML = '<p class="tip">可以搜尋課程名稱、島名、日期（例如 4/24）、講師，或幹部職稱（例如班長、學術組長）。<br>想找自己：輸入完整的姓名，畫面會飛到你的小人偶，名字一樣只顯示遮蔽後的樣子。</p>';
+    searchResults.innerHTML = '<p class="tip">可以搜尋課程名稱、島名、日期（例如 4/24）、講師，或幹部職稱（例如班長、學術組長）。<br>想找自己或朋友：輸入名字（全名或其中幾個字），畫面會飛到那個小人偶。</p>';
     return;
   }
   const people = findPeople(q);
-  // 也可以用職稱找幹部：「班長」「副班長」「學術組長」…，名字一樣只顯示遮蔽後的樣子
+  // 也可以用職稱找幹部：「班長」「副班長」「學術組長」…
   const roles = Array.from(n).length < 2 ? [] : SLOTS
     .filter((sl) => [sl.title, sl.title.replace('組組長', '組長'), sl.title.replace('組成員', '組員')].some((t) => norm(t).includes(n)) && !people.some((h) => h.slot === sl))
     .sort((a, b) => ROLE_RANK[a.role] - ROLE_RANK[b.role] || a.id - b.id)
-    .map((slot) => ({ kind: 'm', slot, icon: '👤', title: slot.masked,
+    .map((slot) => ({ kind: 'm', slot, icon: '👤', title: slot.name,
       sub: `${slot.title}・${realPeople.some((d) => (d.uids || []).includes(slot.uid)) ? '已登島' : '還沒登島'}` }));
   const places = PLACES.filter((p) => p.words.some((w) => norm(w).includes(n)));
   searchHits = [...people, ...roles, ...places.map((p) => ({ kind: 'i', ...p }))].slice(0, 30);
@@ -2396,7 +2387,7 @@ $('night').onclick = () => {
 
 /* ---------- 報名資料：直接讀 Google 報名表，連不上改讀備份 ---------- */
 // 跟報名分析頁同一份表單回覆；試算表要維持「知道連結的任何人都能檢視」
-// 只查詢需要的欄位：手機（F 欄）不會被讀進瀏覽器；姓名只用來去重複、比對幹部，不會留下來
+// 只查詢需要的欄位：手機（F 欄）不會被讀進瀏覽器；姓名用來去重複、比對幹部，也直接顯示在小人偶和搜尋結果上
 const SHEET_ID = '1ev9Z2aIo7E2js_CozAGTpXyKOzZdBVT48T2mP0CylH0';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('表單回覆 1')}&tq=${encodeURIComponent('select A,B,C,D,E,G,H,I')}`;
 const SELF_CADRE = /^(我是|擔任|本身是|本人是)?幹部(本人)?$/;
@@ -2448,11 +2439,11 @@ function summarize(table) {
     const latest = !prev || prev.time <= time;
     const groups = CADRE_OF.get(name) || [], uid = CADRE_NAMES.indexOf(name);
     const row = latest ? { time, gender: get(c.gender), area: get(c.area), unit: get(c.unit), intro: get(c.intro) } : prev;
-    byKey.set(key, { ...row, first, groups, m: mask(name), nk: nameKey(name), uids: uid >= 0 ? [uid] : [], selfCadre: SELF_CADRE.test(row.intro) });
+    byKey.set(key, { ...row, first, groups, m: name, uids: uid >= 0 ? [uid] : [], selfCadre: SELF_CADRE.test(row.intro) });
   });
   return [...byKey.values()].map((p) => ({
     g: p.gender, city: cityOf(p.area), unit: p.unit || '未填寫',
-    isCadre: p.selfCadre || p.groups.length > 0, cadre: p.groups, uids: p.uids, m: p.m, nk: p.nk, date: ymd(p.first),
+    isCadre: p.selfCadre || p.groups.length > 0, cadre: p.groups, uids: p.uids, m: p.m, date: ymd(p.first),
   })).sort((a, b) => a.date.localeCompare(b.date));
 }
 
