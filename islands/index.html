@@ -352,7 +352,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.46</span>
+  <span class="ver">v261026.47</span>
   </div></div>
 </div>
 
@@ -2465,9 +2465,14 @@ const newIsl = makeIsland('newisle', 21, NEW_DIR.x * 118, NEW_DIR.y * 118, 'zhon
     c.fillStyle = '#1f1a1a'; c.font = 'bold 60px "Noto Sans TC", "PingFang TC", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText('🚧 忠恕島 施工中', 256, 80); c.font = 'bold 40px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText('完工後開放・敬請期待', 256, 154);
   });
-  const sy = new THREE.Group(); sy.rotation.y = faceCam(newIsl.x, newIsl.z); g.add(sy);
-  mesh(new THREE.BoxGeometry(5.2, 2, 0.1), [lam('#f2b632'), lam('#f2b632'), lam('#f2b632'), lam('#f2b632'), new THREE.MeshLambertMaterial({ map: sTex }), lam('#f2b632')], 0, 2.2, RF * 0.87 + 0.3, sy);
-  for (const x of [-2.2, 2.2]) mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.2, 6), postMat, x, 1.6, RF * 0.87 + 0.25, sy);
+  // 告示牌貼在最靠近鏡頭的那一面圍籬外側，跟圍籬平行，不會插進圍籬裡
+  const fc = faceCam(newIsl.x, newIsl.z);
+  let best = 0;
+  for (let k = 0; k < 6; k++) { const n = ((k + 1) * Math.PI) / 3, d = Math.abs(Math.atan2(Math.sin(n - fc), Math.cos(n - fc))); if (d < Math.abs(Math.atan2(Math.sin(best - fc), Math.cos(best - fc)))) best = n; }
+  const sy = new THREE.Group(); sy.rotation.y = best; g.add(sy);
+  const edgeR = RF * Math.cos(Math.PI / 6);
+  mesh(new THREE.BoxGeometry(5.2, 2, 0.1), [lam('#f2b632'), lam('#f2b632'), lam('#f2b632'), lam('#f2b632'), new THREE.MeshLambertMaterial({ map: sTex }), lam('#f2b632')], 0, 1.75, edgeR + 0.25, sy);
+  for (const x of [-2.2, 2.2]) mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.8, 6), postMat, x, 1.4, edgeR + 0.18, sy);
   // 高塔外面包著鷹架和綠色防塵網（還在蓋）
   const scaf = lam('#4f5b66'), net = new THREE.MeshLambertMaterial({ color: '#3f8a5a', transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false });
   for (const [x, z] of [[-2.4, -2.4], [2.4, -2.4], [2.4, 2.4], [-2.4, 2.4]]) mesh(new THREE.CylinderGeometry(0.06, 0.06, 13, 6), scaf, x, 6.5, z, TW);
