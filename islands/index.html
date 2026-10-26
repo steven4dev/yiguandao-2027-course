@@ -337,7 +337,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.32</span>
+  <span class="ver">v261026.33</span>
   </div></div>
 </div>
 
@@ -934,6 +934,11 @@ const flagMat = lam('#c0503f'), poleMat = lam('#7a5236'), sashMat = lam('#e8b53a
 const poleGeo = new THREE.CylinderGeometry(0.018, 0.018, 1.1, 6), flagGeo = new THREE.BoxGeometry(0.02, 0.24, 0.36), sashGeo = new THREE.TorusGeometry(0.34, 0.035, 6, 24);
 const ARM_REST = 0.9;
 const JUGGLERS = [], POPPERS = [];
+// 各組的花招：班長揮旗、副班長拍手、人事組蓋章、學術組翻書、輔導組拍拍肩、總務組推車、影音組攝影、活動組員搖鈴鼓／拿氣球
+const TRICKS = [];
+// 活動組員依名單順序輪流：一位搖鈴鼓、一位拿氣球（島上和廣場上的同一個人拿一樣的東西）
+const TRICK_OF = (slot) => ({ 人事組: 'stamp', 學術組: 'book', 輔導組: 'pat', 總務組: 'cart', 影音組: 'camera' })[slot.group]
+  || (slot.group === '活動組' && slot.role !== '組長' ? (slot.id % 2 ? 'balloon' : 'tambourine') : '');
 const popperGeo = new THREE.ConeGeometry(0.1, 0.32, 12), popperMat = lam('#e8b53a', { emissive: '#3a2500' });
 const robeGeo = new THREE.LatheGeometry([[0, 0], [0.42, 0], [0.44, 0.05], [0.38, 0.3], [0.33, 0.5], [0.34, 0.58], [0, 0.6]].map(([r, y]) => new THREE.Vector2(r, y)), 28);   // 手臂平常往外下垂的角度；揮手時從這裡舉起來
 // extra：hat 斗笠顏色、pack 背包顏色、scarf 圍巾顏色、glasses 大圓眼鏡、book 拿書（瞭望員、船夫、講師用）
@@ -941,7 +946,7 @@ function figure(mat, role = '', bob = false, extra = {}) {
   const p = new THREE.Group(), ghost = mat === ghostPersonMat;
   const g = new THREE.Group(); g.scale.setScalar(0.66); p.add(g);   // 吉祥物原始高 1.42，縮到跟以前的人偶差不多高
   const part = (geo, m, x, y, z, parent = g) => { const o = mesh(geo, ghost ? ghostPersonMat : m, x, y, z, parent); o.userData.onMat = m; return o; };
-  mesh(personGeo, mat, 0, 0, 0, g);
+  p.userData.body = mesh(personGeo, mat, 0, 0, 0, g);
   for (const sx of [-1, 1]) { const l = mesh(legGeo, mat, sx * 0.15, 0.13, 0.02, g); l.rotation.z = sx * 0.2; }
   // 手臂掛在肩膀上（樞紐在肩膀），被點到時才能舉起來揮手
   p.userData.arms = [-1, 1].map((sx) => {
@@ -963,7 +968,15 @@ function figure(mat, role = '', bob = false, extra = {}) {
     f.visible = !!bob;
     p.userData.flower = f;
   }
-  if (role === '班長') { part(poleGeo, poleMat, -0.55, 0.8, 0.05); part(flagGeo, flagMat, -0.55, 1.23, 0.23); p.userData.arms[0].rotation.z = -1.6; }
+  if (role === '班長') {
+    // 旗子掛在一個樞紐上，班長會像帶團的領隊一樣左右揮舞
+    const fg = new THREE.Group(); fg.position.set(-0.55, 0.3, 0.05); g.add(fg);
+    part(poleGeo, poleMat, 0, 0.5, 0, fg); part(flagGeo, flagMat, 0, 0.93, 0.18, fg);
+    p.userData.arms[0].rotation.z = -1.6;
+    p.userData.flagG = fg;
+    TRICKS.push({ f: p, kind: 'leader' });
+  }
+  if (String(role).includes('副班長')) TRICKS.push({ f: p, kind: 'clap' });
   if (String(role).includes('副班長')) part(sashGeo, sashMat, 0, 0.44, 0.02).rotation.set(Math.PI / 2, 0.55, 0);
   if (extra.hat) {
     const hm = lam(extra.hat);
@@ -1006,6 +1019,56 @@ function figure(mat, role = '', bob = false, extra = {}) {
     p.userData.armRestX = -0.7;
     POPPERS.push(p);
   }
+  // 各組道具
+  const T = extra.trick;
+  if (T === 'stamp') {   // 人事組：左手名單板、右手印章
+    part(new THREE.BoxGeometry(0.26, 0.34, 0.03), lam('#c89a6a'), -0.3, 0.5, 0.4).rotation.set(-0.4, 0.3, 0);
+    part(new THREE.BoxGeometry(0.2, 0.24, 0.01), lam('#ffffff'), -0.3, 0.5, 0.42).rotation.set(-0.4, 0.3, 0);
+    const st = new THREE.Group(); st.position.set(0.32, 0.55, 0.38); g.add(st);
+    part(new THREE.CylinderGeometry(0.07, 0.08, 0.08, 12), lam('#c0503f'), 0, 0, 0, st);
+    part(new THREE.CylinderGeometry(0.03, 0.03, 0.14, 8), lam('#7a5236'), 0, 0.1, 0, st);
+    part(dotGeo, lam('#7a5236'), 0, 0.18, 0, st).scale.setScalar(0.05);
+    p.userData.prop = st;
+  } else if (T === 'book') {   // 學術組：雙手捧著打開的書，偶爾翻一頁
+    const bk = new THREE.Group(); bk.position.set(0, 0.55, 0.45); bk.rotation.x = -0.6; g.add(bk);
+    for (const sx of [-1, 1]) part(new THREE.BoxGeometry(0.22, 0.02, 0.28), lam('#5b6fa8'), sx * 0.11, 0, 0, bk).rotation.z = sx * -0.12;
+    for (const sx of [-1, 1]) part(new THREE.BoxGeometry(0.2, 0.025, 0.26), lam('#fffaf0'), sx * 0.1, 0.012, 0, bk).rotation.z = sx * -0.12;
+    const page = new THREE.Group(); bk.add(page);
+    part(new THREE.BoxGeometry(0.2, 0.006, 0.25), lam('#ffffff'), 0.1, 0.03, 0, page);
+    p.userData.prop = page;
+    p.userData.arms.forEach((sh, i) => { sh.rotation.x = -1.1; sh.rotation.z = (i ? 1 : -1) * 0.35; });
+    p.userData.armRestX = -1.1; p.userData.armRestZ = 0.35;
+  } else if (T === 'cart') {   // 總務組：推著小推車，上面疊兩個紙箱
+    const ct = new THREE.Group(); ct.position.set(0, 0, 0.62); g.add(ct);
+    part(new THREE.BoxGeometry(0.5, 0.06, 0.42), lam('#5f6b73'), 0, 0.2, 0.12, ct);
+    for (const [x, z] of [[-0.2, -0.05], [0.2, -0.05], [-0.2, 0.3], [0.2, 0.3]]) part(new THREE.CylinderGeometry(0.06, 0.06, 0.04, 10), inkMat, x, 0.08, z, ct).rotation.z = Math.PI / 2;
+    for (const sx of [-1, 1]) part(new THREE.CylinderGeometry(0.02, 0.02, 0.5, 6), lam('#5f6b73'), sx * 0.22, 0.42, -0.08, ct);
+    part(new THREE.BoxGeometry(0.34, 0.24, 0.3), lam('#c89a6a'), 0, 0.35, 0.14, ct);
+    part(new THREE.BoxGeometry(0.26, 0.18, 0.24), lam('#b8865a'), 0.02, 0.56, 0.12, ct);
+    p.userData.arms.forEach((sh, i) => { sh.rotation.x = -1.2; sh.rotation.z = (i ? 1 : -1) * 0.3; });
+    p.userData.armRestX = -1.2; p.userData.armRestZ = 0.3;
+  } else if (T === 'camera') {   // 影音組：右肩扛攝影機，紅色錄影燈一閃一閃
+    const cm = new THREE.Group(); cm.position.set(0.36, 0.86, 0.12); g.add(cm);
+    part(new THREE.BoxGeometry(0.2, 0.2, 0.42), lam('#3a3a46'), 0, 0, 0, cm);
+    part(new THREE.CylinderGeometry(0.09, 0.1, 0.16, 14), inkMat, 0, 0, 0.27, cm).rotation.x = Math.PI / 2;
+    const rec = part(dotGeo, new THREE.MeshBasicMaterial({ color: '#ff3b3b' }), 0.06, 0.12, 0.12, cm); rec.scale.setScalar(0.03);
+    p.userData.rec = rec; p.userData.prop = cm;
+    p.userData.arms[1].rotation.set(-0.3, 0, 2.3);
+    p.userData.armRestX = -0.3; p.userData.armRestZ = 2.3;
+  } else if (T === 'tambourine') {   // 活動組員：搖鈴鼓
+    const tb = new THREE.Group(); tb.position.set(0.42, 0.75, 0.25); g.add(tb);
+    part(new THREE.TorusGeometry(0.15, 0.03, 6, 20), lam('#d2566a'), 0, 0, 0, tb);
+    for (let i = 0; i < 5; i++) { const a = i * 1.257; part(new THREE.CylinderGeometry(0.035, 0.035, 0.015, 10), lam('#e8b53a'), Math.cos(a) * 0.15, Math.sin(a) * 0.15, 0, tb).rotation.x = Math.PI / 2; }
+    p.userData.prop = tb;
+    p.userData.arms[1].rotation.set(-0.4, 0, 1.8);
+    p.userData.armRestX = -0.4; p.userData.armRestZ = 1.8;
+  } else if (T === 'balloon') {   // 活動組員：手拿一顆飄在頭上的氣球
+    const bl = new THREE.Group(); bl.position.set(0.42, 0.45, 0.1); g.add(bl);
+    part(new THREE.CylinderGeometry(0.006, 0.006, 1.2, 4), lam('#ffffff'), 0, 0.6, 0, bl);
+    const ball = part(dotGeo, lam(['#ff6b8b', '#ffd23f', '#4cc9f0'][Math.floor(Math.random() * 3)]), 0, 1.32, 0, bl); ball.scale.set(0.2, 0.24, 0.2);
+    p.userData.prop = bl;
+  }
+  if (T) TRICKS.push({ f: p, kind: T });
   if (extra.robe) {
     const rm = lam(extra.robe), trim = lam('#ffffff');
     part(robeGeo, rm, 0, 0, 0);
@@ -1078,7 +1141,7 @@ function syncPlaza(list) {
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   list.forEach((d) => {
     const slot = mainSlotOf(d);
-    const p = slot ? figure(d.g === '坤道' ? kunMat : qianMat, slot.role, d.g === '坤道', { juggle: slot.group === '活動組' && slot.role === '組長', popper: slot.group === '公關禮節組', scarf: islands[slot.key].info.color }) : figure(d.g === '坤道' ? kunMat : qianMat, d.isCadre, d.g === '坤道');
+    const p = slot ? figure(d.g === '坤道' ? kunMat : qianMat, slot.role, d.g === '坤道', { juggle: slot.group === '活動組' && slot.role === '組長', popper: slot.group === '公關禮節組', trick: TRICK_OF(slot), scarf: islands[slot.key].info.color }) : figure(d.g === '坤道' ? kunMat : qianMat, d.isCadre, d.g === '坤道');
     if (slot) Object.assign(p.userData, { slot: slot.id, at: 'temple' });
     else p.userData.person = realPeople.indexOf(d);
     p.traverse((m) => { if (m.isMesh) plazaHit.push(m); });
@@ -1152,6 +1215,102 @@ animators.push((t) => {
     c.m.position.addScaledVector(c.v, dt);
     c.m.rotation.x += c.spin.x * dt; c.m.rotation.y += c.spin.y * dt; c.m.rotation.z += c.spin.z * dt;
     c.m.material.opacity = c.fade * Math.min(1, (c.life - c.age) / 0.6);
+  }
+});
+// 頭上冒出的小圖示（✔ ❤️ 💡 💦 📸）：往上飄、變大、淡掉
+const emojiTex = {};
+function emojiMat(e) {
+  if (!emojiTex[e]) emojiTex[e] = canvasTex(128, 128, (c) => { c.font = '96px "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(e, 64, 72); });
+  return new THREE.SpriteMaterial({ map: emojiTex[e], transparent: true, depthWrite: false });
+}
+function bubble(f, e) {
+  const u = f.userData;
+  if (!u.bubble) { u.bubble = new THREE.Sprite(emojiMat(e)); u.bubble.userData.ring = true; f.add(u.bubble); }
+  else if (u.bubbleE !== e) { u.bubble.material.dispose(); u.bubble.material = emojiMat(e); }
+  u.bubbleE = e; u.bubbleT = 0;
+}
+const ghosted = (f) => f.userData.body && f.userData.body.material === ghostPersonMat;
+const trickWorld = new THREE.Vector3(), trickTmp = new THREE.Vector3();
+let trickT = null;
+animators.push((t) => {
+  const dt = trickT == null ? 0 : Math.min(0.1, t - trickT);
+  trickT = t;
+  for (const tr of TRICKS) {
+    const f = tr.f, u = f.userData;
+    if (!f.parent) continue;
+    if (u.bubble) {
+      u.bubbleT += dt;
+      const k = u.bubbleT / 1.4;
+      u.bubble.visible = k < 1;
+      u.bubble.position.set(0, 1.05 + k * 0.35, 0);
+      u.bubble.scale.setScalar(0.32 + Math.min(1, k * 4) * 0.12);
+      u.bubble.material.opacity = (ghosted(f) ? 0.4 : 1) * Math.min(1, (1 - k) * 3);
+    }
+    if (u.focusT != null) continue;
+    if (u.nextTrick == null) u.nextTrick = t + 1 + Math.random() * 4;
+    const due = t > u.nextTrick;
+    const [l, r] = u.arms;
+    if (tr.kind === 'leader') {
+      const w = Math.sin(t * 3.2 + u.phase);
+      u.flagG.rotation.z = w * 0.35; l.rotation.z = -1.6 - w * 0.25;
+    } else if (tr.kind === 'clap') {
+      // 每隔一陣子連拍幾下手
+      if (due) { u.clapT = t; u.nextTrick = t + 4 + Math.random() * 3; trickSound('clap', f); }
+      const e = t - (u.clapT ?? -9), on = e < 1.6;
+      const c = on ? Math.abs(Math.sin(e * 9)) : 0;
+      l.rotation.set(on ? -1.2 : 0, 0, on ? -(0.15 + 0.45 * c) : -ARM_REST);
+      r.rotation.set(on ? -1.2 : 0, 0, on ? 0.15 + 0.45 * c : ARM_REST);
+    } else if (tr.kind === 'stamp') {
+      if (due) { u.actT = t; u.nextTrick = t + 3.5 + Math.random() * 3; }
+      const e = t - (u.actT ?? -9);
+      const lift = e < 0.35 ? e / 0.35 : e < 0.5 ? 1 - (e - 0.35) / 0.15 : 0;
+      u.prop.position.y = 0.55 + lift * 0.3;
+      r.rotation.set(-0.9 - lift * 0.6, 0, 0.45);
+      l.rotation.set(-0.9, 0, -0.45);
+      if (u.actT != null && e >= 0.5 && !u.stamped) { u.stamped = true; bubble(f, '✔️'); trickSound('stamp', f); }
+      if (e < 0.5) u.stamped = false;
+    } else if (tr.kind === 'book') {
+      if (due) { u.actT = t; u.nextTrick = t + 3 + Math.random() * 3; trickSound('page', f); if (Math.random() < 0.35) bubble(f, '💡'); }
+      const e = t - (u.actT ?? -9);
+      u.prop.rotation.z = e < 0.6 ? -(e / 0.6) * Math.PI : 0;
+    } else if (tr.kind === 'pat') {
+      // 找身邊最近的一位夥伴，走過去轉身面向他，拍拍肩膀、冒出愛心
+      if (due) {
+        let best = null, bd = 3.5;
+        for (const o of f.parent.children) {
+          if (o === f || !o.userData || !o.userData.arms) continue;
+          const d = o.position.distanceTo(f.position);
+          if (d < bd) { bd = d; best = o; }
+        }
+        u.nextTrick = t + 5 + Math.random() * 4;
+        if (best) { u.patT = t; u.hold = t + 1.6; u.patTo = best; bubble(f, '❤️'); trickSound('pat', f); }
+      }
+      const e = t - (u.patT ?? -9);
+      if (e < 1.6 && u.patTo) {
+        f.rotation.y = Math.atan2(u.patTo.position.x - f.position.x, u.patTo.position.z - f.position.z);
+        r.rotation.set(-1.4, 0, 0.5 + Math.abs(Math.sin(e * 8)) * 0.3);
+      } else r.rotation.set(0, 0, ARM_REST);
+    } else if (tr.kind === 'cart') {
+      if (due) { u.actT = t; u.hold = t + 1.6; u.nextTrick = t + 6 + Math.random() * 4; bubble(f, '💦'); }
+      const e = t - (u.actT ?? -9);
+      if (e < 1.6) { r.rotation.set(-0.2, 0, 2.6 + Math.sin(e * 10) * 0.2); }   // 停下來擦擦汗
+      else r.rotation.set(-1.2, 0, 0.3);
+    } else if (tr.kind === 'camera') {
+      u.rec.visible = Math.sin(t * 6) > 0;
+      if (due) { u.actT = t; u.nextTrick = t + 4 + Math.random() * 3; bubble(f, '📸'); trickSound('shutter', f); }
+      const e = t - (u.actT ?? -9);
+      u.prop.rotation.y = Math.sin(t * 0.8 + u.phase) * 0.35;
+      if (!u.flash) { u.flash = new THREE.Mesh(dotGeo, new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, depthWrite: false })); u.flash.userData.ring = true; u.prop.add(u.flash); u.flash.position.set(0, 0, 0.4); }
+      u.flash.visible = e < 0.25;
+      if (u.flash.visible) { u.flash.scale.setScalar(0.15 + e * 1.2); u.flash.material.opacity = 1 - e / 0.25; }
+    } else if (tr.kind === 'tambourine') {
+      if (due) { u.actT = t; u.nextTrick = t + 3 + Math.random() * 3; trickSound('jingle', f); }
+      const e = t - (u.actT ?? -9), shake = e < 1.2 ? Math.sin(e * 22) * 0.35 : Math.sin(t * 2 + u.phase) * 0.08;
+      u.prop.rotation.z = shake; r.rotation.z = 1.8 + shake * 0.4;
+    } else if (tr.kind === 'balloon') {
+      u.prop.rotation.z = Math.sin(t * 1.3 + u.phase) * 0.15; u.prop.rotation.x = Math.cos(t * 1.1 + u.phase) * 0.1;
+      r.rotation.set(-0.3, 0, 1.2);
+    }
   }
 });
 // 拋球：三顆球輪流從一手拋到另一手，畫出交叉的拋物線（小丑的三球拋接）；兩手跟著一上一下
@@ -1623,7 +1782,7 @@ function buildOuter(o, x, z, ang, faceY) {
     o.slots.forEach((slot, k) => {
       // 圍著建築站一圈，從哪個角度看都看得到幾位
       const a = ang + 0.4 + (k / o.size) * Math.PI * 2, r = o.R * 0.72;
-      const p = figure(ghostPersonMat, slot.role, false, { juggle: slot.group === '活動組' && slot.role === '組長', popper: slot.group === '公關禮節組', scarf: o.color, flowerSlot: true });
+      const p = figure(ghostPersonMat, slot.role, false, { juggle: slot.group === '活動組' && slot.role === '組長', popper: slot.group === '公關禮節組', trick: TRICK_OF(slot), scarf: o.color, flowerSlot: true });
       placeWalker(p, isl.group, Math.sin(a) * r, Math.cos(a) * r, 0.15, o.R * COS30 - 0.6);
       p.userData.grow = 1.4;
       p.scale.setScalar(1.4);
@@ -3105,6 +3264,19 @@ function isleSounds(now) {
 // 熱氣球噴火：一陣低低的「呼——」，鏡頭離氣球越近越大聲
 const burnerTmp = new THREE.Vector3();
 // 拉炮：一聲清脆的「啪！」，接一點紙花飄落的沙沙聲；鏡頭離得近才聽得清楚
+// 各組花招的小音效：拍手、蓋章「咚」、翻書、拍肩、快門「喀嚓」、鈴鼓
+function trickSound(kind, f) {
+  if (!SND.ctx || !SND.sfx || SND.ctx.state !== 'running') return;
+  const level = THREE.MathUtils.clamp(1.3 - camera.position.distanceTo(f.getWorldPosition(trickTmp)) / 70, 0, 1) * (ghosted(f) ? 0.4 : 1);
+  if (level < 0.05) return;
+  const t = SND.ctx.currentTime + 0.02, o = SND.sfxBus;
+  if (kind === 'clap') for (let i = 0; i < 5; i++) noiseHit(t + i * 0.32, o, { f: 1400, q: 0.9, peak: 0.08 * level, attack: 0.002, dur: 0.06 });
+  else if (kind === 'stamp') { ping(t, o, 140, 0.16 * level, 0.12); noiseHit(t, o, { type: 'lowpass', f: 900, peak: 0.06 * level, dur: 0.06 }); }
+  else if (kind === 'page') noiseHit(t, o, { f: 2600, q: 0.6, peak: 0.05 * level, attack: 0.06, dur: 0.3 });
+  else if (kind === 'pat') for (const d of [0, 0.22]) noiseHit(t + d, o, { type: 'lowpass', f: 600, peak: 0.08 * level, dur: 0.05 });
+  else if (kind === 'shutter') { noiseHit(t, o, { f: 3000, q: 2, peak: 0.08 * level, dur: 0.03 }); noiseHit(t + 0.07, o, { f: 2200, q: 2, peak: 0.07 * level, dur: 0.04 }); }
+  else if (kind === 'jingle') for (let i = 0; i < 8; i++) { const st = t + i * 0.13; noiseHit(st, o, { type: 'highpass', f: 6000, peak: 0.04 * level, dur: 0.12 }); ping(st, o, 3400 + Math.random() * 900, 0.015 * level, 0.15); }
+}
 function popSound(pos) {
   if (!SND.ctx || !SND.sfx || SND.ctx.state !== 'running') return;
   const level = THREE.MathUtils.clamp(1.3 - camera.position.distanceTo(pos) / 90, 0, 1);
@@ -3405,7 +3577,7 @@ function tick() {
     const u = p.userData;
     const full = u.grow || 1;
     if (p.scale.x < full) p.scale.setScalar(Math.min(full, p.scale.x + dt * 3));
-    if (reduceMotion || u.focusT != null) continue;   // 被點到的人偶站好面向鏡頭，不再走來走去
+    if (reduceMotion || u.focusT != null || (u.hold && u.hold > t)) continue;   // 被點到（或正在拍肩、擦汗）的人偶站好，不走動
     p.position.y = Math.abs(Math.sin(t * 3 * u.speed + u.phase)) * 0.08;
     p.position.x = u.home.x + Math.sin(t * 0.3 * u.speed + u.phase) * u.roam;
     p.rotation.y = Math.cos(t * 0.3 * u.speed + u.phase) > 0 ? Math.PI / 2 : -Math.PI / 2;
