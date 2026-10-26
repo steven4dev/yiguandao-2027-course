@@ -337,7 +337,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.29</span>
+  <span class="ver">v261026.30</span>
   </div></div>
 </div>
 
@@ -917,7 +917,7 @@ const lampLights = [];
 /* =========================================================
    小人偶
    ========================================================= */
-// 粉嫩的身體顏色：乾道淡藍、坤道淡粉；幹部用組別顏色調淡（見 memberMat）
+// 粉嫩的身體顏色：乾道淡藍、坤道淡粉（學員和幹部都一樣）；幹部另外圍一條組別顏色的圍巾
 const qianMat = lam('#b3d4f2'), kunMat = lam('#f8cfd9');
 const ghostPersonMat = new THREE.MeshLambertMaterial({ color: '#ffffff', transparent: true, opacity: 0.35 });
 const pastel = (c) => new THREE.Color(c).lerp(new THREE.Color('#ffffff'), 0.45);
@@ -954,10 +954,13 @@ function figure(mat, role = '', bob = false, extra = {}) {
   }
   const sm = part(smileGeo, inkMat, 0, 0.88, 0.5); sm.rotation.set(-0.15, 0, Math.PI); sm.scale.set(1.15, 0.85, 1);
   // 坤道：頭上一朵小花髮夾
-  if (bob) {
+  // 幹部島上的人偶還不知道是乾道還是坤道（登島後才知道），先做好花再決定要不要顯示
+  if (bob || extra.flowerSlot) {
     const f = new THREE.Group(); f.position.set(0.33, 1.24, 0.14); g.add(f);
     for (let i = 0; i < 5; i++) { const a = i * 1.257; part(dotGeo, petalMat, Math.cos(a) * 0.08, Math.sin(a) * 0.08, 0, f).scale.setScalar(0.06); }
     part(dotGeo, pistilMat, 0, 0, 0.02, f).scale.setScalar(0.045);
+    f.visible = !!bob;
+    p.userData.flower = f;
   }
   if (role === '班長') { part(poleGeo, poleMat, -0.55, 0.8, 0.05); part(flagGeo, flagMat, -0.55, 1.23, 0.23); p.userData.arms[0].rotation.z = -1.6; }
   if (String(role).includes('副班長')) part(sashGeo, sashMat, 0, 0.44, 0.02).rotation.set(Math.PI / 2, 0.55, 0);
@@ -1063,7 +1066,7 @@ function syncPlaza(list) {
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   list.forEach((d) => {
     const slot = mainSlotOf(d);
-    const p = slot ? figure(islands[slot.key].memberMat, slot.role, d.g === '坤道', { juggle: slot.group === '活動組' && slot.role === '組長' }) : figure(d.g === '坤道' ? kunMat : qianMat, d.isCadre, d.g === '坤道');
+    const p = slot ? figure(d.g === '坤道' ? kunMat : qianMat, slot.role, d.g === '坤道', { juggle: slot.group === '活動組' && slot.role === '組長', scarf: islands[slot.key].info.color }) : figure(d.g === '坤道' ? kunMat : qianMat, d.isCadre, d.g === '坤道');
     if (slot) Object.assign(p.userData, { slot: slot.id, at: 'temple' });
     else p.userData.person = realPeople.indexOf(d);
     p.traverse((m) => { if (m.isMesh) plazaHit.push(m); });
@@ -1548,11 +1551,11 @@ function buildOuter(o, x, z, ang, faceY) {
   bush(-o.R * 0.45, -o.R * 0.33, 0.6, isl.group);
   isl.members = [];
   if (o.slots) {
-    isl.memberMat = lam(pastel(o.color));
+    isl.memberMat = lam(pastel(o.color));   // 還不知道乾坤時（備份資料）的身體顏色
     o.slots.forEach((slot, k) => {
       // 圍著建築站一圈，從哪個角度看都看得到幾位
       const a = ang + 0.4 + (k / o.size) * Math.PI * 2, r = o.R * 0.72;
-      const p = figure(ghostPersonMat, slot.role, slot.role.includes('坤道'), { juggle: slot.group === '活動組' && slot.role === '組長' });
+      const p = figure(ghostPersonMat, slot.role, false, { juggle: slot.group === '活動組' && slot.role === '組長', scarf: o.color, flowerSlot: true });
       placeWalker(p, isl.group, Math.sin(a) * r, Math.cos(a) * r, 0.15, o.R * COS30 - 0.6);
       p.userData.grow = 1.4;
       p.scale.setScalar(1.4);
@@ -2012,12 +2015,17 @@ function applyDate() {
     }
   }
   joinedUids = new Set(list.flatMap((p) => p.uids || []));
+  const uidGender = new Map(list.flatMap((p) => (p.uids || []).map((u) => [u, p.g])));
   for (const o of CADRE) {
     const isl = islands[o.key];
     isl.joined = o.slots.filter((sl) => joinedUids.has(sl.uid)).length;
     isl.members.forEach((p, k) => {
-      const on = joinedUids.has(o.slots[k].uid);
-      p.traverse((m) => { if (m.isMesh && !m.userData.ring) m.material = on ? m.userData.onMat || isl.memberMat : ghostPersonMat; });
+      const slot = o.slots[k], on = joinedUids.has(slot.uid);
+      // 登島後依報名表的乾坤換衣服顏色：乾道淡藍、坤道淡粉＋小花；圍巾維持組別顏色
+      const g = uidGender.get(slot.uid) || (slot.role.includes('坤道') ? '坤道' : slot.role.includes('乾道') ? '乾道' : '');
+      const body = g === '坤道' ? kunMat : g === '乾道' ? qianMat : isl.memberMat;
+      p.traverse((m) => { if (m.isMesh && !m.userData.ring) m.material = on ? m.userData.onMat || body : ghostPersonMat; });
+      if (p.userData.flower) p.userData.flower.visible = on && g === '坤道';
     });
   }
   // 日期列
