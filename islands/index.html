@@ -337,7 +337,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.25</span>
+  <span class="ver">v261026.26</span>
   </div></div>
 </div>
 
@@ -1020,7 +1020,8 @@ function clearWalkers(list) {
 }
 
 // 點傳師：一坤二乾站在全真道院正門樓梯前，面向廣場迎接大家；坤道穿藍色道袍、乾道穿灰色道袍
-const MASTERS = [{ g: '坤道', robe: '#2f4a7a', x: -1.4 }, { g: '乾道', robe: '#7d8494', x: 0 }, { g: '乾道', robe: '#7d8494', x: 1.4 }];
+// 名字取自首頁「同行夥伴」的主班點傳師（林明山・張碧雲・蕭仁德）
+const MASTERS = [{ name: '張碧雲', g: '坤道', robe: '#2f4a7a', x: -1.4 }, { name: '林明山', g: '乾道', robe: '#7d8494', x: 0 }, { name: '蕭仁德', g: '乾道', robe: '#7d8494', x: 1.4 }];
 const masterHit = [];
 MASTERS.forEach((m, i) => {
   const fig = figure(lam('#f6eedd'), '', false, { robe: m.robe, bun: m.g === '坤道' });
@@ -2016,9 +2017,9 @@ function renderPanel() {
   const master = String(selected).startsWith('d:') ? MASTERS[+selected.slice(2)] : null;
   let html = '', title = '', info = '';
   if (master) {
-    title = master.g + '點傳師'; info = '全真島・全真道院';
-    html = `<header><span class="eyebrow">全真島・點傳師</span><h2>${master.g}點傳師</h2><p class="sub">${master.g === '坤道' ? '藍色道袍' : '灰色道袍'}・在全真道院正門前迎接大家</p></header>
-      <p class="note">一坤二乾三位點傳師站在道院正門的樓梯前，陪著登島的夥伴一起走過 2027。</p>
+    title = master.name + ' 點傳師'; info = '主班點傳師・' + master.g;
+    html = `<header><span class="eyebrow">全真島・主班點傳師</span><h2>${master.name} 點傳師</h2><p class="sub">${master.g}・在全真道院正門前迎接大家</p></header>
+      <p class="note">${MASTERS.map((m) => m.name).join('、')}三位主班點傳師站在道院正門的樓梯前，陪著登島的夥伴一起走過 2027。</p>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (teacher) {
     const c = isl.course, pm = isl.kind === 'pm', when = `${+c.date.slice(5, 7)}/${+c.date.slice(8)}`;
@@ -2399,9 +2400,12 @@ function findPeople(q) {
     out.push({ kind: 'm', slot, icon: '👤', title: slot.name, sub: `${slot.title}・${joined ? '已登島' : '還沒登島'}` });
   });
   // 點傳師
-  if (['點傳師', '點傳', '傳師', '坤道點傳師', '乾道點傳師'].some((w) => norm(w).includes(n) || n.includes(norm(w)))) MASTERS.forEach((m, i) => {
-    if (n.includes(norm('坤道')) && m.g !== '坤道' || n.includes(norm('乾道')) && m.g !== '乾道') return;
-    out.push({ kind: 'd', i, icon: '🙏', title: m.g + '點傳師', sub: '全真島・道院正門前' });
+  const anyMaster = ['點傳師', '點傳', '傳師', '主班點傳師', '坤道點傳師', '乾道點傳師'].some((w) => norm(w).includes(n) || n.includes(norm(w)));
+  MASTERS.forEach((m, i) => {
+    const byName = norm(m.name).includes(n) || n.includes(norm(m.name));
+    if (!byName && !anyMaster) return;
+    if (!byName && (n.includes(norm('坤道')) && m.g !== '坤道' || n.includes(norm('乾道')) && m.g !== '乾道')) return;
+    out.push({ kind: 'd', i, icon: '🙏', title: m.name + ' 點傳師', sub: `主班點傳師・${m.g}・全真島道院正門前` });
   });
   // 講師
   TEACHERS.filter((t) => norm(t.name).includes(n)).forEach((t) => {
