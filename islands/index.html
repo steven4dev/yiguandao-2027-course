@@ -334,7 +334,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.16</span>
+  <span class="ver">v261026.17</span>
   </div></div>
 </div>
 
@@ -2950,8 +2950,7 @@ addEventListener('resize', () => {
 /* =========================================================
    動畫
    ========================================================= */
-/* ---------- 選到的人偶：微微發光＋腳下一圈光環＋頭頂浮著一顆金色小菱形 ----------
-   同一組幹部共用材質，所以只幫被選到的那一位複製一份來發光，熄掉時再換回原本的材質 */
+/* ---------- 選到的人偶：腳下一圈光環＋頭頂浮著一顆金色小菱形；人偶本身不發光，揮手才看得清楚 ---------- */
 const HI_COLOR = new THREE.Color('#ffd36b');
 const ringGeo = new THREE.TorusGeometry(0.5, 0.055, 8, 36), gemGeo = new THREE.OctahedronGeometry(0.13);
 const ringPool = [];
@@ -2964,15 +2963,6 @@ function figuresFor(sel) {
   }
   if (id.startsWith('p:')) return plazaPeople.filter((f) => f.userData.person === +id.slice(2));
   return [];
-}
-function unglow(f) {
-  f.traverse((m) => {
-    const u = m.userData;
-    if (!m.isMesh || !u.hiMat) return;
-    if (m.material === u.hiMat) m.material = u.baseMat;
-    u.hiMat.dispose();
-    delete u.hiMat; delete u.baseMat;
-  });
 }
 // 被點到（或搜尋到）的人偶：轉身面向鏡頭，舉起右手揮一揮，揮完放下、繼續看著鏡頭
 const waveTmp = new THREE.Vector3(), waveCam = new THREE.Vector3();
@@ -2996,24 +2986,10 @@ function unfocus(f) {
 }
 function updateHighlight(t) {
   const want = panelMode === 'closed' ? [] : figuresFor(selected);
-  for (const f of hiFigs) if (!want.includes(f)) { unglow(f); unfocus(f); }
+  for (const f of hiFigs) if (!want.includes(f)) unfocus(f);
   hiFigs = want;
-  want.forEach((f) => poseFocus(f, t));
-  const k = 0.28 + 0.14 * Math.sin(t * 4);
   want.forEach((f, i) => {
-    f.traverse((m) => {
-      if (!m.isMesh || m.userData.ring) return;
-      const u = m.userData;
-      // 材質被換掉（例如登島狀態更新）就重新複製一份
-      if (!u.hiMat || m.material !== u.hiMat) {
-        if (u.hiMat) u.hiMat.dispose();
-        u.baseMat = m.material;
-        u.hiMat = m.material.clone();
-        u.hiMat.emissive = HI_COLOR.clone();
-        m.material = u.hiMat;
-      }
-      m.material.emissiveIntensity = k;
-    });
+    poseFocus(f, t);
     let ring = ringPool[i];
     if (!ring) {
       const mat = new THREE.MeshBasicMaterial({ color: HI_COLOR, transparent: true, depthWrite: false });
