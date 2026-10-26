@@ -337,7 +337,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.26</span>
+  <span class="ver">v261026.27</span>
   </div></div>
 </div>
 
@@ -994,8 +994,9 @@ function figure(mat, role = '', bob = false, extra = {}) {
     for (const sx of [-1, 1]) part(new THREE.TorusGeometry(0.06, 0.012, 6, 12, Math.PI * 0.8), inkMat, sx * 0.15, 1.1, 0.47).rotation.set(0, sx * 0.3, Math.PI * 0.1);
   }
   if (extra.bun) {
-    part(dotGeo, lam('#3a2a22'), 0, 1.47, -0.06).scale.set(0.17, 0.15, 0.17);
-    part(new THREE.CylinderGeometry(0.012, 0.012, 0.36, 6), sashMat, 0, 1.5, -0.06).rotation.z = Math.PI / 2.4;
+    // 髮髻盤在後腦勺偏下（像空服員那樣），金簪橫插過去
+    part(dotGeo, lam('#3a2a22'), 0, 1.06, -0.52).scale.set(0.19, 0.16, 0.13);
+    part(new THREE.CylinderGeometry(0.012, 0.012, 0.44, 6), sashMat, 0, 1.1, -0.55).rotation.z = Math.PI / 2 - 0.25;
   }
   Object.assign(p.userData, { phase: Math.random() * 6, speed: 0.6 + Math.random() * 0.6 });
   return p;
