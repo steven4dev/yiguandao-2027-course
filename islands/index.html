@@ -331,7 +331,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.11</span>
+  <span class="ver">v261026.12</span>
   </div></div>
 </div>
 
@@ -356,7 +356,7 @@
 
 <div class="card soundpop" id="soundPop" hidden>
   <b>聲音</b>
-  <label class="sw"><input type="checkbox" id="sfxOn"><span>高鐵經過<small>列車從全真道院旁呼嘯而過的聲音</small></span></label>
+  <label class="sw"><input type="checkbox" id="sfxOn"><span>音效<small>高鐵呼嘯而過、熱氣球噴火，還有每座島的特色聲音（點進那座島就聽得到）</small></span></label>
   <label class="sw"><input type="checkbox" id="musicOn"><span>輕音樂<small>漫步調的電鋼琴小曲，晚上會變慢、變輕</small></span></label>
 </div>
 
@@ -1109,7 +1109,7 @@ function balloon(g) {
   const b = new THREE.Group(); g.add(b);
   mesh(new THREE.BoxGeometry(0.6, 0.45, 0.6), lam(C.wood), 0, -2.7, 0, b);
   const rig = new THREE.Group(); rig.position.y = -2.475; rig.scale.setScalar(0.45); b.add(rig);
-  hotAirBalloon(rig, '#e2763b', '#f4d35e', 1.4, 0.6);
+  hotAirBalloon(rig, '#e2763b', '#f4d35e', 1.4, 0.6, (dur) => burnerSound(dur, rig, 0.6));
   mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.05, 20), lam('#c9c3b6'), 0, 0.03, 0, g, false);
   // 地上的小地球儀：世界這麼大
   mesh(new THREE.SphereGeometry(0.5, 16, 12), lam('#5b8fc9'), 2.2, 1.0, 1.4, g);
@@ -1560,7 +1560,7 @@ const LOOK_BASE = new THREE.Vector3(-50, 22, -6);
 const lookoutHit = [];
 {
   const b = lookout;
-  hotAirBalloon(b, '#c0503f', '#f4e9d8', 1.7, 0.85);
+  hotAirBalloon(b, '#c0503f', '#f4e9d8', 1.7, 0.85, (dur) => burnerSound(dur, lookout, 1));
   // 籃子：藤編的方籃，上緣一圈木框
   mesh(new THREE.BoxGeometry(1.7, 1.0, 1.7), lam('#b98b55'), 0, -0.5, 0, b);
   mesh(new THREE.BoxGeometry(1.86, 0.14, 1.86), lam('#7a5236'), 0, 0.02, 0, b);
@@ -2509,7 +2509,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) load
 
 /* =========================================================
    聲音：全部用 Web Audio 即時合成，不用下載音檔
-   音效只有高鐵呼嘯而過；
+   音效：高鐵呼嘯而過、熱氣球噴火，還有每座島自己的特色音效（鏡頭到那座島附近才聽得到）；
    輕音樂是漫步調：電鋼琴和弦＋散步貝斯＋輕輕的旋律，晚上放慢、變輕
    ========================================================= */
 const SND = { ctx: null, sfx: false, music: false };
@@ -2609,6 +2609,178 @@ function brush(t, vel) {
   env(g, t, 0.006, 0.02 * vel, 0.07);
   src.start(t, Math.random()); src.stop(t + 0.1);
 }
+
+/* ---------- 每座島的特色音效：鏡頭到那座島附近才會響，越近越清楚 ---------- */
+const rnd = (a, b) => a + Math.random() * (b - a);
+function ping(t, out, f, peak, dur, type = 'sine') {
+  const g = SND.ctx.createGain(); g.connect(out); env(g, t, 0.004, peak, dur);
+  return tone(type, f, t, dur, g);
+}
+function noiseHit(t, out, { type = 'bandpass', f = 1000, q = 1, peak = 0.1, attack = 0.005, dur = 0.2 } = {}) {
+  const ctx = SND.ctx, src = noiseSrc(), flt = ctx.createBiquadFilter(), g = ctx.createGain();
+  flt.type = type; flt.frequency.value = f; flt.Q.value = q;
+  src.connect(flt).connect(g).connect(out); env(g, t, attack, peak, dur);
+  src.start(t, Math.random()); src.stop(t + dur + 0.05);
+  return flt;
+}
+// 鐘、缽這類金屬聲：幾個不成倍數的泛音一起慢慢消失
+function bell(t, out, f, peak, dur, partials = [[1, 1], [2.76, 0.35], [5.4, 0.12]]) {
+  partials.forEach(([m, v]) => ping(t, out, f * m, peak * v, dur / Math.sqrt(m)));
+}
+const ISLE_SFX = {
+  // 全真島：木魚叩叩，偶爾一聲磬
+  temple: { every: [5, 9], play(t, o, v) {
+    if (Math.random() < 0.6) for (let i = 0; i < 3; i++) { ping(t + i * 0.5, o, 820, 0.12 * v, 0.14); ping(t + i * 0.5, o, 1690, 0.03 * v, 0.06); }
+    else bell(t, o, 660, 0.07 * v, 3.5);
+  } },
+  // 好玩島：旋轉木馬的風琴小樂句
+  carousel: { every: [5, 8], play(t, o, v) {
+    [72, 76, 79, 84, 79, 76, 72].forEach((m, i) => { ping(t + i * 0.17, o, midiHz(m), 0.05 * v, 0.3, 'triangle'); ping(t + i * 0.17, o, midiHz(m + 12), 0.015 * v, 0.2); });
+  } },
+  // 好賺島：收銀台「鏘—叮！」，接著幾枚硬幣落下
+  piggy: { every: [4, 7], play(t, o, v) {
+    noiseHit(t, o, { f: 2600, q: 1.5, peak: 0.08 * v, dur: 0.12 });
+    bell(t + 0.1, o, 2093, 0.07 * v, 1.0, [[1, 1], [1.26, 0.6], [2.5, 0.2]]);
+    for (let i = 0; i < 4; i++) ping(t + 0.45 + i * rnd(0.06, 0.1), o, rnd(3200, 4600), 0.03 * v, 0.12);
+  } },
+  // 氣球島：扭氣球時橡皮吱吱的聲音
+  balloonArt: { every: [3.5, 6], play(t, o, v) {
+    for (let i = 0; i < 3; i++) {
+      const st = t + i * rnd(0.25, 0.4), f = rnd(500, 850), osc = SND.ctx.createOscillator(), lfo = SND.ctx.createOscillator(), lg = SND.ctx.createGain(), g = SND.ctx.createGain();
+      osc.type = 'sine'; osc.frequency.setValueAtTime(f, st); osc.frequency.linearRampToValueAtTime(f * 1.5, st + 0.22);
+      lfo.frequency.value = 38; lg.gain.value = f * 0.07; lfo.connect(lg).connect(osc.frequency);
+      osc.connect(g).connect(o); env(g, st, 0.02, 0.05 * v, 0.24);
+      osc.start(st); lfo.start(st); osc.stop(st + 0.3); lfo.stop(st + 0.3);
+    }
+  } },
+  // 春遊島：營火劈啪
+  camp: { every: [2, 3.5], play(t, o, v) {
+    noiseHit(t, o, { type: 'lowpass', f: 380, peak: 0.04 * v, attack: 0.3, dur: 1.8 });
+    for (let i = 0; i < 9; i++) noiseHit(t + rnd(0, 1.6), o, { type: 'highpass', f: rnd(1800, 3500), peak: rnd(0.03, 0.09) * v, dur: rnd(0.015, 0.04) });
+  } },
+  // 秋遊島：秋風吹過、落葉沙沙
+  camp2: { every: [3, 5.5], play(t, o, v) {
+    noiseHit(t, o, { f: 3800, q: 0.7, peak: 0.05 * v, attack: 0.4, dur: 1.5 });
+    noiseHit(t + 0.3, o, { type: 'lowpass', f: 500, peak: 0.03 * v, attack: 0.6, dur: 1.8 });
+  } },
+  // 好愛島：噗通、噗通的心跳，再閃一下亮晶晶
+  heart: { every: [3, 5], play(t, o, v) {
+    for (const [d, a] of [[0, 1], [0.24, 0.75]]) { ping(t + d, o, 62, 0.22 * v * a, 0.18); ping(t + d, o, 124, 0.08 * v * a, 0.12); }
+    [2637, 3136, 3951].forEach((f, i) => ping(t + 0.6 + i * 0.09, o, f, 0.02 * v, 0.5));
+  } },
+  // 靈數島：神秘的水晶風鈴
+  numerology: { every: [4, 7], play(t, o, v) {
+    [88, 91, 93, 96, 98].sort(() => Math.random() - 0.5).forEach((m, i) => ping(t + i * 0.13, o, midiHz(m), 0.03 * v, 1.6));
+  } },
+  // 法會島：頌缽，長長的嗡——
+  lotus: { every: [6, 10], play(t, o, v) {
+    bell(t, o, 392, 0.08 * v, 5, [[1, 1], [1.004, 0.6], [2.71, 0.3], [5.15, 0.1]]);
+  } },
+  // 重置島：風車咿呀轉動、一陣風
+  windmill: { every: [4, 7], play(t, o, v) {
+    noiseHit(t, o, { type: 'lowpass', f: 700, peak: 0.08 * v, attack: 0.8, dur: 2.4 });
+    for (let i = 0; i < 2; i++) {
+      const st = t + 0.6 + i * 0.9, osc = SND.ctx.createOscillator(), bp = SND.ctx.createBiquadFilter(), g = SND.ctx.createGain();
+      osc.type = 'sawtooth'; osc.frequency.setValueAtTime(95, st); osc.frequency.linearRampToValueAtTime(70, st + 0.5);
+      bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 5;
+      osc.connect(bp).connect(g).connect(o); env(g, st, 0.08, 0.14 * v, 0.55); osc.start(st); osc.stop(st + 0.6);
+    }
+  } },
+  // 翻轉島：骰子在桌上滾，越滾越慢
+  flipDice: { every: [4, 6.5], play(t, o, v) {
+    let st = t;
+    for (let i = 0; i < 8; i++) { noiseHit(st, o, { f: 3200, q: 3, peak: 0.07 * v, dur: 0.03 }); ping(st, o, rnd(1500, 2100), 0.02 * v, 0.03); st += 0.05 + i * 0.03; }
+  } },
+  // 走走島：熱氣球噴火的聲音跟著火焰走，這裡再加一點高空的風
+  balloon: { every: [5, 8], play(t, o, v) { noiseHit(t, o, { type: 'lowpass', f: 600, peak: 0.08 * v, attack: 0.6, dur: 2 }); } },
+  // 料理島：炒菜滋滋作響，鍋鏟鏗鏗
+  cooking: { every: [2.5, 4], play(t, o, v) {
+    noiseHit(t, o, { type: 'highpass', f: 3500, peak: 0.05 * v, attack: 0.03, dur: 2.2 });
+    for (let i = 0; i < 10; i++) noiseHit(t + rnd(0, 2), o, { type: 'highpass', f: 5000, peak: rnd(0.02, 0.05) * v, dur: 0.02 });
+    for (const d of [0.3, 0.75]) bell(t + d, o, 1150, 0.035 * v, 0.35, [[1, 1], [1.47, 0.6], [2.31, 0.3]]);
+  } },
+  // 歡樂島：許願樹上的風鈴
+  tree: { every: [3, 6], play(t, o, v) {
+    for (let i = 0, n = 4 + Math.floor(Math.random() * 3); i < n; i++) ping(t + i * rnd(0.1, 0.3), o, [1568, 1760, 2093, 2349, 2637][Math.floor(Math.random() * 5)], 0.035 * v, 2);
+  } },
+  // 渡口島：竹篙划水、碰到木棧的叩一聲
+  dock: { every: [3.5, 6], play(t, o, v) {
+    for (const d of [0, 1.3]) noiseHit(t + d, o, { f: 900, q: 0.7, peak: 0.07 * v, attack: 0.03, dur: 0.4 });
+    ping(t + 2.1, o, 300, 0.06 * v, 0.1); ping(t + 2.1, o, 610, 0.02 * v, 0.06);
+  } },
+  // 班務島：桌上服務鈴「叮」
+  hall: { every: [5, 9], play(t, o, v) { bell(t, o, 2350, 0.05 * v, 1.4, [[1, 1], [2.52, 0.25]]); } },
+  // 人事島（郵局）：蓋章咚咚
+  post: { every: [4, 7], play(t, o, v) {
+    for (const d of [0, 0.35]) { ping(t + d, o, 150, 0.16 * v, 0.12); noiseHit(t + d, o, { type: 'lowpass', f: 900, peak: 0.06 * v, dur: 0.07 }); }
+  } },
+  // 公關禮節島（迎賓）：門口的「叮咚」
+  arch: { every: [5, 8], play(t, o, v) { bell(t, o, 1319, 0.06 * v, 1.3, [[1, 1], [3, 0.08]]); bell(t + 0.45, o, 1047, 0.06 * v, 1.6, [[1, 1], [3, 0.08]]); } },
+  // 學術島（圖書館）：翻書聲
+  library: { every: [3.5, 6], play(t, o, v) { for (const d of [0, 0.8]) noiseHit(t + d, o, { f: 2600, q: 0.6, peak: 0.05 * v, attack: 0.06, dur: 0.28 }); } },
+  // 輔導島（燈塔）：遠遠的一聲霧笛
+  lighthouse: { every: [7, 11], play(t, o, v) {
+    const osc = SND.ctx.createOscillator(), lp = SND.ctx.createBiquadFilter(), g = SND.ctx.createGain();
+    osc.type = 'sawtooth'; osc.frequency.value = 130; lp.type = 'lowpass'; lp.frequency.value = 420;
+    osc.connect(lp).connect(g).connect(o); env(g, t, 0.35, 0.05 * v, 2); osc.start(t); osc.stop(t + 2.1);
+  } },
+  // 總務島（倉庫）：搬東西、釘槌叩叩叩
+  barn: { every: [4, 7], play(t, o, v) {
+    for (let i = 0; i < 3; i++) { ping(t + i * 0.28, o, 420, 0.09 * v, 0.07); noiseHit(t + i * 0.28, o, { f: 1800, q: 2, peak: 0.04 * v, dur: 0.04 }); }
+  } },
+  // 影音島（電視塔）：收音機轉台的沙沙聲，最後對到頻道「嗶」
+  tower: { every: [5, 8], play(t, o, v) {
+    const f = noiseHit(t, o, { f: 600, q: 4, peak: 0.09 * v, attack: 0.05, dur: 0.8 });
+    f.frequency.setValueAtTime(600, t); f.frequency.exponentialRampToValueAtTime(3200, t + 0.75);
+    ping(t + 0.85, o, 1000, 0.04 * v, 0.15);
+  } },
+  // 活動島（大帳篷）：派對吹笛「嘟～嘟～」
+  bigtop: { every: [4, 7], play(t, o, v) {
+    for (const d of [0, 0.5]) {
+      const osc = SND.ctx.createOscillator(), lp = SND.ctx.createBiquadFilter(), g = SND.ctx.createGain();
+      osc.type = 'sawtooth'; osc.frequency.setValueAtTime(330, t + d); osc.frequency.linearRampToValueAtTime(420, t + d + 0.35);
+      lp.type = 'lowpass'; lp.frequency.value = 1400;
+      osc.connect(lp).connect(g).connect(o); env(g, t + d, 0.03, 0.04 * v, 0.4); osc.start(t + d); osc.stop(t + d + 0.45);
+    }
+  } },
+};
+// 每座島對到哪一種音效
+const ISLE_MARK = { temple: 'temple', dock: 'dock' };
+COURSES.forEach((c) => { ISLE_MARK[c.key] = c.mark; if (c.pm) ISLE_MARK[c.pm.key] = c.pm.mark; });
+CADRE.forEach((o) => { ISLE_MARK[o.key] = o.mark; });
+const isleNext = {};
+const isleTmp = new THREE.Vector3();
+function isleSounds(now) {
+  // 鏡頭拉遠看整片群島時不響；點進某座島（或拉近到它附近）才響，越近越大聲
+  const close = THREE.MathUtils.clamp(1.6 - camera.position.distanceTo(controls.target) / 140, 0, 1);
+  camRight.setFromMatrixColumn(camera.matrixWorld, 0);
+  for (const [key, mark] of Object.entries(ISLE_MARK)) {
+    const isl = islands[key], sfx = ISLE_SFX[mark];
+    if (!isl || !sfx) continue;
+    const d = Math.hypot(isl.x - controls.target.x, isl.z - controls.target.z);
+    const v = close * THREE.MathUtils.clamp(1 - d / (isl.R + 8), 0, 1);
+    if (v < 0.08) { isleNext[key] = Math.max(isleNext[key] || 0, now + 0.6); continue; }
+    if (now < (isleNext[key] || 0)) continue;
+    isleTmp.set(isl.x - camera.position.x, 0, isl.z - camera.position.z).normalize();
+    sfx.play(now + 0.05, panTo(THREE.MathUtils.clamp(isleTmp.dot(camRight), -1, 1) * 0.6), v);
+    isleNext[key] = now + rnd(sfx.every[0], sfx.every[1]);
+  }
+}
+// 熱氣球噴火：一陣低低的「呼——」，鏡頭離氣球越近越大聲
+const burnerTmp = new THREE.Vector3();
+function burnerSound(dur, obj, size) {
+  if (!SND.ctx || !SND.sfx || SND.ctx.state !== 'running') return;
+  const dist = camera.position.distanceTo(obj.getWorldPosition(burnerTmp)), level = size * THREE.MathUtils.clamp(1.3 - dist / 110, 0, 1);
+  if (level < 0.05) return;
+  const t = SND.ctx.currentTime, g = SND.ctx.createGain(), lp = SND.ctx.createBiquadFilter(), src = noiseSrc();
+  lp.type = 'lowpass'; lp.frequency.value = 750;
+  src.connect(lp).connect(g).connect(SND.sfxBus);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.1 * level, t + 0.12);
+  g.gain.setValueAtTime(0.1 * level, t + Math.max(0.15, dur - 0.2));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.25);
+  src.start(t); src.stop(t + dur + 0.3);
+}
 // 高鐵：每列車一組噪音，依距離調音量、依左右調聲道，靠近時音色亮、遠離時悶
 const tv = new THREE.Vector3(), toCam = new THREE.Vector3(), camRight = new THREE.Vector3();
 function trainSound(tr, now) {
@@ -2661,8 +2833,11 @@ function audioTick() {
   SND.sfxBus.gain.setTargetAtTime(SND.sfx ? 0.9 * near : 0, now, 0.4);
   SND.trainBus.gain.setTargetAtTime(SND.sfx ? 1 : 0, now, 0.3);
   SND.musicBus.gain.setTargetAtTime(SND.music ? 0.8 : 0, now, 0.6);
-  // 音效只剩高鐵呼嘯而過；鳥叫、蟲鳴、海浪都拿掉了，背景只留輕音樂
-  if (SND.sfx) for (const tr of trains) trainSound(tr, now);
+  // 音效：高鐵呼嘯而過＋鏡頭所在那座島的特色音效；海浪、鳥叫蟲鳴這類一直響的背景聲都不放
+  if (SND.sfx) {
+    for (const tr of trains) trainSound(tr, now);
+    isleSounds(now);
+  }
   if (SND.music) {
     // 一格是八分音符；反拍稍微晚一點點（搖擺感），走起來比較悠閒
     const eighth = 60 / (night ? 62 : 76) / 2, swing = eighth * 0.16;
