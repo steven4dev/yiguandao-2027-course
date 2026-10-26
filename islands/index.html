@@ -337,7 +337,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.19</span>
+  <span class="ver">v261026.20</span>
   </div></div>
 </div>
 
@@ -2088,11 +2088,22 @@ function applyView(k) {
    ========================================================= */
 let tween = null;
 // arc：飛行路線中段往上拱多高（數字），或往哪個方向繞（向量），避免直線穿過建築物或氣球
-function flyTo(target, pos, dur = 1.2, then = null, arc = 0) {
+// swirl：繞著目標轉進去——方位角、距離、高度分開內插，鏡頭一邊靠近一邊繞著島轉
+function flyTo(target, pos, dur = 1.2, then = null, arc = 0, swirl = false) {
   tween = { t: 0, dur, ft: controls.target.clone(), fp: camera.position.clone(), tt: target, tp: pos, then, arc };
+  if (swirl) {
+    const a = tween.fp.clone().sub(tween.ft), b = pos.clone().sub(target);
+    const az0 = Math.atan2(a.x, a.z);
+    let dAz = Math.atan2(b.x, b.z) - az0;
+    dAz = Math.atan2(Math.sin(dAz), Math.cos(dAz));
+    tween.swirl = { az0, dAz, r0: Math.hypot(a.x, a.z), r1: Math.hypot(b.x, b.z), h0: a.y, h1: b.y };
+  }
   controls.autoRotate = false;
   return tween;
 }
+// 到了島上之後，鏡頭繞著這座島慢慢轉；使用者一碰畫面就停
+const ISLE_ORBIT = 0.5;
+function orbitIsland() { controls.autoRotate = true; controls.autoRotateSpeed = ISLE_ORBIT; }
 // sel 可以是島（'g3'）、某一位幹部（'m:12'）或廣場上的學員（'p:3'）；鏡頭已經在那座島上就不動
 function select(key, sel = key) {
   const isl = islands[key];
@@ -2107,7 +2118,9 @@ function select(key, sel = key) {
     // 俯角約 26 度：比較像站在旁邊看，不會有從高處往下壓的感覺
     const p = t.clone().add(dirV.multiplyScalar(dist * 0.88)).setY(dist * 0.43 + 2);
     if (innerWidth < innerHeight) p.sub(t).multiplyScalar(1.35).add(t);
-    flyTo(t, p);
+    // 終點再繞島轉 35 度，飛過去時就是一邊靠近、一邊繞著島轉進來；轉的方向跟之後慢慢環繞的方向一樣
+    p.sub(t).applyAxisAngle(new THREE.Vector3(0, 1, 0), -0.6).add(t);
+    flyTo(t, p, 1.7, () => { if (islandOf2(selected) === key && panelMode !== 'closed' && !reduceMotion) orbitIsland(); }, 0, true);
   }
   lastView = '';
   applyDate();
@@ -2122,7 +2135,7 @@ document.getElementById('panelBody').addEventListener('click', (e) => {
 
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 let downXY = null;
-renderer.domElement.addEventListener('pointerdown', (e) => { downXY = [e.clientX, e.clientY]; if (tween) tween = null; });
+renderer.domElement.addEventListener('pointerdown', (e) => { downXY = [e.clientX, e.clientY]; if (tween) tween = null; controls.autoRotate = false; });
 // 滑鼠移到幹部小人偶上，游標變成手指
 let hoverQueued = false;
 renderer.domElement.addEventListener('pointermove', (e) => {
@@ -3139,7 +3152,10 @@ function tick() {
     tween.t += Math.min(rawDt, 0.25) / tween.dur;
     const k = ease(Math.min(1, tween.t));
     controls.target.lerpVectors(tween.ft, tween.tt, k);
-    camera.position.lerpVectors(tween.fp, tween.tp, k);
+    if (tween.swirl) {
+      const w = tween.swirl, az = w.az0 + w.dAz * k, r = w.r0 + (w.r1 - w.r0) * k;
+      camera.position.set(controls.target.x + Math.sin(az) * r, controls.target.y + w.h0 + (w.h1 - w.h0) * k, controls.target.z + Math.cos(az) * r);
+    } else camera.position.lerpVectors(tween.fp, tween.tp, k);
     if (tween.arc) {
       if (tween.arc.isVector3) camera.position.addScaledVector(tween.arc, Math.sin(k * Math.PI));
       else camera.position.y += Math.sin(k * Math.PI) * tween.arc;
