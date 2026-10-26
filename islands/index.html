@@ -83,6 +83,8 @@
   .brand .count { margin: 2px 0 0; font-size: 13px; color: var(--ink); line-height: 1.5; }
   /* 瓶中信數量：跟登島人數同一種寫法，整行可以點，點了飛到漂流瓶島 */
   .bottle-count { cursor: pointer; margin-top: -6px !important; }
+  .brand .count.bottle-count b { color: #2f80c9; }
+  :root[data-theme="dark"] .brand .count.bottle-count b { color: #7cc4ff; }
   .bottle-count .go { color: var(--brick); font-weight: 700; margin-left: 2px; white-space: nowrap; }
   .bottle-count:hover .go { text-decoration: underline; }
   .bottle-count:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; border-radius: 6px; }
@@ -350,7 +352,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.42</span>
+  <span class="ver">v261026.43</span>
   </div></div>
 </div>
 
@@ -1959,7 +1961,7 @@ const gapMid = new THREE.Vector3((islands.c1.x + islands.c9.x) / 2, 0, (islands.
 const ROUTE_DIR = gapMid.clone().sub(new THREE.Vector3(gateIsl.x, 0, gateIsl.z)).normalize();
 const R_DOCK = 6;
 const dockIsl = buildOuter({ key: 'dock', kind: 'dock', title: '渡口島', mark: 'dock', color: '#c0503f', R: R_DOCK },
-  gateIsl.x + ROUTE_DIR.x * 58, gateIsl.z + ROUTE_DIR.z * 58, 0, Math.atan2(-ROUTE_DIR.x, -ROUTE_DIR.z));
+  gateIsl.x + ROUTE_DIR.x * 58, gateIsl.z + ROUTE_DIR.z * 58, 0, Math.atan2(-ROUTE_DIR.x, -ROUTE_DIR.z) + Math.PI);
 // 木棧橋：從島的邊緣伸進海裡，竹筏停在棧橋末端
 const plankMat = lam(C.wood);
 function pier(isl, dir) {
@@ -2446,8 +2448,9 @@ function syncBottleChip(fresh) {
   if (fresh) { chip.classList.remove('new'); void chip.offsetWidth; chip.classList.add('new'); }
 }
 syncBottleChip();
-document.getElementById('bottleChip').addEventListener('click', () => select('bottle'));
-document.getElementById('bottleChip').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select('bottle'); } });
+// 點了要擋住冒泡：不然同一下點擊會傳到品牌卡，把剛收起來的品牌卡又展開
+document.getElementById('bottleChip').addEventListener('click', (e) => { e.stopPropagation(); select('bottle'); });
+document.getElementById('bottleChip').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); select('bottle'); } });
 animators.push((t) => {
   const sel = String(selected).startsWith('b:') ? +String(selected).slice(2) : -9;
   for (const b of bottleMeshes) {
