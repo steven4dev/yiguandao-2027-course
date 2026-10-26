@@ -330,7 +330,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.01</span>
+  <span class="ver">v261026.02</span>
   </div></div>
 </div>
 
@@ -2181,12 +2181,18 @@ function runSearch() {
   if (!n) {
     searchHits = [];
     markHits();
-    searchResults.innerHTML = '<p class="tip">可以搜尋課程名稱、島名、日期（例如 4/24）或講師。<br>想找自己：輸入完整的姓名，畫面會飛到你的小人偶，名字一樣只顯示遮蔽後的樣子。</p>';
+    searchResults.innerHTML = '<p class="tip">可以搜尋課程名稱、島名、日期（例如 4/24）、講師，或幹部職稱（例如班長、學術組長）。<br>想找自己：輸入完整的姓名，畫面會飛到你的小人偶，名字一樣只顯示遮蔽後的樣子。</p>';
     return;
   }
   const people = findPeople(q);
+  // 也可以用職稱找幹部：「班長」「副班長」「學術組長」…，名字一樣只顯示遮蔽後的樣子
+  const roles = Array.from(n).length < 2 ? [] : SLOTS
+    .filter((sl) => [sl.title, sl.title.replace('組組長', '組長'), sl.title.replace('組成員', '組員')].some((t) => norm(t).includes(n)) && !people.some((h) => h.slot === sl))
+    .sort((a, b) => ROLE_RANK[a.role] - ROLE_RANK[b.role] || a.id - b.id)
+    .map((slot) => ({ kind: 'm', slot, icon: '👤', title: slot.masked,
+      sub: `${slot.title}・${realPeople.some((d) => (d.uids || []).includes(slot.uid)) ? '已登島' : '還沒登島'}` }));
   const places = PLACES.filter((p) => p.words.some((w) => norm(w).includes(n)));
-  searchHits = [...people, ...places.map((p) => ({ kind: 'i', ...p }))].slice(0, 30);
+  searchHits = [...people, ...roles, ...places.map((p) => ({ kind: 'i', ...p }))].slice(0, 30);
   const row = (h, i) => `<button data-hit="${i}"><span aria-hidden="true">${h.icon}</span><span><b>${esc(h.title)}</b><small>${esc(h.sub)}</small></span></button>`;
   markHits();
   searchResults.innerHTML = searchHits.length ? searchHits.map(row).join('')
