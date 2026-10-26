@@ -331,7 +331,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.10</span>
+  <span class="ver">v261026.11</span>
   </div></div>
 </div>
 
@@ -356,7 +356,7 @@
 
 <div class="card soundpop" id="soundPop" hidden>
   <b>聲音</b>
-  <label class="sw"><input type="checkbox" id="sfxOn"><span>環境音效<small>白天鳥叫、晚上蟋蟀和青蛙、高鐵經過</small></span></label>
+  <label class="sw"><input type="checkbox" id="sfxOn"><span>高鐵經過<small>列車從全真道院旁呼嘯而過的聲音</small></span></label>
   <label class="sw"><input type="checkbox" id="musicOn"><span>輕音樂<small>漫步調的電鋼琴小曲，晚上會變慢、變輕</small></span></label>
 </div>
 
@@ -1560,7 +1560,7 @@ const LOOK_BASE = new THREE.Vector3(-50, 22, -6);
 const lookoutHit = [];
 {
   const b = lookout;
-  hotAirBalloon(b, '#c0503f', '#f4e9d8', 1.7, 0.85, (dur) => burnerSound(dur));
+  hotAirBalloon(b, '#c0503f', '#f4e9d8', 1.7, 0.85);
   // 籃子：藤編的方籃，上緣一圈木框
   mesh(new THREE.BoxGeometry(1.7, 1.0, 1.7), lam('#b98b55'), 0, -0.5, 0, b);
   mesh(new THREE.BoxGeometry(1.86, 0.14, 1.86), lam('#7a5236'), 0, 0.02, 0, b);
@@ -2509,11 +2509,11 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) load
 
 /* =========================================================
    聲音：全部用 Web Audio 即時合成，不用下載音檔
-   環境音效跟著畫面走：白天鳥叫、晚上蟋蟀和青蛙、高鐵經過、熱氣球噴火；
+   音效只有高鐵呼嘯而過；
    輕音樂是漫步調：電鋼琴和弦＋散步貝斯＋輕輕的旋律，晚上放慢、變輕
    ========================================================= */
 const SND = { ctx: null, sfx: false, music: false };
-const SOUND_KEY = 'islands-sound';
+const SOUND_KEY = 'islands-sound-v2';   // 換了預設值（改成預設開），舊的記錄不沿用
 function audioInit() {
   if (SND.ctx) { if (SND.ctx.state === 'suspended') SND.ctx.resume(); return; }
   const AC = window.AudioContext || window.webkitAudioContext;
@@ -2537,7 +2537,7 @@ function audioInit() {
   SND.musicIn.connect(SND.musicBus);
   SND.musicIn.connect(rev).connect(wet).connect(SND.musicBus);
   const now = ctx.currentTime;
-  Object.assign(SND, { nextBird: now + 1, nextCricket: now, nextFrog: now + 3, nextNote: now + 0.6, step: 0 });
+  Object.assign(SND, { nextNote: now + 0.6, step: 0 });
 }
 const noiseSrc = () => { const s = SND.ctx.createBufferSource(); s.buffer = SND.noise; s.loop = true; return s; };
 function env(g, t, attack, peak, dur) {
@@ -2556,50 +2556,6 @@ function tone(type, freq, t, dur, out) {
   o.type = type; o.frequency.setValueAtTime(freq, t);
   o.connect(out); o.start(t); o.stop(t + dur + 0.05);
   return o;
-}
-// 瞭望氣球的燃燒器：一陣低低的「呼——」，鏡頭離氣球越近越大聲
-function burnerSound(dur) {
-  if (!SND.ctx || !SND.sfx) return;
-  const dist = camera.position.distanceTo(lookout.position), level = THREE.MathUtils.clamp(1.4 - dist / 120, 0.15, 1);
-  const t = SND.ctx.currentTime, g = SND.ctx.createGain(), lp = SND.ctx.createBiquadFilter(), src = noiseSrc();
-  lp.type = 'lowpass'; lp.frequency.value = 700;
-  src.connect(lp).connect(g).connect(panTo(0));
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.09 * level, t + 0.12);
-  g.gain.setValueAtTime(0.09 * level, t + dur - 0.2);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.25);
-  src.start(t); src.stop(t + dur + 0.3);
-}
-// 鳥叫：幾聲快速上下滑音的短哨
-function bird(t, level) {
-  const out = panTo(Math.random() * 1.6 - 0.8), base = 2600 + Math.random() * 1400;
-  const n = 2 + Math.floor(Math.random() * 4);
-  for (let i = 0; i < n; i++) {
-    const st = t + i * (0.09 + Math.random() * 0.05), g = SND.ctx.createGain();
-    g.connect(out); env(g, st, 0.01, 0.05 * level, 0.09);
-    const o = tone('sine', base * (0.9 + Math.random() * 0.2), st, 0.1, g);
-    o.frequency.exponentialRampToValueAtTime(base * (1.3 + Math.random() * 0.3), st + 0.04);
-    o.frequency.exponentialRampToValueAtTime(base * 0.85, st + 0.08);
-  }
-}
-// 蟋蟀：4.5kHz 左右的短脈衝，一串三四聲
-function cricket(t, level) {
-  const out = panTo(Math.random() * 1.4 - 0.7), f = 4300 + Math.random() * 500;
-  for (let i = 0, n = 3 + Math.floor(Math.random() * 2); i < n; i++) {
-    const st = t + i * 0.07, g = SND.ctx.createGain();
-    g.connect(out); env(g, st, 0.005, 0.03 * level, 0.05);
-    tone('sine', f, st, 0.06, g);
-  }
-}
-// 青蛙：低沉的咕呱兩聲
-function frog(t, level) {
-  const out = panTo(Math.random() * 1.2 - 0.6);
-  for (let i = 0; i < 2; i++) {
-    const st = t + i * 0.18, g = SND.ctx.createGain(), lp = SND.ctx.createBiquadFilter();
-    lp.type = 'lowpass'; lp.frequency.value = 700;
-    lp.connect(g).connect(out); env(g, st, 0.01, 0.06 * level, 0.14);
-    tone('sawtooth', 190, st, 0.16, lp).frequency.linearRampToValueAtTime(150, st + 0.12);
-  }
 }
 // 原創的漫步調小曲：C 大調、每小節一個七和弦，16 小節一輪；速度像散步，白天每分鐘 76 拍、晚上 62 拍
 const midiHz = (m) => 440 * Math.pow(2, (m - 69) / 12);
@@ -2696,21 +2652,17 @@ function stopTrainSound(tr) {
 function audioTick() {
   const ctx = SND.ctx;
   if (!ctx || ctx.state !== 'running') return;
-  const now = ctx.currentTime, ahead = now + 0.3, day = 1 - nightT, night = nightT > 0.5;
+  const now = ctx.currentTime, ahead = now + 0.3, night = nightT > 0.5;
   // 畫面暫停一陣子（切到別的 App、分頁沒有被偵測到隱藏）再回來時，聲音時鐘已經走遠了；
   // 錯過的鳥叫和音符直接跳過，不要一口氣補排幾千個聲音把瀏覽器卡住
-  for (const k of ['nextBird', 'nextCricket', 'nextFrog', 'nextNote']) if (SND[k] < now - 1) SND[k] = now;
+  if (SND.nextNote < now - 1) SND.nextNote = now;
   // 鏡頭拉近時環境音大一點，拉遠時小一點
   const near = THREE.MathUtils.clamp(1.5 - camera.position.distanceTo(controls.target) / 200, 0.35, 1);
   SND.sfxBus.gain.setTargetAtTime(SND.sfx ? 0.9 * near : 0, now, 0.4);
   SND.trainBus.gain.setTargetAtTime(SND.sfx ? 1 : 0, now, 0.3);
   SND.musicBus.gain.setTargetAtTime(SND.music ? 0.8 : 0, now, 0.6);
-  if (SND.sfx) {
-    for (; SND.nextBird < ahead; SND.nextBird += 1.2 + Math.random() * 3.5) if (Math.random() < day) bird(SND.nextBird, day);
-    for (; SND.nextCricket < ahead; SND.nextCricket += 0.5 + Math.random() * 0.9) if (Math.random() < nightT) cricket(SND.nextCricket, nightT);
-    for (; SND.nextFrog < ahead; SND.nextFrog += 3 + Math.random() * 6) if (Math.random() < nightT * 0.7) frog(SND.nextFrog, nightT);
-    for (const tr of trains) trainSound(tr, now);
-  } else SND.nextBird = SND.nextCricket = SND.nextFrog = ahead;
+  // 音效只剩高鐵呼嘯而過；鳥叫、蟲鳴、海浪都拿掉了，背景只留輕音樂
+  if (SND.sfx) for (const tr of trains) trainSound(tr, now);
   if (SND.music) {
     // 一格是八分音符；反拍稍微晚一點點（搖擺感），走起來比較悠閒
     const eighth = 60 / (night ? 62 : 76) / 2, swing = eighth * 0.16;
@@ -2733,7 +2685,8 @@ function audioTick() {
   } else SND.nextNote = ahead;
 }
 
-// 聲音開關：預設靜音；開過一次會記住（只存在自己的瀏覽器），下次碰一下畫面就開始
+// 聲音開關：預設輕音樂和高鐵聲都開；瀏覽器規定要等使用者碰一下畫面才能出聲，所以第一次點畫面任何地方就開始播放。
+// 關掉的話會記住（只存在自己的瀏覽器）
 const soundBtn = $('sound'), soundPop = $('soundPop');
 function syncSound() {
   $('sfxOn').checked = SND.sfx;
@@ -2755,17 +2708,25 @@ $('sfxOn').addEventListener('change', (e) => { SND.sfx = e.target.checked; if (S
 $('musicOn').addEventListener('change', (e) => { SND.music = e.target.checked; if (SND.music) audioInit(); syncSound(); });
 document.addEventListener('pointerdown', (e) => { if (!soundPop.hidden && !soundPop.contains(e.target) && !soundBtn.contains(e.target)) showSoundPop(false); });
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && !soundPop.hidden) showSoundPop(false); });
-try {
-  const pref = JSON.parse(localStorage.getItem(SOUND_KEY) || 'null');
-  if (pref && (pref.sfx || pref.music)) {
-    SND.sfx = !!pref.sfx; SND.music = !!pref.music;
-    soundBtn.setAttribute('aria-pressed', 'true');
-    $('sfxOn').checked = SND.sfx; $('musicOn').checked = SND.music;
-    const wake = () => { audioInit(); removeEventListener('pointerdown', wake, true); removeEventListener('keydown', wake, true); };
-    addEventListener('pointerdown', wake, true);
-    addEventListener('keydown', wake, true);
+{
+  let pref = null;
+  try { pref = JSON.parse(localStorage.getItem(SOUND_KEY) || 'null'); } catch (e) {}
+  SND.sfx = pref ? !!pref.sfx : true;
+  SND.music = pref ? !!pref.music : true;
+  soundBtn.setAttribute('aria-pressed', String(SND.sfx || SND.music));
+  $('sfxOn').checked = SND.sfx; $('musicOn').checked = SND.music;
+  if (SND.sfx || SND.music) {
+    // iPhone 要在手指放開（touchend／click）時才肯解鎖聲音，幾種事件都聽，真的開始播放才拆掉
+    const EVS = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'];
+    const wake = () => {
+      if (!SND.sfx && !SND.music) return;
+      audioInit();
+      if (SND.ctx && SND.ctx.state === 'running') EVS.forEach((ev) => removeEventListener(ev, wake, true));
+      else if (SND.ctx) SND.ctx.resume().then(() => { if (SND.ctx.state === 'running') EVS.forEach((ev) => removeEventListener(ev, wake, true)); });
+    };
+    EVS.forEach((ev) => addEventListener(ev, wake, true));
   }
-} catch (e) {}
+}
 // 切到別的分頁就暫停聲音
 document.addEventListener('visibilitychange', () => {
   if (!SND.ctx) return;
