@@ -337,7 +337,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.27</span>
+  <span class="ver">v261026.28</span>
   </div></div>
 </div>
 
@@ -1031,9 +1031,11 @@ MASTERS.forEach((m, i) => {
   fig.userData.master = i;
   fig.userData.restRotY = 0;
   TEMPLE.group.add(fig);
-  addObst(TEMPLE.group, { x: m.x, z: 5.1, r: 0.75 });
+  // 走動範圍：前後約 0.8、左右約 0.3，廣場上的夥伴繞開這一塊
+  addObst(TEMPLE.group, { x0: m.x - 0.75, x1: m.x + 0.75, z0: 4.2, z1: 6.1 });
   fig.traverse((o) => { if (o.isMesh) masterHit.push(o); });
   m.fig = fig;
+  m.phase = i * 2.1;
 });
 
 // 佛堂廣場上的報名者：學員乾道藍、坤道橘；幹部穿該組顏色並帶職位配件，點了可以看是誰
@@ -1072,6 +1074,19 @@ function syncPlaza(list) {
    課程島的地標
    ========================================================= */
 const animators = [];
+// 點傳師（MASTERS 在前面建好）慢慢地在樓梯前踱步：往前走幾步、轉頭看看廣場、再走回來；被點到時停下來揮手
+animators.push((t) => {
+  for (const m of MASTERS) {
+    const f = m.fig, u = f.userData;
+    if (u.focusT != null) continue;
+    const k = t * 0.32 + m.phase, z = 5.1 + Math.sin(k) * 0.4, x = m.x + Math.sin(k * 0.5) * 0.15;
+    const vz = Math.cos(k);
+    f.position.set(x, Math.abs(Math.sin(t * 2.2 + m.phase)) * 0.03, z);
+    // 往前走時面向廣場，往回走時側身轉頭，不會背對大家
+    f.rotation.y = (vz < 0 ? Math.sign(m.x || 1) * 0.9 * Math.min(1, -vz * 1.5) : 0) + Math.sin(t * 0.5 + m.phase) * 0.25;
+    u.restRotY = f.rotation.y;
+  }
+});
 function carousel(g) {
   const spin = new THREE.Group(); g.add(spin);
   mesh(new THREE.CylinderGeometry(2.2, 2.3, 0.3, 24), whiteMat, 0, 0.15, 0, g);
