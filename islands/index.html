@@ -168,11 +168,7 @@
   .searchpop.on { opacity: 1; transform: none; }
   .searchpop > #searchResults { grid-column: 1 / -1; }
   .sclose { align-self: center; margin-bottom: 4px; }
-  /* 望遠鏡的視野：四周一圈淡淡的圓形暗角 */
-  #scope { position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0; transition: opacity 0.6s linear;
-    background: radial-gradient(ellipse 72% 78% at var(--sx, 50%) var(--sy, 50%), transparent 62%, rgba(18, 36, 52, 0.18) 82%, rgba(18, 36, 52, 0.42) 100%); }
-  #scope.on { opacity: 1; }
-  /* 搜尋時其他面板縮小、變淡，讓出鳥瞰畫面 */
+  /* 搜尋時其他面板縮小、變淡，讓出畫面 */
   .panel, .dock, .mapctl .icon { transition: opacity 0.32s linear, transform 0.32s linear; }
   body.searching .panel { opacity: 0; transform: scale(0.92); pointer-events: none; }
   body.searching .dock { opacity: 0.45; transform: translateX(-50%) scale(0.86); transform-origin: 50% 100%; }
@@ -309,7 +305,7 @@
     .tag.small:not(.dock-tag):not(.look-tag) { display: none; }
     .tag.small.hit { display: inline-flex; }
   }
-  @media (prefers-reduced-motion: reduce) { body, .card, .brand *, .brand-more, #scope, .mapctl .icon, #labels .tag { transition: none !important; } }
+  @media (prefers-reduced-motion: reduce) { body, .card, .brand *, .brand-more, .mapctl .icon, #labels .tag { transition: none !important; } }
 </style>
 <style>
   body { margin: 0; }
@@ -320,7 +316,6 @@
 <body>
 
 <div id="stage"></div>
-<div id="scope" aria-hidden="true"></div>
 <div id="labels"></div>
 
 <div class="card brand" id="brand">
@@ -330,7 +325,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.02</span>
+  <span class="ver">v261026.03</span>
   </div></div>
 </div>
 
@@ -1505,29 +1500,16 @@ animators.push((t) => {
 });
 
 /* =========================================================
-   瞭望氣球：飄在群島上空，籃子邊架著望遠鏡；按搜尋時鏡頭會飛上來，從這裡鳥瞰整個群島
+   瞭望氣球：飄在群島上空，籃子邊架著望遠鏡；按搜尋時鏡頭會飛到氣球旁邊
    ========================================================= */
-// 鳥瞰的取景：把所有島都框進來，方位跟一開始的視角一樣，只是從高處往下看
+// 群島的中心：望遠鏡一直對著這裡
 const BIRD = (() => {
   const all = Object.values(islands);
   const x0 = Math.min(...all.map((i) => i.x - i.R)), x1 = Math.max(...all.map((i) => i.x + i.R));
   const z0 = Math.min(...all.map((i) => i.z - i.R)), z1 = Math.max(...all.map((i) => i.z + i.R));
   const target = new THREE.Vector3((x0 + x1) / 2, 0, (z0 + z1) / 2);
-  const r = Math.max(...all.map((i) => Math.hypot(i.x - target.x, i.z - target.z) + i.R));
-  const hd = HOME.pos.clone().sub(HOME.target).setY(0).normalize();
-  return { target, r, hd };
+  return { target };
 })();
-const BASE_FOV = camera.fov;
-let fovTarget = BASE_FOV;
-const birdFov = () => (innerWidth < innerHeight ? 50 : BASE_FOV);
-function birdPose() {
-  const half = THREE.MathUtils.degToRad(birdFov() / 2), aspect = innerWidth / innerHeight;
-  const fit = Math.min(half, Math.atan(Math.tan(half) * aspect));
-  const D = Math.min(350, (BIRD.r / Math.tan(fit)) * 0.92);
-  const tilt = THREE.MathUtils.degToRad(28);   // 離正上方 28 度，看得出島的立體感
-  const pos = BIRD.target.clone().addScaledVector(BIRD.hd, Math.sin(tilt) * D).setY(Math.cos(tilt) * D);
-  return { target: BIRD.target.clone(), pos };
-}
 const lookout = new THREE.Group();
 scene.add(lookout);
 const LOOK_BASE = new THREE.Vector3(-50, 22, -6);
@@ -1574,12 +1556,12 @@ animators.push((t) => {
   lookout.userData.flag.rotation.y = Math.sin(t * 2.2) * 0.3;
 });
 lookout.position.copy(LOOK_BASE);
-// 鏡頭先停在望遠鏡後面（從籃子這裡看出去），再往上拉成鳥瞰
-function lookoutEye() {
-  const eyepiece = lookout.userData.scope.getWorldPosition(new THREE.Vector3());
-  const away = eyepiece.clone().sub(BIRD.target).setY(0).normalize(), side = new THREE.Vector3(-away.z, 0, away.x);
-  // 站在瞭望員的肩膀後面一點、高一點：鏡筒在畫面一角，前方就是整片群島
-  return eyepiece.clone().addScaledVector(away, 12).addScaledVector(side, 2.2).add(new THREE.Vector3(0, 3.6, 0));
+// 搜尋時的鏡頭：停在氣球斜後方，氣球在畫面裡，後面就是群島；鏡頭不再移動，免得暈
+function lookoutView() {
+  const c = lookout.position.clone().add(new THREE.Vector3(0, 5, 0));
+  const away = c.clone().sub(BIRD.target).setY(0).normalize(), side = new THREE.Vector3(-away.z, 0, away.x);
+  const k = innerWidth < innerHeight ? 1.5 : 1;
+  return { target: c.clone().lerp(BIRD.target, 0.3), pos: c.clone().addScaledVector(away, 62 * k).addScaledVector(side, 26 * k).add(new THREE.Vector3(0, 20 * k, 0)) };
 }
 
 /* =========================================================
@@ -1898,8 +1880,8 @@ function renderPanel() {
 const dock = document.getElementById('dock');
 const MOBILE_UI = matchMedia('(max-width: 720px)');
 const brand = document.getElementById('brand');
-let brandPeek = false;
-let searching = false;   // 搜尋模式：鏡頭在瞭望氣球上鳥瞰，其他面板縮小   // 資訊卡開著時，使用者自己把品牌卡展開
+let brandPeek = false;   // 資訊卡開著時，使用者自己把品牌卡展開
+let searching = false;   // 搜尋模式：鏡頭停在瞭望氣球旁邊，其他面板縮小
 function setUI(next) {
   if (next.panel) panelMode = next.panel;
   if (next.panel === 'open' || panelMode === 'closed') brandPeek = false;
@@ -2220,16 +2202,15 @@ function pickHit(h) {
   select(h.kind === 'm' ? h.slot.key : 'temple', sel);
   focusFigure(sel);
 }
-// 打字時，鳥瞰畫面上符合的島標籤亮起來，其他的變淡
+// 打字時，畫面上符合的島標籤亮起來，其他的變淡
 function markHits() {
   const keys = new Set(searchHits.map((h) => (h.kind === 'i' ? h.key : h.kind === 'm' ? h.slot.key : 'temple')));
   const on = searching && searchInput.value.trim() !== '';
   labelsEl.classList.toggle('dim', on);
   for (const t of tags) t.el.classList.toggle('hit', on && keys.has(t.isl.key));
 }
-const scopeEl = $('scope');
 let searchFrom = null, searchFly = 0;
-// 打開搜尋：鏡頭飛到瞭望氣球的望遠鏡後面，再往上拉成鳥瞰；到定位後搜尋面板才淡入
+// 打開搜尋：鏡頭飛到瞭望氣球旁邊停住；到定位後搜尋面板才淡入
 function openSearch() {
   if (searching) return;
   if (!navPop.hidden) showNavPop(false);
@@ -2250,21 +2231,14 @@ function openSearch() {
     requestAnimationFrame(measureFree);
     setTimeout(() => searchInput.focus(), 0);
   };
-  const bird = () => {
-    if (fly !== searchFly || !searching) return;
-    scopeEl.classList.add('on');
-    fovTarget = birdFov();
-    const b = birdPose();
-    if (reduceMotion) { controls.target.copy(b.target); camera.position.copy(b.pos); reveal(); return; }
-    flyTo(b.target, b.pos, 1.1, reveal);
-    setTimeout(reveal, 700);
-  };
-  if (reduceMotion) { bird(); return; }
-  // 從氣球旁邊繞過去，不要穿過籃子：路線中段往遠離氣球的一側、往上拱
-  const eye = lookoutEye(), mid = camera.position.clone().add(eye).multiplyScalar(0.5);
+  const v = lookoutView();
+  if (reduceMotion) { controls.target.copy(v.target); camera.position.copy(v.pos); reveal(); return; }
+  // 一段飛過去就停住；路線中段往遠離氣球的一側、往上拱，不要穿過籃子
+  const mid = camera.position.clone().add(v.pos).multiplyScalar(0.5);
   const off = mid.clone().sub(lookout.position).setY(0);
-  const arc = (off.lengthSq() < 1 ? new THREE.Vector3(1, 0, 0) : off.normalize()).multiplyScalar(14).setY(16);
-  flyTo(BIRD.target.clone(), eye, 1.1, bird, arc);
+  const arc = (off.lengthSq() < 1 ? new THREE.Vector3(1, 0, 0) : off.normalize()).multiplyScalar(10).setY(10);
+  flyTo(v.target, v.pos, 1.2, reveal, arc);
+  setTimeout(reveal, 800);
 }
 // 關掉搜尋：選了結果就交給 select 飛過去；沒選就回到打開搜尋之前的位置
 function showSearchPop(open, restore = true) {
@@ -2272,10 +2246,8 @@ function showSearchPop(open, restore = true) {
   if (!searching) return;
   searching = false;
   searchFly++;
-  fovTarget = BASE_FOV;
   searchPop.classList.remove('on');
   searchPop.hidden = true;
-  scopeEl.classList.remove('on');
   document.body.classList.remove('searching');
   searchBtn.setAttribute('aria-expanded', 'false');
   controls.enabled = true;
@@ -2799,11 +2771,6 @@ function tick() {
       else camera.position.y += Math.sin(k * Math.PI) * tween.arc;
     }
     if (tween.t >= 1) { const then = tween.then; tween = null; if (then) then(); }
-  }
-  // 搜尋鳥瞰時手機的鏡頭稍微廣角一點，整個群島才裝得下
-  if (Math.abs(camera.fov - fovTarget) > 0.01) {
-    camera.fov += (fovTarget - camera.fov) * (reduceMotion ? 1 : 1 - Math.exp(-rawDt * 3.5));
-    camera.updateProjectionMatrix();
   }
   applyView(1 - Math.exp(-rawDt * 6));
   controls.update();
