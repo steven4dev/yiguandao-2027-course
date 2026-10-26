@@ -325,7 +325,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.06</span>
+  <span class="ver">v261026.07</span>
   </div></div>
 </div>
 
@@ -2036,7 +2036,8 @@ function select(key, sel = key) {
     const dist = isl.R * 3.4 + 12;
     const dirV = camera.position.clone().sub(controls.target).setY(0).normalize();
     if (dirV.lengthSq() < 0.01) dirV.set(0.6, 0, 0.8);
-    const p = t.clone().add(dirV.multiplyScalar(dist * 0.78)).setY(dist * 0.62 + 2);
+    // 俯角約 26 度：比較像站在旁邊看，不會有從高處往下壓的感覺
+    const p = t.clone().add(dirV.multiplyScalar(dist * 0.88)).setY(dist * 0.43 + 2);
     if (innerWidth < innerHeight) p.sub(t).multiplyScalar(1.35).add(t);
     flyTo(t, p);
   }
@@ -2242,7 +2243,7 @@ function focusFigure(sel) {
   const t = f.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0.8, 0));
   const dirV = camera.position.clone().sub(controls.target).setY(0).normalize();
   if (dirV.lengthSq() < 0.01) dirV.set(0.6, 0, 0.8);
-  const p = t.clone().addScaledVector(dirV, 17).setY(t.y + 14);
+  const p = t.clone().addScaledVector(dirV, 20).setY(t.y + 9);
   if (innerWidth < innerHeight) p.sub(t).multiplyScalar(1.3).add(t);
   flyTo(t, p);
 }
