@@ -337,7 +337,7 @@
   <p class="count" id="brandCount"></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.21</span>
+  <span class="ver">v261026.22</span>
   </div></div>
 </div>
 
@@ -778,7 +778,37 @@ function roof(w, d, h, ridgeHalf, lift, x, y, z, parent, mat = tileMat) {
   return g;
 }
 
+// 障礙物：樹、樹叢、路燈、圍籬、柱子、地標、講師…，人偶走路時要繞開（座標是島上的區域座標）
+// 圓形 { x, z, r }，長方形 { x0, x1, z0, z1 }；每個人偶走動的範圍也登記成長方形，彼此就不會重疊
+const OBST = new Map();
+const obstOf = (parent) => { if (!OBST.has(parent)) OBST.set(parent, []); return OBST.get(parent); };
+const addObst = (parent, o) => { obstOf(parent).push(o); return o; };
+const BODY_R = 0.45;   // 人偶身體的半徑（含一點空隙）
+// 人偶在 z 這條線上、從 x-roam 走到 x+roam，會不會碰到任何障礙物
+function pathClear(parent, x, z, roam) {
+  const a = x - roam - BODY_R, b = x + roam + BODY_R;
+  return obstOf(parent).every((o) => {
+    if (o.r != null) {
+      const cx = Math.min(Math.max(o.x, x - roam), x + roam);
+      return Math.hypot(o.x - cx, o.z - z) > o.r + BODY_R;
+    }
+    return b < o.x0 || a > o.x1 || z + BODY_R < o.z0 || z - BODY_R > o.z1;
+  });
+}
+// 原本的位置被擋住，就在附近繞圈找一個空位（不能超出島的邊緣）
+function freeSpot(parent, x, z, roam, maxR) {
+  if (pathClear(parent, x, z, roam)) return [x, z];
+  for (let d = 0.4; d < 6; d += 0.4) {
+    for (let k = 0; k < 12; k++) {
+      const a = (k / 12) * Math.PI * 2, nx = x + Math.sin(a) * d, nz = z + Math.cos(a) * d;
+      if (maxR && Math.hypot(nx, nz) + roam > maxR) continue;
+      if (pathClear(parent, nx, nz, roam)) return [nx, nz];
+    }
+  }
+  return [x, z];
+}
 function pine(x, z, h, parent) {
+  addObst(parent, { x, z, r: 0.75 });
   mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.5, 6), trunkMat, x, 0.25, z, parent);
   for (let i = 0; i < 3; i++) {
     const r = 0.75 - i * 0.18, hh = h * 0.45;
@@ -786,13 +816,15 @@ function pine(x, z, h, parent) {
   }
 }
 function bush(x, z, s, parent, mat = hillMat2) {
+  addObst(parent, { x, z, r: 0.8 * s });
   mesh(new THREE.CylinderGeometry(0.1, 0.14, 0.8 * s, 6), trunkMat, x, 0.4 * s, z, parent);
   mesh(new THREE.IcosahedronGeometry(0.8 * s, 1), mat, x, 0.8 * s + 0.6 * s, z, parent);
 }
 
-const TEMPLE = makeIsland('temple', 16, 0, 0, 'temple');
-const FRONT_Z = 16 * COS30;
-const plaza = { x0: -7.5, x1: 7.5, z0: 4.6, z1: FRONT_Z - 1.6 };
+// 全真島放大一點（16 → 18），前方廣場更深，報名的人多了也走得開
+const TEMPLE = makeIsland('temple', 18, 0, 0, 'temple');
+const FRONT_Z = 18 * COS30;
+const plaza = { x0: -9.5, x1: 9.5, z0: 4.6, z1: FRONT_Z - 1.5 };
 const lampLights = [];
 (function buildTemple() {
   const T = TEMPLE.group;
@@ -841,9 +873,14 @@ const lampLights = [];
   for (const sx of [-1, 1]) {
     mesh(new THREE.BoxGeometry(5.5, 0.5, 0.7), hedgeMat, sx * 5.6, 0.25, 8.4, T);
     mesh(new THREE.BoxGeometry(0.7, 0.5, 4.2), hedgeMat, sx * 8.4, 0.25, 10.6, T);
+    addObst(T, { x0: sx * 5.6 - 2.75, x1: sx * 5.6 + 2.75, z0: 8.05, z1: 8.75 });
+    addObst(T, { x0: sx * 8.4 - 0.35, x1: sx * 8.4 + 0.35, z0: 8.5, z1: 12.7 });
   }
+  // 大樓和前面的樓梯
+  addObst(T, { x0: -7.8, x1: 7.8, z0: -5.4, z1: 3.9 });
   const globeMat = glow(C.globe, 0.15, 1.8);
   for (const x of [-3.6, 3.6]) {
+    addObst(T, { x, z: 7.6, r: 0.25 });
     mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.8, 8), lam('#55585c'), x, 0.9, 7.6, T);
     mesh(new THREE.SphereGeometry(0.18, 12, 10), globeMat, x, 1.9, 7.6, T);
     const l = new THREE.PointLight('#ffbf6b', 0, 8, 1.6);
@@ -864,11 +901,12 @@ const lampLights = [];
     const mats = Array(6).fill(pillarMat);
     if (text) mats[4] = new THREE.MeshLambertMaterial({ map: sign });
     mesh(new THREE.BoxGeometry(0.55, h, 0.55), mats, x, h / 2, gateZ, T);
+    addObst(T, { x, z: gateZ, r: 0.45 });
     mesh(new THREE.BoxGeometry(0.66, 0.1, 0.66), pillarMat, x, h + 0.05, gateZ, T);
     mesh(new THREE.SphereGeometry(h > 1.5 ? 0.32 : 0.22, 16, 12), globeMat, x, h + 0.1 + (h > 1.5 ? 0.3 : 0.2), gateZ, T);
   });
   const fenceMat = lam('#9aa0a6');
-  for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(1.3, 0.7, 0.06), fenceMat, sx * 3.75, 0.35, gateZ, T);
+  for (const sx of [-1, 1]) { mesh(new THREE.BoxGeometry(1.3, 0.7, 0.06), fenceMat, sx * 3.75, 0.35, gateZ, T); addObst(T, { x0: sx * 3.75 - 0.65, x1: sx * 3.75 + 0.65, z0: gateZ - 0.1, z1: gateZ + 0.1 }); }
   [[8.5, -7.5, 3.6, 2.4, 3], [3.5, -10, 3, 1.6, 2.2], [11, -2.5, 2.4, 1.5, 2.4], [-9, -8, 2.6, 1.3, 2.2]].forEach(([x, z, sx, sy, sz], i) => {
     const h = mesh(new THREE.SphereGeometry(1, 20, 14, 0, Math.PI * 2, 0, Math.PI / 2), i % 2 ? hillMat2 : hillMat, x, 0, z, T);
     h.scale.set(sx, sy, sz);
@@ -946,7 +984,9 @@ function figure(mat, role = '', bob = false, extra = {}) {
   return p;
 }
 const walkers = [];
-function placeWalker(p, parent, x, z, roam = 0.6) {
+function placeWalker(p, parent, x, z, roam = 0.6, maxR = 0) {
+  [x, z] = freeSpot(parent, x, z, roam, maxR);
+  p.userData.obst = addObst(parent, { x0: x - roam - BODY_R * 0.6, x1: x + roam + BODY_R * 0.6, z0: z - BODY_R * 0.6, z1: z + BODY_R * 0.6 });
   p.position.set(x, 0, z);
   p.userData.home = new THREE.Vector3(x, 0, z);
   p.userData.roam = roam;
@@ -955,7 +995,10 @@ function placeWalker(p, parent, x, z, roam = 0.6) {
   walkers.push(p);
 }
 function clearWalkers(list) {
-  for (const p of list) { p.parent && p.parent.remove(p); const i = walkers.indexOf(p); if (i >= 0) walkers.splice(i, 1); }
+  for (const p of list) {
+    if (p.parent) { const ob = obstOf(p.parent), j = ob.indexOf(p.userData.obst); if (j >= 0) ob.splice(j, 1); p.parent.remove(p); }
+    const i = walkers.indexOf(p); if (i >= 0) walkers.splice(i, 1);
+  }
   list.length = 0;
 }
 
@@ -979,10 +1022,13 @@ function syncPlaza(list) {
     if (slot) Object.assign(p.userData, { slot: slot.id, at: 'temple' });
     else p.userData.person = realPeople.indexOf(d);
     p.traverse((m) => { if (m.isMesh) plazaHit.push(m); });
-    let x, z;
-    do { x = plaza.x0 + rnd() * (plaza.x1 - plaza.x0); z = plaza.z0 + rnd() * (plaza.z1 - plaza.z0); }
-    while (Math.abs(x) > 2.4 && z > 7.9 && z < 8.9);
-    placeWalker(p, TEMPLE.group, x, z);
+    // 在廣場上隨機找位置，走動的路線不能碰到樹、路燈、圍籬，也不跟別人重疊
+    let x = 0, z = plaza.z0;
+    for (let tries = 0; tries < 80; tries++) {
+      x = plaza.x0 + rnd() * (plaza.x1 - plaza.x0); z = plaza.z0 + rnd() * (plaza.z1 - plaza.z0);
+      if (pathClear(TEMPLE.group, x, z, 0.6)) break;
+    }
+    placeWalker(p, TEMPLE.group, x, z, 0.6, TEMPLE.R * COS30 - 1);
     p.userData.grow = 1.35;
     plazaPeople.push(p);
   });
@@ -1291,6 +1337,7 @@ COURSES.forEach((c, i) => {
   // 地標面向群島中心
   const mark = new THREE.Group(); mark.rotation.y = faceCam(isl.x, isl.z); g.add(mark);
   MARKS[c.mark](mark);
+  addObst(g, { x: 0, z: 0, r: 2.6 });
   isl.mark = mark;
   // 小步道與樹
   mesh(new THREE.BoxGeometry(1.4, 0.05, R_COURSE * 0.8), lam(C.pave), 0, 0.03, 0, g, false).rotation.y = ang;
@@ -1424,6 +1471,7 @@ function buildOuter(o, x, z, ang, faceY) {
   isl.info = o;
   const b = new THREE.Group(); b.rotation.y = faceY; isl.group.add(b);
   cadreBuilding(o.mark, b, o.color);
+  addObst(isl.group, { x: 0, z: 0, r: o.R * 0.42 });
   bush(o.R * 0.4, -o.R * 0.39, 0.55, isl.group);
   bush(-o.R * 0.45, -o.R * 0.33, 0.6, isl.group);
   isl.members = [];
@@ -1433,7 +1481,7 @@ function buildOuter(o, x, z, ang, faceY) {
       // 圍著建築站一圈，從哪個角度看都看得到幾位
       const a = ang + 0.4 + (k / o.size) * Math.PI * 2, r = o.R * 0.72;
       const p = figure(ghostPersonMat, slot.role, slot.role.includes('坤道'));
-      placeWalker(p, isl.group, Math.sin(a) * r, Math.cos(a) * r, 0.15);
+      placeWalker(p, isl.group, Math.sin(a) * r, Math.cos(a) * r, 0.15, o.R * COS30 - 0.6);
       p.userData.grow = 1.4;
       p.scale.setScalar(1.4);
       p.userData.slot = slot.id;
@@ -1701,6 +1749,7 @@ COURSES.filter((c) => c.pm).forEach((c) => {
   isl.course = c;
   const mark = new THREE.Group(); mark.rotation.y = faceCam(px, pz); isl.group.add(mark);
   MARKS[c.pm.mark](mark);
+  addObst(isl.group, { x: 0, z: 0, r: 1.7 });
   isl.mark = mark;
   bush(Math.sin(ang + 1.9) * R_PM * 0.66, Math.cos(ang + 1.9) * R_PM * 0.66, 0.6, isl.group);
   bush(Math.sin(ang - 1.9) * R_PM * 0.66, Math.cos(ang - 1.9) * R_PM * 0.66, 0.7, isl.group);
@@ -1736,6 +1785,7 @@ function addTeachers(isl, list, dist, spread) {
     g.rotation.y = a;
     g.scale.setScalar(1.3);
     isl.group.add(g);
+    addObst(isl.group, { x: g.position.x, z: g.position.z, r: 1.1 });
     // 身後的小黑板，看得出是老師
     const board = new THREE.Group(); board.position.set(0.55, 0, -0.45); board.rotation.y = -0.35; g.add(board);
     mesh(new THREE.BoxGeometry(0.9, 0.6, 0.05), boardMat, 0, 1.05, 0, board);
@@ -1864,7 +1914,7 @@ function syncCrowd(isl, n) {
   for (let k = 0; k < n; k++) {
     const a = k * 2.39996, r = isl.R * (0.33 + (k % 6) * 0.06);
     const p = figure(k % 2 ? kunMat : qianMat, '', k % 2 === 1);
-    placeWalker(p, isl.group, Math.sin(a) * r, Math.cos(a) * r, 0.3);
+    placeWalker(p, isl.group, Math.sin(a) * r, Math.cos(a) * r, 0.3, isl.R * COS30 - 0.8);
     isl.crowd.push(p);
   }
 }
