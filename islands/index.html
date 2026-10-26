@@ -363,7 +363,7 @@
     <button class="bottle-chip" id="bottleChip" type="button" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span class="bc-ico" aria-hidden="true">🍾</span><span class="bc-txt" id="bottleChipText">瓶中信</span><span class="bc-go" aria-hidden="true">›</span></button>
   </div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.40</span>
+  <span class="ver">v261026.41</span>
   </div></div>
 </div>
 
@@ -1181,14 +1181,68 @@ function syncPlaza(list) {
     }
     placeWalker(p, TEMPLE.group, x, z, 0.6, TEMPLE.R * COS30 - 1);
     p.userData.grow = 1.35;
+    if (AURA_NAMES.some((n) => d.m === n || d.m === mask(n))) addAura(p);
     plazaPeople.push(p);
   });
+}
+/* ---------- 有神照護體的人：金光閃閃，像超級賽亞人一樣，全身冒金色火焰、頭髮豎起來、金色火花往上飄 ---------- */
+const AURA_NAMES = ['黃靖傑'];
+const AURAS = [];
+const auraFlameMat = new THREE.MeshBasicMaterial({ color: '#ff9f0a', transparent: true, opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+const auraShellMat = new THREE.MeshBasicMaterial({ color: '#ffb31a', transparent: true, opacity: 0.12, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+const auraSparkMat = new THREE.MeshBasicMaterial({ color: '#ffd23f', transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+const auraFlameGeo = new THREE.ConeGeometry(0.11, 0.9, 8, 1, true).translate(0, 0.45, 0);
+const auraShellGeo = new THREE.LatheGeometry([[0, 0], [0.5, 0.05], [0.62, 0.45], [0.58, 0.85], [0.38, 1.25], [0.12, 1.55], [0, 1.6]].map(([r, y]) => new THREE.Vector2(r, y)), 20);
+const spikeMat = new THREE.MeshLambertMaterial({ color: '#ffc21a', emissive: '#e08a00', emissiveIntensity: 0.8 });
+function addAura(p) {
+  const a = new THREE.Group(); a.userData.ring = true; p.add(a);
+  const mark = (o) => { o.userData.ring = true; return o; };
+  // 金色外光：一層半透明、會呼吸的光罩
+  const shell = mark(new THREE.Mesh(auraShellGeo, auraShellMat)); a.add(shell);
+  // 一圈往上竄的金色火焰
+  const flames = [];
+  for (let i = 0; i < 12; i++) {
+    const f = mark(new THREE.Mesh(auraFlameGeo, auraFlameMat));
+    const ang = (i / 12) * Math.PI * 2;
+    f.position.set(Math.sin(ang) * 0.42, 0.05, Math.cos(ang) * 0.42);
+    f.rotation.set(Math.cos(ang) * 0.25, 0, -Math.sin(ang) * 0.25);
+    a.add(f); flames.push(f);
+  }
+  // 頭髮豎起來：頭頂一圈金色尖刺（超級賽亞人）
+  for (let i = 0; i < 9; i++) {
+    const ang = (i / 9) * Math.PI * 2, sp = mark(new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.42, 6), spikeMat));
+    sp.position.set(Math.sin(ang) * 0.17, 0.88, Math.cos(ang) * 0.12 - 0.03);
+    sp.rotation.set(Math.cos(ang) * 0.6 - 0.15, 0, -Math.sin(ang) * 0.7);
+    a.add(sp);
+  }
+  // 往上飄的金色火花
+  const sparks = [];
+  for (let i = 0; i < 14; i++) {
+    const s = mark(new THREE.Mesh(dotGeo, auraSparkMat.clone()));
+    s.userData.seed = Math.random() * 10; a.add(s); sparks.push(s);
+  }
+  AURAS.push({ p, shell, flames, sparks });
 }
 
 /* =========================================================
    課程島的地標
    ========================================================= */
 const animators = [];
+// 有神照護體的金色光（AURAS 在前面建好）
+animators.push((t) => {
+  for (const au of AURAS) {
+    if (!au.p.parent) continue;
+    au.shell.scale.set(1 + Math.sin(t * 6) * 0.05, 1 + Math.sin(t * 4.3) * 0.06, 1 + Math.sin(t * 6) * 0.05);
+    au.shell.rotation.y = t * 0.8;
+    au.flames.forEach((f, i) => { f.scale.set(1, 0.7 + Math.abs(Math.sin(t * 9 + i * 1.7)) * 0.7 + Math.random() * 0.15, 1); });
+    au.sparks.forEach((s) => {
+      const k = (t * 0.7 + s.userData.seed) % 1, ang = s.userData.seed * 7 + k * 2;
+      s.position.set(Math.sin(ang) * (0.3 + k * 0.15), 0.1 + k * 1.6, Math.cos(ang) * (0.3 + k * 0.15));
+      s.scale.setScalar(0.035 * (1 - k * 0.5));
+      s.material.opacity = Math.sin(k * Math.PI);
+    });
+  }
+});
 // 拉拉炮：每個人每 4～7 秒拉一次，彼此錯開；紙花往錐口方向噴出，受重力飄落、旋轉、淡掉
 const CONFETTI_COLORS = ['#e63946', '#f4c430', '#ff8fab', '#3a86ff', '#2ec27e', '#ffffff'];
 const confettiGeo = new THREE.PlaneGeometry(0.16, 0.1), streamerGeo = new THREE.BoxGeometry(0.035, 0.6, 0.01);
