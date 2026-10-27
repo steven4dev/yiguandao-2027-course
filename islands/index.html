@@ -387,7 +387,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.53</span>
+  <span class="ver">v261026.54</span>
   </div></div>
 </div>
 
@@ -2645,16 +2645,19 @@ function makeBottle(color, i) {
   scene.add(b);
   return b;
 }
-// 依留言數量把瓶子排在島的周圍，最新的離島最近；沒有留言時放幾個裝飾用的空瓶
+// 一則留言＝一個瓶子，跟登島人數一樣一比一；最新的離島最近，越舊的越往外漂（像向日葵種子那樣螺旋排開，不會疊在一起）
+// 最多排 60 個，再多就會漂到鄰近的島，那時候島上只放最新的 60 個（數字還是照實際留言數）
+const BOTTLE_MAX = 60;
 function placeBottles() {
   for (const b of bottleMeshes) scene.remove(b);
   bottleMeshes.length = 0; bottleHit.length = 0;
-  const list = bottles.length ? bottles.slice(0, 30) : [0, 1, 2, 3, 4].map(() => null);
+  const list = bottles.slice(0, BOTTLE_MAX);
   list.forEach((m, i) => {
-    const a = i * 2.39996 + 0.6, r = 7.2 + (i % 4) * 1.5 + Math.floor(i / 12) * 1.2;
+    const a = i * 2.39996 + 0.6, r = 7.4 + Math.sqrt(i) * 1.0;
     const b = makeBottle(m ? moodColor(m.mood) : '#bfeee9', m ? i : -1);
     b.userData.home = new THREE.Vector3(bottleIsl.x + Math.sin(a) * r, -3.15, bottleIsl.z + Math.cos(a) * r);
     b.userData.phase = i * 1.7;
+    b.scale.setScalar(1.4); b.userData.size = 1.4;
     b.position.copy(b.userData.home);
     bottleMeshes.push(b);
   });
@@ -2677,7 +2680,7 @@ animators.push((t) => {
     const u = b.userData, h = u.home;
     b.position.set(h.x + Math.sin(t * 0.3 + u.phase) * 0.4, h.y + Math.sin(t * 1.4 + u.phase) * 0.08, h.z + Math.cos(t * 0.25 + u.phase) * 0.4);
     b.rotation.y = t * 0.15 + u.phase;
-    b.scale.setScalar(u.bottle === sel && panelMode !== 'closed' ? 1.5 + Math.sin(t * 4) * 0.1 : 1);
+    b.scale.setScalar(u.bottle === sel && panelMode !== 'closed' ? 2.1 + Math.sin(t * 4) * 0.14 : u.size || 1);
   }
 });
 
