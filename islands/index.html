@@ -400,7 +400,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261027.09</span>
+  <span class="ver">v261027.10</span>
   </div></div>
 </div>
 
@@ -1165,10 +1165,19 @@ function figure(mat, role = '', bob = false, extra = {}) {
   }
   // 妙麗裝扮（生命靈數 朱宸慧講師）：蓬蓬的棕色捲髮、霍格華茲黑袍、白襯衫配紅金領帶、葛來分多圍巾，右手拿魔杖
   if (extra.hermione) {
-    const hair = lam('#7a4a2a'), robe = lam('#24232b'), red = lam('#9b1c1f'), gold = lam('#e8b53a'), white = lam('#ffffff');
-    for (const [x, y, z, sx, sy, sz] of [[0, 1.24, -0.04, 0.55, 0.28, 0.53], [0, 0.98, -0.32, 0.5, 0.45, 0.3], [0, 0.7, -0.3, 0.42, 0.28, 0.24],
-      [-0.42, 1.02, -0.1, 0.22, 0.3, 0.3], [0.42, 1.02, -0.1, 0.22, 0.3, 0.3], [-0.4, 0.74, -0.16, 0.2, 0.22, 0.24], [0.4, 0.74, -0.16, 0.2, 0.22, 0.24],
-      [-0.2, 1.3, 0.3, 0.17, 0.11, 0.14], [0.06, 1.33, 0.33, 0.17, 0.1, 0.14], [0.3, 1.27, 0.28, 0.15, 0.11, 0.13]]) part(dotGeo, hair, x, y, z).scale.set(sx, sy, sz);
+    const hair = lam('#7a4b30'), robe = lam('#24232b'), red = lam('#9b1c1f'), gold = lam('#e8b53a'), white = lam('#ffffff');
+    // 髮型參考黏土人妙麗：頭頂一整片髮帽（前面高到額頭、後面垂到後頸），瀏海往一側斜撥，兩側和後面是過肩的大波浪
+    const cap = part(new THREE.SphereGeometry(0.55, 28, 16, 0, Math.PI * 2, 0, 1.75), hair, 0, 0.97, -0.02);
+    cap.rotation.x = -0.6;
+    for (const [x, y, z, sx, sy, rz] of [[-0.25, 1.17, 0.38, 0.2, 0.1, 0.5], [-0.03, 1.22, 0.44, 0.22, 0.09, 0.32], [0.2, 1.21, 0.41, 0.17, 0.09, 0.15], [0.36, 1.12, 0.3, 0.12, 0.13, -0.5]])
+    { const b = part(dotGeo, hair, x, y, z); b.scale.set(sx, sy, 0.1); b.rotation.z = rz; }
+    // 兩側長髮：一片片拉長的橢圓重疊成柔順的大波浪，越往下越往外蓬；前面一綹框住臉，後面一綹接到背後
+    for (const sx of [-1, 1]) for (const [z, n] of [[0.14, 3], [-0.14, 4]]) for (let k = 0; k < n; k++) {
+      const lock = part(dotGeo, hair, sx * (0.46 + k * 0.035 + (k % 2) * 0.03), 0.98 - k * 0.15, z - k * 0.02);
+      lock.scale.set(0.15, 0.19, 0.15); lock.rotation.z = sx * (k % 2 ? -0.25 : 0.15);
+    }
+    for (const x of [-0.26, 0, 0.26]) for (let k = 0; k < 4; k++)
+      part(dotGeo, hair, x * (1 + k * 0.12) + (k % 2) * 0.03, 0.96 - k * 0.15, -0.4 + k * 0.01).scale.set(0.19, 0.19, 0.14);
     part(robeGeo, robe, 0, 0, 0);
     p.userData.arms.forEach((sh) => part(new THREE.CylinderGeometry(0.1, 0.17, 0.26, 12), robe, 0, -0.16, 0, sh));
     for (const sx of [-1, 1]) part(new THREE.BoxGeometry(0.1, 0.24, 0.03), white, sx * 0.07, 0.47, 0.33).rotation.z = sx * 0.45;
@@ -1183,7 +1192,7 @@ function figure(mat, role = '', bob = false, extra = {}) {
       for (const y of [-0.06, 0.06]) part(new THREE.BoxGeometry(0.105, 0.035, 0.045), gold, 0, y, 0, end);
     }
     const wand = new THREE.Group(); wand.position.set(0, -0.3, 0.04); wand.rotation.x = -1.2; p.userData.arms[1].add(wand);
-    part(new THREE.CylinderGeometry(0.014, 0.022, 0.42, 6), lam('#5a3a22'), 0, -0.2, 0, wand);
+    part(new THREE.CylinderGeometry(0.014, 0.022, 0.42, 6), gold, 0, -0.2, 0, wand);
     const spark = part(dotGeo, new THREE.MeshBasicMaterial({ color: '#fff3a8' }), 0, -0.42, 0, wand);
     spark.scale.setScalar(0.05); spark.userData.ring = true;
     p.userData.spark = spark;
