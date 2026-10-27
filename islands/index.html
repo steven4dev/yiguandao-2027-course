@@ -400,7 +400,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261027.11</span>
+  <span class="ver">v261027.12</span>
   </div></div>
 </div>
 
@@ -2464,31 +2464,44 @@ const YOGA_POSES = [];   // 墊子上跟著講師做動作的人偶（講師也�
   const mark = new THREE.Group(); mark.rotation.y = faceCam(yogaIsl.x, yogaIsl.z); g.add(mark);
   yogaIsl.mark = mark;
   // 講台後面左邊一顆太陽、右邊一彎月亮：拜日式、拜月式，一陽一陰
+  // 做成有厚度的立體（太陽是球、光芒是小圓錐、月亮和星星是擠出來的厚片），從島的哪一面看都看得到
+  const glow = (c, k = 0.55) => lam(c, { emissive: c, emissiveIntensity: k });
   const sunG = new THREE.Group(); sunG.position.set(-2.4, 3.3, -3.9); mark.add(sunG);
-  mesh(new THREE.CircleGeometry(1.0, 32), new THREE.MeshBasicMaterial({ color: '#ffb54d' }), 0, 0, 0, sunG, false);
+  mesh(new THREE.SphereGeometry(0.9, 24, 16), glow('#ffb54d'), 0, 0, 0, sunG, false);
   const rays = new THREE.Group(); sunG.add(rays);
   for (let i = 0; i < 12; i++) {
-    const a = (i / 12) * Math.PI * 2, ray = mesh(new THREE.PlaneGeometry(0.14, 0.48), new THREE.MeshBasicMaterial({ color: '#ffd27a' }), Math.cos(a) * 1.38, Math.sin(a) * 1.38, -0.02, rays, false);
+    const a = (i / 12) * Math.PI * 2, ray = mesh(new THREE.ConeGeometry(0.12, 0.42, 8), glow('#ffd27a'), Math.cos(a) * 1.25, Math.sin(a) * 1.25, 0, rays, false);
     ray.rotation.z = a - Math.PI / 2;
   }
-  // 彎月：大圓減掉往右偏的同樣大小的圓，留下開口朝右的月牙
+  // 彎月：大圓減掉往右偏的同樣大小的圓，留下開口朝右的月牙，再擠出厚度、磨圓邊
   const MR = 1.0, MD = 0.75, phi = Math.atan2(Math.sqrt(MR * MR - (MD * MD) / 4), MD / 2);
   const crescent = new THREE.Shape();
   crescent.absarc(0, 0, MR, phi, Math.PI * 2 - phi, false);
   crescent.absarc(MD, 0, MR, Math.PI + phi, Math.PI - phi, true);
+  const thick = (shape, depth, bevel) => {
+    const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 3, curveSegments: 24 });
+    geo.translate(0, 0, -depth / 2);
+    return geo;
+  };
   const moonG = new THREE.Group(); moonG.position.set(2.4, 3.3, -3.9); mark.add(moonG);
-  const moon = mesh(new THREE.ShapeGeometry(crescent, 24), new THREE.MeshBasicMaterial({ color: '#ffe48a' }), -0.3, 0, 0, moonG, false);
+  const moon = mesh(thick(crescent, 0.3, 0.08), glow('#ffe48a'), -0.3, 0, 0, moonG, false);
   moon.rotation.z = -0.35;
-  const stars = [[0.75, 0.85, 0.13], [1.05, -0.35, 0.1], [0.45, -1.0, 0.08]].map(([x, y, r]) => {
-    const st = mesh(new THREE.CircleGeometry(r, 5), new THREE.MeshBasicMaterial({ color: '#fff7d6' }), x, y, 0, moonG, false);
-    st.rotation.z = Math.random();
+  const starShape = new THREE.Shape();
+  for (let k = 0; k < 10; k++) {
+    const a = Math.PI / 2 + (k * Math.PI) / 5, r = k % 2 ? 0.42 : 1;
+    starShape[k ? 'lineTo' : 'moveTo'](Math.cos(a) * r, Math.sin(a) * r);
+  }
+  const starGeo = thick(starShape, 0.25, 0.08);
+  const stars = [[0.75, 0.85, 0.15], [1.05, -0.35, 0.12], [0.45, -1.0, 0.1]].map(([x, y, r]) => {
+    const st = new THREE.Group(); st.position.set(x, y, 0); st.userData.r = r; moonG.add(st);
+    mesh(starGeo, glow('#fff7d6', 0.7), 0, 0, 0, st, false);
     return st;
   });
   animators.push((t) => {
     sunG.scale.setScalar(1 + Math.sin(t * 0.8) * 0.04);
     rays.rotation.z = t * 0.12;
     moonG.rotation.z = Math.sin(t * 0.5) * 0.06;
-    stars.forEach((st, i) => st.scale.setScalar(0.7 + 0.3 * Math.abs(Math.sin(t * 1.3 + i * 1.7))));
+    stars.forEach((st, i) => { st.scale.setScalar(st.userData.r * (0.7 + 0.3 * Math.abs(Math.sin(t * 1.3 + i * 1.7)))); st.rotation.y = t * 0.6 + i; });
   });
   // 木頭講台
   mesh(new THREE.BoxGeometry(3.2, 0.35, 1.8), lam(C.wood), 0, 0.18, -2.7, mark);
