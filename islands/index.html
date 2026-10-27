@@ -95,6 +95,12 @@
   .bottle-count:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; border-radius: 6px; }
   .bottle-count.new b { animation: bump 0.5s ease-in-out 2; display: inline-block; }
   @keyframes bump { 50% { transform: scale(1.3); } }
+  /* 歡迎今天登島的夥伴：名字可以點，點了飛到他的小人偶 */
+  .brand .count.welcome { font-size: 12.5px; }
+  .welcome button { border: 0; padding: 0 1px; background: none; color: var(--brick); font: inherit; font-weight: 700; cursor: pointer; }
+  .welcome button:hover { text-decoration: underline; }
+  .welcome button:focus-visible { outline: 2px solid var(--jade); outline-offset: 1px; border-radius: 4px; }
+  .welcome .more { color: var(--muted); white-space: nowrap; }
   .board { justify-self: start; display: inline-flex; align-items: baseline; gap: 6px; margin: 2px 0; padding: 6px 14px; border-radius: 999px;
     background: var(--brick); color: #fff; font-weight: 700; font-size: 14px; text-decoration: none; box-shadow: 0 4px 12px color-mix(in srgb, var(--brick) 35%, transparent);
     transition: transform 0.2s; }
@@ -389,11 +395,12 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <div class="brand-more"><div>
   <p class="count" id="brandCount"></p>
+  <p class="count welcome" id="brandWelcome" hidden></p>
   <p class="count brand-next" id="brandNext"></p>
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261027.06</span>
+  <span class="ver">v261027.07</span>
   </div></div>
 </div>
 
@@ -2945,9 +2952,30 @@ function applyDate() {
   const nv = visitorsNow().filter((p) => p.date <= now).length;
   document.getElementById('brandCount').innerHTML = `<b>${list.length}</b> 位夥伴已登島${nv ? `<span class="visit-n">・另有 <b class="n-green">${nv}</b> 位旅人來逛逛</span>` : ''}`;
   document.getElementById('brandNext').innerHTML = countdown;
+  renderWelcome(list.filter((p) => p.date === now), now === todayISO);
   const view = now + '|' + dataStamp + '|' + (selected || '');
   if (view !== lastView) { lastView = view; renderPanel(); syncTour(); }
 }
+
+// 歡迎今天登島的夥伴：最多列 3 位，其餘寫「等 N 位」；時光捲軸拉到別天就變成「這天登島的夥伴」
+let welcomeList = [];
+function renderWelcome(arr, isToday) {
+  const el = document.getElementById('brandWelcome');
+  welcomeList = arr.slice().reverse();
+  el.hidden = !arr.length;
+  if (!arr.length) { el.innerHTML = ''; return; }
+  const names = welcomeList.slice(0, 3).map((d, k) => `<button type="button" data-k="${k}">${esc(d.m)}</button>`).join('、');
+  // 「等 N 位 👋」包成一段不換行，手機上不會把「等」和人數拆到兩行
+  const tail = arr.length > 3 ? `<span class="more"> 等 <b class="n-green">${arr.length}</b> 位 👋</span>` : ' 👋';
+  el.innerHTML = `🎉 ${isToday ? '歡迎今天登島的夥伴' : '這天登島的夥伴'}：${names}${tail}`;
+}
+document.getElementById('brandWelcome').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-k]');
+  if (!b) return;
+  e.stopPropagation();
+  const d = welcomeList[+b.dataset.k], slot = mainSlotOf(d);
+  pickHit(slot ? { kind: 'm', slot } : { kind: 'p', i: realPeople.indexOf(d), d });
+});
 
 /* =========================================================
    資訊卡
