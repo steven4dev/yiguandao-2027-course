@@ -1,0 +1,42 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&family=Noto+Sans+TC:wght@500;700;900&display=block">
+<style>
+*{box-sizing:border-box}
+body{margin:0;width:1200px;height:630px;overflow:hidden;font-family:"Noto Sans TC",sans-serif;color:#1f2a3a;
+ background:linear-gradient(160deg,#d3eef6 0%,#e3f4f3 45%,#f6efdc 100%);position:relative}
+.art{position:absolute;right:-60px;top:-30px;width:900px;height:690px;object-fit:cover;object-position:55% 45%;
+ -webkit-mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.55) 16%,#000 34%);mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.55) 16%,#000 34%)}
+.cloud{position:absolute;background:#fff;border-radius:60px;opacity:.85;filter:blur(.3px)}
+.cloud::before,.cloud::after{content:"";position:absolute;background:#fff;border-radius:50%}
+.c1{left:470px;top:520px;width:170px;height:56px}.c1::before{width:80px;height:80px;left:24px;top:-38px}.c1::after{width:60px;height:60px;left:84px;top:-26px}
+.txt{position:absolute;left:70px;top:70px;width:560px}
+.kick{font-weight:700;font-size:26px;color:#1d8a5f;letter-spacing:.04em}
+h1{margin:6px 0 0;font-family:"Noto Serif TC",serif;font-weight:900;font-size:124px;line-height:1.08;letter-spacing:.04em;color:#1f2a3a}
+.pill{display:inline-block;margin-top:14px;padding:10px 30px 12px;border-radius:18px;background:#d6336c;color:#fff;font-weight:900;font-size:46px;letter-spacing:.06em;box-shadow:0 8px 20px rgba(214,51,108,.28)}
+.desc{margin-top:22px;font-size:29px;font-weight:700;line-height:1.55}
+.desc b{color:#d9770a}
+.btns{margin-top:26px;display:flex;gap:16px}
+.btn{padding:13px 28px;border-radius:999px;color:#fff;font-weight:900;font-size:28px}
+.g{background:#1d8a5f}.o{background:#d9770a}
+.chip{position:absolute;background:#fff;border:3px solid #e8a33a;border-radius:16px;padding:9px 16px;font-weight:900;font-size:22px;color:#3f2c22;box-shadow:0 8px 18px rgba(50,30,15,.16);white-space:nowrap}
+.chip small{display:block;font-weight:500;font-size:14px;color:#7a6455;margin-top:1px}
+.k1{right:46px;top:34px;transform:rotate(3deg)}
+.k2{right:300px;top:455px;transform:rotate(-4deg);border-color:#d6336c}
+.k3{right:40px;top:520px;transform:rotate(2deg);border-color:#1d8a5f}
+.k4{right:370px;top:40px;transform:rotate(-3deg);border-color:#5b8fc9}
+</style></head><body>
+<img class="art" src="art.png">
+
+<div class="chip k4" style="border-color:#2f80c9">💌 寫一封瓶中信<small>不用登入，可以匿名</small></div>
+<div class="chip k1">🏝️ 許願蓋島<small>想要哪座島多什麼？</small></div>
+<div class="chip k2">🧑‍🎨 幫人偶換造型</div>
+<div class="chip k3">🕺 點播幹部的動作</div>
+<div class="txt">
+  <div class="kick" style="color:#2f80c9">全真群島・新島上岸 🎉</div>
+  <h1 style="font-size:116px">漂流瓶島</h1>
+  <div class="pill" style="background:#2f80c9;box-shadow:0 8px 20px rgba(47,128,201,.3)">撿到一封瓶中信</div>
+  <div class="desc">想說的話、許願、點子，<br>通通裝進瓶子丟進海裡——<b style="color:#2f80c9">島主會撈起來！</b></div>
+  <div class="btns"><span class="btn" style="background:#2f80c9">🍾 丟一個瓶子</span><span class="btn o">▶ 點開逛群島</span></div>
+</div>
+<script>document.fonts.ready.then(()=>{document.title='ready'})</script>
+</body></html>
