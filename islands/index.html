@@ -393,7 +393,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261027.01</span>
+  <span class="ver">v261027.03</span>
   </div></div>
 </div>
 
@@ -2751,6 +2751,46 @@ function addTag(isl, text, cls, h, onClick = () => select(isl.key)) {
   tags.push({ el: b, isl, h });
   isl.tag = b;
 }
+/* ---------- 火把：每座島靠近鏡頭的兩個角各插一支；天黑後點亮、火焰跳動，白天熄掉 ----------
+   不放真的光源（二十幾座島都放手機會卡），用會發光的火焰＋一圈柔光貼圖，看起來就像亮著 */
+const TORCHES = [];
+const torchPoleMat = lam('#6b4a2f'), torchCupMat = lam('#3a3a42');
+const flameOuterGeo = new THREE.ConeGeometry(0.22, 0.75, 10).translate(0, 0.37, 0), flameInnerGeo = new THREE.ConeGeometry(0.11, 0.45, 8).translate(0, 0.22, 0);
+const torchGlowTex = canvasTex(64, 64, (c) => { const g = c.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,200,110,0.9)'); g.addColorStop(0.4, 'rgba(255,150,60,0.35)'); g.addColorStop(1, 'rgba(255,120,40,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); });
+function addTorch(parent, x, z, h = 1.9) {
+  const t = new THREE.Group(); t.position.set(x, 0, z); parent.add(t);
+  mesh(new THREE.CylinderGeometry(0.06, 0.08, h, 6), torchPoleMat, 0, h / 2, 0, t);
+  mesh(new THREE.CylinderGeometry(0.17, 0.09, 0.22, 10), torchCupMat, 0, h + 0.06, 0, t);
+  const outer = mesh(flameOuterGeo, new THREE.MeshBasicMaterial({ color: '#ff8a2a', transparent: true, opacity: 0, depthWrite: false }), 0, h + 0.16, 0, t, false);
+  const inner = mesh(flameInnerGeo, new THREE.MeshBasicMaterial({ color: '#ffe08a', transparent: true, opacity: 0, depthWrite: false }), 0, h + 0.16, 0, t, false);
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: torchGlowTex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+  glow.position.y = h + 0.35; glow.scale.setScalar(1.6); t.add(glow);
+  addObst(parent, { x, z, r: 0.35 });
+  TORCHES.push({ outer, inner, glow, phase: Math.random() * 10 });
+}
+for (const isl of Object.values(islands)) {
+  // 六邊形的角在 30°、90°…；挑最靠近一開始鏡頭方向的兩個角，插在角的內側
+  const face = Math.atan2(HOME.pos.x - isl.x, HOME.pos.z - isl.z);
+  const corners = [0, 1, 2, 3, 4, 5].map((k) => Math.PI / 6 + (k * Math.PI) / 3)
+    .sort((a, b) => Math.abs(Math.atan2(Math.sin(a - face), Math.cos(a - face))) - Math.abs(Math.atan2(Math.sin(b - face), Math.cos(b - face)))).slice(0, 2);
+  const r = isl.R - (isl.R > 10 ? 1.6 : 1.0), h = isl.R > 10 ? 2.4 : 1.9;
+  for (const a of corners) addTorch(isl.group, Math.sin(a) * r, Math.cos(a) * r, h);
+}
+animators.push((t) => {
+  // 黃昏開始慢慢點亮，夜晚最亮；白天完全熄掉
+  const lit = THREE.MathUtils.smoothstep(nightT, 0.25, 0.75);
+  for (const f of TORCHES) {
+    const fl = 0.85 + Math.sin(t * 13 + f.phase) * 0.1 + Math.sin(t * 7.3 + f.phase * 2) * 0.08;
+    f.outer.visible = f.inner.visible = f.glow.visible = lit > 0.01;
+    if (!f.outer.visible) continue;
+    f.outer.scale.set(1, fl * lit, 1); f.inner.scale.set(1, (0.9 + Math.sin(t * 17 + f.phase) * 0.15) * lit, 1);
+    f.outer.rotation.y = t * 2 + f.phase;
+    f.outer.material.opacity = 0.9 * lit; f.inner.material.opacity = lit;
+    f.glow.material.opacity = (0.75 + Math.sin(t * 9 + f.phase) * 0.15) * lit;
+    f.glow.scale.setScalar(2.2 + fl * 0.5);
+  }
+});
+
 addTag(TEMPLE, '全真島', 'main', 9);
 // 標籤只留島名，日期和完整課名放在資訊卡裡
 COURSES.forEach((c) => addTag(islands[c.key], `${c.isle}${c.game ? ' 🎮' : ''}`, '', 7.6));
