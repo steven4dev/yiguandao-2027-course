@@ -116,12 +116,12 @@
   .brand-more { display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--bt), opacity var(--bt), margin var(--bt), visibility 0s; }
   .brand-more > div { display: grid; gap: 4px; min-height: 0; overflow: hidden; padding: 0 8px 8px; margin: 0 -8px -8px; }
   /* 收合鈕跟資訊卡、時光捲軸用同一顆：小圓鈕＋箭頭；展開時 ⌄（收合），收起來時轉成 ⌃（展開） */
-  .brand-toggle { position: absolute; top: 8px; right: 8px; opacity: 0; visibility: hidden;
+  .brand-toggle { position: absolute; top: 8px; right: 8px;
     transition: opacity var(--bt), top var(--bt), transform var(--bt), visibility 0s linear 0.32s; }
   .brand-toggle svg { transition: transform 0.2s; }
   .brand.brand-mini .brand-toggle svg { transform: rotate(180deg); }
-  .brand.foldable { padding-right: 46px; }
-  .brand.foldable .brand-toggle { opacity: 1; visibility: visible; transition: opacity var(--bt), top var(--bt), transform var(--bt), visibility 0s; }
+  /* 收合鈕一直都在（初始狀態也可以自己收起來） */
+  .brand { padding-right: 46px; }
   .brand.brand-mini { padding: 6px 42px 6px 14px; max-width: 84px; cursor: pointer; }
   .brand.brand-mini .brand-more > div { white-space: nowrap; }
   .brand.brand-mini h1 { font-size: 17px; }
@@ -357,7 +357,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.50</span>
+  <span class="ver">v261026.51</span>
   </div></div>
 </div>
 
@@ -2973,13 +2973,15 @@ const dock = document.getElementById('dock');
 const MOBILE_UI = matchMedia('(max-width: 720px)');
 const brand = document.getElementById('brand');
 let brandPeek = false;   // 資訊卡開著時，使用者自己把品牌卡展開
+let brandFolded = false; // 沒開資訊卡時，使用者自己把品牌卡收起來（會記在這台裝置上）
+try { brandFolded = localStorage.getItem('islands-brand-folded') === '1'; } catch (e) {}
 let searching = false;   // 搜尋模式：鏡頭停在瞭望氣球旁邊，其他面板縮小
 function setUI(next) {
   if (next.panel) panelMode = next.panel;
   if (next.panel === 'open' || panelMode === 'closed') brandPeek = false;
   if (next.brand != null) brandPeek = next.brand;
   // 點開島（資訊卡出現）時，左上角品牌卡自動收成小膠囊；資訊卡關掉就恢復
-  const foldable = panelMode !== 'closed' || searching, mini = foldable && (!brandPeek || searching);
+  const foldable = panelMode !== 'closed' || searching, mini = foldable ? !brandPeek || searching : brandFolded;
   brand.classList.toggle('foldable', foldable);
   brand.classList.toggle('brand-mini', mini);
   const bt = document.getElementById('brandToggle');
@@ -3001,8 +3003,15 @@ function setUI(next) {
   dock.hidden = MOBILE_UI.matches && panelMode === 'open';
   requestAnimationFrame(measureFree);
 }
-document.getElementById('brandToggle').onclick = (e) => { e.stopPropagation(); setUI({ brand: brand.classList.contains('brand-mini') }); };
-brand.addEventListener('click', (e) => { if (brand.classList.contains('brand-mini') && !e.target.closest('a')) setUI({ brand: true }); });
+// 開著資訊卡時：暫時展開／收回；沒開資訊卡時：自己決定要不要收起來，並記住
+function toggleBrand(open) {
+  if (brand.classList.contains('foldable')) { setUI({ brand: open }); return; }
+  brandFolded = !open;
+  try { localStorage.setItem('islands-brand-folded', brandFolded ? '1' : '0'); } catch (e) {}
+  setUI({});
+}
+document.getElementById('brandToggle').onclick = (e) => { e.stopPropagation(); toggleBrand(brand.classList.contains('brand-mini')); };
+brand.addEventListener('click', (e) => { if (brand.classList.contains('brand-mini') && !e.target.closest('a')) toggleBrand(true); });
 document.getElementById('panelFold').onclick = () => setUI({ panel: panelMode === 'open' ? 'mini' : 'open' });
 document.getElementById('panelMini').onclick = () => setUI({ panel: 'open' });
 document.getElementById('panelClose').onclick = () => setUI({ panel: 'closed' });
