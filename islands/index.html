@@ -393,7 +393,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261027.03</span>
+  <span class="ver">v261027.04</span>
   </div></div>
 </div>
 
@@ -2415,7 +2415,8 @@ const NEW_DIR = new THREE.Vector2(islands.c4.x, islands.c4.z).normalize();
 const newIsl = makeIsland('newisle', 21, NEW_DIR.x * 118, NEW_DIR.y * 118, 'zhongshu');
 {
   const g = newIsl.group;
-  const mark = new THREE.Group(); mark.rotation.y = faceCam(newIsl.x, newIsl.z); g.add(mark);
+  // 建築的正面跟六邊形的一條邊平行：把朝向鏡頭的角度對齊到最近的 60° 倍數（六邊形每條邊的法線方向）
+  const mark = new THREE.Group(); mark.rotation.y = Math.round(faceCam(newIsl.x, newIsl.z) / (Math.PI / 3)) * (Math.PI / 3); g.add(mark);
   newIsl.mark = mark;
   const beige = lam('#d9cbb3'), white = lam('#f2efe8'), silver = lam('#c9ccd1'), maroon = lam('#7a3b34'), gold = lam('#d9a43a', { emissive: '#3a2500' });
   const tealGlass = lam('#4fa8a0', { emissive: '#0c2a28' });
