@@ -391,7 +391,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.55</span>
+  <span class="ver">v261026.56</span>
   </div></div>
 </div>
 
@@ -2026,6 +2026,14 @@ function pier(isl, dir) {
   // 棧板的頂面要比草地高一點，兩個面一樣高時會互相搶著顯示、一直閃爍
   mesh(new THREE.BoxGeometry(1.6, 0.18, LEN), plankMat, 0, 0.02, 0, g);
   for (const sx of [-0.7, 0.7]) for (const sz of [-LEN / 2 + 0.2, LEN / 2 - 0.2]) mesh(new THREE.CylinderGeometry(0.09, 0.09, 3.5, 6), trunkMat, sx, -1.75, sz, g);
+  // 棧板末端往下到水面的木梯：竹筏比棧板低三公尺多，乘客從這裡爬上爬下；上面兩根扶手彎出棧板好抓
+  const ladder = new THREE.Group(); ladder.position.set(0, 0, LEN / 2 + 0.08); ladder.rotation.x = -0.1; g.add(ladder);
+  const railM = lam('#7a5236'), rungM = lam('#a8794f');
+  for (const sx of [-0.32, 0.32]) {
+    mesh(new THREE.BoxGeometry(0.08, 3.8, 0.08), railM, sx, -1.55, 0, ladder);
+    const hand = mesh(new THREE.TorusGeometry(0.22, 0.04, 6, 10, Math.PI), railM, sx, 0.35, -0.22, ladder); hand.rotation.y = Math.PI / 2;
+  }
+  for (let i = 0; i < 10; i++) mesh(new THREE.BoxGeometry(0.64, 0.06, 0.07), rungM, 0, -0.2 - i * 0.34, 0, ladder);
   return new THREE.Vector3(isl.x + dir.x * (d0 + LEN + 1.6), 0, isl.z + dir.z * (d0 + LEN + 1.6));
 }
 const stopGate = pier(gateIsl, ROUTE_DIR);
