@@ -357,7 +357,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.48</span>
+  <span class="ver">v261026.49</span>
   </div></div>
 </div>
 
@@ -2540,13 +2540,35 @@ const bottleHit = [], bottleMeshes = [];
   const g = bottleIsl.group;
   // 沙灘：一圈淡黃色的沙，加一棵椰子樹
   const sand = mesh(new THREE.CylinderGeometry(5.2, 5.2, 0.1, 6), lam('#f2dfae'), 0, 0.03, 0, g, false); sand.rotation.y = Math.PI / 6;
-  mesh(new THREE.CylinderGeometry(0.16, 0.24, 3.2, 8), trunkMat, -2.6, 1.6, -1.6, g).rotation.z = 0.15;
-  for (let i = 0; i < 6; i++) { const lf = mesh(new THREE.BoxGeometry(1.8, 0.06, 0.5), lam('#4f9a4a'), -2.4, 3.2, -1.6, g); lf.rotation.set(0, (i / 6) * Math.PI * 2, -0.45); lf.translateX(0.8); }
+  // 椰子樹：樹幹微微斜，樹葉和椰子都長在樹幹頂端（掛在同一個斜的群組裡，才不會錯開）
+  const palm = new THREE.Group(); palm.position.set(-2.6, 0, -1.6); palm.rotation.z = 0.15; g.add(palm);
+  for (let i = 0; i < 4; i++) mesh(new THREE.CylinderGeometry(0.15 - i * 0.01, 0.2 - i * 0.01, 0.82, 8), lam(i % 2 ? '#8a6040' : '#7a5236'), 0, 0.41 + i * 0.8, 0, palm);
+  const crown = new THREE.Group(); crown.position.y = 3.25; palm.add(crown);
+  const leafMat = lam('#4f9a4a'), leafMat2 = lam('#5fae55');
+  for (let i = 0; i < 7; i++) {
+    const pv = new THREE.Group(); pv.rotation.y = (i / 7) * Math.PI * 2; crown.add(pv);
+    const lf = mesh(new THREE.BoxGeometry(1.7, 0.05, 0.45), i % 2 ? leafMat : leafMat2, 0.8, -0.25, 0, pv); lf.rotation.z = -0.4;
+  }
+  for (const [x, z] of [[0.15, 0.1], [-0.12, 0.12], [0, -0.16]]) mesh(new THREE.SphereGeometry(0.14, 10, 8), lam('#6b4a2a'), x, -0.18, z, crown);
   addObst(g, { x: -2.6, z: -1.6, r: 0.6 });
   // 地標：一個斜躺在沙灘上的大玻璃瓶，裡面捲著一封信
   const mark = new THREE.Group(); mark.rotation.y = faceCam(bottleIsl.x, bottleIsl.z); g.add(mark);
   bottleIsl.mark = mark;
-  const big = new THREE.Group(); big.position.set(0.6, 0.75, 0.4); big.rotation.set(0, 0.4, Math.PI / 2 - 0.25); mark.add(big);
+  // 沙丘：瓶子斜躺在一座小沙丘上，旁邊散著幾個小貝殼
+  const dune = mesh(new THREE.SphereGeometry(2.6, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), lam('#ead196'), 0.6, 0, 0.4, mark); dune.scale.set(1, 0.38, 0.85);
+  mesh(new THREE.SphereGeometry(1.4, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), lam('#e4c684'), 1.9, 0, -0.3, mark).scale.set(1, 0.3, 1);
+  const shellA = lam('#f6c7c2'), shellB = lam('#fff4e6'), shellC = lam('#f2b48a');
+  for (const [x, z, k, r] of [[-1.6, 2.2, 0, 0.3], [-0.6, 2.9, 1, 1.4], [2.6, 2.0, 2, 2.2], [3.2, 0.6, 0, 0.8], [-2.0, 0.9, 1, 2.8]]) {
+    const sh = new THREE.Group(); sh.position.set(x, 0.05, z); sh.rotation.y = r; sh.scale.setScalar(1.8); mark.add(sh);
+    if (k === 2) {   // 螺貝：一顆小圓錐
+      const c = mesh(new THREE.ConeGeometry(0.13, 0.36, 10), shellC, 0, 0.12, 0, sh, false); c.rotation.z = Math.PI / 2;
+    } else {   // 扇貝：半圓扇形，上面幾條放射紋
+      const fan = mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.06, 14, 1, false, -Math.PI / 2, Math.PI), k ? shellB : shellA, 0, 0.04, 0, sh, false);
+      fan.scale.set(1, 1, 0.85);
+      for (let i = 0; i < 4; i++) { const rib = mesh(new THREE.BoxGeometry(0.02, 0.07, 0.2), k ? shellA : shellB, Math.sin(-1.1 + i * 0.73) * 0.11, 0.05, Math.cos(-1.1 + i * 0.73) * 0.11 * 0.85, sh, false); rib.rotation.y = -1.1 + i * 0.73; }
+    }
+  }
+  const big = new THREE.Group(); big.position.set(0.6, 1.55, 0.4); big.rotation.set(0, 0.4, Math.PI / 2 - 0.25); mark.add(big);
   const glass = new THREE.MeshLambertMaterial({ color: '#bfeee9', transparent: true, opacity: 0.45, depthWrite: false });
   mesh(new THREE.CylinderGeometry(0.75, 0.75, 2.2, 24), glass, 0, 0, 0, big, false);
   mesh(new THREE.SphereGeometry(0.75, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), glass, 0, 1.1, 0, big, false);
@@ -2554,7 +2576,7 @@ const bottleHit = [], bottleMeshes = [];
   mesh(new THREE.CylinderGeometry(0.3, 0.27, 0.35, 16), lam('#a8794f'), 0, 2.4, 0, big);
   mesh(new THREE.CylinderGeometry(0.32, 0.32, 1.5, 16), lam('#fff4dc'), 0, -0.1, 0, big);
   mesh(new THREE.TorusGeometry(0.33, 0.04, 6, 18), lam('#c0503f'), 0, -0.1, 0, big).rotation.x = Math.PI / 2;
-  addObst(g, { x: 0, z: 0, r: 2.2 });
+  addObst(g, { x: 0, z: 0, r: 2.8 });
   // 「丟一個漂流瓶」小木牌
   const signTex = canvasTex(256, 96, (c) => { c.fillStyle = '#c89a6a'; c.fillRect(0, 0, 256, 96); c.fillStyle = '#3f2c22'; c.font = 'bold 40px "Noto Sans TC", "PingFang TC", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🍾 丟一個瓶子', 128, 50); });
   mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.4, 6), lam('#7a5236'), 2.6, 0.7, 2.2, mark);
