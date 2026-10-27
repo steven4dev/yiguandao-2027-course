@@ -85,6 +85,8 @@
   .bottle-count { cursor: pointer; }
   .brand .count.bottle-count b { color: #2f80c9; }
   .brand .count .n-gold { color: #d9770a; }
+  .brand .count .n-green { color: #1d8a5f; font-size: 16px; }
+  .brand .count .visit-n { font-size: 12px; color: var(--muted); }
   :root[data-theme="dark"] .brand .count .n-gold { color: #f0b54d; }
   .brand .count + .count { margin-top: -6px; }
   :root[data-theme="dark"] .brand .count.bottle-count b { color: #7cc4ff; }
@@ -391,7 +393,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.56</span>
+  <span class="ver">v261027.01</span>
   </div></div>
 </div>
 
@@ -581,7 +583,11 @@ const SNAPSHOT = {
 SNAPSHOT.people.forEach((p) => { p.uids = p.isCadre ? cadreUidsOf(p.m, p.cadre) : []; });
 
 let realPeople = SNAPSHOT.people, dataStamp = SNAPSHOT.updated;
-const peopleNow = () => realPeople;
+// 報名表「所屬單位」選「我只想先登島逛逛而已」的是來逛逛的旅人：不算進登島人數，人偶戴草帽、揹背包，站在渡口島上看風景
+const isVisit = (p) => /逛逛/.test(p.unit || '');
+const peopleNow = () => realPeople.filter((p) => !isVisit(p));
+const visitorsNow = () => realPeople.filter(isVisit);
+const homeOf = (p) => (isVisit(p) ? 'dock' : 'temple');
 
 /* =========================================================
    場景
@@ -1195,6 +1201,25 @@ MASTERS.forEach((m, i) => {
   m.phase = i * 2.1;
 });
 
+// 來逛逛的旅人：渡口島上，戴草帽、揹背包，不時舉起相機拍拍風景
+const visitorPeople = [], visitorHit = [];
+let visitorSig = '';
+function syncVisitors(list) {
+  const sig = list.map((p) => p.g + (p.m || '') + p.date).join('|');
+  if (sig === visitorSig) return;
+  visitorSig = sig;
+  clearWalkers(visitorPeople);
+  visitorHit.length = 0;
+  list.slice(0, 24).forEach((d, k) => {
+    const kun = d.g === '坤道', f = figure(kun ? kunMat : qianMat, '', kun, { hat: '#f0d38a', pack: '#9ec9f5' });
+    f.userData.person = realPeople.indexOf(d);
+    f.traverse((m) => { if (m.isMesh) visitorHit.push(m); });
+    const a = k * 2.39996 + 0.8, r = 2.6 + (k % 3) * 0.9;
+    placeWalker(f, dockIsl.group, Math.sin(a) * r, Math.cos(a) * r, 0.35, dockIsl.R * COS30 - 0.8);
+    f.userData.grow = 1.25;
+    visitorPeople.push(f);
+  });
+}
 // 佛堂廣場上的報名者：學員乾道藍、坤道橘；幹部穿該組顏色並帶職位配件，點了可以看是誰
 const plazaPeople = [], plazaHit = [];
 let plazaSig = '';
@@ -2834,6 +2859,7 @@ function applyDate() {
   const now = curISO();
   const list = peopleNow().filter((p) => p.date <= now);
   syncPlaza(list);
+  syncVisitors(visitorsNow().filter((p) => p.date <= now));
   for (const c of COURSES) {
     const isl = islands[c.key], s = courseStatus(c, now);
     if (isl.status !== s) {
@@ -2872,7 +2898,8 @@ function applyDate() {
   document.getElementById('chipDate').textContent = dateLabel + (now === todayISO ? '・今天' : '');
   // 登島人數、倒數天數、瓶中信各一行；數字都用同一種大字（登島紅、倒數金、瓶中信藍）
   const countdown = next && left > 0 ? `距離「${esc(next.name)}」還有 <b class="n-gold">${left}</b> 天` : esc(nextText);
-  document.getElementById('brandCount').innerHTML = `<b>${list.length}</b> 位夥伴已登島`;
+  const nv = visitorsNow().filter((p) => p.date <= now).length;
+  document.getElementById('brandCount').innerHTML = `<b>${list.length}</b> 位夥伴已登島${nv ? `<span class="visit-n">・另有 <b class="n-green">${nv}</b> 位旅人來逛逛</span>` : ''}`;
   document.getElementById('brandNext').innerHTML = countdown;
   const view = now + '|' + dataStamp + '|' + (selected || '');
   if (view !== lastView) { lastView = view; renderPanel(); syncTour(); }
@@ -2914,6 +2941,13 @@ function renderPanel() {
       <div class="bars"><h3>這堂課</h3>${teacher.topics.map((tp) => `<div class="prog"><span>${esc(when)}</span><span>${esc(tp)}</span></div>`).join('')}</div>
       ${also.length ? `<div class="bars"><h3>也在這些島上課</h3><div class="alsoT">${also.map((o) => `<button class="back" data-go="${o.key}">${esc(isleName(o.key))}・${esc(isleWhen(o.key))}</button>`).join('')}</div></div>` : ''}
       <button class="back" data-go="${teacher.key}">← 看${esc(home)}的課程</button>`;
+  } else if (personRec && isVisit(personRec)) {
+    const pr = personRec, name = pr.m || '旅人';
+    title = name; info = '來逛逛的旅人';
+    html = `<header><span class="eyebrow">渡口島・來逛逛的旅人</span><h2>🏝️ ${esc(name)}</h2><p class="sub">${esc(pr.g)}・${esc(pr.city)}・${+pr.date.slice(5, 7)}/${+pr.date.slice(8)} 上岸</p></header>
+      <p class="note">戴著草帽、揹著背包，先來群島逛逛、看看風景。不用有報名上課的壓力，慢慢逛就好 😊</p>
+      <div class="cta"><p>逛得喜歡嗎？想一起上 2027 的課，再填一次報名表、選你的所屬單位，你的小人偶就會搬到全真島廣場上。</p><a href="${SIGNUP_URL}" target="_blank" rel="noopener">🛶 我要正式登島</a></div>
+      <button class="back" data-go="dock">← 看渡口島</button>`;
   } else if (personRec) {
     const pr = personRec, name = pr.m || '學員';
     title = name; info = `${pr.g}・${pr.unit}`;
@@ -3020,7 +3054,8 @@ function renderPanel() {
     title = '渡口島'; info = '登島報名處・竹筏往返迎賓島';
     html = `<header><span class="eyebrow">登島報名處</span><h2>🛶 渡口島</h2>
       <p class="sub">還沒登島的夥伴，從這裡搭竹筏，穿過好玩島和歡樂島之間的開口，到迎賓島上岸，再穿過迎賓牌樓就登島了。</p></header>
-      <div class="cta"><p>填好報名表，就是買好船票。報名後，你的小人偶會出現在佛堂廣場上。</p><a href="${SIGNUP_URL}" target="_blank" rel="noopener">🛶 我要登島</a></div>
+      ${visitorsNow().length ? `<div class="bars"><h3>🏝️ 來逛逛的旅人：${visitorsNow().length} 位</h3><p class="note" style="margin:0">戴草帽、揹背包的小人偶，是報名時選「我只想先登島逛逛而已」的夥伴。點他們看看是誰。</p></div>` : ''}
+      <div class="cta"><p>填好報名表，就是買好船票。想正式上課，你的小人偶會出現在佛堂廣場上；只想先逛逛也沒關係，所屬單位選「我只想先登島逛逛而已」，就會在渡口島上看風景。</p><a href="${SIGNUP_URL}" target="_blank" rel="noopener">🛶 我要登島</a></div>
       <p class="note">竹筏在渡口島和公關禮節島之間固定往返，每趟大約 12 秒，靠岸停 3 秒。點竹筏也可以直接打開報名表。</p>`;
   }
   document.getElementById('panelBody').innerHTML = html;
@@ -3189,7 +3224,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
     hoverQueued = false;
     ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit, lookoutHit, teacherHit, masterHit, bottleHit), false).length ? 'pointer' : '';
+    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit, lookoutHit, teacherHit, masterHit, bottleHit, visitorHit), false).length ? 'pointer' : '';
   });
 });
 renderer.domElement.addEventListener('pointerup', (e) => {
@@ -3208,7 +3243,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   for (let f = o; f; f = f.parent) {
     const u = f.userData || {};
     if (u.slot != null) { select(u.at || SLOTS[u.slot].key, 'm:' + u.slot); return; }
-    if (u.person != null && u.person >= 0) { select('temple', 'p:' + u.person); return; }
+    if (u.person != null && u.person >= 0) { select(homeOf(realPeople[u.person]), 'p:' + u.person); return; }
     if (u.teacher != null) { select(TEACHERS[u.teacher].key, 't:' + u.teacher); return; }
     if (u.master != null) { select('temple', 'd:' + u.master); return; }
   }
@@ -3275,7 +3310,7 @@ function navItem(key, text, extra = '', cls = '') {
   const cur = islandOf2(selected) === key;
   return `<button class="${cls}" data-go="${key}"${cur ? ' aria-current="true"' : ''}><i data-s="${s}"></i><span>${esc(text)}</span><small>${esc(extra)}</small></button>`;
 }
-const islandOf2 = (sel) => { const s = String(sel); return s.startsWith('m:') ? SLOTS[+s.slice(2)].key : s.startsWith('p:') || s.startsWith('d:') ? 'temple' : s.startsWith('b:') ? 'bottle' : s.startsWith('t:') ? TEACHERS[+s.slice(2)].key : s; };
+const islandOf2 = (sel) => { const s = String(sel); return s.startsWith('m:') ? SLOTS[+s.slice(2)].key : s.startsWith('p:') ? homeOf(realPeople[+s.slice(2)] || {}) : s.startsWith('d:') ? 'temple' : s.startsWith('b:') ? 'bottle' : s.startsWith('t:') ? TEACHERS[+s.slice(2)].key : s; };
 // 已經從桌面圖示打開時，就不用再提示怎麼加到桌面
 const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
 function renderNav() {
@@ -3351,7 +3386,7 @@ function findPeople(q) {
   // 學員：已經登島的夥伴
   realPeople.forEach((d, i) => {
     if (!d.m || !norm(d.m).includes(n) || mainSlotOf(d)) return;
-    out.push({ kind: 'p', i, d, icon: '👤', title: d.m, sub: `${d.isCadre ? '幹部' : '學員'}・${md2(d.date)} 登島` });
+    out.push({ kind: 'p', i, d, icon: isVisit(d) ? '🏝️' : '👤', title: d.m, sub: isVisit(d) ? `來逛逛的旅人・${md2(d.date)} 上岸` : `${d.isCadre ? '幹部' : '學員'}・${md2(d.date)} 登島` });
   });
   return out;
 }
@@ -3400,7 +3435,7 @@ function pickHit(h) {
   // 時光捲軸停在他登島之前的日子，就先拉回今天，人偶才會在廣場上
   if (h.kind === 'p' && h.d.date > curISO()) { dayInput.value = Math.max(0, dayIndex(todayISO)); applyDate(); }
   const sel = h.kind === 'm' ? 'm:' + h.slot.id : h.kind === 't' ? 't:' + h.t.id : h.kind === 'd' ? 'd:' + h.i : 'p:' + h.i;
-  select(h.kind === 'm' ? h.slot.key : h.kind === 't' ? h.t.key : 'temple', sel);
+  select(h.kind === 'm' ? h.slot.key : h.kind === 't' ? h.t.key : h.kind === 'p' ? homeOf(h.d) : 'temple', sel);
   focusFigure(sel);
 }
 // 打字時，畫面上符合的島標籤亮起來，其他的變淡
@@ -4173,7 +4208,7 @@ function figuresFor(sel) {
     const slot = +id.slice(2);
     return [...islands[SLOTS[slot].key].members, ...plazaPeople].filter((f) => f.userData.slot === slot);
   }
-  if (id.startsWith('p:')) return plazaPeople.filter((f) => f.userData.person === +id.slice(2));
+  if (id.startsWith('p:')) return plazaPeople.concat(visitorPeople).filter((f) => f.userData.person === +id.slice(2));
   if (id.startsWith('t:')) return [TEACHERS[+id.slice(2)].fig];
   if (id.startsWith('d:')) return [MASTERS[+id.slice(2)].fig];
   return [];
