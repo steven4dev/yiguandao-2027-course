@@ -194,6 +194,42 @@
     box-shadow: 0 6px 16px color-mix(in srgb, var(--brick) 35%, transparent); }
   .howto-go:focus-visible { outline: 2px solid var(--jade); outline-offset: 3px; }
   @media (prefers-reduced-motion: reduce) { .hi::before, .hi::after { animation: none !important; } }
+  /* 寫瓶中信：網頁裡的信紙卡，不用跳到 Google 表單 */
+  .write { position: fixed; inset: 0; z-index: 21; display: grid; place-items: center; padding: 16px; background: rgba(20, 30, 40, 0.32);
+    backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); opacity: 0; transition: opacity 0.28s linear; }
+  .write.on { opacity: 1; }
+  .write-card { width: min(380px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 18px 18px 16px; display: grid; gap: 12px;
+    transform: translateY(10px) scale(0.97); transition: transform 0.28s ease-out; }
+  .write.on .write-card { transform: none; }
+  .write.toss .write-card { transform: translateY(-40px) scale(0.6) rotate(-12deg); opacity: 0; transition: transform 0.5s ease-in, opacity 0.5s ease-in; }
+  .write h2 { margin: 0; font-family: var(--font-display); font-size: 20px; letter-spacing: 0.05em; }
+  .write .wsub { margin: -6px 0 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .write fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 6px; min-width: 0; }
+  .write legend, .write label.wl { display: block; padding: 0; margin-bottom: 6px; font-size: 13px; font-weight: 700; }
+  .write legend i, .write label.wl i { color: var(--brick); font-style: normal; }
+  .write textarea, .write input[type="text"] { width: 100%; box-sizing: border-box; border: 1px solid rgba(160, 120, 60, 0.35); border-radius: 12px; padding: 10px 12px;
+    font: inherit; font-size: 16px; background: #fff8e6; color: #3f2c22; }
+  .write textarea { min-height: 110px; resize: vertical; line-height: 1.7; }
+  .write textarea:focus, .write input[type="text"]:focus { outline: 2px solid var(--jade); outline-offset: 1px; }
+  .write .wcount { justify-self: end; margin-top: -8px; font-size: 11.5px; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips label { position: relative; }
+  .chips input { position: absolute; opacity: 0; pointer-events: none; }
+  .chips span { display: inline-block; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--chip); font-size: 13px; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+  .chips input:checked + span { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .chips input:focus-visible + span { outline: 2px solid var(--jade); outline-offset: 2px; }
+  .chips.moods span { font-size: 22px; padding: 3px 7px; line-height: 1.2; }
+  .chips.moods input:checked + span { background: color-mix(in srgb, var(--mc) 45%, var(--card)); border-color: var(--mc); color: inherit; transform: scale(1.12); }
+  .write .werr { margin: 0; font-size: 13px; color: var(--brick); font-weight: 700; }
+  .write .wbtns { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .write .wgo { padding: 10px 22px; border-radius: 999px; border: 0; background: var(--brick); color: #fff; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--brick) 35%, transparent); }
+  .write .wgo[disabled] { opacity: 0.6; cursor: wait; }
+  .write .wcancel { border: 0; background: none; color: var(--muted); font: inherit; font-size: 14px; cursor: pointer; }
+  .write .wform { margin-left: auto; font-size: 12px; color: var(--muted); }
+  .panel .cta button.cta-write { justify-self: start; display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 14px; border-radius: 999px; border: 0; background: var(--brick); color: #fff;
+    font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px color-mix(in srgb, var(--brick) 30%, transparent); }
+  .letter .mine { display: inline-block; margin-bottom: 6px; padding: 2px 9px; border-radius: 999px; background: #ffe9a8; font-size: 12px; font-style: normal; font-weight: 700; color: #7a5a10; }
   .soundhint { border: 1px solid var(--line); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
   .soundhint.on { pointer-events: auto; animation: hintPulse 2.4s ease-in-out infinite; }
   @keyframes hintPulse { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--gold) 30%, transparent), 0 8px 28px rgba(50, 30, 15, 0.14); } }
@@ -400,7 +436,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261027.12</span>
+  <span class="ver">v261027.13</span>
   </div></div>
 </div>
 
@@ -425,6 +461,24 @@
 <div class="card skytip" id="skyTip" role="status" aria-live="polite"></div>
 <button class="card skytip soundhint" id="soundHint" type="button">🔊 點一下畫面，打開音樂和音效</button>
 
+<div class="write" id="write" role="dialog" aria-modal="true" aria-labelledby="writeTitle" hidden>
+  <form class="card write-card" id="writeForm" novalidate>
+    <h2 id="writeTitle">🍾 寫一封瓶中信</h2>
+    <p class="wsub">把想說的話裝進瓶子，丟進全真群島的海裡。不用登入、可以匿名。</p>
+    <div><label class="wl" for="wText">想裝進瓶子的話 <i>*</i></label>
+      <textarea id="wText" maxlength="500" placeholder="一句鼓勵、一個心情、對課程的期待，或想對某位夥伴說的話⋯"></textarea></div>
+    <span class="wcount" id="wCount">0 / 500</span>
+    <fieldset><legend>這個瓶子想漂給誰？ <i>*</i></legend>
+      <div class="chips" id="wTo"></div>
+      <input type="text" id="wToOther" maxlength="40" placeholder="想漂給誰？" hidden></fieldset>
+    <fieldset><legend>瓶子的心情 <i>*</i></legend><div class="chips moods" id="wMood"></div></fieldset>
+    <div><label class="wl" for="wSign">署名（不填就是匿名）</label>
+      <input type="text" id="wSign" maxlength="30" placeholder="也可以寫暱稱，例如「好賺島的小明」"></div>
+    <p class="werr" id="wErr" role="alert" hidden></p>
+    <div class="wbtns"><button class="wgo" id="wGo" type="submit">🌊 丟進海裡</button><button class="wcancel" id="wCancel" type="button">先不要</button>
+      <a class="wform" id="wForm" target="_blank" rel="noopener">改用 Google 表單</a></div>
+  </form>
+</div>
 <div class="howto" id="howto" role="dialog" aria-modal="true" aria-labelledby="howtoTitle" hidden>
   <div class="card howto-card">
     <h2 id="howtoTitle">歡迎登上全真群島 👋</h2>
@@ -2741,12 +2795,19 @@ const newIsl = makeIsland('newisle', 21, NEW_DIR.x * 118, NEW_DIR.y * 118, 'zhon
 
 /* ---------- 漂流瓶島：大家匿名留言的地方；每則審核通過的留言是一個漂在島邊的玻璃瓶 ---------- */
 const BOTTLE_FORM = 'https://forms.gle/bBxgYkA4GXhmviRLA';
+// 網頁裡的寫信卡直接送到同一份 Google 表單（formResponse），資料一樣進原本的試算表；表單題目增刪時要跟著改這裡的 entry 代號
+const BOTTLE_POST = 'https://docs.google.com/forms/d/e/1FAIpQLSdUmiKGvHq0TRm_RaIbWjm3RBRzeoIJ3F74n-wbE4Ksl2KR0g/formResponse';
+const BOTTLE_ENTRY = { text: 'entry.392724741', to: 'entry.2095907018', mood: 'entry.1149596771', sign: 'entry.1445288423' };
+const BOTTLE_TO = ['給全真群島的大家', '給社青班的幹部們', '給講師、點傳師', '給自己（寫給未來的自己）'];
 // 留言的試算表；網頁只顯示「審核通過」有打勾的瓶子。
 // 目前暫時直接讀表單的原始回覆，之後換成只放審核通過留言的公開試算表（IMPORTRANGE＋QUERY），改這一行就好
 const BOTTLE_SHEET_ID = '19FzGRdWNhVKCJ19_KNd2g7HbDS6ThNhZV0nSBwEx6L0';
 // 先不審核：所有留言都直接漂上島；之後要審核時改成 true，就只顯示「審核通過」有打勾的瓶子
 const BOTTLE_REVIEW = false;
-const MOOD_COLOR = { 開心: '#ffd23f', 加油: '#ff9f43', 感謝: '#ff8fab', 心事: '#6fb7ff', 期待: '#7ed957' };
+// 表單的心情是表情符號；早期的留言是文字心情，兩種都認得
+const MOODS = ['😃', '😠', '😥', '😑', '😘', '😍', '😭'];
+const MOOD_COLOR = { '😃': '#ffd23f', '😠': '#ff6b5b', '😥': '#6fb7ff', '😑': '#b8c2cc', '😘': '#ff8fab', '😍': '#ff5c8a', '😭': '#8f7cf0',
+  開心: '#ffd23f', 加油: '#ff9f43', 感謝: '#ff8fab', 心事: '#6fb7ff', 期待: '#7ed957' };
 const moodColor = (m) => { for (const [k, c] of Object.entries(MOOD_COLOR)) if (String(m).includes(k)) return c; return '#9fe3e0'; };
 const bottleIsl = makeIsland('bottle', 5.5, -12, 66, 'bottle');
 let bottles = [];   // { text, to, mood, sign, date }
@@ -2815,6 +2876,7 @@ function makeBottle(color, i) {
 // 一則留言＝一個瓶子，跟登島人數一樣一比一；最新的離島最近，越舊的越往外漂（像向日葵種子那樣螺旋排開，不會疊在一起）
 // 最多排 60 個，再多就會漂到鄰近的島，那時候島上只放最新的 60 個（數字還是照實際留言數）
 const BOTTLE_MAX = 60;
+let dropNext = false;   // 下一次重排瓶子時，最新那個（自己剛丟的）從空中拋進海裡
 function placeBottles() {
   for (const b of bottleMeshes) scene.remove(b);
   bottleMeshes.length = 0; bottleHit.length = 0;
@@ -2826,6 +2888,7 @@ function placeBottles() {
     b.userData.phase = i * 1.7;
     b.scale.setScalar(1.4); b.userData.size = 1.4;
     b.position.copy(b.userData.home);
+    if (i === 0 && dropNext) { b.userData.drop = true; dropNext = false; }
     bottleMeshes.push(b);
   });
 }
@@ -2845,6 +2908,14 @@ animators.push((t) => {
   const sel = String(selected).startsWith('b:') ? +String(selected).slice(2) : -9;
   for (const b of bottleMeshes) {
     const u = b.userData, h = u.home;
+    if (u.drop === true) u.drop = t;
+    if (typeof u.drop === 'number' && t - u.drop < 1.4) {
+      // 從空中畫一道弧線拋進海裡，落水後再開始漂
+      const k = (t - u.drop) / 1.4;
+      b.position.set(h.x + (1 - k) * 6, h.y + 14 * (1 - k) + Math.sin(k * Math.PI) * 4, h.z + (1 - k) * 6);
+      b.rotation.y = k * 9;
+      continue;
+    }
     b.position.set(h.x + Math.sin(t * 0.3 + u.phase) * 0.4, h.y + Math.sin(t * 1.4 + u.phase) * 0.08, h.z + Math.cos(t * 0.25 + u.phase) * 0.4);
     b.rotation.y = t * 0.15 + u.phase;
     b.scale.setScalar(u.bottle === sel && panelMode !== 'closed' ? 2.1 + Math.sin(t * 4) * 0.14 : u.size || 1);
@@ -3150,8 +3221,8 @@ function renderPanel() {
     const m = bottles[+String(selected).slice(2)];
     title = '漂流瓶'; info = m.sign ? `來自 ${m.sign}` : '匿名的瓶子';
     html = `<header><span class="eyebrow">漂流瓶島・${esc(m.mood || '一個瓶子')}</span><h2>🍾 撿到一個漂流瓶</h2><p class="sub">寫給：${esc(m.to || '大家')}${m.date ? `・${+m.date.slice(5, 7)}/${+m.date.slice(8)}` : ''}</p></header>
-      <div class="letter">${esc(m.text).replace(/\n/g, '<br>')}<span>—— ${esc(m.sign || '匿名的夥伴')}</span></div>
-      <div class="cta"><p>也有話想說、或有讓群島更好玩的點子嗎？把它裝進瓶子，丟進全真群島的海裡。</p><a href="${BOTTLE_FORM}" target="_blank" rel="noopener">🍾 丟一個漂流瓶</a></div>
+      <div class="letter">${m.mine ? '<em class="mine">✨ 這是你丟的瓶子</em><br>' : ''}${esc(m.text).replace(/\n/g, '<br>')}<span>—— ${esc(m.sign || '匿名的夥伴')}</span></div>
+      <div class="cta"><p>也有話想說、或有讓群島更好玩的點子嗎？把它裝進瓶子，丟進全真群島的海裡。</p><button type="button" class="cta-write">🍾 丟一個漂流瓶</button></div>
       <button class="back" data-go="bottle">← 看漂流瓶島</button>`;
   } else if (isl && isl.kind === 'bottle') {
     title = '漂流瓶島'; info = bottles.length ? `${bottles.length} 個瓶子漂上岸` : '等第一個瓶子漂過來';
@@ -3167,7 +3238,7 @@ function renderPanel() {
         <p class="tip-small">群島的島主每週都會撈瓶子，被選中的點子會真的蓋進島上 🛠️</p>
       </div>
       ${bottles.length ? `<div class="bars"><h3>最近漂上岸的瓶子</h3>${bottles.slice(0, 5).map((m, i) => `<button class="back bottle-row" data-bottle="${i}"><i style="background:${moodColor(m.mood)}"></i>${esc(m.text.length > 22 ? m.text.slice(0, 22) + '…' : m.text)}</button>`).join('')}</div>` : ''}
-      <div class="cta"><p>瓶子的顏色跟著心情：開心黃、加油橘、感謝粉、心事藍、期待綠。今天想丟哪一種顏色？</p><a href="${BOTTLE_FORM}" target="_blank" rel="noopener">🍾 丟一個漂流瓶</a></div>
+      <div class="cta"><p>瓶子的顏色跟著心情：😃 黃、😍 桃紅、😘 粉、😥 藍、😭 紫、😠 紅、😑 灰。今天想丟哪一種顏色？</p><button type="button" class="cta-write">🍾 丟一個漂流瓶</button></div>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongshu') {
     title = '忠恕島'; info = '施工中・敬請期待';
@@ -3396,6 +3467,7 @@ function select(key, sel = key) {
 function goHome() { flyTo(HOME.target.clone(), HOME.pos.clone()); }
 const selectMember = (id) => select(SLOTS[id].key, 'm:' + id);
 document.getElementById('panelBody').addEventListener('click', (e) => {
+  if (e.target.closest('.cta-write')) { openWrite(); return; }
   const who = e.target.closest('.who'), back = e.target.closest('.back');
   if (back && back.dataset.bottle != null) { select('bottle', 'b:' + back.dataset.bottle); return; }
   if (back && back.dataset.teacher != null) { const tr = TEACHERS[+back.dataset.teacher]; select(tr.key, 't:' + tr.id); return; }
@@ -3798,6 +3870,95 @@ $('hand').onclick = () => {
   skyTipTimer = setTimeout(() => tip.classList.remove('on'), 2000);
 };
 
+/* ---------- 寫瓶中信：在網頁裡填完、直接丟進海裡，不用跳到 Google 表單 ---------- */
+// 自己丟的瓶子記在這台裝置上：試算表還沒讀到之前先在自己的畫面漂上岸，讀到了就換成正式的那一個（一樣標記「你丟的」）
+const MINE_KEY = 'islands-mybottles';
+let myBottles = [];
+try { myBottles = JSON.parse(localStorage.getItem(MINE_KEY) || '[]'); } catch (e) {}
+const saveMine = () => { try { localStorage.setItem(MINE_KEY, JSON.stringify(myBottles.slice(-20))); } catch (e) {} };
+function mergeMine(list) {
+  const same = (a, b) => String(a).replace(/\s+/g, '') === String(b).replace(/\s+/g, '');
+  for (const m of myBottles) {
+    const hit = list.find((x) => same(x.text, m.text));
+    if (hit) hit.mine = true;
+    else if (Date.now() - m.ts < 3 * 86400000) list.unshift({ text: m.text, to: m.to, mood: m.mood, sign: m.sign, date: iso(new Date(m.ts)), mine: true });
+  }
+}
+function addMyBottle(m) {
+  myBottles.push({ ...m, ts: Date.now() });
+  saveMine();
+  bottles = [{ ...m, date: todayISO, mine: true }, ...bottles];
+  bottles.sig = '';
+  dropNext = true;
+  placeBottles(); syncBottleChip(true); lastView = '';
+}
+function splashSound() {
+  if (!SND.ctx || !SND.sfx || SND.ctx.state !== 'running') return;
+  const t = SND.ctx.currentTime + 1.3, o = SND.sfxBus;
+  noiseHit(t, o, { type: 'lowpass', f: 1400, peak: 0.12, attack: 0.01, dur: 0.4 });
+  ping(t, o, 420, 0.05, 0.25);
+}
+const writeEl = $('write'), wText = $('wText'), wErr = $('wErr'), wGo = $('wGo');
+$('wForm').href = BOTTLE_FORM;
+$('wTo').innerHTML = [...BOTTLE_TO, '其他'].map((t, i) => `<label><input type="radio" name="wto" value="${esc(t)}"${i ? '' : ' checked'}><span>${esc(t.replace('（寫給未來的自己）', ''))}</span></label>`).join('');
+$('wMood').innerHTML = MOODS.map((m) => `<label style="--mc:${MOOD_COLOR[m]}"><input type="radio" name="wmood" value="${m}"><span>${m}</span></label>`).join('');
+$('wTo').addEventListener('change', () => { const o = $('wToOther'); o.hidden = writeEl.querySelector('[name=wto]:checked').value !== '其他'; if (!o.hidden) o.focus(); });
+wText.addEventListener('input', () => { $('wCount').textContent = `${wText.value.length} / 500`; });
+// 一有修改就收起上一次的提醒
+$('writeForm').addEventListener('input', () => { wErr.hidden = true; });
+$('writeForm').addEventListener('change', () => { wErr.hidden = true; });
+function openWrite() {
+  wErr.hidden = true; wGo.disabled = false; wGo.textContent = '🌊 丟進海裡';
+  writeEl.classList.remove('toss');
+  writeEl.hidden = false;
+  requestAnimationFrame(() => writeEl.classList.add('on'));
+  setTimeout(() => wText.focus(), 60);
+}
+function closeWrite() {
+  writeEl.classList.remove('on');
+  setTimeout(() => { writeEl.hidden = true; writeEl.classList.remove('toss'); }, 320);
+}
+$('wCancel').addEventListener('click', closeWrite);
+writeEl.addEventListener('click', (e) => { if (e.target === writeEl) closeWrite(); });
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && !writeEl.hidden) closeWrite(); });
+$('writeForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = wText.value.trim(), toV = writeEl.querySelector('[name=wto]:checked').value, other = $('wToOther').value.trim();
+  const moodEl = writeEl.querySelector('[name=wmood]:checked'), sign = $('wSign').value.trim();
+  const err = (msg) => { wErr.textContent = msg; wErr.hidden = false; };
+  if (!text) { err('瓶子還是空的，寫一句話再丟吧 ✍️'); wText.focus(); return; }
+  if (toV === '其他' && !other) { err('寫一下想漂給誰吧'); $('wToOther').focus(); return; }
+  if (!moodEl) { err('選一個瓶子的心情 🙂'); return; }
+  wErr.hidden = true; wGo.disabled = true; wGo.textContent = '瓶子封口中⋯';
+  const body = new URLSearchParams();
+  body.set(BOTTLE_ENTRY.text, text);
+  if (toV === '其他') { body.set(BOTTLE_ENTRY.to, '__other_option__'); body.set(BOTTLE_ENTRY.to + '.other_option_response', other); }
+  else body.set(BOTTLE_ENTRY.to, toV);
+  body.set(BOTTLE_ENTRY.mood, moodEl.value);
+  if (sign) body.set(BOTTLE_ENTRY.sign, sign);
+  const ac = new AbortController(), timer = setTimeout(() => ac.abort(), 12000);
+  try {
+    // Google 表單不回應跨網域請求，只能用 no-cors 送出：看不到回覆內容，但網路斷了或逾時會丟錯
+    await fetch(BOTTLE_POST, { method: 'POST', mode: 'no-cors', body, signal: ac.signal });
+  } catch (x) {
+    clearTimeout(timer);
+    wGo.disabled = false; wGo.textContent = '🌊 再丟一次';
+    err('瓶子沒丟出去（網路好像不太穩）。再試一次，或改用 Google 表單。');
+    return;
+  }
+  clearTimeout(timer);
+  writeEl.classList.add('toss');
+  splashSound();
+  setTimeout(() => {
+    closeWrite();
+    wText.value = ''; $('wSign').value = ''; $('wToOther').value = ''; $('wToOther').hidden = true; $('wCount').textContent = '0 / 500';
+    writeEl.querySelector('[name=wto]').checked = true; moodEl.checked = false;
+    addMyBottle({ text, to: toV === '其他' ? other : toV, mood: moodEl.value, sign });
+    select('bottle', 'b:0');
+  }, 480);
+  setTimeout(loadBottles, 90000);   // 一分半後再讀一次試算表，換成正式的瓶子
+});
+
 /* ---------- 報名資料：直接讀 Google 報名表，連不上改讀備份 ---------- */
 // 跟報名分析頁同一份表單回覆；試算表要維持「知道連結的任何人都能檢視」
 // 只查詢需要的欄位：手機（F 欄）不會被讀進瀏覽器；姓名用來去重複、比對幹部，也直接顯示在小人偶和搜尋結果上
@@ -3908,9 +4069,16 @@ async function loadBottles() {
       const tm = toDate(t(c.time) != null ? String(t(c.time)) : '');
       return { text: get(c.text), to: get(c.to), mood: get(c.mood), sign: get(c.sign), ok: !BOTTLE_REVIEW || c.ok < 0 || /true|✅|是|通過/i.test(get(c.ok)), date: tm ? ymd(tm) : '' };
     }).filter((m) => m.text && m.ok).reverse();
-    const sig = list.map((m) => m.text + m.date).join('|');
-    if (sig !== bottles.sig) { const more = list.length > bottles.length; bottles = list; bottles.sig = sig; placeBottles(); syncBottleChip(more); lastView = ''; }
-  } catch (e) {}
+    applyBottles(list);
+  } catch (e) {
+    // 試算表讀不到：至少把自己剛丟、還沒讀到的瓶子留在畫面上
+    applyBottles(bottles.filter((m) => !m.mine));
+  }
+}
+function applyBottles(list) {
+  mergeMine(list);
+  const sig = list.map((m) => m.text + m.date + (m.mine ? '*' : '')).join('|');
+  if (sig !== bottles.sig) { const more = list.length > bottles.length; bottles = list; bottles.sig = sig; placeBottles(); syncBottleChip(more); lastView = ''; }
 }
 async function loadData() {
   if (busy) return;
