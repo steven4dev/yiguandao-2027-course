@@ -400,7 +400,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261027.07</span>
+  <span class="ver">v261027.08</span>
   </div></div>
 </div>
 
@@ -1163,6 +1163,60 @@ function figure(mat, role = '', bob = false, extra = {}) {
     });
     for (const sx of [-1, 1]) part(new THREE.TorusGeometry(0.06, 0.012, 6, 12, Math.PI * 0.8), inkMat, sx * 0.15, 1.1, 0.47).rotation.set(0, sx * 0.3, Math.PI * 0.1);
   }
+  // 妙麗裝扮（生命靈數 朱宸慧講師）：蓬蓬的棕色捲髮、霍格華茲黑袍、白襯衫配紅金領帶、葛來分多圍巾，右手拿魔杖
+  if (extra.hermione) {
+    const hair = lam('#7a4a2a'), robe = lam('#24232b'), red = lam('#9b1c1f'), gold = lam('#e8b53a'), white = lam('#ffffff');
+    for (const [x, y, z, sx, sy, sz] of [[0, 1.24, -0.04, 0.55, 0.28, 0.53], [0, 0.98, -0.32, 0.5, 0.45, 0.3], [0, 0.7, -0.3, 0.42, 0.28, 0.24],
+      [-0.42, 1.02, -0.1, 0.22, 0.3, 0.3], [0.42, 1.02, -0.1, 0.22, 0.3, 0.3], [-0.4, 0.74, -0.16, 0.2, 0.22, 0.24], [0.4, 0.74, -0.16, 0.2, 0.22, 0.24],
+      [-0.2, 1.3, 0.3, 0.17, 0.11, 0.14], [0.06, 1.33, 0.33, 0.17, 0.1, 0.14], [0.3, 1.27, 0.28, 0.15, 0.11, 0.13]]) part(dotGeo, hair, x, y, z).scale.set(sx, sy, sz);
+    part(robeGeo, robe, 0, 0, 0);
+    p.userData.arms.forEach((sh) => part(new THREE.CylinderGeometry(0.1, 0.17, 0.26, 12), robe, 0, -0.16, 0, sh));
+    for (const sx of [-1, 1]) part(new THREE.BoxGeometry(0.1, 0.24, 0.03), white, sx * 0.07, 0.47, 0.33).rotation.z = sx * 0.45;
+    part(new THREE.BoxGeometry(0.07, 0.24, 0.03), red, 0, 0.42, 0.35);
+    for (const y of [0.36, 0.46]) part(new THREE.BoxGeometry(0.075, 0.025, 0.035), gold, 0, y, 0.355);
+    part(new THREE.BoxGeometry(0.1, 0.12, 0.02), red, -0.2, 0.42, 0.33).rotation.y = -0.4;   // 胸前院徽
+    part(dotGeo, gold, -0.2, 0.43, 0.345).scale.set(0.03, 0.035, 0.01);
+    part(new THREE.TorusGeometry(0.345, 0.065, 6, 24), red, 0, 0.6, 0).rotation.x = Math.PI / 2;
+    for (const [x, z, rz] of [[0.14, 0.33, 0.15], [0.26, 0.28, 0.3]]) {
+      const end = new THREE.Group(); end.position.set(x, 0.42, z); end.rotation.z = rz; g.add(end);
+      part(new THREE.BoxGeometry(0.1, 0.3, 0.04), red, 0, 0, 0, end);
+      for (const y of [-0.06, 0.06]) part(new THREE.BoxGeometry(0.105, 0.035, 0.045), gold, 0, y, 0, end);
+    }
+    const wand = new THREE.Group(); wand.position.set(0, -0.3, 0.04); wand.rotation.x = -1.2; p.userData.arms[1].add(wand);
+    part(new THREE.CylinderGeometry(0.014, 0.022, 0.42, 6), lam('#5a3a22'), 0, -0.2, 0, wand);
+    const spark = part(dotGeo, new THREE.MeshBasicMaterial({ color: '#fff3a8' }), 0, -0.42, 0, wand);
+    spark.scale.setScalar(0.05); spark.userData.ring = true;
+    p.userData.spark = spark;
+    p.userData.arms[1].rotation.set(-0.5, 0, 0.6);
+    p.userData.armRestX = -0.5; p.userData.armRestZ = 0.6;
+    TRICKS.push({ f: p, kind: 'wand' });
+  }
+  // 大力士（鄭名翔講師）：左手伸直往上，單手把一台腳踏車舉過頭；右手留著揮手打招呼
+  if (extra.bike) {
+    const sh = p.userData.arms[0], ARM = -(Math.PI - 0.38);
+    sh.remove(sh.children[0]);
+    mesh(new THREE.CapsuleGeometry(0.1, 0.9, 4, 10), mat, 0, -0.55, 0, sh);
+    sh.rotation.z = ARM;
+    const bk = new THREE.Group(); bk.position.set(0, -1.08, 0); bk.rotation.z = -ARM + 0.12; bk.scale.setScalar(1.3); sh.add(bk);
+    const frame = lam('#d64545'), tire = inkMat, rim = lam('#b9c0c7');
+    const tube = (a, b, r, m) => {
+      const dx = b[0] - a[0], dy = b[1] - a[1], o = part(new THREE.CylinderGeometry(r, r, Math.hypot(dx, dy), 6), m, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 0, bk);
+      o.rotation.z = Math.atan2(-dx, dy);
+    };
+    const R = [-0.38, 0.06], F = [0.38, 0.06], BB = [0, 0], S = [-0.1, 0.36], H = [0.27, 0.36], HB = [0.29, 0.28];
+    for (const w of [R, F]) {
+      part(new THREE.TorusGeometry(0.24, 0.032, 6, 22), tire, w[0], w[1], 0, bk);
+      part(new THREE.TorusGeometry(0.2, 0.012, 4, 22), rim, w[0], w[1], 0, bk);
+      for (let i = 0; i < 3; i++) part(new THREE.BoxGeometry(0.4, 0.008, 0.008), rim, w[0], w[1], 0, bk).rotation.z = (i * Math.PI) / 3;
+    }
+    tube(BB, S, 0.028, frame); tube(S, H, 0.028, frame); tube(BB, HB, 0.03, frame); tube(BB, R, 0.022, frame); tube(S, R, 0.02, frame); tube(HB, F, 0.022, frame);
+    tube(H, [0.25, 0.46], 0.022, frame);
+    part(new THREE.CylinderGeometry(0.018, 0.018, 0.3, 6), inkMat, 0.25, 0.46, 0, bk).rotation.x = Math.PI / 2;
+    part(new THREE.BoxGeometry(0.16, 0.04, 0.08), inkMat, -0.12, 0.4, 0, bk);
+    part(new THREE.BoxGeometry(0.1, 0.02, 0.2), inkMat, 0, 0, 0, bk);
+    p.userData.bikeArm = ARM; p.userData.bike = bk;
+    TRICKS.push({ f: p, kind: 'bike' });
+  }
   if (extra.bun) {
     // 髮髻盤在後腦勺偏下（像空服員那樣），金簪橫插過去
     part(dotGeo, lam('#3a2a22'), 0, 1.06, -0.52).scale.set(0.19, 0.16, 0.13);
@@ -1463,6 +1517,20 @@ animators.push((t) => {
       if (due) { u.actT = t; u.nextTrick = t + 3 + Math.random() * 3; trickSound('jingle', f); }
       const e = t - (u.actT ?? -9), shake = e < 1.2 ? Math.sin(e * 22) * 0.35 : Math.sin(t * 2 + u.phase) * 0.08;
       u.prop.rotation.z = shake; r.rotation.z = 1.8 + shake * 0.4;
+    } else if (tr.kind === 'wand') {
+      // 揮一下魔杖：杖尖亮起金色光點、冒出 ✨
+      if (due) { u.actT = t; u.nextTrick = t + 4 + Math.random() * 3; bubble(f, '✨'); trickSound('wand', f); }
+      const e = t - (u.actT ?? -9), on = e < 0.9;
+      r.rotation.set(on ? -1.4 + Math.sin(e * 9) * 0.35 : -0.5, 0, on ? 0.45 : 0.6);
+      u.spark.visible = on || Math.sin(t * 3 + u.phase) > 0.6;
+      u.spark.scale.setScalar(on ? 0.05 + Math.sin(e * 12) ** 2 * 0.07 : 0.04);
+    } else if (tr.kind === 'bike') {
+      // 舉著腳踏車微微晃，偶爾往上推兩下、按兩聲車鈴
+      if (due) { u.actT = t; u.nextTrick = t + 5 + Math.random() * 4; bubble(f, '💪'); trickSound('bell', f); }
+      const e = t - (u.actT ?? -9), push = e < 1.2 ? Math.abs(Math.sin(e * Math.PI * 2 / 1.2 * 2)) * 0.1 : 0;
+      l.rotation.z = u.bikeArm + Math.sin(t * 1.6 + u.phase) * 0.04;
+      u.bike.position.y = -1.08 - push;
+      u.bike.rotation.z = -l.rotation.z + 0.12 + Math.sin(t * 1.3 + u.phase) * 0.05;
     } else if (tr.kind === 'balloon') {
       u.prop.rotation.z = Math.sin(t * 1.3 + u.phase) * 0.15; u.prop.rotation.x = Math.cos(t * 1.1 + u.phase) * 0.1;
       r.rotation.set(-0.3, 0, 1.2);
@@ -2322,6 +2390,8 @@ const TEACHER_RE = /(\S+)\s+(\S{2,4})\s+(講師|助理)/;
 const isleName = (k) => { const i = islands[k]; return i.kind === 'yoga' ? '瑜伽島' : i.kind === 'pm' ? i.course.pm.isle : i.course.isle; };
 const isleWhen = (k) => { const i = islands[k]; return i.kind === 'yoga' ? '每堂課早上' : `${+i.course.date.slice(5, 7)}/${+i.course.date.slice(8)}`; };
 const TEACHERS = [], teacherHit = [];
+// 個別講師的造型：沒有列在這裡的講師都是眼鏡＋圍巾＋書
+const TEACHER_LOOK = { 朱宸慧: { hermione: true, book: true }, 鄭名翔: { bike: true, scarf: '#2f6f73', glasses: true } };
 const teacherMat = lam('#f6eedd'), boardMat = lam('#2f4a3a'), easelMat = lam('#8a6a48');
 function addTeachers(isl, list, dist, spread) {
   // 同一位講師在同一座島教兩堂（例如瑜伽＋觀點分享）就合成一位
@@ -2352,7 +2422,7 @@ function addTeachers(isl, list, dist, spread) {
     const slot = SLOTS.find((sl) => sl.name === t.name && /坤道|乾道/.test(sl.role));
     const kun = slot && slot.role.includes('坤道');
     const fig = slot ? figure(kun ? kunMat : qianMat, slot.role, kun, { scarf: CADRE_LOOK[slot.group][1] })
-      : figure(teacherMat, '', false, { scarf: '#2f6f73', glasses: true, book: true });
+      : figure(teacherMat, '', false, TEACHER_LOOK[t.name] || { scarf: '#2f6f73', glasses: true, book: true });
     fig.scale.setScalar(1.45);
     g.add(fig);
     const rec = { id: TEACHERS.length, key: isl.key, fig, slot, ...t };
@@ -2377,13 +2447,33 @@ const YOGA_POSES = [];   // 墊子上跟著講師做動作的人偶（講師也�
   bridge(TEMPLE, yogaIsl);
   const mark = new THREE.Group(); mark.rotation.y = faceCam(yogaIsl.x, yogaIsl.z); g.add(mark);
   yogaIsl.mark = mark;
-  // 講台後面一顆朝陽：每天早上的第一堂課
-  const sun = mesh(new THREE.CircleGeometry(1.3, 32), new THREE.MeshBasicMaterial({ color: '#ffb54d' }), 0, 3.3, -3.9, mark, false);
+  // 講台後面左邊一顆太陽、右邊一彎月亮：拜日式、拜月式，一陽一陰
+  const sunG = new THREE.Group(); sunG.position.set(-2.4, 3.3, -3.9); mark.add(sunG);
+  mesh(new THREE.CircleGeometry(1.0, 32), new THREE.MeshBasicMaterial({ color: '#ffb54d' }), 0, 0, 0, sunG, false);
+  const rays = new THREE.Group(); sunG.add(rays);
   for (let i = 0; i < 12; i++) {
-    const a = (i / 12) * Math.PI * 2, ray = mesh(new THREE.PlaneGeometry(0.16, 0.6), new THREE.MeshBasicMaterial({ color: '#ffd27a' }), Math.cos(a) * 1.75, 3.3 + Math.sin(a) * 1.75, -3.92, mark, false);
+    const a = (i / 12) * Math.PI * 2, ray = mesh(new THREE.PlaneGeometry(0.14, 0.48), new THREE.MeshBasicMaterial({ color: '#ffd27a' }), Math.cos(a) * 1.38, Math.sin(a) * 1.38, -0.02, rays, false);
     ray.rotation.z = a - Math.PI / 2;
   }
-  animators.push((t) => { sun.scale.setScalar(1 + Math.sin(t * 0.8) * 0.04); });
+  // 彎月：大圓減掉往右偏的同樣大小的圓，留下開口朝右的月牙
+  const MR = 1.0, MD = 0.75, phi = Math.atan2(Math.sqrt(MR * MR - (MD * MD) / 4), MD / 2);
+  const crescent = new THREE.Shape();
+  crescent.absarc(0, 0, MR, phi, Math.PI * 2 - phi, false);
+  crescent.absarc(MD, 0, MR, Math.PI + phi, Math.PI - phi, true);
+  const moonG = new THREE.Group(); moonG.position.set(2.4, 3.3, -3.9); mark.add(moonG);
+  const moon = mesh(new THREE.ShapeGeometry(crescent, 24), new THREE.MeshBasicMaterial({ color: '#ffe48a' }), -0.3, 0, 0, moonG, false);
+  moon.rotation.z = -0.35;
+  const stars = [[0.75, 0.85, 0.13], [1.05, -0.35, 0.1], [0.45, -1.0, 0.08]].map(([x, y, r]) => {
+    const st = mesh(new THREE.CircleGeometry(r, 5), new THREE.MeshBasicMaterial({ color: '#fff7d6' }), x, y, 0, moonG, false);
+    st.rotation.z = Math.random();
+    return st;
+  });
+  animators.push((t) => {
+    sunG.scale.setScalar(1 + Math.sin(t * 0.8) * 0.04);
+    rays.rotation.z = t * 0.12;
+    moonG.rotation.z = Math.sin(t * 0.5) * 0.06;
+    stars.forEach((st, i) => st.scale.setScalar(0.7 + 0.3 * Math.abs(Math.sin(t * 1.3 + i * 1.7))));
+  });
   // 木頭講台
   mesh(new THREE.BoxGeometry(3.2, 0.35, 1.8), lam(C.wood), 0, 0.18, -2.7, mark);
   mesh(new THREE.BoxGeometry(3.3, 0.06, 1.9), lam('#a77b4f'), 0, 0.38, -2.7, mark);
@@ -4084,6 +4174,8 @@ function trickSound(kind, f) {
   else if (kind === 'page') noiseHit(t, o, { f: 2600, q: 0.6, peak: 0.05 * level, attack: 0.06, dur: 0.3 });
   else if (kind === 'pat') for (const d of [0, 0.22]) noiseHit(t + d, o, { type: 'lowpass', f: 600, peak: 0.08 * level, dur: 0.05 });
   else if (kind === 'shutter') { noiseHit(t, o, { f: 3000, q: 2, peak: 0.08 * level, dur: 0.03 }); noiseHit(t + 0.07, o, { f: 2200, q: 2, peak: 0.07 * level, dur: 0.04 }); }
+  else if (kind === 'wand') [1320, 1760, 2350].forEach((fq, i) => ping(t + i * 0.09, o, fq, 0.04 * level, 0.5));
+  else if (kind === 'bell') for (const d of [0, 0.28]) { ping(t + d, o, 2600, 0.06 * level, 0.35); ping(t + d, o, 3900, 0.025 * level, 0.25); }
   else if (kind === 'jingle') for (let i = 0; i < 8; i++) { const st = t + i * 0.13; noiseHit(st, o, { type: 'highpass', f: 6000, peak: 0.04 * level, dur: 0.12 }); ping(st, o, 3400 + Math.random() * 900, 0.015 * level, 0.15); }
 }
 function popSound(pos) {
