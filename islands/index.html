@@ -393,7 +393,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261027.05</span>
+  <span class="ver">v261027.06</span>
   </div></div>
 </div>
 
@@ -4387,9 +4387,18 @@ function tick() {
 tick();
 
 // 網址帶 #島代號（例如 islands/#c5）就直接打開那座島；小遊戲結尾的「回到全真群島」用這個
+// 講師專屬連結：#t-拼音（例如 #t-wu-mingqing）直接飛到那位講師身邊，他會轉身揮手
+const TEACHER_SLUG = { 鄭名翔: 'zheng-mingxiang', 鄔明清: 'wu-mingqing', 楊峰誌: 'yang-fengzhi', 林鈺蓉: 'lin-yurong', 李寶莉: 'li-baoli',
+  朱宸慧: 'zhu-chenhui', 何珈貞: 'he-jiazhen', 林信宏: 'lin-xinhong', 何思諺: 'he-siyan', 蘇毓婷: 'su-yuting' };
 function openFromHash() {
   const key = decodeURIComponent(location.hash.slice(1));
-  if (islands[key]) select(key);
+  if (islands[key]) { select(key); return; }
+  if (key.startsWith('t-')) {
+    const name = Object.keys(TEACHER_SLUG).find((n) => TEACHER_SLUG[n] === key.slice(2));
+    // 同一位講師在好幾座島上課時，優先帶到瑜伽島（每堂課的第一堂）
+    const t = TEACHERS.filter((x) => x.name === name).sort((a, b) => (b.key === 'yoga') - (a.key === 'yoga'))[0];
+    if (t) { select(t.key, 't:' + t.id); focusFigure('t:' + t.id); }
+  }
 }
 openFromHash();
 addEventListener('hashchange', openFromHash);
