@@ -153,6 +153,36 @@
     transform: translate(-50%, 6px); padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap;
     opacity: 0; pointer-events: none; transition: opacity 0.32s linear, transform 0.32s linear; }
   .skytip.on { opacity: 1; transform: translate(-50%, 0); }
+  /* 第一次進來的操作提示：畫面正中間一張小卡，三個手勢＋開始按鈕 */
+  .howto { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 16px; background: rgba(20, 30, 40, 0.28);
+    backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); opacity: 0; transition: opacity 0.32s linear; }
+  .howto.on { opacity: 1; }
+  .howto-card { width: min(340px, 100%); padding: 22px 22px 18px; text-align: center; transform: translateY(8px) scale(0.97); transition: transform 0.32s ease-out; }
+  .howto.on .howto-card { transform: none; }
+  .howto h2 { margin: 0; font-family: var(--font-display); font-size: 22px; letter-spacing: 0.06em; }
+  .howto-sub { margin: 4px 0 14px; font-size: 13px; color: var(--muted); }
+  .howto-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; text-align: left; }
+  .howto-list li { display: grid; grid-template-columns: 46px 1fr; grid-template-rows: auto auto; column-gap: 12px; align-items: center; padding: 8px 10px; border-radius: 12px; background: var(--chip); }
+  .howto-list b { font-size: 15px; }
+  .howto-list small { grid-column: 2; font-size: 13px; color: var(--muted); }
+  .hi { grid-row: span 2; width: 46px; height: 46px; border-radius: 12px; background: var(--card); position: relative; overflow: hidden; }
+  .hi::before, .hi::after { content: ""; position: absolute; width: 12px; height: 12px; border-radius: 50%; background: var(--brick); top: 17px; left: 17px; box-shadow: 0 0 0 4px color-mix(in srgb, var(--brick) 22%, transparent); }
+  .hi::after { display: none; }
+  .hi-rotate::before { animation: hiRotate 2.4s ease-in-out infinite; }
+  .hi-pan::before, .hi-pan::after { display: block; animation: hiPan 2.4s ease-in-out infinite; }
+  .hi-pan::before { left: 11px; } .hi-pan::after { left: 23px; }
+  .hi-zoom::before, .hi-zoom::after { display: block; }
+  .hi-zoom::before { animation: hiZoomA 2.4s ease-in-out infinite; }
+  .hi-zoom::after { animation: hiZoomB 2.4s ease-in-out infinite; }
+  @keyframes hiRotate { 0%, 100% { transform: translate(-11px, 0); } 50% { transform: translate(11px, 0); } }
+  @keyframes hiPan { 0%, 100% { transform: translate(0, -10px); } 50% { transform: translate(0, 10px); } }
+  @keyframes hiZoomA { 0%, 100% { transform: translate(-3px, 3px); } 50% { transform: translate(-12px, 12px); } }
+  @keyframes hiZoomB { 0%, 100% { transform: translate(3px, -3px); } 50% { transform: translate(12px, -12px); } }
+  .howto-tip { margin: 14px 0 16px; font-size: 13px; line-height: 1.6; }
+  .howto-go { padding: 10px 26px; border-radius: 999px; border: 0; background: var(--brick); color: #fff; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--brick) 35%, transparent); }
+  .howto-go:focus-visible { outline: 2px solid var(--jade); outline-offset: 3px; }
+  @media (prefers-reduced-motion: reduce) { .hi::before, .hi::after { animation: none !important; } }
   .soundhint { border: 1px solid var(--line); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
   .soundhint.on { pointer-events: auto; animation: hintPulse 2.4s ease-in-out infinite; }
   @keyframes hintPulse { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--gold) 30%, transparent), 0 8px 28px rgba(50, 30, 15, 0.14); } }
@@ -357,7 +387,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.51</span>
+  <span class="ver">v261026.52</span>
   </div></div>
 </div>
 
@@ -380,6 +410,20 @@
 
 <div class="card skytip" id="skyTip" role="status" aria-live="polite"></div>
 <button class="card skytip soundhint" id="soundHint" type="button">🔊 點一下畫面，打開音樂和音效</button>
+
+<div class="howto" id="howto" role="dialog" aria-modal="true" aria-labelledby="howtoTitle" hidden>
+  <div class="card howto-card">
+    <h2 id="howtoTitle">歡迎登上全真群島 👋</h2>
+    <p class="howto-sub">三個手勢，就能逛遍整片群島</p>
+    <ul class="howto-list">
+      <li><span class="hi hi-rotate" aria-hidden="true"></span><b>旋轉</b><small data-touch="單指拖曳" data-mouse="按住滑鼠左鍵拖曳"></small></li>
+      <li><span class="hi hi-pan" aria-hidden="true"></span><b>平移</b><small data-touch="兩指一起拖曳" data-mouse="按住右鍵拖曳（或 Shift＋左鍵）"></small></li>
+      <li><span class="hi hi-zoom" aria-hidden="true"></span><b>縮放</b><small data-touch="兩指捏合、張開" data-mouse="滾動滑鼠滾輪"></small></li>
+    </ul>
+    <p class="howto-tip">👆 點島、點人物，就能看介紹；迷路時按右上角 🏠 回到起點</p>
+    <button class="howto-go" id="howtoGo" type="button">開始探索 🏝️</button>
+  </div>
+</div>
 
 <div class="card soundpop" id="soundPop" hidden>
   <b>聲音</b>
@@ -3220,6 +3264,7 @@ function renderNav() {
   const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島</span></a>
+    <button class="home" data-howto><span aria-hidden="true">👆</span><span>操作說明：旋轉、平移、縮放</span></button>
     <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
@@ -3238,6 +3283,7 @@ navPop.addEventListener('click', (e) => {
   if (!b) return;
   showNavPop(false);
   if (b.hasAttribute('data-home')) { setUI({ panel: 'closed', dock: false }); goHome(); return; }
+  if (b.hasAttribute('data-howto')) { showHowto(); return; }
   const key = b.dataset.go;
   if (TOUR.includes(key)) goTo(key); else select(key);
 });
@@ -3407,6 +3453,26 @@ document.addEventListener('pointerdown', (e) => {
   showSearchPop(false, !e.target.closest('.tag'));
 });
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && searching) showSearchPop(false); });
+
+// 第一次進來：畫面正中間顯示操作說明（手機顯示觸控手勢、電腦顯示滑鼠操作）；按「開始探索」關掉，之後就不再自動出現
+const howto = $('howto'), TOUCH = matchMedia('(pointer: coarse)').matches;
+howto.querySelectorAll('small').forEach((el) => { el.textContent = TOUCH ? el.dataset.touch : el.dataset.mouse; });
+function showHowto() {
+  howto.hidden = false;
+  requestAnimationFrame(() => howto.classList.add('on'));
+  setTimeout(() => $('howtoGo').focus(), 50);
+}
+function hideHowto() {
+  howto.classList.remove('on');
+  setTimeout(() => { howto.hidden = true; }, 320);
+  try { localStorage.setItem('islands-howto', '1'); } catch (e) {}
+}
+$('howtoGo').addEventListener('click', hideHowto);
+howto.addEventListener('click', (e) => { if (e.target === howto) hideHowto(); });
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && !howto.hidden) hideHowto(); });
+let seenHowto = false;
+try { seenHowto = localStorage.getItem('islands-howto') === '1'; } catch (e) {}
+if (!seenHowto && !location.hash) setTimeout(showHowto, 900);
 
 // 晝夜跟著台灣時間：日出、白天、夕陽、黃昏、夜晚；右上角按鈕可以切換「自動／固定白天／固定夜晚」，選擇會記在這台裝置上
 const root = document.documentElement;
