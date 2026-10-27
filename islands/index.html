@@ -82,8 +82,11 @@
   .card { z-index: 2; }
   .brand .count { margin: 2px 0 0; font-size: 13px; color: var(--ink); line-height: 1.5; }
   /* 瓶中信數量：跟登島人數同一種寫法，整行可以點，點了飛到漂流瓶島 */
-  .bottle-count { cursor: pointer; margin-top: -6px !important; }
+  .bottle-count { cursor: pointer; }
   .brand .count.bottle-count b { color: #2f80c9; }
+  .brand .count .n-gold { color: #d9770a; }
+  :root[data-theme="dark"] .brand .count .n-gold { color: #f0b54d; }
+  .brand .count + .count { margin-top: -6px; }
   :root[data-theme="dark"] .brand .count.bottle-count b { color: #7cc4ff; }
   .bottle-count .go { color: var(--brick); font-weight: 700; margin-left: 2px; white-space: nowrap; }
   .bottle-count:hover .go { text-decoration: underline; }
@@ -384,10 +387,11 @@
   <h1>全真群島<small>2027 全真社青・一座島一堂課</small></h1>
   <div class="brand-more"><div>
   <p class="count" id="brandCount"></p>
+  <p class="count brand-next" id="brandNext"></p>
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.54</span>
+  <span class="ver">v261026.55</span>
   </div></div>
 </div>
 
@@ -2858,7 +2862,10 @@ function applyDate() {
   document.getElementById('dateText').textContent = dateLabel;
   document.getElementById('dateHint').textContent = (now === todayISO ? '今天・' : '') + nextText;
   document.getElementById('chipDate').textContent = dateLabel + (now === todayISO ? '・今天' : '');
-  document.getElementById('brandCount').innerHTML = `<b>${list.length}</b> 位夥伴已登島・${esc(nextText)}`;
+  // 登島人數、倒數天數、瓶中信各一行；數字都用同一種大字（登島紅、倒數金、瓶中信藍）
+  const countdown = next && left > 0 ? `距離「${esc(next.name)}」還有 <b class="n-gold">${left}</b> 天` : esc(nextText);
+  document.getElementById('brandCount').innerHTML = `<b>${list.length}</b> 位夥伴已登島`;
+  document.getElementById('brandNext').innerHTML = countdown;
   const view = now + '|' + dataStamp + '|' + (selected || '');
   if (view !== lastView) { lastView = view; renderPanel(); syncTour(); }
 }
