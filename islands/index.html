@@ -400,7 +400,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261027.10</span>
+  <span class="ver">v261027.11</span>
   </div></div>
 </div>
 
@@ -409,6 +409,7 @@
   <button class="icon" id="sound" aria-pressed="false" aria-expanded="false" aria-controls="soundPop" aria-label="聲音設定" title="聲音"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg></button>
   <button class="icon" id="night" data-mode="auto" aria-label="日夜：自動" title="日夜：自動"><svg class="auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><path d="M12 4.5a7.5 7.5 0 0 0 0 15z" fill="currentColor"/></svg><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
   <button class="icon" id="search" aria-expanded="false" aria-controls="searchPop" aria-label="搜尋課程或夥伴" title="搜尋"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg></button>
+  <button class="icon" id="hand" aria-pressed="false" aria-label="平移模式：關" title="平移模式"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 11V6a2 2 0 0 0-4 0v5"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg></button>
   <button class="icon" id="home" aria-label="回到初始視角" title="回到初始視角"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></svg></button>
 </div>
 
@@ -433,7 +434,7 @@
       <li><span class="hi hi-pan" aria-hidden="true"></span><b>平移</b><small data-touch="兩指一起拖曳" data-mouse="按住右鍵拖曳（或 Shift＋左鍵）"></small></li>
       <li><span class="hi hi-zoom" aria-hidden="true"></span><b>縮放</b><small data-touch="兩指捏合、張開" data-mouse="滾動滑鼠滾輪"></small></li>
     </ul>
-    <p class="howto-tip">👆 點島、點人物，就能看介紹；<br>迷路時，按右上角 🏠 回到起點。</p>
+    <p class="howto-tip">👆 點島、點人物，就能看介紹；<br>迷路時，按右上角 🏠 回到起點。<br>想一指平移地圖？按右上角 ✋</p>
     <button class="howto-go" id="howtoGo" type="button">開始探索 🏝️</button>
   </div>
 </div>
@@ -3761,6 +3762,29 @@ $('night').onclick = () => {
   skyTipTimer = setTimeout(() => tip.classList.remove('on'), 1800);
 };
 
+// ✋ 平移模式：一指（滑鼠左鍵）拖曳變成平移地圖，兩指（右鍵）改成旋轉；縮放、點島點人都不變。記住每個人上次的選擇
+const HAND_KEY = 'islands-hand';
+let handMode = false;
+try { handMode = localStorage.getItem(HAND_KEY) === '1'; } catch (e) {}
+function applyHand() {
+  controls.touches = handMode ? { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE } : { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+  controls.mouseButtons = handMode ? { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE } : { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+  const b = $('hand');
+  b.setAttribute('aria-pressed', handMode);
+  b.setAttribute('aria-label', handMode ? '平移模式：開' : '平移模式：關');
+}
+applyHand();
+$('hand').onclick = () => {
+  handMode = !handMode;
+  try { localStorage.setItem(HAND_KEY, handMode ? '1' : '0'); } catch (e) {}
+  applyHand();
+  const tip = $('skyTip');
+  tip.textContent = handMode ? (TOUCH ? '✋ 平移模式：一指拖曳移動地圖，兩指旋轉' : '✋ 平移模式：左鍵拖曳移動地圖，右鍵旋轉') : (TOUCH ? '↻ 回到原本：一指旋轉，兩指平移' : '↻ 回到原本：左鍵旋轉，右鍵平移');
+  tip.classList.add('on');
+  clearTimeout(skyTipTimer);
+  skyTipTimer = setTimeout(() => tip.classList.remove('on'), 2000);
+};
+
 /* ---------- 報名資料：直接讀 Google 報名表，連不上改讀備份 ---------- */
 // 跟報名分析頁同一份表單回覆；試算表要維持「知道連結的任何人都能檢視」
 // 只查詢需要的欄位：手機（F 欄）不會被讀進瀏覽器；姓名用來去重複、比對幹部，也直接顯示在小人偶和搜尋結果上
@@ -4455,6 +4479,8 @@ const HEMI_DAY = new THREE.Color('#fff6e6');
 const warmC = new THREE.Color(), seaC = new THREE.Color();
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+// 平移的範圍：最外圍那座島再往外留一點海
+const PAN_LIMIT = Math.max(...Object.values(islands).map((i) => Math.hypot(i.x, i.z))) + 30;
 function tick() {
   const rawDt = clock.getDelta(), dt = Math.min(rawDt, 0.05), t = clock.elapsedTime;
 
@@ -4515,6 +4541,14 @@ function tick() {
   }
   applyView(1 - Math.exp(-rawDt * 6));
   controls.update();
+  // 平移不能拖出群島範圍：視線中心離群島中心太遠就拉回來（鏡頭跟著一起移）
+  const off = Math.hypot(controls.target.x, controls.target.z);
+  if (off > PAN_LIMIT) {
+    const k = PAN_LIMIT / off;
+    const dx = controls.target.x * (k - 1), dz = controls.target.z * (k - 1);
+    controls.target.x += dx; controls.target.z += dz;
+    camera.position.x += dx; camera.position.z += dz;
+  }
   composer.render();
   placeTags();
   requestAnimationFrame(tick);
