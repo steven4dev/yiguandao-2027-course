@@ -357,7 +357,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261026.49</span>
+  <span class="ver">v261026.50</span>
   </div></div>
 </div>
 
@@ -2260,10 +2260,14 @@ function addTeachers(isl, list, dist, spread) {
     mesh(new THREE.BoxGeometry(0.9, 0.6, 0.05), boardMat, 0, 1.05, 0, board);
     mesh(new THREE.BoxGeometry(0.98, 0.07, 0.07), easelMat, 0, 0.72, 0.03, board, false);
     for (const sx of [-0.38, 0.38]) mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.4, 5), easelMat, sx, 0.65, -0.06, board, false).rotation.x = 0.12;
-    const fig = figure(teacherMat, '', false, { scarf: '#2f6f73', glasses: true, book: true });
+    // 講師本身也是班務幹部（例如坤道副班長何珈貞）：用跟她幹部人偶一樣的樣子（乾坤顏色、職位配件、組別圍巾），身後一樣立著小黑板
+    const slot = SLOTS.find((sl) => sl.name === t.name && /坤道|乾道/.test(sl.role));
+    const kun = slot && slot.role.includes('坤道');
+    const fig = slot ? figure(kun ? kunMat : qianMat, slot.role, kun, { scarf: CADRE_LOOK[slot.group][1] })
+      : figure(teacherMat, '', false, { scarf: '#2f6f73', glasses: true, book: true });
     fig.scale.setScalar(1.45);
     g.add(fig);
-    const rec = { id: TEACHERS.length, key: isl.key, fig, ...t };
+    const rec = { id: TEACHERS.length, key: isl.key, fig, slot, ...t };
     fig.userData.teacher = g.userData.teacher = rec.id;
     g.traverse((m) => { if (m.isMesh) teacherHit.push(m); });
     TEACHERS.push(rec);
@@ -2844,7 +2848,7 @@ function renderPanel() {
     // 同一位講師在其他島也有課，一起列出來
     const also = TEACHERS.filter((o) => o.name === teacher.name && o !== teacher);
     title = teacher.name; info = `${home}・${teacher.topics.join('、')}`;
-    html = `<header><span class="eyebrow">${esc(home)}・${teacher.title}</span><h2>${esc(teacher.name)}</h2><p class="sub">${esc(teacher.unit)}・${esc(teacher.title)}</p></header>
+    html = `<header><span class="eyebrow">${esc(home)}・${teacher.title}</span><h2>${esc(teacher.name)}</h2><p class="sub">${esc(teacher.unit)}・${esc(teacher.title)}${teacher.slot ? `・也是${esc(teacher.slot.title)}` : ''}</p></header>
       <div class="bars"><h3>這堂課</h3>${teacher.topics.map((tp) => `<div class="prog"><span>${esc(when)}</span><span>${esc(tp)}</span></div>`).join('')}</div>
       ${also.length ? `<div class="bars"><h3>也在這些島上課</h3><div class="alsoT">${also.map((o) => `<button class="back" data-go="${o.key}">${esc(isleName(o.key))}・${esc(isleWhen(o.key))}</button>`).join('')}</div></div>` : ''}
       <button class="back" data-go="${teacher.key}">← 看${esc(home)}的課程</button>`;
