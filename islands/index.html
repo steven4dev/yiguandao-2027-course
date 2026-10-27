@@ -436,7 +436,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261027.13</span>
+  <span class="ver">v261027.14</span>
   </div></div>
 </div>
 
@@ -2507,6 +2507,96 @@ COURSES.forEach((c) => {
   if (c.pm) addTeachers(islands[c.pm.key], [{ topic: c.pm.name, text: c.pm.who || '' }], 3.2, 2);
 });
 
+/* ---------- 何珈貞（重置島講師）：平常繞著重置島慢跑，偶爾跌倒再爬起來；被點到時像超級瑪莉一樣起跳，
+   拳頭朝天、背後長出小天使翅膀飛一圈，落地後再揮手 ---------- */
+{
+  const rec = TEACHERS.find((x) => x.name === '何珈貞' && x.key === 'c6');
+  if (rec) {
+    const isl = islands[rec.key], f = rec.fig, u = f.userData, inner = f.children[0];
+    // 從講台（小黑板那一組）拿出來，直接放在島上跑；小黑板留在原地，從講台前面起跑
+    const start = f.parent.position;
+    let th = Math.atan2(start.x, start.z);
+    f.parent.remove(f); isl.group.add(f);
+    f.scale.setScalar(1.45 * 1.3);
+    // 副班長原本的拍手換成跑步，手臂交給下面的動畫
+    for (let i = TRICKS.length - 1; i >= 0; i--) if (TRICKS[i].f === f) TRICKS.splice(i, 1);
+    TRICKS.push({ f, kind: 'runner' });   // 留著冒泡泡（💫）的功能
+    const RUN_R = 5.9, SPEED = 0.6;
+    let nextFall = 18 + Math.random() * 10, fallT = -9, lastT = null;
+    // 小天使翅膀：左右各三片白色羽毛疊成一片，掛在背後的樞紐上拍動
+    const wingMat = new THREE.MeshLambertMaterial({ color: '#ffffff', emissive: '#fff6d8', emissiveIntensity: 0.35 });
+    const wings = [-1, 1].map((sx) => {
+      const w = new THREE.Group(); w.position.set(sx * 0.14, 0.78, -0.36); inner.add(w);
+      [[0.32, 0.12, 0.3], [0.5, 0.0, 0.24], [0.62, -0.12, 0.18]].forEach(([x, y, r], k) => {
+        const fe = mesh(dotGeo, wingMat, sx * x, y + 0.1, -0.06, w, false);
+        fe.scale.set(r, r * 0.55, 0.05); fe.rotation.z = sx * (0.5 - k * 0.25);
+      });
+      w.visible = false;
+      return w;
+    });
+    const feathers = [];
+    for (let i = 0; i < 6; i++) { const fe = mesh(dotGeo, wingMat, 0, 0, 0, isl.group, false); fe.scale.set(0.1, 0.05, 0.02); fe.visible = false; feathers.push(fe); }
+    const FLY = 2.4, H = 2.3;
+    const [L, R] = u.arms;
+    const setRun = () => { inner.rotation.set(0.18, 0, 0); inner.scale.set(1, 1, 1); wings.forEach((w) => { w.visible = false; }); };
+    animators.push((t) => {
+      const dt = lastT == null ? 0 : Math.min(0.1, t - lastT); lastT = t;
+      if (u.focusT != null) return;   // 被點到時交給 onFocus
+      const fe = t - fallT;
+      if (fe < 2.4) {
+        // 跌倒：往前撲 → 趴著 💫 → 撐起來 → 拍拍身體
+        const k = fe < 0.3 ? fe / 0.3 : fe < 1.3 ? 1 : fe < 2 ? 1 - (fe - 1.3) / 0.7 : 0;
+        inner.rotation.x = 0.18 + k * 1.35;
+        f.position.y = 0;
+        L.rotation.set(-1.4 * k, 0, -ARM_REST * (1 - k * 0.5)); R.rotation.set(-1.4 * k, 0, ARM_REST * (1 - k * 0.5));
+        if (fe >= 2) { const pat = Math.abs(Math.sin((fe - 2) * 16)); L.rotation.set(-0.6, 0, -0.3 - pat * 0.3); R.rotation.set(-0.6, 0, 0.3 + pat * 0.3); }
+        return;
+      }
+      if (t > nextFall) { fallT = t; nextFall = t + 20 + Math.random() * 10; bubble(f, '💫'); return; }
+      setRun();
+      th += SPEED * dt;
+      f.position.set(Math.sin(th) * RUN_R, Math.abs(Math.sin(t * 9)) * 0.12, Math.cos(th) * RUN_R);
+      f.rotation.y = Math.atan2(Math.cos(th), -Math.sin(th));
+      u.restRotY = f.rotation.y;
+      const sw = Math.sin(t * 9);
+      L.rotation.set(sw * 0.9, 0, -ARM_REST * 0.6); R.rotation.set(-sw * 0.9, 0, ARM_REST * 0.6);
+    });
+    // 被點到：蹲 → 起跳 → 拳頭朝天、翅膀拍動飛一下 → 落地；回傳 null 代表還在飛，回傳數字就接著揮手
+    u.onFocus = (fig, e, t) => {
+      // 鏡頭還在飛過來的路上就先站著等，等鏡頭到了才起跳，才不會錯過
+      if (tween) { fig.userData.focusT = t; inner.rotation.set(0, 0, 0); inner.scale.set(1, 1, 1); fig.position.y = 0; L.rotation.set(0, 0, -ARM_REST); R.rotation.set(0, 0, ARM_REST); return null; }
+      if (e >= FLY) { wings.forEach((w) => { w.visible = false; }); feathers.forEach((x) => { x.visible = false; }); inner.rotation.set(0, 0, 0); inner.scale.set(1, 1, 1); return e - FLY; }
+      fallT = -9;
+      if (e < 0.22) {   // 蹲下蓄力
+        const k = e / 0.22;
+        inner.scale.set(1 + k * 0.12, 1 - k * 0.22, 1 + k * 0.12); inner.rotation.set(0, 0, 0);
+        fig.position.y = 0; L.rotation.set(0, 0, -ARM_REST); R.rotation.set(0, 0, ARM_REST);
+        return null;
+      }
+      if (e - 0.22 < 0.05) { bubble(fig, '✨'); trickSound('wand', fig); }
+      inner.scale.set(1, 1, 1);
+      const k = (e - 0.22) / (FLY - 0.22);
+      const hgt = k < 0.3 ? H * (1 - (1 - k / 0.3) ** 2) : k < 0.75 ? H + Math.sin((k - 0.3) * 14) * 0.15 : H * (1 - ((k - 0.75) / 0.25) ** 2);
+      fig.position.y = hgt;
+      // 超人姿勢：右手拳頭斜斜朝天（往外一點才不會被大頭擋住），左手貼在身側，身體微微往前傾
+      R.rotation.set(-0.35, 0, 2.35); L.rotation.set(0.2, 0, -0.25);
+      inner.rotation.set(k < 0.75 ? 0.15 : 0, 0, 0);
+      // 翅膀：起跳後展開、快速拍動；落地前收起
+      const on = k > 0.05 && k < 0.92;
+      wings.forEach((w, i) => { w.visible = on; w.rotation.y = (i ? -1 : 1) * (0.35 + Math.sin(t * 28) * 0.45); });
+      // 幾根羽毛從身邊飄落
+      fig.getWorldPosition(waveTmp); isl.group.worldToLocal(waveTmp);
+      feathers.forEach((x, i) => {
+        const fk = (k * 3 + i / 6) % 1;
+        x.visible = on;
+        x.position.set(waveTmp.x + Math.sin(i * 2.1) * (0.6 + fk), waveTmp.y + 1.6 - fk * 2.2, waveTmp.z + Math.cos(i * 2.1) * (0.6 + fk));
+        x.rotation.set(t * 3 + i, t * 2, Math.sin(t * 4 + i));
+      });
+      return null;
+    };
+  }
+}
+
 /* ---------- 瑜伽島：在全真島、走走島、歡樂島之間；每堂課早上大家先來這裡做古典瑜伽 ---------- */
 const YOGA_COURSES = COURSES.filter((c) => (c.prog || []).some(([k]) => k === '古典瑜伽'));
 const YOGA_WHO = ((YOGA_COURSES[0] || {}).prog || []).find(([k]) => k === '古典瑜伽')?.[1] || '';
@@ -3446,6 +3536,8 @@ function orbitIsland() { controls.autoRotate = true; controls.autoRotateSpeed = 
 // sel 可以是島（'g3'）、某一位幹部（'m:12'）或廣場上的學員（'p:3'）；鏡頭已經在那座島上就不動
 function select(key, sel = key) {
   const isl = islands[key];
+  // 再點一次同一個人：重新來一次（何珈貞會再飛一次）
+  if (sel === selected && panelMode !== 'closed') for (const f of figuresFor(sel)) if (f.userData.onFocus) f.userData.focusT = null;
   const stay = controls.target.distanceTo(new THREE.Vector3(isl.x, 1.5, isl.z)) < 1;
   selected = sel;
   setUI({ panel: 'open' });
@@ -4605,8 +4697,11 @@ function poseFocus(f, t) {
   f.getWorldPosition(waveTmp);
   waveCam.set(camera.position.x, waveTmp.y, camera.position.z);
   f.lookAt(waveCam);
+  let e = t - u.focusT;
+  // 有自己的「被點到」特技的人偶（何珈貞起飛）：特技做完才接著揮手
+  if (u.onFocus) { const left = u.onFocus(f, e, t); if (left == null) return; e = left; }
   f.position.y = u.baseY || 0;
-  const e = t - u.focusT, [, right] = u.arms || [];
+  const [, right] = u.arms || [];
   if (!right) return;
   // 拋球、拉拉炮的人先把右手放回身側再揮手
   right.rotation.x = 0;
