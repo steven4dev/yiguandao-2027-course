@@ -82,7 +82,13 @@
   .card { z-index: 2; }
   .brand .count { margin: 2px 0 0; font-size: 13px; color: var(--ink); line-height: 1.5; }
   /* 瓶中信數量：跟登島人數同一種寫法，整行可以點，點了飛到漂流瓶島 */
-  .bottle-count { cursor: pointer; }
+  .bottle-count, .party-count { cursor: pointer; }
+  /* 凝聚晚會：跟瓶中信同一種寫法，數字用燈籠紅；整行可以點，點了飛到中一島 */
+  .brand .count.party-count b { color: #d0392b; }
+  :root[data-theme="dark"] .brand .count.party-count b { color: #ff8a7a; }
+  .party-count .go { color: var(--brick); font-weight: 700; margin-left: 2px; white-space: nowrap; }
+  .party-count:hover .go { text-decoration: underline; }
+  .party-count:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; border-radius: 6px; }
   .brand .count.bottle-count b { color: #2f80c9; }
   .brand .count .n-gold { color: #d9770a; }
   .brand .count .n-green { color: #1d8a5f; font-size: 16px; }
@@ -433,10 +439,11 @@
   <p class="count" id="brandCount"></p>
   <p class="count welcome" id="brandWelcome" hidden></p>
   <p class="count brand-next" id="brandNext"></p>
+  <p class="count party-count" id="partyChip" role="button" tabindex="0" hidden></p>
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.08</span>
+  <span class="ver">v261028.09</span>
   </div></div>
 </div>
 
@@ -3303,6 +3310,8 @@ function syncBottleChip(fresh) {
 syncBottleChip();
 // 點了要擋住冒泡：不然同一下點擊會傳到品牌卡，把剛收起來的品牌卡又展開
 document.getElementById('bottleChip').addEventListener('click', (e) => { e.stopPropagation(); select('bottle'); });
+document.getElementById('partyChip').addEventListener('click', (e) => { e.stopPropagation(); select('zhongyi'); });
+document.getElementById('partyChip').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); select('zhongyi'); } });
 document.getElementById('bottleChip').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); select('bottle'); } });
 animators.push((t) => {
   const sel = String(selected).startsWith('b:') ? +String(selected).slice(2) : -9;
@@ -3546,6 +3555,14 @@ function applyDate() {
   renderWelcome(list.filter((p) => p.date === now), now === todayISO);
   const view = now + '|' + dataStamp + '|' + (selected || '');
   if (zyIsl.sync) zyIsl.sync(now);
+  // 品牌卡：凝聚晚會倒數（報名期間寫截止日；當天寫就是今晚；結束後不顯示）
+  const pLeft = dayIndex('2026-11-28') - dayIndex(now), pc = document.getElementById('partyChip');
+  pc.hidden = pLeft < 0;
+  if (pLeft >= 0) {
+    pc.innerHTML = pLeft === 0 ? `🏮 今晚 18:00 全真青年凝聚晚會・<span class="go">去中一島 ›</span>`
+      : `🏮 凝聚晚會 11/28 還有 <b>${pLeft}</b> 天${now <= '2026-11-02' ? '・報名到 11/2' : ''}・<span class="go">${now <= '2026-11-02' ? '去報名' : '去看看'} ›</span>`;
+    pc.setAttribute('aria-label', '前往中一島，看全真青年凝聚晚會');
+  }
   if (view !== lastView) { lastView = view; renderPanel(); syncTour(); }
 }
 
