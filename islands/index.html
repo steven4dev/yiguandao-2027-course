@@ -443,7 +443,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.11</span>
+  <span class="ver">v261028.12</span>
   </div></div>
 </div>
 
@@ -3128,7 +3128,8 @@ const zyIsl = (() => {
   mesh(new THREE.BoxGeometry(4.3, 0.06, 1.6), lam('#c0503f'), 0, 0.32, 1.1, ST, false);
   for (const sx of [-1.9, 1.9]) { mesh(new THREE.BoxGeometry(0.5, 0.7, 0.4), lam('#2f2b2a'), sx, 0.7, 0.6, ST); }   // 兩顆音響
   // 橫布條：掛在兩翼之間
-  const bTex = canvasTex(640, 120, (c) => { c.fillStyle = SIGN_BG; c.fillRect(0, 0, 640, 120); signFrame(c, 640, 120, 10); c.fillStyle = SIGN_GOLD; c.font = signFont(64); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🏮 全真青年凝聚晚會', 320, 64); });
+  // 主布條用紅底白字（喜氣）；外圈白色粗框，跟後面的紅瓦簷分得開
+  const bTex = canvasTex(640, 120, (c) => { c.fillStyle = '#d62f22'; c.fillRect(0, 0, 640, 120); signFrame(c, 640, 120, 10); c.fillStyle = '#ffffff'; c.font = signFont(64); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🏮 全真青年凝聚晚會', 320, 64); });
   mesh(new THREE.PlaneGeometry(5.6, 1.05), signMat(bTex), 0, 2.55, 1.0, ST, false);
   mesh(new THREE.CylinderGeometry(0.02, 0.02, WX * 2, 4), ropeM, 0, 3.05, 0.9, ST, false).rotation.z = Math.PI / 2;
   // 燈串：兩翼屋頂之間拉四條，微微下垂，掛一顆顆暖黃小燈泡（天黑會亮）
