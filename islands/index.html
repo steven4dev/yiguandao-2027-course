@@ -3054,6 +3054,31 @@ const zyIsl = (() => {
   const pr = mesh(new THREE.ConeGeometry(1.75, 0.9, 8), eave, 0, 1.95, 0, PV); pr.rotation.y = Math.PI / 8;
   mesh(new THREE.SphereGeometry(0.1, 8, 6), gold, 0, 2.45, 0, PV);
   addObst(g, { x: 0, z: 0, r: ZY_R - 1 });
+  // ===== 還在施工：島外一圈海上施工浮筒，橘白相間一節一節串起來，隨著海浪輕輕上下晃 =====
+  const RB = ZY_R + 2.6, floatO = lam('#e8743a'), floatW = lam('#f4f1ea'), ropeM = lam('#5f6b73');
+  const segGeo = new THREE.CylinderGeometry(0.32, 0.32, 1.1, 10).rotateZ(Math.PI / 2);
+  const capGeo = new THREE.SphereGeometry(0.32, 10, 8);
+  const floats = [];
+  for (let k = 0; k < 6; k++) {
+    const a0 = Math.PI / 6 + (k * Math.PI) / 3, a1 = a0 + Math.PI / 3;
+    const p0 = new THREE.Vector3(Math.sin(a0) * RB, 0, Math.cos(a0) * RB), p1 = new THREE.Vector3(Math.sin(a1) * RB, 0, Math.cos(a1) * RB);
+    const n = Math.round(p0.distanceTo(p1) / 1.25);
+    for (let i = 0; i < n; i++) {
+      const q = p0.clone().lerp(p1, (i + 0.5) / n);
+      const fl = new THREE.Group(); fl.position.set(q.x, -3.12, q.z); fl.rotation.y = Math.atan2(p1.x - p0.x, p1.z - p0.z) + Math.PI / 2; g.add(fl);
+      const m = (i + k) % 2 ? floatW : floatO;
+      mesh(segGeo, m, 0, 0, 0, fl, false);
+      for (const sx of [-0.55, 0.55]) mesh(capGeo, m, sx, 0, 0, fl, false);
+      // 每隔幾節立一支小旗桿，掛一面橘色小旗
+      if (i % 4 === 0) { mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.2, 5), ropeM, 0, 0.75, 0, fl, false); mesh(new THREE.BoxGeometry(0.02, 0.3, 0.45), floatO, 0, 1.2, 0.24, fl, false); }
+      fl.userData.phase = (k * 7 + i) * 0.7;
+      floats.push(fl);
+    }
+    // 浮筒之間的纜繩
+    const rope = mesh(new THREE.CylinderGeometry(0.03, 0.03, p0.distanceTo(p1), 4), ropeM, (p0.x + p1.x) / 2, -2.98, (p0.z + p1.z) / 2, g, false);
+    rope.lookAt(new THREE.Vector3(p1.x, -2.98, p1.z).add(g.position)); rope.rotateX(Math.PI / 2);
+  }
+  animators.push((t) => { for (const fl of floats) { fl.position.y = -3.12 + Math.sin(t * 1.3 + fl.userData.phase) * 0.06; fl.rotation.x = Math.sin(t * 1.1 + fl.userData.phase) * 0.06; } });
 }
 
 /* ---------- 漂流瓶島：大家匿名留言的地方；每則審核通過的留言是一個漂在島邊的玻璃瓶 ---------- */
@@ -3264,7 +3289,7 @@ COURSES.filter((c) => c.pm).forEach((c) => addTag(islands[c.pm.key], `${c.pm.emo
 addTag(dockIsl, '🛶 渡口島・登島', 'small dock-tag', 4.5);
 addTag(yogaIsl, '🧘 瑜伽島', '', 5.2);
 addTag(newIsl, '🚧 忠恕島・施工中', 'main', 15);
-addTag(zyIsl, '中一島', 'small', 8);
+addTag(zyIsl, '🚧 中一島・施工中', 'small', 8);
 addTag(bottleIsl, '🍾 漂流瓶島', 'small', 4.8);
 // 登島是重要入口：渡口島的標籤排在全真島和課程島之後、其他小標籤之前
 tags.splice(1 + COURSES.length, 0, tags.pop());
@@ -3505,8 +3530,8 @@ function renderPanel() {
       <div class="cta"><p>瓶子的顏色跟著心情：😃 黃、😍 桃紅、😘 粉、😥 藍、😭 紫、😠 紅、😑 灰。今天想丟哪一種顏色？</p><button type="button" class="cta-write">🍾 丟一個漂流瓶</button></div>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongyi') {
-    title = '中一島'; info = '基礎忠恕道場中一堂';
-    html = `<header><span class="eyebrow">外海・忠恕島旁</span><h2>🏯 中一島</h2><p class="sub">一貫道基礎忠恕道場中一堂</p></header>
+    title = '中一島'; info = '基礎忠恕道場中一堂・施工中';
+    html = `<header><span class="eyebrow">外海・忠恕島旁・施工中</span><h2>🚧 中一島</h2><p class="sub">一貫道基礎忠恕道場中一堂・島外一圈海上施工浮筒圍起來，完工後開放</p></header>
       <p class="note">從忠恕道院沿著產業道路往下走，山坡上就是中一堂。整棟像三合院的ㄇ字型：左右兩翼是白色兩層樓往前伸，中間圍出一個小廣場，最裡面的兩層樓掛著紅色瓦簷、三扇紅門；第三層只有正中間：屋頂平台上一座米黃牆、橘色琉璃瓦的佛堂。前面一大片紅磚色的停車廣場，右前角一座紅瓦八角涼亭，後面是整片山林。</p>
       <button class="back" data-go="newisle">→ 看隔壁的忠恕島</button>
       <button class="back" data-go="temple">← 回到全真島</button>`;
@@ -3853,7 +3878,7 @@ function renderNav() {
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島</span></a>
     <button class="home" data-howto><span aria-hidden="true">👆</span><span>操作說明：旋轉、平移、縮放</span></button>
-    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏯 中一島・中一堂')}${navItem('dock', '🛶 渡口島・登島報名處')}
+    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🚧 中一島・施工中')}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
@@ -3887,7 +3912,7 @@ const PLACES = [
   { key: 'dock', icon: '🛶', title: '渡口島', sub: '登島報名處', words: ['渡口島', '登島', '報名', '竹筏'] },
   { key: 'bottle', icon: '🍾', title: '漂流瓶島', sub: '匿名留言、交換訊息的地方', words: ['漂流瓶島', '漂流瓶', '瓶中信', '留言', '交流', '匿名', '瓶子', '心聲', '建議', '許願', '點子'] },
   { key: 'newisle', icon: '🚧', title: '忠恕島', sub: '忠恕道院・施工中', words: ['忠恕島', '忠恕道院', '忠恕', '大殿', '施工', '建置中'] },
-  { key: 'zhongyi', icon: '🏯', title: '中一島', sub: '基礎忠恕道場中一堂', words: ['中一島', '中一堂', '中一', '忠恕道場'] },
+  { key: 'zhongyi', icon: '🚧', title: '中一島', sub: '基礎忠恕道場中一堂・施工中', words: ['中一島', '中一堂', '中一', '忠恕道場', '施工'] },
   { key: 'yoga', icon: '🧘', title: '瑜伽島', sub: '每堂課早上的第一堂：古典瑜伽', words: ['瑜伽島', '瑜伽', '古典瑜伽', '早上', '晨間'] },
   ...COURSES.flatMap((c) => [
     { key: c.key, icon: c.game ? '🎮' : '📅', title: c.isle, sub: `${md2(c.date)} ${c.name}｜${c.sub}`,
