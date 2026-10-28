@@ -452,7 +452,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.19</span>
+  <span class="ver">v261028.20</span>
   </div></div>
 </div>
 
@@ -1982,21 +1982,115 @@ function flipDice(g) {
     hand.rotation.y = Math.sin(t * 0.7) * 0.3;
   });
 }
-// 蔬食料理王：冒熱氣的大鍋、砧板與蔬菜；料理桌前面留給蘇毓婷講師（米其林寶寶），在 addTeachers 之後搬過來
-function cooking(g) {
-  mesh(new THREE.BoxGeometry(2.4, 0.08, 1.2), lam(C.wood), 0, 0.9, -0.6, g);
-  for (const [x, z] of [[-1.05, -1.05], [1.05, -1.05], [-1.05, -0.15], [1.05, -0.15]]) mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.9, 6), lam(C.wood), x, 0.45, z, g);
-  mesh(new THREE.CylinderGeometry(0.55, 0.45, 0.55, 18), lam('#8a9096'), -0.5, 1.22, -0.6, g);
-  mesh(new THREE.BoxGeometry(0.8, 0.05, 0.5), lam('#e9d2a8'), 0.6, 0.97, -0.6, g);
-  mesh(new THREE.ConeGeometry(0.06, 0.4, 8), lam('#e2763b'), 0.45, 1.05, -0.55, g).rotation.z = Math.PI / 2;
-  mesh(new THREE.SphereGeometry(0.15, 10, 8), lam('#7fb05e'), 0.75, 1.1, -0.65, g);
-  mesh(new THREE.SphereGeometry(0.1, 10, 8), lam('#e2626b'), 0.9, 1.05, -0.45, g);
-  [[-1.6, 1.0, '#7fb05e', 0.3], [-1.9, 0.6, '#e2763b', 0.2], [-1.4, 1.5, '#e2626b', 0.18]].forEach(([x, z, col, r]) => mesh(new THREE.SphereGeometry(r, 10, 8), lam(col), x, r, z, g));
-  const steam = [0, 1, 2].map((i) => mesh(new THREE.SphereGeometry(0.18, 10, 8), new THREE.MeshLambertMaterial({ color: '#ffffff', transparent: true, opacity: 0.6 }), -0.5, 1.6, -0.6, g, false));
+// 蔬食料理王（大家許的願）：「煮過頭 Overcooked」的廚房島——左右兩排木頭流理台（爐火、平底鍋、湯鍋、砧板、水槽、盤子），
+// 米其林寶寶（蘇毓婷講師）站在島中間，四位戴廚師帽的小廚師在兩側忙著做自己的拿手菜；全部都是蔬食，沒有肉
+const COOK_R = 6.6;
+function cooking(mark) {
+  const g = new THREE.Group(); g.position.z = 0.9; mark.add(g);   // 整組往前挪，島的前半部不會空著
+  const wood = lam('#c08a52'), woodD = lam('#9a6a3c'), top = lam('#e2b77e'), steel = lam('#c9ced3'), dark = lam('#3a3a3f');
+  const plate = lam('#ffffff'), red = lam('#e2483a'), tomato = lam('#e2483a'), green = lam('#5fae45'), carrot = lam('#ef8a2a');
+  const steam = [];
+  const puff = (parent, x, y, z) => { for (let k = 0; k < 3; k++) { const m = mesh(new THREE.SphereGeometry(0.14, 8, 6), new THREE.MeshLambertMaterial({ color: '#ffffff', transparent: true, opacity: 0.5, depthWrite: false }), x, y, z, parent, false); m.userData = { x, y, z, ph: k / 3 }; steam.push(m); } };
+  // —— 兩排流理台：沿著前後方向擺在島的左右兩側 ——
+  for (const sx of [-1, 1]) {
+    const C = new THREE.Group(); C.position.set(sx * 3.1, 0, -0.1); g.add(C);
+    mesh(new THREE.BoxGeometry(1.0, 0.85, 4.2), wood, 0, 0.42, 0, C);
+    mesh(new THREE.BoxGeometry(1.1, 0.1, 4.3), top, 0, 0.9, 0, C);
+    for (const z of [-1.4, 0, 1.4]) mesh(new THREE.BoxGeometry(0.02, 0.6, 1.1), woodD, sx * -0.51, 0.42, z, C, false);   // 櫃門線
+    // 爐台（後段）：紅底、黑爐面、藍色火圈
+    mesh(new THREE.BoxGeometry(0.85, 0.08, 1.0), lam('#c0392b'), 0, 0.98, -1.45, C);
+    mesh(new THREE.BoxGeometry(0.7, 0.06, 0.85), dark, 0, 1.04, -1.45, C);
+    const fire = mesh(new THREE.TorusGeometry(0.2, 0.03, 6, 18), glow('#4fa3ff', 0.8, 1.6), 0, 1.08, -1.45, C, false); fire.rotation.x = Math.PI / 2;
+    if (sx < 0) {   // 左邊：平底鍋煎蔬菜
+      const pan = mesh(new THREE.CylinderGeometry(0.3, 0.26, 0.08, 18), dark, 0, 1.13, -1.45, C);
+      mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.45, 6), dark, 0, 1.15, -1.05, C).rotation.x = Math.PI / 2;
+      for (const [x, z, m] of [[-0.08, -1.5, green], [0.1, -1.4, carrot], [0, -1.35, lam('#f2d64b')]]) mesh(new THREE.BoxGeometry(0.1, 0.05, 0.1), m, x, 1.19, z, C, false);
+      pan.userData.pan = true;
+    } else {        // 右邊：一鍋南瓜濃湯
+      mesh(new THREE.CylinderGeometry(0.3, 0.28, 0.38, 18), steel, 0, 1.27, -1.45, C);
+      mesh(new THREE.CylinderGeometry(0.27, 0.27, 0.02, 18), lam('#f0a33a'), 0, 1.45, -1.45, C, false);
+      puff(C, 0, 1.6, -1.45);
+    }
+    // 中段：砧板和蔬菜
+    mesh(new THREE.BoxGeometry(0.7, 0.05, 0.55), lam('#f1e2c2'), 0, 0.98, -0.35, C);
+    mesh(new THREE.SphereGeometry(0.13, 10, 8), tomato, -0.15, 1.1, -0.4, C);
+    mesh(new THREE.SphereGeometry(0.14, 8, 6), green, 0.14, 1.1, -0.3, C).scale.set(1, 0.8, 1);
+    mesh(new THREE.ConeGeometry(0.05, 0.32, 8), carrot, 0.05, 1.04, -0.15, C).rotation.z = Math.PI / 2;
+    // 水槽
+    mesh(new THREE.BoxGeometry(0.7, 0.04, 0.8), steel, 0, 0.97, 0.6, C);
+    mesh(new THREE.BoxGeometry(0.55, 0.02, 0.62), lam('#8fd3ee'), 0, 0.99, 0.6, C, false);
+    mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.35, 6), steel, sx * 0.3, 1.15, 0.6, C);
+    // 前段：一疊白盤子
+    for (let k = 0; k < 5; k++) mesh(new THREE.CylinderGeometry(0.26, 0.22, 0.04, 18), plate, 0, 0.99 + k * 0.05, 1.55, C, false);
+  }
+  // —— 蔬菜箱、木桶、黑板（畫一頂廚師帽）、兩支路燈 ——
+  for (const [x, z, items] of [[-4.2, 1.6, [tomato, carrot, tomato]], [4.2, 2.0, [green, tomato, green]]]) {
+    const B = new THREE.Group(); B.position.set(x, 0, z); g.add(B);
+    mesh(new THREE.BoxGeometry(0.9, 0.45, 0.6), wood, 0, 0.23, 0, B);
+    items.forEach((m, k) => mesh(new THREE.SphereGeometry(0.13, 8, 6), m, -0.25 + k * 0.25, 0.5, 0, B, false));
+  }
+  mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.7, 12), woodD, 4.3, 0.35, -1.3, g);
+  const sign = new THREE.Group(); sign.position.set(2.6, 0, -3.1); sign.rotation.y = -0.3; g.add(sign);
+  const sTex = canvasTex(256, 192, (c) => { c.fillStyle = '#1f2a24'; c.fillRect(0, 0, 256, 192); c.strokeStyle = '#ffffff'; c.lineWidth = 8; c.strokeRect(4, 4, 248, 184);
+    c.fillStyle = '#ffffff'; c.beginPath(); c.arc(100, 80, 30, 0, 7); c.arc(128, 66, 34, 0, 7); c.arc(156, 80, 30, 0, 7); c.fill(); c.fillRect(100, 92, 56, 36);
+    c.font = 'bold 28px "Noto Sans TC", "PingFang TC", sans-serif'; c.textAlign = 'center'; c.fillText('蔬食料理王', 128, 168); });
+  mesh(new THREE.BoxGeometry(1.2, 0.9, 0.06), [woodD, woodD, woodD, woodD, new THREE.MeshBasicMaterial({ map: sTex }), woodD], 0, 1.2, 0, sign);
+  for (const sx of [-0.45, 0.45]) mesh(new THREE.BoxGeometry(0.06, 1.6, 0.06), woodD, sx, 0.8, -0.1, sign, false).rotation.x = 0.15;
+  for (const [x, z] of [[-4.6, -1.2], [4.6, 0.6]]) {
+    mesh(new THREE.CylinderGeometry(0.05, 0.06, 2.2, 6), woodD, x, 1.1, z, g);
+    mesh(new THREE.BoxGeometry(0.3, 0.36, 0.3), glow('#ffd36b', 0.4, 2), x, 2.3, z, g, false);
+  }
+  // —— 四位小廚師：各自的拿手菜（全素） ——
+  // [x, z, 衣服顏色, 帽子顏色, 菜色, 冒的泡泡]
+  const COOKS = [[-1.65, -1.6, '#e2574a', '#ffffff', 'pan', '🥦'], [1.65, -1.6, '#4f86d6', '#7fb8ff', 'salad', '🥗'],
+    [-1.65, 1.5, '#4fae55', '#5fbf5a', 'soup', '🎃'], [1.65, 1.5, '#f2b632', '#ffffff', 'pizza', '🍅']];
+  COOKS.forEach(([x, z, body, hat, dish, emo], i) => {
+    const f = figure(lam(body), '', i % 2 === 0); f.scale.setScalar(1.25); f.position.set(x, 0, z);
+    f.rotation.y = Math.atan2(-x * 0.4, 1) + (z < 0 ? 0 : 0);   // 稍微朝向島中間，臉朝外面的大家
+    g.add(f);
+    const inner = f.children[0], hm = lam(hat);
+    mesh(new THREE.CylinderGeometry(0.32, 0.28, 0.3, 14), hm, 0, 1.42, 0, inner);
+    for (const [hx, hz] of [[0, 0], [-0.18, 0.06], [0.18, 0.06], [0, -0.16]]) mesh(new THREE.SphereGeometry(0.24, 12, 10), hm, hx, 1.66, hz, inner);
+    mesh(new THREE.BoxGeometry(0.5, 0.42, 0.04), lam('#ffffff'), 0, 0.42, 0.42, inner, false);   // 白色圍裙
+    const prop = new THREE.Group(); prop.position.set(0, 0.6, 0.62); inner.add(prop);
+    if (dish === 'pan') {   // 平底鍋炒時蔬，會甩鍋
+      mesh(new THREE.CylinderGeometry(0.26, 0.22, 0.07, 16), dark, 0, 0, 0, prop);
+      mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 6), dark, 0.3, 0.02, 0, prop).rotation.z = Math.PI / 2;
+      prop.userData.bits = [green, carrot, lam('#f2d64b')].map((m, k) => mesh(new THREE.BoxGeometry(0.09, 0.06, 0.09), m, -0.08 + k * 0.08, 0.06, 0.02 * k, prop, false));
+    } else if (dish === 'salad') {   // 生菜沙拉
+      mesh(new THREE.CylinderGeometry(0.3, 0.24, 0.05, 18), plate, 0, 0, 0, prop);
+      for (let k = 0; k < 6; k++) mesh(new THREE.SphereGeometry(0.08, 8, 6), [green, tomato, green, lam('#f2d64b'), green, carrot][k], Math.sin(k) * 0.14, 0.06, Math.cos(k) * 0.14, prop, false).scale.y = 0.6;
+    } else if (dish === 'soup') {    // 一鍋南瓜濃湯，冒熱氣
+      mesh(new THREE.CylinderGeometry(0.26, 0.24, 0.3, 16), steel, 0, 0, 0, prop);
+      mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.02, 16), lam('#f0a33a'), 0, 0.15, 0, prop, false);
+      for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(0.12, 0.04, 0.06), steel, sx * 0.3, 0.1, 0, prop, false);
+      puff(prop, 0, 0.3, 0);
+    } else {   // 番茄蔬菜披薩
+      mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.05, 18), lam('#e8c07a'), 0, 0, 0, prop);
+      mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.02, 18), lam('#d8442f'), 0, 0.035, 0, prop, false);
+      for (let k = 0; k < 5; k++) mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.02, 10), k % 2 ? green : lam('#fff2c4'), Math.sin(k * 1.3) * 0.15, 0.05, Math.cos(k * 1.3) * 0.15, prop, false);
+    }
+    f.userData.arms.forEach((sh, k) => sh.rotation.set(-1.2, 0, (k ? 1 : -1) * 0.5));
+    Object.assign(f.userData, { armRestX: -1.2, armRestZ: 0.5, cookProp: prop, dish, emo, cookPh: i * 1.7 });
+    COOK_FIGS.push(f); TRICKS.push({ f, kind: 'cook' });   // 掛進 TRICKS 只是為了讓頭上的泡泡會飄、會消失
+  });
   animators.push((t) => {
-    steam.forEach((m, i) => { const k = (t * 0.5 + i / 3) % 1; m.position.set(-0.5 + Math.sin(t + i) * 0.1, 1.55 + k * 1.4, -0.6); m.scale.setScalar(0.6 + k); m.material.opacity = 0.6 * (1 - k); });
+    for (const m of steam) { const k = (t * 0.5 + m.userData.ph) % 1; m.position.set(m.userData.x + Math.sin(t + m.userData.ph * 6) * 0.06, m.userData.y + k * 1.1, m.userData.z); m.scale.setScalar(0.6 + k); m.material.opacity = 0.5 * (1 - k); }
+    for (const f of COOK_FIGS) {
+      const u = f.userData;
+      if (u.focusT != null) continue;
+      f.position.y = Math.abs(Math.sin(t * 3 + u.cookPh)) * 0.05;
+      const cyc = (t + u.cookPh) % 5;
+      if (u.dish === 'pan') {   // 甩鍋：蔬菜飛起來再落回鍋裡
+        const k = cyc < 0.8 ? cyc / 0.8 : 0;
+        u.cookProp.rotation.x = -Math.sin(k * Math.PI) * 0.35;
+        u.cookProp.userData.bits.forEach((b, n) => { b.position.y = 0.06 + Math.sin(k * Math.PI) * (0.35 + n * 0.08); b.rotation.x = k * 6 + n; });
+      } else u.cookProp.rotation.y = Math.sin(t * 0.8 + u.cookPh) * 0.3;
+      if (cyc < 0.05 && !u.popped) { u.popped = true; bubble(f, u.emo); } else if (cyc > 1) u.popped = false;
+    }
   });
 }
+const COOK_FIGS = [];
 const MARKS = {
   balloonArt, numerology, flipDice, cooking,
   carousel, piggy, heart, lotus, windmill, balloon, tree: wishTree,
@@ -2522,14 +2616,16 @@ function pmSpot(parent) {
 }
 COURSES.filter((c) => c.pm).forEach((c) => {
   const parent = islands[c.key], [px, pz] = pmSpot(parent), ang = Math.atan2(px, pz);
-  const isl = makeIsland(c.pm.key, R_PM, px, pz, 'pm');
+  const isl = makeIsland(c.pm.key, c.pm.mark === 'cooking' ? COOK_R : R_PM, px, pz, 'pm');   // 料理島放大一點，擺得下兩排流理台
   isl.course = c;
   const mark = new THREE.Group(); mark.rotation.y = faceCam(px, pz); isl.group.add(mark);
   MARKS[c.pm.mark](mark);
   addObst(isl.group, { x: 0, z: 0, r: 1.7 });
   isl.mark = mark;
-  bush(Math.sin(ang + 1.9) * R_PM * 0.66, Math.cos(ang + 1.9) * R_PM * 0.66, 0.6, isl.group);
-  bush(Math.sin(ang - 1.9) * R_PM * 0.66, Math.cos(ang - 1.9) * R_PM * 0.66, 0.7, isl.group);
+  if (c.pm.mark !== 'cooking') {
+    bush(Math.sin(ang + 1.9) * R_PM * 0.66, Math.cos(ang + 1.9) * R_PM * 0.66, 0.6, isl.group);
+    bush(Math.sin(ang - 1.9) * R_PM * 0.66, Math.cos(ang - 1.9) * R_PM * 0.66, 0.7, isl.group);
+  }
   const flowers = new THREE.Group(); isl.group.add(flowers);
   const petals = ['#f2a7b0', '#f4d35e', '#ffffff', '#c9a2e0'];
   for (let k = 0; k < 14; k++) { const a = k * 2.39996, r = 2.6 + (k % 4) * 0.4; mesh(new THREE.SphereGeometry(0.12, 8, 6), lam(petals[k % 4]), Math.sin(a) * r, 0.12, Math.cos(a) * r, flowers, false); }
@@ -2592,7 +2688,7 @@ COURSES.forEach((c) => {
   if (c.pm) addTeachers(islands[c.pm.key], [{ topic: c.pm.name, text: c.pm.who || '' }], 3.2, 2);
 });
 
-// 料理島：蘇毓婷講師站在料理桌前面、面向大家，原本講台和小黑板拿掉，島上就不會多卡一個人
+// 料理島：蘇毓婷講師（米其林寶寶）站在島正中間、面向大家，兩側是小廚師們的流理台，原本講台和小黑板拿掉，島上就不會多卡一個人
 {
   const rec = TEACHERS.find((x) => x.name === '蘇毓婷');
   if (rec) {
@@ -2601,7 +2697,7 @@ COURSES.forEach((c) => {
     const ob = obstOf(isl.group), k = ob.findIndex((o) => o.r === 1.1 && Math.abs(o.x - stand.position.x) < 0.01 && Math.abs(o.z - stand.position.z) < 0.01);
     if (k >= 0) ob.splice(k, 1);
     stand.remove(f); isl.mark.add(f);
-    f.position.set(0.3, 0, 0.95); f.rotation.y = 0; f.userData.restRotY = 0;
+    f.position.set(0, 0, 0.9); f.rotation.y = 0; f.userData.restRotY = 0;
     f.scale.setScalar(1.45 * 1.15);
   }
 }
