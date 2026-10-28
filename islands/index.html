@@ -110,6 +110,7 @@
   .board { justify-self: start; display: inline-flex; align-items: baseline; gap: 6px; margin: 2px 0; padding: 6px 14px; border-radius: 999px;
     background: var(--brick); color: #fff; font-weight: 700; font-size: 14px; text-decoration: none; box-shadow: 0 4px 12px color-mix(in srgb, var(--brick) 35%, transparent);
     transition: transform 0.2s; }
+  .join.visit .jfull { display: none; }
   .boards { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   /* 我要觀摩：跟我要登島同一份報名表，所屬單位預設「我只想先登島逛逛而已」；顏色用綠色（旅人），跟紅色的登島分開 */
   .board-visit { border: 0; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; background: var(--jade); box-shadow: 0 4px 12px color-mix(in srgb, var(--jade) 35%, transparent); }
@@ -455,7 +456,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.24</span>
+  <span class="ver">v261028.25</span>
   </div></div>
 </div>
 
@@ -504,13 +505,13 @@
     <p class="wsub">全真社青班第四期・2027 年，每月給自己一天。填好船票就完成預約，之後會有專人跟你聯繫。</p>
     <div><label class="wl" for="jName">姓名 <i>*</i></label><input type="text" id="jName" maxlength="30" autocomplete="name"></div>
     <fieldset><legend>性別 <i>*</i></legend><div class="chips" id="jGender"><label><input type="radio" name="jg" value="乾道"><span>乾道</span></label><label><input type="radio" name="jg" value="坤道"><span>坤道</span></label></div></fieldset>
-    <div><label class="wl" for="jBirth">出生年月日 <i>*</i></label><input type="date" id="jBirth" min="1940-01-01" max="2015-12-31"></div>
-    <div><label class="wl" for="jArea">居住地區 <i>*</i></label><input type="text" id="jArea" maxlength="40" placeholder="例如 桃園市龜山區、新北市板橋區"></div>
-    <div><label class="wl" for="jPhone">聯絡手機 <i>*</i></label><input type="text" id="jPhone" inputmode="tel" maxlength="12" autocomplete="tel" placeholder="09xxxxxxxx"></div>
-    <div><label class="wl" for="jUnit">所屬單位（區） <i>*</i></label><select id="jUnit"></select></div>
-    <div><label class="wl" for="jIntro">介紹人／陪伴夥伴 <i>*</i></label><input type="text" id="jIntro" maxlength="60" placeholder="邀請你的講師、前輩或朋友；擔任幹部請填「幹部」；沒有就填「無」"></div>
-    <div><label class="wl" for="jKids">是否攜帶孩童隨行？</label><input type="text" id="jKids" maxlength="40" placeholder="沒有就免填；例如 2位（5歲、8歲）"></div>
-    <p class="wsub">手機和生日只會送到報名表，不會出現在群島上。</p>
+    <div class="jfull"><label class="wl" for="jBirth">出生年月日 <i>*</i></label><input type="date" id="jBirth" min="1940-01-01" max="2015-12-31"></div>
+    <div class="jfull"><label class="wl" for="jArea">居住地區 <i>*</i></label><input type="text" id="jArea" maxlength="40" placeholder="例如 桃園市龜山區、新北市板橋區"></div>
+    <div class="jfull"><label class="wl" for="jPhone">聯絡手機 <i>*</i></label><input type="text" id="jPhone" inputmode="tel" maxlength="12" autocomplete="tel" placeholder="09xxxxxxxx"></div>
+    <div class="jfull"><label class="wl" for="jUnit">所屬單位（區） <i>*</i></label><select id="jUnit"></select></div>
+    <div><label class="wl" for="jIntro"><span id="jIntroLabel">介紹人／陪伴夥伴</span> <i>*</i></label><input type="text" id="jIntro" maxlength="60" placeholder="邀請你的講師、前輩或朋友；擔任幹部請填「幹部」；沒有就填「無」"></div>
+    <div class="jfull"><label class="wl" for="jKids">是否攜帶孩童隨行？</label><input type="text" id="jKids" maxlength="40" placeholder="沒有就免填；例如 2位（5歲、8歲）"></div>
+    <p class="wsub" id="jPrivacy">手機和生日只會送到報名表，不會出現在群島上。</p>
     <p class="werr" id="jErr" role="alert" hidden></p>
     <div class="wbtns"><button class="wgo" id="jGo" type="submit">🛶 登船！</button><button class="wcancel" id="jCancel" type="button">先不要</button>
       <a class="wform" id="jForm" data-raw="1" target="_blank" rel="noopener">改用 Google 表單</a></div>
@@ -4690,6 +4691,11 @@ function openJoin(visit = false) {
   jErr.hidden = true; jGo.disabled = false; jGo.textContent = visit ? '👀 上岸看看！' : '🛶 登船！';
   $('joinTitle').textContent = visit ? '👀 觀摩船票' : '🛶 登島船票';
   $('jUnit').value = visit ? '我只想先登島逛逛而已' : ($('jUnit').value === '我只想先登島逛逛而已' ? '' : $('jUnit').value);
+  // 觀摩只問姓名、乾坤和「從哪裡知道的」，其他個資都不收
+  joinEl.classList.toggle('visit', visit);
+  $('jIntroLabel').textContent = visit ? '從哪裡知道群島？（平台／哪一個 LINE 群組）' : '介紹人／陪伴夥伴';
+  $('jIntro').placeholder = visit ? '例如 全真社青 LINE 群、朋友分享、課程網頁' : '邀請你的講師、前輩或朋友；擔任幹部請填「幹部」；沒有就填「無」';
+  $('jPrivacy').textContent = visit ? '觀摩只需要名字和乾坤，其他個資都不用填 😊' : '手機和生日只會送到報名表，不會出現在群島上。';
   joinEl.classList.remove('toss'); joinEl.hidden = false;
   requestAnimationFrame(() => joinEl.classList.add('on'));
   setTimeout(() => $('jName').focus(), 60);
@@ -4731,19 +4737,27 @@ $('joinForm').addEventListener('submit', async (e) => {
   const name = v('jName'), g = joinEl.querySelector('[name=jg]:checked'), birth = v('jBirth'), area = v('jArea');
   const phone = v('jPhone').replace(/[\s-]/g, ''), unit = v('jUnit'), intro = v('jIntro'), kids = v('jKids');
   const err = (msg, id) => { jErr.textContent = msg; jErr.hidden = false; if (id) $(id).focus(); };
+  const visitOnly = joinEl.classList.contains('visit');
   if (!name) return err('請填姓名', 'jName');
   if (!g) return err('請選乾道或坤道');
+  if (visitOnly && !intro) return err('請填從哪裡知道群島（平台或 LINE 群組）', 'jIntro');
+  if (!visitOnly) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(birth)) return err('請選出生年月日', 'jBirth');
   if (!area) return err('請填居住地區，例如 桃園市龜山區', 'jArea');
   if (!/^09\d{8}$/.test(phone)) return err('手機格式好像不太對，請填 09 開頭的 10 碼', 'jPhone');
   if (!unit) return err('請選所屬單位（區）', 'jUnit');
   if (!intro) return err('請填介紹人；沒有的話填「無」，幹部填「幹部」', 'jIntro');
+  }
   jGo.disabled = true; jGo.textContent = '船票開立中⋯';
   const body = new URLSearchParams(), [yy, mm, dd] = birth.split('-');
   body.set(JOIN_ENTRY.name, name); body.set(JOIN_ENTRY.gender, g.value);
-  body.set(JOIN_ENTRY.birth + '_year', yy); body.set(JOIN_ENTRY.birth + '_month', String(+mm)); body.set(JOIN_ENTRY.birth + '_day', String(+dd));
-  body.set(JOIN_ENTRY.area, area); body.set(JOIN_ENTRY.phone, phone); body.set(JOIN_ENTRY.unit, unit); body.set(JOIN_ENTRY.intro, intro);
-  if (kids) body.set(JOIN_ENTRY.kids, kids);
+  if (visitOnly) body.set(JOIN_ENTRY.unit, '我只想先登島逛逛而已');
+  else {
+    body.set(JOIN_ENTRY.birth + '_year', yy); body.set(JOIN_ENTRY.birth + '_month', String(+mm)); body.set(JOIN_ENTRY.birth + '_day', String(+dd));
+    body.set(JOIN_ENTRY.area, area); body.set(JOIN_ENTRY.phone, phone); body.set(JOIN_ENTRY.unit, unit);
+    if (kids) body.set(JOIN_ENTRY.kids, kids);
+  }
+  body.set(JOIN_ENTRY.intro, intro);
   const ac = new AbortController(), timer = setTimeout(() => ac.abort(), 12000);
   try { await fetch(JOIN_POST, { method: 'POST', mode: 'no-cors', body, signal: ac.signal }); }
   catch (x) { clearTimeout(timer); jGo.disabled = false; jGo.textContent = '🛶 再試一次'; err('船票沒送出去（網路好像不太穩）。再試一次，或改用 Google 表單。'); return; }
@@ -4752,7 +4766,7 @@ $('joinForm').addEventListener('submit', async (e) => {
   setTimeout(() => {
     closeJoin();
     $('joinForm').reset();
-    const visit = /逛逛/.test(unit);
+    const visit = visitOnly || /逛逛/.test(unit);
     select(visit ? 'dock' : 'temple');
     joinToast(visit ? '🎫 船票收到了！一會兒你就會出現在渡口島上 🏝️' : '🎫 船票收到了！一會兒你的小人偶就會出現在全真島廣場 🎉', 6000);
     confirmJoin(name, visit);
