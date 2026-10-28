@@ -436,7 +436,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.06</span>
+  <span class="ver">v261028.07</span>
   </div></div>
 </div>
 
@@ -3041,9 +3041,6 @@ const zyIsl = (() => {
   const pz0 = PZ0 - 0.5, pz1 = Math.min(PZ1 + 0.5, AI);
   const parkShape = new THREE.Shape([[-px(pz0), -pz0], [px(pz0), -pz0], [px(pz1), -pz1], [-px(pz1), -pz1]].map(([x, y]) => new THREE.Vector2(x, y)));
   mesh(new THREE.ExtrudeGeometry(parkShape, { depth: 0.08, bevelEnabled: false }).rotateX(-Math.PI / 2), lam('#b98272'), 0, 0, 0, mark, false);
-  const lineM = lam('#f4ece6');
-  for (let k = 0; k < 8; k++) mesh(new THREE.BoxGeometry(0.06, 0.02, 1.4), lineM, -6.3 + k * 1.6, 0.09, PZ1 - 1.4, mark, false);
-  mesh(new THREE.BoxGeometry(11.2, 0.02, 0.06), lineM, -0.7, 0.09, PZ1 - 2.1, mark, false);
   for (let k = 0; k < 6; k++) {
     const x = -5.5 + k * 2.2;
     mesh(new THREE.CylinderGeometry(0.04, 0.05, 1.3, 6), lam('#5f6b73'), x, 0.65, PZ1 - 0.2, mark, false);
@@ -3058,31 +3055,118 @@ const zyIsl = (() => {
   const pr = mesh(new THREE.ConeGeometry(1.75, 0.9, 8), eave, 0, 1.95, 0, PV); pr.rotation.y = Math.PI / 8;
   mesh(new THREE.SphereGeometry(0.1, 8, 6), gold, 0, 2.45, 0, PV);
   addObst(g, { x: 0, z: 0, r: ZY_R - 1 });
-  // ===== 還在施工：島外一圈海上施工浮筒，橘白相間一節一節串起來，隨著海浪輕輕上下晃 =====
-  const RB = ZY_R + 2.6, floatO = lam('#e8743a'), floatW = lam('#f4f1ea'), ropeM = lam('#5f6b73');
-  const segGeo = new THREE.CylinderGeometry(0.32, 0.32, 1.1, 10).rotateZ(Math.PI / 2);
-  const capGeo = new THREE.SphereGeometry(0.32, 10, 8);
-  const floats = [];
+  // ===== 全真青年凝聚晚會（2026/11/28 六 18:00–22:00，烤盤式晚餐＋晚會，含住宿）=====
+  // 島外一圈海上紅燈籠（天黑會亮），停車場擺成 10 區的烤盤桌，中間小廣場是晚會舞台，兩翼之間拉燈串，右前角涼亭是報到處；
+  // 看板跟著時光捲軸的日期變：倒數 → 就是今晚 → 圓滿落幕；當天會場坐滿人、烤盤冒煙
+  const RB = ZY_R + 2.6, lanternM = glow('#e0412f', 0.25, 1.6), capM = lam('#3a2a22'), ropeM = lam('#5f6b73');
+  const lanterns = [];
   for (let k = 0; k < 6; k++) {
     const a0 = Math.PI / 6 + (k * Math.PI) / 3, a1 = a0 + Math.PI / 3;
     const p0 = new THREE.Vector3(Math.sin(a0) * RB, 0, Math.cos(a0) * RB), p1 = new THREE.Vector3(Math.sin(a1) * RB, 0, Math.cos(a1) * RB);
-    const n = Math.round(p0.distanceTo(p1) / 1.25);
+    const n = Math.round(p0.distanceTo(p1) / 2.4);
     for (let i = 0; i < n; i++) {
       const q = p0.clone().lerp(p1, (i + 0.5) / n);
-      const fl = new THREE.Group(); fl.position.set(q.x, -3.12, q.z); fl.rotation.y = Math.atan2(p1.x - p0.x, p1.z - p0.z) + Math.PI / 2; g.add(fl);
-      const m = (i + k) % 2 ? floatW : floatO;
-      mesh(segGeo, m, 0, 0, 0, fl, false);
-      for (const sx of [-0.55, 0.55]) mesh(capGeo, m, sx, 0, 0, fl, false);
-      // 每隔幾節立一支小旗桿，掛一面橘色小旗
-      if (i % 4 === 0) { mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.2, 5), ropeM, 0, 0.75, 0, fl, false); mesh(new THREE.BoxGeometry(0.02, 0.3, 0.45), floatO, 0, 1.2, 0.24, fl, false); }
-      fl.userData.phase = (k * 7 + i) * 0.7;
-      floats.push(fl);
+      const ln = new THREE.Group(); ln.position.set(q.x, -2.9, q.z); g.add(ln);
+      mesh(new THREE.CylinderGeometry(0.42, 0.5, 0.25, 10), lam('#7a5236'), 0, -0.15, 0, ln, false);   // 小木筏
+      mesh(new THREE.SphereGeometry(0.42, 12, 10), lanternM, 0, 0.45, 0, ln, false).scale.set(1, 1.15, 1);
+      for (const y of [0.0, 0.92]) mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.1, 10), capM, 0, y, 0, ln, false);
+      mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.3, 4), lam('#e8b53a'), 0, -0.2 + 0.0, 0, ln, false);
+      ln.userData.phase = (k * 5 + i) * 0.9;
+      lanterns.push(ln);
     }
-    // 浮筒之間的纜繩
-    const rope = mesh(new THREE.CylinderGeometry(0.03, 0.03, p0.distanceTo(p1), 4), ropeM, (p0.x + p1.x) / 2, -2.98, (p0.z + p1.z) / 2, g, false);
-    rope.lookAt(new THREE.Vector3(p1.x, -2.98, p1.z).add(g.position)); rope.rotateX(Math.PI / 2);
   }
-  animators.push((t) => { for (const fl of floats) { fl.position.y = -3.12 + Math.sin(t * 1.3 + fl.userData.phase) * 0.06; fl.rotation.x = Math.sin(t * 1.1 + fl.userData.phase) * 0.06; } });
+  animators.push((t) => { for (const ln of lanterns) { ln.position.y = -2.9 + Math.sin(t * 1.2 + ln.userData.phase) * 0.07; ln.rotation.z = Math.sin(t * 0.9 + ln.userData.phase) * 0.05; } });
+
+  const venue = new THREE.Group(); mark.add(venue);      // 會場佈置：活動結束前都在
+  const party = new THREE.Group(); mark.add(party);      // 當天才出現：人、烤盤的煙、舞台上的主持人
+  venue.userData.noMerge = party.userData.noMerge = true;   // 會跟著日期顯示、收起來，不能合併
+  const cloth = lam('#fbf6ec'), legM = lam('#7a5236'), grillM = lam('#2f2b2a');
+  // 10 區的烤盤長桌：兩排、每排五張，每張桌子一支小旗寫區名
+  const REGIONS = ['天龍區', '天選區', '至善區', '光輝區', '天如區', '天儲區', '天隆區', '德容區', '參健區', '育樂營'];
+  const flagCols = ['#e0412f', '#f2a33a', '#3f8a5a', '#2f80c9', '#8f5bd6'];
+  const smoke = [], seats = [];
+  REGIONS.forEach((name, i) => {
+    const row = Math.floor(i / 5), col = i % 5;
+    const z = PZ0 + 1.25 + row * 2.3, x = (col - 2) * 2.3 * (row ? 0.92 : 1);
+    const T = new THREE.Group(); T.position.set(x, 0, z); venue.add(T);
+    mesh(new THREE.BoxGeometry(1.7, 0.08, 0.85), cloth, 0, 0.62, 0, T);
+    for (const [lx, lz] of [[-0.75, -0.35], [0.75, -0.35], [-0.75, 0.35], [0.75, 0.35]]) mesh(new THREE.BoxGeometry(0.06, 0.6, 0.06), legM, lx, 0.3, lz, T, false);
+    mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.05, 16), grillM, 0, 0.69, 0, T, false);
+    mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.06, 8), lam('#5f6b73'), 0, 0.66, 0, T, false);
+    const ftex = canvasTex(128, 64, (c) => { c.fillStyle = flagCols[i % 5]; c.fillRect(0, 0, 128, 64); c.fillStyle = '#fff'; c.font = 'bold 34px "Noto Sans TC", "PingFang TC", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(name, 64, 34); });
+    mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.8, 5), legM, 0.78, 1.0, 0, T, false);
+    mesh(new THREE.PlaneGeometry(0.62, 0.31), new THREE.MeshLambertMaterial({ map: ftex, side: THREE.DoubleSide }), 0.78 + 0.31, 1.24, 0, T, false);
+    for (let k = 0; k < 3; k++) {
+      const sm = mesh(new THREE.SphereGeometry(0.16, 8, 6), new THREE.MeshLambertMaterial({ color: '#f4f1ea', transparent: true, opacity: 0, depthWrite: false }), 0, 0.8, 0, T, false);
+      sm.userData.phase = k / 3 + i * 0.13; smoke.push(sm); party.add(sm); sm.position.add(T.position);
+    }
+    for (const sz of [-0.75, 0.75]) seats.push(new THREE.Vector3(x + (Math.random() - 0.5) * 0.6, 0, z + sz));
+  });
+  // 中間小廣場：晚會舞台（在 ㄇ 字建築裡，座標跟著前棟 FB）
+  const ST = new THREE.Group(); FB.add(ST);
+  mesh(new THREE.BoxGeometry(4.2, 0.3, 1.5), lam('#8a5a3a'), 0, 0.15, 1.1, ST);
+  mesh(new THREE.BoxGeometry(4.3, 0.06, 1.6), lam('#c0503f'), 0, 0.32, 1.1, ST, false);
+  for (const sx of [-1.9, 1.9]) { mesh(new THREE.BoxGeometry(0.5, 0.7, 0.4), lam('#2f2b2a'), sx, 0.7, 0.6, ST); }   // 兩顆音響
+  // 橫布條：掛在兩翼之間
+  const bTex = canvasTex(512, 96, (c) => { c.fillStyle = '#c0392b'; c.fillRect(0, 0, 512, 96); c.fillStyle = '#ffe9a8'; c.font = 'bold 50px "Noto Sans TC", "PingFang TC", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('全真青年凝聚晚會', 256, 50); });
+  mesh(new THREE.PlaneGeometry(5.4, 1.0), new THREE.MeshLambertMaterial({ map: bTex, side: THREE.DoubleSide }), 0, 2.55, 0.9, ST, false);
+  mesh(new THREE.CylinderGeometry(0.02, 0.02, WX * 2, 4), ropeM, 0, 3.05, 0.9, ST, false).rotation.z = Math.PI / 2;
+  // 燈串：兩翼屋頂之間拉四條，微微下垂，掛一顆顆暖黃小燈泡（天黑會亮）
+  const bulbM = glow('#ffd36b', 0.3, 2.2);
+  for (const z of [1.8, 2.8, 3.8, 4.8]) {
+    for (let k = 0; k <= 12; k++) {
+      const u = k / 12, x = -WX + u * WX * 2, y = FH * 2 + 0.05 - Math.sin(u * Math.PI) * 0.5;
+      mesh(new THREE.SphereGeometry(0.07, 6, 5), bulbM, x, y, z, ST, false);
+    }
+  }
+  // 報到處：右前角的涼亭前放一張桌子和一塊小立牌
+  mesh(new THREE.BoxGeometry(1.4, 0.08, 0.6), cloth, -1.2, 0.62, 0.3, PV);
+  for (const lx of [-0.6, 0.6]) mesh(new THREE.BoxGeometry(0.06, 0.6, 0.5), legM, -1.2 + lx, 0.3, 0.3, PV, false);
+  // 倒數看板：左前角，文字跟著日期換
+  const SB = new THREE.Group(); SB.position.set(-(px(PZ0 + 1.6) - 1.9), 0, PZ0 + 1.6); SB.rotation.y = 0.35; mark.add(SB);
+  const sbCanvas = document.createElement('canvas'); sbCanvas.width = 512; sbCanvas.height = 300;
+  const sbTex = new THREE.CanvasTexture(sbCanvas); sbTex.colorSpace = THREE.SRGBColorSpace;
+  mesh(new THREE.BoxGeometry(3.0, 1.75, 0.1), [lam('#7a5236'), lam('#7a5236'), lam('#7a5236'), lam('#7a5236'), new THREE.MeshLambertMaterial({ map: sbTex }), lam('#7a5236')], 0, 1.75, 0, SB, false);
+  for (const x of [-1.3, 1.3]) mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.6, 6), legM, x, 1.3, -0.08, SB, false);
+  let sbText = '';
+  const drawSign = (lines) => {
+    const key = lines.join('|'); if (key === sbText) return; sbText = key;
+    const c = sbCanvas.getContext('2d');
+    c.fillStyle = '#fff6e0'; c.fillRect(0, 0, 512, 300);
+    c.fillStyle = '#c0392b'; c.fillRect(0, 0, 512, 78);
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillStyle = '#ffe9a8'; c.font = 'bold 44px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText(lines[0], 256, 42);
+    c.fillStyle = '#3f2c22'; c.font = 'bold 54px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText(lines[1], 256, 150);
+    c.fillStyle = '#7a6455'; c.font = 'bold 34px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText(lines[2], 256, 236);
+    sbTex.needsUpdate = true;
+  };
+  // 當天的人：每張桌子兩位（乾道淡藍、坤道淡粉），舞台上一位拿麥克風的主持人
+  const guests = seats.map((v, k) => {
+    const kun = k % 2 === 1, f = figure(kun ? kunMat : qianMat, '', kun);
+    f.scale.setScalar(1.15); f.position.copy(v); f.rotation.y = v.z > 0 && (k % 2) ? Math.PI : 0;
+    f.userData.phase = k * 0.7; party.add(f); return f;
+  });
+  const host = figure(lam('#f6eedd'), '', false, { scarf: '#c0392b' }); host.scale.setScalar(1.3); host.position.set(0, 0.35, 1.0); ST.add(host);
+  mesh(new THREE.CylinderGeometry(0.04, 0.03, 0.25, 6), lam('#2f2b2a'), 0.32, 0.75, 0.3, host.children[0], false);
+  host.userData.arms[1].rotation.set(-1.2, 0, 0.5);
+  const hostOn = { v: false };
+  animators.push((t) => {
+    if (!party.visible) return;
+    for (const sm of smoke) { const k = (t * 0.45 + sm.userData.phase) % 1; sm.position.y = 0.8 + k * 1.6; sm.scale.setScalar(0.6 + k * 1.6); sm.material.opacity = 0.55 * (1 - k); }
+    guests.forEach((f) => { f.position.y = Math.abs(Math.sin(t * 2.2 + f.userData.phase)) * 0.06; f.userData.arms[0].rotation.x = Math.sin(t * 3 + f.userData.phase) > 0.85 ? -1.2 : 0; });
+    if (hostOn.v) host.userData.arms[0].rotation.set(0, 0, -ARM_REST - Math.abs(Math.sin(t * 3)) * 1.2);
+  });
+  host.visible = false;
+  // 依時光捲軸的日期切換：活動前佈置好、看板倒數；當天坐滿人、烤盤冒煙；結束後收起桌子，看板寫圓滿落幕
+  const EVENT = '2026-11-28', DEADLINE = '2026-11-02';
+  zyIsl.sync = (now) => {
+    const left = dayIndex(EVENT) - dayIndex(now), today = left === 0, after = left < 0;
+    venue.visible = !after;
+    party.visible = today; host.visible = today; hostOn.v = today;
+    if (after) drawSign(['🏮 全真青年凝聚晚會', '圓滿落幕 🎉', '11/28 謝謝每一位夥伴']);
+    else if (today) drawSign(['🏮 全真青年凝聚晚會', '就是今晚！', '18:00–22:00・烤盤＋晚會']);
+    else drawSign(['🏮 11/28（六）凝聚晚會', `倒數 ${left} 天`, now <= DEADLINE ? `報名到 11/2（一）・含住宿` : '確定開辦・含住宿']);
+  };
 }
 
 /* ---------- 漂流瓶島：大家匿名留言的地方；每則審核通過的留言是一個漂在島邊的玻璃瓶 ---------- */
@@ -3293,7 +3377,7 @@ COURSES.filter((c) => c.pm).forEach((c) => addTag(islands[c.pm.key], `${c.pm.emo
 addTag(dockIsl, '🛶 渡口島・登島', 'small dock-tag', 4.5);
 addTag(yogaIsl, '🧘 瑜伽島', '', 5.2);
 addTag(newIsl, '🚧 忠恕島・施工中', 'main', 15);
-addTag(zyIsl, '🚧 中一島・施工中', 'main', 8);   // 跟忠恕島一樣用一般標籤：小標籤在手機上會藏起來
+addTag(zyIsl, '🏮 中一島・凝聚晚會 11/28', 'main', 8);   // 跟忠恕島一樣用一般標籤：小標籤在手機上會藏起來
 addTag(bottleIsl, '🍾 漂流瓶島', 'small', 4.8);
 // 登島是重要入口：渡口島的標籤排在全真島和課程島之後、其他小標籤之前
 tags.splice(1 + COURSES.length, 0, tags.pop());
@@ -3437,6 +3521,7 @@ function applyDate() {
   document.getElementById('brandNext').innerHTML = countdown;
   renderWelcome(list.filter((p) => p.date === now), now === todayISO);
   const view = now + '|' + dataStamp + '|' + (selected || '');
+  if (zyIsl.sync) zyIsl.sync(now);
   if (view !== lastView) { lastView = view; renderPanel(); syncTour(); }
 }
 
@@ -3534,9 +3619,12 @@ function renderPanel() {
       <div class="cta"><p>瓶子的顏色跟著心情：😃 黃、😍 桃紅、😘 粉、😥 藍、😭 紫、😠 紅、😑 灰。今天想丟哪一種顏色？</p><button type="button" class="cta-write">🍾 丟一個漂流瓶</button></div>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongyi') {
-    title = '中一島'; info = '基礎忠恕道場中一堂・施工中';
-    html = `<header><span class="eyebrow">外海・忠恕島旁・施工中</span><h2>🚧 中一島</h2><p class="sub">一貫道基礎忠恕道場中一堂・島外一圈海上施工浮筒圍起來，完工後開放</p></header>
-      <p class="note">從忠恕道院沿著產業道路往下走，山坡上就是中一堂。整棟像三合院的ㄇ字型：左右兩翼是白色兩層樓往前伸，中間圍出一個小廣場，最裡面的兩層樓掛著紅色瓦簷、三扇紅門；第三層只有正中間：屋頂平台上一座米黃牆、橘色琉璃瓦的佛堂。前面一大片紅磚色的停車廣場，右前角一座紅瓦八角涼亭，後面是整片山林。</p>
+    const left = dayIndex('2026-11-28') - dayIndex(curISO()), open = curISO() <= '2026-11-02';
+    title = '中一島'; info = '全真青年凝聚晚會 11/28';
+    html = `<header><span class="eyebrow">中一堂・全真青年部</span><h2>🏮 全真青年凝聚晚會</h2><p class="sub">${left > 0 ? `倒數 ${left} 天・確定開辦` : left === 0 ? '就是今晚！' : '圓滿落幕，謝謝每一位夥伴'}</p></header>
+      <ul class="prog"><li><span>日期</span>2026/11/28（六）</li><li><span>時間</span>18:00–22:00</li><li><span>地點</span>中一堂（一貫道基礎忠恕道場中一堂）</li><li><span>方式</span>烤盤式晚餐＋晚會，可以夜宿中一堂</li><li><span>報名</span>11/2（一）截止</li></ul>
+      <p class="note">島上已經佈置好了：停車廣場擺了十區的烤盤長桌（每桌一支區旗），ㄇ字中間的小廣場是晚會舞台，兩翼之間拉滿燈串，右前角的涼亭是報到處。當天會場會坐滿人、烤盤冒煙；天黑之後燈串和海上的紅燈籠都會亮起來。</p>
+      ${open ? `<div class="cta"><p>全真青年專屬的一個晚上，一起來烤肉、聊天、玩晚會！</p><a href="https://docs.google.com/forms/d/e/1FAIpQLScn5a2EP6ptUXyJ8MGavqGprAPxWNleM9SbvOIVUlGfjLc4gg/viewform" target="_blank" rel="noopener">🏮 我要報名凝聚晚會</a></div>` : ''}
       <button class="back" data-go="newisle">→ 看隔壁的忠恕島</button>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongshu') {
@@ -3882,7 +3970,7 @@ function renderNav() {
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島</span></a>
     <button class="home" data-howto><span aria-hidden="true">👆</span><span>操作說明：旋轉、平移、縮放</span></button>
-    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🚧 中一島・施工中')}${navItem('dock', '🛶 渡口島・登島報名處')}
+    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
@@ -3916,7 +4004,7 @@ const PLACES = [
   { key: 'dock', icon: '🛶', title: '渡口島', sub: '登島報名處', words: ['渡口島', '登島', '報名', '竹筏'] },
   { key: 'bottle', icon: '🍾', title: '漂流瓶島', sub: '匿名留言、交換訊息的地方', words: ['漂流瓶島', '漂流瓶', '瓶中信', '留言', '交流', '匿名', '瓶子', '心聲', '建議', '許願', '點子'] },
   { key: 'newisle', icon: '🚧', title: '忠恕島', sub: '忠恕道院・施工中', words: ['忠恕島', '忠恕道院', '忠恕', '大殿', '施工', '建置中'] },
-  { key: 'zhongyi', icon: '🚧', title: '中一島', sub: '基礎忠恕道場中一堂・施工中', words: ['中一島', '中一堂', '中一', '忠恕道場', '施工'] },
+  { key: 'zhongyi', icon: '🏮', title: '中一島', sub: '中一堂・全真青年凝聚晚會 11/28', words: ['中一島', '中一堂', '中一', '忠恕道場', '凝聚晚會', '晚會', '烤肉', '烤盤', '住宿', '青年'] },
   { key: 'yoga', icon: '🧘', title: '瑜伽島', sub: '每堂課早上的第一堂：古典瑜伽', words: ['瑜伽島', '瑜伽', '古典瑜伽', '早上', '晨間'] },
   ...COURSES.flatMap((c) => [
     { key: c.key, icon: c.game ? '🎮' : '📅', title: c.isle, sub: `${md2(c.date)} ${c.name}｜${c.sub}`,
