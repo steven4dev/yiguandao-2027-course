@@ -452,7 +452,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.20</span>
+  <span class="ver">v261028.21</span>
   </div></div>
 </div>
 
@@ -2041,9 +2041,10 @@ function cooking(mark) {
     mesh(new THREE.BoxGeometry(0.3, 0.36, 0.3), glow('#ffd36b', 0.4, 2), x, 2.3, z, g, false);
   }
   // —— 四位小廚師：各自的拿手菜（全素） ——
-  // [x, z, 衣服顏色, 帽子顏色, 菜色, 冒的泡泡]
-  const COOKS = [[-1.65, -1.6, '#e2574a', '#ffffff', 'pan', '🥦'], [1.65, -1.6, '#4f86d6', '#7fb8ff', 'salad', '🥗'],
-    [-1.65, 1.5, '#4fae55', '#5fbf5a', 'soup', '🎃'], [1.65, 1.5, '#f2b632', '#ffffff', 'pizza', '🍅']];
+  // [x, z, 衣服顏色, 帽子顏色（白）, 菜色, 冒的泡泡]
+  // 廚師帽一律白色，靠衣服顏色分人
+  const COOKS = [[-1.65, -1.6, '#e2574a', '#ffffff', 'pan', '🥦'], [1.65, -1.6, '#4f86d6', '#ffffff', 'salad', '🥗'],
+    [-1.65, 1.5, '#4fae55', '#ffffff', 'soup', '🎃'], [1.65, 1.5, '#f2b632', '#ffffff', 'pizza', '🍅']];
   COOKS.forEach(([x, z, body, hat, dish, emo], i) => {
     const f = figure(lam(body), '', i % 2 === 0); f.scale.setScalar(1.25); f.position.set(x, 0, z);
     f.rotation.y = Math.atan2(-x * 0.4, 1) + (z < 0 ? 0 : 0);   // 稍微朝向島中間，臉朝外面的大家
