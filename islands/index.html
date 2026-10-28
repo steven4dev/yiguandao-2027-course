@@ -443,7 +443,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.15</span>
+  <span class="ver">v261028.16</span>
   </div></div>
 </div>
 
@@ -2711,6 +2711,102 @@ COURSES.forEach((c) => {
   }
 }
 
+/* ---------- 希望島：全真島和秋遊島之間，木橋連到全真島；島上一座噴泉，後面是一棵白色的祈福樹
+   （照實物：五片白色木板十字交錯組裝成一棵樹，立在白色圓底座上，枝條上一根根小木釘），樹上掛滿紅蘋果 ---------- */
+const hopeIsl = (() => {
+  const c7 = islands.c7, d = Math.hypot(c7.x, c7.z), k = 28 / d;
+  return makeIsland('hope', 6.5, c7.x * k, c7.z * k, 'hope');
+})();
+{
+  const g = hopeIsl.group;
+  bridge(TEMPLE, hopeIsl);
+  const mark = new THREE.Group(); mark.rotation.y = faceCam(hopeIsl.x, hopeIsl.z); g.add(mark);
+  hopeIsl.mark = mark;
+  mesh(new THREE.CylinderGeometry(5.2, 5.2, 0.06, 6), lam('#e7dcc8'), 0, 0.03, 0, mark, false).rotation.y = Math.PI / 6;
+  // —— 祈福樹：一片樹的剪影（樹幹往上分叉成好幾根枝條），做成薄板，五片繞著中心轉 36° 交錯插在一起 ——
+  const white = lam('#fbfbf8'), white2 = lam('#eeeeea');
+  const TREE = new THREE.Group(); TREE.position.set(0, 0, -1.7); mark.add(TREE);
+  mesh(new THREE.CylinderGeometry(1.8, 1.85, 0.12, 40), white, 0, 0.06, 0, TREE);
+  const sh = new THREE.Shape();
+  // 樹幹：一塊寬板子，下面往外撇、中段收窄、上面再微微張開（照片裡樹幹佔樹高一半以上）
+  const half = [[0.75, 0], [0.42, 0.3], [0.3, 0.9], [0.27, 1.8], [0.34, 2.5], [0.2, 2.9]];
+  sh.moveTo(-half[0][0], 0); half.forEach(([x, y]) => sh.lineTo(x, y)); [...half].reverse().forEach(([x, y]) => sh.lineTo(-x, y));
+  const trunkGeo = new THREE.ExtrudeGeometry(sh, { depth: 0.08, bevelEnabled: false }).translate(0, 0, -0.04);
+  // 枝條：從樹幹往外伸、末端往上翹的長條板，越往末端越細
+  const branchGeo = (len, w, lift) => {
+    const b = new THREE.Shape();
+    b.moveTo(0, -w / 2); b.quadraticCurveTo(len * 0.55, -w * 0.4 + lift * 0.3, len, lift); b.lineTo(len, lift + w * 0.35);
+    b.quadraticCurveTo(len * 0.55, w * 0.45 + lift * 0.3, 0, w / 2); b.lineTo(0, -w / 2);
+    return new THREE.ExtrudeGeometry(b, { depth: 0.07, bevelEnabled: false }).translate(0, 0, -0.035);
+  };
+  const pegGeo = new THREE.BoxGeometry(0.04, 0.12, 0.04);
+  // [從哪個高度長出來, 往上的角度, 長度, 寬, 末端上翹]：下面的枝條比較平、比較長，上面的比較陡
+  const BR = [[1.5, 0.12, 2.3, 0.26, 0.45], [1.95, 0.35, 2.1, 0.22, 0.4], [2.4, 0.65, 1.8, 0.19, 0.3], [2.75, 1.0, 1.4, 0.16, 0.2]];
+  const tips = [];
+  const apple = lam('#d8262b'), leaf = lam('#4f8f3e');
+  for (let i = 0; i < 5; i++) {
+    const piece = new THREE.Group(); piece.rotation.y = (i * Math.PI) / 5; TREE.add(piece);
+    const m = i % 2 ? white2 : white;
+    mesh(trunkGeo, m, 0, 0.12, 0, piece);
+    for (const sx of [-1, 1]) BR.forEach(([y, ang, len, w, lift], k) => {
+      if ((i + k) % 5 === 4 && k < 2) return;   // 每片少一兩根，五片疊起來才不會太擠
+      const L = len * (0.88 + ((i * 3 + k) % 4) * 0.06);
+      const br = new THREE.Group(); br.position.set(sx * 0.22, 0.12 + y, 0); br.rotation.z = sx > 0 ? ang : -ang; br.scale.x = sx; piece.add(br);
+      mesh(branchGeo(L, w, lift), m, 0, 0, 0, br);
+      for (let q = 1; q <= 3; q++) mesh(pegGeo, m, L * q / 4, lift * (q / 4) ** 2 + w * 0.3, 0, br, false);   // 枝條上一根根小木釘
+      // 末端和中段掛紅蘋果
+      if ((i + k) % 2 === 0) tips.push([br, L * 0.95, lift - 0.05]);
+      if ((i + k + (sx > 0 ? 1 : 0)) % 3 === 0) tips.push([br, L * 0.55, lift * 0.3 - 0.05]);
+    });
+    // 頂端兩根往上的小枝
+    for (const sx of [-1, 1]) { const br = new THREE.Group(); br.position.set(sx * 0.08, 2.95, 0); br.rotation.z = sx > 0 ? 1.3 : -1.3; br.scale.x = sx; piece.add(br); mesh(branchGeo(1.0, 0.12, 0.1), m, 0, 0, 0, br); if (i % 2) tips.push([br, 0.95, 0.05]); }
+  }
+  TREE.scale.setScalar(0.95);
+  tips.forEach(([br, x, y], k) => {
+    const ap = new THREE.Group(); ap.position.set(x, y - 0.12, 0); br.add(ap);
+    ap.scale.x = br.scale.x;   // 枝條左右鏡像時蘋果不要被翻扁
+    mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.12, 4), lam('#7a5236'), 0, 0.1, 0, ap, false);
+    mesh(new THREE.SphereGeometry(0.14, 12, 10), apple, 0, 0, 0, ap).scale.set(1, 0.92, 1);
+    mesh(new THREE.ConeGeometry(0.03, 0.08, 5), lam('#5a3a22'), 0, 0.14, 0, ap, false);
+    if (k % 2) mesh(new THREE.SphereGeometry(0.06, 6, 4), leaf, 0.06, 0.16, 0, ap, false).scale.set(1, 0.4, 0.6);
+    ap.userData.phase = k * 0.9; ap.userData.apple = true;
+  });
+  const apples = []; TREE.traverse((o) => { if (o.userData.apple) apples.push(o); });
+  animators.push((t) => { for (const ap of apples) ap.rotation.z = Math.sin(t * 1.6 + ap.userData.phase) * 0.12; });
+  addObst(g, { x: 0, z: 0, r: 4.5 });   // 樹和噴泉占滿島中央
+  // —— 噴泉：樹前面一座圓形水池，中間兩層的白色水盆，水柱往上噴、往外灑下來 ——
+  const FT = new THREE.Group(); FT.position.set(0, 0, 2.3); mark.add(FT);
+  const stone = lam('#e8e2d6'), waterM = new THREE.MeshLambertMaterial({ color: '#8fd3ee', emissive: '#2a6f8a', emissiveIntensity: 0.25 });
+  const rim = mesh(new THREE.TorusGeometry(1.5, 0.16, 8, 32), stone, 0, 0.32, 0, FT); rim.rotation.x = Math.PI / 2;
+  mesh(new THREE.CylinderGeometry(1.5, 1.55, 0.3, 32), stone, 0, 0.15, 0, FT);
+  mesh(new THREE.CylinderGeometry(1.42, 1.42, 0.04, 32), waterM, 0, 0.3, 0, FT, false);
+  mesh(new THREE.CylinderGeometry(0.16, 0.22, 0.9, 12), stone, 0, 0.7, 0, FT);
+  mesh(new THREE.CylinderGeometry(0.62, 0.3, 0.2, 20), stone, 0, 1.15, 0, FT);
+  mesh(new THREE.CylinderGeometry(0.56, 0.56, 0.03, 20), waterM, 0, 1.26, 0, FT, false);
+  mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.45, 10), stone, 0, 1.45, 0, FT);
+  mesh(new THREE.CylinderGeometry(0.3, 0.14, 0.12, 16), stone, 0, 1.7, 0, FT);
+  const dropM = new THREE.MeshLambertMaterial({ color: '#bfe9fa', emissive: '#4fa0c0', emissiveIntensity: 0.3, transparent: true, opacity: 0.85 });
+  const drops = [];
+  for (let i = 0; i < 28; i++) { const d = mesh(new THREE.SphereGeometry(0.055, 6, 5), dropM, 0, 1.8, 0, FT, false); d.userData = { a: (i / 28) * Math.PI * 2, ph: (i * 0.37) % 1, far: i % 2 }; drops.push(d); }
+  const jet = mesh(new THREE.CylinderGeometry(0.03, 0.06, 0.6, 8), dropM, 0, 2.05, 0, FT, false);
+  animators.push((t) => {
+    jet.scale.y = 0.85 + Math.sin(t * 6) * 0.15;
+    for (const d of drops) {
+      const k = (t * 0.8 + d.userData.ph) % 1, r = (d.userData.far ? 1.2 : 0.55) * k, top = d.userData.far ? 2.35 : 1.95;
+      d.position.set(Math.sin(d.userData.a) * r, top + 1.4 * k - 2.6 * k * k * (d.userData.far ? 1 : 0.6) , Math.cos(d.userData.a) * r);
+      if (d.position.y < (d.userData.far ? 0.32 : 1.27)) d.position.y = d.userData.far ? 0.32 : 1.27;
+    }
+  });
+  // 兩旁幾張白色長椅、幾叢花
+  for (const sx of [-1, 1]) {
+    const bn = new THREE.Group(); bn.position.set(sx * 3.2, 0, 1.6); bn.rotation.y = -sx * 0.6; mark.add(bn);
+    mesh(new THREE.BoxGeometry(1.4, 0.08, 0.45), white, 0, 0.45, 0, bn);
+    mesh(new THREE.BoxGeometry(1.4, 0.4, 0.06), white, 0, 0.7, -0.2, bn);
+    for (const lx of [-0.6, 0.6]) mesh(new THREE.BoxGeometry(0.06, 0.45, 0.4), white2, lx, 0.22, 0, bn);
+    bush(sx * 3.8, -1.6, 0.6, mark, lam('#f2a7c3'));
+  }
+}
+
 /* ---------- 瑜伽島：在全真島、走走島、歡樂島之間；每堂課早上大家先來這裡做古典瑜伽 ---------- */
 const YOGA_COURSES = COURSES.filter((c) => (c.prog || []).some(([k]) => k === '古典瑜伽'));
 const YOGA_WHO = ((YOGA_COURSES[0] || {}).prog || []).find(([k]) => k === '古典瑜伽')?.[1] || '';
@@ -3461,6 +3557,7 @@ addTag(gateIsl, GATE.isle, 'small', 5.5);
 COURSES.filter((c) => c.pm).forEach((c) => addTag(islands[c.pm.key], `${c.pm.emoji} ${c.pm.isle}`, 'small', 3.4));
 addTag(dockIsl, '🛶 渡口島・登島', 'small dock-tag', 4.5);
 addTag(yogaIsl, '🧘 瑜伽島', '', 5.2);
+addTag(hopeIsl, '🍎 希望島', '', 5.4);
 addTag(newIsl, '🚧 忠恕島・施工中', 'main', 15);
 addTag(zyIsl, '🏮 中一島・凝聚晚會 11/28', 'main', 8);   // 跟忠恕島一樣用一般標籤：小標籤在手機上會藏起來
 addTag(bottleIsl, '🍾 漂流瓶島', 'small', 4.8);
@@ -3711,6 +3808,11 @@ function renderPanel() {
       </div>
       ${bottles.length ? `<div class="bars"><h3>最近漂上岸的瓶子</h3>${bottles.slice(0, 5).map((m, i) => `<button class="back bottle-row" data-bottle="${i}"><i style="background:${moodColor(m.mood)}"></i>${esc(m.text.length > 22 ? m.text.slice(0, 22) + '…' : m.text)}</button>`).join('')}</div>` : ''}
       <div class="cta"><p>瓶子的顏色跟著心情：😃 黃、😍 桃紅、😘 粉、😥 藍、😭 紫、😠 紅、😑 灰。今天想丟哪一種顏色？</p><button type="button" class="cta-write">🍾 丟一個漂流瓶</button></div>
+      <button class="back" data-go="temple">← 回到全真島</button>`;
+  } else if (isl && isl.kind === 'hope') {
+    title = '希望島'; info = '祈福樹與噴泉';
+    html = `<header><span class="eyebrow">全真島旁・往秋遊島的路上</span><h2>🍎 希望島</h2><p class="sub">一棵白色的祈福樹，掛滿紅蘋果</p></header>
+      <p class="note">島的中央是一棵白色的祈福樹：五片白色木板交錯組裝成一棵樹，立在圓圓的白色底座上，枝條上一根根小木釘，掛滿了紅蘋果 🍎——每一顆都是一個祝福、一份希望。樹前面有一座小噴泉，水花一直往上噴；兩旁擺了白色長椅，可以坐下來許個願。</p>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongyi') {
     const left = dayIndex('2026-11-28') - dayIndex(curISO()), open = curISO() <= '2026-11-02';
@@ -4066,7 +4168,7 @@ function renderNav() {
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島</span></a>
     <button class="home" data-howto><span aria-hidden="true">👆</span><span>操作說明：旋轉、平移、縮放</span></button>
-    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
+    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('hope', '🍎 希望島・祈福樹與噴泉')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
@@ -4101,6 +4203,7 @@ const PLACES = [
   { key: 'bottle', icon: '🍾', title: '漂流瓶島', sub: '匿名留言、交換訊息的地方', words: ['漂流瓶島', '漂流瓶', '瓶中信', '留言', '交流', '匿名', '瓶子', '心聲', '建議', '許願', '點子'] },
   { key: 'newisle', icon: '🚧', title: '忠恕島', sub: '忠恕道院・施工中', words: ['忠恕島', '忠恕道院', '忠恕', '大殿', '施工', '建置中'] },
   { key: 'zhongyi', icon: '🏮', title: '中一島', sub: '中一堂・全真青年凝聚晚會 11/28', words: ['中一島', '中一堂', '中一', '忠恕道場', '凝聚晚會', '晚會', '烤肉', '烤盤', '住宿', '青年'] },
+  { key: 'hope', icon: '🍎', title: '希望島', sub: '祈福樹與噴泉', words: ['希望島', '希望', '祈福樹', '祈福', '蘋果', '噴泉', '許願'] },
   { key: 'yoga', icon: '🧘', title: '瑜伽島', sub: '每堂課早上的第一堂：古典瑜伽', words: ['瑜伽島', '瑜伽', '古典瑜伽', '早上', '晨間'] },
   ...COURSES.flatMap((c) => [
     { key: c.key, icon: c.game ? '🎮' : '📅', title: c.isle, sub: `${md2(c.date)} ${c.name}｜${c.sub}`,
