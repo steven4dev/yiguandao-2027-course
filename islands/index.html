@@ -436,7 +436,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.01</span>
+  <span class="ver">v261028.02</span>
   </div></div>
 </div>
 
@@ -562,7 +562,7 @@ const COURSES = [
   { key: 'c5', isle: '法會島', date: '2027-08-28', name: '新道親法會', sub: '志工陪伴體驗', mark: 'lotus', prog: [['全天', '新道親法會－志工陪伴體驗']],
     game: { name: '法會小天使', url: '../game/fahui-angel-25d.html?v=2', img: '../game/og-fahui-angel-25d.png',
       desc: '法會那天，我們一起當新朋友的小天使。先在遊戲裡練習：誰的頭上冒出需求泡泡，就過去陪陪他。' } },
-  { key: 'c6', isle: '重置島', date: '2027-10-02', name: '人生重開機', sub: '人生卡關的時候，你會怎麼辦', mark: 'windmill', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 何珈貞 講師'], ['下午活動', 'V·翻轉後的人生（天曉 林信宏 講師）']],
+  { key: 'c6', isle: '重啟島', date: '2027-10-02', name: '人生重開機', sub: '人生卡關的時候，你會怎麼辦', mark: 'windmill', prog: [['古典瑜伽', '全真 鄔明清 講師'], ['觀點分享', '全真 何珈貞 講師'], ['下午活動', 'V·翻轉後的人生（天曉 林信宏 講師）']],
     pm: { key: 'p6', isle: '翻轉島', name: 'V·翻轉後的人生', emoji: '🎲', who: '天曉 林信宏 講師', mark: 'flipDice',
       desc: '一場歡樂滿點的互動遊戲，主題只有一個字：「讚」！在笑聲中破冰，發現夥伴眼中的你藏著好多閃光點。你想成為什麼樣的人，就用相對的付出與行動去實踐，一起 V 出翻轉後的人生。' } },
   { key: 'c7', isle: '秋遊島', date: '2027-10-30', name: '戶外聯誼', sub: '秋天的第二次出遊', mark: 'camp2', prog: [['全天', '戶外聯誼活動']] },
@@ -2528,7 +2528,7 @@ COURSES.forEach((c) => {
   if (c.pm) addTeachers(islands[c.pm.key], [{ topic: c.pm.name, text: c.pm.who || '' }], 3.2, 2);
 });
 
-/* ---------- 何珈貞（重置島講師）：平常繞著重置島慢跑，偶爾跌倒再爬起來；被點到時像超級瑪莉一樣起跳，
+/* ---------- 何珈貞（重啟島講師）：平常繞著重啟島慢跑，偶爾跌倒再爬起來；被點到時像超級瑪莉一樣起跳，
    拳頭朝天、背後長出小天使翅膀飛一圈，落地後再揮手 ---------- */
 {
   const rec = TEACHERS.find((x) => x.name === '何珈貞' && x.key === 'c6');
@@ -4403,7 +4403,7 @@ const ISLE_SFX = {
   lotus: { every: [6, 10], play(t, o, v) {
     bell(t, o, 392, 0.08 * v, 5, [[1, 1], [1.004, 0.6], [2.71, 0.3], [5.15, 0.1]]);
   } },
-  // 重置島：風車咿呀轉動、一陣風
+  // 重啟島：風車咿呀轉動、一陣風
   windmill: { every: [4, 7], play(t, o, v) {
     noiseHit(t, o, { type: 'lowpass', f: 700, peak: 0.08 * v, attack: 0.8, dur: 2.4 });
     for (let i = 0; i < 2; i++) {
