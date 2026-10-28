@@ -2918,7 +2918,8 @@ const newIsl = makeIsland('newisle', 21, NEW_DIR.x * 118, NEW_DIR.y * 118, 'zhon
   const cable = mesh(new THREE.CylinderGeometry(0.03, 0.03, 1, 4), lam('#333333'), 0, -0.5, 0, hook, false);
   const load = mesh(new THREE.BoxGeometry(2, 0.5, 0.8), lam('#c0503f'), 0, -1, 0, hook);
   // 起重船：停在島的正前方外海，船上一支 A 字形吊臂伸向島上，吊著一根橫梁慢慢上下
-  const toHome = Math.atan2(HOME.pos.x - newIsl.x, HOME.pos.z - newIsl.z) - 0.7;
+  // 起重船停在島的右前方外海（左前方那一側是中一島）
+  const toHome = Math.atan2(HOME.pos.x - newIsl.x, HOME.pos.z - newIsl.z) + 0.7;
   const BG = new THREE.Group(); BG.position.set(newIsl.x + Math.sin(toHome) * 29, -3.05, newIsl.z + Math.cos(toHome) * 29); BG.rotation.y = toHome + Math.PI; scene.add(BG);
   const hull = lam('#b5412f'), deck = lam('#5f6b73');
   mesh(new THREE.BoxGeometry(6.5, 1.6, 12), hull, 0, 0, 0, BG);
@@ -2946,96 +2947,108 @@ const newIsl = makeIsland('newisle', 21, NEW_DIR.x * 118, NEW_DIR.y * 118, 'zhon
   });
 }
 
-/* ---------- 中一島：一貫道基礎忠恕道場中一堂，在忠恕島的左前方（實景在忠恕道院沿產業道路往下的山坡上）
-   參考空拍：前棟是白色口字形三層樓，中間凹進去的兩層有紅色瓦簷、米黃色牆面三扇紅門；後棟在屋頂平台上，
-   是米黃牆、橘色琉璃瓦的三川式佛堂；前面一大片紅磚色停車廣場、一排路燈和欄杆，右前角一座紅瓦八角涼亭，後面整片山林 ---------- */
+/* ---------- 中一島：一貫道基礎忠恕道場中一堂，實景在忠恕道院沿產業道路往下的山坡上
+   島擺在忠恕島原本停起重船的那一側，兩座島相鄰的邊互相平行、置中對齊（六邊形都同一個方向，沿著邊的法線往外排就會對齊）
+   建築參考空拍：像三合院的ㄇ字型，左右兩翼三層樓往前伸，中間圍出一個小廣場；正中間退進去的兩層樓有紅色瓦簷、米黃牆三扇紅門；
+   後棟在屋頂平台上，是米黃牆、橘色琉璃瓦的三川式佛堂；ㄇ字外面是紅磚色停車廣場、一排路燈和欄杆，右前角一座紅瓦八角涼亭，後面整片山林 ---------- */
+const ZY_R = 13;
 const zyIsl = (() => {
-  const r = Math.round(faceCam(newIsl.x, newIsl.z) / (Math.PI / 3)) * (Math.PI / 3);
-  const lx = -46, lz = 4;   // 忠恕島建築座標裡的「左前方」（避開起重船）
-  return makeIsland('zhongyi', 12, newIsl.x + lx * Math.cos(r) + lz * Math.sin(r), newIsl.z - lx * Math.sin(r) + lz * Math.cos(r), 'zhongyi');
+  const want = Math.atan2(HOME.pos.x - newIsl.x, HOME.pos.z - newIsl.z) - 0.7;   // 原本起重船的方向
+  const dir = Math.round(want / (Math.PI / 3)) * (Math.PI / 3);                  // 對齊到最近的一條邊的法線
+  const d = newIsl.R * COS30 + ZY_R * COS30 + 5;
+  return makeIsland('zhongyi', ZY_R, newIsl.x + Math.sin(dir) * d, newIsl.z + Math.cos(dir) * d, 'zhongyi');
 })();
 {
   const g = zyIsl.group;
   const mark = new THREE.Group(); mark.rotation.y = Math.round(faceCam(zyIsl.x, zyIsl.z) / (Math.PI / 3)) * (Math.PI / 3); g.add(mark);
   zyIsl.mark = mark;
   const white = lam('#eef0ec'), white2 = lam('#dfe2de'), cream = lam('#efe0b6'), redDoor = lam('#8a2a22'), eave = lam('#b5523f'), eave2 = lam('#9b3f33');
-  const glass = lam('#3f7d6a', { emissive: '#0c1f18' }), orange = lam('#e8874a'), gold = lam('#d9a43a');
-  // 後面的山林：沿著六邊形後半部墊高一塊山坡，上面種滿深淺不一的圓樹
-  const hillShape = new THREE.Shape([[9.3, 3.5], [5.6, 9.7], [-5.6, 9.7], [-9.3, 3.5]].map(([x, y]) => new THREE.Vector2(x, y)));
+  const glass = lam('#3f7d6a', { emissive: '#0c1f18' }), winM = lam('#5a6b72'), orange = lam('#e8874a'), gold = lam('#d9a43a');
+  const A = ZY_R * COS30;   // 前後兩條邊離中心的距離
+  // 後面的山林：六邊形後半部墊高一塊山坡，上面種滿深淺不一的圓樹
+  const HZ = 4.2, hx = (z) => ZY_R * 0.94 - (z / (A * 0.94)) * (ZY_R * 0.47);
+  const hillShape = new THREE.Shape([[hx(HZ), HZ], [ZY_R * 0.47, A * 0.94], [-ZY_R * 0.47, A * 0.94], [-hx(HZ), HZ]].map(([x, y]) => new THREE.Vector2(x, y)));
   mesh(new THREE.ExtrudeGeometry(hillShape, { depth: 2.4, bevelEnabled: false }).rotateX(-Math.PI / 2), lam('#4f8a3f'), 0, 0, 0, mark);
   const forest = new THREE.Group(); forest.position.y = 2.4; mark.add(forest);
   const greens = [lam('#3f7a35'), lam('#4f8f3e'), lam('#5f9e48'), lam('#386b2f')];
-  for (let i = 0; i < 26; i++) {
-    const a = i * 2.39996, rr = Math.sqrt(i / 26);
-    const x = Math.sin(a) * 8 * rr, z = -6.4 + Math.cos(a) * 2.8 * rr;
-    if (Math.abs(z) > 9.4 || Math.abs(x) > 9.3 - (Math.abs(z) - 3.5) * 0.6) continue;
+  for (let i = 0; i < 30; i++) {
+    const a = i * 2.39996, rr = Math.sqrt((i + 0.5) / 30);
+    const x = Math.sin(a) * 9 * rr, z = -7.3 + Math.cos(a) * 3 * rr;
+    if (-z < HZ + 0.6 || -z > A - 1 || Math.abs(x) > hx(-z) - 1) continue;
     bush(x, z, 0.9 + (i % 4) * 0.18, forest, greens[i % 4]);
   }
-  // —— 前棟：白色口字形三層樓 ——
-  const FB = new THREE.Group(); FB.position.set(0, 0, -0.5); mark.add(FB);
-  const FH = 1.1;
-  const winRow = (x0, x1, y, z, n, mat = glass) => { for (let k = 0; k < n; k++) mesh(new THREE.BoxGeometry(0.55, 0.45, 0.06), mat, x0 + (k + 0.5) * (x1 - x0) / n, y, z, FB, false); };
+  // —— ㄇ字型主建築 ——
+  const FB = new THREE.Group(); FB.position.set(0, 0, -0.6); mark.add(FB);
+  const FH = 1.1, WX = 3.3, WW = 4.2, ZB = -3.4, ZF = 5.2;   // 兩翼內側 x=±WX、寬 WW；從後面 ZB 一路伸到前面 ZF
+  const box = (w, h, d, x, y, z, m = white) => mesh(new THREE.BoxGeometry(w, h, d), m, x, y, z, FB);
   for (const sx of [-1, 1]) {
-    // 左右兩翼：三層、往前突出
-    mesh(new THREE.BoxGeometry(4.6, FH * 3, 6.4), white, sx * 5.6, FH * 1.5, 0.6, FB);
-    mesh(new THREE.BoxGeometry(4.8, 0.12, 6.6), white2, sx * 5.6, FH * 3 + 0.06, 0.6, FB);
-    for (let f = 0; f < 3; f++) winRow(sx * 5.6 - 1.6, sx * 5.6 + 1.6, FH * (f + 0.6), 3.82, 2, lam('#5a6b72'));
-    // 兩翼側面也有窗
-    for (let f = 0; f < 3; f++) for (let k = 0; k < 3; k++) mesh(new THREE.BoxGeometry(0.06, 0.45, 0.6), lam('#5a6b72'), sx * 7.92, FH * (f + 0.6), -1.2 + k * 1.6, FB, false);
+    const cx = sx * (WX + WW / 2), len = ZF - ZB;
+    box(WW, FH * 3, len, cx, FH * 1.5, (ZF + ZB) / 2);
+    box(WW + 0.2, 0.12, len + 0.2, cx, FH * 3 + 0.06, (ZF + ZB) / 2, white2);
+    for (let f = 0; f < 3; f++) {
+      // 正面兩扇窗
+      for (const k of [-1, 1]) mesh(new THREE.BoxGeometry(0.6, 0.45, 0.06), winM, cx + k * 1.0, FH * (f + 0.6), ZF + 0.02, FB, false);
+      // 朝小廣場的內側：一排窗；二、三樓外面一條紅色瓦簷走廊
+      for (let k = 0; k < 4; k++) mesh(new THREE.BoxGeometry(0.06, 0.45, 0.6), f === 0 ? glass : winM, sx * (WX - 0.02), FH * (f + 0.6), 0.3 + k * 1.3, FB, false);
+      // 外側
+      for (let k = 0; k < 5; k++) mesh(new THREE.BoxGeometry(0.06, 0.45, 0.6), winM, sx * (WX + WW + 0.02), FH * (f + 0.6), ZB + 1 + k * 1.7, FB, false);
+    }
+    for (const f of [1, 2]) {
+      const e = mesh(new THREE.BoxGeometry(0.7, 0.1, ZF - 0.2), eave, sx * (WX - 0.32), FH * f + 0.08, ZF / 2 - 0.1, FB); e.rotation.z = sx * -0.3;
+    }
   }
   // 左翼正面掛一個籃球架
-  mesh(new THREE.BoxGeometry(0.9, 0.6, 0.05), lam('#ffffff'), -5.6, 1.7, 3.85, FB);
-  const hoop = mesh(new THREE.TorusGeometry(0.2, 0.025, 6, 16), lam('#d9562f'), -5.6, 1.45, 4.08, FB, false); hoop.rotation.x = Math.PI / 2;
-  // 中間：退進去的兩層樓，一樓米黃牆三扇紅門＋金色柱子，二樓一排綠窗，每層上面一道紅色瓦簷
-  mesh(new THREE.BoxGeometry(6.6, FH * 2, 5), white, 0, FH, -0.2, FB);
-  mesh(new THREE.BoxGeometry(6.0, FH * 0.95, 0.06), cream, 0, FH * 0.48, 2.33, FB, false);
-  for (const x of [-1.8, 0, 1.8]) mesh(new THREE.BoxGeometry(x ? 0.6 : 0.8, 0.85, 0.08), redDoor, x, 0.43, 2.36, FB, false);
-  for (const x of [-2.9, -0.9, 0.9, 2.9]) mesh(new THREE.CylinderGeometry(0.08, 0.08, FH, 8), gold, x, FH / 2, 2.9, FB);
-  winRow(-2.8, 2.8, FH * 1.55, 2.33, 3);
-  for (const [y, w, d, z] of [[FH * 1.02, 7.6, 1.1, 2.75], [FH * 2.02, 7.2, 0.9, 2.55]]) {
-    const e = mesh(new THREE.BoxGeometry(w, 0.12, d), eave, 0, y + 0.1, z, FB); e.rotation.x = 0.28;
-    mesh(new THREE.BoxGeometry(w, 0.16, 0.08), eave2, 0, y - 0.05, z + d / 2 - 0.05, FB, false);
+  mesh(new THREE.BoxGeometry(0.9, 0.6, 0.05), lam('#ffffff'), -(WX + WW / 2), 1.75, ZF + 0.05, FB);
+  const hoop = mesh(new THREE.TorusGeometry(0.2, 0.025, 6, 16), lam('#d9562f'), -(WX + WW / 2), 1.5, ZF + 0.28, FB, false); hoop.rotation.x = Math.PI / 2;
+  // 正中間：退在小廣場最裡面的兩層樓，一樓米黃牆三扇紅門＋金色柱子，二樓一排綠窗，兩層各一道紅色瓦簷
+  const CD = 3;
+  box(WX * 2, FH * 2, CD, 0, FH, ZB + CD / 2);
+  mesh(new THREE.BoxGeometry(WX * 2 - 0.4, FH * 0.95, 0.06), cream, 0, FH * 0.48, ZB + CD + 0.02, FB, false);
+  for (const x of [-1.6, 0, 1.6]) mesh(new THREE.BoxGeometry(x ? 0.6 : 0.8, 0.85, 0.08), redDoor, x, 0.43, ZB + CD + 0.05, FB, false);
+  for (const x of [-2.6, -0.8, 0.8, 2.6]) mesh(new THREE.CylinderGeometry(0.08, 0.08, FH, 8), gold, x, FH / 2, ZB + CD + 0.55, FB);
+  for (let k = 0; k < 3; k++) mesh(new THREE.BoxGeometry(0.9, 0.45, 0.06), glass, -2 + k * 2, FH * 1.55, ZB + CD + 0.02, FB, false);
+  for (const f of [1, 2]) {
+    const e = mesh(new THREE.BoxGeometry(WX * 2, 0.12, 1.1), eave, 0, FH * f + 0.1, ZB + CD + 0.45, FB); e.rotation.x = 0.28;
+    mesh(new THREE.BoxGeometry(WX * 2, 0.16, 0.08), eave2, 0, FH * f - 0.05, ZB + CD + 0.95, FB, false);
   }
-  mesh(new THREE.BoxGeometry(6.8, 0.12, 5.2), white2, 0, FH * 2 + 0.06, -0.2, FB);
-  // 右後方一座白色的樓梯間（屋頂上的小方塔）
-  mesh(new THREE.BoxGeometry(2, 1.4, 2), white, 6.2, FH * 3 + 0.7, -1.6, FB);
-  mesh(new THREE.BoxGeometry(2.2, 0.1, 2.2), white2, 6.2, FH * 3 + 1.45, -1.6, FB);
-  // —— 後棟：屋頂平台上的三川式佛堂：米黃牆、三扇紅門、橘色琉璃瓦（中間高、兩側低） ——
-  const BK = new THREE.Group(); BK.position.set(0, FH * 2 + 0.12, -1.8); FB.add(BK);
-  mesh(new THREE.BoxGeometry(4.2, 1.4, 2.4), cream, 0, 0.7, 0, BK);
-  for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(1.9, 1.15, 2.2), cream, sx * 2.9, 0.58, 0.05, BK);
-  for (const x of [-0.95, 0, 0.95]) mesh(new THREE.BoxGeometry(x ? 0.45 : 0.6, 0.85, 0.06), redDoor, x, 0.43, 1.22, BK, false);
-  for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(0.4, 0.35, 0.05), lam('#5a6b72'), sx * 2.9, 0.7, 1.16, BK, false);
-  for (const x of [-1.9, 1.9]) mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.4, 8), gold, x, 0.7, 1.35, BK);
-  roof(5, 3.1, 0.9, 1.6, 0.18, 0, 1.4, 0.05, BK, orange);
-  for (const sx of [-1, 1]) roof(2.3, 2.8, 0.7, 0.6, 0.12, sx * 2.95, 1.15, 0.05, BK, orange);
-  // 右邊一間紅屋頂的白色小屋、一個水塔
-  mesh(new THREE.BoxGeometry(1.3, 1, 1.6), white, 4.6, 0.5, 0, BK);
-  const rr = mesh(new THREE.BoxGeometry(1.5, 0.12, 1.8), eave, 4.6, 1.12, 0, BK); rr.rotation.z = -0.25;
-  mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.6, 12), lam('#cfd3d6'), 4.0, 1.55, -0.9, BK);
-  // —— 前面的紅磚色停車廣場：白色停車格線、前緣一排路燈和欄杆 ——
-  mesh(new THREE.BoxGeometry(15, 0.08, 6.2), lam('#b98272'), 0, 0.04, 6.0, mark, false);
+  box(WX * 2 + 0.2, 0.12, CD + 0.2, 0, FH * 2 + 0.06, ZB + CD / 2, white2);
+  // 中間的小廣場：淺一點的紅磚地、兩階台階、兩盆圓盆栽
+  mesh(new THREE.BoxGeometry(WX * 2, 0.06, ZF - ZB - CD), lam('#c99686'), 0, 0.05, (ZF + ZB + CD) / 2, FB, false);
+  for (let k = 0; k < 2; k++) mesh(new THREE.BoxGeometry(WX * 1.6, 0.12, 0.35), lam('#d9cfc4'), 0, 0.06 + k * 0.12, ZB + CD + 0.35 - k * 0.3, FB, false);
+  for (const x of [-1.6, 1.6]) { mesh(new THREE.CylinderGeometry(0.3, 0.25, 0.35, 10), lam('#8a6a48'), x, 0.18, 2.2, FB); mesh(new THREE.SphereGeometry(0.45, 10, 8), lam('#4f8f3e'), x, 0.7, 2.2, FB); }
+  // 右後方屋頂上一座白色的樓梯間
+  box(2, 1.4, 2, WX + WW / 2, FH * 3 + 0.7, ZB + 1.2);
+  box(2.2, 0.1, 2.2, WX + WW / 2, FH * 3 + 1.45, ZB + 1.2, white2);
+  // —— 後棟：中間兩層樓的屋頂平台上，三川式佛堂：米黃牆、三扇紅門、橘色琉璃瓦（中間高、兩側低） ——
+  const BK = new THREE.Group(); BK.position.set(0, FH * 2 + 0.12, ZB + 1.3); FB.add(BK);
+  mesh(new THREE.BoxGeometry(3.4, 1.4, 2.2), cream, 0, 0.7, 0, BK);
+  for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(1.5, 1.15, 2.0), cream, sx * 2.4, 0.58, 0.05, BK);
+  for (const x of [-0.85, 0, 0.85]) mesh(new THREE.BoxGeometry(x ? 0.42 : 0.55, 0.85, 0.06), redDoor, x, 0.43, 1.12, BK, false);
+  for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(0.4, 0.35, 0.05), winM, sx * 2.4, 0.7, 1.06, BK, false);
+  for (const x of [-1.55, 1.55]) mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.4, 8), gold, x, 0.7, 1.25, BK);
+  roof(4.2, 2.9, 0.85, 1.3, 0.18, 0, 1.4, 0.05, BK, orange);
+  for (const sx of [-1, 1]) roof(1.9, 2.6, 0.65, 0.45, 0.12, sx * 2.45, 1.15, 0.05, BK, orange);
+  mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.55, 12), lam('#cfd3d6'), 3.1, 0.3, -0.6, BK);
+  // —— ㄇ字外面：紅磚色停車廣場，白色停車格線，前緣一排路燈和欄杆 ——
+  const PZ0 = ZF - 0.6 + 0.2, PZ1 = A - 1.0;
+  mesh(new THREE.BoxGeometry(17, 0.08, PZ1 - PZ0 + 1), lam('#b98272'), 0, 0.04, (PZ0 + PZ1) / 2, mark, false);
   const lineM = lam('#f4ece6');
-  for (let k = 0; k < 7; k++) mesh(new THREE.BoxGeometry(0.06, 0.02, 1.4), lineM, -6 + k * 1.7, 0.09, 7.6, mark, false);
-  mesh(new THREE.BoxGeometry(11, 0.02, 0.06), lineM, -0.9, 0.09, 6.9, mark, false);
+  for (let k = 0; k < 8; k++) mesh(new THREE.BoxGeometry(0.06, 0.02, 1.4), lineM, -6.3 + k * 1.6, 0.09, PZ1 - 1.4, mark, false);
+  mesh(new THREE.BoxGeometry(11.2, 0.02, 0.06), lineM, -0.7, 0.09, PZ1 - 2.1, mark, false);
   for (let k = 0; k < 6; k++) {
-    const x = -6 + k * 2.2;
-    mesh(new THREE.CylinderGeometry(0.04, 0.05, 1.3, 6), lam('#5f6b73'), x, 0.65, 8.95, mark, false);
-    mesh(new THREE.SphereGeometry(0.11, 8, 6), glow('#fff3c4', 0.15, 1.6), x, 1.35, 8.95, mark, false);
+    const x = -5.5 + k * 2.2;
+    mesh(new THREE.CylinderGeometry(0.04, 0.05, 1.3, 6), lam('#5f6b73'), x, 0.65, PZ1 - 0.2, mark, false);
+    mesh(new THREE.SphereGeometry(0.11, 8, 6), glow('#fff3c4', 0.15, 1.6), x, 1.35, PZ1 - 0.2, mark, false);
   }
-  mesh(new THREE.BoxGeometry(13.5, 0.06, 0.06), lam('#7d858c'), 0, 0.7, 9.2, mark, false);
-  for (let k = 0; k <= 27; k++) mesh(new THREE.BoxGeometry(0.04, 0.7, 0.04), lam('#7d858c'), -6.75 + k * 0.5, 0.35, 9.2, mark, false);
-  // 門口兩盆圓圓的盆栽
-  for (const x of [-2.2, 2.2]) { mesh(new THREE.CylinderGeometry(0.3, 0.25, 0.35, 10), lam('#8a6a48'), x, 0.18, 3.6, mark); mesh(new THREE.SphereGeometry(0.45, 10, 8), lam('#4f8f3e'), x, 0.7, 3.6, mark); }
+  mesh(new THREE.BoxGeometry(12.5, 0.06, 0.06), lam('#7d858c'), 0, 0.7, PZ1 + 0.05, mark, false);
+  for (let k = 0; k <= 25; k++) mesh(new THREE.BoxGeometry(0.04, 0.7, 0.04), lam('#7d858c'), -6.25 + k * 0.5, 0.35, PZ1 + 0.05, mark, false);
   // —— 右前角：紅瓦八角涼亭 ——
-  const PV = new THREE.Group(); PV.position.set(6.2, 0, 6.4); mark.add(PV);
+  const PV = new THREE.Group(); PV.position.set(8.2, 0, PZ0 + 1.6); mark.add(PV);
   mesh(new THREE.CylinderGeometry(1.35, 1.4, 0.2, 8), lam('#c9c2b6'), 0, 0.1, 0, PV);
   for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2 + Math.PI / 8; mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.3, 6), lam('#a0523c'), Math.sin(a) * 1.15, 0.85, Math.cos(a) * 1.15, PV); }
   const pr = mesh(new THREE.ConeGeometry(1.75, 0.9, 8), eave, 0, 1.95, 0, PV); pr.rotation.y = Math.PI / 8;
   mesh(new THREE.SphereGeometry(0.1, 8, 6), gold, 0, 2.45, 0, PV);
-  // 往右後方下山的產業道路（灰色柏油路）
-  const road = mesh(new THREE.BoxGeometry(2.2, 0.06, 8), lam('#8d9196'), 8.6, 0.05, 2.5, mark, false); road.rotation.y = -0.5;
-  addObst(g, { x: 0, z: 0, r: 11 });
+  addObst(g, { x: 0, z: 0, r: ZY_R - 1 });
 }
 
 /* ---------- 漂流瓶島：大家匿名留言的地方；每則審核通過的留言是一個漂在島邊的玻璃瓶 ---------- */
