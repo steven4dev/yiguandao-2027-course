@@ -436,7 +436,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.07</span>
+  <span class="ver">v261028.08</span>
   </div></div>
 </div>
 
@@ -2952,6 +2952,9 @@ const newIsl = makeIsland('newisle', 21, NEW_DIR.x * 118, NEW_DIR.y * 118, 'zhon
    建築參考空拍：像三合院的ㄇ字型，左右兩翼兩層樓往前伸，中間圍出一個小廣場；正中間退進去的兩層樓有紅色瓦簷、米黃牆三扇紅門；
    第三層只有正中間有：後棟在屋頂平台上，是米黃牆、橘色琉璃瓦的三川式佛堂；ㄇ字外面是紅磚色停車廣場、一排路燈和欄杆，右前角一座紅瓦八角涼亭，後面整片山林 ---------- */
 const ZY_R = 13;
+// 凝聚晚會的報名表（全真青年部的表單，只能用連結開啟）；點中一島的涼亭報名處就開這個
+const PARTY_FORM = 'https://docs.google.com/forms/d/e/1FAIpQLScn5a2EP6ptUXyJ8MGavqGprAPxWNleM9SbvOIVUlGfjLc4gg/viewform';
+const partyHit = [];
 const zyIsl = (() => {
   const want = Math.atan2(HOME.pos.x - newIsl.x, HOME.pos.z - newIsl.z) - 0.7;   // 原本起重船的方向
   const dir = Math.round(want / (Math.PI / 3)) * (Math.PI / 3);                  // 對齊到最近的一條邊的法線
@@ -3122,6 +3125,25 @@ const zyIsl = (() => {
   // 報到處：右前角的涼亭前放一張桌子和一塊小立牌
   mesh(new THREE.BoxGeometry(1.4, 0.08, 0.6), cloth, -1.2, 0.62, 0.3, PV);
   for (const lx of [-0.6, 0.6]) mesh(new THREE.BoxGeometry(0.06, 0.6, 0.5), legM, -1.2 + lx, 0.3, 0.3, PV, false);
+  // 涼亭＝晚會報名處：旁邊立一塊「點我報名」的牌子，屋頂上一個金色箭頭上下跳；點涼亭或牌子就開報名表
+  const RS = new THREE.Group(); RS.position.set(-1.9, 0, 1.0); RS.rotation.y = 0.3; PV.add(RS);
+  const rsCanvas = document.createElement('canvas'); rsCanvas.width = 384; rsCanvas.height = 200;
+  const rsTex = new THREE.CanvasTexture(rsCanvas); rsTex.colorSpace = THREE.SRGBColorSpace;
+  mesh(new THREE.BoxGeometry(1.9, 1.0, 0.08), [lam('#c0392b'), lam('#c0392b'), lam('#c0392b'), lam('#c0392b'), new THREE.MeshLambertMaterial({ map: rsTex }), lam('#c0392b')], 0, 1.45, 0, RS, false);
+  for (const x of [-0.8, 0.8]) mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.5, 6), legM, x, 0.75, -0.06, RS, false);
+  const drawReg = (open) => {
+    const c = rsCanvas.getContext('2d');
+    c.fillStyle = open ? '#c0392b' : '#8d9196'; c.fillRect(0, 0, 384, 200);
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#ffe9a8';
+    c.font = 'bold 56px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText('🏮 晚會報名處', 192, 70);
+    c.fillStyle = '#ffffff'; c.font = 'bold 40px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText(open ? '👆 點我報名・到 11/2' : '報名已截止・謝謝大家', 192, 148);
+    rsTex.needsUpdate = true;
+  };
+  const arrow = new THREE.Group(); arrow.position.set(0, 3.1, 0); PV.add(arrow);
+  mesh(new THREE.ConeGeometry(0.3, 0.5, 4), glow('#ffcf4a', 0.6, 1.8), 0, 0, 0, arrow, false).rotation.x = Math.PI;
+  mesh(new THREE.BoxGeometry(0.16, 0.4, 0.16), glow('#ffcf4a', 0.6, 1.8), 0, 0.42, 0, arrow, false);
+  animators.push((t) => { if (arrow.visible) { arrow.position.y = 3.1 + Math.abs(Math.sin(t * 3)) * 0.35; arrow.rotation.y = t * 1.5; } });
+  PV.traverse((o) => { if (o.isMesh) partyHit.push(o); });
   // 倒數看板：左前角，文字跟著日期換
   const SB = new THREE.Group(); SB.position.set(-(px(PZ0 + 1.6) - 1.9), 0, PZ0 + 1.6); SB.rotation.y = 0.35; mark.add(SB);
   const sbCanvas = document.createElement('canvas'); sbCanvas.width = 512; sbCanvas.height = 300;
@@ -3166,6 +3188,8 @@ const zyIsl = (() => {
     if (after) drawSign(['🏮 全真青年凝聚晚會', '圓滿落幕 🎉', '11/28 謝謝每一位夥伴']);
     else if (today) drawSign(['🏮 全真青年凝聚晚會', '就是今晚！', '18:00–22:00・烤盤＋晚會']);
     else drawSign(['🏮 11/28（六）凝聚晚會', `倒數 ${left} 天`, now <= DEADLINE ? `報名到 11/2（一）・含住宿` : '確定開辦・含住宿']);
+    const open = now <= DEADLINE;
+    if (open !== zyIsl.formOpen) { zyIsl.formOpen = open; drawReg(open); arrow.visible = open; }
   };
 }
 
@@ -3623,8 +3647,8 @@ function renderPanel() {
     title = '中一島'; info = '全真青年凝聚晚會 11/28';
     html = `<header><span class="eyebrow">中一堂・全真青年部</span><h2>🏮 全真青年凝聚晚會</h2><p class="sub">${left > 0 ? `倒數 ${left} 天・確定開辦` : left === 0 ? '就是今晚！' : '圓滿落幕，謝謝每一位夥伴'}</p></header>
       <ul class="prog"><li><span>日期</span>2026/11/28（六）</li><li><span>時間</span>18:00–22:00</li><li><span>地點</span>中一堂（一貫道基礎忠恕道場中一堂）</li><li><span>方式</span>烤盤式晚餐＋晚會，可以夜宿中一堂</li><li><span>報名</span>11/2（一）截止</li></ul>
-      <p class="note">島上已經佈置好了：停車廣場擺了十區的烤盤長桌（每桌一支區旗），ㄇ字中間的小廣場是晚會舞台，兩翼之間拉滿燈串，右前角的涼亭是報到處。當天會場會坐滿人、烤盤冒煙；天黑之後燈串和海上的紅燈籠都會亮起來。</p>
-      ${open ? `<div class="cta"><p>全真青年專屬的一個晚上，一起來烤肉、聊天、玩晚會！</p><a href="https://docs.google.com/forms/d/e/1FAIpQLScn5a2EP6ptUXyJ8MGavqGprAPxWNleM9SbvOIVUlGfjLc4gg/viewform" target="_blank" rel="noopener">🏮 我要報名凝聚晚會</a></div>` : ''}
+      <p class="note">島上已經佈置好了：停車廣場擺了十區的烤盤長桌（每桌一支區旗），ㄇ字中間的小廣場是晚會舞台，兩翼之間拉滿燈串，右前角的涼亭是晚會報名處（點涼亭就能報名）。當天會場會坐滿人、烤盤冒煙；天黑之後燈串和海上的紅燈籠都會亮起來。</p>
+      ${open ? `<div class="cta"><p>全真青年專屬的一個晚上，一起來烤肉、聊天、玩晚會！</p><a href="${PARTY_FORM}" target="_blank" rel="noopener">🏮 我要報名凝聚晚會</a></div>` : ''}
       <button class="back" data-go="newisle">→ 看隔壁的忠恕島</button>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongshu') {
@@ -3876,7 +3900,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
     hoverQueued = false;
     ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit, lookoutHit, teacherHit, masterHit, bottleHit, visitorHit), false).length ? 'pointer' : '';
+    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit, partyHit, lookoutHit, teacherHit, masterHit, bottleHit, visitorHit), false).length ? 'pointer' : '';
   });
 });
 renderer.domElement.addEventListener('pointerup', (e) => {
@@ -3885,6 +3909,8 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   ray.setFromCamera(ndc, camera);
   // 先打到任何物件，再往上找它屬於哪座島
   if (ray.intersectObjects(raftHit, false).length) { openSignup(); return; }
+  // 中一島的涼亭＝凝聚晚會報名處：報名期間點了開報名表，截止後就打開中一島的介紹
+  if (ray.intersectObjects(partyHit, false).length) { if (zyIsl.formOpen) window.open(PARTY_FORM, '_blank', 'noopener'); else select('zhongyi'); return; }
   const bh = ray.intersectObjects(bottleHit, false)[0];
   if (bh) { const i = bh.object.userData.bottle; select('bottle', i >= 0 ? 'b:' + i : 'bottle'); return; }
   if (!searching && ray.intersectObjects(lookoutHit, false).length) { openSearch(); return; }
@@ -5059,7 +5085,7 @@ const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
    原本要畫四千多次的場景，合併後少掉一大半，手機（例如 iPhone）會順很多 */
 const NO_MERGE_KEYS = ['ring', 'arms', 'slot', 'person', 'teacher', 'master', 'bottle', 'noMerge', 'detail'];
 function staticMerge() {
-  const hits = new Set([cadreHit, plazaHit, raftHit, lookoutHit, teacherHit, masterHit, bottleHit, visitorHit].flat());
+  const hits = new Set([cadreHit, plazaHit, raftHit, partyHit, lookoutHit, teacherHit, masterHit, bottleHit, visitorHit].flat());
   const visChain = (o) => { for (let x = o; x; x = x.parent) if (!x.visible) return false; return true; };
   const cand = [];
   scene.traverse((o) => {
