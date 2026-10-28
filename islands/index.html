@@ -436,7 +436,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.05</span>
+  <span class="ver">v261028.06</span>
   </div></div>
 </div>
 
@@ -3036,7 +3036,11 @@ const zyIsl = (() => {
   mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.55, 12), lam('#cfd3d6'), 3.1, 0.3, -0.6, BK);
   // —— ㄇ字外面：紅磚色停車廣場，白色停車格線，前緣一排路燈和欄杆 ——
   const PZ0 = ZF - 0.6 + 0.2, PZ1 = A - 1.0;
-  mesh(new THREE.BoxGeometry(17, 0.08, PZ1 - PZ0 + 1), lam('#b98272'), 0, 0.04, (PZ0 + PZ1) / 2, mark, false);
+  // 停車廣場順著六邊形前半部的斜邊裁切，往內留 0.4，不會超出島的邊緣
+  const RI = ZY_R - 0.4, AI = RI * COS30, px = (z) => RI - (z / AI) * (RI / 2);
+  const pz0 = PZ0 - 0.5, pz1 = Math.min(PZ1 + 0.5, AI);
+  const parkShape = new THREE.Shape([[-px(pz0), -pz0], [px(pz0), -pz0], [px(pz1), -pz1], [-px(pz1), -pz1]].map(([x, y]) => new THREE.Vector2(x, y)));
+  mesh(new THREE.ExtrudeGeometry(parkShape, { depth: 0.08, bevelEnabled: false }).rotateX(-Math.PI / 2), lam('#b98272'), 0, 0, 0, mark, false);
   const lineM = lam('#f4ece6');
   for (let k = 0; k < 8; k++) mesh(new THREE.BoxGeometry(0.06, 0.02, 1.4), lineM, -6.3 + k * 1.6, 0.09, PZ1 - 1.4, mark, false);
   mesh(new THREE.BoxGeometry(11.2, 0.02, 0.06), lineM, -0.7, 0.09, PZ1 - 2.1, mark, false);
@@ -3048,7 +3052,7 @@ const zyIsl = (() => {
   mesh(new THREE.BoxGeometry(12.5, 0.06, 0.06), lam('#7d858c'), 0, 0.7, PZ1 + 0.05, mark, false);
   for (let k = 0; k <= 25; k++) mesh(new THREE.BoxGeometry(0.04, 0.7, 0.04), lam('#7d858c'), -6.25 + k * 0.5, 0.35, PZ1 + 0.05, mark, false);
   // —— 右前角：紅瓦八角涼亭 ——
-  const PV = new THREE.Group(); PV.position.set(8.2, 0, PZ0 + 1.6); mark.add(PV);
+  const PV = new THREE.Group(); PV.position.set(px(PZ0 + 1.6) - 1.8, 0, PZ0 + 1.6); mark.add(PV);   // 涼亭也收在島邊以內
   mesh(new THREE.CylinderGeometry(1.35, 1.4, 0.2, 8), lam('#c9c2b6'), 0, 0.1, 0, PV);
   for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2 + Math.PI / 8; mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.3, 6), lam('#a0523c'), Math.sin(a) * 1.15, 0.85, Math.cos(a) * 1.15, PV); }
   const pr = mesh(new THREE.ConeGeometry(1.75, 0.9, 8), eave, 0, 1.95, 0, PV); pr.rotation.y = Math.PI / 8;
