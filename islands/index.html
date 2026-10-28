@@ -452,7 +452,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.21</span>
+  <span class="ver">v261028.22</span>
   </div></div>
 </div>
 
@@ -4502,6 +4502,8 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape' && !howto.hidden) hi
 let seenHowto = false;
 try { seenHowto = localStorage.getItem('islands-howto') === '1'; } catch (e) {}
 if (!seenHowto && !location.hash) setTimeout(showHowto, 900);
+// 懶人包連結（islands/guide/ → #guide）：不管看過沒有，都再秀一次操作說明
+if (location.hash === '#guide') setTimeout(showHowto, 900);
 
 // 晝夜跟著台灣時間：日出、白天、夕陽、黃昏、夜晚；右上角按鈕可以切換「自動／固定白天／固定夜晚」，選擇會記在這台裝置上
 const root = document.documentElement;
