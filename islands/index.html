@@ -436,7 +436,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261027.15</span>
+  <span class="ver">v261028.01</span>
   </div></div>
 </div>
 
@@ -754,7 +754,7 @@ function makeIsland(key, R, x, z, kind) {
   s1.rotation.y = Math.PI / 6;
   const s2 = mesh(new THREE.CylinderGeometry(R * 0.94, R * 0.78, h2, 6), soilDarkMat, 0, -0.8 - h1 - h2 / 2, 0, g, false);
   s2.rotation.y = Math.PI / 6;
-  islands[key] = { key, R, x, z, group: g, kind, near: true };
+  islands[key] = { key, R, x, z, group: g, kind };
   g.userData.isle = islands[key];
   return islands[key];
 }
@@ -1295,7 +1295,7 @@ function figure(mat, role = '', bob = false, extra = {}) {
     part(dotGeo, lam('#3a2a22'), 0, 1.06, -0.52).scale.set(0.19, 0.16, 0.13);
     part(new THREE.CylinderGeometry(0.012, 0.012, 0.44, 6), sashMat, 0, 1.1, -0.55).rotation.z = Math.PI / 2 - 0.25;
   }
-  // 表情、髮夾、道具這些小零件標成「細節」：鏡頭離遠時收起來，也不投影子（遠看根本看不到，卻很吃手機效能）
+  // 表情、髮夾、道具這些小零件不投影子（影子小到看不到，卻很吃手機效能）
   g.traverse((m) => {
     if (!m.isMesh || m.userData.ring || m === p.userData.body) return;
     if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere();
@@ -1305,12 +1305,17 @@ function figure(mat, role = '', bob = false, extra = {}) {
   return p;
 }
 const walkers = [];
-/* ---------- 遠近分級：鏡頭靠近一座島，那座島的人偶才開始動、小細節才出現；離遠了就暫停、收起來（手機省電、不卡） ---------- */
 function islOf(o) { for (let x = o; x; x = x.parent) if (x.userData && x.userData.isle) return x.userData.isle; return null; }
-function far(o) {
-  const u = o.userData;
-  if (u.isl === undefined) { const i = islOf(o); if (!i) return false; u.isl = i; }
-  return !u.isl.near;
+/* ---------- 畫面外的人偶先不算動作：整個不在鏡頭範圍裡才跳過（看不到就不會像卡住），一回到畫面就接著動 ----------
+   每一幀在 tick 裡更新一次鏡頭的視野範圍；位置用上一幀畫好的位置，留 3 的餘裕，邊緣不會突然停 */
+const viewFrustum = new THREE.Frustum(), viewM = new THREE.Matrix4(), offV = new THREE.Vector3(), offS = new THREE.Sphere(offV, 3);
+function updateViewFrustum() {
+  camera.updateMatrixWorld();
+  viewFrustum.setFromProjectionMatrix(viewM.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+}
+function offscreen(o) {
+  offV.setFromMatrixPosition(o.matrixWorld);
+  return !viewFrustum.intersectsSphere(offS);
 }
 function placeWalker(p, parent, x, z, roam = 0.6, maxR = 0) {
   [x, z] = freeSpot(parent, x, z, roam, maxR);
@@ -1321,7 +1326,6 @@ function placeWalker(p, parent, x, z, roam = 0.6, maxR = 0) {
   p.scale.setScalar(0.001);
   parent.add(p);
   walkers.push(p);
-  const isl = islOf(parent); if (isl) isl.lodDirty = true;
 }
 function clearWalkers(list) {
   for (const p of list) {
@@ -1446,7 +1450,7 @@ const animators = [];
 // 有神照護體的金色光（AURAS 在前面建好）
 animators.push((t) => {
   for (const au of AURAS) {
-    if (!au.p.parent || far(au.p)) continue;
+    if (!au.p.parent || offscreen(au.p)) continue;
     au.shell.scale.set(1 + Math.sin(t * 6) * 0.05, 1 + Math.sin(t * 4.3) * 0.06, 1 + Math.sin(t * 6) * 0.05);
     au.shell.rotation.y = t * 0.8;
     au.flames.forEach((f, i) => { f.scale.set(1, 0.7 + Math.abs(Math.sin(t * 9 + i * 1.7)) * 0.7 + Math.random() * 0.15, 1); });
@@ -1495,7 +1499,7 @@ animators.push((t) => {
   confettiT = t;
   for (const f of POPPERS) {
     const u = f.userData;
-    if (!f.parent || far(f)) continue;
+    if (!f.parent || offscreen(f)) continue;
     if (u.nextPop == null) u.nextPop = t + 1 + Math.random() * 5;
     if (u.focusT == null && t > u.nextPop) { popConfetti(f); u.nextPop = t + 4 + Math.random() * 3; }
     // 左手往後一拉
@@ -1534,7 +1538,7 @@ animators.push((t) => {
   trickT = t;
   for (const tr of TRICKS) {
     const f = tr.f, u = f.userData;
-    if (!f.parent || far(f)) continue;
+    if (!f.parent || offscreen(f)) continue;
     if (u.bubble) {
       u.bubbleT += dt;
       const k = u.bubbleT / 1.4;
@@ -1628,7 +1632,7 @@ animators.push((t) => {
 animators.push((t) => {
   for (const f of JUGGLERS) {
     const u = f.userData;
-    if (u.focusT != null || !f.parent || far(f)) continue;
+    if (u.focusT != null || !f.parent || offscreen(f)) continue;
     const rate = 1.1;
     u.balls.forEach((b, i) => {
       const s = (t * rate + (i * 2) / 3) % 2, k = s % 1, dir = s < 1 ? 1 : -1;
@@ -1642,7 +1646,7 @@ animators.push((t) => {
 animators.push((t) => {
   for (const m of MASTERS) {
     const f = m.fig, u = f.userData;
-    if (u.focusT != null || far(f)) continue;
+    if (u.focusT != null || offscreen(f)) continue;
     const k = t * 0.32 + m.phase, z = 5.1 + Math.sin(k) * 0.4, x = m.x + Math.sin(k * 0.5) * 0.15;
     const vz = Math.cos(k);
     f.position.set(x, Math.abs(Math.sin(t * 2.2 + m.phase)) * 0.03, z);
@@ -2558,7 +2562,7 @@ COURSES.forEach((c) => {
     const setRun = () => { inner.rotation.set(0.18, 0, 0); inner.scale.set(1, 1, 1); wings.forEach((w) => { w.visible = false; }); };
     animators.push((t) => {
       const dt = lastT == null ? 0 : Math.min(0.1, t - lastT); lastT = t;
-      if (u.focusT != null || far(f)) return;   // 被點到時交給 onFocus；鏡頭離太遠就先不跑
+      if (u.focusT != null || offscreen(f)) return;   // 被點到時交給 onFocus；不在畫面裡就先不跑
       const fe = t - fallT;
       if (fe < 2.4) {
         // 跌倒：往前撲 → 趴著 💫 → 撐起來 → 拍拍身體
@@ -3037,7 +3041,7 @@ animators.push((t) => {
   const z = POSE[i][0] + (POSE[j][0] - POSE[i][0]) * e, x = POSE[i][1] + (POSE[j][1] - POSE[i][1]) * e, lean = POSE[i][2] + (POSE[j][2] - POSE[i][2]) * e;
   for (const f of YOGA_POSES) {
     const u = f.userData;
-    if (u.focusT != null || far(f)) continue;
+    if (u.focusT != null || offscreen(f)) continue;
     const [l, r] = u.arms;
     l.rotation.set(x, 0, -z); r.rotation.set(x, 0, z);
     f.rotation.set(0, 0, lean);
@@ -4772,23 +4776,6 @@ const HEMI_DAY = new THREE.Color('#fff6e6');
 const warmC = new THREE.Color(), seaC = new THREE.Color();
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
-// 每 0.4 秒檢查一次每座島離鏡頭多遠：島越大，算「靠近」的距離越遠
-const lodV = new THREE.Vector3();
-let lodNext = 0;
-function updateLOD(t) {
-  if (t < lodNext) return;
-  lodNext = t + 0.4;
-  for (const isl of Object.values(islands)) {
-    const near = camera.position.distanceTo(lodV.set(isl.x, 0, isl.z)) < isl.R * 3 + 32;
-    if (near === isl.near && !isl.lodDirty) continue;
-    isl.near = near; isl.lodDirty = false;
-    isl.group.traverse((o) => {
-      if (!o.userData.detail) return;
-      if (!near && o.visible) { o.visible = false; o.userData.lodHidden = true; }
-      else if (near && o.userData.lodHidden) { o.visible = true; o.userData.lodHidden = false; }
-    });
-  }
-}
 /* ---------- 靜態合併：島上不會動的東西（建築、樹、橋、欄杆、地面⋯）合併成少數幾塊一起畫 ----------
    開場後先觀察 10 秒，位置、顯示狀態都沒變過的才合併；人偶、會點的東西、會跟著日期變的花都不碰。
    原本要畫四千多次的場景，合併後少掉一大半，手機（例如 iPhone）會順很多 */
@@ -4847,6 +4834,23 @@ function staticMerge() {
   }, 500);
 }
 setTimeout(staticMerge, 1500);
+/* ---------- 依實際順暢度自動調畫質：開場 14 秒後（靜態合併完）量 4 秒，每秒不到 40 格就降一級，最多兩級；
+   只動畫質（解析度、移軸景深），人偶、動作、可以點的東西都不變；電腦和順的手機維持原樣 ---------- */
+const Q_STEPS = [
+  () => { const pr = Math.min(devicePixelRatio, MOBILE ? 1.15 : 1.4); renderer.setPixelRatio(pr); composer.setPixelRatio(pr); },
+  () => { renderer.setPixelRatio(1); composer.setPixelRatio(1); hTilt.enabled = vTilt.enabled = false; },
+];
+let qLevel = 0, fpsFrom = 0, fpsFrames = 0;
+function watchFps(t, rawDt) {
+  if (qLevel >= Q_STEPS.length || t < 14) return;
+  if (document.hidden || rawDt > 0.5) { fpsFrom = 0; return; }   // 切到背景、卡一下就重新量，不算數
+  if (!fpsFrom) { fpsFrom = t; fpsFrames = 0; return; }
+  fpsFrames++;
+  if (t - fpsFrom < 4) return;
+  const fps = fpsFrames / (t - fpsFrom);
+  fpsFrom = 0;
+  if (fps < 40) { Q_STEPS[qLevel++](); console.info(`全真群島：每秒 ${fps.toFixed(0)} 格，畫質降到第 ${qLevel} 級`); }
+}
 // 手機上影子每 3 幀更新一次（影子要把整個場景再畫一遍，最吃效能）
 renderer.shadowMap.autoUpdate = false;
 let frameN = 0;
@@ -4873,8 +4877,9 @@ function tick() {
   for (const g of glowMats) g.mat.emissiveIntensity = g.base + (g.night - g.base) * nightT;
   for (const l of lampLights) l.intensity = nightT * 6;
 
-  updateLOD(t);
-  if (MOBILE ? ++frameN % 3 === 0 : true) renderer.shadowMap.needsUpdate = true;
+  updateViewFrustum();
+  watchFps(t, rawDt);
+  if (++frameN % (MOBILE ? 3 : 1) === 0) renderer.shadowMap.needsUpdate = true;
   if (!reduceMotion) for (const a of animators) a(t);
   audioTick();
   updateHighlight(t);
@@ -4892,7 +4897,7 @@ function tick() {
     const u = p.userData;
     const full = u.grow || 1;
     if (p.scale.x < full) p.scale.setScalar(Math.min(full, p.scale.x + dt * 3));
-    if (reduceMotion || u.focusT != null || (u.hold && u.hold > t) || far(p)) continue;   // 離太遠的島先不動；被點到（或正在拍肩、擦汗）的人偶站好，不走動
+    if (reduceMotion || u.focusT != null || (u.hold && u.hold > t) || offscreen(p)) continue;   // 不在畫面裡先不動；被點到（或正在拍肩、擦汗）的人偶站好，不走動
     p.position.y = Math.abs(Math.sin(t * 3 * u.speed + u.phase)) * 0.08;
     p.position.x = u.home.x + Math.sin(t * 0.3 * u.speed + u.phase) * u.roam;
     p.rotation.y = Math.cos(t * 0.3 * u.speed + u.phase) > 0 ? Math.PI / 2 : -Math.PI / 2;
