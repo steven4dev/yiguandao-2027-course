@@ -216,6 +216,8 @@
   .write textarea, .write input[type="text"] { width: 100%; box-sizing: border-box; border: 1px solid rgba(160, 120, 60, 0.35); border-radius: 12px; padding: 10px 12px;
     font: inherit; font-size: 16px; background: #fff8e6; color: #3f2c22; }
   .write textarea { min-height: 110px; resize: vertical; line-height: 1.7; }
+  .write select, .write input[type="date"] { width: 100%; box-sizing: border-box; border: 1px solid rgba(160, 120, 60, 0.35); border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 16px; background: #fff8e6; color: #3f2c22; }
+  .write select:focus, .write input[type="date"]:focus { outline: 2px solid var(--jade); outline-offset: 1px; }
   .write textarea:focus, .write input[type="text"]:focus { outline: 2px solid var(--jade); outline-offset: 1px; }
   .write .wcount { justify-self: end; margin-top: -8px; font-size: 11.5px; color: var(--muted); }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -443,7 +445,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.16</span>
+  <span class="ver">v261028.17</span>
   </div></div>
 </div>
 
@@ -484,6 +486,24 @@
     <p class="werr" id="wErr" role="alert" hidden></p>
     <div class="wbtns"><button class="wgo" id="wGo" type="submit">🌊 丟進海裡</button><button class="wcancel" id="wCancel" type="button">先不要</button>
       <a class="wform" id="wForm" target="_blank" rel="noopener">改用 Google 表單</a></div>
+  </form>
+</div>
+<div class="write join" id="join" role="dialog" aria-modal="true" aria-labelledby="joinTitle" hidden>
+  <form class="card write-card" id="joinForm" novalidate>
+    <h2 id="joinTitle">🛶 登島船票</h2>
+    <p class="wsub">全真社青班第四期・2027 年，每月給自己一天。填好船票就完成預約，之後會有專人跟你聯繫。</p>
+    <div><label class="wl" for="jName">姓名 <i>*</i></label><input type="text" id="jName" maxlength="30" autocomplete="name"></div>
+    <fieldset><legend>性別 <i>*</i></legend><div class="chips" id="jGender"><label><input type="radio" name="jg" value="乾道"><span>乾道</span></label><label><input type="radio" name="jg" value="坤道"><span>坤道</span></label></div></fieldset>
+    <div><label class="wl" for="jBirth">出生年月日 <i>*</i></label><input type="date" id="jBirth" min="1940-01-01" max="2015-12-31"></div>
+    <div><label class="wl" for="jArea">居住地區 <i>*</i></label><input type="text" id="jArea" maxlength="40" placeholder="例如 桃園市龜山區、新北市板橋區"></div>
+    <div><label class="wl" for="jPhone">聯絡手機 <i>*</i></label><input type="text" id="jPhone" inputmode="tel" maxlength="12" autocomplete="tel" placeholder="09xxxxxxxx"></div>
+    <div><label class="wl" for="jUnit">所屬單位（區） <i>*</i></label><select id="jUnit"></select></div>
+    <div><label class="wl" for="jIntro">介紹人／陪伴夥伴 <i>*</i></label><input type="text" id="jIntro" maxlength="60" placeholder="邀請你的講師、前輩或朋友；擔任幹部請填「幹部」；沒有就填「無」"></div>
+    <div><label class="wl" for="jKids">是否攜帶孩童隨行？</label><input type="text" id="jKids" maxlength="40" placeholder="沒有就免填；例如 2位（5歲、8歲）"></div>
+    <p class="wsub">手機和生日只會送到報名表，不會出現在群島上。</p>
+    <p class="werr" id="jErr" role="alert" hidden></p>
+    <div class="wbtns"><button class="wgo" id="jGo" type="submit">🛶 登船！</button><button class="wcancel" id="jCancel" type="button">先不要</button>
+      <a class="wform" id="jForm" data-raw="1" target="_blank" rel="noopener">改用 Google 表單</a></div>
   </form>
 </div>
 <div class="howto" id="howto" role="dialog" aria-modal="true" aria-labelledby="howtoTitle" hidden>
@@ -2237,7 +2257,7 @@ bridge(gateIsl, islands.c1);
    課程島從好玩島一路接到歡樂島，但歡樂島和好玩島之間沒有木橋，剛好留下一個開口；
    竹筏從迎賓島穿過這個開口，往返外海的渡口島 */
 const SIGNUP_URL = 'https://forms.gle/PG7yAsyz1r4unXXZ8';
-const openSignup = () => window.open(SIGNUP_URL, '_blank', 'noopener');
+const openSignup = () => openJoin();   // 點竹筏也開船票卡（openJoin 在後面定義，點的時候已經有了）
 const gapMid = new THREE.Vector3((islands.c1.x + islands.c9.x) / 2, 0, (islands.c1.z + islands.c9.z) / 2);
 const ROUTE_DIR = gapMid.clone().sub(new THREE.Vector3(gateIsl.x, 0, gateIsl.z)).normalize();
 const R_DOCK = 6;
@@ -4546,6 +4566,84 @@ $('writeForm').addEventListener('submit', async (e) => {
     select('bottle', 'b:0');
   }, 480);
   setTimeout(loadBottles, 90000);   // 一分半後再讀一次試算表，換成正式的瓶子
+});
+
+/* ---------- 登島船票：在群島裡直接填報名表，送到同一份 Google 報名表（formResponse），不用跳出去 ----------
+   所屬單位是下拉選單，選項文字要跟表單一字不差，不然 Google 會把整筆丟掉；所以送出後會重新讀報名試算表，確認名字真的進去了 */
+const JOIN_POST = 'https://docs.google.com/forms/d/e/1FAIpQLSekGRMHi_Z5rcDZy1SXSq5HeQIRwyS8S8r9VfS7Gy7m6LMbgw/formResponse';
+const JOIN_ENTRY = { name: 'entry.1971419124', gender: 'entry.381321845', birth: 'entry.1824705651', area: 'entry.849190744', phone: 'entry.400827304', unit: 'entry.880820237', intro: 'entry.1174641110', kids: 'entry.199240840' };
+const JOIN_UNITS = ['天龍區', '天選區', '至善區', '光輝區', '天如區', '天儲區', '天隆區', '德容區', '參健區', '育樂營', '我只想先登島逛逛而已'];
+const joinEl = $('join'), jErr = $('jErr'), jGo = $('jGo');
+$('jForm').href = SIGNUP_URL;
+$('jUnit').innerHTML = '<option value="">選擇</option>' + JOIN_UNITS.map((u) => `<option>${esc(u)}</option>`).join('');
+function openJoin() {
+  jErr.hidden = true; jGo.disabled = false; jGo.textContent = '🛶 登船！';
+  joinEl.classList.remove('toss'); joinEl.hidden = false;
+  requestAnimationFrame(() => joinEl.classList.add('on'));
+  setTimeout(() => $('jName').focus(), 60);
+}
+function closeJoin() { joinEl.classList.remove('on'); setTimeout(() => { joinEl.hidden = true; joinEl.classList.remove('toss'); }, 320); }
+$('jCancel').addEventListener('click', closeJoin);
+joinEl.addEventListener('click', (e) => { if (e.target === joinEl) closeJoin(); });
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && !joinEl.hidden) closeJoin(); });
+$('joinForm').addEventListener('input', () => { jErr.hidden = true; });
+$('joinForm').addEventListener('change', () => { jErr.hidden = true; });
+// 群島裡所有「我要登島」的連結都改開船票卡（備用的「改用 Google 表單」除外）
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a[href]');
+  if (!a || a.dataset.raw || e.metaKey || e.ctrlKey || e.shiftKey) return;
+  if (a.href === SIGNUP_URL || a.href.startsWith(SIGNUP_URL)) { e.preventDefault(); e.stopPropagation(); openJoin(); }
+}, true);
+function joinToast(msg, ms = 4000) {
+  const tip = $('skyTip'); tip.textContent = msg; tip.classList.add('on');
+  clearTimeout(skyTipTimer); skyTipTimer = setTimeout(() => tip.classList.remove('on'), ms);
+}
+// 送出後每隔一陣子重讀報名資料，看到名字就飛過去打招呼；兩分半還沒看到就提醒改用表單
+function confirmJoin(name, visit, tries = 0) {
+  setTimeout(async () => {
+    await loadData();
+    const i = realPeople.findIndex((d) => (d.m || '').replace(/\s+/g, '') === name.replace(/\s+/g, ''));
+    if (i >= 0) {
+      dayInput.value = Math.max(0, dayIndex(todayISO)); applyDate();
+      const d = realPeople[i], slot = mainSlotOf(d);
+      pickHit(slot ? { kind: 'm', slot } : { kind: 'p', i, d });
+      joinToast(`✅ 已確認登島！歡迎 ${name} 👋`, 5000);
+    } else if (tries < 4) confirmJoin(name, visit, tries + 1);
+    else joinToast('還沒在名單上看到你，可能要再等幾分鐘；一直沒出現的話，請改用 Google 表單再填一次 🙏', 9000);
+  }, tries ? 30000 : 15000);
+}
+$('joinForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const v = (id) => $(id).value.trim();
+  const name = v('jName'), g = joinEl.querySelector('[name=jg]:checked'), birth = v('jBirth'), area = v('jArea');
+  const phone = v('jPhone').replace(/[\s-]/g, ''), unit = v('jUnit'), intro = v('jIntro'), kids = v('jKids');
+  const err = (msg, id) => { jErr.textContent = msg; jErr.hidden = false; if (id) $(id).focus(); };
+  if (!name) return err('請填姓名', 'jName');
+  if (!g) return err('請選乾道或坤道');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birth)) return err('請選出生年月日', 'jBirth');
+  if (!area) return err('請填居住地區，例如 桃園市龜山區', 'jArea');
+  if (!/^09\d{8}$/.test(phone)) return err('手機格式好像不太對，請填 09 開頭的 10 碼', 'jPhone');
+  if (!unit) return err('請選所屬單位（區）', 'jUnit');
+  if (!intro) return err('請填介紹人；沒有的話填「無」，幹部填「幹部」', 'jIntro');
+  jGo.disabled = true; jGo.textContent = '船票開立中⋯';
+  const body = new URLSearchParams(), [yy, mm, dd] = birth.split('-');
+  body.set(JOIN_ENTRY.name, name); body.set(JOIN_ENTRY.gender, g.value);
+  body.set(JOIN_ENTRY.birth + '_year', yy); body.set(JOIN_ENTRY.birth + '_month', String(+mm)); body.set(JOIN_ENTRY.birth + '_day', String(+dd));
+  body.set(JOIN_ENTRY.area, area); body.set(JOIN_ENTRY.phone, phone); body.set(JOIN_ENTRY.unit, unit); body.set(JOIN_ENTRY.intro, intro);
+  if (kids) body.set(JOIN_ENTRY.kids, kids);
+  const ac = new AbortController(), timer = setTimeout(() => ac.abort(), 12000);
+  try { await fetch(JOIN_POST, { method: 'POST', mode: 'no-cors', body, signal: ac.signal }); }
+  catch (x) { clearTimeout(timer); jGo.disabled = false; jGo.textContent = '🛶 再試一次'; err('船票沒送出去（網路好像不太穩）。再試一次，或改用 Google 表單。'); return; }
+  clearTimeout(timer);
+  joinEl.classList.add('toss');
+  setTimeout(() => {
+    closeJoin();
+    $('joinForm').reset();
+    const visit = /逛逛/.test(unit);
+    select(visit ? 'dock' : 'temple');
+    joinToast(visit ? '🎫 船票收到了！一會兒你就會出現在渡口島上 🏝️' : '🎫 船票收到了！一會兒你的小人偶就會出現在全真島廣場 🎉', 6000);
+    confirmJoin(name, visit);
+  }, 480);
 });
 
 /* ---------- 報名資料：直接讀 Google 報名表，連不上改讀備份 ---------- */
