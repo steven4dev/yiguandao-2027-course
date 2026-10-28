@@ -443,7 +443,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.10</span>
+  <span class="ver">v261028.11</span>
   </div></div>
 </div>
 
@@ -3091,6 +3091,13 @@ const zyIsl = (() => {
   const party = new THREE.Group(); mark.add(party);      // 當天才出現：人、烤盤的煙、舞台上的主持人
   venue.userData.noMerge = party.userData.noMerge = true;   // 會跟著日期顯示、收起來，不能合併
   const cloth = lam('#fbf6ec'), legM = lam('#7a5236'), grillM = lam('#2f2b2a');
+  // 島上文宣一律用「深藍底＋金白大字＋白色粗框」：群島上沒有深藍，跟紅瓦、紅涼亭、白牆、綠樹、紅磚地都對得出來，
+  // 牌面不吃光影（MeshBasic），白天不會被陰影壓暗，晚上像燈箱一樣看得清楚
+  const SIGN_BG = '#1d2547', SIGN_GOLD = '#ffd75e', SIGN_FONT = 'bold {px}px "Noto Sans TC", "PingFang TC", sans-serif';
+  const signFont = (px) => SIGN_FONT.replace('{px}', px);
+  const signMat = (tex) => new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, toneMapped: false });
+  const signFrame = (c, w, h, lw) => { c.strokeStyle = '#ffffff'; c.lineWidth = lw; c.strokeRect(lw / 2, lw / 2, w - lw, h - lw); };
+  const frameM = lam('#ffffff');
   // 10 區的烤盤長桌：兩排、每排五張，每張桌子一支小旗寫區名
   const REGIONS = ['天龍區', '天選區', '至善區', '光輝區', '天如區', '天儲區', '天隆區', '德容區', '參健區', '育樂營'];
   const flagCols = ['#e0412f', '#f2a33a', '#3f8a5a', '#2f80c9', '#8f5bd6'];
@@ -3103,9 +3110,12 @@ const zyIsl = (() => {
     for (const [lx, lz] of [[-0.75, -0.35], [0.75, -0.35], [-0.75, 0.35], [0.75, 0.35]]) mesh(new THREE.BoxGeometry(0.06, 0.6, 0.06), legM, lx, 0.3, lz, T, false);
     mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.05, 16), grillM, 0, 0.69, 0, T, false);
     mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.06, 8), lam('#5f6b73'), 0, 0.66, 0, T, false);
-    const ftex = canvasTex(128, 64, (c) => { c.fillStyle = flagCols[i % 5]; c.fillRect(0, 0, 128, 64); c.fillStyle = '#fff'; c.font = 'bold 34px "Noto Sans TC", "PingFang TC", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(name, 64, 34); });
+    const ftex = canvasTex(160, 80, (c) => {
+      c.fillStyle = SIGN_BG; c.fillRect(0, 0, 160, 80); c.fillStyle = flagCols[i % 5]; c.fillRect(0, 0, 20, 80);
+      signFrame(c, 160, 80, 6); c.fillStyle = '#ffffff'; c.font = signFont(36); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(name, 90, 42);
+    });
     mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.8, 5), legM, 0.78, 1.0, 0, T, false);
-    mesh(new THREE.PlaneGeometry(0.62, 0.31), new THREE.MeshLambertMaterial({ map: ftex, side: THREE.DoubleSide }), 0.78 + 0.31, 1.24, 0, T, false);
+    mesh(new THREE.PlaneGeometry(0.7, 0.35), signMat(ftex), 0.78 + 0.35, 1.24, 0, T, false);
     for (let k = 0; k < 3; k++) {
       const sm = mesh(new THREE.SphereGeometry(0.16, 8, 6), new THREE.MeshLambertMaterial({ color: '#f4f1ea', transparent: true, opacity: 0, depthWrite: false }), 0, 0.8, 0, T, false);
       sm.userData.phase = k / 3 + i * 0.13; smoke.push(sm); party.add(sm); sm.position.add(T.position);
@@ -3118,8 +3128,8 @@ const zyIsl = (() => {
   mesh(new THREE.BoxGeometry(4.3, 0.06, 1.6), lam('#c0503f'), 0, 0.32, 1.1, ST, false);
   for (const sx of [-1.9, 1.9]) { mesh(new THREE.BoxGeometry(0.5, 0.7, 0.4), lam('#2f2b2a'), sx, 0.7, 0.6, ST); }   // 兩顆音響
   // 橫布條：掛在兩翼之間
-  const bTex = canvasTex(512, 96, (c) => { c.fillStyle = '#c0392b'; c.fillRect(0, 0, 512, 96); c.fillStyle = '#ffe9a8'; c.font = 'bold 50px "Noto Sans TC", "PingFang TC", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('全真青年凝聚晚會', 256, 50); });
-  mesh(new THREE.PlaneGeometry(5.4, 1.0), new THREE.MeshLambertMaterial({ map: bTex, side: THREE.DoubleSide }), 0, 2.55, 0.9, ST, false);
+  const bTex = canvasTex(640, 120, (c) => { c.fillStyle = SIGN_BG; c.fillRect(0, 0, 640, 120); signFrame(c, 640, 120, 10); c.fillStyle = SIGN_GOLD; c.font = signFont(64); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🏮 全真青年凝聚晚會', 320, 64); });
+  mesh(new THREE.PlaneGeometry(5.6, 1.05), signMat(bTex), 0, 2.55, 1.0, ST, false);
   mesh(new THREE.CylinderGeometry(0.02, 0.02, WX * 2, 4), ropeM, 0, 3.05, 0.9, ST, false).rotation.z = Math.PI / 2;
   // 燈串：兩翼屋頂之間拉四條，微微下垂，掛一顆顆暖黃小燈泡（天黑會亮）
   const bulbM = glow('#ffd36b', 0.3, 2.2);
@@ -3133,17 +3143,18 @@ const zyIsl = (() => {
   mesh(new THREE.BoxGeometry(1.4, 0.08, 0.6), cloth, -1.2, 0.62, 0.3, PV);
   for (const lx of [-0.6, 0.6]) mesh(new THREE.BoxGeometry(0.06, 0.6, 0.5), legM, -1.2 + lx, 0.3, 0.3, PV, false);
   // 涼亭＝晚會報名處：旁邊立一塊「點我報名」的牌子，屋頂上一個金色箭頭上下跳；點涼亭或牌子就開報名表
-  const RS = new THREE.Group(); RS.position.set(-1.9, 0, 1.0); RS.rotation.y = 0.3; PV.add(RS);
+  // 牌子立在涼亭右後方的空地（右翼前面、島邊以內），不跟涼亭屋頂或報到桌重疊
+  const RS = new THREE.Group(); RS.position.set(1.5, 0, -2.4); PV.add(RS);
   const rsCanvas = document.createElement('canvas'); rsCanvas.width = 384; rsCanvas.height = 200;
   const rsTex = new THREE.CanvasTexture(rsCanvas); rsTex.colorSpace = THREE.SRGBColorSpace;
-  mesh(new THREE.BoxGeometry(1.9, 1.0, 0.08), [lam('#c0392b'), lam('#c0392b'), lam('#c0392b'), lam('#c0392b'), new THREE.MeshLambertMaterial({ map: rsTex }), lam('#c0392b')], 0, 1.45, 0, RS, false);
+  mesh(new THREE.BoxGeometry(2.1, 1.1, 0.08), [frameM, frameM, frameM, frameM, signMat(rsTex), frameM], 0, 1.5, 0, RS, false);
   for (const x of [-0.8, 0.8]) mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.5, 6), legM, x, 0.75, -0.06, RS, false);
   const drawReg = (open) => {
     const c = rsCanvas.getContext('2d');
-    c.fillStyle = open ? '#c0392b' : '#8d9196'; c.fillRect(0, 0, 384, 200);
-    c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#ffe9a8';
-    c.font = 'bold 56px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText('🏮 晚會報名處', 192, 70);
-    c.fillStyle = '#ffffff'; c.font = 'bold 40px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText(open ? '👆 點我報名・到 11/2' : '報名已截止・謝謝大家', 192, 148);
+    c.fillStyle = open ? SIGN_BG : '#5f6672'; c.fillRect(0, 0, 384, 200); signFrame(c, 384, 200, 10);
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = SIGN_GOLD;
+    c.font = signFont(54); c.fillText('🏮 晚會報名處', 192, 72);
+    c.fillStyle = '#ffffff'; c.font = signFont(38); c.fillText(open ? '👆 點我報名・到 11/2' : '報名已截止・謝謝大家', 192, 146);
     rsTex.needsUpdate = true;
   };
   const arrow = new THREE.Group(); arrow.position.set(0, 3.1, 0); PV.add(arrow);
@@ -3155,18 +3166,17 @@ const zyIsl = (() => {
   const SB = new THREE.Group(); SB.position.set(-(px(PZ0 + 1.6) - 1.9), 0, PZ0 + 1.6); SB.rotation.y = 0.35; mark.add(SB);
   const sbCanvas = document.createElement('canvas'); sbCanvas.width = 512; sbCanvas.height = 300;
   const sbTex = new THREE.CanvasTexture(sbCanvas); sbTex.colorSpace = THREE.SRGBColorSpace;
-  mesh(new THREE.BoxGeometry(3.0, 1.75, 0.1), [lam('#7a5236'), lam('#7a5236'), lam('#7a5236'), lam('#7a5236'), new THREE.MeshLambertMaterial({ map: sbTex }), lam('#7a5236')], 0, 1.75, 0, SB, false);
+  mesh(new THREE.BoxGeometry(3.0, 1.75, 0.1), [frameM, frameM, frameM, frameM, signMat(sbTex), frameM], 0, 1.75, 0, SB, false);
   for (const x of [-1.3, 1.3]) mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.6, 6), legM, x, 1.3, -0.08, SB, false);
   let sbText = '';
   const drawSign = (lines) => {
     const key = lines.join('|'); if (key === sbText) return; sbText = key;
     const c = sbCanvas.getContext('2d');
-    c.fillStyle = '#fff6e0'; c.fillRect(0, 0, 512, 300);
-    c.fillStyle = '#c0392b'; c.fillRect(0, 0, 512, 78);
+    c.fillStyle = SIGN_BG; c.fillRect(0, 0, 512, 300); signFrame(c, 512, 300, 12);
     c.textAlign = 'center'; c.textBaseline = 'middle';
-    c.fillStyle = '#ffe9a8'; c.font = 'bold 44px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText(lines[0], 256, 42);
-    c.fillStyle = '#3f2c22'; c.font = 'bold 54px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText(lines[1], 256, 150);
-    c.fillStyle = '#7a6455'; c.font = 'bold 34px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText(lines[2], 256, 236);
+    c.fillStyle = SIGN_GOLD; c.font = signFont(42); c.fillText(lines[0], 256, 58);
+    c.fillStyle = '#ffffff'; c.font = signFont(70); c.fillText(lines[1], 256, 152);
+    c.fillStyle = SIGN_GOLD; c.font = signFont(34); c.fillText(lines[2], 256, 238);
     sbTex.needsUpdate = true;
   };
   // 當天的人：每張桌子兩位（乾道淡藍、坤道淡粉），舞台上一位拿麥克風的主持人
