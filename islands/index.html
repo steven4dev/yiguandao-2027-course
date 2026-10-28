@@ -443,7 +443,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.13</span>
+  <span class="ver">v261028.14</span>
   </div></div>
 </div>
 
@@ -1955,7 +1955,7 @@ function flipDice(g) {
     hand.rotation.y = Math.sin(t * 0.7) * 0.3;
   });
 }
-// 蔬食料理王：冒熱氣的大鍋、砧板與蔬菜，戴廚師帽的小人偶
+// 蔬食料理王：冒熱氣的大鍋、砧板與蔬菜；料理桌前面留給蘇毓婷講師（米其林寶寶），在 addTeachers 之後搬過來
 function cooking(g) {
   mesh(new THREE.BoxGeometry(2.4, 0.08, 1.2), lam(C.wood), 0, 0.9, -0.6, g);
   for (const [x, z] of [[-1.05, -1.05], [1.05, -1.05], [-1.05, -0.15], [1.05, -0.15]]) mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.9, 6), lam(C.wood), x, 0.45, z, g);
@@ -1965,14 +1965,9 @@ function cooking(g) {
   mesh(new THREE.SphereGeometry(0.15, 10, 8), lam('#7fb05e'), 0.75, 1.1, -0.65, g);
   mesh(new THREE.SphereGeometry(0.1, 10, 8), lam('#e2626b'), 0.9, 1.05, -0.45, g);
   [[-1.6, 1.0, '#7fb05e', 0.3], [-1.9, 0.6, '#e2763b', 0.2], [-1.4, 1.5, '#e2626b', 0.18]].forEach(([x, z, col, r]) => mesh(new THREE.SphereGeometry(r, 10, 8), lam(col), x, r, z, g));
-  const chef = figure(lam('#f4f1ea'));
-  chef.position.set(0.1, 0, -1.55); chef.scale.setScalar(1.6); g.add(chef);
-  mesh(new THREE.CylinderGeometry(0.2, 0.17, 0.2, 14), lam('#ffffff'), 0, 0.97, 0, chef);
-  mesh(new THREE.SphereGeometry(0.23, 14, 10), lam('#ffffff'), 0, 1.12, 0, chef);
   const steam = [0, 1, 2].map((i) => mesh(new THREE.SphereGeometry(0.18, 10, 8), new THREE.MeshLambertMaterial({ color: '#ffffff', transparent: true, opacity: 0.6 }), -0.5, 1.6, -0.6, g, false));
   animators.push((t) => {
     steam.forEach((m, i) => { const k = (t * 0.5 + i / 3) % 1; m.position.set(-0.5 + Math.sin(t + i) * 0.1, 1.55 + k * 1.4, -0.6); m.scale.setScalar(0.6 + k); m.material.opacity = 0.6 * (1 - k); });
-    chef.rotation.y = Math.sin(t * 1.1) * 0.35;
   });
 }
 const MARKS = {
@@ -2569,6 +2564,20 @@ COURSES.forEach((c) => {
   addTeachers(islands[c.key], (c.prog || []).filter(([label]) => label !== '下午活動' && label !== '古典瑜伽').map(([topic, text]) => ({ topic, text })), 5.2, 2.3);
   if (c.pm) addTeachers(islands[c.pm.key], [{ topic: c.pm.name, text: c.pm.who || '' }], 3.2, 2);
 });
+
+// 料理島：蘇毓婷講師站在料理桌前面、面向大家，原本講台和小黑板拿掉，島上就不會多卡一個人
+{
+  const rec = TEACHERS.find((x) => x.name === '蘇毓婷');
+  if (rec) {
+    const isl = islands[rec.key], f = rec.fig, stand = f.parent;
+    stand.parent.remove(stand);
+    const ob = obstOf(isl.group), k = ob.findIndex((o) => o.r === 1.1 && Math.abs(o.x - stand.position.x) < 0.01 && Math.abs(o.z - stand.position.z) < 0.01);
+    if (k >= 0) ob.splice(k, 1);
+    stand.remove(f); isl.mark.add(f);
+    f.position.set(0.3, 0, 0.95); f.rotation.y = 0; f.userData.restRotY = 0;
+    f.scale.setScalar(1.45 * 1.15);
+  }
+}
 
 /* ---------- 何珈貞（重啟島講師）：平常繞著重啟島慢跑，偶爾跌倒再爬起來；被點到時像超級瑪莉一樣起跳，
    拳頭朝天、背後長出小天使翅膀飛一圈，落地後再揮手 ---------- */
