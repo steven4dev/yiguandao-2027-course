@@ -3023,8 +3023,16 @@ const zyIsl = (() => {
   for (const x of [-0.85, 0, 0.85]) mesh(new THREE.BoxGeometry(x ? 0.42 : 0.55, 0.85, 0.06), redDoor, x, 0.43, 1.12, BK, false);
   for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(0.4, 0.35, 0.05), winM, sx * 2.4, 0.7, 1.06, BK, false);
   for (const x of [-1.55, 1.55]) mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.4, 8), gold, x, 0.7, 1.25, BK);
-  roof(4.2, 2.9, 0.85, 1.3, 0.18, 0, 1.4, 0.05, BK, orange);
-  for (const sx of [-1, 1]) roof(1.9, 2.6, 0.65, 0.45, 0.12, sx * 2.45, 1.15, 0.05, BK, orange);
+  // 照片裡是樸素的橘色瓦頂：只有一條屋脊、兩端微微上翹，沒有葫蘆和捲尾
+  const ridgeM = lam('#c9673a');
+  const plainRoof = (w, d, h, ridgeHalf, x, y) => {
+    const rg = new THREE.Group(); rg.position.set(x, y, 0.05); BK.add(rg);
+    mesh(curvedRoof(w, d, h, ridgeHalf, 0.06), orange, 0, 0, 0, rg);
+    mesh(new THREE.BoxGeometry(ridgeHalf * 2 + 0.2, 0.12, 0.14), ridgeM, 0, h + 0.03, 0, rg);
+    for (const sx of [-1, 1]) { const tip = mesh(new THREE.BoxGeometry(0.28, 0.1, 0.12), ridgeM, sx * (ridgeHalf + 0.18), h + 0.09, 0, rg); tip.rotation.z = sx * 0.45; }
+  };
+  plainRoof(4.2, 2.9, 0.8, 1.3, 0, 1.4);
+  for (const sx of [-1, 1]) plainRoof(1.9, 2.6, 0.6, 0.45, sx * 2.45, 1.15);
   mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.55, 12), lam('#cfd3d6'), 3.1, 0.3, -0.6, BK);
   // —— ㄇ字外面：紅磚色停車廣場，白色停車格線，前緣一排路燈和欄杆 ——
   const PZ0 = ZF - 0.6 + 0.2, PZ1 = A - 1.0;
