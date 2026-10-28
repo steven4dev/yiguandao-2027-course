@@ -443,7 +443,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.14</span>
+  <span class="ver">v261028.15</span>
   </div></div>
 </div>
 
@@ -3184,9 +3184,6 @@ const zyIsl = (() => {
       mesh(new THREE.SphereGeometry(0.07, 6, 5), bulbM, x, y, z, ST, false);
     }
   }
-  // 報到處：右前角的涼亭前放一張桌子和一塊小立牌
-  mesh(new THREE.BoxGeometry(1.4, 0.08, 0.6), cloth, -1.2, 0.62, 0.3, PV);
-  for (const lx of [-0.6, 0.6]) mesh(new THREE.BoxGeometry(0.06, 0.6, 0.5), legM, -1.2 + lx, 0.3, 0.3, PV, false);
   // 涼亭＝晚會報名處：旁邊立一塊「點我報名」的牌子，屋頂上一個金色箭頭上下跳；點涼亭或牌子就開報名表
   // 牌子立在涼亭右後方的空地（右翼前面、島邊以內），不跟涼亭屋頂或報到桌重疊
   const RS = new THREE.Group(); RS.position.set(1.5, 0, -2.4); PV.add(RS);
