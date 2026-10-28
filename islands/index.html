@@ -436,7 +436,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.04</span>
+  <span class="ver">v261028.05</span>
   </div></div>
 </div>
 
@@ -2955,7 +2955,7 @@ const ZY_R = 13;
 const zyIsl = (() => {
   const want = Math.atan2(HOME.pos.x - newIsl.x, HOME.pos.z - newIsl.z) - 0.7;   // 原本起重船的方向
   const dir = Math.round(want / (Math.PI / 3)) * (Math.PI / 3);                  // 對齊到最近的一條邊的法線
-  const d = newIsl.R * COS30 + ZY_R * COS30 + 5;
+  const d = newIsl.R * COS30 + ZY_R * COS30 + 10;   // 兩島之間留 10 的海面（含島外一圈施工浮筒）
   return makeIsland('zhongyi', ZY_R, newIsl.x + Math.sin(dir) * d, newIsl.z + Math.cos(dir) * d, 'zhongyi');
 })();
 {
@@ -3289,7 +3289,7 @@ COURSES.filter((c) => c.pm).forEach((c) => addTag(islands[c.pm.key], `${c.pm.emo
 addTag(dockIsl, '🛶 渡口島・登島', 'small dock-tag', 4.5);
 addTag(yogaIsl, '🧘 瑜伽島', '', 5.2);
 addTag(newIsl, '🚧 忠恕島・施工中', 'main', 15);
-addTag(zyIsl, '🚧 中一島・施工中', 'small', 8);
+addTag(zyIsl, '🚧 中一島・施工中', 'main', 8);   // 跟忠恕島一樣用一般標籤：小標籤在手機上會藏起來
 addTag(bottleIsl, '🍾 漂流瓶島', 'small', 4.8);
 // 登島是重要入口：渡口島的標籤排在全真島和課程島之後、其他小標籤之前
 tags.splice(1 + COURSES.length, 0, tags.pop());
