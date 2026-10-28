@@ -221,6 +221,10 @@
   .write textarea { min-height: 110px; resize: vertical; line-height: 1.7; }
   .write select, .write input[type="date"] { width: 100%; box-sizing: border-box; border: 1px solid rgba(160, 120, 60, 0.35); border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 16px; background: #fff8e6; color: #3f2c22; }
   .write select:focus, .write input[type="date"]:focus { outline: 2px solid var(--jade); outline-offset: 1px; }
+  /* iPhone 的日期欄有自己的最小寬度，不處理會撐爆卡片：去掉系統外觀、允許縮小，日期文字靠左 */
+  .write input[type="date"] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%; min-height: 44px; text-align: left; }
+  .write input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+  .write-card > * { min-width: 0; }
   .write textarea:focus, .write input[type="text"]:focus { outline: 2px solid var(--jade); outline-offset: 1px; }
   .write .wcount { justify-self: end; margin-top: -8px; font-size: 11.5px; color: var(--muted); }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -448,7 +452,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.18</span>
+  <span class="ver">v261028.19</span>
   </div></div>
 </div>
 
