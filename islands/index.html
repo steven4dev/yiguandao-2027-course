@@ -110,6 +110,9 @@
   .board { justify-self: start; display: inline-flex; align-items: baseline; gap: 6px; margin: 2px 0; padding: 6px 14px; border-radius: 999px;
     background: var(--brick); color: #fff; font-weight: 700; font-size: 14px; text-decoration: none; box-shadow: 0 4px 12px color-mix(in srgb, var(--brick) 35%, transparent);
     transition: transform 0.2s; }
+  .boards { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  /* 我要觀摩：跟我要登島同一份報名表，所屬單位預設「我只想先登島逛逛而已」；顏色用綠色（旅人），跟紅色的登島分開 */
+  .board-visit { border: 0; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; background: var(--jade); box-shadow: 0 4px 12px color-mix(in srgb, var(--jade) 35%, transparent); }
   .board small { font-size: 11px; font-weight: 500; opacity: 0.85; }
   .board:hover { transform: translateY(-1px); }
   .board:focus-visible, .cta a:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; }
@@ -450,9 +453,9 @@
   <p class="count brand-next" id="brandNext"></p>
   <p class="count party-count" id="partyChip" role="button" tabindex="0" hidden></p>
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
-  <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
+  <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.23</span>
+  <span class="ver">v261028.24</span>
   </div></div>
 </div>
 
@@ -4682,14 +4685,18 @@ const JOIN_UNITS = ['天龍區', '天選區', '至善區', '光輝區', '天如�
 const joinEl = $('join'), jErr = $('jErr'), jGo = $('jGo');
 $('jForm').href = SIGNUP_URL;
 $('jUnit').innerHTML = '<option value="">選擇</option>' + JOIN_UNITS.map((u) => `<option>${esc(u)}</option>`).join('');
-function openJoin() {
-  jErr.hidden = true; jGo.disabled = false; jGo.textContent = '🛶 登船！';
+// visit=true：「我要觀摩」，同一張船票，所屬單位先選好「我只想先登島逛逛而已」（還是可以改）
+function openJoin(visit = false) {
+  jErr.hidden = true; jGo.disabled = false; jGo.textContent = visit ? '👀 上岸看看！' : '🛶 登船！';
+  $('joinTitle').textContent = visit ? '👀 觀摩船票' : '🛶 登島船票';
+  $('jUnit').value = visit ? '我只想先登島逛逛而已' : ($('jUnit').value === '我只想先登島逛逛而已' ? '' : $('jUnit').value);
   joinEl.classList.remove('toss'); joinEl.hidden = false;
   requestAnimationFrame(() => joinEl.classList.add('on'));
   setTimeout(() => $('jName').focus(), 60);
 }
 function closeJoin() { joinEl.classList.remove('on'); setTimeout(() => { joinEl.hidden = true; joinEl.classList.remove('toss'); }, 320); }
 $('jCancel').addEventListener('click', closeJoin);
+$('visitBtn').addEventListener('click', (e) => { e.stopPropagation(); openJoin(true); });
 joinEl.addEventListener('click', (e) => { if (e.target === joinEl) closeJoin(); });
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && !joinEl.hidden) closeJoin(); });
 $('joinForm').addEventListener('input', () => { jErr.hidden = true; });
