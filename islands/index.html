@@ -204,6 +204,9 @@
   .write { position: fixed; inset: 0; z-index: 21; display: grid; place-items: center; padding: 16px; background: rgba(20, 30, 40, 0.32);
     backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); opacity: 0; transition: opacity 0.28s linear; }
   .write.on { opacity: 1; }
+  /* 登島船票題目多：四周多留一點邊，看得到後面的群島，不會像整頁表單 */
+  .write.join { display: flex; align-items: center; justify-content: center; padding: max(26px, env(safe-area-inset-top)) 22px max(26px, env(safe-area-inset-bottom)); }
+  .write.join .write-card { box-sizing: border-box; flex: 0 1 380px; min-width: 0; width: auto; max-height: calc(100dvh - 52px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); border-radius: 20px; }
   .write-card { width: min(380px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 18px 18px 16px; display: grid; gap: 12px;
     transform: translateY(10px) scale(0.97); transition: transform 0.28s ease-out; }
   .write.on .write-card { transform: none; }
@@ -445,7 +448,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.17</span>
+  <span class="ver">v261028.18</span>
   </div></div>
 </div>
 
