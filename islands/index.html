@@ -2949,8 +2949,8 @@ const newIsl = makeIsland('newisle', 21, NEW_DIR.x * 118, NEW_DIR.y * 118, 'zhon
 
 /* ---------- 中一島：一貫道基礎忠恕道場中一堂，實景在忠恕道院沿產業道路往下的山坡上
    島擺在忠恕島原本停起重船的那一側，兩座島相鄰的邊互相平行、置中對齊（六邊形都同一個方向，沿著邊的法線往外排就會對齊）
-   建築參考空拍：像三合院的ㄇ字型，左右兩翼三層樓往前伸，中間圍出一個小廣場；正中間退進去的兩層樓有紅色瓦簷、米黃牆三扇紅門；
-   後棟在屋頂平台上，是米黃牆、橘色琉璃瓦的三川式佛堂；ㄇ字外面是紅磚色停車廣場、一排路燈和欄杆，右前角一座紅瓦八角涼亭，後面整片山林 ---------- */
+   建築參考空拍：像三合院的ㄇ字型，左右兩翼兩層樓往前伸，中間圍出一個小廣場；正中間退進去的兩層樓有紅色瓦簷、米黃牆三扇紅門；
+   第三層只有正中間有：後棟在屋頂平台上，是米黃牆、橘色琉璃瓦的三川式佛堂；ㄇ字外面是紅磚色停車廣場、一排路燈和欄杆，右前角一座紅瓦八角涼亭，後面整片山林 ---------- */
 const ZY_R = 13;
 const zyIsl = (() => {
   const want = Math.atan2(HOME.pos.x - newIsl.x, HOME.pos.z - newIsl.z) - 0.7;   // 原本起重船的方向
@@ -2979,13 +2979,13 @@ const zyIsl = (() => {
   }
   // —— ㄇ字型主建築 ——
   const FB = new THREE.Group(); FB.position.set(0, 0, -0.6); mark.add(FB);
-  const FH = 1.1, WX = 3.3, WW = 4.2, ZB = -3.4, ZF = 5.2;   // 兩翼內側 x=±WX、寬 WW；從後面 ZB 一路伸到前面 ZF
+  const FH = 1.1, WX = 3.3, WW = 4.2, ZB = -3.4, ZF = 5.2;   // 兩翼兩層樓；兩翼內側 x=±WX、寬 WW；從後面 ZB 一路伸到前面 ZF
   const box = (w, h, d, x, y, z, m = white) => mesh(new THREE.BoxGeometry(w, h, d), m, x, y, z, FB);
   for (const sx of [-1, 1]) {
     const cx = sx * (WX + WW / 2), len = ZF - ZB;
-    box(WW, FH * 3, len, cx, FH * 1.5, (ZF + ZB) / 2);
-    box(WW + 0.2, 0.12, len + 0.2, cx, FH * 3 + 0.06, (ZF + ZB) / 2, white2);
-    for (let f = 0; f < 3; f++) {
+    box(WW, FH * 2, len, cx, FH, (ZF + ZB) / 2);
+    box(WW + 0.2, 0.12, len + 0.2, cx, FH * 2 + 0.06, (ZF + ZB) / 2, white2);
+    for (let f = 0; f < 2; f++) {
       // 正面兩扇窗
       for (const k of [-1, 1]) mesh(new THREE.BoxGeometry(0.6, 0.45, 0.06), winM, cx + k * 1.0, FH * (f + 0.6), ZF + 0.02, FB, false);
       // 朝小廣場的內側：一排窗；二、三樓外面一條紅色瓦簷走廊
@@ -3016,9 +3016,6 @@ const zyIsl = (() => {
   mesh(new THREE.BoxGeometry(WX * 2, 0.06, ZF - ZB - CD), lam('#c99686'), 0, 0.05, (ZF + ZB + CD) / 2, FB, false);
   for (let k = 0; k < 2; k++) mesh(new THREE.BoxGeometry(WX * 1.6, 0.12, 0.35), lam('#d9cfc4'), 0, 0.06 + k * 0.12, ZB + CD + 0.35 - k * 0.3, FB, false);
   for (const x of [-1.6, 1.6]) { mesh(new THREE.CylinderGeometry(0.3, 0.25, 0.35, 10), lam('#8a6a48'), x, 0.18, 2.2, FB); mesh(new THREE.SphereGeometry(0.45, 10, 8), lam('#4f8f3e'), x, 0.7, 2.2, FB); }
-  // 右後方屋頂上一座白色的樓梯間
-  box(2, 1.4, 2, WX + WW / 2, FH * 3 + 0.7, ZB + 1.2);
-  box(2.2, 0.1, 2.2, WX + WW / 2, FH * 3 + 1.45, ZB + 1.2, white2);
   // —— 後棟：中間兩層樓的屋頂平台上，三川式佛堂：米黃牆、三扇紅門、橘色琉璃瓦（中間高、兩側低） ——
   const BK = new THREE.Group(); BK.position.set(0, FH * 2 + 0.12, ZB + 1.3); FB.add(BK);
   mesh(new THREE.BoxGeometry(3.4, 1.4, 2.2), cream, 0, 0.7, 0, BK);
@@ -3502,7 +3499,7 @@ function renderPanel() {
   } else if (isl && isl.kind === 'zhongyi') {
     title = '中一島'; info = '基礎忠恕道場中一堂';
     html = `<header><span class="eyebrow">外海・忠恕島旁</span><h2>🏯 中一島</h2><p class="sub">一貫道基礎忠恕道場中一堂</p></header>
-      <p class="note">從忠恕道院沿著產業道路往下走，山坡上就是中一堂。前棟是白色口字形的三層樓，中間凹進去的兩層掛著紅色瓦簷、三扇紅門；後棟在屋頂平台上，是米黃牆、橘色琉璃瓦的佛堂。前面一大片紅磚色的停車廣場，右前角一座紅瓦八角涼亭，後面是整片山林。</p>
+      <p class="note">從忠恕道院沿著產業道路往下走，山坡上就是中一堂。整棟像三合院的ㄇ字型：左右兩翼是白色兩層樓往前伸，中間圍出一個小廣場，最裡面的兩層樓掛著紅色瓦簷、三扇紅門；第三層只有正中間：屋頂平台上一座米黃牆、橘色琉璃瓦的佛堂。前面一大片紅磚色的停車廣場，右前角一座紅瓦八角涼亭，後面是整片山林。</p>
       <button class="back" data-go="newisle">→ 看隔壁的忠恕島</button>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongshu') {
