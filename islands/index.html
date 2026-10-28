@@ -443,7 +443,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.12</span>
+  <span class="ver">v261028.13</span>
   </div></div>
 </div>
 
@@ -1265,6 +1265,35 @@ function figure(mat, role = '', bob = false, extra = {}) {
     p.userData.armRestX = -0.5; p.userData.armRestZ = 0.6;
     TRICKS.push({ f: p, kind: 'wand' });
   }
+  // 米其林寶寶（料理島 蘇毓婷講師，大家許的願）：全身白白胖胖、一圈一圈的輪胎肉，脖子圍紫色領巾，雙手抱著一顆大南瓜；
+  // 不時把南瓜舉高一下、冒出 😋
+  if (extra.michelin) {
+    const tyre = lam('#fbfbf7'), tyre2 = lam('#eceee9');
+    p.userData.body.material = tyre; p.userData.body.userData.onMat = tyre;
+    // 身體一圈一圈的輪胎；臉的位置空出來，頭頂再兩圈（像米其林寶寶的頭）
+    [[0.22, 0.3, 0.07], [0.36, 0.32, 0.07], [0.5, 0.33, 0.07], [1.22, 0.4, 0.06], [1.33, 0.26, 0.055]].forEach(([y, r, tk], k) => {
+      const ring = part(new THREE.TorusGeometry(r, tk, 8, 28), k % 2 ? tyre2 : tyre, 0, y, 0); ring.rotation.x = Math.PI / 2;
+    });
+    // 手臂、腿也是一節一節的輪胎
+    p.userData.arms.forEach((sh) => { for (const y of [-0.08, -0.2]) { const r = part(new THREE.TorusGeometry(0.1, 0.045, 6, 16), tyre2, 0, y, 0, sh); r.rotation.x = Math.PI / 2; } });
+    for (const sx of [-1, 1]) { const r = part(new THREE.TorusGeometry(0.13, 0.05, 6, 16), tyre2, sx * 0.15, 0.16, 0.02); r.rotation.x = Math.PI / 2; }
+    // 紫色領巾：一圈圍在脖子上，前面打一個結、垂下兩片
+    const purple = lam('#7a3fb0');
+    const nk = part(new THREE.TorusGeometry(0.4, 0.075, 8, 28), purple, 0, 0.62, 0.02); nk.rotation.x = Math.PI / 2;
+    part(dotGeo, purple, 0, 0.6, 0.42).scale.set(0.1, 0.08, 0.07);
+    for (const sx of [-1, 1]) { const t = part(new THREE.BoxGeometry(0.13, 0.26, 0.04), purple, sx * 0.08, 0.46, 0.43); t.rotation.z = sx * 0.3; }
+    // 大南瓜：一瓣一瓣的橘色球，綠色蒂頭，抱在胸前
+    const pk = new THREE.Group(); pk.position.set(0, 0.36, 0.58); pk.scale.setScalar(0.8); g.add(pk);
+    const orange = lam('#f08a24'), orange2 = lam('#e07418');
+    for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; part(dotGeo, i % 2 ? orange : orange2, Math.sin(a) * 0.14, 0, Math.cos(a) * 0.14, pk).scale.set(0.17, 0.26, 0.17); }
+    part(dotGeo, orange, 0, 0, 0, pk).scale.set(0.22, 0.25, 0.22);
+    part(new THREE.CylinderGeometry(0.035, 0.05, 0.16, 6), lam('#4f7a2e'), 0.02, 0.3, 0, pk).rotation.z = -0.3;
+    part(dotGeo, lam('#5f9e48'), 0.12, 0.28, 0.03, pk).scale.set(0.09, 0.03, 0.06);
+    p.userData.prop = pk;
+    p.userData.arms.forEach((sh, i) => sh.rotation.set(-1.25, 0, (i ? 1 : -1) * 0.55));
+    p.userData.armRestX = -1.25; p.userData.armRestZ = 0.55;
+    TRICKS.push({ f: p, kind: 'pumpkin' });
+  }
   // 大力士（鄭名翔講師）：右手插腰、身體往右彎，左手只比平常長一點點，斜斜地把腳踏車舉到頭的左上方（像車手奪冠舉車）
   // 右手插腰；被點到時一樣用右手揮手，揮完放回腰上
   if (extra.bike) {
@@ -1622,6 +1651,12 @@ animators.push((t) => {
       r.rotation.set(on ? -1.4 + Math.sin(e * 9) * 0.35 : -0.5, 0, on ? 0.45 : 0.6);
       u.spark.visible = on || Math.sin(t * 3 + u.phase) > 0.6;
       u.spark.scale.setScalar(on ? 0.05 + Math.sin(e * 12) ** 2 * 0.07 : 0.04);
+    } else if (tr.kind === 'pumpkin') {
+      // 偶爾把南瓜舉高秀一下，冒出 😋
+      if (due) { u.actT = t; u.nextTrick = t + 5 + Math.random() * 4; bubble(f, '😋'); }
+      const e = t - (u.actT ?? -9), lift = e < 1.4 ? Math.sin((e / 1.4) * Math.PI) : 0;
+      u.prop.position.y = 0.36 + lift * 0.45; u.prop.rotation.y = Math.sin(t * 0.8 + u.phase) * 0.3;
+      l.rotation.set(-1.25 - lift * 0.6, 0, -0.55); r.rotation.set(-1.25 - lift * 0.6, 0, 0.55);
     } else if (tr.kind === 'bike') {
       // 舉著腳踏車微微晃，偶爾往上推兩下、按兩聲車鈴
       if (due) { u.actT = t; u.nextTrick = t + 5 + Math.random() * 4; bubble(f, '💪'); trickSound('bell', f); }
@@ -2489,7 +2524,7 @@ const isleName = (k) => { const i = islands[k]; return i.kind === 'yoga' ? '瑜�
 const isleWhen = (k) => { const i = islands[k]; return i.kind === 'yoga' ? '每堂課早上' : `${+i.course.date.slice(5, 7)}/${+i.course.date.slice(8)}`; };
 const TEACHERS = [], teacherHit = [];
 // 個別講師的造型：沒有列在這裡的講師都是眼鏡＋圍巾＋書
-const TEACHER_LOOK = { 朱宸慧: { hermione: true, book: true }, 鄭名翔: { bike: true, scarf: '#2f6f73', glasses: true } };
+const TEACHER_LOOK = { 朱宸慧: { hermione: true, book: true }, 蘇毓婷: { michelin: true }, 鄭名翔: { bike: true, scarf: '#2f6f73', glasses: true } };
 const teacherMat = lam('#f6eedd'), boardMat = lam('#2f4a3a'), easelMat = lam('#8a6a48');
 function addTeachers(isl, list, dist, spread) {
   // 同一位講師在同一座島教兩堂（例如瑜伽＋觀點分享）就合成一位
