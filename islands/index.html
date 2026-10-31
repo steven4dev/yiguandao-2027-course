@@ -513,7 +513,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261101.04</span>
+  <span class="ver">v261101.05</span>
   </div></div>
 </div>
 
@@ -2973,6 +2973,7 @@ const hopeIsl = (() => {
   addObst(g, { x: 0, z: 0, r: 4.5 });   // 樹和噴泉占滿島中央
   // —— 噴泉：樹前面一座圓形水池，中間兩層的白色水盆，水柱往上噴、往外灑下來 ——
   const FT = new THREE.Group(); FT.position.set(0, 0, 2.3); mark.add(FT);
+  hopeIsl.fountain = FT;
   const stone = lam('#e8e2d6'), waterM = new THREE.MeshLambertMaterial({ color: '#8fd3ee', emissive: '#2a6f8a', emissiveIntensity: 0.25 });
   const rim = mesh(new THREE.TorusGeometry(1.5, 0.16, 8, 32), stone, 0, 0.32, 0, FT); rim.rotation.x = Math.PI / 2;
   mesh(new THREE.CylinderGeometry(1.5, 1.55, 0.3, 32), stone, 0, 0.15, 0, FT);
@@ -2986,15 +2987,42 @@ const hopeIsl = (() => {
   const drops = [];
   for (let i = 0; i < 28; i++) { const d = mesh(new THREE.SphereGeometry(0.055, 6, 5), dropM, 0, 1.8, 0, FT, false); d.userData = { a: (i / 28) * Math.PI * 2, ph: (i * 0.37) % 1, far: i % 2 }; drops.push(d); }
   const jet = mesh(new THREE.CylinderGeometry(0.03, 0.06, 0.6, 8), dropM, 0, 2.05, 0, FT, false);
-  // 祈福卡送出後：噴泉噴高高約 7 秒（水柱拉高、水花噴得又高又遠、冒出閃光）
+  // 祈福卡送出後：噴泉噴高高約 8 秒——水柱衝到原本的好幾倍高，頂端像煙火一樣往四面八方開花散開，
+  // 水花畫著弧線落回水池四周，頂端一團水霧、金色閃光；結束時慢慢降回原本的高度
+  const BOOST_LEN = 8, JET_H = 5.5;
   const sparkM = new THREE.MeshBasicMaterial({ color: '#fff3a8', transparent: true });
-  const sparks = []; for (let i = 0; i < 14; i++) { const sp = mesh(new THREE.OctahedronGeometry(0.09), sparkM, 0, 0, 0, FT, false); sp.visible = false; sparks.push(sp); }
-  let boostT = -99;
+  const sparks = []; for (let i = 0; i < 18; i++) { const sp = mesh(new THREE.OctahedronGeometry(0.1), sparkM, 0, 0, 0, FT, false); sp.visible = false; sparks.push(sp); }
+  const bloomM = new THREE.MeshLambertMaterial({ color: '#7fd0f0', emissive: '#2f8fc0', emissiveIntensity: 0.45, transparent: true, opacity: 0.95 });
+  const bloomGeo = new THREE.SphereGeometry(0.11, 6, 5);
+  const bloom = [];
+  for (let i = 0; i < 140; i++) { const m = mesh(bloomGeo, bloomM, 0, 0, 0, FT, false); m.visible = false; bloom.push({ m, v: new THREE.Vector3(), live: false }); }
+  const mist = mesh(new THREE.SphereGeometry(0.9, 14, 10), new THREE.MeshLambertMaterial({ color: '#ffffff', emissive: '#bfe9fa', emissiveIntensity: 0.4, transparent: true, opacity: 0, depthWrite: false }), 0, 0, 0, FT, false);
+  let boostT = -99, bloomNext = 0, lastBT = null;
   animators.push((t) => {
     if (hopeIsl.boostReq) { hopeIsl.boostReq = false; boostT = t; }
-    const be = t - boostT, boost = be < 7 ? Math.sin(Math.min(1, be / 0.6) * Math.PI / 2) * Math.min(1, (7 - be) / 1.2) : 0;
-    jet.scale.y = (0.85 + Math.sin(t * 6) * 0.15) * (1 + boost * 9); jet.position.y = 2.05 + boost * 2.6;
-    sparks.forEach((sp, i) => { sp.visible = boost > 0.05; if (sp.visible) { const k = (t * 0.6 + i / 14) % 1, a = i * 2.4; sp.position.set(Math.sin(a) * (0.4 + k * 1.6), 2 + boost * 5 * k, Math.cos(a) * (0.4 + k * 1.6)); sp.rotation.y = t * 4; sparkM.opacity = boost; } });
+    const dt = lastBT == null ? 0 : Math.min(0.05, t - lastBT); lastBT = t;
+    const be = t - boostT, boost = be < BOOST_LEN ? Math.sin(Math.min(1, be / 0.8) * Math.PI / 2) * Math.min(1, (BOOST_LEN - be) / 1.5) : 0;
+    const topY = 1.8 + boost * JET_H;   // 水柱頂端的高度
+    jet.scale.y = (0.85 + Math.sin(t * 6) * 0.15) * (1 + boost * JET_H / 0.6 * 0.95); jet.position.y = 1.8 + (topY - 1.8) / 2 + 0.25;
+    jet.scale.x = jet.scale.z = 1 + boost * 1.6;
+    // 頂端開花：每一幀從水柱頂端噴出一圈水珠，往外、往上，再被重力拉成弧線落下
+    if (boost > 0.15) {
+      bloomNext -= dt;
+      while (bloomNext <= 0) {
+        bloomNext += 0.012;
+        const b = bloom.find((x) => !x.live); if (!b) break;
+        const a = Math.random() * Math.PI * 2, out = 2.2 + Math.random() * 2.4 * boost;
+        b.live = true; b.m.visible = true; b.m.position.set(Math.cos(a) * 0.15, topY, Math.sin(a) * 0.15);
+        b.v.set(Math.cos(a) * out, 2 + Math.random() * 2.2 * boost, Math.sin(a) * out);
+      }
+    }
+    for (const b of bloom) {
+      if (!b.live) continue;
+      b.v.y -= 9 * dt; b.m.position.addScaledVector(b.v, dt);
+      if (b.m.position.y < 0.3) { b.live = false; b.m.visible = false; }
+    }
+    mist.position.y = topY + 0.2; mist.scale.setScalar(0.5 + boost * 0.8 + Math.sin(t * 5) * 0.06); mist.material.opacity = boost * 0.3;
+    sparks.forEach((sp, i) => { sp.visible = boost > 0.05; if (sp.visible) { const k = (t * 0.5 + i / 18) % 1, a = i * 2.4; sp.position.set(Math.sin(a) * (0.5 + k * 3), topY - k * topY * 0.7, Math.cos(a) * (0.5 + k * 3)); sp.rotation.y = t * 4; sparkM.opacity = boost * (1 - k); } });
     for (const d of drops) {
       const k = (t * 0.8 + d.userData.ph) % 1, r = (d.userData.far ? 1.2 : 0.55) * k * (1 + boost * 0.8), top = (d.userData.far ? 2.35 : 1.95) + boost * 2.5;
       d.position.set(Math.sin(d.userData.a) * r, top + (1.4 + boost * 3) * k - (2.6 + boost * 3) * k * k * (d.userData.far ? 1 : 0.6) , Math.cos(d.userData.a) * r);
@@ -4813,12 +4841,19 @@ $('writeForm').addEventListener('submit', async (e) => {
     if (wish) {
       myBottles.push({ text, to: WISH_TO, who, mood, sign, ts: Date.now() }); saveMine();
       syncWishes(); select('hope');
-      award('wish'); setTimeout(() => award('fountain'), 3000);
+      // 看噴泉：資訊卡先收成一行，鏡頭退後、往上抬，把整道水柱和頂端的開花都框進畫面
+      setUI({ panel: 'mini' });
+      const fw = hopeIsl.fountain.getWorldPosition(new THREE.Vector3()), away = camera.position.clone().sub(fw).setY(0).normalize();
+      const k = innerWidth < innerHeight ? 1.5 : 1;
+      flyTo(fw.clone().add(new THREE.Vector3(0, 4, 0)), fw.clone().addScaledVector(away, 24 * k).add(new THREE.Vector3(0, 7 * k, 0)), 1.6);
+      holdBadges(10500);   // 鏡頭飛過去約 2 秒＋噴泉 8 秒，噴完再頒徽章
+      award('wish'); award('fountain');
       hopeIsl.boostReq = true;   // 噴泉噴高高
       fountainSound();
       joinToast('🍎 祈福卡掛上去了！噴泉為你噴高高 ⛲✨', 5000);
     } else {
       addMyBottle({ text, to: toV === '其他' ? other : toV, mood, sign });
+      holdBadges(4200);   // 等瓶子拋進海裡、落水
       award('bottle_write');
       select('bottle', 'b:0');
     }
@@ -4876,7 +4911,8 @@ function confirmJoin(name, visit, tries = 0) {
       const d = realPeople[i], slot = mainSlotOf(d);
       pickHit(slot ? { kind: 'm', slot } : { kind: 'p', i, d });
       joinToast(`✅ 已確認登島！歡迎 ${name} 👋`, 5000);
-      setTimeout(() => award(visit ? 'visitor' : 'joined'), 5200);
+      holdBadges(5200);   // 等鏡頭飛到小人偶、揮完手
+      award(visit ? 'visitor' : 'joined');
     } else if (tries < 4) confirmJoin(name, visit, tries + 1);
     else joinToast('還沒在名單上看到你，可能要再等幾分鐘；一直沒出現的話，請改用 Google 表單再填一次 🙏', 9000);
   }, tries ? 30000 : 15000);
@@ -4983,7 +5019,9 @@ function award(id) {
   badgeQueue.push(b); if (!badgeShowing) nextBadgeToast();
   if (!$('badges').hidden) renderBadges();
 }
-let bPopTimer = 0;
+let bPopTimer = 0, badgeHoldUntil = 0;
+// 精彩時刻不打擾：噴泉、起飛、瓶子拋進海這些特效播放時，徽章先排隊，特效播完再一張一張跳
+function holdBadges(ms) { badgeHoldUntil = Math.max(badgeHoldUntil, Date.now() + ms); }
 // 解鎖音效：叮叮叮往上的三連音＋一聲亮亮的和弦，尾巴灑一點閃亮亮（要開著音效才聽得到）
 // 解鎖音效（誇張版）：左右兩聲「砰！砰！」禮炮，接著「噹噹噹─噹～」的號角式上行和弦，最後一陣閃亮亮的碎響和掌聲
 function badgeSound() {
@@ -5034,6 +5072,8 @@ function confettiBurst() {
   confettiRaf = requestAnimationFrame(step);
 }
 function nextBadgeToast() {
+  const wait = badgeHoldUntil - Date.now();
+  if (wait > 0 && badgeQueue.length) { badgeShowing = true; setTimeout(nextBadgeToast, wait + 50); return; }
   const b = badgeQueue.shift(), el = $('bPop');
   if (!b) { badgeShowing = false; el.classList.remove('on'); setTimeout(() => { if (!badgeShowing) el.hidden = true; }, 300); return; }
   badgeShowing = true;
@@ -5072,7 +5112,7 @@ function badgeOnSelect(key, sel) {
   if (id.startsWith('t:')) {
     const t = TEACHERS[+id.slice(2)];
     if (t && new Set(seen('teacher', t.name)).size >= new Set(TEACHERS.map((x) => x.name)).size) award('teachers');
-    if (t && t.name === '何珈貞' && t.key === 'c6') award('angel');
+    if (t && t.name === '何珈貞' && t.key === 'c6') { holdBadges(6500); award('angel'); }   // 等鏡頭飛到、她起飛落地揮手
     if (t && t.name === '蘇毓婷') award('michelin');
   }
   if (id.startsWith('p:') && seen('person', id).length >= 3) award('finder');
