@@ -229,6 +229,8 @@
   .bpop b { font-size: 20px; font-family: var(--font-display); letter-spacing: 0.06em; }
   .bpop p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
   .bpop em { font-style: normal; font-size: 11.5px; color: var(--muted); }
+  .bconfetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+  .bpop .bpop-card { position: relative; z-index: 0; }
   #badgeBtn { position: relative; }
   #badgeBtn .badge-ico { font-size: 19px; line-height: 1; }
   #badgeBtn .badge-dot { position: absolute; top: 4px; right: 4px; width: 9px; height: 9px; border-radius: 50%; background: var(--brick); box-shadow: 0 0 0 2px var(--card); }
@@ -511,7 +513,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261101.03</span>
+  <span class="ver">v261101.04</span>
   </div></div>
 </div>
 
@@ -583,7 +585,7 @@
     <p class="wsub">徽章先存在這支手機上；換手機或清除瀏覽資料會不見，之後會開放用 Google 帳號保存。</p>
   </div>
 </div>
-<div class="bpop" id="bPop" role="status" aria-live="polite" hidden><div class="card bpop-card"><small>🏅 解鎖新徽章</small><span class="bpe" id="bPopE"></span><b id="bPopN"></b><p id="bPopC"></p><em id="bPopNext"></em></div></div>
+<div class="bpop" id="bPop" role="status" aria-live="polite" hidden><canvas class="bconfetti" id="bConfetti" aria-hidden="true"></canvas><div class="card bpop-card"><small>🏅 解鎖新徽章</small><span class="bpe" id="bPopE"></span><b id="bPopN"></b><p id="bPopC"></p><em id="bPopNext"></em></div></div>
 <div class="howto" id="howto" role="dialog" aria-modal="true" aria-labelledby="howtoTitle" hidden>
   <div class="card howto-card">
     <h2 id="howtoTitle">歡迎登上全真群島 👋</h2>
@@ -4983,12 +4985,53 @@ function award(id) {
 }
 let bPopTimer = 0;
 // 解鎖音效：叮叮叮往上的三連音＋一聲亮亮的和弦，尾巴灑一點閃亮亮（要開著音效才聽得到）
+// 解鎖音效（誇張版）：左右兩聲「砰！砰！」禮炮，接著「噹噹噹─噹～」的號角式上行和弦，最後一陣閃亮亮的碎響和掌聲
 function badgeSound() {
   if (!SND.ctx || !SND.sfx || SND.ctx.state !== 'running') return;
-  const t = SND.ctx.currentTime + 0.05, o = SND.sfxBus;
-  [784, 988, 1175].forEach((f, i) => ping(t + i * 0.09, o, f, 0.07, 0.35, 'triangle'));
-  [1568, 1976, 2349].forEach((f) => ping(t + 0.3, o, f, 0.045, 0.9));
-  for (let i = 0; i < 6; i++) ping(t + 0.45 + i * 0.07, o, 2600 + Math.random() * 1600, 0.018, 0.25);
+  const t = SND.ctx.currentTime + 0.03, o = SND.sfxBus;
+  for (const d of [0, 0.12]) {   // 禮炮
+    noiseHit(t + d, o, { type: 'highpass', f: 1500, peak: 0.22, attack: 0.002, dur: 0.09 });
+    ping(t + d, o, 150, 0.18, 0.12);
+    noiseHit(t + d + 0.05, o, { type: 'bandpass', f: 5000, q: 0.8, peak: 0.05, attack: 0.05, dur: 0.9 });
+  }
+  [523, 659, 784].forEach((f, i) => { ping(t + 0.3 + i * 0.11, o, f, 0.11, 0.3, 'triangle'); ping(t + 0.3 + i * 0.11, o, f * 2, 0.04, 0.25, 'square'); });
+  [1047, 1319, 1568, 2093].forEach((f) => { ping(t + 0.66, o, f, 0.08, 1.3, 'triangle'); ping(t + 0.66, o, f * 1.005, 0.03, 1.2, 'sawtooth'); });
+  for (let i = 0; i < 16; i++) ping(t + 0.8 + i * 0.06, o, 2400 + Math.random() * 2400, 0.025, 0.3);
+  for (let i = 0; i < 22; i++) noiseHit(t + 0.9 + Math.random() * 1.3, o, { f: 1200 + Math.random() * 900, q: 1.2, peak: 0.035, attack: 0.003, dur: 0.05 });   // 掌聲
+}
+// 滿版撒花：左下、右下兩門禮炮往上噴彩帶紙花，再從上面灑一陣，約 3.5 秒
+let confettiRaf = 0;
+function confettiBurst() {
+  if (reduceMotion) return;
+  const cv = $('bConfetti'), ctx = cv.getContext('2d'), dpr = Math.min(2, devicePixelRatio || 1);
+  const W = innerWidth, H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const COLS = ['#ff4d6d', '#ffd23f', '#3ec1d3', '#7ed957', '#b388ff', '#ff9f43', '#ffffff', '#ff8fab'];
+  const P = [], N = W < 500 ? 150 : 240;
+  const add = (x, y, vx, vy, delay) => P.push({ x, y, vx, vy, delay, r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.4, w: 6 + Math.random() * 6, h: 9 + Math.random() * 9,
+    c: COLS[(Math.random() * COLS.length) | 0], shape: Math.random() < 0.25 ? 'c' : Math.random() < 0.5 ? 's' : 'r', sway: Math.random() * 6 });
+  for (let i = 0; i < N * 0.36; i++) { const a = -Math.PI / 2 + 0.15 + Math.random() * 0.75; const sp = H * (0.022 + Math.random() * 0.018); add(-10, H + 10, Math.cos(a) * sp * 1.1 + 2, Math.sin(a) * sp, Math.random() * 6); }
+  for (let i = 0; i < N * 0.36; i++) { const a = -Math.PI / 2 - 0.15 - Math.random() * 0.75; const sp = H * (0.022 + Math.random() * 0.018); add(W + 10, H + 10, Math.cos(a) * sp * 1.1 - 2, Math.sin(a) * sp, Math.random() * 6); }
+  for (let i = 0; i < N * 0.28; i++) add(Math.random() * W, -20 - Math.random() * H * 0.3, (Math.random() - 0.5) * 2, 2 + Math.random() * 3, 18 + Math.random() * 40);
+  cancelAnimationFrame(confettiRaf);
+  let f = 0;
+  const step = () => {
+    f++; ctx.clearRect(0, 0, W, H);
+    let alive = 0;
+    for (const q of P) {
+      if (f < q.delay) { alive++; continue; }
+      q.vy += 0.32; q.vx *= 0.985; q.vy *= q.vy > 0 ? 0.96 : 0.99;
+      q.x += q.vx + Math.sin((f + q.sway * 10) * 0.08) * 0.8; q.y += q.vy; q.r += q.vr;
+      if (q.y > H + 30) continue;
+      alive++;
+      ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(q.r); ctx.fillStyle = q.c; ctx.globalAlpha = f > 170 ? Math.max(0, 1 - (f - 170) / 40) : 1;
+      if (q.shape === 'c') { ctx.beginPath(); ctx.arc(0, 0, q.w / 2, 0, 7); ctx.fill(); }
+      else if (q.shape === 's') { ctx.fillRect(-q.w / 2, -2, q.w * 1.6, 4); }   // 細長彩帶
+      else ctx.fillRect(-q.w / 2, -q.h / 2 * Math.abs(Math.cos(q.r * 2)), q.w, q.h * Math.abs(Math.cos(q.r * 2)) + 1);   // 翻滾的紙片
+      ctx.restore();
+    }
+    if (alive && f < 215) confettiRaf = requestAnimationFrame(step); else ctx.clearRect(0, 0, W, H);
+  };
+  confettiRaf = requestAnimationFrame(step);
 }
 function nextBadgeToast() {
   const b = badgeQueue.shift(), el = $('bPop');
@@ -4999,7 +5042,7 @@ function nextBadgeToast() {
   const n = BADGES.filter((x) => BS.got[x.id]).length;
   $('bPopNext').textContent = `已收集 ${n} / ${BADGES.length}・點右上角 🏅 看全部`;
   el.hidden = false; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
-  badgeSound();
+  badgeSound(); confettiBurst();
   clearTimeout(bPopTimer); bPopTimer = setTimeout(dismissBadgePop, 4200);
 }
 // 收起目前這張，接著跳下一張（同時解鎖好幾個時一張一張來）
