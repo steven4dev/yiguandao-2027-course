@@ -99,7 +99,9 @@
   .bottle-count .go { color: var(--brick); font-weight: 700; margin-left: 2px; white-space: nowrap; }
   .bottle-count:hover .go { text-decoration: underline; }
   .bottle-count:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; border-radius: 6px; }
-  .bottle-count.new b { animation: bump 0.5s ease-in-out 2; display: inline-block; }
+  .brand .count.wish-count b { color: #d8262b; }
+  :root[data-theme="dark"] .brand .count.wish-count b { color: #ff8a7a; }
+  #wishChip.new b, .bottle-count.new b { animation: bump 0.5s ease-in-out 2; display: inline-block; }
   @keyframes bump { 50% { transform: scale(1.3); } }
   /* 歡迎今天登島的夥伴：名字可以點，點了飛到他的小人偶 */
   .brand .count.welcome { font-size: 12.5px; }
@@ -461,10 +463,11 @@
   <p class="count welcome" id="brandWelcome" hidden></p>
   <p class="count brand-next" id="brandNext"></p>
   <p class="count party-count" id="partyChip" role="button" tabindex="0" hidden></p>
+  <p class="count bottle-count wish-count" id="wishChip" role="button" tabindex="0" aria-label="前往希望島，看祈福卡或寫一張"><span id="wishChipText">祈福卡</span></p>
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261031.02</span>
+  <span class="ver">v261031.03</span>
   </div></div>
 </div>
 
@@ -3599,6 +3602,15 @@ function syncBottleChip(fresh) {
   if (fresh) { chip.classList.remove('new'); void chip.offsetWidth; chip.classList.add('new'); }
 }
 syncBottleChip();
+// 品牌卡的祈福卡：跟瓶中信同一種寫法，數字蘋果紅，點了飛到希望島
+function syncWishChip(fresh) {
+  const n = wishes.length, el = document.getElementById('wishChipText'), chip = document.getElementById('wishChip');
+  el.innerHTML = n ? `🍎 <b>${n}</b> 張祈福卡掛上希望島・<span class="go">去許願 ›</span>` : `🍎 希望島可以匿名許願・<span class="go">寫第一張 ›</span>`;
+  if (fresh) { chip.classList.remove('new'); void chip.offsetWidth; chip.classList.add('new'); }
+}
+syncWishChip();
+document.getElementById('wishChip').addEventListener('click', (e) => { e.stopPropagation(); select('hope'); });
+document.getElementById('wishChip').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); select('hope'); } });
 // 點了要擋住冒泡：不然同一下點擊會傳到品牌卡，把剛收起來的品牌卡又展開
 document.getElementById('bottleChip').addEventListener('click', (e) => { e.stopPropagation(); select('bottle'); });
 document.getElementById('partyChip').addEventListener('click', (e) => { e.stopPropagation(); select('zhongyi'); });
@@ -4631,6 +4643,15 @@ function addMyBottle(m) {
   dropNext = true;
   placeBottles(); syncBottleChip(true); lastView = '';
 }
+// 噴泉噴高高的聲音（約 6 秒）：一聲「咻──」往上衝，接著一陣嘩啦啦的水聲，水花落下時叮叮噹噹
+function fountainSound() {
+  if (!SND.ctx || !SND.sfx || SND.ctx.state !== 'running') return;
+  const t = SND.ctx.currentTime + 0.5, o = SND.sfxBus;
+  noiseHit(t, o, { type: 'bandpass', f: 900, q: 0.7, peak: 0.12, attack: 0.5, dur: 1.4 });      // 咻──
+  noiseHit(t + 0.8, o, { type: 'highpass', f: 2200, peak: 0.08, attack: 0.3, dur: 5 });       // 嘩啦啦
+  noiseHit(t + 0.8, o, { type: 'lowpass', f: 700, peak: 0.07, attack: 0.4, dur: 4.5 });
+  for (let i = 0; i < 14; i++) ping(t + 1 + i * 0.35 + Math.random() * 0.2, o, 1300 + Math.random() * 1500, 0.03, 0.35);   // 水滴叮叮
+}
 function splashSound() {
   if (!SND.ctx || !SND.sfx || SND.ctx.state !== 'running') return;
   const t = SND.ctx.currentTime + 1.3, o = SND.sfxBus;
@@ -4732,6 +4753,7 @@ $('writeForm').addEventListener('submit', async (e) => {
       myBottles.push({ text, to: WISH_TO, who, mood, sign, ts: Date.now() }); saveMine();
       syncWishes(); select('hope');
       hopeIsl.boostReq = true;   // 噴泉噴高高
+      fountainSound();
       joinToast('🍎 祈福卡掛上去了！噴泉為你噴高高 ⛲✨', 5000);
     } else {
       addMyBottle({ text, to: toV === '其他' ? other : toV, mood, sign });
@@ -4943,7 +4965,7 @@ function syncWishes() {
     else if (Date.now() - m.ts < 3 * 86400000) all.unshift({ text: m.text, who: m.who, mood: m.mood, sign: m.sign, date: iso(new Date(m.ts)), mine: true });
   }
   const sig = all.map((m) => m.text + (m.mine ? '*' : '')).join('|');
-  if (sig !== wishes.sig) { wishes = all; wishes.sig = sig; lastView = ''; }
+  if (sig !== wishes.sig) { const more = all.length > wishes.length && wishes.sig != null; wishes = all; wishes.sig = sig; lastView = ''; syncWishChip(more); }
 }
 async function loadWishes() {
   try {
