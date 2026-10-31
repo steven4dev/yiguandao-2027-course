@@ -470,7 +470,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261031.04</span>
+  <span class="ver">v261031.05</span>
   </div></div>
 </div>
 
@@ -4770,7 +4770,8 @@ $('writeForm').addEventListener('submit', async (e) => {
    所屬單位是下拉選單，選項文字要跟表單一字不差，不然 Google 會把整筆丟掉；所以送出後會重新讀報名試算表，確認名字真的進去了 */
 const JOIN_POST = 'https://docs.google.com/forms/d/e/1FAIpQLSekGRMHi_Z5rcDZy1SXSq5HeQIRwyS8S8r9VfS7Gy7m6LMbgw/formResponse';
 const JOIN_ENTRY = { name: 'entry.1971419124', gender: 'entry.381321845', birth: 'entry.1824705651', area: 'entry.849190744', phone: 'entry.400827304', unit: 'entry.880820237', intro: 'entry.1174641110', kids: 'entry.199240840' };
-const JOIN_UNITS = ['天龍區', '天選區', '至善區', '光輝區', '天如區', '天儲區', '天隆區', '德容區', '參健區', '育樂營', '我只想先登島逛逛而已'];
+// 跟報名表「所屬單位（區）」的下拉選單一字不差、同樣順序（2026/10/31 對過表單截圖）；表單改選項時這裡要一起改
+const JOIN_UNITS = ['天如區', '天隆區', '天選區', '天龍區', '天儲區', '光輝區', '至善區', '參健區', '德容區', '其他 / 非本道場成員', '我只想先登島逛逛而已'];
 const joinEl = $('join'), jErr = $('jErr'), jGo = $('jGo');
 $('jForm').href = SIGNUP_URL;
 $('jUnit').innerHTML = '<option value="">選擇</option>' + JOIN_UNITS.map((u) => `<option>${esc(u)}</option>`).join('');
