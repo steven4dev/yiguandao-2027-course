@@ -313,15 +313,17 @@
   .tip-small { margin: 8px 0 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
   .letter { padding: 14px 16px; border-radius: 12px; background: #fff8e6; color: #3f2c22; font-size: 15px; line-height: 1.8; box-shadow: inset 0 0 0 1px rgba(160, 120, 60, 0.25); white-space: normal; word-break: break-word; }
   .letter span { display: block; margin-top: 8px; text-align: right; font-size: 13px; color: #7a6455; }
-  .bottle-row { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; margin-bottom: 4px; }
+  /* 瓶中信、祈福卡清單：圓角矩形卡片（不用膠囊），字多也包得住 */
+  .bottle-row, .wish-row { display: flex; align-items: flex-start; gap: 10px; width: 100%; box-sizing: border-box; text-align: left; margin-bottom: 6px;
+    padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); line-height: 1.6; white-space: normal; word-break: break-word; }
+  .bottle-row i, .wish-row i { margin-top: 0.5em; }
   .bottle-more { display: block; margin: 4px 0 0 auto; border: 0; background: none; color: var(--brick); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
   .bottle-more:hover { text-decoration: underline; }
   .bottle-row .full { display: grid; gap: 2px; white-space: normal; line-height: 1.6; }
   .bottle-row .full small { color: var(--muted); font-size: 11.5px; }
-  .wish-list { display: grid; gap: 6px; }
-  .wish-list p { margin: 0; padding: 8px 10px; border-radius: 10px; background: #fff4f2; color: #3f2c22; font-size: 13.5px; line-height: 1.6; border-left: 4px solid #d8262b; }
-  .wish-list small { display: block; color: #7a6455; font-size: 11.5px; }
-  .bottle-row i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .wish-row .full { display: grid; gap: 2px; font-size: 13.5px; }
+  .wish-row .full small { color: var(--muted); font-size: 11.5px; }
+  .bottle-row i, .wish-row i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
   .prog .go-yoga { padding: 1px 8px; font-size: 11px; margin-left: 4px; }
   .bars .prog { display: grid; grid-template-columns: 44px 1fr; gap: 8px; font-size: 13px; padding: 2px 0; }
   .bars .prog span:first-child { color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -420,7 +422,8 @@
   .tag.main { font-family: var(--font-display); font-size: 15px; padding: 4px 12px; }
 
   @media (max-width: 720px) {
-    .brand { max-width: calc(100vw - 32px - 52px); padding: 8px 12px 10px; }
+    /* 寬度含內距和外框：右邊留給快捷按鈕那一排（40）＋12 的間距 */
+    .brand { box-sizing: border-box; max-width: calc(100vw - max(16px, env(safe-area-inset-left, 0px)) - max(16px, env(safe-area-inset-right, 0px)) - 52px); padding: 8px 12px 10px; }
     .brand .count, .status { font-size: 12px; }
     .mapctl { flex-direction: column; }
     .soundpop { top: calc(14px + env(safe-area-inset-top, 0px)); right: calc(64px + env(safe-area-inset-right, 0px)); }
@@ -467,7 +470,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261031.03</span>
+  <span class="ver">v261031.04</span>
   </div></div>
 </div>
 
@@ -3969,7 +3972,7 @@ function renderPanel() {
     html = `<header><span class="eyebrow">全真島旁・往秋遊島的路上</span><h2>🍎 希望島</h2><p class="sub">${wishes.length ? `祈福樹上已經掛了 ${wishes.length} 張祈福卡` : '一棵白色的祈福樹，掛滿紅蘋果'}</p></header>
       <p class="note">島的中央是一棵白色的祈福樹：五片白色木板交錯組裝成一棵樹，掛滿了紅蘋果 🍎——每一顆都是一個祝福、一份希望。樹前面有一座小噴泉。</p>
       <div class="cta"><p>不用報名、不用登入，<b>匿名也可以</b>！別只已讀、按讚，寫一張祈福卡掛上祈福樹——送出後，噴泉會為你噴高高 ⛲✨</p><button type="button" class="cta-write cta-wish">🍎 寫一張祈福卡</button></div>
-      ${wishes.length ? `<div class="bars"><h3>祈福樹上的祝福</h3><div class="wish-list">${wishes.slice(0, 6).map((m) => `<p style="border-left-color:${m.mood ? moodColor(m.mood) : '#d8262b'}">${m.mine ? '✨ ' : ''}${m.mood ? m.mood + ' ' : ''}${esc(m.text)}<small>${m.who ? `給 ${esc(m.who)}・` : ''}—— ${esc(m.sign || '匿名的夥伴')}</small></p>`).join('')}</div></div>` : ''}
+      ${wishes.length ? `<div class="bars"><h3>祈福樹上的祝福</h3><div class="wish-list">${wishes.slice(0, 6).map((m) => `<div class="wish-row"><i style="background:${m.mood ? moodColor(m.mood) : '#d8262b'}"></i><span class="full">${m.mine ? '✨ ' : ''}${m.mood ? m.mood + ' ' : ''}${esc(m.text)}<small>${m.who ? `給 ${esc(m.who)}・` : ''}—— ${esc(m.sign || '匿名的夥伴')}</small></span></div>`).join('')}</div></div>` : ''}
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongyi') {
     const left = dayIndex('2026-11-28') - dayIndex(curISO()), open = curISO() <= '2026-11-02';
