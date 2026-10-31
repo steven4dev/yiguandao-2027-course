@@ -208,6 +208,7 @@
   .write { position: fixed; inset: 0; z-index: 21; display: grid; place-items: center; padding: 16px; background: rgba(20, 30, 40, 0.32);
     backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); opacity: 0; transition: opacity 0.28s linear; }
   .write.on { opacity: 1; }
+  .write.wish fieldset { display: none; }   /* 祈福卡不用選漂給誰、心情 */
   /* 瓶中信和登島船票同一個版型：四周多留一點邊，看得到後面的群島，不會像整頁表單 */
   .write { display: flex; align-items: center; justify-content: center; padding: max(26px, env(safe-area-inset-top)) 22px max(26px, env(safe-area-inset-bottom)); }
   .write .write-card { box-sizing: border-box; flex: 0 1 380px; min-width: 0; width: auto; max-height: calc(100dvh - 52px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); border-radius: 20px; }
@@ -311,6 +312,13 @@
   .letter { padding: 14px 16px; border-radius: 12px; background: #fff8e6; color: #3f2c22; font-size: 15px; line-height: 1.8; box-shadow: inset 0 0 0 1px rgba(160, 120, 60, 0.25); white-space: normal; word-break: break-word; }
   .letter span { display: block; margin-top: 8px; text-align: right; font-size: 13px; color: #7a6455; }
   .bottle-row { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; margin-bottom: 4px; }
+  .bottle-more { display: block; margin: 4px 0 0 auto; border: 0; background: none; color: var(--brick); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .bottle-more:hover { text-decoration: underline; }
+  .bottle-row .full { display: grid; gap: 2px; white-space: normal; line-height: 1.6; }
+  .bottle-row .full small { color: var(--muted); font-size: 11.5px; }
+  .wish-list { display: grid; gap: 6px; }
+  .wish-list p { margin: 0; padding: 8px 10px; border-radius: 10px; background: #fff4f2; color: #3f2c22; font-size: 13.5px; line-height: 1.6; border-left: 4px solid #d8262b; }
+  .wish-list small { display: block; color: #7a6455; font-size: 11.5px; }
   .bottle-row i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
   .prog .go-yoga { padding: 1px 8px; font-size: 11px; margin-left: 4px; }
   .bars .prog { display: grid; grid-template-columns: 44px 1fr; gap: 8px; font-size: 13px; padding: 2px 0; }
@@ -456,7 +464,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261028.25</span>
+  <span class="ver">v261031.01</span>
   </div></div>
 </div>
 
@@ -526,7 +534,7 @@
       <li><span class="hi hi-pan" aria-hidden="true"></span><b>平移</b><small data-touch="兩指一起拖曳" data-mouse="按住右鍵拖曳（或 Shift＋左鍵）"></small></li>
       <li><span class="hi hi-zoom" aria-hidden="true"></span><b>縮放</b><small data-touch="兩指捏合、張開" data-mouse="滾動滑鼠滾輪"></small></li>
     </ul>
-    <p class="howto-tip">👆 點島、點人物，就能看介紹；<br>迷路時，按右上角 🏠 回到起點。<br>想一指平移地圖？按右上角 ✋</p>
+    <p class="howto-tip">👆 點島、點人物，就能看介紹；<br>迷路時，按右上角 🏠 回到起點。<br>想一指平移地圖？按右上角 ✋<br>🍎 不用報名也能匿名逛，上希望島寫張祈福卡吧！</p>
     <button class="howto-go" id="howtoGo" type="button">開始探索 🏝️</button>
   </div>
 </div>
@@ -2917,11 +2925,18 @@ const hopeIsl = (() => {
   const drops = [];
   for (let i = 0; i < 28; i++) { const d = mesh(new THREE.SphereGeometry(0.055, 6, 5), dropM, 0, 1.8, 0, FT, false); d.userData = { a: (i / 28) * Math.PI * 2, ph: (i * 0.37) % 1, far: i % 2 }; drops.push(d); }
   const jet = mesh(new THREE.CylinderGeometry(0.03, 0.06, 0.6, 8), dropM, 0, 2.05, 0, FT, false);
+  // 祈福卡送出後：噴泉噴高高約 7 秒（水柱拉高、水花噴得又高又遠、冒出閃光）
+  const sparkM = new THREE.MeshBasicMaterial({ color: '#fff3a8', transparent: true });
+  const sparks = []; for (let i = 0; i < 14; i++) { const sp = mesh(new THREE.OctahedronGeometry(0.09), sparkM, 0, 0, 0, FT, false); sp.visible = false; sparks.push(sp); }
+  let boostT = -99;
   animators.push((t) => {
-    jet.scale.y = 0.85 + Math.sin(t * 6) * 0.15;
+    if (hopeIsl.boostReq) { hopeIsl.boostReq = false; boostT = t; }
+    const be = t - boostT, boost = be < 7 ? Math.sin(Math.min(1, be / 0.6) * Math.PI / 2) * Math.min(1, (7 - be) / 1.2) : 0;
+    jet.scale.y = (0.85 + Math.sin(t * 6) * 0.15) * (1 + boost * 9); jet.position.y = 2.05 + boost * 2.6;
+    sparks.forEach((sp, i) => { sp.visible = boost > 0.05; if (sp.visible) { const k = (t * 0.6 + i / 14) % 1, a = i * 2.4; sp.position.set(Math.sin(a) * (0.4 + k * 1.6), 2 + boost * 5 * k, Math.cos(a) * (0.4 + k * 1.6)); sp.rotation.y = t * 4; sparkM.opacity = boost; } });
     for (const d of drops) {
-      const k = (t * 0.8 + d.userData.ph) % 1, r = (d.userData.far ? 1.2 : 0.55) * k, top = d.userData.far ? 2.35 : 1.95;
-      d.position.set(Math.sin(d.userData.a) * r, top + 1.4 * k - 2.6 * k * k * (d.userData.far ? 1 : 0.6) , Math.cos(d.userData.a) * r);
+      const k = (t * 0.8 + d.userData.ph) % 1, r = (d.userData.far ? 1.2 : 0.55) * k * (1 + boost * 0.8), top = (d.userData.far ? 2.35 : 1.95) + boost * 2.5;
+      d.position.set(Math.sin(d.userData.a) * r, top + (1.4 + boost * 3) * k - (2.6 + boost * 3) * k * k * (d.userData.far ? 1 : 0.6) , Math.cos(d.userData.a) * r);
       if (d.position.y < (d.userData.far ? 0.32 : 1.27)) d.position.y = d.userData.far ? 0.32 : 1.27;
     }
   });
@@ -3493,7 +3508,7 @@ const MOOD_COLOR = { '😃': '#ffd23f', '😠': '#ff6b5b', '😥': '#6fb7ff', '�
   開心: '#ffd23f', 加油: '#ff9f43', 感謝: '#ff8fab', 心事: '#6fb7ff', 期待: '#7ed957' };
 const moodColor = (m) => { for (const [k, c] of Object.entries(MOOD_COLOR)) if (String(m).includes(k)) return c; return '#9fe3e0'; };
 const bottleIsl = makeIsland('bottle', 5.5, -12, 66, 'bottle');
-let bottles = [];   // { text, to, mood, sign, date }
+let bottles = [], wishes = [], bottleAll = false;   // wishes：希望島的祈福卡（同一份瓶中信表單，「漂給誰」寫希望島祈福卡）   // { text, to, mood, sign, date }
 const bottleHit = [], bottleMeshes = [];
 {
   const g = bottleIsl.group;
@@ -3934,13 +3949,15 @@ function renderPanel() {
         </ul>
         <p class="tip-small">群島的島主每週都會撈瓶子，被選中的點子會真的蓋進島上 🛠️</p>
       </div>
-      ${bottles.length ? `<div class="bars"><h3>最近漂上岸的瓶子</h3>${bottles.slice(0, 5).map((m, i) => `<button class="back bottle-row" data-bottle="${i}"><i style="background:${moodColor(m.mood)}"></i>${esc(m.text.length > 22 ? m.text.slice(0, 22) + '…' : m.text)}</button>`).join('')}</div>` : ''}
+      ${bottles.length ? `<div class="bars"><h3>${bottleAll ? `全部的瓶中信（${bottles.length} 封）` : '最近漂上岸的瓶子'}</h3>${(bottleAll ? bottles : bottles.slice(0, 5)).map((m, i) => `<button class="back bottle-row" data-bottle="${i}"><i style="background:${moodColor(m.mood)}"></i>${bottleAll ? `<span class="full">${esc(m.text)}<small>—— ${esc(m.sign || '匿名')}${m.date ? `・${+m.date.slice(5, 7)}/${+m.date.slice(8)}` : ''}</small></span>` : esc(m.text.length > 22 ? m.text.slice(0, 22) + '…' : m.text)}</button>`).join('')}<button type="button" class="bottle-more">${bottleAll ? '收合 ︿' : 'More｜閱讀更多 ›'}</button></div>` : ''}
       <div class="cta"><p>瓶子的顏色跟著心情：😃 黃、😍 桃紅、😘 粉、😥 藍、😭 紫、😠 紅、😑 灰。今天想丟哪一種顏色？</p><button type="button" class="cta-write">🍾 丟一個漂流瓶</button></div>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'hope') {
-    title = '希望島'; info = '祈福樹與噴泉';
-    html = `<header><span class="eyebrow">全真島旁・往秋遊島的路上</span><h2>🍎 希望島</h2><p class="sub">一棵白色的祈福樹，掛滿紅蘋果</p></header>
-      <p class="note">島的中央是一棵白色的祈福樹：五片白色木板交錯組裝成一棵樹，立在圓圓的白色底座上，枝條上一根根小木釘，掛滿了紅蘋果 🍎——每一顆都是一個祝福、一份希望。樹前面有一座小噴泉，水花一直往上噴；兩旁擺了白色長椅，可以坐下來許個願。</p>
+    title = '希望島'; info = wishes.length ? `${wishes.length} 張祈福卡` : '祈福樹與噴泉';
+    html = `<header><span class="eyebrow">全真島旁・往秋遊島的路上</span><h2>🍎 希望島</h2><p class="sub">${wishes.length ? `祈福樹上已經掛了 ${wishes.length} 張祈福卡` : '一棵白色的祈福樹，掛滿紅蘋果'}</p></header>
+      <p class="note">島的中央是一棵白色的祈福樹：五片白色木板交錯組裝成一棵樹，掛滿了紅蘋果 🍎——每一顆都是一個祝福、一份希望。樹前面有一座小噴泉。</p>
+      <div class="cta"><p>不用報名、不用登入，<b>匿名也可以</b>！別只已讀、按讚，寫一張祈福卡掛上祈福樹——送出後，噴泉會為你噴高高 ⛲✨</p><button type="button" class="cta-write cta-wish">🍎 寫一張祈福卡</button></div>
+      ${wishes.length ? `<div class="bars"><h3>祈福樹上的祝福</h3><div class="wish-list">${wishes.slice(0, 6).map((m) => `<p>${m.mine ? '✨ ' : ''}${esc(m.text)}<small>—— ${esc(m.sign || '匿名的夥伴')}</small></p>`).join('')}</div></div>` : ''}
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongyi') {
     const left = dayIndex('2026-11-28') - dayIndex(curISO()), open = curISO() <= '2026-11-02';
@@ -4180,7 +4197,9 @@ function select(key, sel = key) {
 function goHome() { flyTo(HOME.target.clone(), HOME.pos.clone()); }
 const selectMember = (id) => select(SLOTS[id].key, 'm:' + id);
 document.getElementById('panelBody').addEventListener('click', (e) => {
+  if (e.target.closest('.cta-wish')) { openWrite(true); return; }
   if (e.target.closest('.cta-write')) { openWrite(); return; }
+  if (e.target.closest('.bottle-more')) { bottleAll = !bottleAll; lastView = ''; renderPanel(); return; }
   const who = e.target.closest('.who'), back = e.target.closest('.back');
   if (back && back.dataset.bottle != null) { select('bottle', 'b:' + back.dataset.bottle); return; }
   if (back && back.dataset.teacher != null) { const tr = TEACHERS[+back.dataset.teacher]; select(tr.key, 't:' + tr.id); return; }
@@ -4595,9 +4614,14 @@ const MINE_KEY = 'islands-mybottles';
 let myBottles = [];
 try { myBottles = JSON.parse(localStorage.getItem(MINE_KEY) || '[]'); } catch (e) {}
 const saveMine = () => { try { localStorage.setItem(MINE_KEY, JSON.stringify(myBottles.slice(-20))); } catch (e) {} };
-function mergeMine(list) {
+function mergeMine(list, wl = []) {
   const same = (a, b) => String(a).replace(/\s+/g, '') === String(b).replace(/\s+/g, '');
   for (const m of myBottles) {
+    if (isWish(m)) {   // 自己寫的祈福卡：還沒讀到就先放進祈福卡清單
+      const hw = wl.find((x) => same(x.text, m.text));
+      if (hw) hw.mine = true; else if (Date.now() - m.ts < 3 * 86400000) wl.unshift({ text: m.text, to: m.to, sign: m.sign, date: iso(new Date(m.ts)), mine: true });
+      continue;
+    }
     const hit = list.find((x) => same(x.text, m.text));
     if (hit) hit.mine = true;
     else if (Date.now() - m.ts < 3 * 86400000) list.unshift({ text: m.text, to: m.to, mood: m.mood, sign: m.sign, date: iso(new Date(m.ts)), mine: true });
@@ -4626,8 +4650,17 @@ wText.addEventListener('input', () => { $('wCount').textContent = `${wText.value
 // 一有修改就收起上一次的提醒
 $('writeForm').addEventListener('input', () => { wErr.hidden = true; });
 $('writeForm').addEventListener('change', () => { wErr.hidden = true; });
-function openWrite() {
-  wErr.hidden = true; wGo.disabled = false; wGo.textContent = '🌊 丟進海裡';
+// wish=true：希望島的祈福卡——同一張寫信卡，只留「祈福的話」和署名，送出後噴泉噴高高
+let wishMode = false;
+const WISH_TO = '希望島祈福卡';
+function openWrite(wish = false) {
+  wishMode = wish;
+  writeEl.classList.toggle('wish', wish);
+  $('writeTitle').textContent = wish ? '🍎 寫一張祈福卡' : '🍾 寫一封瓶中信';
+  writeEl.querySelector('.wsub').textContent = wish ? '寫下你的祝福或心願，掛上希望島的祈福樹。不用登入、可以匿名。' : '把想說的話裝進瓶子，丟進全真群島的海裡。不用登入、可以匿名。';
+  wText.placeholder = wish ? '願家人平安健康、願自己今年更勇敢⋯⋯想祝福誰、許什麼願都可以' : '一句鼓勵、一個心情、對課程的期待，或想對某位夥伴說的話⋯';
+  writeEl.querySelector('label[for=wText]').firstChild.textContent = wish ? '祈福的話 ' : '想裝進瓶子的話 ';
+  wErr.hidden = true; wGo.disabled = false; wGo.textContent = wish ? '🍎 掛上祈福樹' : '🌊 丟進海裡';
   writeEl.classList.remove('toss');
   writeEl.hidden = false;
   requestAnimationFrame(() => writeEl.classList.add('on'));
@@ -4646,14 +4679,16 @@ $('writeForm').addEventListener('submit', async (e) => {
   const moodEl = writeEl.querySelector('[name=wmood]:checked'), sign = $('wSign').value.trim();
   const err = (msg) => { wErr.textContent = msg; wErr.hidden = false; };
   if (!text) { err('瓶子還是空的，寫一句話再丟吧 ✍️'); wText.focus(); return; }
-  if (toV === '其他' && !other) { err('寫一下想漂給誰吧'); $('wToOther').focus(); return; }
-  if (!moodEl) { err('選一個瓶子的心情 🙂'); return; }
+  if (!wishMode && toV === '其他' && !other) { err('寫一下想漂給誰吧'); $('wToOther').focus(); return; }
+  if (!wishMode && !moodEl) { err('選一個瓶子的心情 🙂'); return; }
+  const wish = wishMode, mood = wish ? '😍' : moodEl.value;
   wErr.hidden = true; wGo.disabled = true; wGo.textContent = '瓶子封口中⋯';
   const body = new URLSearchParams();
   body.set(BOTTLE_ENTRY.text, text);
-  if (toV === '其他') { body.set(BOTTLE_ENTRY.to, '__other_option__'); body.set(BOTTLE_ENTRY.to + '.other_option_response', other); }
+  if (wish) { body.set(BOTTLE_ENTRY.to, '__other_option__'); body.set(BOTTLE_ENTRY.to + '.other_option_response', WISH_TO); }
+  else if (toV === '其他') { body.set(BOTTLE_ENTRY.to, '__other_option__'); body.set(BOTTLE_ENTRY.to + '.other_option_response', other); }
   else body.set(BOTTLE_ENTRY.to, toV);
-  body.set(BOTTLE_ENTRY.mood, moodEl.value);
+  body.set(BOTTLE_ENTRY.mood, mood);
   if (sign) body.set(BOTTLE_ENTRY.sign, sign);
   const ac = new AbortController(), timer = setTimeout(() => ac.abort(), 12000);
   try {
@@ -4671,9 +4706,17 @@ $('writeForm').addEventListener('submit', async (e) => {
   setTimeout(() => {
     closeWrite();
     wText.value = ''; $('wSign').value = ''; $('wToOther').value = ''; $('wToOther').hidden = true; $('wCount').textContent = '0 / 500';
-    writeEl.querySelector('[name=wto]').checked = true; moodEl.checked = false;
-    addMyBottle({ text, to: toV === '其他' ? other : toV, mood: moodEl.value, sign });
-    select('bottle', 'b:0');
+    writeEl.querySelector('[name=wto]').checked = true; if (moodEl) moodEl.checked = false;
+    if (wish) {
+      myBottles.push({ text, to: WISH_TO, mood, sign, ts: Date.now() }); saveMine();
+      wishes = [{ text, to: WISH_TO, sign, date: todayISO, mine: true }, ...wishes];
+      lastView = ''; select('hope');
+      hopeIsl.boostReq = true;   // 噴泉噴高高
+      joinToast('🍎 祈福卡掛上去了！噴泉為你噴高高 ⛲✨', 5000);
+    } else {
+      addMyBottle({ text, to: toV === '其他' ? other : toV, mood, sign });
+      select('bottle', 'b:0');
+    }
   }, 480);
   setTimeout(loadBottles, 90000);   // 一分半後再讀一次試算表，換成正式的瓶子
 });
@@ -4886,11 +4929,15 @@ async function loadBottles() {
     applyBottles(list);
   } catch (e) {
     // 試算表讀不到：至少把自己剛丟、還沒讀到的瓶子留在畫面上
-    applyBottles(bottles.filter((m) => !m.mine));
+    applyBottles(bottles.filter((m) => !m.mine).concat(wishes.filter((m) => !m.mine)));
   }
 }
+const isWish = (m) => /祈福/.test(m.to || '');
 function applyBottles(list) {
-  mergeMine(list);
+  // 祈福卡跟瓶中信用同一份表單；「漂給誰」是希望島祈福卡的掛到希望島，不變成瓶子
+  const w = list.filter(isWish); list = list.filter((m) => !isWish(m));
+  mergeMine(list, w);
+  if (w.map((m) => m.text).join('|') !== wishes.map((m) => m.text).join('|')) { wishes = w; lastView = ''; }
   const sig = list.map((m) => m.text + m.date + (m.mine ? '*' : '')).join('|');
   if (sig !== bottles.sig) { const more = list.length > bottles.length; bottles = list; bottles.sig = sig; placeBottles(); syncBottleChip(more); lastView = ''; }
 }
