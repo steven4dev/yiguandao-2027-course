@@ -252,6 +252,10 @@
   .btile.new::after { content: ""; position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: #fff; }
   .bdetail { margin: 0; min-height: 3.2em; padding: 10px 12px; border-radius: 12px; background: var(--chip); font-size: 13.5px; line-height: 1.6; }
   .bdetail b { font-size: 15px; }
+  .bclaim { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 8px; }
+  .bclaim small { grid-column: 1 / -1; }
+  .bclaim input { min-width: 0; box-sizing: border-box; border: 1px solid rgba(160, 120, 60, 0.35); border-radius: 10px; padding: 8px 10px; font: inherit; font-size: 16px; background: #fff8e6; color: #3f2c22; }
+  .bclaim button { border-radius: 10px; padding: 8px 14px; background: var(--brick); color: #fff; border: 0; font-weight: 700; }
   .bdetail small { display: block; color: var(--muted); font-size: 12px; }
   .write legend small { font-weight: 500; color: var(--muted); }
   /* 瓶中信和登島船票同一個版型：四周多留一點邊，看得到後面的群島，不會像整頁表單 */
@@ -515,7 +519,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261101.07</span>
+  <span class="ver">v261101.08</span>
   </div></div>
 </div>
 
@@ -5156,7 +5160,8 @@ function showBadgeDetail(id) {
   if (BS.fresh) delete BS.fresh[id]; saveBadges();
   const d = on ? new Date(on) : null;
   $('bDetail').innerHTML = b.hidden && !on ? '<b>❓ 隱藏徽章</b><small>還沒被發現的祕密，四處逛逛、點點看吧 👀</small>'
-    : `<b>${b.e} ${esc(b.n)}</b>${on ? `<small>✅ ${d.getMonth() + 1}/${d.getDate()} 解鎖</small>` : ''}<small>${b.live ? '🌟 現場掃 QR 解鎖（第二階段，之後開放）：' : on ? '' : '怎麼解鎖：'}${esc(b.c)}</small>`;
+    : `<b>${b.e} ${esc(b.n)}</b>${on ? `<small>✅ ${d.getMonth() + 1}/${d.getDate()} 解鎖</small>` : ''}<small>${b.live ? '🌟 現場掃 QR 解鎖（第二階段，之後開放）：' : on ? '' : '怎麼解鎖：'}${esc(b.c)}</small>`
+      + (!on && (id === 'joined' || id === 'visitor') ? `<span class="bclaim"><small>徽章上線前就已經報名了？打你報名時填的名字來認領：</small><input type="text" id="bClaimName" maxlength="30" placeholder="報名時的姓名" autocomplete="name"><button type="button" id="bClaimGo">認領</button><small id="bClaimMsg"></small></span>` : '');
   renderBadges();
 }
 function openBadges() {
@@ -5166,6 +5171,18 @@ function openBadges() {
   $('badgeDot').hidden = true;
 }
 function closeBadges() { const el = $('badges'); el.classList.remove('on'); setTimeout(() => { el.hidden = true; }, 320); }
+// 徽章上線前就報名的人：打報名時的名字，在報名名單裡找得到就補發「登島成功」或「先來看看」
+function claimJoin() {
+  const nm = ($('bClaimName').value || '').replace(/\s+/g, ''), msg = $('bClaimMsg');
+  if (!nm) { msg.textContent = '請打報名時填的名字'; return; }
+  const d = realPeople.find((x) => (x.m || '').replace(/\s+/g, '') === nm);
+  if (!d) { msg.textContent = liveOk ? '名單上還沒找到這個名字；剛報名的話等 1～2 分鐘再試，或確認跟報名時寫的一樣 🙏' : '報名名單還沒讀到（網路不穩），等一下再試一次 🙏'; return; }
+  const id = isVisit(d) ? 'visitor' : 'joined';
+  msg.textContent = id === 'visitor' ? '找到了！你是來逛逛的旅人 🏝️' : '找到了！歡迎登島 🎉';
+  award(id); showBadgeDetail(id);
+}
+$('bDetail').addEventListener('click', (e) => { if (e.target.id === 'bClaimGo') claimJoin(); });
+$('bDetail').addEventListener('keydown', (e) => { if (e.target.id === 'bClaimName' && e.key === 'Enter') claimJoin(); });
 $('badgeBtn').addEventListener('click', openBadges);
 $('badgesClose').addEventListener('click', closeBadges);
 $('badges').addEventListener('click', (e) => { if (e.target.id === 'badges') closeBadges(); const t = e.target.closest('.btile'); if (t) showBadgeDetail(t.dataset.b); });
