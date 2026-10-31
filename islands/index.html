@@ -515,7 +515,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261101.06</span>
+  <span class="ver">v261101.07</span>
   </div></div>
 </div>
 
@@ -5005,9 +5005,10 @@ const BADGES = [
   { id: 'live_full', e: '📖', n: '全勤學員', c: '六場專題都到場', bc: '#2f6f73', live: true },
   { id: 'live_fahui', e: '🙌', n: '法會志工', c: '參加 8/28 新道親法會志工陪伴', bc: '#a8873a', live: true },
   { id: 'live_end', e: '🥂', n: '結班畢業', c: '12/25 結班當天到場', bc: '#7a5aa6', live: true },
-  // 兩個隱藏徽章（2026/11/01 討論）：考慮對應兩次戶外聯誼——5/29 春遊島、10/30 秋遊島；解鎖方式（現場掃 QR／當天上島）之後再定
-  { id: 'hidden1', e: '❓', n: '隱藏徽章', c: '', bc: '#4a4f5a', hidden: true },
-  { id: 'hidden2', e: '❓', n: '隱藏徽章', c: '', bc: '#4a4f5a', hidden: true },
+  // 兩個隱藏徽章：對應兩次戶外聯誼。解鎖前在徽章牆上只顯示「？」保留神秘感，解鎖後才露出名字和圖示；
+  // 解鎖方式（現場掃 QR／當天上島）之後再定，目前還不會被解鎖
+  { id: 'spring_trip', e: '🌸', n: '春遊同行', c: '一起參加 2027/5/29 的春季戶外聯誼', bc: '#e88aa8', hidden: true },
+  { id: 'autumn_trip', e: '🍁', n: '秋遊同行', c: '一起參加 2027/10/30 的秋季戶外聯誼', bc: '#d9772a', hidden: true },
 ];
 const BADGE_KEY = 'islands-badges';
 let BS = { v: 1, got: {}, seen: {}, days: [] };
