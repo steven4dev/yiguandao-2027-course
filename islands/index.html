@@ -208,7 +208,7 @@
   .write { position: fixed; inset: 0; z-index: 21; display: grid; place-items: center; padding: 16px; background: rgba(20, 30, 40, 0.32);
     backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); opacity: 0; transition: opacity 0.28s linear; }
   .write.on { opacity: 1; }
-  .write.wish fieldset { display: none; }   /* 祈福卡不用選漂給誰、心情 */
+  .write legend small { font-weight: 500; color: var(--muted); }
   /* 瓶中信和登島船票同一個版型：四周多留一點邊，看得到後面的群島，不會像整頁表單 */
   .write { display: flex; align-items: center; justify-content: center; padding: max(26px, env(safe-area-inset-top)) 22px max(26px, env(safe-area-inset-bottom)); }
   .write .write-card { box-sizing: border-box; flex: 0 1 380px; min-width: 0; width: auto; max-height: calc(100dvh - 52px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); border-radius: 20px; }
@@ -464,7 +464,7 @@
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261031.01</span>
+  <span class="ver">v261031.02</span>
   </div></div>
 </div>
 
@@ -3957,7 +3957,7 @@ function renderPanel() {
     html = `<header><span class="eyebrow">全真島旁・往秋遊島的路上</span><h2>🍎 希望島</h2><p class="sub">${wishes.length ? `祈福樹上已經掛了 ${wishes.length} 張祈福卡` : '一棵白色的祈福樹，掛滿紅蘋果'}</p></header>
       <p class="note">島的中央是一棵白色的祈福樹：五片白色木板交錯組裝成一棵樹，掛滿了紅蘋果 🍎——每一顆都是一個祝福、一份希望。樹前面有一座小噴泉。</p>
       <div class="cta"><p>不用報名、不用登入，<b>匿名也可以</b>！別只已讀、按讚，寫一張祈福卡掛上祈福樹——送出後，噴泉會為你噴高高 ⛲✨</p><button type="button" class="cta-write cta-wish">🍎 寫一張祈福卡</button></div>
-      ${wishes.length ? `<div class="bars"><h3>祈福樹上的祝福</h3><div class="wish-list">${wishes.slice(0, 6).map((m) => `<p>${m.mine ? '✨ ' : ''}${esc(m.text)}<small>—— ${esc(m.sign || '匿名的夥伴')}</small></p>`).join('')}</div></div>` : ''}
+      ${wishes.length ? `<div class="bars"><h3>祈福樹上的祝福</h3><div class="wish-list">${wishes.slice(0, 6).map((m) => `<p style="border-left-color:${m.mood ? moodColor(m.mood) : '#d8262b'}">${m.mine ? '✨ ' : ''}${m.mood ? m.mood + ' ' : ''}${esc(m.text)}<small>${m.who ? `給 ${esc(m.who)}・` : ''}—— ${esc(m.sign || '匿名的夥伴')}</small></p>`).join('')}</div></div>` : ''}
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongyi') {
     const left = dayIndex('2026-11-28') - dayIndex(curISO()), open = curISO() <= '2026-11-02';
@@ -4617,11 +4617,7 @@ const saveMine = () => { try { localStorage.setItem(MINE_KEY, JSON.stringify(myB
 function mergeMine(list, wl = []) {
   const same = (a, b) => String(a).replace(/\s+/g, '') === String(b).replace(/\s+/g, '');
   for (const m of myBottles) {
-    if (isWish(m)) {   // 自己寫的祈福卡：還沒讀到就先放進祈福卡清單
-      const hw = wl.find((x) => same(x.text, m.text));
-      if (hw) hw.mine = true; else if (Date.now() - m.ts < 3 * 86400000) wl.unshift({ text: m.text, to: m.to, sign: m.sign, date: iso(new Date(m.ts)), mine: true });
-      continue;
-    }
+    if (isWish(m)) continue;   // 祈福卡在 syncWishes 處理
     const hit = list.find((x) => same(x.text, m.text));
     if (hit) hit.mine = true;
     else if (Date.now() - m.ts < 3 * 86400000) list.unshift({ text: m.text, to: m.to, mood: m.mood, sign: m.sign, date: iso(new Date(m.ts)), mine: true });
@@ -4653,13 +4649,30 @@ $('writeForm').addEventListener('change', () => { wErr.hidden = true; });
 // wish=true：希望島的祈福卡——同一張寫信卡，只留「祈福的話」和署名，送出後噴泉噴高高
 let wishMode = false;
 const WISH_TO = '希望島祈福卡';
+// 祈福卡自己的表單和試算表（2026/10/31 起）；舊的祈福卡在瓶中信表單裡（漂給誰＝希望島祈福卡），兩邊都讀進來
+const WISH_POST = 'https://docs.google.com/forms/d/e/1FAIpQLSejxyOXBfw0-lZr_ndgvSqoSiqXXIoTr0Wv-AemLKz1S_4mHQ/formResponse';
+const WISH_ENTRY = { text: 'entry.392724741', who: 'entry.2095907018', mood: 'entry.1149596771', sign: 'entry.1445288423' };
+const WISH_SHEET_ID = '1AQSRhEk0fOnVPnKmilqOp5JRBpQezF8qKbp5FyMuDew';
+const WISH_WHO = ['自己', '家人', '朋友', '社青班的夥伴', '全世界'];
+const BOTTLE_TO_HTML = () => [...BOTTLE_TO, '其他'].map((t, i) => `<label><input type="radio" name="wto" value="${esc(t)}"${i ? '' : ' checked'}><span>${esc(t.replace('（寫給未來的自己）', ''))}</span></label>`).join('');
+const WISH_WHO_HTML = () => [...WISH_WHO, '其他'].map((t) => `<label><input type="radio" name="wto" value="${esc(t)}"><span>${esc(t)}</span></label>`).join('');
+let legacyWishes = [], newWishes = [];
 function openWrite(wish = false) {
   wishMode = wish;
   writeEl.classList.toggle('wish', wish);
   $('writeTitle').textContent = wish ? '🍎 寫一張祈福卡' : '🍾 寫一封瓶中信';
   writeEl.querySelector('.wsub').textContent = wish ? '寫下你的祝福或心願，掛上希望島的祈福樹。不用登入、可以匿名。' : '把想說的話裝進瓶子，丟進全真群島的海裡。不用登入、可以匿名。';
   wText.placeholder = wish ? '願家人平安健康、願自己今年更勇敢⋯⋯想祝福誰、許什麼願都可以' : '一句鼓勵、一個心情、對課程的期待，或想對某位夥伴說的話⋯';
-  writeEl.querySelector('label[for=wText]').firstChild.textContent = wish ? '祈福的話 ' : '想裝進瓶子的話 ';
+  writeEl.querySelector('label[for=wText]').firstChild.textContent = wish ? '想祈福的話 ' : '想裝進瓶子的話 ';
+  // 祈福卡：「想祝福誰？」和「祈福時的心情」都是選填；瓶中信：「漂給誰」和心情必填
+  $('wTo').innerHTML = wish ? WISH_WHO_HTML() : BOTTLE_TO_HTML();
+  $('wToOther').hidden = true; $('wToOther').value = '';
+  $('wToOther').placeholder = wish ? '想祝福誰？' : '想漂給誰？';
+  const [lgTo, lgMood] = writeEl.querySelectorAll('legend');
+  lgTo.innerHTML = wish ? '想祝福誰？<small>（選填）</small>' : '這個瓶子想漂給誰？ <i>*</i>';
+  lgMood.innerHTML = wish ? '祈福時的心情<small>（選填，蘋果會染上這個心情的顏色）</small>' : '瓶子的心情 <i>*</i>';
+  $('wSign').placeholder = wish ? '例如「一個想變勇敢的人」' : '也可以寫暱稱，例如「好賺島的小明」';
+  $('wForm').href = wish ? WISH_POST.replace('formResponse', 'viewform') : BOTTLE_FORM;
   wErr.hidden = true; wGo.disabled = false; wGo.textContent = wish ? '🍎 掛上祈福樹' : '🌊 丟進海裡';
   writeEl.classList.remove('toss');
   writeEl.hidden = false;
@@ -4675,25 +4688,33 @@ writeEl.addEventListener('click', (e) => { if (e.target === writeEl) closeWrite(
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && !writeEl.hidden) closeWrite(); });
 $('writeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const text = wText.value.trim(), toV = writeEl.querySelector('[name=wto]:checked').value, other = $('wToOther').value.trim();
+  const text = wText.value.trim(), toV = (writeEl.querySelector('[name=wto]:checked') || {}).value || '', other = $('wToOther').value.trim();
   const moodEl = writeEl.querySelector('[name=wmood]:checked'), sign = $('wSign').value.trim();
   const err = (msg) => { wErr.textContent = msg; wErr.hidden = false; };
   if (!text) { err('瓶子還是空的，寫一句話再丟吧 ✍️'); wText.focus(); return; }
   if (!wishMode && toV === '其他' && !other) { err('寫一下想漂給誰吧'); $('wToOther').focus(); return; }
   if (!wishMode && !moodEl) { err('選一個瓶子的心情 🙂'); return; }
-  const wish = wishMode, mood = wish ? '😍' : moodEl.value;
+  const wish = wishMode, mood = moodEl ? moodEl.value : '';
   wErr.hidden = true; wGo.disabled = true; wGo.textContent = '瓶子封口中⋯';
   const body = new URLSearchParams();
+  const who = wish ? (toV === '其他' ? other : toV || '') : '';
+  if (wish) {
+    body.set(WISH_ENTRY.text, text);
+    if (toV === '其他' && other) { body.set(WISH_ENTRY.who, '__other_option__'); body.set(WISH_ENTRY.who + '.other_option_response', other); }
+    else if (toV && toV !== '其他') body.set(WISH_ENTRY.who, toV);
+    if (mood) body.set(WISH_ENTRY.mood, mood);
+    if (sign) body.set(WISH_ENTRY.sign, sign);
+  } else {
   body.set(BOTTLE_ENTRY.text, text);
-  if (wish) { body.set(BOTTLE_ENTRY.to, '__other_option__'); body.set(BOTTLE_ENTRY.to + '.other_option_response', WISH_TO); }
-  else if (toV === '其他') { body.set(BOTTLE_ENTRY.to, '__other_option__'); body.set(BOTTLE_ENTRY.to + '.other_option_response', other); }
+  if (toV === '其他') { body.set(BOTTLE_ENTRY.to, '__other_option__'); body.set(BOTTLE_ENTRY.to + '.other_option_response', other); }
   else body.set(BOTTLE_ENTRY.to, toV);
   body.set(BOTTLE_ENTRY.mood, mood);
   if (sign) body.set(BOTTLE_ENTRY.sign, sign);
+  }
   const ac = new AbortController(), timer = setTimeout(() => ac.abort(), 12000);
   try {
     // Google 表單不回應跨網域請求，只能用 no-cors 送出：看不到回覆內容，但網路斷了或逾時會丟錯
-    await fetch(BOTTLE_POST, { method: 'POST', mode: 'no-cors', body, signal: ac.signal });
+    await fetch(wish ? WISH_POST : BOTTLE_POST, { method: 'POST', mode: 'no-cors', body, signal: ac.signal });
   } catch (x) {
     clearTimeout(timer);
     wGo.disabled = false; wGo.textContent = '🌊 再丟一次';
@@ -4706,11 +4727,10 @@ $('writeForm').addEventListener('submit', async (e) => {
   setTimeout(() => {
     closeWrite();
     wText.value = ''; $('wSign').value = ''; $('wToOther').value = ''; $('wToOther').hidden = true; $('wCount').textContent = '0 / 500';
-    writeEl.querySelector('[name=wto]').checked = true; if (moodEl) moodEl.checked = false;
+    if (moodEl) moodEl.checked = false;
     if (wish) {
-      myBottles.push({ text, to: WISH_TO, mood, sign, ts: Date.now() }); saveMine();
-      wishes = [{ text, to: WISH_TO, sign, date: todayISO, mine: true }, ...wishes];
-      lastView = ''; select('hope');
+      myBottles.push({ text, to: WISH_TO, who, mood, sign, ts: Date.now() }); saveMine();
+      syncWishes(); select('hope');
       hopeIsl.boostReq = true;   // 噴泉噴高高
       joinToast('🍎 祈福卡掛上去了！噴泉為你噴高高 ⛲✨', 5000);
     } else {
@@ -4912,6 +4932,34 @@ async function loadPeople() {
   liveOk = false;
 }
 // 漂流瓶：讀公開用試算表（只有審核通過的留言），欄位依標題找，順序換了也沒關係
+// 祈福卡：新表單的試算表＋瓶中信表單裡的舊祈福卡，新的排前面；自己剛寫、還沒讀到的先放進來
+function syncWishes() {
+  const same = (a, b) => String(a).replace(/\s+/g, '') === String(b).replace(/\s+/g, '');
+  const all = [...newWishes, ...legacyWishes].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  for (const m of myBottles) {
+    if (!isWish(m)) continue;
+    const hit = all.find((x) => same(x.text, m.text));
+    if (hit) hit.mine = true;
+    else if (Date.now() - m.ts < 3 * 86400000) all.unshift({ text: m.text, who: m.who, mood: m.mood, sign: m.sign, date: iso(new Date(m.ts)), mine: true });
+  }
+  const sig = all.map((m) => m.text + (m.mine ? '*' : '')).join('|');
+  if (sig !== wishes.sig) { wishes = all; wishes.sig = sig; lastView = ''; }
+}
+async function loadWishes() {
+  try {
+    const r = await fetch(`https://docs.google.com/spreadsheets/d/${WISH_SHEET_ID}/gviz/tq?tqx=out:json&headers=1&t=${Date.now()}`, { cache: 'no-store' });
+    const json = JSON.parse((await r.text()).replace(/^[\s\S]*?setResponse\(/, '').replace(/\);?\s*$/, ''));
+    const head = json.table.cols.map((c) => String(c.label || ''));
+    const col = (k) => head.findIndex((h) => h.includes(k));
+    const c = { time: col('時間'), text: col('祈福的話'), who: col('祝福誰'), mood: col('心情'), sign: col('署名'), ok: col('審核') };
+    newWishes = json.table.rows.map((row) => {
+      const get = (i) => (i >= 0 && row.c[i] && row.c[i].v != null ? String(row.c[i].v).trim() : '');
+      const tm = toDate(c.time >= 0 && row.c[c.time] && row.c[c.time].v != null ? String(row.c[c.time].v) : '');
+      return { text: get(c.text), who: get(c.who), mood: get(c.mood), sign: get(c.sign), ok: c.ok < 0 || /true|✅|是|通過/i.test(get(c.ok)), date: tm ? ymd(tm) : '' };
+    }).filter((m) => m.text && m.ok);
+    syncWishes();
+  } catch (e) {}
+}
 async function loadBottles() {
   if (!BOTTLE_SHEET_ID) return;
   try {
@@ -4929,15 +4977,15 @@ async function loadBottles() {
     applyBottles(list);
   } catch (e) {
     // 試算表讀不到：至少把自己剛丟、還沒讀到的瓶子留在畫面上
-    applyBottles(bottles.filter((m) => !m.mine).concat(wishes.filter((m) => !m.mine)));
+    applyBottles(bottles.filter((m) => !m.mine).concat(legacyWishes));
   }
 }
 const isWish = (m) => /祈福/.test(m.to || '');
 function applyBottles(list) {
   // 祈福卡跟瓶中信用同一份表單；「漂給誰」是希望島祈福卡的掛到希望島，不變成瓶子
-  const w = list.filter(isWish); list = list.filter((m) => !isWish(m));
-  mergeMine(list, w);
-  if (w.map((m) => m.text).join('|') !== wishes.map((m) => m.text).join('|')) { wishes = w; lastView = ''; }
+  legacyWishes = list.filter((m) => isWish(m) && !m.mine); list = list.filter((m) => !isWish(m));
+  mergeMine(list);
+  syncWishes();
   const sig = list.map((m) => m.text + m.date + (m.mine ? '*' : '')).join('|');
   if (sig !== bottles.sig) { const more = list.length > bottles.length; bottles = list; bottles.sig = sig; placeBottles(); syncBottleChip(more); lastView = ''; }
 }
@@ -4945,7 +4993,7 @@ async function loadData() {
   if (busy) return;
   busy = true;
   try {
-    loadBottles();
+    loadBottles(); loadWishes();
     await loadPeople();
     setStatus();
     lastView = '';
