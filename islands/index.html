@@ -533,6 +533,9 @@
   .js-cancel { justify-self: start; border: 0; background: none; padding: 2px 0; font: inherit; color: var(--muted); font-size: 12px; cursor: pointer; }
   .js-qr { display: flex !important; align-items: center; gap: 12px; }
   .js-qr canvas { flex: none; width: 96px; height: 96px; border-radius: 8px; background: #fff; padding: 4px; }
+  .js-test { border: 1px dashed var(--gold); }
+  .js-test-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .js-test-btns button { padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); font: inherit; font-size: 12px; cursor: pointer; }
   .js-cells { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
   .js-cell { display: grid; gap: 2px; padding: 6px 4px; border-radius: 10px; text-align: center; font: inherit; font-size: 11px; line-height: 1.3; color: var(--muted);
     background: var(--chip); border: 1px dashed var(--line); }
@@ -598,7 +601,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261102.04</span>
+  <span class="ver">v261102.05</span>
   </div></div>
 </div>
 
@@ -3834,6 +3837,21 @@ const tags = [];
    濟公活佛體感抽籤。前面是入口洗塵區（濟世靈山牌坊、青石板路、竹林、葫蘆靈泉），中間是濟公草堂
    （石桌上一個大籤筒、一把破蒲扇），左邊聖訓碑廊、右邊許願樹，後面一座靈山。
    島上不放濟公活佛的人偶，用破蒲扇、葫蘆、草堂這些隨身物件代表老師在這裡 */
+// 濟世靈山島還沒正式開放：一般人看到的是施工圍籬和「施工中」，不能抽籤。
+// 測試的人在網址加上 ?jishi=測試碼（例如 islands/?jishi=jsq-7f3k#jishi）打開測試模式，記在那支手機上；?jishi=off 關掉。
+// 正式開放時把 JS_LIVE 改成 true，圍籬就拆掉、大家都能抽。
+const JS_LIVE = false;
+const JS_TEST_TOKEN = 'jsq-7f3k', JS_TEST_KEY = 'islands-jishi-test';
+const jsTester = (() => {
+  try {
+    const q = new URLSearchParams(location.search), v = q.get('jishi');
+    if (v === JS_TEST_TOKEN) localStorage.setItem(JS_TEST_KEY, '1');
+    else if (v === 'off') localStorage.removeItem(JS_TEST_KEY);
+    if (v !== null) { q.delete('jishi'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }   // 測試碼不留在網址上，分享出去也不會外流
+    return localStorage.getItem(JS_TEST_KEY) === '1';
+  } catch (e) { return false; }
+})();
+const jsOpen = JS_LIVE || jsTester;
 const JS_ANG = (() => {
   // 好愛島和法會島的中間方向，再往法會島偏 5°，跟忠恕島（好愛島方向）多留一點海面
   const a = Math.atan2(islands.c4.x, islands.c4.z), b = Math.atan2(islands.c5.x, islands.c5.z);
@@ -4079,6 +4097,37 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
   // 一位夥伴在靈泉邊淨手
   const washer = figure(kunMat, '', false); washer.scale.setScalar(1.25); washer.position.set(5.9, 0, 5.4); washer.rotation.y = -0.6; mark.add(washer);
   bush(-10.4, 1.2, 0.7, mark, lam('#f2a7c3')); bush(10.6, 6.8, 0.6, mark, lam('#f6d27a'));
+  // 還沒開放：跟忠恕島一樣用紅白條紋的施工圍籬圍起來，正面掛「施工中」告示牌（測試模式看不到圍籬）
+  if (!jsOpen) {
+    const FN = new THREE.Group(); FN.userData.noMerge = true; g.add(FN);
+    const fTex = canvasTex(256, 64, (c) => {
+      c.fillStyle = '#f4f1ea'; c.fillRect(0, 0, 256, 64);
+      c.fillStyle = '#e0602a'; for (let i = -1; i < 9; i++) { c.beginPath(); c.moveTo(i * 32, 64); c.lineTo(i * 32 + 16, 64); c.lineTo(i * 32 + 40, 0); c.lineTo(i * 32 + 24, 0); c.fill(); }
+      c.fillStyle = '#2f6b45'; c.fillRect(0, 0, 256, 6); c.fillRect(0, 58, 256, 6);
+    }, true);
+    const postM = lam('#5f6b73'), RF = 16 * 0.97;
+    for (let k = 0; k < 6; k++) {
+      const a0 = Math.PI / 6 + (k * Math.PI) / 3, a1 = a0 + Math.PI / 3;
+      const p0 = new THREE.Vector3(Math.sin(a0) * RF, 0, Math.cos(a0) * RF), p1 = new THREE.Vector3(Math.sin(a1) * RF, 0, Math.cos(a1) * RF);
+      const len = p0.distanceTo(p1), mid = p0.clone().add(p1).multiplyScalar(0.5);
+      const m = new THREE.MeshLambertMaterial({ map: fTex.clone(), side: THREE.DoubleSide }); m.map.repeat.set(len / 4, 1); m.map.needsUpdate = true;
+      const panel = mesh(new THREE.PlaneGeometry(len, 1.6), m, mid.x, 0.8, mid.z, FN, false);
+      panel.rotation.y = Math.atan2(p1.x - p0.x, p1.z - p0.z) + Math.PI / 2;
+      for (let i = 0; i <= Math.round(len / 3); i++) { const q = p0.clone().lerp(p1, i / Math.round(len / 3)); mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.8, 6), postM, q.x, 0.9, q.z, FN, false); }
+    }
+    const sTex = canvasTex(512, 200, (c) => {
+      c.fillStyle = '#f2b632'; c.fillRect(0, 0, 512, 200);
+      c.fillStyle = '#1f1a1a'; c.font = 'bold 54px "Noto Sans TC", "PingFang TC", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText('🚧 濟世靈山島 施工中', 256, 80); c.font = 'bold 40px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText('即將開放・敬請期待', 256, 154);
+    });
+    const fc = faceCam(jsIsl.x, jsIsl.z);
+    let best = 0;
+    for (let k = 0; k < 6; k++) { const n = ((k + 1) * Math.PI) / 3, d = Math.abs(Math.atan2(Math.sin(n - fc), Math.cos(n - fc))); if (d < Math.abs(Math.atan2(Math.sin(best - fc), Math.cos(best - fc)))) best = n; }
+    const sy = new THREE.Group(); sy.rotation.y = best; FN.add(sy);
+    const edgeR = RF * Math.cos(Math.PI / 6), signY = lam('#f2b632');
+    mesh(new THREE.BoxGeometry(5.2, 2, 0.1), [signY, signY, signY, signY, new THREE.MeshLambertMaterial({ map: sTex }), signY], 0, 1.75, edgeR + 0.25, sy);
+    for (const x of [-2.2, 2.2]) mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.8, 6), postM, x, 1.4, edgeR + 0.18, sy);
+  }
 }
 
 /* ---------- 濟世靈山島：體感抽籤 ----------
@@ -4113,7 +4162,8 @@ const JS_FORTUNES = [
     explanation: '轉職、求職都急不得。履歷改一改、能力練一練，每天前進一點點。老天爺看得清清楚楚，認真的人，路一定會越走越寬。',
     action: '今天花二十分鐘學一項對工作有幫助的新技能。' },
 ];
-const JS_DEMO = true;   // 換成道場審定的正式籤詩後改成 false，卷軸上的「示範籤詩」字樣就會拿掉
+const JS_DEMO = true;
+const jsGc = (path) => { if (JS_LIVE) gc(path); };   // 測試期間的抽籤不算進造訪統計   // 換成道場審定的正式籤詩後改成 false，卷軸上的「示範籤詩」字樣就會拿掉
 const JS_NUM = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 const jsNo = (id) => `第${id <= 10 ? JS_NUM[id - 1] : id}籤`;
 const JS_URL = 'https://steven4dev.github.io/yiguandao-2027-course/islands/jishi/';
@@ -4292,7 +4342,7 @@ function jsStart() {
   controls.minDistance = 8;
   jsFocus('spring');
   jsSet('purify');
-  gc('動作/濟公抽籤開始');
+  jsGc('動作/濟公抽籤開始');
 }
 function jsPurifyDone() {
   JS3.rubbing = false; jsWater(false);
@@ -4347,7 +4397,7 @@ function jsLanded() {
   JSS.day = todayISO; JSS.today = f.id;
   if (first) JSS.got[f.id] = todayISO;
   jsSave(); jsSyncCollection(true);
-  gc(`動作/濟公抽籤：${jsNo(f.id)}`);
+  jsGc(`動作/濟公抽籤：${jsNo(f.id)}`);
   jsOpenScroll(f, false);
   jsFinish();
   holdBadges(10 * 60 * 1000);   // 徽章等卷軸收起來再跳，不要蓋住籤詩
@@ -4410,10 +4460,11 @@ function jsRender() {
   let h = '';
   if (p === 'idle') {
     const tf = jsTodayFortune();
-    h = tf ? `<div class="cta js-today"><p>今天已經抽過了：<b>${jsNo(tf.id)}・${esc(tf.title)}</b>（${esc(tf.type)}）<br>修心妙方：${esc(tf.action)}</p>
+    const test = jsTester && !JS_LIVE ? `<div class="bars js-test"><h3>🔧 測試模式</h3><p class="note" style="margin:0">只有這支手機看得到抽籤，其他人看到的是施工圍籬和「施工中」。</p><div class="js-test-btns"><button class="js-test-redo" type="button">↻ 清掉今天的紀錄再抽</button><button class="js-test-off" type="button">結束測試</button></div></div>` : '';
+    h = test + (tf ? `<div class="cta js-today"><p>今天已經抽過了：<b>${jsNo(tf.id)}・${esc(tf.title)}</b>（${esc(tf.type)}）<br>修心妙方：${esc(tf.action)}</p>
         <button class="js-btn js-reopen" type="button">📜 再看一次籤詩</button><p class="note" style="margin:0">每天一支，明天再來抽一支新的籤。</p></div>`
       : `<div class="cta"><p>跟著濟公老師抽一支修心籤：先到葫蘆靈泉淨手洗心，再誠心叩首三拜，搖一搖籤筒，往前一傾，籤就出來了。${jsCanSense() ? '要用到手機的動作感應，記得打開音效更有感覺。' : '電腦上用滑鼠拖動代替手機的動作。'}</p>
-        <button class="js-btn js-start" type="button">🎋 開始抽籤</button></div>`;
+        <button class="js-btn js-start" type="button">🎋 開始抽籤</button></div>`);
     if (!matchMedia('(pointer: coarse)').matches) h += `<div class="bars js-qr"><canvas id="jsQR" width="116" height="116" aria-label="濟世靈山島的 QR code"></canvas><p class="note" style="margin:0">用手機掃這個 QR code，搖手機、往前傾倒出籤，體感抽籤更有感覺。</p></div>`;
     h += jsCollectionHTML();
   } else if (p === 'purify') {
@@ -4475,6 +4526,8 @@ jsUI.addEventListener('click', (e) => {
   else if (b.classList.contains('js-bow')) { const n = performance.now(); if (n - (jsBow.last || 0) > 450) { jsBow.last = n; jsBow(); } }
   else if (b.classList.contains('js-shake')) jsStartShake();
   else if (b.classList.contains('js-cancel')) { jsAbort(); select('jishi'); }
+  else if (b.classList.contains('js-test-redo')) { JSS.day = ''; jsSave(); jsRender(); lastView = ''; renderPanel(); }
+  else if (b.classList.contains('js-test-off')) { location.href = location.pathname + '?jishi=off#jishi'; }
 });
 // 手指／滑鼠：淨手搓洗、左右拖動搖籤、往下拖倒出籤
 const PAD = { id: null, x: 0, y: 0, t: 0, y0: 0, dir: 0, lastHit: 0 };
@@ -4621,7 +4674,7 @@ function jsOpenScroll(f, again) {
     <div class="jsc-btns"><a class="jsc-line" href="${lineUrl}" target="_blank" rel="noopener">分享到 LINE</a><button type="button" class="jsc-ok">🙏 ${again ? '收起來' : '收下這支籤'}</button></div>`;
   el.hidden = false;
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('on')));
-  if (!again) gc('動作/濟公抽籤完成');
+  if (!again) jsGc('動作/濟公抽籤完成');
 }
 function jsCloseScroll() {
   const el = $('jsScroll');
@@ -4631,7 +4684,7 @@ function jsCloseScroll() {
   if (islandOf2(selected) === 'jishi' && panelMode !== 'closed' && controls.minDistance < 16) select('jishi');
 }
 document.getElementById('jsScroll').addEventListener('click', (e) => {
-  if (e.target.closest('.jsc-line')) { gc('動作/濟公籤分享LINE'); return; }
+  if (e.target.closest('.jsc-line')) { jsGc('動作/濟公籤分享LINE'); return; }
   if (e.target.closest('.jsc-ok') || e.target.id === 'jsScroll') jsCloseScroll();
 });
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('jsScroll').hidden) jsCloseScroll(); });
@@ -4698,7 +4751,7 @@ addTag(hopeIsl, '🍎 希望島', '', 5.4);
 addTag(newIsl, '🚧 忠恕島・施工中', 'main', 15);
 addTag(zyIsl, '🏮 中一島・凝聚晚會 11/28', 'main', 8);   // 跟忠恕島一樣用一般標籤：小標籤在手機上會藏起來
 addTag(bottleIsl, '🍾 漂流瓶島', 'small', 4.8);
-addTag(jsIsl, '⛰️ 濟世靈山島・抽籤', 'main', 13);
+addTag(jsIsl, jsOpen ? '⛰️ 濟世靈山島・抽籤' : '🚧 濟世靈山島・施工中', 'main', 13);
 // 登島是重要入口：渡口島的標籤排在全真島和課程島之後、其他小標籤之前
 tags.splice(1 + COURSES.length, 0, tags.pop());
 // 瞭望氣球的小標籤跟著氣球飄，點了就是搜尋
@@ -4962,6 +5015,11 @@ function renderPanel() {
       <p class="note">島上已經佈置好了：停車廣場擺了十區的烤盤長桌（每桌一支區旗），ㄇ字中間的小廣場是晚會舞台，兩翼之間拉滿燈串，右前角的涼亭是晚會報名處（點涼亭就能報名）。當天會場會坐滿人、烤盤冒煙；天黑之後燈串和海上的紅燈籠都會亮起來。</p>
       ${open ? `<div class="cta"><p>全真青年專屬的一個晚上，一起來烤肉、聊天、玩晚會！</p><a href="${PARTY_FORM}" target="_blank" rel="noopener">🏮 我要報名凝聚晚會</a></div>` : ''}
       <button class="back" data-go="newisle">→ 看隔壁的忠恕島</button>
+      <button class="back" data-go="temple">← 回到全真島</button>`;
+  } else if (isl && isl.kind === 'jishi' && !jsOpen) {
+    title = '濟世靈山島'; info = '施工中・敬請期待';
+    html = `<header><span class="eyebrow">外海・施工中</span><h2>🚧 濟世靈山島</h2><p class="sub">新島正在整地施工，整座島用施工圍籬圍起來，完工後開放</p></header>
+      <p class="note">圍籬裡面隱約看得到一座靈山、茅草屋頂的草堂、一片竹林和一棵掛滿紅布條的大樹。完工後會有新的互動，敬請期待。</p>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'jishi') {
     const tf = jsTodayFortune();
@@ -5322,7 +5380,7 @@ function renderNav() {
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島</span></a>
     <button class="home" data-howto><span aria-hidden="true">👆</span><span>操作說明：旋轉、平移、縮放</span></button>
-    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('hope', '🍎 希望島・祈福樹與噴泉')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${navItem('jishi', '⛰️ 濟世靈山島・濟公活佛體感抽籤', jsTodayFortune() ? '今日已抽' : '')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
+    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('hope', '🍎 希望島・祈福樹與噴泉')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${jsOpen ? navItem('jishi', '⛰️ 濟世靈山島・濟公活佛體感抽籤', jsTodayFortune() ? '今日已抽' : '') : navItem('jishi', '🚧 濟世靈山島・施工中')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
@@ -5355,7 +5413,8 @@ const PLACES = [
   { key: 'temple', icon: '🏯', title: '全真島', sub: '全真道院・廣場上是已登島的夥伴', words: ['全真島', '全真道院', '佛堂', '中央'] },
   { key: 'dock', icon: '🛶', title: '渡口島', sub: '登島報名處', words: ['渡口島', '登島', '報名', '竹筏'] },
   { key: 'bottle', icon: '🍾', title: '漂流瓶島', sub: '匿名留言、交換訊息的地方', words: ['漂流瓶島', '漂流瓶', '瓶中信', '留言', '交流', '匿名', '瓶子', '心聲', '建議', '許願', '點子'] },
-  { key: 'jishi', icon: '⛰️', title: '濟世靈山島', sub: '濟公活佛體感抽籤・每天一支修心籤', words: ['濟世靈山島', '靈山', '濟公', '活佛', '師尊', '抽籤', '籤詩', '求籤', '籤筒', '葫蘆', '靈泉', '草堂', '碑廊', '許願樹', '修心'] },
+  jsOpen ? { key: 'jishi', icon: '⛰️', title: '濟世靈山島', sub: '濟公活佛體感抽籤・每天一支修心籤', words: ['濟世靈山島', '靈山', '濟公', '活佛', '師尊', '抽籤', '籤詩', '求籤', '籤筒', '葫蘆', '靈泉', '草堂', '碑廊', '許願樹', '修心'] }
+    : { key: 'jishi', icon: '🚧', title: '濟世靈山島', sub: '施工中・敬請期待', words: ['濟世靈山島', '靈山', '施工', '建置中'] },
   { key: 'newisle', icon: '🚧', title: '忠恕島', sub: '忠恕道院・施工中', words: ['忠恕島', '忠恕道院', '忠恕', '大殿', '施工', '建置中'] },
   { key: 'zhongyi', icon: '🏮', title: '中一島', sub: '中一堂・全真青年凝聚晚會 11/28', words: ['中一島', '中一堂', '中一', '忠恕道場', '凝聚晚會', '晚會', '烤肉', '烤盤', '住宿', '青年'] },
   { key: 'hope', icon: '🍎', title: '希望島', sub: '祈福樹與噴泉', words: ['希望島', '希望', '祈福樹', '祈福', '蘋果', '噴泉', '許願'] },
@@ -5921,8 +5980,8 @@ const BADGES = [
   { id: 'bottle_read', e: '📬', n: '撿瓶子的人', c: '打開 5 封不同的瓶中信', bc: '#3f6fa8' },
   { id: 'wish', e: '🍎', n: '許願者', c: '在希望島寫一張祈福卡', bc: '#c8312b' },
   { id: 'fountain', e: '⛲', n: '噴泉噴高高', c: '祈福後看到噴泉噴高高', bc: '#3a9ab8' },
-  { id: 'jishi_draw', e: '🎋', n: '第一支籤', c: '在濟世靈山島淨手、參拜、搖籤，抽出第一支籤', bc: '#6f8f3a' },
-  { id: 'jishi_all', e: '📜', n: '籤冊集滿', c: '濟世靈山島的每一支籤都抽過（每天一支）', bc: '#8a5a2b' },
+  { id: 'jishi_draw', e: '🎋', n: '第一支籤', c: '在濟世靈山島淨手、參拜、搖籤，抽出第一支籤', bc: '#6f8f3a', hidden: !jsOpen },
+  { id: 'jishi_all', e: '📜', n: '籤冊集滿', c: '濟世靈山島的每一支籤都抽過（每天一支）', bc: '#8a5a2b', hidden: !jsOpen },
   { id: 'joined', e: '🛶', n: '登島成功', c: '用「我要登島」報名，並確認已登島', bc: '#c0503f' },
   { id: 'visitor', e: '👀', n: '先來看看', c: '用「我要觀摩」上岸當旅人', bc: '#1d8a5f' },
   // 🌙 時間與日常
