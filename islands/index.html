@@ -83,6 +83,9 @@
   .brand .count { margin: 2px 0 0; font-size: 13px; color: var(--ink); line-height: 1.5; }
   /* 瓶中信數量：跟登島人數同一種寫法，整行可以點，點了飛到漂流瓶島 */
   .bottle-count, .party-count { cursor: pointer; }
+  /* 累計造訪人次：Hits（hits.sh）的計數小圖，每打開一次群島加 1；圖片載不到就整行藏起來 */
+  .brand .count.hits-count { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+  .hits-count img { height: 18px; border-radius: 4px; vertical-align: middle; }
   /* 凝聚晚會：跟瓶中信同一種寫法，數字用燈籠紅；整行可以點，點了飛到中一島 */
   .brand .count.party-count b { color: #d0392b; }
   :root[data-theme="dark"] .brand .count.party-count b { color: #ff8a7a; }
@@ -519,9 +522,10 @@
   <p class="count party-count" id="partyChip" role="button" tabindex="0" hidden></p>
   <p class="count bottle-count wish-count" id="wishChip" role="button" tabindex="0" aria-label="前往希望島，看祈福卡或寫一張"><span id="wishChipText">祈福卡</span></p>
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
+  <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261101.09</span>
+  <span class="ver">v261102.01</span>
   </div></div>
 </div>
 
