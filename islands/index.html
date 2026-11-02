@@ -555,8 +555,11 @@
   .jsc-no { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: #a9473b; letter-spacing: 0.1em; }
   .jsc-type { padding: 1px 10px; border-radius: 999px; border: 1px solid #a9473b; color: #a9473b; font-size: 12px; font-weight: 700; }
   .jsc-body h2 { margin: 6px 0 10px; text-align: center; font-family: var(--font-display); font-size: 26px; letter-spacing: 0.16em; }
-  .jsc-poem { writing-mode: vertical-rl; display: flex; justify-content: center; align-items: center; gap: 14px; height: 9.4em; margin: 0 auto 12px; padding: 10px 0;
-    font-family: var(--font-display); font-size: 20px; letter-spacing: 0.22em; border-top: 1px solid rgba(169, 71, 59, 0.35); border-bottom: 1px solid rgba(169, 71, 59, 0.35); }
+  /* 直書：四句由右往左排，每個字一格（不用 writing-mode，各家手機的直排字型才不會疊字） */
+  .jsc-poem { display: flex; flex-direction: row-reverse; justify-content: center; gap: 18px; margin: 0 auto 12px; padding: 12px 0;
+    font-family: var(--font-display); font-size: 20px; border-top: 1px solid rgba(169, 71, 59, 0.35); border-bottom: 1px solid rgba(169, 71, 59, 0.35); }
+  .jsc-poem span { display: flex; flex-direction: column; align-items: center; }
+  .jsc-poem i { font-style: normal; line-height: 1.3; }
   .jsc-body h3 { margin: 0 0 4px; font-size: 13px; color: #a9473b; letter-spacing: 0.1em; }
   .jsc-body p { margin: 0 0 10px; font-size: 14px; line-height: 1.8; }
   .jsc-act { padding: 10px 12px; border-radius: 10px; background: rgba(169, 71, 59, 0.08); border: 1px solid rgba(169, 71, 59, 0.25); margin-bottom: 10px; }
@@ -4286,7 +4289,7 @@ function jsStart() {
   if (jsTodayFortune()) { jsOpenScroll(jsTodayFortune(), true); return; }
   Object.assign(JS, { purify: 0, bows: 0, progress: 0, upright: true, fortune: null });
   JS3.purify = 0;
-  controls.minDistance = 9;
+  controls.minDistance = 8;
   jsFocus('spring');
   jsSet('purify');
   gc('動作/濟公抽籤開始');
@@ -4347,7 +4350,7 @@ function jsLanded() {
   gc(`動作/濟公抽籤：${jsNo(f.id)}`);
   jsOpenScroll(f, false);
   jsFinish();
-  holdBadges(2500);
+  holdBadges(10 * 60 * 1000);   // 徽章等卷軸收起來再跳，不要蓋住籤詩
   award('jishi_draw');
   if (JS_FORTUNES.every((x) => JSS.got[x.id])) award('jishi_all');
 }
@@ -4381,8 +4384,9 @@ function jsFocus(which) {
   // 靈泉從左前方看（右前角有火把），草堂從正前方偏右看
   const yaw = jsIsl.mark.rotation.y + (which === 'spring' ? -0.45 : 0.3);
   const front = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
-  const d = which === 'spring' ? 12 : 11;
-  const p = t.clone().addScaledVector(front, d).setY(t.y + d * 0.55);
+  // 草堂要從屋簷底下看進去，鏡頭壓低，才不會被茅草屋頂擋住
+  const d = which === 'spring' ? 12 : 9.5;
+  const p = t.clone().addScaledVector(front, d).setY(t.y + (which === 'spring' ? d * 0.55 : 1.3));
   if (innerWidth < innerHeight) p.sub(t).multiplyScalar(1.3).add(t);
   flyTo(t, p, 1.4);
 }
@@ -4610,7 +4614,7 @@ function jsOpenScroll(f, again) {
     : 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(JS_URL) + '&text=' + encodeURIComponent(share.split('\n')[0]);
   $('jsBody').innerHTML = `<div class="jsc-head"><span class="jsc-no">${jsNo(f.id)}</span><span class="jsc-type">${esc(f.type)}</span></div>
     <h2 id="jsTitle">${esc(f.title)}</h2>
-    <div class="jsc-poem" aria-label="詩云：${esc(f.poem.join('，'))}">${f.poem.map((l) => `<span>${esc(l)}</span>`).join('')}</div>
+    <div class="jsc-poem" aria-label="詩云：${esc(f.poem.join('，'))}">${f.poem.map((l) => `<span>${[...l].map((ch) => `<i>${esc(ch)}</i>`).join('')}</span>`).join('')}</div>
     <h3>濟公老師慈語</h3><p>${esc(f.explanation)}</p>
     <div class="jsc-act"><b>修心妙方</b><p>${esc(f.action)}</p></div>
     ${JS_DEMO ? '<p class="jsc-demo">示範籤詩・正式慈語由道場審定後更換</p>' : ''}
@@ -4623,6 +4627,7 @@ function jsCloseScroll() {
   const el = $('jsScroll');
   el.classList.remove('on');
   setTimeout(() => { el.hidden = true; }, 350);
+  if (badgeHoldUntil > Date.now()) { badgeHoldUntil = Date.now() + 900; if (badgeQueue.length) setTimeout(nextBadgeToast, 950); }
   if (islandOf2(selected) === 'jishi' && panelMode !== 'closed' && controls.minDistance < 16) select('jishi');
 }
 document.getElementById('jsScroll').addEventListener('click', (e) => {
