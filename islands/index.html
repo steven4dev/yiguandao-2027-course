@@ -525,7 +525,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261102.02</span>
+  <span class="ver">v261102.03</span>
   </div></div>
 </div>
 
@@ -4978,7 +4978,7 @@ $('joinForm').addEventListener('submit', async (e) => {
 /* ---------- GoatCounter 造訪統計：不用 Cookie、不追蹤個人；記錄瀏覽人次、不重複訪客、從哪個連結進來、逛了哪些島 ----------
    GOAT_CODE 填 GoatCounter 的網站代號（https://代號.goatcounter.com）；空白就完全不載入
    自己測試不想被算進去：用自己的手機打開一次 islands/#toggle-goatcounter */
-const GOAT_CODE = '';
+const GOAT_CODE = 'quanzhen-islands';
 const gcQueue = [];
 function gc(path, title = path) {
   if (!GOAT_CODE) return;
