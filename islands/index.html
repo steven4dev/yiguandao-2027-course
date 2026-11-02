@@ -525,7 +525,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261102.01</span>
+  <span class="ver">v261102.02</span>
   </div></div>
 </div>
 
@@ -1453,6 +1453,8 @@ function figure(mat, role = '', bob = false, extra = {}) {
   return p;
 }
 const walkers = [];
+// 統計用的島名（標籤上的名字）
+const isleName2 = (k) => { const t = tags.find((x) => x.isl.key === k); return t ? t.el.textContent.replace(/^\s+|\s+$/g, '') : k; };
 function islOf(o) { for (let x = o; x; x = x.parent) if (x.userData && x.userData.isle) return x.userData.isle; return null; }
 /* ---------- 畫面外的人偶先不算動作：整個不在鏡頭範圍裡才跳過（看不到就不會像卡住），一回到畫面就接著動 ----------
    每一幀在 tick 裡更新一次鏡頭的視野範圍；位置用上一幀畫好的位置，留 3 的餘裕，邊緣不會突然停 */
@@ -4289,6 +4291,7 @@ function select(key, sel = key) {
   const stay = controls.target.distanceTo(new THREE.Vector3(isl.x, 1.5, isl.z)) < 1;
   selected = sel;
   if (typeof badgeOnSelect === 'function') badgeOnSelect(key, sel);
+  if (!gcSeenIsle.has(key)) { gcSeenIsle.add(key); gc(`島/${isleName2(key)}`); }   // 每座島每次造訪只記一次
   setUI({ panel: 'open' });
   if (!stay) {
     const t = new THREE.Vector3(isl.x, 1.5, isl.z);
@@ -4559,7 +4562,7 @@ let searchFrom = null, searchFly = 0;
 // 打開搜尋：鏡頭飛到瞭望氣球旁邊停住；到定位後搜尋面板才淡入
 function openSearch() {
   if (searching) return;
-  award('balloon');
+  award('balloon'); gc('動作/搭熱氣球搜尋');
   if (!navPop.hidden) showNavPop(false);
   if (!soundPop.hidden) showSoundPop(false);
   searching = true;
@@ -4859,14 +4862,14 @@ $('writeForm').addEventListener('submit', async (e) => {
       const k = innerWidth < innerHeight ? 1.5 : 1;
       flyTo(fw.clone().add(new THREE.Vector3(0, 4, 0)), fw.clone().addScaledVector(away, 24 * k).add(new THREE.Vector3(0, 7 * k, 0)), 1.6);
       holdBadges(10500);   // 鏡頭飛過去約 2 秒＋噴泉 8 秒，噴完再頒徽章
-      award('wish'); award('fountain');
+      award('wish'); award('fountain'); gc('動作/寫祈福卡');
       hopeIsl.boostReq = true;   // 噴泉噴高高
       fountainSound();
       joinToast('🍎 祈福卡掛上去了！噴泉為你噴高高 ⛲✨', 5000);
     } else {
       addMyBottle({ text, to: toV === '其他' ? other : toV, mood, sign });
       holdBadges(4200);   // 等瓶子拋進海裡、落水
-      award('bottle_write');
+      award('bottle_write'); gc('動作/寫瓶中信');
       select('bottle', 'b:0');
     }
   }, 480);
@@ -4965,11 +4968,34 @@ $('joinForm').addEventListener('submit', async (e) => {
     closeJoin();
     $('joinForm').reset();
     const visit = visitOnly || /逛逛/.test(unit);
+    gc(visit ? '動作/觀摩船票送出' : '動作/登島船票送出');
     select(visit ? 'dock' : 'temple');
     joinToast(visit ? '🎫 船票收到了！一會兒你就會出現在渡口島上 🏝️' : '🎫 船票收到了！一會兒你的小人偶就會出現在全真島廣場 🎉', 6000);
     confirmJoin(name, visit);
   }, 480);
 });
+
+/* ---------- GoatCounter 造訪統計：不用 Cookie、不追蹤個人；記錄瀏覽人次、不重複訪客、從哪個連結進來、逛了哪些島 ----------
+   GOAT_CODE 填 GoatCounter 的網站代號（https://代號.goatcounter.com）；空白就完全不載入
+   自己測試不想被算進去：用自己的手機打開一次 islands/#toggle-goatcounter */
+const GOAT_CODE = '';
+const gcQueue = [];
+function gc(path, title = path) {
+  if (!GOAT_CODE) return;
+  const go = () => window.goatcounter.count({ path, title, event: true });
+  if (window.goatcounter && window.goatcounter.count) go(); else gcQueue.push(go);
+}
+if (GOAT_CODE) {
+  const sc = document.createElement('script');
+  sc.async = true; sc.src = 'https://gc.zgo.at/count.js';
+  sc.dataset.goatcounter = `https://${GOAT_CODE}.goatcounter.com/count`;
+  sc.onload = () => { const wait = setInterval(() => { if (window.goatcounter && window.goatcounter.count) { clearInterval(wait); gcQueue.splice(0).forEach((f) => f()); } }, 300); };
+  document.head.appendChild(sc);
+}
+// 從哪個專屬連結進來的（懶人包、晚會、講師邀請、漂流瓶⋯⋯網址 # 後面那一段）
+const gcEntry = decodeURIComponent(location.hash.slice(1));
+if (gcEntry && gcEntry !== 'toggle-goatcounter') gc(`入口/${gcEntry}${/[?&]from=game/.test(location.search) ? '（從遊戲）' : ''}`);
+const gcSeenIsle = new Set();
 
 /* ---------- 群島徽章（第一版）：一格一個徽章，像世界迷霧那樣把暗格點亮 ----------
    先存在這支手機上（localStorage）；所有「拿到徽章」都走 award()，之後接 Google 帳號只要改這裡。
@@ -5029,6 +5055,7 @@ function award(id) {
   if (BS.got[id]) return;
   const b = BADGES.find((x) => x.id === id); if (!b) return;
   BS.got[id] = Date.now(); BS.fresh = BS.fresh || {}; BS.fresh[id] = 1; saveBadges();
+  gc(`徽章/${b.n}`);
   $('badgeDot').hidden = false;
   badgeQueue.push(b); if (!badgeShowing) nextBadgeToast();
   if (!$('badges').hidden) renderBadges();
