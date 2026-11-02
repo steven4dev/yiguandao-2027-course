@@ -535,6 +535,7 @@
   .js-qr canvas { flex: none; width: 96px; height: 96px; border-radius: 8px; background: #fff; padding: 4px; }
   .js-test { border: 1px dashed var(--gold); }
   .js-test-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .js-mini { justify-self: start; margin-top: 6px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); font: inherit; font-size: 12px; cursor: pointer; }
   .js-test-btns button { padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); font: inherit; font-size: 12px; cursor: pointer; }
   .js-cells { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
   .js-cell { display: grid; gap: 2px; padding: 6px 4px; border-radius: 10px; text-align: center; font: inherit; font-size: 11px; line-height: 1.3; color: var(--muted);
@@ -601,7 +602,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261102.05</span>
+  <span class="ver">v261102.06</span>
   </div></div>
 </div>
 
@@ -4163,6 +4164,7 @@ const JS_FORTUNES = [
     action: '今天花二十分鐘學一項對工作有幫助的新技能。' },
 ];
 const JS_DEMO = true;
+const JS_DAILY = false;   // 每天只能抽一支：測試期間先關掉，可以一直重抽；正式開放前改回 true
 const jsGc = (path) => { if (JS_LIVE) gc(path); };   // 測試期間的抽籤不算進造訪統計   // 換成道場審定的正式籤詩後改成 false，卷軸上的「示範籤詩」字樣就會拿掉
 const JS_NUM = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 const jsNo = (id) => `第${id <= 10 ? JS_NUM[id - 1] : id}籤`;
@@ -4336,7 +4338,7 @@ function jsSensorsOn() {
 function jsSet(phase) { JS.phase = phase; jsRender(); }
 function jsStart() {
   audioInit();
-  if (jsTodayFortune()) { jsOpenScroll(jsTodayFortune(), true); return; }
+  if (JS_DAILY && jsTodayFortune()) { jsOpenScroll(jsTodayFortune(), true); return; }
   Object.assign(JS, { purify: 0, bows: 0, progress: 0, upright: true, fortune: null });
   JS3.purify = 0;
   controls.minDistance = 8;
@@ -4460,10 +4462,12 @@ function jsRender() {
   let h = '';
   if (p === 'idle') {
     const tf = jsTodayFortune();
-    const test = jsTester && !JS_LIVE ? `<div class="bars js-test"><h3>🔧 測試模式</h3><p class="note" style="margin:0">只有這支手機看得到抽籤，其他人看到的是施工圍籬和「施工中」。</p><div class="js-test-btns"><button class="js-test-redo" type="button">↻ 清掉今天的紀錄再抽</button><button class="js-test-off" type="button">結束測試</button></div></div>` : '';
-    h = test + (tf ? `<div class="cta js-today"><p>今天已經抽過了：<b>${jsNo(tf.id)}・${esc(tf.title)}</b>（${esc(tf.type)}）<br>修心妙方：${esc(tf.action)}</p>
+    const test = jsTester && !JS_LIVE && JS_DAILY ? `<div class="bars js-test"><h3>🔧 測試模式</h3><p class="note" style="margin:0">只有這支手機看得到抽籤，其他人看到的是施工圍籬和「施工中」。</p><div class="js-test-btns"><button class="js-test-redo" type="button">↻ 清掉今天的紀錄再抽</button><button class="js-test-off" type="button">結束測試</button></div></div>` : '';
+    // 不限每天一支時：顯示剛剛抽到的那支，下面照樣可以再抽
+    const last = !JS_DAILY && tf ? `<div class="bars"><p class="note" style="margin:0">剛剛抽到：<b>${jsNo(tf.id)}・${esc(tf.title)}</b>（${esc(tf.type)}）</p><button class="js-mini js-reopen" type="button">📜 再看一次籤詩</button></div>` : '';
+    h = test + last + (JS_DAILY && tf ? `<div class="cta js-today"><p>今天已經抽過了：<b>${jsNo(tf.id)}・${esc(tf.title)}</b>（${esc(tf.type)}）<br>修心妙方：${esc(tf.action)}</p>
         <button class="js-btn js-reopen" type="button">📜 再看一次籤詩</button><p class="note" style="margin:0">每天一支，明天再來抽一支新的籤。</p></div>`
-      : `<div class="cta"><p>跟著濟公老師抽一支修心籤：先到葫蘆靈泉淨手洗心，再誠心叩首三拜，搖一搖籤筒，往前一傾，籤就出來了。${jsCanSense() ? '要用到手機的動作感應，記得打開音效更有感覺。' : '電腦上用滑鼠拖動代替手機的動作。'}</p>
+      : `<div class="cta"><p>${!JS_DAILY && jsTester && !JS_LIVE ? '🔧 測試中：不限每天一支，可以一直重抽。<br>' : ''}跟著濟公老師抽一支修心籤：先到葫蘆靈泉淨手洗心，再誠心叩首三拜，搖一搖籤筒，往前一傾，籤就出來了。${jsCanSense() ? '要用到手機的動作感應，記得打開音效更有感覺。' : '電腦上用滑鼠拖動代替手機的動作。'}</p>
         <button class="js-btn js-start" type="button">🎋 開始抽籤</button></div>`);
     if (!matchMedia('(pointer: coarse)').matches) h += `<div class="bars js-qr"><canvas id="jsQR" width="116" height="116" aria-label="濟世靈山島的 QR code"></canvas><p class="note" style="margin:0">用手機掃這個 QR code，搖手機、往前傾倒出籤，體感抽籤更有感覺。</p></div>`;
     h += jsCollectionHTML();
@@ -5022,7 +5026,7 @@ function renderPanel() {
       <p class="note">圍籬裡面隱約看得到一座靈山、茅草屋頂的草堂、一片竹林和一棵掛滿紅布條的大樹。完工後會有新的互動，敬請期待。</p>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'jishi') {
-    const tf = jsTodayFortune();
+    const tf = JS_DAILY ? jsTodayFortune() : null;
     title = '濟世靈山島'; info = tf ? `今日一籤：${jsNo(tf.id)}・${tf.title}` : '濟公活佛體感抽籤';
     html = `<header><span class="eyebrow">外海・濟公活佛體感抽籤</span><h2>⛰️ 濟世靈山島</h2><p class="sub">淨手、參拜、搖籤、出籤，跟著濟公老師抽一支修心籤</p></header>
       <div id="jsSlot"></div>
@@ -5380,7 +5384,7 @@ function renderNav() {
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島</span></a>
     <button class="home" data-howto><span aria-hidden="true">👆</span><span>操作說明：旋轉、平移、縮放</span></button>
-    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('hope', '🍎 希望島・祈福樹與噴泉')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${jsOpen ? navItem('jishi', '⛰️ 濟世靈山島・濟公活佛體感抽籤', jsTodayFortune() ? '今日已抽' : '') : navItem('jishi', '🚧 濟世靈山島・施工中')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
+    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('hope', '🍎 希望島・祈福樹與噴泉')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${jsOpen ? navItem('jishi', '⛰️ 濟世靈山島・濟公活佛體感抽籤', JS_DAILY && jsTodayFortune() ? '今日已抽' : '') : navItem('jishi', '🚧 濟世靈山島・施工中')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
