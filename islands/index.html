@@ -602,7 +602,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261102.06</span>
+  <span class="ver">v261103.01</span>
   </div></div>
 </div>
 
@@ -3897,19 +3897,20 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
     return cl;
   });
   animators.push((t) => { for (const cl of clouds) cl.position.x = cl.userData.x + Math.sin(t * 0.15 + cl.userData.ph) * 0.9; });
-  for (const [x, z, h] of [[-8.6, -6.5, 2.4], [-9.8, -3.6, 2.0], [8.8, -6.2, 2.5], [10.2, -3.8, 1.9], [-6.6, -10.2, 2.2], [6.8, -10.6, 2.0]]) pine(x, z, h, mark);
+  for (const [x, z, h] of [[-9.4, -6.8, 2.4], [-11.0, -4.2, 2.0], [9.2, -7.0, 2.5], [11.3, -2.2, 1.9], [-6.6, -10.2, 2.2], [6.8, -10.6, 2.0]]) pine(x, z, h, mark);
 
   /* —— 入口洗塵區：牌坊、青石板路、竹林 —— */
   const GATE_Z = 11.4;
+  // 牌樓加高約三成、稍微加寬，遠遠看比較氣派
   for (const sx of [-1, 1]) {
-    mesh(new THREE.CylinderGeometry(0.17, 0.2, 3.4, 8), trunkMat, sx * 1.75, 1.7, GATE_Z, mark);
-    mesh(new THREE.CylinderGeometry(0.32, 0.36, 0.3, 8), stoneM, sx * 1.75, 0.15, GATE_Z, mark);
+    mesh(new THREE.CylinderGeometry(0.2, 0.24, 4.4, 8), trunkMat, sx * 1.95, 2.2, GATE_Z, mark);
+    mesh(new THREE.CylinderGeometry(0.36, 0.4, 0.34, 8), stoneM, sx * 1.95, 0.17, GATE_Z, mark);
   }
-  mesh(new THREE.BoxGeometry(4.6, 0.32, 0.36), lam('#7a3d2c'), 0, 3.3, GATE_Z, mark);
-  mesh(new THREE.BoxGeometry(4.0, 0.2, 0.26), lam('#7a3d2c'), 0, 2.55, GATE_Z, mark);
-  mesh(new THREE.BoxGeometry(5.2, 0.24, 1.0), strawM, 0, 3.58, GATE_Z, mark);
-  mesh(new THREE.BoxGeometry(4.4, 0.2, 0.6), strawM2, 0, 3.78, GATE_Z, mark);
-  const gp = faceBox(2.2, 0.62, 0.08, lam('#3f2c22'), plaque('濟世靈山', 512, 144, { font: 84 })); gp.position.set(0, 2.93, GATE_Z + 0.16); mark.add(gp);
+  mesh(new THREE.BoxGeometry(5.1, 0.36, 0.4), lam('#7a3d2c'), 0, 4.3, GATE_Z, mark);
+  mesh(new THREE.BoxGeometry(4.4, 0.24, 0.3), lam('#7a3d2c'), 0, 3.35, GATE_Z, mark);
+  mesh(new THREE.BoxGeometry(5.8, 0.28, 1.15), strawM, 0, 4.62, GATE_Z, mark);
+  mesh(new THREE.BoxGeometry(4.9, 0.22, 0.7), strawM2, 0, 4.85, GATE_Z, mark);
+  const gp = faceBox(2.5, 0.7, 0.08, lam('#3f2c22'), plaque('濟世靈山', 512, 144, { font: 84 })); gp.position.set(0, 3.83, GATE_Z + 0.18); mark.add(gp);
   // 青石板路：從牌坊彎彎地走到草堂的台階
   for (let i = 0; i < 12; i++) {
     const k = i / 11, z = 12.9 - k * 9.6, x = Math.sin(k * Math.PI * 1.25) * 0.9;
@@ -3944,7 +3945,8 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
   }
 
   /* —— 葫蘆靈泉：大石頭上躺著一個大葫蘆，泉水從葫蘆口流進石盆；淨手時水流變大、水面泛起漣漪 —— */
-  const SP = new THREE.Group(); SP.position.set(4.6, 0, 7.0); mark.add(SP);
+  // 放在青石板路右側、草堂台階前面的空地，淨手時鏡頭從前方看過來，不會被牌樓擋住
+  const SP = new THREE.Group(); SP.position.set(4.3, 0, 4.4); mark.add(SP);
   mesh(new THREE.CylinderGeometry(1.25, 1.38, 0.56, 22), stoneM2, 0, 0.28, 0, SP);
   mesh(new THREE.TorusGeometry(1.2, 0.09, 6, 26), stoneM3, 0, 0.56, 0, SP).rotation.x = Math.PI / 2;
   const springWaterM = new THREE.MeshLambertMaterial({ color: '#8fd3ee', emissive: '#2a6f8a', emissiveIntensity: 0.25 });
@@ -3995,16 +3997,18 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
   const PLAT = 0.45, TABLE = PLAT + 0.85;
   mesh(new THREE.BoxGeometry(7.6, PLAT, 6.2), stoneM2, 0, PLAT / 2, 0, HALL);
   mesh(new THREE.BoxGeometry(2.6, 0.22, 0.55), stoneM2, 0, 0.11, 3.35, HALL);
-  for (const [x, z] of [[-3.2, -2.5], [3.2, -2.5], [-3.2, 2.5], [3.2, 2.5]]) mesh(new THREE.CylinderGeometry(0.16, 0.18, 3.1, 8), trunkMat, x, PLAT + 1.55, z, HALL);
-  for (const z of [-2.5, 2.5]) mesh(new THREE.BoxGeometry(6.9, 0.26, 0.26), lam('#6b4a2f'), 0, PLAT + 3.05, z, HALL);
-  for (const x of [-3.2, 3.2]) mesh(new THREE.BoxGeometry(0.26, 0.26, 5.4), lam('#6b4a2f'), x, PLAT + 3.05, 0, HALL);
+  // 柱子加高（3.1 → 4.3），屋頂跟著抬高，參拜、搖籤時鏡頭看不到屋簷底下
+  const POST = 4.3;
+  for (const [x, z] of [[-3.2, -2.5], [3.2, -2.5], [-3.2, 2.5], [3.2, 2.5]]) mesh(new THREE.CylinderGeometry(0.17, 0.19, POST, 8), trunkMat, x, PLAT + POST / 2, z, HALL);
+  for (const z of [-2.5, 2.5]) mesh(new THREE.BoxGeometry(6.9, 0.26, 0.26), lam('#6b4a2f'), 0, PLAT + POST - 0.05, z, HALL);
+  for (const x of [-3.2, 3.2]) mesh(new THREE.BoxGeometry(0.26, 0.26, 5.4), lam('#6b4a2f'), x, PLAT + POST - 0.05, 0, HALL);
   // 茅草屋頂：兩層四角攢尖，再加一圈草簷
-  const roof1 = mesh(new THREE.ConeGeometry(6.6, 2.5, 4, 1), strawM, 0, PLAT + 3.2 + 1.25, 0, HALL); roof1.rotation.y = Math.PI / 4; roof1.scale.set(1, 1, 0.84);
-  const roof2 = mesh(new THREE.ConeGeometry(3.5, 1.5, 4, 1), strawM2, 0, PLAT + 3.2 + 1.9, 0, HALL); roof2.rotation.y = Math.PI / 4; roof2.scale.set(1, 1, 0.84);
-  mesh(new THREE.SphereGeometry(0.26, 10, 8), strawM2, 0, PLAT + 3.2 + 2.62, 0, HALL);
-  const hp = faceBox(2.4, 0.6, 0.08, lam('#3f2c22'), plaque('濟公草堂', 512, 128, { font: 76 })); hp.position.set(0, PLAT + 2.62, 2.62); HALL.add(hp);
+  const roof1 = mesh(new THREE.ConeGeometry(6.0, 2.5, 4, 1), strawM, 0, PLAT + POST + 0.1 + 1.25, 0, HALL); roof1.rotation.y = Math.PI / 4; roof1.scale.set(1, 1, 0.84);
+  const roof2 = mesh(new THREE.ConeGeometry(3.2, 1.5, 4, 1), strawM2, 0, PLAT + POST + 0.1 + 1.9, 0, HALL); roof2.rotation.y = Math.PI / 4; roof2.scale.set(1, 1, 0.84);
+  mesh(new THREE.SphereGeometry(0.26, 10, 8), strawM2, 0, PLAT + POST + 0.1 + 2.62, 0, HALL);
+  const hp = faceBox(2.4, 0.6, 0.08, lam('#3f2c22'), plaque('濟公草堂', 512, 128, { font: 76 })); hp.position.set(0, PLAT + POST - 0.48, 2.62); HALL.add(hp);
   // 柱子上掛一個小葫蘆
-  const hg = new THREE.Group(); hg.position.set(-3.0, PLAT + 2.15, 2.62); HALL.add(hg);
+  const hg = new THREE.Group(); hg.position.set(-3.0, PLAT + POST - 0.95, 2.62); HALL.add(hg);
   mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.4, 4), redM, 0, 0.32, 0, hg, false);
   mesh(new THREE.SphereGeometry(0.2, 12, 10), gourdM, 0, -0.05, 0, hg); mesh(new THREE.SphereGeometry(0.13, 12, 10), gourdM, 0, 0.2, 0, hg);
   // 石桌、四個石鼓凳
@@ -4042,38 +4046,79 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
   mesh(new THREE.BoxGeometry(0.062, 0.18, 0.02), redM, 0, 0.68, 0, chosen, false);
   TUBE.add(chosen);
   const fallen = chosen.clone(); fallen.visible = false; fallen.userData.noMerge = true; HALL.add(fallen);
-  // 破蒲扇：立在石桌右邊，缺了一角；搖籤時跟著搧動
-  const FAN = new THREE.Group(); FAN.position.set(0.9, TABLE, -0.25); FAN.rotation.y = -0.35; FAN.userData.noMerge = true; HALL.add(FAN);
-  const fanLeafM = new THREE.MeshLambertMaterial({ color: '#d8c28a', side: THREE.DoubleSide });
-  mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.7, 6), lam('#7a5236'), 0, 0.35, 0, FAN);
-  const leafFan = mesh(new THREE.CircleGeometry(0.55, 18, -0.3, Math.PI * 1.72), fanLeafM, 0, 1.12, 0, FAN);
-  leafFan.rotation.z = 0.25;
-  for (let i = 0; i < 6; i++) { const a = -0.1 + i * 0.95, rib = mesh(new THREE.BoxGeometry(0.018, 0.5, 0.012), lam('#a88a52'), Math.cos(a) * 0.22, 1.12 + Math.sin(a) * 0.22, 0.01, FAN, false); rib.rotation.z = a - Math.PI / 2; }
-  mesh(new THREE.TorusGeometry(0.55, 0.025, 4, 30, Math.PI * 1.72), lam('#a88a52'), 0, 1.12, 0, FAN, false).rotation.z = -0.3 + 0.25;
+  // 破蒲扇：蒲葵葉做的扇子——上寬下窄的葉形扇面、一條條從手把放射出去的葉脈、外圈包邊；
+  // 「破」在邊緣兩處撕裂、扇面兩個破洞、一塊補丁、幾根鬚鬚。斜靠在籤筒旁邊，搖籤時跟著搧動
+  const FAN = new THREE.Group(); FAN.position.set(0.88, TABLE, 0.32); FAN.rotation.y = -0.25; FAN.userData.noMerge = true; HALL.add(FAN);
+  const FAN_LEAN = 0.42; FAN.rotation.z = FAN_LEAN;
+  const fanLeafM = new THREE.MeshLambertMaterial({ color: '#dcc58c', side: THREE.DoubleSide }), fanRibM = lam('#b8955a'), fanRimM = lam('#9c7440');
+  const FY = 0.5, FCY = 0.52, FRX = 0.5, FRY = 0.47;   // 扇面在手把上方；中心、寬、高
+  const TEARS = [[0.35, 0.16, 0.13], [2.45, 0.2, 0.1]];   // 撕裂處：[角度, 深度, 寬度]
+  const tearAt = (ph) => TEARS.reduce((d, [c, dep, w]) => { const x = Math.abs(Math.atan2(Math.sin(ph - c), Math.cos(ph - c))); return x < w ? Math.max(d, dep * (1 - x / w) * (0.8 + 0.4 * hsh(Math.round(ph * 90)))) : d; }, 0);
+  const rimPt = (ph, k = 1) => new THREE.Vector2(FRX * k * Math.cos(ph) * (1 + 0.06 * Math.sin(ph)), FCY + FRY * k * Math.sin(ph));
+  const fanShape = new THREE.Shape();
+  fanShape.moveTo(0.06, 0);
+  const PH0 = -Math.PI / 2 + 0.55, PH1 = (3 * Math.PI) / 2 - 0.55, NF = 72;
+  for (let i = 0; i <= NF; i++) {
+    const ph = PH0 + ((PH1 - PH0) * i) / NF, k = 1 - tearAt(ph) / FRX - (i % 2 ? 0.012 : 0);   // 邊緣微微毛邊
+    const q = rimPt(ph, k); fanShape.lineTo(q.x, q.y);
+  }
+  fanShape.lineTo(-0.06, 0); fanShape.lineTo(0.06, 0);
+  for (const [hx, hy, hr] of [[-0.18, 0.72, 0.05], [0.22, 0.32, 0.035]]) {   // 兩個破洞（不規則）
+    const h = new THREE.Path();
+    for (let i = 0; i <= 7; i++) { const a = (i / 7) * Math.PI * 2, r = hr * (0.7 + 0.5 * hsh(i + hx * 50)); h[i ? 'lineTo' : 'moveTo'](hx + Math.cos(a) * r, hy + Math.sin(a) * r); }
+    fanShape.holes.push(h);
+  }
+  const fanFace = new THREE.Group(); fanFace.position.y = FY; FAN.add(fanFace);
+  mesh(new THREE.ExtrudeGeometry(fanShape, { depth: 0.014, bevelEnabled: false }).translate(0, 0, -0.007), fanLeafM, 0, 0, 0, fanFace);
+  // 葉脈：從扇柄往外放射，前後兩面都有
+  for (let i = 0; i < 13; i++) {
+    const ph = PH0 + 0.25 + ((PH1 - PH0 - 0.5) * i) / 12, tip = rimPt(ph, 1 - tearAt(ph) / FRX - 0.04), len = tip.length();
+    for (const zz of [0.011, -0.011]) { const rib = mesh(new THREE.BoxGeometry(0.014, len, 0.008), fanRibM, tip.x / 2, tip.y / 2, zz, fanFace, false); rib.rotation.z = -Math.atan2(tip.x, tip.y); }
+  }
+  // 包邊：沿著扇緣一圈，撕裂的地方斷開
+  const rimSeg = [];
+  for (let i = 0; i <= NF; i++) {
+    const ph = PH0 + ((PH1 - PH0) * i) / NF;
+    if (tearAt(ph) > 0.01) { if (rimSeg.length > 1) mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rimSeg.splice(0)), rimSeg.length * 2 + 8, 0.018, 5), fanRimM, 0, 0, 0, fanFace, false); rimSeg.length = 0; continue; }
+    const q = rimPt(ph); rimSeg.push(new THREE.Vector3(q.x, q.y, 0));
+  }
+  if (rimSeg.length > 1) mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rimSeg), rimSeg.length * 2, 0.018, 5), fanRimM, 0, 0, 0, fanFace, false);
+  // 補丁和撕裂處垂下來的鬚鬚
+  const patch = mesh(new THREE.BoxGeometry(0.17, 0.14, 0.02), lam('#a98a5a'), 0.12, 0.62, 0, fanFace, false); patch.rotation.z = 0.2;
+  for (const [c] of TEARS) for (let k = -1; k <= 1; k++) {
+    const q = rimPt(c + k * 0.05, 1 - tearAt(c + k * 0.05) / FRX), st = mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.12 + 0.04 * (k + 1), 3), fanRibM, q.x, q.y - 0.05, 0, fanFace, false);
+    st.rotation.z = 0.3 * k;
+  }
+  // 扇柄（葉柄）綁一條紅繩
+  mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.56, 8), lam('#a07a45'), 0, 0.27, 0, FAN);
+  mesh(new THREE.TorusGeometry(0.042, 0.012, 5, 12), redM, 0, 0.1, 0, FAN, false).rotation.x = Math.PI / 2;
+  const tassel = mesh(new THREE.CylinderGeometry(0.008, 0.02, 0.2, 5), redM, 0.03, -0.0, 0.02, FAN, false); tassel.rotation.z = 0.3;
+  JS3.fanLean = FAN_LEAN;
   Object.assign(JS3, { tube: TUBE, sticks: STICKS, chosen, fallen, fan: FAN, TUBE_H, TABLE });
 
-  /* —— 聖訓碑廊：左邊一道長廊，牆上八塊石碑，每塊對應一支籤；抽過的籤，碑上的字會變成金色 —— */
-  const COR = new THREE.Group(); COR.position.set(-8.3, 0, -1.6); mark.add(COR);
+  /* —— 聖訓碑廊：右邊一道長廊，牆上八塊石碑，每塊對應一支籤；抽過的籤，碑上的字會變成金色 —— */
+  // 碑廊放在右邊，牆在外側、掛石碑的那一面朝島中間（從一般角度看過來看得到石碑，不會只看到牆背面）
+  const COR = new THREE.Group(); COR.position.set(8.3, 0, -1.6); mark.add(COR);
   mesh(new THREE.BoxGeometry(2.4, 0.25, 7.4), stoneM2, 0, 0.12, 0, COR);
-  mesh(new THREE.BoxGeometry(0.3, 2.6, 7.4), lam('#e9e1d0'), -1.0, 1.55, 0, COR);
-  for (const z of [-3.4, -1.15, 1.15, 3.4]) mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.6, 8), lam('#8e3a30'), 0.95, 1.55, z, COR);
+  mesh(new THREE.BoxGeometry(0.3, 2.6, 7.4), lam('#e9e1d0'), 1.0, 1.55, 0, COR);
+  for (const z of [-3.4, -1.15, 1.15, 3.4]) mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.6, 8), lam('#8e3a30'), -0.95, 1.55, z, COR);
   const corRoof = new THREE.Group(); corRoof.position.set(0, 2.9, 0); COR.add(corRoof);
-  const rf = mesh(new THREE.BoxGeometry(2.9, 0.14, 7.9), tileMat, 0.15, 0.25, 0, corRoof); rf.rotation.z = -0.32;
-  mesh(new THREE.BoxGeometry(0.2, 0.2, 7.9), lam(C.ridge), -0.95, 0.62, 0, corRoof);
-  const cp = faceBox(1.7, 0.42, 0.06, lam('#3f2c22'), plaque('聖訓碑廊', 384, 96, { font: 60 })); cp.position.set(0.95, 2.62, 3.75); COR.add(cp);
+  const rf = mesh(new THREE.BoxGeometry(2.9, 0.14, 7.9), tileMat, -0.15, 0.25, 0, corRoof); rf.rotation.z = 0.32;
+  mesh(new THREE.BoxGeometry(0.2, 0.2, 7.9), lam(C.ridge), 0.95, 0.62, 0, corRoof);
+  const cp = faceBox(1.7, 0.42, 0.06, lam('#3f2c22'), plaque('聖訓碑廊', 384, 96, { font: 60 })); cp.position.set(-0.95, 2.62, 3.75); COR.add(cp);
   JS3.steles = [];
   for (let i = 0; i < 8; i++) {
     const cv = document.createElement('canvas'); cv.width = 128; cv.height = 224;
     const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
-    const st = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.25, 0.72), [new THREE.MeshLambertMaterial({ map: tex }), stoneM, stoneM, stoneM, stoneM, stoneM]);
-    st.position.set(-0.8, 1.35, 3.1 - i * 0.88); st.castShadow = true; st.userData.noMerge = true; COR.add(st);
+    const st = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.25, 0.72), [stoneM, new THREE.MeshLambertMaterial({ map: tex }), stoneM, stoneM, stoneM, stoneM]);   // 字刻在朝島中間（-x）的那一面
+    st.position.set(0.8, 1.35, 3.1 - i * 0.88); st.castShadow = true; st.userData.noMerge = true; COR.add(st);
     JS3.steles.push({ cv, tex });
   }
   // 一位夥伴站在碑廊前看石碑
-  const reader = figure(qianMat, '', false); reader.scale.setScalar(1.25); reader.position.set(0.3, 0.25, 0.4); reader.rotation.y = -Math.PI / 2 + 0.3; COR.add(reader);
+  const reader = figure(qianMat, '', false); reader.scale.setScalar(1.25); reader.position.set(-0.3, 0.25, 0.4); reader.rotation.y = Math.PI / 2 - 0.3; COR.add(reader);
 
-  /* —— 許願樹：右邊一棵大樹，掛滿紅布條；八條掛木牌的布條對應八支籤，抽過的會亮起來 —— */
-  const TR = new THREE.Group(); TR.position.set(8.2, 0, -2.2); mark.add(TR);
+  /* —— 許願樹：左邊一棵大樹，掛滿紅布條；八條掛木牌的布條對應八支籤，抽過的會亮起來 —— */
+  const TR = new THREE.Group(); TR.position.set(-8.2, 0, -2.2); mark.add(TR);
   mesh(new THREE.CylinderGeometry(1.7, 1.75, 0.3, 20), stoneM, 0, 0.15, 0, TR);
   mesh(new THREE.CylinderGeometry(0.42, 0.62, 3.0, 10), trunkMat, 0, 1.6, 0, TR);
   for (const [x, y, z, r] of [[0, 4.1, 0, 1.9], [-1.3, 3.6, 0.3, 1.3], [1.3, 3.7, -0.2, 1.35], [0.2, 3.5, 1.2, 1.25], [-0.2, 3.6, -1.2, 1.2], [0.4, 5.1, 0.1, 1.1]]) mesh(new THREE.IcosahedronGeometry(r, 1), x ? hillMat2 : hillMat, x, y, z, TR);
@@ -4096,7 +4141,7 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
   }
   animators.push((t) => { for (const rb of ribbons) rb.rotation.z = Math.sin(t * 1.4 + rb.userData.ph) * 0.12; });
   // 一位夥伴在靈泉邊淨手
-  const washer = figure(kunMat, '', false); washer.scale.setScalar(1.25); washer.position.set(5.9, 0, 5.4); washer.rotation.y = -0.6; mark.add(washer);
+  const washer = figure(kunMat, '', false); washer.scale.setScalar(1.25); washer.position.set(6.4, 0, 3.4); washer.rotation.y = -2.3;   // 站在靈泉右後方，不擋鏡頭 mark.add(washer);
   bush(-10.4, 1.2, 0.7, mark, lam('#f2a7c3')); bush(10.6, 6.8, 0.6, mark, lam('#f6d27a'));
   // 還沒開放：跟忠恕島一樣用紅白條紋的施工圍籬圍起來，正面掛「施工中」告示牌（測試模式看不到圍籬）
   if (!jsOpen) {
@@ -4432,13 +4477,11 @@ animators.push(() => {
 function jsFocus(which) {
   const obj = which === 'spring' ? JS3.spring : JS3.tube;
   const t = obj.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, which === 'spring' ? 0.8 : 0.7, 0));
-  // 從島的正面（牌坊那一側）稍微偏一點看過去
-  // 靈泉從左前方看（右前角有火把），草堂從正前方偏右看
-  const yaw = jsIsl.mark.rotation.y + (which === 'spring' ? -0.45 : 0.3);
+  // 靈泉從正前方偏右看過去（牌樓在左前方，不會擋到）；草堂從正前方偏右、屋簷底下看進去，畫面上緣剛好是「濟公草堂」匾額
+  const yaw = jsIsl.mark.rotation.y + (which === 'spring' ? 0.3 : 0.3);
   const front = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
-  // 草堂要從屋簷底下看進去，鏡頭壓低，才不會被茅草屋頂擋住
-  const d = which === 'spring' ? 12 : 9.5;
-  const p = t.clone().addScaledVector(front, d).setY(t.y + (which === 'spring' ? d * 0.55 : 1.3));
+  const d = which === 'spring' ? 11 : 11;
+  const p = t.clone().addScaledVector(front, d).setY(t.y + (which === 'spring' ? d * 0.55 : 2.1));
   if (innerWidth < innerHeight) p.sub(t).multiplyScalar(1.3).add(t);
   flyTo(t, p, 1.4);
 }
@@ -4604,7 +4647,7 @@ animators.push((t) => {
   T.position.x = -0.15 + Math.sin(t * 37) * 0.05 * e;
   T.position.z = 0.1 + Math.cos(t * 29) * 0.04 * e;
   T.rotation.z = THREE.MathUtils.damp(T.rotation.z, Math.sin(t * 31) * 0.16 * e, 20, dtF);
-  JS3.fan.rotation.z = Math.sin(t * (1.2 + e * 14)) * (0.04 + e * 0.35);
+  JS3.fan.rotation.z = JS3.fanLean + Math.sin(t * (1.2 + e * 14)) * (0.03 + e * 0.3);
   // 叩首時籤筒閃一下金光
   const flash = JS3.bowFlash ? Math.exp(-(now - JS3.bowFlash) / 300) : 0;
   JS3.tube.children[0].material.emissive?.setRGB(0.6 * flash, 0.45 * flash, 0.1 * flash);
@@ -5030,7 +5073,7 @@ function renderPanel() {
     title = '濟世靈山島'; info = tf ? `今日一籤：${jsNo(tf.id)}・${tf.title}` : '濟公活佛體感抽籤';
     html = `<header><span class="eyebrow">外海・濟公活佛體感抽籤</span><h2>⛰️ 濟世靈山島</h2><p class="sub">淨手、參拜、搖籤、出籤，跟著濟公老師抽一支修心籤</p></header>
       <div id="jsSlot"></div>
-      <p class="note">島上分三區：前面是入口洗塵區（濟世靈山牌坊、青石板路、竹林、葫蘆靈泉），中間是濟公草堂（石桌上的大籤筒和破蒲扇），左邊聖訓碑廊、右邊許願樹，後面是靈山。</p>
+      <p class="note">島上分三區：前面是入口洗塵區（濟世靈山牌坊、青石板路、竹林，草堂台階前的葫蘆靈泉），中間是濟公草堂（石桌上的大籤筒和破蒲扇），右邊聖訓碑廊、左邊許願樹，後面是靈山。</p>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongshu') {
     title = '忠恕島'; info = '施工中・敬請期待';
