@@ -631,7 +631,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261103.05</span>
+  <span class="ver">v261103.06</span>
   </div></div>
 </div>
 
@@ -5445,7 +5445,7 @@ function ptRender() {
     h = `${stepper}<p class="js-say">麥克風開好了。先別吹，聽一下周圍的聲音⋯</p>${level}${cancel}`;
   } else if (p === 'blow') {
     h = `${stepper}${PT.hint ? `<p class="js-hint">${esc(PT.hint)}</p>` : ''}
-      <p class="js-say">${mic ? `請對著麥克風長吹一口氣 🌬️<br>嘴巴靠近${ptTouchDev() ? '手機下緣的麥克風孔' : '電腦的麥克風（筆電通常在螢幕上緣或鍵盤旁）'}，像吹蠟燭那樣「呼——」一直吹；一口不夠，換口氣再吹。` : '按住下面的雲朵吹氣，雲霧就會被吹散；放開就停，停太久雲會慢慢聚回來。'}</p>
+      <p class="js-say">${mic ? `請對著麥克風長吹一口氣 🌬️<br>${ptTouchDev() ? '手機下緣的麥克風孔離嘴巴約一個手掌寬（5～10 公分）' : '電腦的麥克風（筆電通常在螢幕上緣或鍵盤旁）離嘴巴約一個手掌寬'}，像吹蠟燭那樣輕輕長吹「呼——」就好，不用貼著、也不用用力；一口不夠，換口氣再吹。` : '按住下面的雲朵吹氣，雲霧就會被吹散；放開就停，停太久雲會慢慢聚回來。'}</p>
       ${mic ? level : '<button class="js-pad pt-pad" type="button" data-pad="blow"><span class="js-pad-ico">🌬️</span><span>按住這裡　呼～</span></button>'}
       <div class="js-meter pt-prog" role="progressbar" aria-label="雲霧吹散進度" aria-valuemin="0" aria-valuemax="100"><i style="width:0%"></i><em>雲霧吹散</em></div>
       <p class="js-hint js-live" aria-live="polite"></p>
