@@ -602,7 +602,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261103.01</span>
+  <span class="ver">v261103.02</span>
   </div></div>
 </div>
 
@@ -4047,9 +4047,11 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
   TUBE.add(chosen);
   const fallen = chosen.clone(); fallen.visible = false; fallen.userData.noMerge = true; HALL.add(fallen);
   // 破蒲扇：蒲葵葉做的扇子——上寬下窄的葉形扇面、一條條從手把放射出去的葉脈、外圈包邊；
-  // 「破」在邊緣兩處撕裂、扇面兩個破洞、一塊補丁、幾根鬚鬚。斜靠在籤筒旁邊，搖籤時跟著搧動
-  const FAN = new THREE.Group(); FAN.position.set(0.88, TABLE, 0.32); FAN.rotation.y = -0.25; FAN.userData.noMerge = true; HALL.add(FAN);
-  const FAN_LEAN = 0.42; FAN.rotation.z = FAN_LEAN;
+  // 「破」在邊緣兩處撕裂、扇面兩個破洞、一塊補丁、幾根鬚鬚。插在石桌右邊的小木架上，搖籤時跟著搧動
+  // 插在石桌右邊的小木架上，扇面朝前、微微往外斜，跟籤筒留一點空隙（不要靠在籤筒上，會像在切籤筒）
+  const FAN = new THREE.Group(); FAN.position.set(1.0, TABLE + 0.08, 0.32); FAN.rotation.y = -0.15; FAN.userData.noMerge = true; HALL.add(FAN);
+  const FAN_LEAN = -0.16; FAN.rotation.z = FAN_LEAN;
+  mesh(new THREE.BoxGeometry(0.26, 0.08, 0.18), lam('#7a5236'), 1.0, TABLE + 0.04, 0.32, HALL);   // 扇架
   const fanLeafM = new THREE.MeshLambertMaterial({ color: '#dcc58c', side: THREE.DoubleSide }), fanRibM = lam('#b8955a'), fanRimM = lam('#9c7440');
   const FY = 0.5, FCY = 0.52, FRX = 0.5, FRY = 0.47;   // 扇面在手把上方；中心、寬、高
   const TEARS = [[0.35, 0.16, 0.13], [2.45, 0.2, 0.1]];   // 撕裂處：[角度, 深度, 寬度]
@@ -4647,7 +4649,7 @@ animators.push((t) => {
   T.position.x = -0.15 + Math.sin(t * 37) * 0.05 * e;
   T.position.z = 0.1 + Math.cos(t * 29) * 0.04 * e;
   T.rotation.z = THREE.MathUtils.damp(T.rotation.z, Math.sin(t * 31) * 0.16 * e, 20, dtF);
-  JS3.fan.rotation.z = JS3.fanLean + Math.sin(t * (1.2 + e * 14)) * (0.03 + e * 0.3);
+  JS3.fan.rotation.z = JS3.fanLean + Math.sin(t * (1.2 + e * 14)) * (0.03 + e * 0.15);   // 擺幅收小，搧的時候不會碰到籤筒
   // 叩首時籤筒閃一下金光
   const flash = JS3.bowFlash ? Math.exp(-(now - JS3.bowFlash) / 300) : 0;
   JS3.tube.children[0].material.emissive?.setRGB(0.6 * flash, 0.45 * flash, 0.1 * flash);
