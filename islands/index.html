@@ -576,6 +576,35 @@
   .jsc-ok { background: #a9473b; color: #fff; }
   .jsc-btns a:focus-visible, .jsc-btns button:focus-visible { outline: 2px solid #3f8a6a; outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { .jsc-body, .jscroll, .js-meter i { transition: none; } .js-rub.on::after { animation: none; } }
+  /* 清淨菩提島：資訊卡裡的吹氣步驟（沿用濟世靈山島的樣式）、音量條、按住吹氣的雲朵 */
+  .pt-ui .js-steps { grid-template-columns: repeat(3, 1fr); }
+  .pt-ui .js-btn { justify-self: start; display: inline-flex; align-items: baseline; gap: 6px; padding: 7px 16px; border-radius: 999px; border: 0;
+    background: var(--jade); color: #fff; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 12px color-mix(in srgb, var(--jade) 30%, transparent); }
+  .pt-ui .js-today .js-btn + .js-btn { margin-top: 6px; background: var(--brick); }
+  .pt-level { position: relative; height: 18px; border-radius: 999px; background: var(--chip); border: 1px solid var(--line); overflow: hidden; }
+  .pt-level i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #b9c7d6, #8fa6bd); transition: width 0.08s linear; }
+  .pt-level.on i { background: linear-gradient(90deg, #9fe0c4, var(--jade)); }
+  .pt-level b { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--brick); }
+  .pt-level em { position: absolute; right: 8px; top: 1px; font-size: 10px; font-style: normal; color: var(--muted); }
+  .pt-prog i { background: linear-gradient(90deg, #f6d27a, #f5b3c8); }
+  .pt-pad { width: 100%; font: inherit; font-size: 14px; color: #3d5a73; border-color: color-mix(in srgb, #7f9bb5 55%, transparent);
+    background: radial-gradient(circle at 30% 35%, #ffffff, #e6eef5 55%, #c9d8e6); -webkit-touch-callout: none; }
+  .pt-pad.on { border-style: solid; transform: scale(0.98); background: radial-gradient(circle at 30% 35%, #fffaf0, #fbe9c6 55%, #f3d18c); }
+  .pt-pad:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; }
+  /* 破關金句：從畫面上方往下展開 */
+  .ptcard { position: fixed; z-index: 24; top: max(12px, env(safe-area-inset-top)); left: 50%; width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 24px); overflow-y: auto;
+    transform: translate(-50%, calc(-100% - 40px)); transition: transform 0.65s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 18px; padding: 18px 20px 16px;
+    background: linear-gradient(180deg, #fffaf0, #fbefd6); color: #3f2c22; border: 1px solid #e6c98a; box-shadow: 0 18px 40px rgba(60, 40, 10, 0.28), 0 0 0 6px rgba(255, 230, 170, 0.35); }
+  .ptcard.on { transform: translate(-50%, 0); }
+  .ptc-eyebrow { display: block; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; color: #b07a2a; }
+  .ptcard h2 { margin: 4px 0 10px; text-align: center; font-family: var(--font-display); font-size: 26px; letter-spacing: 0.18em; color: #7a4f17; }
+  .ptc-quote { margin: 0 0 12px; padding: 12px 14px; border-radius: 12px; text-align: center; font-family: var(--font-display); font-size: 19px; line-height: 1.8; letter-spacing: 0.06em;
+    background: rgba(255, 215, 106, 0.18); border: 1px solid rgba(217, 154, 43, 0.35); text-wrap: balance; }
+  .ptcard h3 { margin: 0 0 4px; font-size: 13px; color: #a9473b; letter-spacing: 0.1em; }
+  .ptcard p { margin: 0 0 10px; font-size: 14px; line-height: 1.8; }
+  .ptcard .ptc-demo { font-size: 11px; color: #8a7060; text-align: center; margin-bottom: 8px; }
+  .ptc-ok { background: #3f8a6a; color: #fff; }
+  @media (prefers-reduced-motion: reduce) { .ptcard, .pt-level i { transition: none; } }
 </style>
 <style>
   body { margin: 0; }
@@ -602,7 +631,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261103.03</span>
+  <span class="ver">v261103.04</span>
   </div></div>
 </div>
 
@@ -678,6 +707,7 @@
 <div class="jscroll" id="jsScroll" role="dialog" aria-modal="true" aria-labelledby="jsTitle" hidden>
   <div class="jsc-paper"><div class="jsc-rod"></div><div class="jsc-body" id="jsBody"></div><div class="jsc-rod"></div></div>
 </div>
+<div class="ptcard" id="ptCard" role="dialog" aria-modal="false" aria-labelledby="ptTitle" hidden><div id="ptBody"></div></div>
 <div class="howto" id="howto" role="dialog" aria-modal="true" aria-labelledby="howtoTitle" hidden>
   <div class="card howto-card">
     <h2 id="howtoTitle">歡迎登上全真群島 👋</h2>
@@ -4771,6 +4801,676 @@ document.getElementById('jsScroll').addEventListener('click', (e) => {
 });
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('jsScroll').hidden) jsCloseScroll(); });
 
+/* =========================================================
+   清淨菩提島（雲開見日洲）：全真島正後方、高鐵橋外面的外海，比濟世靈山島小一點（16 → 13）
+   島中央一座古樸的智慧石碑，碑前蓮池裡一朵含苞的清淨蓮花，左邊一棵菩提樹，後面一座小靈山。
+   一開始整座島被濃濃的雲霧蓋住；對著麥克風長吹一口氣，雲霧由外往內被吹散，
+   蓮花綻放發光、石碑浮現金字、天上落下一道光——吹散無明，雲開見日。
+   ========================================================= */
+// 跟濟世靈山島一樣先封起來：一般人看到施工圍籬和「施工中」，不能吹。
+// 測試的人在網址加上 ?puti=測試碼（例如 islands/?puti=ptq-5m2w#puti）打開測試模式，記在那支手機上；?puti=off 關掉。
+// 正式開放時把 PT_LIVE 改成 true，圍籬就拆掉、大家都能吹。
+const PT_LIVE = false;
+const PT_TEST_TOKEN = 'ptq-5m2w', PT_TEST_KEY = 'islands-puti-test';
+const ptTester = (() => {
+  try {
+    const q = new URLSearchParams(location.search), v = q.get('puti');
+    if (v === PT_TEST_TOKEN) localStorage.setItem(PT_TEST_KEY, '1');
+    else if (v === 'off') localStorage.removeItem(PT_TEST_KEY);
+    if (v !== null) { q.delete('puti'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }   // 測試碼不留在網址上
+    return localStorage.getItem(PT_TEST_KEY) === '1';
+  } catch (e) { return false; }
+})();
+const ptOpen = PT_LIVE || ptTester;
+// 全真島正後方、高鐵橋外面的外海（175°、離中心 110）：一開始的鏡頭就看得到，跟輔導島、濟世靈山島都留了一大片海
+const PT_ANG = (175 * Math.PI) / 180, PT_R = 13;
+const ptIsl = makeIsland('puti', PT_R, Math.sin(PT_ANG) * 110, Math.cos(PT_ANG) * 110, 'puti');
+const PT3 = {};   // 吹氣會動到的 3D 物件
+{
+  const g = ptIsl.group;
+  // 正面（石碑、蓮池、小徑）對著一開始的鏡頭方向（取最接近的六邊形邊）；點進來時鏡頭也是從這一側飛過來
+  const mark = new THREE.Group(); mark.rotation.y = Math.round(Math.atan2(HOME.pos.x - ptIsl.x, HOME.pos.z - ptIsl.z) / (Math.PI / 3)) * (Math.PI / 3); g.add(mark);
+  ptIsl.mark = mark; PT3.mark = mark;
+  const hsh = (n) => { const x = Math.sin(n * 91.7 + 13.3) * 43758.5453; return x - Math.floor(x); };
+  const stoneM = lam('#a3a89f'), stoneM2 = lam('#c2c4b9'), stoneDark = lam('#868b83'), mossM = lam('#7aa35c');
+  const glowTex = (inner, mid) => canvasTex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, inner); gr.addColorStop(0.4, mid); gr.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
+
+  /* —— 小靈山：島的後方三座山峰，雲霧散開前只露出山尖 —— */
+  const MT = new THREE.Group(); MT.position.set(0, 0, -7.2); mark.add(MT);
+  for (const [x, z, r, h, m] of [[0, 0, 4.2, 8.6, lam('#6a9656')], [-3.7, 0.9, 2.9, 5.4, lam('#7fab63')], [3.8, 0.7, 3.1, 6.1, lam('#7fab63')], [-1.8, 2.4, 2.0, 3.0, hillMat], [2.1, 2.5, 2.0, 2.8, hillMat]]) {
+    const c = mesh(new THREE.ConeGeometry(r, h, 7), m, x, h / 2, z, MT); c.rotation.y = x * 0.6 + 0.3;
+  }
+  mesh(new THREE.ConeGeometry(1.2, 2.1, 7), lam('#bdb6a6'), 0, 8.6 - 1.05 + 0.02, 0, MT);
+
+  /* —— 菩提樹：左後方一棵大樹，樹根盤在石台上 —— */
+  const TR = new THREE.Group(); TR.position.set(-6.3, 0, -2.2); mark.add(TR);
+  addObst(mark, { x: -6.3, z: -2.2, r: 1.8 });
+  mesh(new THREE.CylinderGeometry(1.6, 1.7, 0.32, 18), stoneM, 0, 0.16, 0, TR);
+  mesh(new THREE.CylinderGeometry(0.45, 0.75, 3.2, 10), trunkMat, 0, 1.7, 0, TR);
+  for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2 + 0.4, root = mesh(new THREE.CylinderGeometry(0.1, 0.22, 1.2, 6), trunkMat, Math.sin(a) * 0.65, 0.5, Math.cos(a) * 0.65, TR); root.rotation.set(Math.cos(a) * 0.9, 0, -Math.sin(a) * 0.9); }
+  const leafA = lam('#5d9a4a'), leafB = lam('#6eae56');
+  for (const [x, y, z, r] of [[0, 4.5, 0, 2.2], [-1.6, 4.0, 0.4, 1.5], [1.6, 4.1, -0.3, 1.6], [0.3, 3.9, 1.5, 1.4], [-0.2, 4.0, -1.5, 1.4], [0.4, 5.6, 0.2, 1.3]]) mesh(new THREE.IcosahedronGeometry(r, 1), x ? leafA : leafB, x, y, z, TR);
+
+  /* —— 右邊：兩棵松、幾叢花 —— */
+  for (const [x, z, h] of [[7.4, -4.6, 2.4], [8.6, -1.4, 2.0], [-8.4, 3.2, 1.9]]) pine(x, z, h, mark);
+  bush(6.4, 2.6, 0.6, mark, lam('#f2b8cb')); bush(-4.6, 5.6, 0.55, mark, lam('#f6d27a')); bush(7.6, 4.8, 0.5, mark, hillMat2);
+
+  /* —— 智慧石碑：兩層石座上一塊古樸的石碑，圓頂；字刻在正面，雲開之後浮現金色 —— */
+  const ST = new THREE.Group(); ST.position.set(0, 0, -1.4); mark.add(ST);
+  addObst(mark, { x: 0, z: -1.4, r: 1.9 });
+  mesh(new THREE.BoxGeometry(3.6, 0.6, 1.7), stoneDark, 0, 0.3, 0, ST);
+  mesh(new THREE.BoxGeometry(3.0, 0.32, 1.25), stoneM, 0, 0.76, 0, ST);
+  const SW = 2.4, SH = 3.8, SD = 0.42, SY = 0.92;
+  const steleTex = canvasTex(256, 406, (c, W, H) => {
+    c.fillStyle = '#9da397'; c.fillRect(0, 0, W, H);
+    c.globalAlpha = 0.12;   // 石頭的斑點
+    for (let i = 0; i < 900; i++) { c.fillStyle = i % 2 ? '#3d423b' : '#f4f2ea'; c.fillRect(Math.random() * W, Math.random() * H, 2 + Math.random() * 3, 2); }
+    c.globalAlpha = 1;
+    c.strokeStyle = '#7d8378'; c.lineWidth = 6; c.strokeRect(14, 14, W - 28, H - 28);
+  });
+  // 刻字（灰色凹字）和金字分開畫：金字是另一片透明面，雲開時慢慢浮現
+  const PT_STELE = [['雲', '開', '見', '日'], ['清', '淨', '菩', '提']];   // 由右往左讀
+  const drawStele = (c, W, H, gold) => {
+    c.font = 'bold 76px "LXGW WenKai TC", "Noto Serif TC", "PingFang TC", serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    PT_STELE.forEach((col, k) => col.forEach((ch, i) => {
+      const x = W / 2 + (k ? -52 : 52), y = 72 + i * 88;
+      if (gold) { c.shadowColor = 'rgba(255, 200, 80, 0.9)'; c.shadowBlur = 18; c.fillStyle = '#ffd76a'; c.fillText(ch, x, y); c.shadowBlur = 0; c.fillStyle = '#fff1b8'; c.fillText(ch, x, y); }
+      else { c.fillStyle = '#6c7268'; c.fillText(ch, x + 2, y + 2); c.fillStyle = '#868c82'; c.fillText(ch, x, y); }
+    }));
+  };
+  drawStele(steleTex.image.getContext('2d'), 256, 406, false);
+  const goldTex = canvasTex(256, 406, (c, W, H) => drawStele(c, W, H, true));
+  const steleSide = lam('#9aa094');
+  const stele = new THREE.Mesh(new THREE.BoxGeometry(SW, SH, SD), [steleSide, steleSide, steleSide, steleSide, new THREE.MeshLambertMaterial({ map: steleTex }), steleSide]);
+  stele.position.set(0, SY + SH / 2, 0); stele.castShadow = stele.receiveShadow = true; stele.userData.noMerge = true; ST.add(stele);
+  // 圓頂：半圓柱，厚度跟碑身一樣
+  mesh(new THREE.CylinderGeometry(SW / 2, SW / 2, SD, 26, 1, false, -Math.PI / 2, Math.PI).rotateX(-Math.PI / 2), steleSide, 0, SY + SH, 0, ST);
+  mesh(new THREE.TorusGeometry(0.34, 0.05, 6, 20), stoneDark, 0, SY + SH + 0.5, SD / 2 + 0.01, ST, false);
+  const goldM = new THREE.MeshBasicMaterial({ map: goldTex, transparent: true, opacity: 0, depthWrite: false });
+  const goldFace = mesh(new THREE.PlaneGeometry(SW, SH), goldM, 0, SY + SH / 2, SD / 2 + 0.012, ST, false);
+  goldFace.userData.noMerge = true;
+  PT3.stele = ST; PT3.goldM = goldM; PT3.redrawStele = () => { drawStele(steleTex.image.getContext('2d'), 256, 406, false); steleTex.needsUpdate = true; const gc2 = goldTex.image.getContext('2d'); gc2.clearRect(0, 0, 256, 406); drawStele(gc2, 256, 406, true); goldTex.needsUpdate = true; };
+
+  /* —— 蓮池：石碑前面一個圓形石池，三片蓮葉，中間一朵含苞的清淨蓮花 —— */
+  const PZ = 2.7, POND = new THREE.Group(); POND.position.set(0, 0, PZ); mark.add(POND);
+  addObst(mark, { x: 0, z: PZ, r: 2.1 });
+  mesh(new THREE.CylinderGeometry(1.95, 2.05, 0.5, 28), stoneM2, 0, 0.25, 0, POND);
+  mesh(new THREE.TorusGeometry(1.92, 0.1, 6, 30), stoneM, 0, 0.5, 0, POND).rotation.x = Math.PI / 2;
+  const pondWater = new THREE.MeshLambertMaterial({ color: '#8fd0e6', emissive: '#2a6f8a', emissiveIntensity: 0.22 });
+  mesh(new THREE.CylinderGeometry(1.82, 1.82, 0.04, 28), pondWater, 0, 0.47, 0, POND, false);
+  const padM = lam('#5f9a4a'), padM2 = lam('#73ad58');
+  for (const [x, z, r, a] of [[-1.05, 0.55, 0.42, 0.4], [0.95, 0.75, 0.36, 2.2], [0.85, -0.85, 0.32, 4.1], [-0.9, -0.7, 0.28, 5.3]]) {
+    const pad = mesh(new THREE.CylinderGeometry(r, r, 0.03, 18, 1, false, 0.3, Math.PI * 2 - 0.6), r > 0.35 ? padM : padM2, x, 0.5, z, POND, false); pad.rotation.y = a;
+  }
+  const LOTUS = new THREE.Group(); LOTUS.position.set(0, 0.5, 0); LOTUS.userData.noMerge = true; POND.add(LOTUS);
+  mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.03, 18), padM, 0, 0.0, 0, LOTUS, false);
+  // 花瓣：上窄下寬、尖端微微往外翹的橢圓片；樞紐在花心，綻放時繞著根部往外倒
+  const petalGeo = new THREE.SphereGeometry(1, 16, 10);
+  petalGeo.scale(0.24, 0.58, 0.1).translate(0, 0.58, 0);
+  { const p = petalGeo.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i) / 1.16; p.setZ(i, p.getZ(i) + 0.14 * y * y); p.setX(i, p.getX(i) * (1 - 0.35 * y * y)); } petalGeo.computeVertexNormals(); }
+  const petalOut = new THREE.MeshLambertMaterial({ color: '#f5b3c8', emissive: '#ff9ec0', emissiveIntensity: 0.04, side: THREE.DoubleSide });
+  const petalIn = new THREE.MeshLambertMaterial({ color: '#fde3ec', emissive: '#ffd0e0', emissiveIntensity: 0.04, side: THREE.DoubleSide });
+  const petals = [];
+  for (const [n, r0, bud, open, m, s, off] of [[8, 0.12, 0.22, 1.2, petalOut, 1, 0], [6, 0.07, 0.1, 0.72, petalIn, 0.86, Math.PI / 6], [5, 0.03, 0.04, 0.38, petalIn, 0.66, 0.2]]) {
+    for (let i = 0; i < n; i++) {
+      const a = off + (i / n) * Math.PI * 2, piv = new THREE.Group(); piv.position.set(Math.sin(a) * r0, 0.03, Math.cos(a) * r0); piv.rotation.y = a; LOTUS.add(piv);
+      const pm = mesh(petalGeo, m, 0, 0, 0, piv, false); pm.scale.setScalar(s); pm.rotation.x = bud;
+      petals.push({ pm, bud, open, ph: hsh(i + n * 7) * 6.28 });
+    }
+  }
+  const podM = new THREE.MeshLambertMaterial({ color: '#f2c94c', emissive: '#f2a93b', emissiveIntensity: 0.05 });
+  const pod = mesh(new THREE.CylinderGeometry(0.15, 0.1, 0.12, 14), podM, 0, 0.22, 0, LOTUS, false);
+  // 綻放時的光：一團柔光＋往上飄的金色光點
+  const lotusGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex('rgba(255,236,190,0.95)', 'rgba(255,190,210,0.4)'), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+  lotusGlow.position.set(0, 0.5, 0); lotusGlow.scale.setScalar(0.1); LOTUS.add(lotusGlow);
+  const MOTE_N = 36, moteP = new Float32Array(MOTE_N * 3), moteS = Array.from({ length: MOTE_N }, (_, i) => ({ a: hsh(i + 3) * 6.28, r: 0.3 + hsh(i + 5) * 2.2, sp: 0.4 + hsh(i + 9) * 0.7, ph: hsh(i + 11) }));
+  const moteGeo = new THREE.BufferGeometry(); moteGeo.setAttribute('position', new THREE.BufferAttribute(moteP, 3));
+  const moteM = new THREE.PointsMaterial({ size: 0.32, map: glowTex('rgba(255,240,180,1)', 'rgba(255,210,110,0.5)'), color: '#ffe08a', transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+  const motes = new THREE.Points(moteGeo, moteM); motes.position.set(0, 0, PZ - 1.2); motes.visible = false; motes.frustumCulled = false; mark.add(motes);
+  // 雲開見日：天上落下一道柔和的光柱，罩住石碑和蓮池
+  const shaftTex = canvasTex(8, 128, (c, W, H) => { const gr = c.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.55)'); gr.addColorStop(0.85, 'rgba(255,255,255,0.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gr; c.fillRect(0, 0, W, H); });
+  const shaftM = new THREE.MeshBasicMaterial({ map: shaftTex, color: '#fff0b8', transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false });
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 3.6, 24, 28, 1, true), shaftM);
+  shaft.position.set(0, 12, 0.6); shaft.visible = false; shaft.userData.noMerge = true; mark.add(shaft);
+  Object.assign(PT3, { lotus: LOTUS, petals, petalOut, petalIn, podM, pod, lotusGlow, motes, moteP, moteS, moteGeo, moteM, shaft, shaftM, pondWater });
+
+  /* —— 前面：踏石小徑、兩座石燈，一位夥伴站在蓮池邊 —— */
+  for (let i = 0; i < 7; i++) {
+    const k = i / 6, z = 10.6 - k * 5.6, x = Math.sin(k * Math.PI) * -0.7;
+    const st = mesh(new THREE.CylinderGeometry(0.55 + hsh(i) * 0.1, 0.6 + hsh(i) * 0.1, 0.1, 7), i % 2 ? stoneM : stoneM2, x, 0.05, z, mark, false);
+    st.scale.set(1.3, 1, 0.85); st.rotation.y = hsh(i + 4) * 3;
+  }
+  const lampGlowM = glow('#ffd98a', 0.15, 1.6);
+  for (const sx of [-1, 1]) {
+    const L = new THREE.Group(); L.position.set(sx * 2.5, 0, 6.4); mark.add(L);
+    addObst(mark, { x: sx * 2.5, z: 6.4, r: 0.5 });
+    mesh(new THREE.CylinderGeometry(0.42, 0.5, 0.25, 6), stoneM, 0, 0.12, 0, L);
+    mesh(new THREE.CylinderGeometry(0.13, 0.16, 0.9, 6), stoneM2, 0, 0.7, 0, L);
+    mesh(new THREE.CylinderGeometry(0.36, 0.3, 0.14, 6), stoneM, 0, 1.2, 0, L);
+    mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), lampGlowM, 0, 1.47, 0, L, false);
+    const cap = mesh(new THREE.ConeGeometry(0.55, 0.42, 6), stoneM2, 0, 1.88, 0, L); cap.rotation.y = Math.PI / 6;
+    mesh(new THREE.SphereGeometry(0.09, 8, 6), stoneM, 0, 2.13, 0, L);
+  }
+  for (const [x, z] of [[-3.6, 3.6], [3.8, 3.0], [-2.6, -4.2], [3.1, -4.6]]) mesh(new THREE.DodecahedronGeometry(0.35 + hsh(x) * 0.25, 0), mossM, x, 0.18, z, mark);
+  const friend = figure(qianMat, '', false); friend.scale.setScalar(1.25); friend.position.set(2.7, 0, 4.9); friend.rotation.y = -2.5; mark.add(friend);
+
+  /* —— 雲霧粒子：一團罩住石碑、蓮花和山腳的雲；由外往內一層一層被吹散 ——
+     一顆粒子就是一片柔邊的圓形雲片（自訂 ShaderMaterial）。每顆帶自己的「離開門檻」：越外圈門檻越低，先被吹走；
+     uProg 超過門檻後，這顆沿著「往外＋往吹的方向＋往上」飄走、變大變淡。uGust 是當下的吹氣力道，還沒散的雲會跟著翻湧 */
+  const N = MOBILE ? 1100 : 1800, FX = 7.2, FY = 6.2, FZ = 7.0, FC_Z = -0.2;
+  const fogPos = new Float32Array(N * 3), fogSeed = new Float32Array(N * 4);
+  for (let i = 0; i < N; i++) {
+    const u = Math.pow(Math.random(), 0.55), th = Math.random() * Math.PI * 2, ph = Math.acos(Math.random() * 0.96);   // 越往中心越濃；只取上半球
+    const x = Math.sin(ph) * Math.cos(th) * u * FX, y = 0.25 + Math.cos(ph) * u * FY, z = FC_Z + Math.sin(ph) * Math.sin(th) * u * FZ;
+    fogPos.set([x, y, z], i * 3);
+    const rn = Math.min(1, Math.hypot(x / FX, (y - 0.25) / FY, (z - FC_Z) / FZ));
+    fogSeed.set([(1 - rn) * 0.62 + Math.random() * 0.3, Math.random(), Math.random(), 0.7 + Math.random() * 0.6], i * 4);
+  }
+  const fogGeo = new THREE.BufferGeometry();
+  fogGeo.setAttribute('position', new THREE.BufferAttribute(fogPos, 3));
+  fogGeo.setAttribute('aSeed', new THREE.BufferAttribute(fogSeed, 4));
+  fogGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 4, 0), 34);   // 粒子在 shader 裡會飄很遠，包圍球給大一點才不會被誤剪掉
+  const fogM = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 }, uProg: { value: 0 }, uGust: { value: 0 }, uPx: { value: 800 }, uOpacity: { value: 1 },
+      uDir: { value: new THREE.Vector3(0, 0, -1) }, uColor: { value: new THREE.Color('#ffffff') }, uShadow: { value: new THREE.Color('#c3d0de') },
+    },
+    vertexShader: `
+      uniform float uTime, uProg, uGust, uPx, uOpacity;
+      uniform vec3 uDir;
+      attribute vec4 aSeed;   // x：離開門檻　y：速度　z：相位　w：大小
+      varying float vA, vShade;
+      void main() {
+        vec3 p = position;
+        float a = uTime * (0.05 + 0.06 * aSeed.y) + aSeed.z * 6.2832;      // 平常慢慢繞著打轉、上下起伏
+        p.x += cos(a) * 0.45; p.z += sin(a) * 0.45;
+        p.y += sin(uTime * 0.4 + aSeed.z * 12.0) * 0.18;
+        vec3 rad = vec3(p.x, 0.0, p.z);
+        float rl = length(rad);
+        rad = rl > 0.001 ? rad / rl : vec3(0.0, 0.0, 1.0);
+        float k = clamp((uProg - aSeed.x) / 0.32, 0.0, 1.0);
+        float e = k * k * (3.0 - 2.0 * k);
+        vec3 dir = normalize(rad + uDir * 0.9 + vec3(0.0, 0.25 + aSeed.y * 0.35, 0.0));
+        p += dir * e * (9.0 + aSeed.y * 12.0);                                 // 被吹散：往外飄走
+        float edge = clamp(rl / 7.0, 0.2, 1.0);
+        p += (rad * 0.7 + uDir) * uGust * (0.35 + 0.65 * aSeed.y) * (1.0 - e) * edge * 1.1;   // 吹氣當下的一陣風
+        p.y += uGust * sin(uTime * 7.0 + aSeed.z * 20.0) * 0.12 * (1.0 - e);
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        gl_Position = projectionMatrix * mv;
+        float size = (1.5 + aSeed.w * 1.6) * (1.0 + e * 1.4);
+        gl_PointSize = min(size * uPx / max(1.0, -mv.z), 480.0);
+        vA = uOpacity * (1.0 - e) * (0.45 + 0.25 * aSeed.y);
+        vShade = clamp(p.y / 6.0, 0.0, 1.0);
+      }`,
+    fragmentShader: `
+      uniform vec3 uColor, uShadow;
+      varying float vA, vShade;
+      void main() {
+        vec2 c = gl_PointCoord - 0.5;
+        float d = length(c) * 2.0;
+        if (d > 1.0) discard;
+        float a = 1.0 - d * d; a *= a * vA;
+        if (a < 0.004) discard;
+        float top = clamp(0.5 - c.y, 0.0, 1.0);                                // 雲片上緣亮、下緣帶一點藍灰，看起來有厚度
+        gl_FragColor = vec4(mix(uShadow, uColor, clamp(0.3 + 0.45 * top + 0.4 * vShade, 0.0, 1.0)), a);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+    transparent: true, depthWrite: false,
+  });
+  const fog = new THREE.Points(fogGeo, fogM);
+  fog.renderOrder = 5; fog.userData.noMerge = true; mark.add(fog);
+  PT3.fog = fog; PT3.fogM = fogM;
+
+  // 還沒開放：施工圍籬＋「施工中」告示牌（跟濟世靈山島一樣；測試模式看不到圍籬）
+  if (!ptOpen) {
+    const FN = new THREE.Group(); FN.userData.noMerge = true; g.add(FN);
+    const fTex = canvasTex(256, 64, (c) => {
+      c.fillStyle = '#f4f1ea'; c.fillRect(0, 0, 256, 64);
+      c.fillStyle = '#e0602a'; for (let i = -1; i < 9; i++) { c.beginPath(); c.moveTo(i * 32, 64); c.lineTo(i * 32 + 16, 64); c.lineTo(i * 32 + 40, 0); c.lineTo(i * 32 + 24, 0); c.fill(); }
+      c.fillStyle = '#2f6b45'; c.fillRect(0, 0, 256, 6); c.fillRect(0, 58, 256, 6);
+    }, true);
+    const postM = lam('#5f6b73'), RF = PT_R * 0.97;
+    for (let k = 0; k < 6; k++) {
+      const a0 = Math.PI / 6 + (k * Math.PI) / 3, a1 = a0 + Math.PI / 3;
+      const p0 = new THREE.Vector3(Math.sin(a0) * RF, 0, Math.cos(a0) * RF), p1 = new THREE.Vector3(Math.sin(a1) * RF, 0, Math.cos(a1) * RF);
+      const len = p0.distanceTo(p1), mid = p0.clone().add(p1).multiplyScalar(0.5);
+      const m = new THREE.MeshLambertMaterial({ map: fTex.clone(), side: THREE.DoubleSide }); m.map.repeat.set(len / 4, 1); m.map.needsUpdate = true;
+      const panel = mesh(new THREE.PlaneGeometry(len, 1.6), m, mid.x, 0.8, mid.z, FN, false);
+      panel.rotation.y = Math.atan2(p1.x - p0.x, p1.z - p0.z) + Math.PI / 2;
+      for (let i = 0; i <= Math.round(len / 3); i++) { const q = p0.clone().lerp(p1, i / Math.round(len / 3)); mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.8, 6), postM, q.x, 0.9, q.z, FN, false); }
+    }
+    const sTex = canvasTex(512, 200, (c) => {
+      c.fillStyle = '#f2b632'; c.fillRect(0, 0, 512, 200);
+      c.fillStyle = '#1f1a1a'; c.font = 'bold 50px "Noto Sans TC", "PingFang TC", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText('🚧 清淨菩提島 施工中', 256, 80); c.font = 'bold 40px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText('即將開放・敬請期待', 256, 154);
+    });
+    const sy = new THREE.Group(); sy.rotation.y = mark.rotation.y; FN.add(sy);   // 告示牌掛在正面那條邊上
+    const edgeR = RF * Math.cos(Math.PI / 6), signY = lam('#f2b632');
+    mesh(new THREE.BoxGeometry(5.2, 2, 0.1), [signY, signY, signY, signY, new THREE.MeshLambertMaterial({ map: sTex }), signY], 0, 1.75, edgeR + 0.25, sy);
+    for (const x of [-2.2, 2.2]) mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.8, 6), postM, x, 1.4, edgeR + 0.18, sy);
+  }
+}
+// 字型載入後再畫一次，石碑上的字才會是楷體
+if (document.fonts) document.fonts.ready.then(() => PT3.redrawStele());
+
+/* ---------- 清淨菩提島：吹散無明 ----------
+   流程（狀態機）：idle → perm（請開啟麥克風）→ calib（先聽 0.8 秒環境音當底噪）→ blow（吹氣累積 progress 0～100）→ cleared（雲開見日）→ 回到 idle
+   吹氣偵測只用 Web Audio 的 AnalyserNode 即時算音量和頻譜，不錄音、不上傳，聲音也不會接到喇叭。
+   判斷「是吹氣」要同時符合：
+     1. 夠大聲：整體音量比底噪大 QT.margin dB 以上，而且超過 QT.absMin
+     2. 像風聲：頻譜平坦度高（吹氣是沙沙的寬頻雜訊；說話、唱歌有一根根的諧波，平坦度低）、低頻占比高（吹到麥克風上的風切聲大多在低頻）
+     3. 持續：連續成立 QT.holdMs 才算開始吹，中斷超過 QT.releaseMs 才算停（拍手、敲桌子這種一下子的聲音不算）
+   沒有麥克風、拒絕授權、LINE 內建瀏覽器：改成「按住吹氣」，流程一樣。
+   ⚠️ 金句目前是示範文案（第 1 句是企劃提供的範例），不是仙佛原文；正式上線前請換成道場審定的慈語並註明出處，再把 PT_DEMO 改成 false */
+const PT_QUOTES = [
+  { id: 1, title: '雲開見日', quote: '煩惱即菩提，無明本是幻。一念清淨，萬法皆然。',
+    reflection: '煩惱像一片雲，遮住了太陽，但太陽從來沒有離開。下次被一件事卡住時，先停下來深呼吸，問問自己：讓我難受的，是事情本身，還是我對它的想法？看清了，雲就開了。' },
+  { id: 2, title: '清淨無染', quote: '蓮生淤泥不嫌泥，心在紅塵不染塵。',
+    reflection: '職場、家庭、人情往來，誰不是在泥裡走路？不用急著逃開環境，守好自己的起心動念就好：不跟著抱怨、不跟著比較。泥再深，蓮花照樣開得出來。' },
+  { id: 3, title: '一念回光', quote: '向外求，處處是風雨；向內看，步步是歸途。',
+    reflection: '滑手機看別人過得多好，越看心越慌。把眼光收回來，看看自己今天做到了什麼、還能多做一點什麼。回光，不是逃避外面的世界，是先找回自己的方向。' },
+  { id: 4, title: '心燈常明', quote: '千年暗室，一燈即明；多年心結，一念可解。',
+    reflection: '有些心結放久了，好像永遠解不開。其實不用等很久——願意換個角度想的那一刻，燈就亮了。今天試著對一件舊事說：「我願意放下。」' },
+  { id: 5, title: '放下自在', quote: '手握得越緊，心越不得閒；放下一分執著，多得一分自在。',
+    reflection: '放下不是不在乎，是不再讓它綁住你。把今天最在意的一件事寫下來，分成「我能做的」和「交給時間的」兩邊，做完能做的，其他的就先放下。' },
+  { id: 6, title: '本性光明', quote: '烏雲再厚，遮不住天；境界再亂，染不了性。',
+    reflection: '被罵、被誤會、事情不順，都只是天上飄過的雲。你的本性像天空一樣，雲來雲去，天還是天。難過的時候提醒自己：這片雲會過去的。' },
+  { id: 7, title: '和氣生光', quote: '一句柔和語，勝過千般理；心平氣自和，處處是佛堂。',
+    reflection: '道理講贏了，關係卻可能輸了。今天遇到意見不合，先把聲音放軟、把話說慢，先讓對方感覺被聽見，再說自己的想法。和氣，就是最亮的那盞燈。' },
+  { id: 8, title: '當下清淨', quote: '昨日已成雲，明日尚未雨；當下這一念，最是清淨時。',
+    reflection: '後悔昨天、擔心明天，心就一直不在這裡。現在先做一件小事：把呼吸放慢，數十次。回到當下，心就清淨了，力氣也回來了。' },
+];
+const PT_DEMO = true;   // 換成道場審定的正式慈語後改成 false，金句面板上的「示範慈語」字樣就會拿掉
+const ptGc = (path) => { if (PT_LIVE) gc(path); };   // 測試期間不算進造訪統計
+const PT_URL = 'https://steven4dev.github.io/yiguandao-2027-course/islands/puti/';
+// 這支手機的紀錄：今天哪一天雲開見日、拿到哪一句，菩提冊（拿過的金句＋第一次拿到的日期）
+const PT_KEY = 'islands-puti';
+let PTS = { v: 1, day: '', today: 0, got: {} };
+try { const o = JSON.parse(localStorage.getItem(PT_KEY) || 'null'); if (o && o.v === 1) PTS = Object.assign(PTS, o); } catch (e) {}
+const ptSave = () => { try { localStorage.setItem(PT_KEY, JSON.stringify(PTS)); } catch (e) {} };
+const ptToday = () => (PTS.day === todayISO ? PT_QUOTES.find((q) => q.id === PTS.today) || null : null);
+
+// 調整手感只要改這裡（音量單位是 dBFS：0 是麥克風能收的最大聲，越小聲越負）
+const QT = {
+  calibMs: 800,            // 開麥克風後先安靜聽 0.8 秒，當作環境底噪
+  margin: 14, absMin: -52, // 比底噪大 14 dB，而且至少 -52 dBFS，才可能是吹氣
+  flat: 0.2,               // 150–4000 Hz 的頻譜平坦度（0～1）：吹氣多在 0.2 以上，說話、唱歌大多在 0.1 以下
+  lowShare: 0.35,          // 600 Hz 以下的能量占全頻（60–6000 Hz）的比例
+  loud: -24, flatLoud: 0.1, // 很用力、幾乎爆音的吹氣：平坦度門檻放寬
+  holdMs: 140, releaseMs: 220,   // 連續 0.14 秒才算開始吹，中斷 0.22 秒才算停
+  needMs: 3200,            // 吹滿要累積多久（用力吹會快一點）；一口氣不夠可以換氣再吹
+  touchMs: 3600,           // 按住吹氣：按滿 3.6 秒
+  decayAfter: 800, decay: 8, // 停下來超過 0.8 秒，雲霧每秒聚回 8%
+};
+// phase：idle → perm → calib → blow → cleared；mode：mic（麥克風）｜touch（按住吹氣）
+const PT = { phase: 'idle', mode: 'mic', progress: 0, blowing: false, touch: false, level: 0, gate: 0.44, gust: 0, why: '', hint: '', quote: null, duck: false, lastBlow: 0, quietFor: 0 };
+const PTM = { stream: null, src: null, an: null, ctx: null, own: false, freq: null, time: null, calib: [], calibUntil: 0, floor: -70, cand: 0, rel: 0 };
+const PTV = { init: false, vis: 0, bloom: 0, uiAt: 0 };   // 給 3D 每一幀讀的數值：雲散開多少、蓮花開多少
+const ptCanMic = () => !!(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia && (window.AudioContext || window.webkitAudioContext));
+const ptInApp = /\bLine\/|FBAN|FBAV|Instagram/i.test(navigator.userAgent);
+const ptTouchDev = () => matchMedia('(pointer: coarse)').matches;
+
+/* —— 麥克風 —— */
+// iPhone（Safari 17 以後）：網頁聲音一開始宣告成「播放音樂」，開麥克風前要改成「播放＋錄音」，關掉後再改回來
+function ptSession(type) { try { if (navigator.audioSession) navigator.audioSession.type = type; } catch (e) {} }
+async function ptMicOn() {
+  audioInit();   // 一定要在點擊當下叫：iPhone 的 AudioContext 要靠手勢才會開始跑
+  if (PT.phase !== 'perm') return;
+  if (!ptCanMic()) { ptFallback(ptInApp ? 'inapp' : 'nomic'); return; }
+  PT.hint = '等待麥克風權限⋯（瀏覽器會問要不要允許使用麥克風，請按「允許」）'; ptUpdate();
+  ptSession('play-and-record');
+  let stream;
+  try {
+    // 降噪、回音消除、自動增益都要關掉：瀏覽器的降噪會把吹氣的風聲當成雜訊濾掉
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 } });
+  } catch (err) {
+    ptSession('playback');
+    if (PT.phase !== 'perm') return;
+    const n = err && err.name;
+    ptFallback(n === 'NotAllowedError' || n === 'SecurityError' ? (ptInApp ? 'inapp' : 'denied') : n === 'NotFoundError' || n === 'OverconstrainedError' ? 'nomic' : 'error');
+    return;
+  }
+  if (PT.phase !== 'perm') { stream.getTracks().forEach((t) => t.stop()); ptSession('playback'); return; }   // 等權限的時候已經取消了
+  let ctx = SND.ctx, own = false;
+  if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; ctx = new AC(); own = true; }
+  if (ctx.state !== 'running') { try { await ctx.resume(); } catch (e) {} }
+  const src = ctx.createMediaStreamSource(stream), an = ctx.createAnalyser();
+  an.fftSize = 1024; an.smoothingTimeConstant = 0.25;
+  src.connect(an);   // 只接到分析器、不接喇叭：不會回授，也沒有錄音
+  Object.assign(PTM, { stream, src, an, ctx, own, freq: new Float32Array(an.frequencyBinCount), time: new Float32Array(an.fftSize), calib: [], calibUntil: performance.now() + QT.calibMs, cand: 0, rel: 0 });
+  const track = stream.getAudioTracks()[0];
+  if (track) track.addEventListener('ended', () => { if (PT.phase === 'calib' || PT.phase === 'blow') ptFallback('ended'); });   // 來電、藍牙耳機斷線
+  Object.assign(PT, { mode: 'mic', hint: '', blowing: false, quietFor: 0 });
+  ptSet('calib');
+}
+// 關麥克風、放掉所有音訊節點（離開、取消、吹完、改用按住都會走這裡）
+function ptMicOff() {
+  try { if (PTM.src) PTM.src.disconnect(); } catch (e) {}
+  try { if (PTM.an) PTM.an.disconnect(); } catch (e) {}
+  if (PTM.stream) PTM.stream.getTracks().forEach((t) => t.stop());
+  if (PTM.own && PTM.ctx) PTM.ctx.close().catch(() => {});
+  if (PTM.stream) ptSession('playback');
+  Object.assign(PTM, { stream: null, src: null, an: null, ctx: null, own: false, freq: null, time: null, calib: [] });
+  PT.duck = false;
+}
+// 一幀的聲音特徵：整體音量（dBFS）、頻譜平坦度、低頻占比
+function ptAnalyse() {
+  const an = PTM.an, td = PTM.time, f = PTM.freq;
+  let s = 0;
+  if (an.getFloatTimeDomainData) { an.getFloatTimeDomainData(td); for (let i = 0; i < td.length; i++) s += td[i] * td[i]; }
+  else { const b = new Uint8Array(td.length); an.getByteTimeDomainData(b); for (let i = 0; i < b.length; i++) { const v = (b[i] - 128) / 128; s += v * v; } }
+  const rmsDb = 10 * Math.log10(s / td.length + 1e-12);
+  an.getFloatFrequencyData(f);
+  const hz = PTM.ctx.sampleRate / an.fftSize, bin = (x) => Math.max(1, Math.min(f.length - 1, Math.round(x / hz)));
+  const b60 = bin(60), b150 = bin(150), b600 = bin(600), b4k = bin(4000), b6k = bin(6000);
+  let low = 0, all = 0, dbSum = 0, lin = 0, n = 0;
+  for (let i = b60; i <= b6k; i++) {
+    const db = Number.isFinite(f[i]) ? Math.max(-140, f[i]) : -140, p = Math.pow(10, db / 10);
+    all += p; if (i <= b600) low += p;
+    if (i >= b150 && i <= b4k) { dbSum += db; lin += p; n++; }
+  }
+  // 平坦度＝幾何平均÷算術平均：純音或諧波接近 0，白雜訊接近 1
+  const flat = n && lin > 0 ? Math.pow(10, dbSum / n / 10) / (lin / n) : 0;
+  return { rmsDb, flat, lowShare: all > 0 ? low / all : 0 };
+}
+// 沒辦法用麥克風（或自己選擇）：改成按住吹氣
+const PT_WHY = {
+  denied: '沒有取得麥克風權限，改用「按住吹氣」也能吹散雲霧。想用麥克風，請到瀏覽器的網站設定允許麥克風，再重新整理。',
+  inapp: 'LINE、Facebook 內建的瀏覽器不能用麥克風。可以點右上角選「用預設瀏覽器開啟」，或直接用下面的「按住吹氣」。',
+  nomic: '這台裝置找不到麥克風，改用「按住吹氣」。',
+  error: '麥克風打不開，改用「按住吹氣」。',
+  ended: '麥克風中斷了，改用「按住吹氣」繼續。',
+  hidden: '',
+  manual: '',
+};
+function ptFallback(why) {
+  ptMicOff();
+  Object.assign(PT, { mode: 'touch', hint: PT_WHY[why] || '', blowing: false, touch: false });
+  ptSet('blow');
+}
+
+/* —— 流程 —— */
+function ptSet(phase) { PT.phase = phase; ptRender(); }
+function ptStart() {
+  audioInit();
+  const tq = ptToday();
+  if (tq && !(ptTester && !PT_LIVE)) { ptOpenCard(tq, true); return; }
+  if (tq) { PTS.day = ''; ptSave(); }   // 測試模式：雲霧聚回來再吹一次
+  Object.assign(PT, { mode: 'mic', progress: 0, blowing: false, touch: false, hint: '', gust: 0, why: '', quote: null, quietFor: 0 });
+  PT.duck = true;   // 背景音樂先淡出：開著喇叭的聲音會被麥克風收進去
+  ptFocus();
+  ptSet('perm');
+  ptGc('動作/菩提島吹氣開始');
+}
+function ptClear() {
+  if (PT.phase !== 'blow') return;
+  PT.progress = 100; PT.blowing = false; PT.touch = false;
+  ptMicOff();   // 鎖定：馬上關麥克風，省電也讓 iPhone 把聲音切回播放模式
+  // 優先給還沒拿過的那幾句，菩提冊才集得滿
+  const left = PT_QUOTES.filter((q) => !PTS.got[q.id]), pool = left.length ? left : PT_QUOTES;
+  const u = new Uint32Array(1); crypto.getRandomValues(u);
+  const q = pool[u[0] % pool.length];
+  PTS.day = todayISO; PTS.today = q.id;
+  if (!PTS.got[q.id]) PTS.got[q.id] = todayISO;
+  ptSave();
+  PT.quote = q;
+  ptSet('cleared');
+  try { if (navigator.vibrate) navigator.vibrate([60, 50, 140]); } catch (e) {}
+  setTimeout(ptDing, 350);   // 等麥克風關好、聲音切回播放模式再敲
+  holdBadges(10 * 60 * 1000);   // 徽章等金句面板收起來再跳
+  ptGc('動作/菩提島雲開見日');
+  // 先讓大家看蓮花綻放、石碑浮現金字，再從畫面上方展開金句
+  clearTimeout(ptClear.tm);
+  ptClear.tm = setTimeout(() => {
+    ptOpenCard(q, false);
+    PT.phase = 'idle'; ptRender(); lastView = ''; renderPanel();
+    award('puti_clear');
+    if (PT_QUOTES.every((x) => PTS.got[x.id])) award('puti_all');
+  }, 2600);
+}
+// 中途點到別座島、關掉資訊卡、切到背景：取消這一次，關掉麥克風
+function ptAbort() {
+  if (PT.phase === 'idle' || PT.phase === 'cleared') return;
+  ptMicOff();
+  Object.assign(PT, { phase: 'idle', progress: 0, blowing: false, touch: false, gust: 0, hint: '', duck: false });
+  ptRender();
+}
+addEventListener('visibilitychange', () => { if (document.hidden && (PT.phase === 'perm' || PT.phase === 'calib' || PT.phase === 'blow')) ptAbort(); });
+addEventListener('pagehide', ptMicOff);
+// 鏡頭：從正前方、微微偏右看過去，雲霧、石碑、蓮池都在畫面中間
+function ptFocus() {
+  const t = PT3.stele.getWorldPosition(new THREE.Vector3()).setY(2.8);
+  const yaw = ptIsl.mark.rotation.y + 0.2, front = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+  t.addScaledVector(front, 1.2);
+  const p = t.clone().addScaledVector(front, 31).setY(12);
+  if (innerWidth < innerHeight) p.sub(t).multiplyScalar(1.35).add(t);
+  flyTo(t, p, 1.4);
+}
+// 法音：一聲清脆的引磬「叮～」，尾巴灑一點細碎的亮音。不經過音效匯流排（剛解除靜音、音量還在爬升），直接出聲
+function ptDing() {
+  if (!SND.ctx || !SND.sfx) return;
+  const ctx = SND.ctx;
+  if (ctx.state !== 'running') { unlockAudio(ctx); ctx.resume(); }
+  const t = ctx.currentTime + 0.05, out = ctx.createGain();
+  out.gain.value = 0.9; out.connect(ctx.destination);
+  bell(t, out, 1568, 0.16, 5.5, [[1, 1], [2.76, 0.3], [5.4, 0.1], [0.5, 0.12]]);
+  bell(t + 0.004, out, 1568 * 1.003, 0.05, 4.5, [[1, 1]]);   // 一點點拍頻，尾音會微微顫動
+  for (let i = 0; i < 10; i++) ping(t + 0.55 + i * 0.09, out, 2600 + Math.random() * 2200, 0.012, 0.5);
+  setTimeout(() => { try { out.disconnect(); } catch (e) {} }, 7000);
+}
+
+/* —— 每一幀：讀麥克風（或按住）→ 累積進度 → 雲霧、蓮花、石碑、光柱 ——
+   這個不放在 animators 裡（系統設定「減少動態效果」時 animators 整個不跑），一定要跑才吹得散 */
+const ptTmpV = new THREE.Vector3(), ptCamDir = new THREE.Vector3(), ptBuf = new THREE.Vector2();
+const PT_NIGHT_C = new THREE.Color('#aab4d8'), PT_NIGHT_S = new THREE.Color('#5f6890'), PT_DAY_C = new THREE.Color('#ffffff'), PT_DAY_S = new THREE.Color('#c3d0de');
+function ptTick(t, dt) {
+  if (!PT3.fog) return;
+  if (!PTV.init) { PTV.init = true; if (ptToday()) PTV.vis = PTV.bloom = 1; }   // 今天已經雲開見日：一打開就是晴朗的樣子
+  const now = performance.now(), p = PT.phase;
+  // 計時（持續多久、累積進度）用真正經過的時間：畫面卡頓時 dt 會被截短，不能拿來算秒數
+  const rdt = Math.min(0.25, (now - (PTV.last || now)) / 1000); PTV.last = now;
+  if ((p === 'perm' || p === 'calib' || p === 'blow') && (panelMode === 'closed' || islandOf2(selected) !== 'puti')) ptAbort();
+  if (PT.phase === 'calib' || PT.phase === 'blow') {
+    let s = 0;
+    if (PT.mode === 'mic' && PTM.an) {
+      const m = ptAnalyse();
+      if (PT.phase === 'calib') {
+        if (m.rmsDb > -100) PTM.calib.push(m.rmsDb);   // 麥克風剛打開的前幾百毫秒常是一片全零（數位靜音），不算
+        if (now >= PTM.calibUntil) {
+          // 取比較安靜的那一段（第 25 百分位）：就算校正時已經開始吹，底噪也不會被墊得太高
+          const a = PTM.calib.slice().sort((x, y) => x - y);
+          PTM.floor = a.length ? THREE.MathUtils.clamp(a[Math.floor(a.length / 4)], -90, -45) : -70;
+          ptSet('blow');
+        }
+      } else {
+        const gate = Math.max(PTM.floor + QT.margin, QT.absMin);
+        const loud = m.rmsDb >= gate;
+        const windy = (m.flat >= QT.flat && m.lowShare >= QT.lowShare) || (m.rmsDb >= QT.loud && m.flat >= QT.flatLoud);
+        if (loud && windy) { PTM.cand += rdt * 1000; PTM.rel = 0; } else { PTM.cand = 0; if (PT.blowing) PTM.rel += rdt * 1000; }
+        if (!PT.blowing && PTM.cand >= QT.holdMs) PT.blowing = true;
+        if (PT.blowing && PTM.rel >= QT.releaseMs) PT.blowing = false;
+        s = THREE.MathUtils.clamp((m.rmsDb - gate) / 18, 0, 1);
+        const span = QT.margin + 22;
+        PT.level = THREE.MathUtils.clamp((m.rmsDb - PTM.floor) / span, 0, 1);
+        PT.gate = THREE.MathUtils.clamp((gate - PTM.floor) / span, 0, 1);
+        PT.why = PT.blowing ? '' : loud && !windy ? 'voice' : 'quiet';
+        // 環境慢慢變吵或變安靜：沒在吹的時候，底噪慢慢跟上（只跟安靜的那一側，吹氣不會把門檻越墊越高）
+        if (!loud) PTM.floor += (Math.min(m.rmsDb, PTM.floor + 6) - PTM.floor) * 0.01;
+      }
+    } else if (PT.mode === 'touch') {
+      PT.blowing = PT.touch; s = PT.touch ? 0.6 : 0;
+      PT.level = PT.touch ? 0.72 + Math.sin(t * 9) * 0.06 : 0; PT.gate = 0.44; PT.why = '';
+    }
+    if (PT.phase === 'blow') {
+      if (PT.blowing) {
+        PT.lastBlow = now; PT.quietFor = 0;
+        PT.progress = Math.min(100, PT.progress + ((rdt * 1000) / (PT.mode === 'touch' ? QT.touchMs : QT.needMs)) * 100 * (0.6 + 0.8 * s));
+      } else {
+        PT.quietFor += rdt;
+        if (now - PT.lastBlow > QT.decayAfter) PT.progress = Math.max(0, PT.progress - QT.decay * rdt);
+      }
+      PT.gust = THREE.MathUtils.damp(PT.gust, PT.blowing ? 0.45 + 0.55 * s : 0, PT.blowing ? 8 : 3, dt);
+      if (PT.progress >= 100) ptClear();
+    }
+    if (now - PTV.uiAt > 70) { PTV.uiAt = now; ptUpdate(); }   // 進度條一秒更新十幾次就夠
+  } else PT.gust = THREE.MathUtils.damp(PT.gust, 0, 3, dt);
+
+  // 雲霧散開的程度：吹的時候跟著進度；今天已經雲開（或剛吹完）就全散；其他時候慢慢聚回來
+  const cleared = PT.phase === 'cleared' || (PT.phase === 'idle' && ptToday());
+  const target = PT.phase === 'blow' ? PT.progress / 100 : cleared ? 1 : 0;
+  PTV.vis = THREE.MathUtils.damp(PTV.vis, target, target > PTV.vis ? 4 : 0.9, dt);
+  PTV.bloom = cleared && PTV.vis > 0.85 ? Math.min(1, PTV.bloom + dt / 2.6) : !cleared ? Math.max(0, PTV.bloom - dt / 1.5) : PTV.bloom;
+  const u = PT3.fogM.uniforms;
+  PT3.fog.visible = PTV.vis < 0.995;
+  if (PT3.fog.visible) {
+    u.uTime.value = reduceMotion ? 0 : t;
+    u.uProg.value = PTV.vis * 1.3;   // 門檻最高約 0.92、要再走 0.32 才完全散開，所以乘 1.3
+    u.uGust.value = reduceMotion ? 0 : PT.gust;
+    renderer.getDrawingBufferSize(ptBuf);
+    u.uPx.value = ptBuf.y * 0.5 * camera.projectionMatrix.elements[5];
+    // 吹的方向：從鏡頭往島上吹（換算到島的座標）
+    ptCamDir.set(ptIsl.x - camera.position.x, 0, ptIsl.z - camera.position.z).normalize().applyAxisAngle(THREE.Object3D.DEFAULT_UP, -PT3.mark.rotation.y);
+    u.uDir.value.copy(ptCamDir);
+    u.uColor.value.copy(PT_DAY_C).lerp(PT_NIGHT_C, nightT);
+    u.uShadow.value.copy(PT_DAY_S).lerp(PT_NIGHT_S, nightT);
+  }
+  // 蓮花綻放：外圈先開、內圈慢一點；花瓣和花心漸漸發光
+  const b = PTV.bloom, eb = b * b * (3 - 2 * b), breathe = reduceMotion ? 0 : Math.sin(t * 1.6) * 0.04;
+  for (const pt of PT3.petals) pt.pm.rotation.x = pt.bud + (pt.open - pt.bud) * Math.min(1, eb * (pt.open > 1 ? 1.15 : 0.95)) + (b > 0.99 ? breathe * pt.open * 0.3 : 0);
+  PT3.lotus.scale.setScalar(0.85 + 0.25 * eb);
+  PT3.petalOut.emissiveIntensity = 0.04 + 0.42 * eb + PTV.vis * 0.06;
+  PT3.petalIn.emissiveIntensity = 0.04 + 0.55 * eb + PTV.vis * 0.06;
+  PT3.podM.emissiveIntensity = 0.05 + 0.7 * eb;
+  PT3.lotusGlow.material.opacity = eb * (0.85 + breathe * 2);
+  PT3.lotusGlow.scale.setScalar(0.1 + eb * 3.4);
+  PT3.goldM.opacity = THREE.MathUtils.smoothstep(b, 0.15, 0.9);
+  PT3.pondWater.emissiveIntensity = 0.22 + 0.35 * eb;
+  PT3.shaft.visible = eb > 0.005;
+  if (PT3.shaft.visible) { PT3.shaftM.opacity = eb * (0.28 + breathe); PT3.shaft.rotation.y = reduceMotion ? 0 : t * 0.08; }
+  PT3.motes.visible = eb > 0.005 && !reduceMotion;
+  if (PT3.motes.visible) {
+    PT3.moteM.opacity = eb * 0.9;
+    PT3.moteS.forEach((m, i) => { const k = (t * m.sp * 0.25 + m.ph) % 1; PT3.moteP.set([Math.sin(m.a + t * 0.3) * m.r * (0.6 + k * 0.4), 0.6 + k * 6.5, Math.cos(m.a + t * 0.3) * m.r * (0.6 + k * 0.4)], i * 3); });
+    PT3.moteGeo.attributes.position.needsUpdate = true;
+  }
+}
+
+/* —— 資訊卡裡的介面：固定的一塊，資訊卡重畫時搬回去，不會打斷正在吹的那一口氣 —— */
+const ptUI = document.createElement('div');
+ptUI.className = 'js-ui pt-ui';
+const PT_STEPS = ['開啟麥克風', '長吹一口氣', '雲開見日'];
+const ptStepOf = (p) => ({ perm: 0, calib: 1, blow: 1, cleared: 2 })[p];
+function ptBookHTML() {
+  const n = PT_QUOTES.filter((q) => PTS.got[q.id]).length;
+  return `<div class="bars"><h3>🪷 我的菩提冊 ${n} / ${PT_QUOTES.length}</h3><div class="js-cells">${PT_QUOTES.map((q) => PTS.got[q.id]
+    ? `<button class="js-cell on" data-pt-open="${q.id}" title="${esc(q.title)}"><b>${esc(q.title)}</b><span>${+PTS.got[q.id].slice(5, 7)}/${+PTS.got[q.id].slice(8)}</span></button>`
+    : '<span class="js-cell"><b>？</b><span>還沒拿到</span></span>').join('')}</div>
+    <p class="note">每天雲開見日一次，拿到一句金句收進菩提冊（優先拿到還沒有的那幾句）。菩提冊記在這支手機上。</p></div>`;
+}
+function ptRender() {
+  const p = PT.phase, step = ptStepOf(p), mic = PT.mode === 'mic';
+  const stepper = step == null ? '' : `<ol class="js-steps">${PT_STEPS.map((n, i) => `<li class="${i < step ? 'done' : i === step ? 'now' : ''}"><i>${i < step ? '✓' : i + 1}</i>${n}</li>`).join('')}</ol>`;
+  const cancel = '<button class="js-cancel pt-cancel" type="button">✕ 先不吹了</button>';
+  const level = '<div class="pt-level" aria-hidden="true"><i></i><b></b><em>你的吹氣聲</em></div>';
+  let h = '';
+  if (p === 'idle') {
+    const tq = ptToday(), test = ptTester && !PT_LIVE;
+    if (test) h += `<div class="bars js-test"><h3>🔧 測試模式</h3><p class="note" style="margin:0">只有這支手機看得到，其他人看到的是施工圍籬和「施工中」。測試中不限每天一次，按「開始」就會讓雲霧聚回來重吹。</p><div class="js-test-btns"><button class="pt-test-off" type="button">結束測試</button></div></div>`;
+    if (tq) h += `<div class="cta js-today"><p>今天已經雲開見日 🪷<br><b>${esc(tq.title)}</b>：「${esc(tq.quote)}」</p>
+        <button class="js-btn pt-reopen" type="button">🪷 再看一次金句</button>${test ? '<button class="js-btn pt-start" type="button">🌬️ 再吹一次（測試）</button>' : '<p class="note" style="margin:0">每天一句。明天雲霧會再聚起來，再來吹一次。</p>'}</div>`;
+    else h += `<div class="cta"><p>清淨菩提島被一層無明的雲霧蓋住了。對著${ptTouchDev() ? '手機' : '電腦'}的麥克風長吹一口氣「呼——」，把雲霧吹散，看蓮花綻放、石碑浮現金字，領一句破關金句。</p>
+        <button class="js-btn pt-start" type="button">🌬️ 開始吹散無明</button>
+        <p class="note" style="margin:0">🔒 聲音只在${ptTouchDev() ? '手機' : '電腦'}上即時分析音量，不錄音、不上傳。不方便出聲也可以改用「按住吹氣」。</p></div>`;
+    h += ptBookHTML();
+  } else if (p === 'perm') {
+    h = `${stepper}<p class="js-say">請開啟麥克風，準備吹散無明 🎙️<br>按下按鈕後，瀏覽器會問要不要允許使用麥克風，請按「允許」。</p>
+      <button class="js-btn pt-mic" type="button">🎙️ 開啟麥克風</button><p class="js-hint pt-perm-hint" aria-live="polite"></p>
+      <button class="js-mini pt-touch" type="button">不方便出聲？改用「按住吹氣」</button>
+      <p class="note" style="margin:0">🔒 只在這台裝置上即時分析音量，不錄音、不上傳；吹完會自動關掉麥克風。</p>${cancel}`;
+  } else if (p === 'calib') {
+    h = `${stepper}<p class="js-say">麥克風開好了。先別吹，聽一下周圍的聲音⋯</p>${level}${cancel}`;
+  } else if (p === 'blow') {
+    h = `${stepper}${PT.hint ? `<p class="js-hint">${esc(PT.hint)}</p>` : ''}
+      <p class="js-say">${mic ? `請對著麥克風長吹一口氣 🌬️<br>嘴巴靠近${ptTouchDev() ? '手機下緣的麥克風孔' : '電腦的麥克風（筆電通常在螢幕上緣或鍵盤旁）'}，像吹蠟燭那樣「呼——」一直吹；一口不夠，換口氣再吹。` : '按住下面的雲朵吹氣，雲霧就會被吹散；放開就停，停太久雲會慢慢聚回來。'}</p>
+      ${mic ? level : '<button class="js-pad pt-pad" type="button" data-pad="blow"><span class="js-pad-ico">🌬️</span><span>按住這裡　呼～</span></button>'}
+      <div class="js-meter pt-prog" role="progressbar" aria-label="雲霧吹散進度" aria-valuemin="0" aria-valuemax="100"><i style="width:0%"></i><em>雲霧吹散</em></div>
+      <p class="js-hint js-live" aria-live="polite"></p>
+      ${mic ? '<button class="js-mini pt-touch" type="button">吹不動？改用「按住吹氣」</button>' : ''}${cancel}`;
+  } else if (p === 'cleared') {
+    h = `${stepper}<p class="js-say">雲開了⋯⋯蓮花綻放，石碑浮現金字 ✨</p>`;
+  }
+  ptUI.innerHTML = h;
+  ptUpdate();
+}
+// 只更新進度條、音量條和提示，不重畫整塊（手指正按著雲朵時不會被打斷）
+function ptUpdate() {
+  const p = PT.phase;
+  const bar = ptUI.querySelector('.pt-prog'), lv = ptUI.querySelector('.pt-level'), live = ptUI.querySelector('.js-live'), ph = ptUI.querySelector('.pt-perm-hint');
+  if (bar) { bar.querySelector('i').style.width = PT.progress.toFixed(0) + '%'; bar.setAttribute('aria-valuenow', PT.progress.toFixed(0)); }
+  if (lv) { lv.querySelector('i').style.width = (PT.level * 100).toFixed(0) + '%'; lv.querySelector('b').style.left = (PT.gate * 100).toFixed(0) + '%'; lv.classList.toggle('on', PT.blowing); }
+  if (ph) ph.textContent = PT.hint;
+  if (live) {
+    live.textContent = p !== 'blow' ? '' : PT.blowing ? '🌬️ 吹散中⋯ 繼續吹！'
+      : PT.mode === 'mic' && PT.why === 'voice' ? '聽起來像說話聲，試試「呼——」的吹氣聲'
+      : PT.mode === 'mic' && PT.quietFor > 4 && PT.progress < 30 ? '再靠近麥克風一點，用力長長地吹'
+      : PT.progress > 0 ? '雲霧慢慢聚回來了，再吹一口！' : '';
+  }
+  const pad = ptUI.querySelector('.pt-pad'); if (pad) pad.classList.toggle('on', PT.touch);
+}
+ptUI.addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.classList.contains('pt-start')) ptStart();
+  else if (b.classList.contains('pt-mic')) ptMicOn();
+  else if (b.classList.contains('pt-touch')) { audioInit(); ptFallback('manual'); }
+  else if (b.classList.contains('pt-cancel')) { ptAbort(); select('puti'); }
+  else if (b.classList.contains('pt-reopen')) ptOpenCard(ptToday(), true);
+  else if (b.dataset.ptOpen) ptOpenCard(PT_QUOTES.find((q) => q.id === +b.dataset.ptOpen), true);
+  else if (b.classList.contains('pt-test-off')) location.href = location.pathname + '?puti=off#puti';
+});
+// 按住吹氣：手指／滑鼠按住雲朵，或鍵盤在雲朵上按住空白鍵
+const ptHold = (on) => { if (PT.phase === 'blow' && PT.mode === 'touch') { PT.touch = on; ptUpdate(); } };
+ptUI.addEventListener('pointerdown', (e) => {
+  const pad = e.target.closest('.pt-pad'); if (!pad) return;
+  e.preventDefault(); audioInit();
+  try { pad.setPointerCapture(e.pointerId); } catch (er) {}
+  ptHold(true);
+});
+for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) ptUI.addEventListener(ev, (e) => { if (e.target.closest && e.target.closest('.pt-pad')) ptHold(false); });
+ptUI.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && e.target.closest('.pt-pad')) { e.preventDefault(); if (!e.repeat) ptHold(true); } });
+ptUI.addEventListener('keyup', (e) => { if ((e.key === ' ' || e.key === 'Enter') && e.target.closest('.pt-pad')) ptHold(false); });
+ptUI.addEventListener('contextmenu', (e) => { if (e.target.closest('.pt-pad')) e.preventDefault(); });   // 手機長按不要跳出選單
+
+/* —— 破關金句：從畫面上方展開的面板 —— */
+function ptOpenCard(q, again) {
+  if (!q) return;
+  const el = $('ptCard');
+  const share = `🪷 我在全真群島・清淨菩提島吹散了雲霧，雲開見日\n「${q.quote}」——${q.title}\n一起來吹散無明：${PT_URL}`;
+  const lineUrl = ptTouchDev() ? 'https://line.me/R/share?text=' + encodeURIComponent(share)
+    : 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(PT_URL) + '&text=' + encodeURIComponent(share.split('\n')[0]);
+  $('ptBody').innerHTML = `<span class="ptc-eyebrow">🪷 雲開見日・破關金句</span>
+    <h2 id="ptTitle">${esc(q.title)}</h2>
+    <blockquote class="ptc-quote">${esc(q.quote)}</blockquote>
+    <h3>破關啟示</h3><p>${esc(q.reflection)}</p>
+    ${PT_DEMO ? '<p class="ptc-demo">示範慈語・正式慈語由道場審定後更換</p>' : ''}
+    <div class="jsc-btns"><a class="jsc-line pt-line" href="${lineUrl}" target="_blank" rel="noopener">分享到 LINE</a><button type="button" class="ptc-ok">🙏 ${again ? '收起來' : '收進菩提冊'}</button></div>`;
+  el.hidden = false;
+  requestAnimationFrame(() => requestAnimationFrame(() => { el.classList.add('on'); el.querySelector('.ptc-ok').focus({ preventScroll: true }); }));
+  if (!again) ptGc(`動作/菩提島金句：${q.title}`);
+}
+function ptCloseCard() {
+  const el = $('ptCard');
+  if (el.hidden) return;
+  el.classList.remove('on');
+  setTimeout(() => { el.hidden = true; }, 450);
+  if (badgeHoldUntil > Date.now()) { badgeHoldUntil = Date.now() + 900; if (badgeQueue.length) setTimeout(nextBadgeToast, 950); }
+}
+document.getElementById('ptCard').addEventListener('click', (e) => {
+  if (e.target.closest('.pt-line')) { ptGc('動作/菩提島金句分享LINE'); return; }
+  if (e.target.closest('.ptc-ok')) ptCloseCard();
+});
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('ptCard').hidden) ptCloseCard(); });
+
 function addTag(isl, text, cls, h, onClick = () => select(isl.key)) {
   const b = document.createElement('button');
   b.className = 'tag ' + cls;
@@ -4834,6 +5534,7 @@ addTag(newIsl, '🚧 忠恕島・施工中', 'main', 15);
 addTag(zyIsl, '🏮 中一島・凝聚晚會 11/28', 'main', 8);   // 跟忠恕島一樣用一般標籤：小標籤在手機上會藏起來
 addTag(bottleIsl, '🍾 漂流瓶島', 'small', 4.8);
 addTag(jsIsl, jsOpen ? '⛰️ 濟世靈山島・抽籤' : '🚧 濟世靈山島・施工中', 'main', 13);
+addTag(ptIsl, ptOpen ? '🪷 清淨菩提島・吹散雲霧' : '🚧 清淨菩提島・施工中', 'main', 12);
 // 登島是重要入口：渡口島的標籤排在全真島和課程島之後、其他小標籤之前
 tags.splice(1 + COURSES.length, 0, tags.pop());
 // 瞭望氣球的小標籤跟著氣球飄，點了就是搜尋
@@ -5110,6 +5811,18 @@ function renderPanel() {
       <div id="jsSlot"></div>
       <p class="note">島上分三區：前面是入口洗塵區（濟世靈山牌坊、青石板路、竹林，草堂台階前的葫蘆靈泉），中間是濟公草堂（石桌上的大籤筒和破蒲扇），右邊聖訓碑廊、左邊許願樹，後面是靈山。</p>
       <button class="back" data-go="temple">← 回到全真島</button>`;
+  } else if (isl && isl.kind === 'puti' && !ptOpen) {
+    title = '清淨菩提島'; info = '施工中・敬請期待';
+    html = `<header><span class="eyebrow">外海・施工中</span><h2>🚧 清淨菩提島</h2><p class="sub">新島正在整地施工，整座島用施工圍籬圍起來，完工後開放</p></header>
+      <p class="note">圍籬裡面整座島被一團白白的雲霧蓋住，只看得到後面的山尖和一棵大樹。聽說雲霧散開的時候會有好事發生，敬請期待。</p>
+      <button class="back" data-go="temple">← 回到全真島</button>`;
+  } else if (isl && isl.kind === 'puti') {
+    const tq = ptToday();
+    title = '清淨菩提島'; info = tq ? `今日雲開見日：${tq.title}` : '吹散無明・雲開見日';
+    html = `<header><span class="eyebrow">外海・雲開見日洲</span><h2>🪷 清淨菩提島</h2><p class="sub">對著麥克風長吹一口氣，吹散遮住靈山的雲霧</p></header>
+      <div id="ptSlot"></div>
+      <p class="note">島的中央是一座古樸的智慧石碑，碑前的蓮池裡有一朵含苞的清淨蓮花；左邊一棵菩提樹，後面一座小靈山，前面是踏石小徑和兩座石燈。雲霧散開後，蓮花綻放發光、石碑浮現金字，天上會落下一道光。</p>
+      <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongshu') {
     title = '忠恕島'; info = '施工中・敬請期待';
     html = `<header><span class="eyebrow">外海・施工中</span><h2>🚧 忠恕島</h2><p class="sub">忠恕道院正在興建，整座島用施工圍籬圍起來，完工後開放</p></header>
@@ -5194,6 +5907,8 @@ function renderPanel() {
   // 濟世靈山島的抽籤介面是固定的一塊，資訊卡重畫時搬回原位，正在搓、正在搖都不會被打斷
   const jsSlot = document.getElementById('jsSlot');
   if (jsSlot) { jsSlot.replaceWith(jsUI); if (JS.phase === 'idle') jsRender(); }
+  const ptSlot = document.getElementById('ptSlot');
+  if (ptSlot) { ptSlot.replaceWith(ptUI); if (PT.phase === 'idle') ptRender(); }
   // 已經下載好（快取）的照片不會再觸發 onload，直接顯示
   document.querySelectorAll('#panelBody .photos img').forEach((im) => { if (im.complete && im.naturalWidth) im.classList.add('ok'); });
   document.getElementById('miniTitle').textContent = title;
@@ -5462,7 +6177,7 @@ function renderNav() {
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島</span></a>
     <button class="home" data-howto><span aria-hidden="true">👆</span><span>操作說明：旋轉、平移、縮放</span></button>
-    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('hope', '🍎 希望島・祈福樹與噴泉')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${jsOpen ? navItem('jishi', '⛰️ 濟世靈山島・濟公活佛體感抽籤', JS_DAILY && jsTodayFortune() ? '今日已抽' : '') : navItem('jishi', '🚧 濟世靈山島・施工中')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
+    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('hope', '🍎 希望島・祈福樹與噴泉')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${jsOpen ? navItem('jishi', '⛰️ 濟世靈山島・濟公活佛體感抽籤', JS_DAILY && jsTodayFortune() ? '今日已抽' : '') : navItem('jishi', '🚧 濟世靈山島・施工中')}${ptOpen ? navItem('puti', '🪷 清淨菩提島・吹散無明、雲開見日', ptToday() ? '今日已雲開' : '') : navItem('puti', '🚧 清淨菩提島・施工中')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
@@ -5497,6 +6212,8 @@ const PLACES = [
   { key: 'bottle', icon: '🍾', title: '漂流瓶島', sub: '匿名留言、交換訊息的地方', words: ['漂流瓶島', '漂流瓶', '瓶中信', '留言', '交流', '匿名', '瓶子', '心聲', '建議', '許願', '點子'] },
   jsOpen ? { key: 'jishi', icon: '⛰️', title: '濟世靈山島', sub: '濟公活佛體感抽籤・每天一支修心籤', words: ['濟世靈山島', '靈山', '濟公', '活佛', '師尊', '抽籤', '籤詩', '求籤', '籤筒', '葫蘆', '靈泉', '草堂', '碑廊', '許願樹', '修心'] }
     : { key: 'jishi', icon: '🚧', title: '濟世靈山島', sub: '施工中・敬請期待', words: ['濟世靈山島', '靈山', '施工', '建置中'] },
+  ptOpen ? { key: 'puti', icon: '🪷', title: '清淨菩提島', sub: '雲開見日洲・對著麥克風吹散雲霧，每天一句破關金句', words: ['清淨菩提島', '菩提島', '菩提', '雲開見日', '雲開見日洲', '清淨', '蓮花', '石碑', '吹氣', '雲霧', '無明', '金句', '麥克風'] }
+    : { key: 'puti', icon: '🚧', title: '清淨菩提島', sub: '施工中・敬請期待', words: ['清淨菩提島', '菩提島', '菩提', '雲開見日', '施工', '建置中'] },
   { key: 'newisle', icon: '🚧', title: '忠恕島', sub: '忠恕道院・施工中', words: ['忠恕島', '忠恕道院', '忠恕', '大殿', '施工', '建置中'] },
   { key: 'zhongyi', icon: '🏮', title: '中一島', sub: '中一堂・全真青年凝聚晚會 11/28', words: ['中一島', '中一堂', '中一', '忠恕道場', '凝聚晚會', '晚會', '烤肉', '烤盤', '住宿', '青年'] },
   { key: 'hope', icon: '🍎', title: '希望島', sub: '祈福樹與噴泉', words: ['希望島', '希望', '祈福樹', '祈福', '蘋果', '噴泉', '許願'] },
@@ -6064,6 +6781,8 @@ const BADGES = [
   { id: 'fountain', e: '⛲', n: '噴泉噴高高', c: '祈福後看到噴泉噴高高', bc: '#3a9ab8' },
   { id: 'jishi_draw', e: '🎋', n: '第一支籤', c: '在濟世靈山島淨手、參拜、搖籤，抽出第一支籤', bc: '#6f8f3a', hidden: !jsOpen },
   { id: 'jishi_all', e: '📜', n: '籤冊集滿', c: '濟世靈山島的每一支籤都抽過（每天一支）', bc: '#8a5a2b', hidden: !jsOpen },
+  { id: 'puti_clear', e: '🪷', n: '雲開見日', c: '在清淨菩提島吹散雲霧，看見蓮花綻放', bc: '#c86a8a', hidden: !ptOpen },
+  { id: 'puti_all', e: '📿', n: '菩提冊集滿', c: '清淨菩提島的每一句金句都收進菩提冊（每天一句）', bc: '#b07a2a', hidden: !ptOpen },
   { id: 'joined', e: '🛶', n: '登島成功', c: '用「我要登島」報名，並確認已登島', bc: '#c0503f' },
   { id: 'visitor', e: '👀', n: '先來看看', c: '用「我要觀摩」上岸當旅人', bc: '#1d8a5f' },
   // 🌙 時間與日常
@@ -6577,6 +7296,11 @@ const ISLE_SFX = {
     for (let i = 0; i < 4; i++) ping(t + 0.3 + i * 0.22 + Math.random() * 0.1, o, 1300 + Math.random() * 1200, 0.022 * v, 0.25);
     if (Math.random() < 0.5) for (const d of [1.4, 1.5]) noiseHit(t + d, o, { f: 2400, q: 8, peak: 0.05 * v, attack: 0.002, dur: 0.05 });
   } },
+  // 清淨菩提島：一陣輕輕的風，接幾聲風鈴
+  puti: { every: [5, 9], play(t, o, v) {
+    noiseHit(t, o, { type: 'lowpass', f: 700, peak: 0.035 * v, attack: 0.9, dur: 2.2 });
+    [2093, 2637, 3136, 2349].forEach((f, i) => { if (Math.random() < 0.75) bell(t + 0.6 + i * 0.28 + Math.random() * 0.1, o, f, 0.018 * v, 1.6, [[1, 1], [2.4, 0.25]]); });
+  } },
   bottle: { every: [4, 7], play(t, o, v) {
     for (const d of [0, 0.18]) bell(t + d, o, 2800 + Math.random() * 600, 0.025 * v, 0.6, [[1, 1], [2.4, 0.3]]);
     noiseHit(t + 0.4, o, { type: 'lowpass', f: 650, peak: 0.04 * v, attack: 0.5, dur: 1.6 });
@@ -6698,7 +7422,7 @@ const ISLE_SFX = {
   } },
 };
 // 每座島對到哪一種音效
-const ISLE_MARK = { temple: 'temple', dock: 'dock', yoga: 'yoga', bottle: 'bottle', jishi: 'jishi' };
+const ISLE_MARK = { temple: 'temple', dock: 'dock', yoga: 'yoga', bottle: 'bottle', jishi: 'jishi', puti: 'puti' };
 COURSES.forEach((c) => { ISLE_MARK[c.key] = c.mark; if (c.pm) ISLE_MARK[c.pm.key] = c.pm.mark; });
 CADRE.forEach((o) => { ISLE_MARK[o.key] = o.mark; });
 const isleNext = {};
@@ -6818,9 +7542,11 @@ function audioTick() {
   if (SND.nextNote < now - 1) SND.nextNote = now;
   // 鏡頭拉近時環境音大一點，拉遠時小一點
   const near = THREE.MathUtils.clamp(1.5 - camera.position.distanceTo(controls.target) / 200, 0.35, 1);
-  SND.sfxBus.gain.setTargetAtTime(SND.sfx ? 0.9 * near : 0, now, 0.4);
-  SND.trainBus.gain.setTargetAtTime(SND.sfx ? 1 : 0, now, 0.3);
-  SND.musicBus.gain.setTargetAtTime(SND.music ? 0.8 : 0, now, 0.6);
+  // 清淨菩提島開麥克風吹氣時，背景音樂和音效都先淡出：喇叭的聲音會被麥克風收進去，干擾吹氣判斷
+  const duck = PT.duck ? 0 : 1;
+  SND.sfxBus.gain.setTargetAtTime(SND.sfx ? 0.9 * near * duck : 0, now, 0.4);
+  SND.trainBus.gain.setTargetAtTime(SND.sfx ? duck : 0, now, 0.3);
+  SND.musicBus.gain.setTargetAtTime(SND.music ? 0.8 * duck : 0, now, 0.6);
   // 音效：高鐵呼嘯而過＋鏡頭所在那座島的特色音效；海浪、鳥叫蟲鳴這類一直響的背景聲都不放
   if (SND.sfx) {
     for (const tr of trains) trainSound(tr, now);
@@ -7108,6 +7834,7 @@ function tick() {
   watchFps(t, rawDt);
   if (++frameN % (MOBILE ? 3 : 1) === 0) renderer.shadowMap.needsUpdate = true;
   if (!reduceMotion) for (const a of animators) a(t);
+  ptTick(t, dt);
   audioTick();
   updateHighlight(t);
 
