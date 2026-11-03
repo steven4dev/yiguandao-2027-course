@@ -602,7 +602,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261103.03</span>
+  <span class="ver">v261103.04</span>
   </div></div>
 </div>
 
@@ -4046,8 +4046,9 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
   animators.push((t) => { hg.rotation.z = Math.sin(t * 1.3) * 0.06; hg.rotation.x = Math.sin(t * 0.9 + 1) * 0.03; });
   // 石桌、四個石鼓凳
   mesh(new THREE.CylinderGeometry(0.42, 0.6, TABLE - PLAT - 0.14, 14), stoneM, 0, PLAT + (TABLE - PLAT - 0.14) / 2, 0, HALL);
-  mesh(new THREE.CylinderGeometry(1.35, 1.35, 0.16, 26), stoneM3, 0, TABLE - 0.08, 0, HALL);
-  for (let i = 0; i < 4; i++) { const a = Math.PI / 4 + (i * Math.PI) / 2; mesh(new THREE.CylinderGeometry(0.34, 0.38, 0.5, 12), stoneM, Math.sin(a) * 2.1, PLAT + 0.25, Math.cos(a) * 2.1, HALL); }
+  const TABLE_R = 1.7;   // 石桌放大一點，倒出來的籤躺得下
+  mesh(new THREE.CylinderGeometry(TABLE_R, TABLE_R, 0.16, 30), stoneM3, 0, TABLE - 0.08, 0, HALL);
+  for (let i = 0; i < 4; i++) { const a = Math.PI / 4 + (i * Math.PI) / 2; mesh(new THREE.CylinderGeometry(0.34, 0.38, 0.5, 12), stoneM, Math.sin(a) * 2.4, PLAT + 0.25, Math.cos(a) * 2.4, HALL); }
   // 香爐：台階前一個三腳小鼎
   const urn = new THREE.Group(); urn.position.set(0, 0, 4.05); HALL.add(urn);
   mesh(new THREE.CylinderGeometry(0.42, 0.32, 0.42, 14), lam('#8a6a3a'), 0, 0.55, 0, urn);
@@ -4055,7 +4056,12 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
   for (const dx of [-0.1, 0, 0.1]) mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.55, 4), redM, dx, 0.98, 0, urn, false);
 
   // 大籤筒（會跟著手機動作傾斜、抖動）
-  const TUBE = new THREE.Group(); TUBE.position.set(-0.15, TABLE, 0.1); TUBE.userData.noMerge = true; HALL.add(TUBE);
+  // 支點在籤筒「前緣底邊」：往前倒時後半部翹起來、前緣一直貼著桌面，不會沉進石桌（像真的籤筒翹起來倒）
+  // 籤筒放在石桌偏後面，倒出來的籤才會落在桌面上
+  const TUBE_Z = -0.45, TUBE_EDGE = 0.42 * 0.92;
+  const TUBE_PIV = new THREE.Group(); TUBE_PIV.position.set(-0.15, TABLE, TUBE_Z + TUBE_EDGE); TUBE_PIV.userData.noMerge = true; HALL.add(TUBE_PIV);
+  const TUBE = new THREE.Group(); TUBE.position.set(0, 0, -TUBE_EDGE); TUBE.userData.noMerge = true; TUBE_PIV.add(TUBE);
+  Object.assign(JS3, { tubePiv: TUBE_PIV, tubePZ: TUBE_Z + TUBE_EDGE, tubeEdge: TUBE_EDGE, PLAT });
   const TUBE_H = 1.25, TUBE_R = 0.42;
   const tubeM = lam('#9a6337'), bandM = lam('#d9a85a');
   mesh(new THREE.CylinderGeometry(TUBE_R, TUBE_R * 0.92, TUBE_H, 22, 1, true), new THREE.MeshLambertMaterial({ color: '#9a6337', side: THREE.DoubleSide }), 0, TUBE_H / 2, 0, TUBE);
@@ -4064,19 +4070,21 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
   const tubeTex = canvasTex(128, 256, (c) => { c.fillStyle = '#9a6337'; c.fillRect(0, 0, 128, 256); c.fillStyle = '#f2d39a'; c.font = 'bold 64px "LXGW WenKai TC", "Noto Serif TC", serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('靈', 64, 80); c.fillText('籤', 64, 170); });
   const label = mesh(new THREE.PlaneGeometry(0.32, 0.64), new THREE.MeshLambertMaterial({ map: tubeTex, transparent: true }), 0, 0.62, TUBE_R * 0.97 + 0.01, TUBE, false);
   label.userData.noMerge = true;
-  const stickGeo = new THREE.BoxGeometry(0.05, 1.5, 0.014), stickM = lam('#e2c48c'), stickTip = lam('#c0503f');
+  const STICK_L = 1.3;   // 竹籤長度：露出筒口一小截
+  const stickGeo = new THREE.BoxGeometry(0.05, STICK_L, 0.014), stickM = lam('#e2c48c'), stickTip = lam('#c0503f');
   const tipGeo = new THREE.BoxGeometry(0.052, 0.16, 0.016);
   const STICKS = Array.from({ length: 22 }, (_, i) => {
     const r = Math.sqrt(hsh(i + 1)) * (TUBE_R - 0.08), a = hsh(i + 7) * Math.PI * 2;
-    const s = new THREE.Group(); s.userData = { noMerge: true, x: Math.cos(a) * r, z: Math.sin(a) * r, y: 0.72 + hsh(i + 13) * 0.14, tx: (hsh(i + 21) - 0.5) * 0.2, tz: (hsh(i + 29) - 0.5) * 0.2, ph: hsh(i + 37) * 6.28 };
-    mesh(stickGeo, stickM, 0, 0, 0, s, false); mesh(tipGeo, stickTip, 0, 0.68, 0, s, false);
+    const s = new THREE.Group(); s.userData = { noMerge: true, x: Math.cos(a) * r, z: Math.sin(a) * r, y: 0.82 + hsh(i + 13) * 0.14, tx: (hsh(i + 21) - 0.5) * 0.2, tz: (hsh(i + 29) - 0.5) * 0.2, ph: hsh(i + 37) * 6.28 };
+    mesh(stickGeo, stickM, 0, 0, 0, s, false); mesh(tipGeo, stickTip, 0, STICK_L / 2 - 0.07, 0, s, false);
     TUBE.add(s);
     return s;
   });
   // 被抽中的那一支：先在籤筒裡往上滑出來，再換到草堂座標系落到石桌上
   const chosen = new THREE.Group(); chosen.visible = false; chosen.userData.noMerge = true;
-  mesh(new THREE.BoxGeometry(0.06, 1.5, 0.018), lam('#f0d49a', { emissive: '#b8860b', emissiveIntensity: 0.35 }), 0, 0, 0, chosen, false);
-  mesh(new THREE.BoxGeometry(0.062, 0.18, 0.02), redM, 0, 0.68, 0, chosen, false);
+  mesh(new THREE.BoxGeometry(0.06, STICK_L, 0.018), lam('#f0d49a', { emissive: '#b8860b', emissiveIntensity: 0.35 }), 0, 0, 0, chosen, false);
+  mesh(new THREE.BoxGeometry(0.062, 0.18, 0.02), redM, 0, STICK_L / 2 - 0.08, 0, chosen, false);
+  Object.assign(JS3, { STICK_L, TABLE_R });
   TUBE.add(chosen);
   const fallen = chosen.clone(); fallen.visible = false; fallen.userData.noMerge = true; HALL.add(fallen);
   // 破蒲扇：蒲葵葉做的扇子——上寬下窄的葉形扇面、一條條從手把放射出去的葉脈、外圈包邊；
@@ -4469,8 +4477,8 @@ function jsDraw() {
   JS3.drawT = performance.now();
   jsDrawSound(); jsVibrate([60, 40, 120], true);
   jsSet('drawn');
-  // 竹籤落到石桌上之後展開卷軸（3D 動畫會呼叫 jsLanded；萬一沒呼叫，3.2 秒後也會展開）
-  clearTimeout(jsDraw.tm); jsDraw.tm = setTimeout(jsLanded, 3200);
+  // 竹籤落到石桌上之後展開卷軸（3D 動畫會呼叫 jsLanded；萬一沒呼叫，7 秒後也會展開）
+  clearTimeout(jsDraw.tm); jsDraw.tm = setTimeout(jsLanded, 7000);
 }
 function jsLanded() {
   clearTimeout(jsDraw.tm);
@@ -4668,20 +4676,23 @@ animators.push(() => {
 
 /* —— 3D：籤筒跟著手機動作 —— */
 animators.push((t) => {
-  const T = JS3.tube; if (!T) return;
-  const now = performance.now(), dtF = 1 / 60, p = JS.phase;
-  // 1. 傾角：參拜時跟著點頭，出籤時跟著手機往前倒（往鏡頭那一側倒）
+  const T = JS3.tubePiv; if (!T) return;
+  // 用實際經過的時間算動畫（手機卡頓時也一樣快，不會倒得特別慢）
+  const now = performance.now(), dtF = Math.min(0.1, Math.max(0.001, t - (JS3.lastAnimT ?? t - 1 / 60))), p = JS.phase;
+  JS3.lastAnimT = t;
+  // 1. 傾角：參拜時跟著點頭，出籤時跟著手機往前倒（往鏡頭那一側倒）；只往前倒，支點在前緣底邊
   let tilt = 0;
   if (p === 'bow') tilt = JL.bowLean * 0.4;
-  if (p === 'pour') tilt = JL.pourLean * 1.0;
-  if (p === 'drawn') tilt = 0.6;
+  if (p === 'pour') tilt = JL.pourLean * 0.6;   // 手機倒到底時籤筒倒 35° 左右，跟出籤時一樣
+  if (p === 'drawn') tilt = 0.6;   // 倒 35° 左右：竹籤滑出來時重心還在桌面上方，不會一出來就翻出桌外
   if (p === 'idle' && JS3.drawT && now - JS3.drawT < 6000) tilt = 0.6 * Math.min(1, Math.max(0, 1 - (now - JS3.drawT - 4000) / 2000));
-  T.rotation.x = THREE.MathUtils.damp(T.rotation.x, tilt, 6, dtF);
-  // 2. 搖晃能量：籤筒抖動；破蒲扇跟著搧
+  T.rotation.x = THREE.MathUtils.damp(T.rotation.x, Math.max(0, tilt), 6, dtF);
+  // 2. 搖晃能量：籤筒左右晃；晃的時候整個籤筒被抬起一點，底緣不會沉進桌面
   const e = p === 'shake' ? JL.energy : 0;
-  T.position.x = -0.15 + Math.sin(t * 37) * 0.05 * e;
-  T.position.z = 0.1 + Math.cos(t * 29) * 0.04 * e;
   T.rotation.z = THREE.MathUtils.damp(T.rotation.z, Math.sin(t * 31) * 0.16 * e, 20, dtF);
+  T.position.x = -0.15 + Math.sin(t * 37) * 0.05 * e;
+  T.position.z = JS3.tubePZ + Math.cos(t * 29) * 0.04 * e;
+  T.position.y = JS3.TABLE + JS3.tubeEdge * Math.abs(Math.sin(T.rotation.z)) + 0.04 * e;
   JS3.fan.rotation.z = JS3.fanLean + Math.sin(t * (1.2 + e * 14)) * (0.03 + e * 0.15);   // 擺幅收小，搧的時候不會碰到籤筒
   // 叩首時籤筒閃一下金光
   const flash = JS3.bowFlash ? Math.exp(-(now - JS3.bowFlash) / 300) : 0;
@@ -4693,33 +4704,75 @@ animators.push((t) => {
     s.position.set(u.x, u.y + Math.max(0, jump), u.z);
     s.rotation.set(u.tx + e * Math.sin(t * 19 + u.ph) * 0.15, 0, u.tz);
   });
-  // 4. 出籤：先從筒口滑出來，再脫離籤筒落到石桌上彈一下
-  const c = JS3.chosen, f = JS3.fallen, A = JS3.anim || (JS3.anim = { st: 'idle', v: new THREE.Vector3(), spin: 0 });
-  if (p === 'drawn' && A.st === 'idle') Object.assign(A, { st: 'slide', t0: now });
+  // 4. 出籤：先順著筒身從筒口滑出來，離開筒口後當成一根真的棍子掉下來（兩端各自受重力、碰撞，中間用固定長度連著），
+  //    碰到石桌會反彈、摩擦、慢慢躺平；萬一滑出桌外，就落在草堂的地板上，不會穿過任何東西
+  const c = JS3.chosen, f = JS3.fallen, A = JS3.anim || (JS3.anim = { st: 'idle' });
+  // 依實際經過的時間算（畫面卡頓時也一樣快），再切成每步 1/120 秒的小步，碰撞才不會漏掉
+  const dt = Math.min(0.1, Math.max(1 / 240, t - (A.lastT ?? t - 1 / 60))); A.lastT = t;
+  if (p === 'drawn' && A.st === 'idle' && Math.abs(T.rotation.x - 0.6) < 0.04) Object.assign(A, { st: 'slide', t0: now });   // 籤筒倒定了，籤才開始滑出來
   if (A.st === 'slide') {
     c.visible = true;
-    const k = Math.min(1, (now - A.t0) / 700);
-    c.position.set(0, 0.8 + k * 0.85, 0.05);
+    const k = Math.min(1, (now - A.t0) / 800), ek = k * k;   // 越滑越快
+    c.position.set(0, 0.9 + ek * (JS3.TUBE_H + JS3.STICK_L / 2 - 0.9), 0);   // 滑到下端剛好離開筒口
     if (k >= 1) {
       c.updateWorldMatrix(true, false);
-      const wp = c.getWorldPosition(new THREE.Vector3()), wq = c.getWorldQuaternion(new THREE.Quaternion());
-      JS3.hall.worldToLocal(f.position.copy(wp));
-      const hq = JS3.hall.getWorldQuaternion(new THREE.Quaternion()).invert();
-      f.quaternion.copy(hq.multiply(wq));
-      A.v.set(0, 0.5, -0.3); A.spin = 4; A.st = 'fall';   // 輕輕往石桌中間落
+      const lo = JS3.hall.worldToLocal(c.localToWorld(new THREE.Vector3(0, -JS3.STICK_L / 2, 0))), hi = JS3.hall.worldToLocal(c.localToWorld(new THREE.Vector3(0, JS3.STICK_L / 2, 0)));
+      const v = hi.clone().sub(lo).normalize().multiplyScalar(0.5 / 120);   // 離開筒口時順著筒身方向的速度（每一小步 1/120 秒）
+      const side = new THREE.Vector3((Math.random() < 0.5 ? -1 : 1) * (0.25 + Math.random() * 0.2) / 120, 0, 0);   // 籤頭往旁邊偏一點，斜斜躺在桌上
+      Object.assign(A, { st: 'fall', P: [lo, hi], Q: [lo.clone().sub(v), hi.clone().sub(v).sub(side)], still: 0, simT: 0, acc: 0 });
       c.visible = false; f.visible = true;
     }
-  } else if (A.st === 'fall') {
-    A.v.y -= 9.8 * dtF; f.position.addScaledVector(A.v, dtF); f.rotateX(A.spin * dtF);
-    const rest = JS3.TABLE + 0.03;
-    if (f.position.y <= rest && Math.hypot(f.position.x, f.position.z) < 1.3) {
-      f.position.y = rest;
-      if (Math.abs(A.v.y) > 0.9) { A.v.y *= -0.3; A.v.z *= 0.4; A.spin *= 0.4; jsClack(0.4); }
-      else { A.st = 'rest'; f.position.set(0.15, rest, 0.85); f.rotation.set(0, 0.25, Math.PI / 2); jsLanded(); }   // 橫躺在籤筒前面
-    } else if (f.position.y < JS3.TABLE - 0.6) { A.st = 'rest'; jsLanded(); }
   }
-  // 抽完一陣子（或重新開始）把落下的籤收回籤筒
-  if (A.st === 'rest' && p === 'idle' && now - (JS3.drawT || 0) > 9000) { A.st = 'idle'; f.visible = false; c.visible = false; JS3.drawT = 0; }
+  if (A.st === 'fall') {
+    const L = JS3.STICK_L, TOP = JS3.TABLE + 0.012, RT = JS3.TABLE_R - 0.02, FLOOR = JS3.PLAT + 0.012;
+    let touching = false;
+    const ground = (x, z) => (Math.hypot(x, z) < RT ? TOP : FLOOR);
+    const h = 1 / 120;
+    A.acc += dt;
+    for (; A.acc >= h; A.acc -= h) {
+      A.simT += h;
+      for (let i = 0; i < 2; i++) {   // Verlet：位置 + 速度（現在減上一刻）+ 重力
+        const P = A.P[i], Q = A.Q[i], nx = P.x + (P.x - Q.x) * 0.998, ny = P.y + (P.y - Q.y) * 0.998 - 9.8 * h * h, nz = P.z + (P.z - Q.z) * 0.998;
+        Q.copy(P); P.set(nx, ny, nz);
+      }
+      for (let it = 0; it < 4; it++) {
+        // 長度固定
+        const d = A.P[1].clone().sub(A.P[0]), len = d.length() || 1, corr = d.multiplyScalar((len - L) / len / 2);
+        A.P[0].add(corr); A.P[1].sub(corr);
+        // 兩端碰撞
+        for (let i = 0; i < 2; i++) {
+          const P = A.P[i], Q = A.Q[i], g = ground(P.x, P.z);
+          if (P.y >= g) continue;
+          touching = true;
+          if (g === TOP && Q.y < TOP - 0.02) {   // 從桌子側面撞過來：往外推出桌緣
+            const r = Math.hypot(P.x, P.z) || 1; P.x *= (RT + 0.01) / r; P.z *= (RT + 0.01) / r;
+          } else {
+            const vy = P.y - Q.y, vx = P.x - Q.x, vz = P.z - Q.z;
+            P.y = g;
+            Q.y = P.y + vy * 0.25;                    // 反彈 25%
+            Q.x = P.x - vx * 0.55; Q.z = P.z - vz * 0.55;   // 摩擦
+            if (vy < -0.025 && now - (A.clackAt || 0) > 120) { A.clackAt = now; jsClack(Math.min(0.6, -vy * 6)); }
+          }
+        }
+        // 整根籤身沿線檢查九個點：哪一點壓進桌面（包括卡在桌緣），就把兩端依槓桿比例往上撐
+        for (let k = 1; k < 8; k++) {
+          const sk = k / 8, x = A.P[0].x + (A.P[1].x - A.P[0].x) * sk, z = A.P[0].z + (A.P[1].z - A.P[0].z) * sk, y = A.P[0].y + (A.P[1].y - A.P[0].y) * sk;
+          if (Math.hypot(x, z) >= RT || y >= TOP) continue;
+          touching = true;
+          const pen = TOP - y, w0 = 1 - sk, w1 = sk, n = w0 * w0 + w1 * w1;
+          A.P[0].y += (pen * w0) / n; A.P[1].y += (pen * w1) / n;
+          for (let i = 0; i < 2; i++) { const P = A.P[i], Q = A.Q[i], fr = i ? w1 : w0; Q.x = P.x - (P.x - Q.x) * (1 - 0.5 * fr); Q.z = P.z - (P.z - Q.z) * (1 - 0.5 * fr); }   // 壓在桌面、桌緣上也有摩擦
+        }
+      }
+    }
+    const a = A.P[0], b = A.P[1], dir = b.clone().sub(a).normalize();
+    f.position.copy(a).add(b).multiplyScalar(0.5);
+    f.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+    const sp = Math.max(a.distanceTo(A.Q[0]), b.distanceTo(A.Q[1])) * 120;
+    A.still = sp < 0.05 && touching ? A.still + dt : 0;
+    if (A.still > 0.5 || A.simT > 5) { A.st = 'rest'; jsLanded(); }   // 碰著桌面或地板、靜止 0.5 秒才算落定（物理最多算 5 秒，用模擬時間算，手機卡也不會停在半空中）
+  }
+  // 落下的籤一直躺在桌上，下一次開始淨手時才收回籤筒
   if (p === 'purify' && A.st !== 'idle') { A.st = 'idle'; f.visible = false; c.visible = false; }
 });
 // 碑廊石碑、許願樹木牌：抽過的籤亮起來
