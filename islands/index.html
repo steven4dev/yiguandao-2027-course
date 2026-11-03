@@ -602,7 +602,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261103.02</span>
+  <span class="ver">v261103.03</span>
   </div></div>
 </div>
 
@@ -3951,26 +3951,48 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
   mesh(new THREE.TorusGeometry(1.2, 0.09, 6, 26), stoneM3, 0, 0.56, 0, SP).rotation.x = Math.PI / 2;
   const springWaterM = new THREE.MeshLambertMaterial({ color: '#8fd3ee', emissive: '#2a6f8a', emissiveIntensity: 0.25 });
   mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.04, 22), springWaterM, 0, 0.54, 0, SP, false);
-  const rock = mesh(new THREE.DodecahedronGeometry(0.95, 0), stoneM, 0.85, 0.55, -0.85, SP); rock.scale.set(1.05, 0.85, 1);
-  // 葫蘆：底下大圓、上面小圓、腰上綁紅繩；整顆斜躺，葫蘆口正好在石盆中間的上方
-  const GY = new THREE.Group(); GY.position.set(0.75, 1.42, -0.75); GY.rotation.y = Math.PI / 4; SP.add(GY);
-  const GZ = new THREE.Group(); GZ.rotation.z = 1.15; GY.add(GZ);
+  // 大石頭墊高，葫蘆橫躺在石頭頂上（重心在石頭正上方），葫蘆口朝石盆、略微朝下
+  const rock = mesh(new THREE.DodecahedronGeometry(0.95, 0), stoneM, 0.85, 0.8, -0.85, SP); rock.scale.set(1.05, 1.12, 1);
+  const GY = new THREE.Group(); GY.position.set(0.75, 2.25, -0.75); GY.rotation.y = Math.PI / 4; SP.add(GY);
+  const GZ = new THREE.Group(); GZ.rotation.z = 1.62; GY.add(GZ);
   mesh(new THREE.SphereGeometry(0.56, 18, 14), gourdM, 0, 0, 0, GZ);
   mesh(new THREE.SphereGeometry(0.38, 16, 12), gourdM, 0, 0.66, 0, GZ);
   mesh(new THREE.TorusGeometry(0.2, 0.05, 6, 16), redM, 0, 0.4, 0, GZ, false).rotation.x = Math.PI / 2;
   mesh(new THREE.CylinderGeometry(0.1, 0.14, 0.3, 10), gourdM, 0, 1.05, 0, GZ);
   mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.06, 10), lam('#7a5236'), 0, 1.22, 0, GZ, false);
+  // 泉水：從葫蘆口沿著葫蘆的方向流出來，受重力畫出拋物線落進石盆；淨手時水量變大、流速變快，落點跟著往外
+  const toSP = (v) => v.clone().applyEuler(GZ.rotation).applyEuler(GY.rotation);
+  const MOUTH = toSP(new THREE.Vector3(0, 1.25, 0)).add(GY.position), JET = toSP(new THREE.Vector3(0, 1, 0)).normalize();
+  const WATER_Y = 0.56, GRAV = 9.8;
+  const fallT = (v) => { const vy = JET.y * v, h = MOUTH.y - WATER_Y; return (vy + Math.sqrt(vy * vy + 2 * GRAV * h)) / GRAV; };
+  const jetAt = (v, t, out = new THREE.Vector3()) => out.copy(MOUTH).addScaledVector(JET, v * t).setY(MOUTH.y + JET.y * v * t - 0.5 * GRAV * t * t);
   const streamM = new THREE.MeshLambertMaterial({ color: '#cfeefa', emissive: '#5fb6d6', emissiveIntensity: 0.35, transparent: true, opacity: 0.85 });
-  const stream = mesh(new THREE.CylinderGeometry(0.05, 0.08, 1.4, 8), streamM, 0, 1.25, 0, SP, false);
-  stream.userData.noMerge = true;
+  const stream = new THREE.Mesh(new THREE.BufferGeometry(), streamM); stream.userData.noMerge = true; SP.add(stream);
+  let streamKey = '';
+  const LAND = new THREE.Vector3();
+  function buildStream(v, r) {
+    const key = v.toFixed(2) + '|' + r.toFixed(3);
+    if (key === streamKey) return;
+    streamKey = key;
+    const T = fallT(v), pts = Array.from({ length: 16 }, (_, i) => jetAt(v, (T * i) / 15));
+    stream.geometry.dispose();
+    stream.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, r, 6);
+    LAND.copy(pts[15]);
+  }
+  buildStream(0.9, 0.045);
   const dropGeo = new THREE.SphereGeometry(0.05, 6, 5);
+  // 水珠：一顆顆沿著同一條拋物線往下流（看得出水在動），落水的地方再濺起一圈小水花
+  const beads = Array.from({ length: 6 }, (_, i) => { const d = mesh(dropGeo, streamM, 0, 0, 0, SP, false); d.userData = { noMerge: true, ph: i / 6 }; return d; });
   const sDrops = Array.from({ length: 10 }, (_, i) => { const d = mesh(dropGeo, streamM, 0, 0.6, 0, SP, false); d.userData = { noMerge: true, a: i * 0.63, ph: i / 10 }; return d; });
   const ringM = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false });
-  const ripples = Array.from({ length: 4 }, (_, i) => { const r = mesh(new THREE.TorusGeometry(1, 0.025, 4, 32), ringM.clone(), 0, 0.58, 0, SP, false); r.rotation.x = Math.PI / 2; r.userData = { noMerge: true, ph: i / 4 }; return r; });
-  // 竹勺擱在石盆邊上
-  const ladle = new THREE.Group(); ladle.position.set(-0.9, 0.62, 0.55); ladle.rotation.y = 0.6; SP.add(ladle);
-  mesh(new THREE.CylinderGeometry(0.16, 0.14, 0.22, 10), bambooM, 0, 0.06, 0, ladle);
-  const handle = mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.3, 6), bambooM2, 0.6, 0.12, 0, ladle); handle.rotation.z = Math.PI / 2 - 0.12;
+  const ripples = Array.from({ length: 4 }, (_, i) => { const r = mesh(new THREE.TorusGeometry(1, 0.022, 4, 32), ringM.clone(), 0, 0.58, 0, SP, false); r.rotation.x = Math.PI / 2; r.userData = { noMerge: true, ph: i / 4 }; return r; });
+  // 竹勺橫擱在石盆邊上：勺子在盆裡、勺柄壓在盆緣上往外伸（盆緣當支點，勺子那頭比較重）
+  const LA = Math.atan2(0.95, 0.3);   // 盆緣右邊（水是往左前方流，不會淋在勺子上）
+  const ladle = new THREE.Group(); ladle.rotation.y = LA; SP.add(ladle);   // 這個群組的 +z 指向盆外
+  mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.2, 10), bambooM, 0, 0.66, 0.82, ladle);
+  const LH0 = new THREE.Vector3(0, 0.66, 0.9), LH1 = new THREE.Vector3(0, 0.73, 1.85);   // 勺柄：從勺子邊越過盆緣頂（半徑 1.2、高 0.65）往外
+  const handle = mesh(new THREE.CylinderGeometry(0.03, 0.03, LH0.distanceTo(LH1), 6), bambooM2, 0, (LH0.y + LH1.y) / 2, (LH0.z + LH1.z) / 2, ladle);
+  handle.rotation.x = Math.PI / 2 - Math.atan2(LH1.y - LH0.y, LH1.z - LH0.z);
   // 小木牌「葫蘆靈泉」
   mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.1, 6), trunkMat, -1.6, 0.55, 1.15, SP);
   const sp1 = faceBox(1.25, 0.42, 0.06, lam(C.wood), plaque('葫蘆靈泉', 320, 108, { bg: '#c89a6a', fg: '#3f2c22', font: 60 })); sp1.position.set(-1.6, 1.12, 1.19); SP.add(sp1);
@@ -3978,15 +4000,22 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
   JS3.purify = 0;   // 淨手進度 0~1：水流變大、水面發亮
   animators.push((t) => {
     const p = JS3.purify, flow = 1 + p * 1.6 + (JS3.rubbing ? 0.6 : 0);
-    stream.scale.set(flow, 1, flow);
+    // 水量越大，流速越快（落點往外）、水柱越粗；速度取 0.05 一級，不用每一幀重建水柱
+    const v = Math.round((0.9 + p * 0.3 + (JS3.rubbing ? 0.08 : 0)) * 20) / 20;
+    buildStream(v, 0.035 + 0.012 * flow);
     springWaterM.emissiveIntensity = 0.25 + p * 0.55 + (JS3.rubbing ? 0.15 : 0);
+    const T = fallT(v);
+    for (const d of beads) jetAt(v, ((t * 1.6 + d.userData.ph) % 1) * T, d.position);
     for (const d of sDrops) {
-      const k = (t * 1.1 + d.userData.ph) % 1, r = 0.15 + k * (0.5 + p * 0.5);
-      d.position.set(Math.sin(d.userData.a) * r, 0.62 + Math.sin(k * Math.PI) * (0.25 + p * 0.3), Math.cos(d.userData.a) * r);
+      const k = (t * 1.1 + d.userData.ph) % 1, r = 0.05 + k * (0.18 + p * 0.12);
+      d.position.set(LAND.x + Math.sin(d.userData.a) * r, WATER_Y + 0.04 + Math.sin(k * Math.PI) * (0.14 + p * 0.12), LAND.z + Math.cos(d.userData.a) * r);
     }
+    // 漣漪從落水點擴散，最大不超出石盆
+    const maxR = Math.max(0.15, 1.06 - Math.hypot(LAND.x, LAND.z));
     for (const r of ripples) {
       const k = (t * (0.35 + p * 0.5 + (JS3.rubbing ? 0.5 : 0)) + r.userData.ph) % 1;
-      r.scale.setScalar(0.15 + k * 0.9);
+      r.position.set(LAND.x, WATER_Y + 0.02, LAND.z);
+      r.scale.setScalar(0.06 + k * maxR);
       r.material.opacity = (0.25 + p * 0.5) * (1 - k);
     }
   });
@@ -4007,10 +4036,14 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
   const roof2 = mesh(new THREE.ConeGeometry(3.2, 1.5, 4, 1), strawM2, 0, PLAT + POST + 0.1 + 1.9, 0, HALL); roof2.rotation.y = Math.PI / 4; roof2.scale.set(1, 1, 0.84);
   mesh(new THREE.SphereGeometry(0.26, 10, 8), strawM2, 0, PLAT + POST + 0.1 + 2.62, 0, HALL);
   const hp = faceBox(2.4, 0.6, 0.08, lam('#3f2c22'), plaque('濟公草堂', 512, 128, { font: 76 })); hp.position.set(0, PLAT + POST - 0.48, 2.62); HALL.add(hp);
-  // 柱子上掛一個小葫蘆
-  const hg = new THREE.Group(); hg.position.set(-3.0, PLAT + POST - 0.95, 2.62); HALL.add(hg);
-  mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.4, 4), redM, 0, 0.32, 0, hg, false);
-  mesh(new THREE.SphereGeometry(0.2, 12, 10), gourdM, 0, -0.05, 0, hg); mesh(new THREE.SphereGeometry(0.13, 12, 10), gourdM, 0, 0.2, 0, hg);
+  // 小葫蘆用紅繩掛在前面橫樑底下（離柱子一段距離，不會跟柱子重疊），樞紐在掛鉤上，被風吹得輕輕擺
+  const hg = new THREE.Group(); hg.position.set(-2.3, PLAT + POST - 0.18, 2.5); hg.userData.noMerge = true; HALL.add(hg);
+  mesh(new THREE.TorusGeometry(0.05, 0.015, 4, 10), lam('#5a4630'), 0, -0.03, 0, hg, false);   // 掛鉤
+  mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.42, 4), redM, 0, -0.27, 0, hg, false);      // 紅繩
+  mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.08, 8), gourdM, 0, -0.51, 0, hg, false);     // 葫蘆頸
+  mesh(new THREE.SphereGeometry(0.13, 12, 10), gourdM, 0, -0.66, 0, hg);
+  mesh(new THREE.SphereGeometry(0.2, 12, 10), gourdM, 0, -0.93, 0, hg);
+  animators.push((t) => { hg.rotation.z = Math.sin(t * 1.3) * 0.06; hg.rotation.x = Math.sin(t * 0.9 + 1) * 0.03; });
   // 石桌、四個石鼓凳
   mesh(new THREE.CylinderGeometry(0.42, 0.6, TABLE - PLAT - 0.14, 14), stoneM, 0, PLAT + (TABLE - PLAT - 0.14) / 2, 0, HALL);
   mesh(new THREE.CylinderGeometry(1.35, 1.35, 0.16, 26), stoneM3, 0, TABLE - 0.08, 0, HALL);
