@@ -537,11 +537,14 @@
   .js-test-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
   .js-mini { justify-self: start; margin-top: 6px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); font: inherit; font-size: 12px; cursor: pointer; }
   .js-test-btns button { padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); font: inherit; font-size: 12px; cursor: pointer; }
-  .js-cells { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-  .js-cell { display: grid; gap: 2px; padding: 6px 4px; border-radius: 10px; text-align: center; font: inherit; font-size: 11px; line-height: 1.3; color: var(--muted);
-    background: var(--chip); border: 1px dashed var(--line); }
-  .js-cell b { font-family: var(--font-display); font-size: 13px; }
-  .js-cell.on { cursor: pointer; color: #6b4a1c; background: linear-gradient(180deg, #fbf1d8, #f0d9a6); border: 1px solid #d9b56b; }
+  .js-sec { margin-top: 8px; }
+  .js-sec h4 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 4px; font-size: 13px; font-family: var(--font-display); letter-spacing: 0.08em; }
+  .js-sec h4 small { font-family: var(--font-body); font-size: 11px; color: var(--muted); letter-spacing: 0; }
+  /* 一排 6 格，18 格剛好三排 */
+  .js-cells { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+  .js-cell { display: grid; place-items: center; aspect-ratio: 1.3; border-radius: 8px; font: inherit; font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--muted);
+    background: var(--chip); border: 1px dashed var(--line); padding: 0; }
+  .js-cell.on { cursor: pointer; font-weight: 700; color: #6b4a1c; background: linear-gradient(180deg, #fbf1d8, #f0d9a6); border: 1px solid #d9b56b; }
   .js-cell.on:hover { transform: translateY(-1px); }
   /* 籤詩卷軸：上下兩根木軸，中間的紙由上往下展開 */
   .jscroll { position: fixed; inset: 0; z-index: 24; display: grid; place-items: center; padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
@@ -631,7 +634,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261104.01</span>
+  <span class="ver">v261104.02</span>
   </div></div>
 </div>
 
@@ -697,7 +700,7 @@
   <div class="card write-card badge-card">
     <div class="bhead"><div><h2 id="badgesTitle">🏅 我的群島徽章</h2><p class="wsub">把群島逛遍、跟夥伴互動，就能點亮一格一格的徽章。</p></div>
       <button class="icon sm" id="badgesClose" type="button" aria-label="關閉" title="關閉"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div class="bstats"><div><small>完成度</small><b id="bPct">0%</b></div><div><small>等級</small><b id="bStars">☆☆☆</b><span id="bRank"></span></div><div><small>已解鎖</small><b id="bCount">0 / 42</b></div></div>
+    <div class="bstats"><div><small>完成度</small><b id="bPct">0%</b></div><div><small>等級</small><b id="bStars">☆☆☆</b><span id="bRank"></span></div><div><small>已解鎖</small><b id="bCount">0 / 48</b></div></div>
     <div class="bgrid" id="bGrid"></div>
     <p class="bdetail" id="bDetail">點一格看看怎麼解鎖 👆</p>
     <p class="wsub">徽章先存在這支手機上；換手機或清除瀏覽資料會不見，之後會開放用 Google 帳號保存。</p>
@@ -775,6 +778,8 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { HorizontalTiltShiftShader } from 'three/addons/shaders/HorizontalTiltShiftShader.js';
 import { VerticalTiltShiftShader } from 'three/addons/shaders/VerticalTiltShiftShader.js';
+// 濟世靈山島的 108 支籤詩放在獨立檔案，審稿改字只要換這個檔案
+import { JS_FORTUNES, JS_TYPES } from './jishi/fortunes.js?v=1';
 
 /* =========================================================
    資料
@@ -4169,28 +4174,37 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
   JS3.fanLean = FAN_LEAN;
   Object.assign(JS3, { tube: TUBE, sticks: STICKS, chosen, fallen, fan: FAN, TUBE_H, TABLE });
 
-  /* —— 聖訓碑廊：右邊一道長廊，牆上八塊石碑，每塊對應一支籤；抽過的籤，碑上的字會變成金色 —— */
-  // 碑廊放在右邊，牆在外側、掛石碑的那一面朝島中間（從一般角度看過來看得到石碑，不會只看到牆背面）
+  /* —— 聖訓碑廊：右邊一道長廊，外側是牆、朝島中間敞開；人字形屋頂左右對稱，屋簷高過匾額。
+     匾額掛在面向青石板路的那一頭（前端橫樑下），牆上 6 塊石碑對應籤詩的 6 類，碑上寫類別和收集進度 —— */
   const COR = new THREE.Group(); COR.position.set(8.3, 0, -1.6); mark.add(COR);
-  mesh(new THREE.BoxGeometry(2.4, 0.25, 7.4), stoneM2, 0, 0.12, 0, COR);
-  mesh(new THREE.BoxGeometry(0.3, 2.6, 7.4), lam('#e9e1d0'), 1.0, 1.55, 0, COR);
-  for (const z of [-3.4, -1.15, 1.15, 3.4]) mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.6, 8), lam('#8e3a30'), -0.95, 1.55, z, COR);
-  const corRoof = new THREE.Group(); corRoof.position.set(0, 2.9, 0); COR.add(corRoof);
-  const rf = mesh(new THREE.BoxGeometry(2.9, 0.14, 7.9), tileMat, -0.15, 0.25, 0, corRoof); rf.rotation.z = 0.32;
-  mesh(new THREE.BoxGeometry(0.2, 0.2, 7.9), lam(C.ridge), 0.95, 0.62, 0, corRoof);
-  const cp = faceBox(1.7, 0.42, 0.06, lam('#3f2c22'), plaque('聖訓碑廊', 384, 96, { font: 60 })); cp.position.set(-0.95, 2.62, 3.75); COR.add(cp);
+  const CW = 0.25, POST_H = 3.0, EAVE = CW + POST_H;   // 台基高、柱高、柱頂高度
+  mesh(new THREE.BoxGeometry(2.6, CW, 7.2), stoneM2, 0, CW / 2, 0, COR);
+  mesh(new THREE.BoxGeometry(0.3, POST_H, 7.2), lam('#e9e1d0'), 1.0, CW + POST_H / 2, 0, COR);   // 外側的牆
+  for (const z of [-3.3, -1.1, 1.1, 3.3]) mesh(new THREE.CylinderGeometry(0.1, 0.1, POST_H, 8), lam('#8e3a30'), -1.0, CW + POST_H / 2, z, COR);
+  for (const x of [-1.0, 1.0]) mesh(new THREE.BoxGeometry(0.16, 0.16, 7.2), lam('#6b3a2a'), x, EAVE - 0.08, 0, COR);   // 兩側的樑
+  for (const z of [-3.45, 3.45]) mesh(new THREE.BoxGeometry(2.16, 0.18, 0.16), lam('#6b3a2a'), 0, EAVE - 0.1, z, COR);   // 前後兩頭的橫樑
+  // 人字形屋頂：兩片屋面在中間屋脊相接，左右對稱
+  const RS = 0.42, RW = 1.75, RIDGE = EAVE + 0.1 + Math.sin(RS) * RW;
+  for (const sx of [-1, 1]) { const r = mesh(new THREE.BoxGeometry(RW, 0.12, 7.8), tileMat, sx * Math.cos(RS) * RW / 2, (EAVE + 0.1 + RIDGE) / 2, 0, COR); r.rotation.z = -sx * RS; }
+  mesh(new THREE.BoxGeometry(0.22, 0.2, 7.9), lam(C.ridge), 0, RIDGE + 0.04, 0, COR);
+  // 前後兩頭的山牆（屋頂下的三角形）
+  const gable = new THREE.Shape(); gable.moveTo(-1.08, 0); gable.lineTo(1.08, 0); gable.lineTo(0, RIDGE - EAVE - 0.05); gable.lineTo(-1.08, 0);
+  for (const z of [-3.5, 3.5]) mesh(new THREE.ShapeGeometry(gable), new THREE.MeshLambertMaterial({ color: '#e9e1d0', side: THREE.DoubleSide }), 0, EAVE, z, COR, false);
+  // 匾額：掛在前端橫樑下，面向青石板路；屋簷整個在它上面
+  const cp = faceBox(1.75, 0.44, 0.06, lam('#3f2c22'), plaque('聖訓碑廊', 384, 96, { font: 60 })); cp.position.set(0, EAVE - 0.45, 3.55); COR.add(cp);
   JS3.steles = [];
-  for (let i = 0; i < 8; i++) {
-    const cv = document.createElement('canvas'); cv.width = 128; cv.height = 224;
+  for (let i = 0; i < 6; i++) {
+    const cv = document.createElement('canvas'); cv.width = 192; cv.height = 320;
     const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
-    const st = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.25, 0.72), [stoneM, new THREE.MeshLambertMaterial({ map: tex }), stoneM, stoneM, stoneM, stoneM]);   // 字刻在朝島中間（-x）的那一面
-    st.position.set(0.8, 1.35, 3.1 - i * 0.88); st.castShadow = true; st.userData.noMerge = true; COR.add(st);
+    const st = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.55, 0.95), [stoneM, new THREE.MeshLambertMaterial({ map: tex }), stoneM, stoneM, stoneM, stoneM]);   // 字刻在朝島中間（-x）的那一面
+    st.position.set(0.8, CW + 0.95, 2.65 - i * 1.06); st.castShadow = true; st.userData.noMerge = true; COR.add(st);
+    mesh(new THREE.BoxGeometry(0.18, 0.12, 1.05), stoneM, 0.78, CW + 0.12, 2.65 - i * 1.06, COR);   // 碑座
     JS3.steles.push({ cv, tex });
   }
-  // 一位夥伴站在碑廊前看石碑
-  const reader = figure(qianMat, '', false); reader.scale.setScalar(1.25); reader.position.set(-0.3, 0.25, 0.4); reader.rotation.y = Math.PI / 2 - 0.3; COR.add(reader);
+  // 一位夥伴站在碑廊裡看石碑
+  const reader = figure(qianMat, '', false); reader.scale.setScalar(1.25); reader.position.set(-0.3, CW, 0.5); reader.rotation.y = Math.PI / 2 - 0.3; COR.add(reader);
 
-  /* —— 許願樹：左邊一棵大樹，掛滿紅布條；八條掛木牌的布條對應八支籤，抽過的會亮起來 —— */
+  /* —— 許願樹：左邊一棵大樹，掛滿紅布條；六條掛木牌的布條對應籤詩的六類，抽過那一類會微微發光、集滿會亮起來 —— */
   const TR = new THREE.Group(); TR.position.set(-8.2, 0, -2.2); mark.add(TR);
   mesh(new THREE.CylinderGeometry(1.7, 1.75, 0.3, 20), stoneM, 0, 0.15, 0, TR);
   mesh(new THREE.CylinderGeometry(0.42, 0.62, 3.0, 10), trunkMat, 0, 1.6, 0, TR);
@@ -4205,8 +4219,8 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
     ribbons.push(rb);
   }
   JS3.tags = [];
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2 + 0.3, rb = new THREE.Group(); rb.position.set(Math.sin(a) * 1.5, 2.85, Math.cos(a) * 1.5); rb.rotation.y = a; rb.userData.ph = i * 1.3; RIB.add(rb);
+  for (let i = 0; i < 6; i++) {   // 6 個木牌對應 6 類
+    const a = (i / 6) * Math.PI * 2 + 0.3, rb = new THREE.Group(); rb.position.set(Math.sin(a) * 1.5, 2.85, Math.cos(a) * 1.5); rb.rotation.y = a; rb.userData.ph = i * 1.3; RIB.add(rb);
     mesh(ribGeo, redM, 0, -0.37, 0, rb, false);
     const tagM = new THREE.MeshLambertMaterial({ color: '#c89a6a', emissive: '#ffcf5a', emissiveIntensity: 0 });
     mesh(tagGeo, tagM, 0, -0.85, 0, rb, false);
@@ -4214,7 +4228,7 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
   }
   animators.push((t) => { for (const rb of ribbons) rb.rotation.z = Math.sin(t * 1.4 + rb.userData.ph) * 0.12; });
   // 一位夥伴在靈泉邊淨手
-  const washer = figure(kunMat, '', false); washer.scale.setScalar(1.25); washer.position.set(6.4, 0, 3.4); washer.rotation.y = -2.3;   // 站在靈泉右後方，不擋鏡頭 mark.add(washer);
+  const washer = figure(kunMat, '', false); washer.scale.setScalar(1.25); washer.position.set(6.4, 0, 3.4); washer.rotation.y = -2.3; mark.add(washer);   // 站在靈泉右後方，不擋鏡頭
   bush(-10.4, 1.2, 0.7, mark, lam('#f2a7c3')); bush(10.6, 6.8, 0.6, mark, lam('#f6d27a'));
   // 還沒開放：跟忠恕島一樣用紅白條紋的施工圍籬圍起來，正面掛「施工中」告示牌（測試模式看不到圍籬）
   if (!jsOpen) {
@@ -4255,42 +4269,34 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
    手機用陀螺儀、加速度計；電腦或手機不給權限時，改用滑鼠／手指拖動代替，流程一樣四步。
    每支手機每天抽一支（記在這支手機上），抽過的籤收進籤冊，碑廊的石碑和許願樹的木牌會跟著亮起來。
    ⚠️ 籤詩目前是「仿濟公老師口吻」的示範文案，不是活佛師尊原文；正式上線前請以道場審定的慈語替換，並註明出處。 */
-const JS_FORTUNES = [
-  { id: 1, type: '修心', title: '反觀內省籤', poem: ['破扇搖風不搖心', '鏡上塵埃自己尋', '莫笑他人衣衫髒', '回頭先看己衣襟'],
-    explanation: '徒兒呀，看別人的錯一眼就看到，看自己的錯要繞好大一圈。今天先別急著挑人家毛病，把手指頭轉過來指指自己，看到了，改了，心就亮了。',
-    action: '睡前花三分鐘，寫下今天一件自己可以做得更好的事。' },
-  { id: 2, type: '人際', title: '將心比心籤', poem: ['你嫌他言語太衝', '他怨你臉色太冷', '兩邊各退一步走', '橋頭自有春風送'],
-    explanation: '忠恕忠恕，「恕」字就是如人之心。你換到他的位置站一站，就知道他那句話是怎麼來的。老師不是要你吞忍，是要你先懂，懂了再說，話就柔了。',
-    action: '對一個最近有摩擦的人，先說一句「辛苦了」。' },
-  { id: 3, type: '解憂', title: '放下自在籤', poem: ['葫蘆裝酒也裝愁', '倒了愁來酒還留', '明日煩惱明日解', '今宵且把月光收'],
-    explanation: '憂慮像背在身上的石頭，路還沒走，肩膀就先酸了。能做的今天做，不能做的交給明天、交給上天。徒兒呀，放下不是不管，是不再讓它管你。',
-    action: '把擔心的事寫在紙上，分成「我能做的」和「我不能控制的」兩欄。' },
-  { id: 4, type: '求職', title: '盡忠職守籤', poem: ['小事做足見大才', '忠於其事福自來', '莫問伯樂何時到', '先把良駒養起來'],
-    explanation: '「忠」是把心放在正中間，事情交到你手上就盡心盡力。機會不是等來的，是準備好的人剛好遇到的。先把手邊的工作做漂亮，好的緣分自然會敲門。',
-    action: '今天把一件拖延的小事做完，並且做得比要求再好一點。' },
-  { id: 5, type: '修心', title: '笑看得失籤', poem: ['衣破鞋穿心不破', '帽歪扇缺笑呵呵', '得來失去皆因果', '一團和氣勝金多'],
-    explanation: '老師穿得破破爛爛，心裡可是富足得很。得失像天上的雲，飄來飄去，你的本性才是那片天。今天遇到不順，先笑一個，笑完再想辦法。',
-    action: '遇到不如意時，先深呼吸三次，再開口。' },
-  { id: 6, type: '人際', title: '和顏悅色籤', poem: ['一句好話三冬暖', '一張笑臉百花開', '佛堂門口無生客', '有緣千里自然來'],
-    explanation: '和氣是最好的禮物，不花錢又最珍貴。你對人笑，人家心門就開一條縫；你多問候一句，就多結一份善緣。修道修道，就從臉上的笑容開始修。',
-    action: '主動向一位不熟的班員或同事打招呼，叫出對方的名字。' },
-  { id: 7, type: '解憂', title: '雲開月現籤', poem: ['烏雲遮月莫心慌', '風過雲散自生光', '本性從來無染著', '一念回頭是故鄉'],
-    explanation: '再黑的夜也藏不住月亮，只是暫時被雲擋住了。你的本心一直都在，難過的時候不要忘了回來佛堂坐一坐，跟老師說說話，心就回家了。',
-    action: '這週找一天回佛堂，靜靜坐五分鐘。' },
-  { id: 8, type: '求職', title: '腳踏實地籤', poem: ['高樓萬丈平地起', '一磚一瓦莫嫌遲', '今日汗水明日果', '天道酬勤不相欺'],
-    explanation: '轉職、求職都急不得。履歷改一改、能力練一練，每天前進一點點。老天爺看得清清楚楚，認真的人，路一定會越走越寬。',
-    action: '今天花二十分鐘學一項對工作有幫助的新技能。' },
-];
+// 108 支籤詩（JS_FORTUNES）和 6 個分類（JS_TYPES）在 islands/jishi/fortunes.js
 const JS_DEMO = true;
 const JS_DAILY = false;   // 每天只能抽一支：測試期間先關掉，可以一直重抽；正式開放前改回 true
 const jsGc = (path) => { if (JS_LIVE) gc(path); };   // 測試期間的抽籤不算進造訪統計   // 換成道場審定的正式籤詩後改成 false，卷軸上的「示範籤詩」字樣就會拿掉
-const JS_NUM = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
-const jsNo = (id) => `第${id <= 10 ? JS_NUM[id - 1] : id}籤`;
+const JS_NUM = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+// 籤號寫成國字：1 → 一、15 → 十五、42 → 四十二、105 → 一百零五、108 → 一百零八
+function jsCn(n) {
+  if (n >= 100) { const r = n % 100; return '一百' + (r === 0 ? '' : r < 10 ? '零' + JS_NUM[r] : r < 20 ? '一' + jsCn(r) : jsCn(r)); }
+  if (n >= 20) return JS_NUM[Math.floor(n / 10)] + '十' + (n % 10 ? JS_NUM[n % 10] : '');
+  if (n >= 10) return '十' + (n % 10 ? JS_NUM[n % 10] : '');
+  return JS_NUM[n];
+}
+const jsNo = (id) => `第${jsCn(id)}籤`;
 const JS_URL = 'https://steven4dev.github.io/yiguandao-2027-course/islands/jishi/';
 // 這支手機的抽籤紀錄：今天抽到哪一支、籤冊（抽過的籤＋第一次抽到的日期）
 const JS_KEY = 'islands-jishi';
-let JSS = { v: 1, day: '', today: 0, got: {} };
-try { const o = JSON.parse(localStorage.getItem(JS_KEY) || 'null'); if (o && o.v === 1) JSS = Object.assign(JSS, o); } catch (e) {}
+let JSS = { v: 2, day: '', today: 0, got: {} };
+// v1 是只有 8 支示範籤時的紀錄：換成 108 支後，原本那 8 支依分類重新編號，抽過的照樣留在籤冊裡
+const JS_V1_MAP = { 1: 1, 2: 19, 3: 91, 4: 73, 5: 2, 6: 20, 7: 92, 8: 74 };
+try {
+  const o = JSON.parse(localStorage.getItem(JS_KEY) || 'null');
+  if (o && o.v === 2) JSS = Object.assign(JSS, o);
+  else if (o && o.v === 1) {
+    JSS.day = o.day || ''; JSS.today = JS_V1_MAP[o.today] || 0;
+    for (const [k, d] of Object.entries(o.got || {})) if (JS_V1_MAP[k]) JSS.got[JS_V1_MAP[k]] = d;
+    localStorage.setItem(JS_KEY, JSON.stringify(JSS));
+  }
+} catch (e) {}
 const jsSave = () => { try { localStorage.setItem(JS_KEY, JSON.stringify(JSS)); } catch (e) {} };
 const jsTodayFortune = () => (JSS.day === todayISO ? JS_FORTUNES.find((f) => f.id === JSS.today) : null);
 
@@ -4522,6 +4528,7 @@ function jsLanded() {
   jsFinish();
   holdBadges(10 * 60 * 1000);   // 徽章等卷軸收起來再跳，不要蓋住籤詩
   award('jishi_draw');
+  JS_TYPES.forEach((ty, k) => { if (JS_FORTUNES.filter((x) => x.type === ty).every((x) => JSS.got[x.id])) award('jishi_t' + k); });   // 一類 18 支集滿
   if (JS_FORTUNES.every((x) => JSS.got[x.id])) award('jishi_all');
 }
 function jsFinish() {
@@ -4566,10 +4573,14 @@ const JS_STEPS = [['purify', '淨手洗心'], ['bow', '誠心參拜'], ['shake',
 const jsStepOf = (p) => ({ purify: 0, permission: 1, bow: 1, ready: 2, shake: 2, pour: 3, drawn: 3 })[p];
 function jsCollectionHTML() {
   const n = JS_FORTUNES.filter((f) => JSS.got[f.id]).length;
-  return `<div class="bars js-book"><h3>📜 我的籤冊 ${n} / ${JS_FORTUNES.length}</h3><div class="js-cells">${JS_FORTUNES.map((f) => JSS.got[f.id]
-    ? `<button class="js-cell on" data-js-open="${f.id}" title="${esc(f.title)}"><b>${jsNo(f.id)}</b><span>${esc(f.title)}</span></button>`
-    : `<span class="js-cell"><b>${jsNo(f.id)}</b><span>？</span></span>`).join('')}</div>
-    <p class="note">抽過的籤，聖訓碑廊的石碑會亮起金字，許願樹的木牌也會發光。籤冊記在這支手機上。</p></div>`;
+  // 6 類分段，每段 18 格、一排 6 格；抽過的格子亮起來，點了再看一次籤詩
+  return `<div class="bars js-book"><h3>📜 我的籤冊 ${n} / ${JS_FORTUNES.length}</h3>${JS_TYPES.map((ty) => {
+    const list = JS_FORTUNES.filter((f) => f.type === ty), got = list.filter((f) => JSS.got[f.id]).length;
+    return `<div class="js-sec"><h4>${esc(ty)}<small>${got} / ${list.length}</small></h4><div class="js-cells">${list.map((f) => JSS.got[f.id]
+      ? `<button class="js-cell on" data-js-open="${f.id}" title="${esc(jsNo(f.id) + '・' + f.title)}" aria-label="${esc(jsNo(f.id) + '・' + f.title)}">${f.id}</button>`
+      : `<span class="js-cell" aria-label="${esc(jsNo(f.id))}・還沒抽到">${f.id}</span>`).join('')}</div></div>`;
+  }).join('')}
+    <p class="note">抽過的籤會亮起來，點一格可以再看一次。聖訓碑廊的石碑、許願樹的木牌，對應六類的收集進度。籤冊記在這支手機上。</p></div>`;
 }
 function jsRender() {
   const p = JS.phase, step = jsStepOf(p), sense = JS.mode === 'sensor';
@@ -4807,17 +4818,21 @@ animators.push((t) => {
 });
 // 碑廊石碑、許願樹木牌：抽過的籤亮起來
 function jsSyncCollection(fresh) {
-  JS_FORTUNES.forEach((f, i) => {
-    const st = JS3.steles[i], got = !!JSS.got[f.id], c = st.cv.getContext('2d'), W = st.cv.width, H = st.cv.height;
-    c.fillStyle = got ? '#7d8a86' : '#a9b0ab'; c.fillRect(0, 0, W, H);
-    c.strokeStyle = got ? '#e6c46b' : '#c5cbc6'; c.lineWidth = 5; c.strokeRect(8, 8, W - 16, H - 16);
-    c.fillStyle = got ? '#ffd76a' : '#8d9590'; c.textAlign = 'center'; c.textBaseline = 'middle';
-    c.font = 'bold 34px "LXGW WenKai TC", "Noto Serif TC", serif';
-    [...jsNo(f.id)].forEach((ch, k) => c.fillText(ch, W / 2, 40 + k * 40));
-    if (got) { c.font = '20px "LXGW WenKai TC", "Noto Serif TC", serif'; c.fillText(f.title.slice(0, 4), W / 2, H - 34); }
+  // 碑廊 6 塊石碑、許願樹 6 個木牌，各對應一類：碑上寫類別和收集進度，一類集滿整塊亮金字、木牌發光
+  JS_TYPES.forEach((ty, i) => {
+    const list = JS_FORTUNES.filter((f) => f.type === ty), got = list.filter((f) => JSS.got[f.id]).length, full = got === list.length;
+    const st = JS3.steles[i], c = st.cv.getContext('2d'), W = st.cv.width, H = st.cv.height;
+    c.fillStyle = full ? '#6f7d79' : '#a9b0ab'; c.fillRect(0, 0, W, H);
+    c.strokeStyle = full ? '#e6c46b' : got ? '#d8c08a' : '#c5cbc6'; c.lineWidth = 6; c.strokeRect(9, 9, W - 18, H - 18);
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillStyle = full ? '#ffd76a' : got ? '#5a4a2a' : '#8d9590';
+    c.font = 'bold 54px "LXGW WenKai TC", "Noto Serif TC", serif';
+    [...ty].forEach((ch, k) => c.fillText(ch, W / 2, 62 + k * 62));
+    c.font = 'bold 26px "Noto Sans TC", "PingFang TC", sans-serif';
+    c.fillText(`${got} / ${list.length}`, W / 2, H - 46);
     st.tex.needsUpdate = true;
-    JS3.tags[i].emissiveIntensity = got ? 0.55 : 0;
-    JS3.tags[i].color.set(got ? '#e8b84a' : '#c89a6a');
+    JS3.tags[i].emissiveIntensity = full ? 0.6 : got ? 0.15 : 0;
+    JS3.tags[i].color.set(full ? '#e8b84a' : '#c89a6a');
   });
 }
 // 字型載入後再畫一次，石碑上的字才會是楷體
@@ -6833,7 +6848,14 @@ const BADGES = [
   { id: 'wish', e: '🍎', n: '許願者', c: '在希望島寫一張祈福卡', bc: '#c8312b' },
   { id: 'fountain', e: '⛲', n: '噴泉噴高高', c: '祈福後看到噴泉噴高高', bc: '#3a9ab8' },
   { id: 'jishi_draw', e: '🎋', n: '第一支籤', c: '在濟世靈山島淨手、參拜、搖籤，抽出第一支籤', bc: '#6f8f3a', hidden: !jsOpen },
-  { id: 'jishi_all', e: '📜', n: '籤冊集滿', c: '濟世靈山島的每一支籤都抽過（每天一支）', bc: '#8a5a2b', hidden: !jsOpen },
+  // 籤冊分 6 類、每類 18 支：集滿一類拿一個，108 支全部集滿再拿「籤冊集滿」
+  { id: 'jishi_t0', e: '🪞', n: '修心籤集滿', c: '濟世靈山島「修心」類 18 支籤都抽過', bc: '#5b7a8a', hidden: !jsOpen },
+  { id: 'jishi_t1', e: '🤝', n: '人際籤集滿', c: '濟世靈山島「人際」類 18 支籤都抽過', bc: '#c27a4a', hidden: !jsOpen },
+  { id: 'jishi_t2', e: '🏠', n: '家庭籤集滿', c: '濟世靈山島「家庭」類 18 支籤都抽過', bc: '#a9473b', hidden: !jsOpen },
+  { id: 'jishi_t3', e: '💞', n: '感情籤集滿', c: '濟世靈山島「感情」類 18 支籤都抽過', bc: '#d2566a', hidden: !jsOpen },
+  { id: 'jishi_t4', e: '💼', n: '工作籤集滿', c: '濟世靈山島「工作」類 18 支籤都抽過', bc: '#5b6fa8', hidden: !jsOpen },
+  { id: 'jishi_t5', e: '🌤️', n: '解憂籤集滿', c: '濟世靈山島「解憂」類 18 支籤都抽過', bc: '#3a9ab8', hidden: !jsOpen },
+  { id: 'jishi_all', e: '📜', n: '籤冊集滿', c: '濟世靈山島 108 支籤全部抽過', bc: '#8a5a2b', hidden: !jsOpen },
   { id: 'puti_clear', e: '🪷', n: '雲開見日', c: '在清淨菩提島吹散雲霧，看見蓮花綻放', bc: '#c86a8a', hidden: !ptOpen },
   { id: 'puti_all', e: '📿', n: '菩提冊集滿', c: '清淨菩提島的每一句金句都收進菩提冊（每天一句）', bc: '#b07a2a', hidden: !ptOpen },
   { id: 'joined', e: '🛶', n: '登島成功', c: '用「我要登島」報名，並確認已登島', bc: '#c0503f' },
