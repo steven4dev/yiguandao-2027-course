@@ -631,7 +631,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261103.07</span>
+  <span class="ver">v261104.01</span>
   </div></div>
 </div>
 
@@ -697,7 +697,7 @@
   <div class="card write-card badge-card">
     <div class="bhead"><div><h2 id="badgesTitle">🏅 我的群島徽章</h2><p class="wsub">把群島逛遍、跟夥伴互動，就能點亮一格一格的徽章。</p></div>
       <button class="icon sm" id="badgesClose" type="button" aria-label="關閉" title="關閉"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <div class="bstats"><div><small>完成度</small><b id="bPct">0%</b></div><div><small>等級</small><b id="bStars">☆☆☆</b><span id="bRank"></span></div><div><small>已解鎖</small><b id="bCount">0 / 38</b></div></div>
+    <div class="bstats"><div><small>完成度</small><b id="bPct">0%</b></div><div><small>等級</small><b id="bStars">☆☆☆</b><span id="bRank"></span></div><div><small>已解鎖</small><b id="bCount">0 / 42</b></div></div>
     <div class="bgrid" id="bGrid"></div>
     <p class="bdetail" id="bDetail">點一格看看怎麼解鎖 👆</p>
     <p class="wsub">徽章先存在這支手機上；換手機或清除瀏覽資料會不見，之後會開放用 Google 帳號保存。</p>
@@ -6854,6 +6854,10 @@ const BADGES = [
   // 解鎖方式（現場掃 QR／當天上島）之後再定，目前還不會被解鎖
   { id: 'spring_trip', e: '🌸', n: '春遊同行', c: '一起參加 2027/5/29 的春季戶外聯誼', bc: '#e88aa8', hidden: true },
   { id: 'autumn_trip', e: '🍁', n: '秋遊同行', c: '一起參加 2027/10/30 的秋季戶外聯誼', bc: '#d9772a', hidden: true },
+  // 預留格：徽章總數維持 6 的倍數（徽章牆一排 6 格，版面才工整）；之後新增徽章時，直接把預留格換成新的徽章，不夠再補一排
+  // 預留格算進總數，在徽章牆上顯示「？」，點了顯示「敬請期待」
+  { id: 'soon_1', e: '🎁', n: '敬請期待', c: '新的徽章準備中', bc: '#9a9488', hidden: true, soon: true },
+  { id: 'soon_2', e: '🎁', n: '敬請期待', c: '新的徽章準備中', bc: '#9a9488', hidden: true, soon: true },
 ];
 const BADGE_KEY = 'islands-badges';
 let BS = { v: 1, got: {}, seen: {}, days: [] };
@@ -7001,7 +7005,8 @@ function showBadgeDetail(id) {
   bSel = id;
   if (BS.fresh) delete BS.fresh[id]; saveBadges();
   const d = on ? new Date(on) : null;
-  $('bDetail').innerHTML = b.hidden && !on ? '<b>❓ 隱藏徽章</b><small>還沒被發現的祕密，四處逛逛、點點看吧 👀</small>'
+  $('bDetail').innerHTML = b.soon ? '<b>🎁 敬請期待</b><small>這一格先留著，之後會加入新的徽章</small>'
+    : b.hidden && !on ? '<b>❓ 隱藏徽章</b><small>還沒被發現的祕密，四處逛逛、點點看吧 👀</small>'
     : `<b>${b.e} ${esc(b.n)}</b>${on ? `<small>✅ ${d.getMonth() + 1}/${d.getDate()} 解鎖</small>` : ''}<small>${b.live ? '🌟 現場掃 QR 解鎖（第二階段，之後開放）：' : on ? '' : '怎麼解鎖：'}${esc(b.c)}</small>`
       + (!on && (id === 'joined' || id === 'visitor') ? `<span class="bclaim"><small>徽章上線前就已經報名了？打你報名時填的名字來認領：</small><input type="text" id="bClaimName" maxlength="30" placeholder="報名時的姓名" autocomplete="name"><button type="button" id="bClaimGo">認領</button><small id="bClaimMsg"></small></span>` : '');
   renderBadges();
