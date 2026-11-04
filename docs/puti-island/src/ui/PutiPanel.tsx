@@ -52,7 +52,7 @@ export function BlowMeter({ blow, state, onTouch, onCancel }: { blow: BlowDetect
       {state.fallback && WHY[state.fallback] && <p className="hint">{WHY[state.fallback]}</p>}
       {mic && blow.status === 'calibrating'
         ? <p className="say">麥克風開好了。先別吹，聽一下周圍的聲音⋯</p>
-        : <p className="say">{mic ? '請對著麥克風長吹一口氣 🌬️ 手機下緣的麥克風孔離嘴巴約一個手掌寬（5～10 公分），像吹蠟燭那樣輕輕長吹「呼——」就好，不用貼著、也不用用力；一口不夠，換口氣再吹。' : '按住下面的雲朵吹氣，雲霧就會被吹散；放開就停。'}</p>}
+        : <p className="say">{mic ? '長吹一口氣 🌬️ 深呼吸，並且將所有的氣吐出來，吹向手機前島上的雲霧。' : '按住下面的雲朵吹氣，雲霧就會被吹散；放開就停。'}</p>}
       {mic
         ? <div className={`level${blow.isBlowing ? ' on' : ''}`} aria-hidden="true"><i style={{ width: `${blow.level * 100}%` }} /><b style={{ left: `${blow.gate * 100}%` }} /><em>你的吹氣聲</em></div>
         : <button type="button" className="pad" onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); hold(true); }} onPointerUp={() => hold(false)} onPointerCancel={() => hold(false)}
