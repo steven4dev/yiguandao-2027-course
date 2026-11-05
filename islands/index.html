@@ -634,7 +634,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261104.02</span>
+  <span class="ver">v261105.01</span>
   </div></div>
 </div>
 
@@ -4878,7 +4878,7 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('jsScroll').hi
 // 跟濟世靈山島一樣先封起來：一般人看到施工圍籬和「施工中」，不能吹。
 // 測試的人在網址加上 ?puti=測試碼（例如 islands/?puti=ptq-5m2w#puti）打開測試模式，記在那支手機上；?puti=off 關掉。
 // 正式開放時把 PT_LIVE 改成 true，圍籬就拆掉、大家都能吹。
-const PT_LIVE = false;
+const PT_LIVE = true;   // 2026/11/05 正式開放
 const PT_TEST_TOKEN = 'ptq-5m2w', PT_TEST_KEY = 'islands-puti-test';
 const ptTester = (() => {
   try {
@@ -5539,6 +5539,122 @@ document.getElementById('ptCard').addEventListener('click', (e) => {
 });
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('ptCard').hidden) ptCloseCard(); });
 
+/* ---------- 筋斗雲：一朵金色的雲在全真島和清淨菩提島之間來回飛，雲上站著一位 Q 版的齊天大聖（跟島上夥伴同一個豆子身基底） ----------
+   （孫悟空出自古典小說《西遊記》；這裡是群島自己的 Q 版造型：豆子身、金箍、虎皮裙、金箍棒）
+   去程從全真島後方出發，往上拱過高鐵橋，停在菩提島的小徑上空；停一下再飛回來。點雲或大聖就飛到清淨菩提島 */
+const kinto = new THREE.Group();
+kinto.userData.noMerge = true;
+kinto.visible = ptOpen;
+scene.add(kinto);
+const kintoHit = [];
+{
+  // 雲：一團暖白帶金的雲朵，後面拖一條捲捲的雲尾
+  const cloudM = new THREE.MeshLambertMaterial({ color: '#fff4cf', emissive: '#ffd36a', emissiveIntensity: 0.28 });
+  const cloudM2 = new THREE.MeshLambertMaterial({ color: '#ffe9a8', emissive: '#f2b84a', emissiveIntensity: 0.22 });
+  const CL = new THREE.Group(); kinto.add(CL); kinto.userData.cloud = CL;
+  for (const [x, y, z, r, m] of [[0, 0, 0, 1.05, cloudM], [0.95, -0.08, 0.15, 0.78, cloudM], [-0.95, -0.1, 0.1, 0.8, cloudM], [0.35, 0.2, -0.6, 0.72, cloudM2], [-0.4, 0.15, 0.65, 0.66, cloudM2], [0.2, -0.25, 0.75, 0.6, cloudM]]) {
+    const s = mesh(new THREE.SphereGeometry(r, 16, 12), m, x, y, z, CL, false); s.scale.y = 0.62;
+  }
+  // 齊天大聖：臉是膚色、頭頂和後腦勺一圈棕色毛、兩隻圓耳朵、金箍、虎皮裙、金箍棒、一條捲尾巴
+  const wk = figure(lam('#f3d2a2'), '', false);
+  wk.position.set(0, 0.62, 0.15); wk.scale.setScalar(1.45); kinto.add(wk); kinto.userData.wk = wk;   // 腳踩在雲朵上緣 kinto.add(wk); kinto.userData.wk = wk;
+  const g = wk.children[0], fur = lam('#9a5b2e'), gold = lam('#f2c14e', { emissive: '#8a5a00', emissiveIntensity: 0.35 });
+  const cap = mesh(new THREE.SphereGeometry(0.54, 22, 12, 0, Math.PI * 2, 0, Math.PI * 0.42), fur, 0, 0.93, -0.06, g, false); cap.rotation.x = -0.55;
+  mesh(new THREE.SphereGeometry(0.5, 18, 12, 0, Math.PI * 2, Math.PI * 0.35, Math.PI * 0.4), fur, 0, 0.98, -0.08, g, false).rotation.x = Math.PI;   // 後腦勺
+  for (const sx of [-1, 1]) { const e = mesh(dotGeo, fur, sx * 0.5, 0.97, 0, g, false); e.scale.set(0.09, 0.12, 0.07); mesh(dotGeo, lam('#e8b08a'), sx * 0.53, 0.97, 0.02, g, false).scale.set(0.05, 0.07, 0.04); }
+  const band = mesh(new THREE.TorusGeometry(0.47, 0.035, 8, 32), gold, 0, 1.12, 0.02, g, false); band.rotation.x = Math.PI / 2 - 0.22;   // 金箍
+  mesh(new THREE.TorusGeometry(0.06, 0.02, 6, 12), gold, -0.1, 1.2, 0.47, g, false);   // 金箍前面的小捲
+  mesh(new THREE.TorusGeometry(0.06, 0.02, 6, 12), gold, 0.1, 1.2, 0.47, g, false);
+  // 上衣（紅）＋虎皮裙（橘底黑紋）＋黃腰帶
+  const tigerTex = canvasTex(128, 32, (c) => { c.fillStyle = '#f0a03a'; c.fillRect(0, 0, 128, 32); c.fillStyle = '#3a2410'; for (let i = 0; i < 8; i++) { c.beginPath(); c.moveTo(i * 16 + 2, 0); c.lineTo(i * 16 + 8, 0); c.lineTo(i * 16 + 5, 22); c.fill(); } }, true);
+  mesh(new THREE.CylinderGeometry(0.4, 0.44, 0.28, 24, 1, true), new THREE.MeshLambertMaterial({ color: '#c8312b', side: THREE.DoubleSide }), 0, 0.56, 0, g, false);
+  const skirt = mesh(new THREE.CylinderGeometry(0.42, 0.5, 0.26, 24, 1, true), new THREE.MeshLambertMaterial({ map: tigerTex, side: THREE.DoubleSide }), 0, 0.3, 0, g, false);
+  skirt.material.map.repeat.set(3, 1);
+  mesh(new THREE.TorusGeometry(0.42, 0.04, 6, 24), lam('#f2c14e'), 0, 0.44, 0, g, false).rotation.x = Math.PI / 2;
+  // 尾巴：從屁股往後翹再捲起來
+  const tailPts = [[0, 0.3, -0.35], [0, 0.25, -0.65], [0.05, 0.45, -0.85], [0.08, 0.75, -0.8], [0.02, 0.85, -0.6]].map(([x, y, z]) => new THREE.Vector3(x, y, z));
+  mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tailPts), 20, 0.045, 6), fur, 0, 0, 0, g, false);
+  // 金箍棒：右手斜握，兩頭紅色；樞紐在手上，停靠時會轉棒子
+  const staff = new THREE.Group(); staff.position.set(0.48, 0.5, 0.18); g.add(staff); kinto.userData.staff = staff;
+  mesh(new THREE.CylinderGeometry(0.035, 0.035, 2.1, 8), gold, 0, 0, 0, staff, false);
+  for (const y of [-1.02, 1.02]) mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.16, 8), lam('#c8312b'), 0, y, 0, staff, false);
+  staff.rotation.z = -0.5;
+  wk.userData.arms[1].rotation.z = 0.2;   // 右手往前舉著棒子
+  wk.userData.arms[0].rotation.z = -1.9;  // 左手舉高，像在遠眺（手搭涼棚）
+  kinto.traverse((m) => { if (m.isMesh) { kintoHit.push(m); m.castShadow = true; } });
+}
+// 雲尾：像汽車排氣一樣，從雲後面一陣一陣噴出柔邊的煙霧，往後飄、越散越開、越來越淡，最後消散（不黏在雲上）
+const kintoSmokeTex = canvasTex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,248,225,0.9)'); gr.addColorStop(0.45, 'rgba(255,240,205,0.45)'); gr.addColorStop(1, 'rgba(255,240,205,0)'); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
+const kintoPuffs = Array.from({ length: 64 }, () => {
+  const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: kintoSmokeTex, color: '#fff6dc', transparent: true, opacity: 0, depthWrite: false }));
+  m.visible = false; scene.add(m);
+  return { m, age: 9, life: 1, vel: new THREE.Vector3(), size: 1, spin: 0 };
+});
+let kintoPuffI = 0, kintoPuffAt = 0;
+// 航線：全真島後方上空 ⇄ 菩提島小徑上空；中段往上拱，越過高鐵橋和火車
+const KINTO_A = new THREE.Vector3(), KINTO_B = new THREE.Vector3();
+{
+  const dx = ptIsl.x - TEMPLE.x, dz = ptIsl.z - TEMPLE.z, d = Math.hypot(dx, dz), ux = dx / d, uz = dz / d;
+  KINTO_A.set(TEMPLE.x + ux * 13.5, 9, TEMPLE.z + uz * 13.5);
+  KINTO_B.set(ptIsl.x - ux * 7.5, 6.5, ptIsl.z - uz * 7.5);
+}
+const KLEG = 14, KDWELL = 4, KCYCLE = 2 * (KLEG + KDWELL), KARC = 10;
+const kintoPos = (k, out) => out.lerpVectors(KINTO_A, KINTO_B, k).setY(KINTO_A.y + (KINTO_B.y - KINTO_A.y) * k + Math.sin(k * Math.PI) * KARC);
+const kintoTmp = new THREE.Vector3(), kintoAhead = new THREE.Vector3();
+kintoPos(0, kinto.position);
+kinto.rotation.y = Math.atan2(KINTO_B.x - KINTO_A.x, KINTO_B.z - KINTO_A.z);
+animators.push((t, dt = 1 / 60) => {
+  if (!kinto.visible) return;
+  const c = (t + 2) % KCYCLE;   // 錯開一點，不要剛打開網頁就停著
+  let k, back = false, moving = true;
+  if (c < KDWELL) { k = 0; moving = false; }
+  else if (c < KDWELL + KLEG) k = smooth((c - KDWELL) / KLEG);
+  else if (c < 2 * KDWELL + KLEG) { k = 1; back = true; moving = false; }
+  else { k = 1 - smooth((c - 2 * KDWELL - KLEG) / KLEG); back = true; }
+  kintoPos(k, kinto.position);
+  kinto.position.y += Math.sin(t * 2.2) * 0.25;   // 雲上下輕輕浮動
+  // 朝著要去的方向；爬升、下降時雲頭跟著仰、俯
+  kintoPos(Math.min(1, Math.max(0, k + (back ? -0.01 : 0.01))), kintoAhead);
+  const yaw = Math.atan2(KINTO_B.x - KINTO_A.x, KINTO_B.z - KINTO_A.z) + (back ? Math.PI : 0);
+  kinto.rotation.y = yaw;
+  const pitch = moving ? -Math.atan2(kintoAhead.y - kinto.position.y + Math.sin(t * 2.2) * 0.25, Math.hypot(kintoAhead.x - kinto.position.x, kintoAhead.z - kinto.position.z) + 1e-4) * 0.6 : 0;
+  kinto.rotation.x = THREE.MathUtils.damp(kinto.rotation.x, pitch, 4, 1 / 60);
+  kinto.rotation.z = Math.sin(t * 1.3) * 0.05;
+  const cl = kinto.userData.cloud; cl.rotation.y = Math.sin(t * 0.8) * 0.08;
+  // 停靠時大聖轉金箍棒、左手放下來揮一揮；飛行時手搭涼棚往前看
+  const u = kinto.userData, wk = u.wk;
+  if (moving) { u.staff.rotation.set(0, 0, -0.5); wk.userData.arms[0].rotation.z = THREE.MathUtils.damp(wk.userData.arms[0].rotation.z, -1.9, 6, 1 / 60); wk.rotation.y = 0; }
+  else { u.staff.rotation.set(0, 0, -0.5 + t * 6); wk.userData.arms[0].rotation.z = -2.4 + Math.sin(t * 8) * 0.35; wk.rotation.y = Math.sin(t * 0.7) * 0.5; }
+  // 飛行時從雲後面噴出煙霧：剛噴出來小而濃，往後、往外飄開，越來越大、越來越淡。
+  // 用實際經過的時間算：畫面卡頓、兩格之間雲飛得比較遠時，在中間補噴幾陣，煙霧才會連成一條
+  const kdt = Math.min(0.25, Math.max(0, t - (kinto.userData.lastT ?? t))); kinto.userData.lastT = t;
+  const kPrev = kinto.userData.prev || (kinto.userData.prev = kinto.position.clone());
+  if (moving) {
+    const n = Math.min(6, Math.floor((t - kintoPuffAt) / 0.035));
+    for (let i = 1; i <= n; i++) {
+      const p = kintoPuffs[kintoPuffI++ % kintoPuffs.length], f = i / n;
+      kintoTmp.set((Math.random() - 0.5) * 0.5, -0.1 + (Math.random() - 0.5) * 0.3, -1.6).applyEuler(kinto.rotation).add(kintoAhead.lerpVectors(kPrev, kinto.position, f));
+      p.m.position.copy(kintoTmp);
+      p.vel.set((Math.random() - 0.5) * 0.8, 0.15 + Math.random() * 0.3, -1.2 - Math.random() * 0.8).applyEuler(kinto.rotation);
+      p.age = (1 - f) * kdt; p.life = 1.1 + Math.random() * 0.6; p.size = 0.7 + Math.random() * 0.4; p.m.visible = true;
+      p.m.material.rotation = Math.random() * 6.28; p.spin = (Math.random() - 0.5) * 0.8;
+    }
+    if (n) kintoPuffAt = t;
+  } else kintoPuffAt = t;
+  kPrev.copy(kinto.position);
+  for (const p of kintoPuffs) {
+    if (!p.m.visible) continue;
+    p.age += kdt;
+    const a = p.age / p.life;
+    if (a >= 1) { p.m.visible = false; continue; }
+    p.m.position.addScaledVector(p.vel, kdt);
+    p.vel.multiplyScalar(Math.pow(0.16, kdt));   // 噴出去後慢慢減速、停在空中散掉
+    p.m.scale.setScalar(p.size * (1 + a * 2.6));
+    p.m.material.rotation += p.spin * kdt;
+    p.m.material.opacity = 0.7 * Math.min(1, a * 6) * (1 - a) * (1 - a);
+  }
+});
+
 function addTag(isl, text, cls, h, onClick = () => select(isl.key)) {
   const b = document.createElement('button');
   b.className = 'tag ' + cls;
@@ -6149,7 +6265,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
     hoverQueued = false;
     ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit, partyHit, lookoutHit, teacherHit, masterHit, bottleHit, visitorHit), false).length ? 'pointer' : '';
+    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit, kintoHit, partyHit, lookoutHit, teacherHit, masterHit, bottleHit, visitorHit), false).length ? 'pointer' : '';
   });
 });
 renderer.domElement.addEventListener('pointerup', (e) => {
@@ -6158,6 +6274,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   ray.setFromCamera(ndc, camera);
   // 先打到任何物件，再往上找它屬於哪座島
   if (ray.intersectObjects(raftHit, false).length) { openSignup(); return; }
+  if (kinto.visible && ray.intersectObjects(kintoHit, false).length) { ptGc('動作/筋斗雲'); select('puti'); return; }   // 筋斗雲：飛到清淨菩提島
   // 中一島的涼亭＝凝聚晚會報名處：報名期間點了開報名表，截止後就打開中一島的介紹
   if (ray.intersectObjects(partyHit, false).length) { if (zyIsl.formOpen) window.open(PARTY_FORM, '_blank', 'noopener'); else select('zhongyi'); return; }
   const bh = ray.intersectObjects(bottleHit, false)[0];
@@ -7814,7 +7931,7 @@ const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
    原本要畫四千多次的場景，合併後少掉一大半，手機（例如 iPhone）會順很多 */
 const NO_MERGE_KEYS = ['ring', 'arms', 'slot', 'person', 'teacher', 'master', 'bottle', 'noMerge', 'detail'];
 function staticMerge() {
-  const hits = new Set([cadreHit, plazaHit, raftHit, partyHit, lookoutHit, teacherHit, masterHit, bottleHit, visitorHit].flat());
+  const hits = new Set([cadreHit, plazaHit, raftHit, kintoHit, partyHit, lookoutHit, teacherHit, masterHit, bottleHit, visitorHit].flat());
   const visChain = (o) => { for (let x = o; x; x = x.parent) if (!x.visible) return false; return true; };
   const cand = [];
   scene.traverse((o) => {
