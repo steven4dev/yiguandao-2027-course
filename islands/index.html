@@ -634,7 +634,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261105.01</span>
+  <span class="ver">v261105.02</span>
   </div></div>
 </div>
 
@@ -5718,7 +5718,7 @@ addTag(newIsl, '🚧 忠恕島・施工中', 'main', 15);
 addTag(zyIsl, '🏮 中一島・凝聚晚會 11/28', 'main', 8);   // 跟忠恕島一樣用一般標籤：小標籤在手機上會藏起來
 addTag(bottleIsl, '🍾 漂流瓶島', 'small', 4.8);
 addTag(jsIsl, jsOpen ? '⛰️ 濟世靈山島・抽籤' : '🚧 濟世靈山島・施工中', 'main', 13);
-addTag(ptIsl, ptOpen ? '🪷 清淨菩提島・吹散雲霧' : '🚧 清淨菩提島・施工中', 'main', 12);
+addTag(ptIsl, ptOpen ? '清淨菩提島 🎮' : '🚧 清淨菩提島・施工中', 'main', 12);   // 跟有小遊戲的課程島一樣，名字後面加 🎮
 // 登島是重要入口：渡口島的標籤排在全真島和課程島之後、其他小標籤之前
 tags.splice(1 + COURSES.length, 0, tags.pop());
 // 瞭望氣球的小標籤跟著氣球飄，點了就是搜尋
