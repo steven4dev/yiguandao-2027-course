@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#14202b">
+<title>揮符實驗室｜拂塵島測試</title>
+<meta name="description" content="拂塵島的動作感測測試頁：手機當拂塵柄，倒數後在空中揮出符號，看看感測器認不認得出來。">
+<style>
+:root{
+  --bg:#f6efe2; --card:#fffaf1; --ink:#3f2c22; --muted:#8a7466; --line:#e6d8c3;
+  --gold:#c8962e; --gold-soft:#f3e3bd; --accent:#2f80c9; --good:#2e8b57; --bad:#c0473b; --warn:#c77a1a;
+  --stage:#14202b; --btn:#3f2c22; --btn-ink:#fffaf1;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#17130f; --card:#221c16; --ink:#f1e6d6; --muted:#a8968a; --line:#3a3027;
+    --gold:#e2b552; --gold-soft:#4a3a1c; --accent:#6aaee8; --good:#5cc08a; --bad:#e2766b; --warn:#e3a14e;
+    --btn:#e2b552; --btn-ink:#1b150f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#17130f; --card:#221c16; --ink:#f1e6d6; --muted:#a8968a; --line:#3a3027;
+  --gold:#e2b552; --gold-soft:#4a3a1c; --accent:#6aaee8; --good:#5cc08a; --bad:#e2766b; --warn:#e3a14e;
+  --btn:#e2b552; --btn-ink:#1b150f;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.6;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:560px;margin:0 auto;padding:12px 16px 48px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0 10px}
+.brand{font-weight:800;font-size:1.2rem}
+.brand small{display:block;font-weight:500;font-size:.78rem;color:var(--muted)}
+.ver{font-size:.72rem;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin:12px 0}
+.card h2,.card h3{margin:0 0 6px;font-size:1.05rem}
+.card p{margin:6px 0}
+.note{font-size:.85rem;color:var(--muted)}
+ul.tips{margin:6px 0;padding-left:1.2em}
+ul.tips li{margin:3px 0}
+button{font:inherit;cursor:pointer;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 14px}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:var(--btn);color:var(--btn-ink);border-color:transparent;font-weight:800}
+button.big{width:100%;font-size:1.1rem;padding:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>button{flex:1 1 auto}
+.statusbar{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.85rem;color:var(--muted)}
+.statusbar b{color:var(--ink)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
+.tabs button{padding:8px 6px;font-size:.92rem}
+.tabs button[aria-pressed="true"]{background:var(--gold-soft);border-color:var(--gold);font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.grid button{padding:8px 2px;display:flex;flex-direction:column;align-items:center;gap:0;font-size:.72rem;line-height:1.3}
+.grid button .ic{font-size:1.35rem;font-weight:800;line-height:1.4;font-family:"Georgia","Times New Roman",serif}
+.grid button[aria-pressed="true"]{background:var(--gold-soft);border-color:var(--gold);font-weight:700}
+.grid.dim{opacity:.4;pointer-events:none}
+.stage{position:relative;margin:12px 0;border-radius:18px;overflow:hidden;background:var(--stage);aspect-ratio:1/1;touch-action:none}
+.stage canvas{display:block;width:100%;height:100%}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;color:#fff;text-align:center;padding:16px}
+.overlay .big{font-size:clamp(3.5rem,22vw,8rem);font-weight:900;line-height:1;text-shadow:0 0 24px rgba(255,214,120,.8)}
+.overlay .mid{font-size:clamp(1.3rem,6vw,2rem);font-weight:800;text-shadow:0 0 14px rgba(0,0,0,.6)}
+.overlay .sub{font-size:.9rem;opacity:.8;margin-top:6px}
+.actions{display:grid;grid-template-columns:1fr auto;gap:8px}
+.verdict{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.verdict .v{font-size:1.4rem;font-weight:900}
+.v.good{color:var(--good)} .v.ok{color:var(--gold)} .v.bad{color:var(--bad)} .v.warn{color:var(--warn)}
+.bars{margin:8px 0}
+.bar{display:grid;grid-template-columns:5.5em 1fr 3em;align-items:center;gap:8px;font-size:.88rem;margin:4px 0}
+.bar .track{height:10px;border-radius:6px;background:var(--line);overflow:hidden}
+.bar .fill{height:100%;background:var(--gold);border-radius:6px}
+.bar.hit .fill{background:var(--good)}
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 12px;font-size:.85rem;color:var(--muted)}
+.metrics b{color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:5px 4px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+details summary{cursor:pointer;font-weight:700}
+.set{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;margin-top:10px;font-size:.92rem}
+.seg{display:flex;gap:4px}
+.seg button{padding:6px 10px;font-size:.88rem}
+.seg button[aria-pressed="true"]{background:var(--gold-soft);border-color:var(--gold);font-weight:800}
+pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:var(--bg);border-radius:10px;padding:8px;margin:10px 0 0;color:var(--muted)}
+.modal{position:fixed;inset:0;background:rgba(10,8,6,.72);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+.modal[hidden]{display:none}
+.modal .card{max-width:420px;width:100%;margin:0}
+.prog{height:12px;border-radius:8px;background:var(--line);overflow:hidden;margin:12px 0}
+.prog i{display:block;height:100%;width:0;background:var(--gold);transition:width .1s linear}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--btn);color:var(--btn-ink);padding:8px 14px;border-radius:999px;font-size:.88rem;z-index:20;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">🪶 揮符實驗室<small>拂塵島・動作感測測試（不會出現在群島上）</small></div>
+    <span class="ver" id="ver"></span>
+  </header>
+
+  <!-- 開場：安全提醒＋啟用感測器 -->
+  <section id="intro" class="card">
+    <h2>手機就是您的拂塵柄</h2>
+    <ul class="tips">
+      <li>🤚 <b>握法</b>：手機直握，像握拂塵的柄。<b>手機頂端就是拂絲</b>，螢幕朝著自己。</li>
+      <li>👀 <b>先看</b>：畫面會先示範這次要揮的符號，接著倒數 3、2、1。</li>
+      <li>🪶 <b>再揮</b>：聽到「揮！」就放心大揮，<b>不用看螢幕</b>；揮完停住，聽到「叮」再拿回來看結果。</li>
+      <li>🔊 請<b>打開聲音</b>（iPhone 記得關掉靜音鍵）；建議鎖定直向畫面。</li>
+    </ul>
+    <p style="margin-top:10px"><b>⚠️ 安全第一</b>：請<b>握緊手機</b>，最好戴上手機掛繩，並確認周圍 1.5 公尺內沒有人和易碎物品。</p>
+    <div class="row" style="margin-top:12px">
+      <button class="primary big" id="btnEnable">啟用動作感測器，開始校正</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button id="btnTouch">沒有感測器？改用觸控模式（用手指畫）</button>
+    </div>
+    <p class="note" id="introMsg"></p>
+  </section>
+
+  <!-- 實驗室本體 -->
+  <section id="lab" hidden>
+    <div class="statusbar">
+      <span id="sensorStatus">感測器：—</span>
+      <button id="btnRecal" style="padding:6px 10px;font-size:.85rem">🧘 重新校正</button>
+    </div>
+
+    <div class="tabs" role="group" aria-label="測試模式">
+      <button data-mode="pick" aria-pressed="true">指定練習</button>
+      <button data-mode="random" aria-pressed="false">隨機測驗</button>
+      <button data-mode="free" aria-pressed="false">自由揮</button>
+    </div>
+    <div class="grid" id="symGrid" role="group" aria-label="選擇符號"></div>
+
+    <div class="stage" id="stage">
+      <canvas id="cv"></canvas>
+      <div class="overlay" id="overlay"></div>
+    </div>
+
+    <div class="actions">
+      <button class="primary big" id="btnGo">🪶 開始這一揮</button>
+      <button id="btnStop" disabled>停止</button>
+    </div>
+
+    <section class="card" id="result" hidden></section>
+
+    <section class="card">
+      <h3>📊 測試統計（這支手機）</h3>
+      <table>
+        <thead><tr><th>符號</th><th class="n">次數</th><th class="n">認對</th><th class="n">平均相似度</th></tr></thead>
+        <tbody id="statsBody"></tbody>
+      </table>
+      <p class="note" id="statsTotal"></p>
+      <div class="row" style="margin-top:8px">
+        <button id="btnCopy">📋 複製測試紀錄</button>
+        <button id="btnDownload">💾 下載紀錄檔</button>
+        <button id="btnClear">🗑️ 清除</button>
+      </div>
+      <p class="note">紀錄裡有每一次揮動的原始感測資料。測完把紀錄檔傳給我，我們就能一起調整判定門檻。</p>
+    </section>
+
+    <details class="card">
+      <summary>⚙️ 設定與除錯</summary>
+      <div class="set">
+        <span>靈敏度</span>
+        <div class="seg" id="segSens">
+          <button data-v="light" aria-pressed="false">輕</button>
+          <button data-v="mid" aria-pressed="true">中</button>
+          <button data-v="heavy" aria-pressed="false">重</button>
+        </div>
+        <span>語音口令</span>
+        <div class="seg" id="segVoice"><button data-v="on" aria-pressed="true">開</button><button data-v="off" aria-pressed="false">關</button></div>
+        <span>震動</span>
+        <div class="seg" id="segVib"><button data-v="on" aria-pressed="true">開</button><button data-v="off" aria-pressed="false">關</button></div>
+        <span>左右鏡像</span>
+        <div class="seg" id="segMirX"><button data-v="off" aria-pressed="true">正常</button><button data-v="on" aria-pressed="false">反轉</button></div>
+        <span>上下翻轉</span>
+        <div class="seg" id="segMirY"><button data-v="off" aria-pressed="true">正常</button><button data-v="on" aria-pressed="false">反轉</button></div>
+      </div>
+      <p class="note">「輕」適合手腕小揮，「重」適合大揮、比較不會誤觸。如果畫出來的軌跡左右或上下顛倒，請切換鏡像或翻轉，並告訴我手機型號。</p>
+      <pre class="debug" id="debug">—</pre>
+    </details>
+  </section>
+</div>
+
+<!-- 校正視窗 -->
+<div class="modal" id="calib" hidden>
+  <div class="card">
+    <h2>🧘 舉拂定心（校正）</h2>
+    <p>把手機<b>直立</b>拿在胸前，<b>螢幕朝著自己</b>，靜止不動約 2 秒。</p>
+    <div class="prog"><i id="calibBar"></i></div>
+    <p class="note" id="calibMsg">準備好就按「開始校正」。</p>
+    <div class="row"><button class="primary" id="btnCalib">開始校正</button><button id="btnCalibSkip">略過</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const VERSION = 'v261107.01';
+const D2R = Math.PI / 180, R2D = 180 / Math.PI;
+const $ = s => document.querySelector(s);
+$('#ver').textContent = VERSION;
+
+/* ---------------- 小工具 ---------------- */
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } }
+};
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), 1800); }
+const dot = (a,b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross3 = (a,b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+const len3 = a => Math.hypot(a[0],a[1],a[2]);
+const sub3 = (a,b) => [a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const scl3 = (a,s) => [a[0]*s,a[1]*s,a[2]*s];
+const nrm3 = a => { const l = len3(a) || 1; return [a[0]/l,a[1]/l,a[2]/l]; };
+function angDiff(a,b){ let d = ((a-b) % 360 + 540) % 360 - 180; return Math.abs(d); }
+const DIR8 = [[0,'➡️','右'],[45,'↗️','右上'],[90,'⬆️','上'],[135,'↖️','左上'],[180,'⬅️','左'],[225,'↙️','左下'],[270,'⬇️','下'],[315,'↘️','右下']];
+function dirLabel(deg){ let best = DIR8[0], bd = 999; for(const d of DIR8){ const e = angDiff(deg,d[0]); if(e < bd){ bd = e; best = d; } } return best; }
+
+/* ---------------- 符號與範本 ---------------- */
+// 畫面座標：x 向右、y 向上（數學座標）
+function arc(cx,cy,r,a0,a1,n){ const p=[]; for(let i=0;i<=n;i++){ const a=(a0+(a1-a0)*i/n)*D2R; p.push([cx+r*Math.cos(a), cy+r*Math.sin(a)]); } return p; }
+function circleVariants(){
+  return [
+    arc(0,0,1,90,-270,48),   // 從上方、順時針
+    arc(0,0,1,90,450,48),    // 從上方、逆時針
+    arc(0,0,1,-90,-450,48),  // 從下方、順時針
+    arc(0,0,1,-90,270,48),   // 從下方、逆時針
+    arc(0,0,1,180,-180,48),  // 從左邊、順時針
+    arc(0,0,1,0,360,48)      // 從右邊、逆時針
+  ];
+}
+function alphaVariants(){
+  // 節點三次曲線 x=t²-1, y=t(t²-1)：左邊一個圈、右邊兩條尾巴交叉，像手寫的 α
+  const f = []; for(let i=0;i<=60;i++){ const t = 1.25 - 2.5*i/60; f.push([t*t-1, t*(t*t-1)]); }
+  return [f, f.slice().reverse()];
+}
+function sCurve(){ return arc(0,0.5,0.5,20,270,24).concat(arc(0,-0.5,0.5,90,-160,24).slice(1)); }
+
+const SYMBOLS = [
+  { key:'left',   icon:'⬅',  name:'左揮',   say:'左揮',   kind:'dir', dir:180 },
+  { key:'right',  icon:'➡',  name:'右揮',   say:'右揮',   kind:'dir', dir:0 },
+  { key:'down',   icon:'⬇',  name:'劈',     say:'劈',     kind:'dir', dir:270 },
+  { key:'v',      icon:'V',  name:'V 字',   say:'V 字',   kind:'shape' },
+  { key:'circle', icon:'○',  name:'圓',     say:'畫圓',   kind:'shape' },
+  { key:'z',      icon:'Z',  name:'Z 字',   say:'Z 字',   kind:'shape' },
+  { key:'n',      icon:'N',  name:'N 字',   say:'N 字',   kind:'shape' },
+  { key:'alpha',  icon:'α',  name:'阿法',   say:'阿法',   kind:'shape' },
+  { key:'s',      icon:'S',  name:'S 字',   say:'S 字',   kind:'shape' },
+  { key:'cross',  icon:'✕',  name:'交叉斬', say:'交叉斬', kind:'cross' }
+];
+const SYM = Object.fromEntries(SYMBOLS.map(s => [s.key, s]));
+// 「Z 字」這類名稱本身就有符號，不要再重複一次圖示
+const symLabel = s => s.name.startsWith(s.icon) ? s.name : `${s.icon} ${s.name}`;
+
+// 拿來比對的範本（含幾個「干擾項」：上挑、斜線，用來看會不會被誤認）
+const TEMPLATE_DEFS = {
+  left:   { name:'左揮', v:[[[0,0],[-1,0]]] },
+  right:  { name:'右揮', v:[[[0,0],[1,0]]] },
+  down:   { name:'劈',   v:[[[0,0],[0,-1]]] },
+  up:     { name:'上挑', v:[[[0,0],[0,1]]] },
+  dr:     { name:'↘ 斜', v:[[[-1,1],[1,-1]]] },
+  dl:     { name:'↙ 斜', v:[[[1,1],[-1,-1]]] },
+  v:      { name:'V 字', v:[[[-1,1],[0,-1],[1,1]]] },
+  circle: { name:'圓',   v:circleVariants() },
+  z:      { name:'Z 字', v:[[[-1,1],[1,1],[-1,-1],[1,-1]]] },
+  n:      { name:'N 字', v:[[[-1,-1],[-1,1],[1,-1],[1,1]]] },
+  alpha:  { name:'阿法', v:alphaVariants() },
+  s:      { name:'S 字', v:[sCurve()] }
+};
+const NPTS = 64;
+function pathLen(p){ let L=0; for(let i=1;i<p.length;i++) L += Math.hypot(p[i][0]-p[i-1][0], p[i][1]-p[i-1][1]); return L; }
+function resample(pts, n){
+  const L = pathLen(pts) / (n-1); if(!(L > 0)) return Array.from({length:n}, () => [pts[0][0], pts[0][1]]);
+  const src = pts.map(p => [p[0],p[1]]), out = [[src[0][0], src[0][1]]]; let D = 0;
+  for(let i=1;i<src.length;i++){
+    const d = Math.hypot(src[i][0]-src[i-1][0], src[i][1]-src[i-1][1]);
+    if(D + d >= L && d > 0){
+      const t = (L - D)/d, q = [src[i-1][0] + t*(src[i][0]-src[i-1][0]), src[i-1][1] + t*(src[i][1]-src[i-1][1])];
+      out.push(q); src.splice(i, 0, q); D = 0;
+    } else D += d;
+  }
+  while(out.length < n) out.push([src[src.length-1][0], src[src.length-1][1]]);
+  return out.slice(0, n);
+}
+// 等比例縮放（保留長寬比與方向）、重心移到原點
+function normalize(pts){
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  for(const p of pts){ x0=Math.min(x0,p[0]); x1=Math.max(x1,p[0]); y0=Math.min(y0,p[1]); y1=Math.max(y1,p[1]); }
+  const s = Math.max(x1-x0, y1-y0) || 1; let cx=0, cy=0;
+  const q = pts.map(p => [p[0]/s, p[1]/s]); for(const p of q){ cx+=p[0]; cy+=p[1]; } cx/=q.length; cy/=q.length;
+  return q.map(p => [p[0]-cx, p[1]-cy]);
+}
+const prep = pts => normalize(resample(pts, NPTS));
+const TEMPLATES = Object.entries(TEMPLATE_DEFS).map(([k,d]) => ({ key:k, name:d.name, variants:d.v.map(prep) }));
+function avgDist(a,b){ let s=0; for(let i=0;i<a.length;i++) s += Math.hypot(a[i][0]-b[i][0], a[i][1]-b[i][1]); return s/a.length; }
+const distToScore = d => Math.max(0, Math.min(100, Math.round((1 - d/0.5)*100)));
+function recognize(pts){
+  const q = prep(pts);
+  const res = TEMPLATES.map(t => {
+    let best = Infinity, bi = 0;
+    t.variants.forEach((v,i) => { const d = avgDist(q, v); if(d < best){ best = d; bi = i; } });
+    return { key:t.key, name:t.name, d:best, score:distToScore(best), variant:bi };
+  }).sort((a,b) => a.d - b.d);
+  return { norm:q, ranking:res };
+}
+
+/* ---------------- 設定 ---------------- */
+const SENS = { light:{ start:70, end:30 }, mid:{ start:110, end:45 }, heavy:{ start:170, end:65 } };
+const settings = Object.assign({ sens:'mid', voice:true, vib:true, mirX:false, mirY:false }, store.get('fuchenLab.settings', {}));
+function saveSettings(){ store.set('fuchenLab.settings', settings); }
+function bindSeg(id, getter, setter){
+  const el = $(id); const sync = () => el.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === getter())));
+  el.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; setter(b.dataset.v); saveSettings(); sync(); });
+  sync();
+}
+bindSeg('#segSens', () => settings.sens, v => settings.sens = v);
+bindSeg('#segVoice', () => settings.voice ? 'on' : 'off', v => settings.voice = v === 'on');
+bindSeg('#segVib', () => settings.vib ? 'on' : 'off', v => settings.vib = v === 'on');
+bindSeg('#segMirX', () => settings.mirX ? 'on' : 'off', v => settings.mirX = v === 'on');
+bindSeg('#segMirY', () => settings.mirY ? 'on' : 'off', v => settings.mirY = v === 'on');
+
+/* ---------------- 聲音、語音、震動 ---------------- */
+let actx = null;
+function audioInit(){
+  try{ if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if(actx.state === 'suspended') actx.resume(); }catch(e){ actx = null; }
+}
+function tone(freq, dur, type='sine', gain=0.25, when=0){
+  if(!actx) return; const t = actx.currentTime + when;
+  const o = actx.createOscillator(), g = actx.createGain(); o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(actx.destination); o.start(t); o.stop(t + dur + 0.05);
+}
+let noiseBuf = null;
+function swoosh(strength=1){
+  if(!actx) return;
+  if(!noiseBuf){ noiseBuf = actx.createBuffer(1, actx.sampleRate*0.6, actx.sampleRate); const d = noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1; }
+  const t = actx.currentTime, src = actx.createBufferSource(), bp = actx.createBiquadFilter(), g = actx.createGain();
+  src.buffer = noiseBuf; bp.type = 'bandpass'; bp.Q.value = 1.2;
+  bp.frequency.setValueAtTime(500, t); bp.frequency.exponentialRampToValueAtTime(1200 + 1800*Math.min(1,strength), t + 0.25);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+  src.connect(bp).connect(g).connect(actx.destination); src.start(t); src.stop(t + 0.5);
+}
+const sfx = {
+  beat(){ tone(660, 0.12, 'triangle', 0.3); },
+  go(){ tone(988, 0.35, 'square', 0.18); tone(1318, 0.3, 'triangle', 0.15, 0.02); },
+  ding(){ tone(1568, 0.6, 'sine', 0.25); tone(2093, 0.5, 'sine', 0.12, 0.05); },
+  good(){ [784,988,1175,1568].forEach((f,i) => tone(f, 0.35, 'triangle', 0.18, i*0.07)); },
+  ok(){ tone(880, 0.25, 'triangle', 0.2); tone(1175, 0.3, 'triangle', 0.15, 0.08); },
+  bad(){ tone(330, 0.3, 'sawtooth', 0.12); tone(247, 0.4, 'sawtooth', 0.1, 0.12); }
+};
+let zhVoice = null;
+function pickVoice(){ try{ const vs = speechSynthesis.getVoices(); zhVoice = vs.find(v => /zh[-_]TW/i.test(v.lang)) || vs.find(v => /zh/i.test(v.lang)) || null; }catch(e){} }
+if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function say(text){
+  if(!settings.voice || !('speechSynthesis' in window)) return;
+  try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-TW'; if(zhVoice) u.voice = zhVoice; u.rate = 1.1; speechSynthesis.speak(u); }catch(e){}
+}
+function vib(ms){ if(settings.vib && navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){} }
+let wakeLock = null;
+async function keepAwake(){ try{ if('wakeLock' in navigator && !wakeLock){ wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => wakeLock = null); } }catch(e){} }
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && inputMode) keepAwake(); });
+
+/* ---------------- 感測器 ---------------- */
+let inputMode = null;        // 'gyro' | 'touch'
+const calib = Object.assign({ bias:[0,0,0], gSign:1, done:false }, store.get('fuchenLab.calib', {}));
+const ring = [];             // 最近 1.2 秒的原始資料
+let lastT = 0, motionCount = 0, rateHz = 0, rateWin = [], peakSeen = 0;
+let rec = null;              // 揮拂錄製中的狀態
+let liveListener = null;
+
+function onMotion(e){
+  const r = e.rotationRate, ag = e.accelerationIncludingGravity;
+  if(!r || r.alpha == null) return;
+  const now = performance.now();
+  // 優先用感測器自己回報的取樣間隔；事件抵達的時間會抖動（甚至成批送達），拿來積分會讓軌跡變形
+  let dt = null;
+  if(e.interval > 2 && e.interval < 100) dt = e.interval/1000;          // 規格單位：毫秒
+  else if(e.interval > 0.002 && e.interval < 0.1) dt = e.interval;      // 少數舊瀏覽器回報秒
+  if(dt == null){ dt = lastT ? (now - lastT)/1000 : 0.016; if(!(dt > 0.002 && dt < 0.1)) dt = 0.016; }
+  lastT = now;
+  // 規格：alpha 繞 z 軸、beta 繞 x 軸、gamma 繞 y 軸（度／秒）
+  const s = { t:now, dt, wx:r.beta||0, wy:r.gamma||0, wz:r.alpha||0, ax:ag ? ag.x||0 : 0, ay:ag ? ag.y||0 : 0, az:ag ? ag.z||0 : 0 };
+  motionCount++; rateWin.push(now); while(rateWin.length && now - rateWin[0] > 1000) rateWin.shift(); rateHz = rateWin.length;
+  ring.push(s); while(ring.length && now - ring[0].t > 1200) ring.shift();
+  if(liveListener) liveListener(s);
+  if(rec && rec.active) rec.onSample(s);
+}
+async function enableGyro(){
+  $('#introMsg').textContent = '';
+  audioInit();
+  try{
+    if(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function'){
+      const p = await DeviceMotionEvent.requestPermission();
+      if(p !== 'granted'){ $('#introMsg').textContent = '沒有取得「動作與方向」權限。iPhone 請到「設定 › Safari › 進階 › 網站資料」清除本站後重新整理，再按一次並選「允許」。'; return; }
+    }
+  }catch(e){ $('#introMsg').textContent = '無法要求動作權限：' + e.message; return; }
+  window.addEventListener('devicemotion', onMotion);
+  const before = motionCount;
+  await sleep(900);
+  if(motionCount - before < 5 || !ring.length){
+    window.removeEventListener('devicemotion', onMotion);
+    $('#introMsg').textContent = '這個裝置沒有回報陀螺儀資料（電腦或部分舊手機會這樣）。可以改用觸控模式測流程。';
+    return;
+  }
+  inputMode = 'gyro'; keepAwake(); showLab(); openCalib();
+}
+function enableTouch(){ audioInit(); inputMode = 'touch'; keepAwake(); showLab(); toast('觸控模式：聽到「揮！」後用手指在畫面上畫'); }
+function showLab(){ $('#intro').hidden = true; $('#lab').hidden = false; updateStatus(); resizeCanvas(); drawIdle(); }
+function updateStatus(){
+  const el = $('#sensorStatus');
+  if(inputMode === 'gyro') el.innerHTML = `感測器：<b>陀螺儀</b>・${rateHz || '—'} 次／秒・${calib.done ? '已校正' : '<span style="color:var(--warn)">未校正</span>'}`;
+  else el.innerHTML = '感測器：<b>觸控模式</b>（用手指畫）';
+  $('#btnRecal').hidden = inputMode !== 'gyro';
+}
+setInterval(() => { if(inputMode) { updateStatus(); updateDebug(); } }, 1000);
+
+/* 校正：手機直立、螢幕朝自己、靜止 → 量陀螺儀偏移和重力方向的正負號 */
+function openCalib(){ $('#calib').hidden = false; $('#calibBar').style.width = '0'; $('#calibMsg').textContent = '準備好就按「開始校正」。'; $('#btnCalib').disabled = false; }
+async function runCalib(){
+  $('#btnCalib').disabled = true; audioInit();
+  $('#calibMsg').textContent = '保持不動…';
+  const buf = []; liveListener = s => buf.push(s);
+  const T = 1800, t0 = performance.now();
+  while(performance.now() - t0 < T){ $('#calibBar').style.width = Math.min(100, (performance.now()-t0)/T*100) + '%'; await sleep(60); }
+  liveListener = null;
+  if(buf.length < 10){ $('#calibMsg').textContent = '沒收到感測資料，請再試一次。'; $('#btnCalib').disabled = false; return; }
+  const mean = k => buf.reduce((a,s) => a + s[k], 0)/buf.length;
+  const sd = k => { const m = mean(k); return Math.sqrt(buf.reduce((a,s) => a + (s[k]-m)**2, 0)/buf.length); };
+  const bias = [mean('wx'), mean('wy'), mean('wz')], wsd = Math.max(sd('wx'), sd('wy'), sd('wz'));
+  const g = [mean('ax'), mean('ay'), mean('az')], gl = len3(g);
+  if(wsd > 6){ $('#calibMsg').textContent = '手有點晃，請靠著身體、穩住再試一次。'; $('#btnCalib').disabled = false; sfx.bad(); return; }
+  if(gl > 3 && Math.abs(g[1])/gl < 0.6){ $('#calibMsg').textContent = '手機好像沒有直立。請讓手機頂端朝上、螢幕朝著自己再試一次。'; $('#btnCalib').disabled = false; sfx.bad(); return; }
+  calib.bias = bias; calib.gSign = gl > 3 ? (g[1] >= 0 ? 1 : -1) : 1; calib.done = true; calib.at = Date.now();
+  store.set('fuchenLab.calib', calib);
+  $('#calibBar').style.width = '100%'; $('#calibMsg').textContent = '校正完成 ✨'; sfx.ding(); vib(60);
+  await sleep(600); $('#calib').hidden = true; updateStatus();
+}
+// 目前「上方」在手機座標裡的方向（取最近 0.3 秒的重力平均）
+function currentUp(){
+  const now = performance.now(), arr = ring.filter(s => now - s.t < 300);
+  if(!arr.length) return [0,1,0];
+  const g = [0,0,0]; for(const s of arr){ g[0]+=s.ax; g[1]+=s.ay; g[2]+=s.az; }
+  if(len3(g)/arr.length < 3) return [0,1,0];
+  return nrm3(scl3(g, calib.gSign));
+}
+
+/* 把陀螺儀轉動累加起來，追蹤「手機頂端（拂絲）指向哪裡」，再投影成平面軌跡 */
+function makeIntegrator(up){
+  let R = [1,0,0, 0,1,0, 0,0,1];        // 現在的手機座標 → 開始揮的那一刻的座標
+  const p0 = [0,1,0];                   // 手機頂端
+  let upT = sub3(up, scl3(p0, dot(up,p0)));
+  if(len3(upT) < 0.35){ const z = [0,0,1]; upT = sub3(z, scl3(p0, dot(z,p0))); } // 手機幾乎直立：往前倒＝往下
+  upT = nrm3(upT); const right = cross3(p0, upT);
+  const pts = [{ x:0, y:0, sp:0, t:0 }]; let T = 0;
+  return {
+    pts, upT, right,
+    step(s){
+      const w = [(s.wx - calib.bias[0])*D2R, (s.wy - calib.bias[1])*D2R, (s.wz - calib.bias[2])*D2R];
+      const wl = len3(w), th = wl * s.dt;
+      if(th > 1e-9){
+        const k = scl3(w, 1/wl), c = Math.cos(th), sn = Math.sin(th), v = 1 - c;
+        const M = [c+k[0]*k[0]*v, k[0]*k[1]*v-k[2]*sn, k[0]*k[2]*v+k[1]*sn,
+                   k[1]*k[0]*v+k[2]*sn, c+k[1]*k[1]*v, k[1]*k[2]*v-k[0]*sn,
+                   k[2]*k[0]*v-k[1]*sn, k[2]*k[1]*v+k[0]*sn, c+k[2]*k[2]*v];
+        const N = new Array(9);
+        for(let i=0;i<3;i++) for(let j=0;j<3;j++) N[i*3+j] = R[i*3]*M[j] + R[i*3+1]*M[3+j] + R[i*3+2]*M[6+j];
+        R = N;
+      }
+      T += s.dt;
+      const p = [R[1], R[4], R[7]], c = Math.max(-1, Math.min(1, dot(p,p0)));
+      const ang = Math.acos(c), d = sub3(p, scl3(p0, c)), dl = len3(d);
+      let x = 0, y = 0;
+      if(dl > 1e-6){ x = ang * dot(d, right)/dl; y = ang * dot(d, upT)/dl; }
+      if(settings.mirX) x = -x; if(settings.mirY) y = -y;
+      const pt = { x, y, sp: wl*R2D, t:T, p }; pts.push(pt); return pt;
+    }
+  };
+}
+// 揮完之後：以整個符號的「平均指向」當投影中心重新投影（等距方位投影），
+// 不然從角落起筆的大符號（例如 Z 從左上角開始）離中心越遠越變形
+function reproject(pts, up){
+  const c = [0,0,0]; for(const q of pts){ const p = q.p || [0,1,0]; c[0]+=p[0]; c[1]+=p[1]; c[2]+=p[2]; }
+  const cn = nrm3(c);
+  let upT = sub3(up, scl3(cn, dot(up,cn)));
+  if(len3(upT) < 0.35){ const z = [0,0,1]; upT = sub3(z, scl3(cn, dot(z,cn))); }
+  upT = nrm3(upT); const right = cross3(cn, upT);
+  return pts.map(q => {
+    const p = q.p || [0,1,0], cc = Math.max(-1, Math.min(1, dot(p,cn))), ang = Math.acos(cc), d = sub3(p, scl3(cn, cc)), dl = len3(d);
+    let x = 0, y = 0; if(dl > 1e-6){ x = ang*dot(d,right)/dl; y = ang*dot(d,upT)/dl; }
+    if(settings.mirX) x = -x; if(settings.mirY) y = -y;
+    return { x, y, sp:q.sp, t:q.t };
+  });
+}
+
+/* ---------------- 畫布 ---------------- */
+const cv = $('#cv'), ctx = cv.getContext('2d');
+let W = 300, H = 300, DPR = 1;
+function resizeCanvas(){ const r = cv.getBoundingClientRect(); DPR = Math.min(2, window.devicePixelRatio || 1); W = r.width || 300; H = r.height || 300; cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0); }
+window.addEventListener('resize', () => { resizeCanvas(); if(!running) redrawLast(); });
+function bg(){
+  const g = ctx.createRadialGradient(W/2, H*0.45, 10, W/2, H/2, W*0.75);
+  g.addColorStop(0, '#24384a'); g.addColorStop(1, '#0d151d'); ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  ctx.save(); ctx.strokeStyle = 'rgba(226,181,82,.10)'; ctx.lineWidth = 1;
+  for(let r=0.15;r<0.5;r+=0.11){ ctx.beginPath(); ctx.arc(W/2, H/2, W*r, 0, Math.PI*2); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(W/2, H*0.06); ctx.lineTo(W/2, H*0.94); ctx.moveTo(W*0.06, H/2); ctx.lineTo(W*0.94, H/2); ctx.stroke(); ctx.restore();
+}
+// 把正規化座標（約 -0.5～0.5，y 向上）轉成畫布座標
+const toC = (p, s=0.72) => [W/2 + p[0]*W*s, H/2 - p[1]*H*s];
+function strokePath(pts, opt){
+  if(pts.length < 2) return;
+  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if(opt.glow){ ctx.shadowColor = opt.glow; ctx.shadowBlur = opt.blur || 18; }
+  ctx.setLineDash(opt.dash || []); ctx.lineWidth = opt.width || 4; ctx.strokeStyle = opt.color;
+  ctx.beginPath(); pts.forEach((p,i) => { const c = toC(p, opt.s); i ? ctx.lineTo(c[0],c[1]) : ctx.moveTo(c[0],c[1]); }); ctx.stroke(); ctx.restore();
+}
+function arrowHead(pts, color, s){
+  if(pts.length < 3) return; const a = toC(pts[pts.length-1], s), b = toC(pts[Math.max(0, pts.length-5)], s);
+  const ang = Math.atan2(a[1]-b[1], a[0]-b[0]), L = 14;
+  ctx.save(); ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(a[0], a[1]);
+  ctx.lineTo(a[0] - L*Math.cos(ang - 0.45), a[1] - L*Math.sin(ang - 0.45)); ctx.lineTo(a[0] - L*Math.cos(ang + 0.45), a[1] - L*Math.sin(ang + 0.45)); ctx.closePath(); ctx.fill(); ctx.restore();
+}
+function startDot(p, s){ const c = toC(p, s); ctx.save(); ctx.fillStyle = '#7fe0a6'; ctx.shadowColor = '#7fe0a6'; ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(c[0], c[1], 6, 0, Math.PI*2); ctx.fill(); ctx.restore(); }
+// 「拂絲」光帶：主線＋幾條細絲錯開，有一點拂塵的感覺
+function fuchenTrail(pts, s, alpha=1){
+  if(pts.length < 2) return;
+  strokePath(pts, { color:`rgba(255,214,120,${0.35*alpha})`, width:16, glow:'rgba(255,200,90,.9)', blur:26, s });
+  for(let k=-2;k<=2;k++){ if(!k) continue; const off = k*0.006; strokePath(pts.map(p => [p[0]+off, p[1]-off]), { color:`rgba(255,248,230,${0.35*alpha})`, width:1.4, s }); }
+  strokePath(pts, { color:`rgba(255,250,235,${alpha})`, width:4.5, glow:'#ffe7a8', blur:12, s });
+}
+function tplPts(key, variant=0){ const t = TEMPLATES.find(t => t.key === key); return t ? t.variants[variant] || t.variants[0] : null; }
+function drawTemplateGhost(key, variant, alpha=0.35){ const p = tplPts(key, variant); if(!p) return; strokePath(p, { color:`rgba(160,200,255,${alpha})`, width:10, dash:[2,14], s:0.72 }); }
+let lastDraw = null;
+function redrawLast(){ if(lastDraw) lastDraw(); else drawIdle(); }
+function drawIdle(){
+  lastDraw = drawIdle; bg();
+  const key = currentKeyForIdle();
+  if(key && key !== 'cross'){ const p = tplPts(key); strokePath(p, { color:'rgba(160,200,255,.45)', width:5, dash:[6,10] }); startDot(p[0], 0.72); arrowHead(p, 'rgba(160,200,255,.7)', 0.72); }
+  if(key === 'cross'){ strokePath(tplPts('dr'), { color:'rgba(160,200,255,.45)', width:5, dash:[6,10] }); strokePath(tplPts('dl'), { color:'rgba(160,200,255,.45)', width:5, dash:[6,10] }); }
+  setOverlay(key ? `<div class="mid">${symLabel(SYM[key])}</div><div class="sub">按「開始這一揮」</div>` : `<div class="mid">${mode === 'random' ? '🎲 隨機測驗' : '🌀 自由揮'}</div><div class="sub">${mode === 'random' ? '每次隨機出一個符號' : '倒數後隨意揮一個符號，看系統認成什麼'}</div>`);
+}
+function setOverlay(html){ $('#overlay').innerHTML = html; }
+
+/* ---------------- 介面：模式與符號 ---------------- */
+let mode = 'pick', selected = 'left', running = false, cancelFlag = false;
+const grid = $('#symGrid');
+SYMBOLS.forEach(s => { const b = document.createElement('button'); b.dataset.key = s.key; b.innerHTML = `<span class="ic">${s.icon}</span>${s.name}`; grid.appendChild(b); });
+function syncGrid(){ grid.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.key === selected))); grid.classList.toggle('dim', mode !== 'pick'); }
+grid.addEventListener('click', e => { const b = e.target.closest('button'); if(!b || running) return; selected = b.dataset.key; syncGrid(); drawIdle(); });
+document.querySelector('.tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b || running) return; mode = b.dataset.mode;
+  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); syncGrid(); drawIdle();
+});
+function currentKeyForIdle(){ return mode === 'pick' ? selected : null; }
+syncGrid();
+
+/* ---------------- 一次揮拂的流程：看 → 倒數 → 揮 → 叮 → 看結果 ---------------- */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function wait(ms){ const t0 = performance.now(); while(performance.now() - t0 < ms){ if(cancelFlag) throw 'cancel'; await sleep(Math.min(40, ms)); } if(cancelFlag) throw 'cancel'; }
+function windowMs(key){ const k = key ? SYM[key].kind : 'shape'; return k === 'dir' ? 1600 : k === 'cross' ? 1500 : 2800; }
+
+async function demo(key){
+  const s = SYM[key]; say(s.say);
+  setOverlay(`<div class="mid">下一招：${symLabel(s)}</div>`);
+  const paths = key === 'cross' ? [tplPts('dr'), tplPts('dl')] : [tplPts(key)];
+  const D = 1500, t0 = performance.now();
+  lastDraw = null;
+  while(performance.now() - t0 < D + 300){
+    if(cancelFlag) throw 'cancel';
+    const k = Math.min(1, (performance.now() - t0)/D); bg();
+    paths.forEach((p, idx) => {
+      const local = paths.length > 1 ? Math.max(0, Math.min(1, k*2 - idx)) : k;
+      strokePath(p, { color:'rgba(160,200,255,.25)', width:5, dash:[6,10] });
+      const n = Math.max(2, Math.round(local*p.length)); if(local > 0) fuchenTrail(p.slice(0, n), 0.72, 0.9);
+    });
+    await sleep(16);
+  }
+}
+async function countdown(beats, label){
+  let early = false; const st = SENS[settings.sens].start * 1.15;
+  for(let i=beats;i>=1;i--){
+    bg(); if(label) setOverlay(`<div class="big">${i}</div><div class="sub">${label}</div>`); else setOverlay(`<div class="big">${i}</div>`);
+    sfx.beat(); vib(30);
+    const t0 = performance.now();
+    while(performance.now() - t0 < 700){
+      if(cancelFlag) throw 'cancel';
+      if(i === 1 && inputMode === 'gyro'){ const s = ring[ring.length-1]; if(s && Math.hypot(s.wx-calib.bias[0], s.wy-calib.bias[1], s.wz-calib.bias[2]) > st) early = true; }
+      await sleep(16);
+    }
+  }
+  return early;
+}
+// 錄一筆揮動，回傳軌跡點
+function record(ms){
+  return new Promise((resolve, reject) => {
+    const th = SENS[settings.sens]; const t0 = performance.now();
+    sfx.go(); vib(140); bg(); setOverlay('<div class="big">揮！</div>');
+    let done = false, raf = 0, timer = 0;
+    const finish = (why) => {
+      if(done) return; done = true; cancelAnimationFrame(raf); clearTimeout(timer); clearInterval(cancelPoll);
+      if(rec) rec.active = false; detachTouch();
+      resolve({ why, pts: rec.integ ? rec.integ.pts : rec.touchPts, raw: rec.raw, up: rec.up, input: inputMode });
+    };
+    const cancelPoll = setInterval(() => { if(cancelFlag && !done){ done = true; cancelAnimationFrame(raf); clearTimeout(timer); clearInterval(cancelPoll); if(rec) rec.active = false; detachTouch(); reject('cancel'); } }, 50);
+    if(inputMode === 'gyro'){
+      const up = currentUp(), integ = makeIntegrator(up);
+      rec = { active:true, integ, up, raw:[], started:false, lastActive:0, swooshed:false,
+        onSample(s){
+          this.raw.push([Math.round(s.dt*1000*10)/10, +s.wx.toFixed(1), +s.wy.toFixed(1), +s.wz.toFixed(1)]);
+          const p = integ.step(s), now = performance.now();
+          if(p.sp > th.start){ if(!this.started){ this.started = true; } this.lastActive = now; if(!this.swooshed){ this.swooshed = true; swoosh(Math.min(1, p.sp/800)); } }
+          else if(p.sp > th.end && this.started) this.lastActive = now;
+          if(this.started && now - this.lastActive > 300) finish('still');
+        } };
+      timer = setTimeout(() => finish('timeout'), ms);
+    } else {
+      rec = { active:true, touchPts:[{x:0,y:0,sp:0,t:0}], raw:[], up:null, started:false };
+      attachTouch(rec, () => finish('lift'));
+      timer = setTimeout(function chk(){ if(rec.down) timer = setTimeout(chk, 150); else finish('timeout'); }, ms + 1200);
+    }
+    const live = () => { if(done) return; drawLive(rec.integ ? rec.integ.pts : rec.touchPts); raf = requestAnimationFrame(live); };
+    raf = requestAnimationFrame(live);
+  });
+}
+function drawLive(pts){
+  bg(); if(pts.length < 2) return;
+  let m = 0.35; for(const p of pts) m = Math.max(m, Math.abs(p.x), Math.abs(p.y));
+  const q = pts.map(p => [p.x/(2*m), p.y/(2*m)]); fuchenTrail(q, 0.8, 0.8);
+}
+// 觸控模式
+let touchHandlers = null;
+function attachTouch(r, onLift){
+  const stage = $('#stage');
+  const pos = e => { const b = stage.getBoundingClientRect(); return [(e.clientX - b.left)/b.width - 0.5, -((e.clientY - b.top)/b.height - 0.5)]; };
+  let t0 = 0, origin = null;
+  const down = e => { e.preventDefault(); r.down = true; t0 = performance.now(); origin = pos(e); r.touchPts = [{x:0,y:0,sp:0,t:0}]; r.raw = []; stage.setPointerCapture && stage.setPointerCapture(e.pointerId); swoosh(0.6); };
+  const move = e => { if(!r.down) return; const p = pos(e), t = (performance.now()-t0)/1000; const q = { x:(p[0]-origin[0])*1.6, y:(p[1]-origin[1])*1.6, sp:400, t }; r.touchPts.push(q); r.raw.push([Math.round(t*1000), +p[0].toFixed(3), +p[1].toFixed(3)]); };
+  const up = () => { if(!r.down) return; r.down = false; onLift(); };
+  stage.addEventListener('pointerdown', down); stage.addEventListener('pointermove', move); stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
+  touchHandlers = { down, move, up };
+}
+function detachTouch(){ if(!touchHandlers) return; const st = $('#stage'); st.removeEventListener('pointerdown', touchHandlers.down); st.removeEventListener('pointermove', touchHandlers.move); st.removeEventListener('pointerup', touchHandlers.up); st.removeEventListener('pointercancel', touchHandlers.up); touchHandlers = null; }
+
+/* ---------------- 分析一筆揮動 ---------------- */
+function analyzeStroke(st){
+  let pts = st.pts;
+  if(st.input === 'gyro'){
+    const th = SENS[settings.sens]; let a = -1, b = -1;
+    for(let i=0;i<pts.length;i++) if(pts[i].sp > th.start){ a = i; break; }
+    if(a < 0) return { none:true, peak: Math.round(Math.max(0, ...pts.map(p => p.sp))) };
+    for(let i=pts.length-1;i>=a;i--) if(pts[i].sp > th.end){ b = i; break; }
+    // 揮動的起手和收尾比較慢，從過門檻的點往前、往後延伸到幾乎靜止，符號的頭尾才不會被切掉
+    const low = Math.max(15, th.end * 0.4);
+    while(a > 0 && pts[a-1].sp > low) a--;
+    while(b < pts.length-1 && pts[b+1].sp > low) b++;
+    pts = pts.slice(Math.max(0, a-1), Math.min(pts.length, b+2));
+    pts = reproject(pts, st.up || [0,1,0]);
+  }
+  const xy = pts.map(p => [p.x, p.y]);
+  const L = pathLen(xy);
+  if(xy.length < 3 || L < (st.input === 'gyro' ? 0.17 : 0.08)) return { none:true, peak: Math.round(Math.max(0, ...pts.map(p => p.sp || 0))) };
+  // 主揮方向：速度最快那一段的位移方向
+  let pk = 1, pv = 0; const vel = [0];
+  for(let i=1;i<pts.length;i++){ const dt = Math.max(0.004, pts[i].t - pts[i-1].t); const v = Math.hypot(xy[i][0]-xy[i-1][0], xy[i][1]-xy[i-1][1])/dt; vel.push(v); if(v > pv){ pv = v; pk = i; } }
+  let s = pk, e = pk; while(s > 1 && vel[s-1] > pv*0.35) s--; while(e < vel.length-1 && vel[e+1] > pv*0.35) e++;
+  const dx = xy[e][0] - xy[Math.max(0,s-1)][0], dy = xy[e][1] - xy[Math.max(0,s-1)][1];
+  const mainDir = (Math.atan2(dy, dx)*R2D + 360) % 360;
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity; for(const p of xy){ x0=Math.min(x0,p[0]); x1=Math.max(x1,p[0]); y0=Math.min(y0,p[1]); y1=Math.max(y1,p[1]); }
+  const rg = recognize(xy);
+  return { none:false, xy, rg, mainDir, dur: Math.round((pts[pts.length-1].t - pts[0].t)*1000),
+    peak: Math.round(Math.max(...pts.map(p => p.sp || 0))), size: [Math.round((x1-x0)*R2D), Math.round((y1-y0)*R2D)] };
+}
+function judge(target, strokes, early){
+  const A = strokes.map(analyzeStroke);
+  const out = { target, early, strokes:A, correct:false, score:0, recognized:null };
+  if(A.some(a => a.none)){ out.verdict = ['💤 沒揮到', 'warn']; out.hint = '感測器沒偵測到夠大的揮動。可以揮大力一點，或把靈敏度調成「輕」。'; return out; }
+  const a = A[0];
+  if(!target){ // 自由揮
+    out.recognized = a.rg.ranking[0].key; out.score = a.rg.ranking[0].score; out.correct = null;
+    out.verdict = [`系統認成：${a.rg.ranking[0].name}`, out.score >= 65 ? 'ok' : 'warn'];
+    out.hint = `主揮方向 ${dirLabel(a.mainDir)[1]}。看看第一名是不是您想畫的符號。`; return out;
+  }
+  const sym = SYM[target];
+  if(sym.kind === 'dir'){
+    const err = angDiff(a.mainDir, sym.dir); out.score = Math.max(0, Math.round((1 - err/70)*100));
+    out.correct = err <= 35; out.recognized = out.correct ? target : dirLabel(a.mainDir)[2];
+  } else if(sym.kind === 'cross'){
+    const isD1 = d => Math.min(angDiff(d,315), angDiff(d,135)), isD2 = d => Math.min(angDiff(d,225), angDiff(d,45));
+    const d1 = A[0].mainDir, d2 = A[1].mainDir;
+    const e = Math.min(Math.max(isD1(d1), isD2(d2)), Math.max(isD2(d1), isD1(d2)));
+    out.score = Math.max(0, Math.round((1 - e/70)*100)); out.correct = e <= 35; out.recognized = out.correct ? 'cross' : `${dirLabel(d1)[1]}＋${dirLabel(d2)[1]}`;
+  } else {
+    const top = a.rg.ranking[0], mine = a.rg.ranking.find(r => r.key === target);
+    out.score = mine.score; out.correct = top.key === target; out.recognized = top.key;
+  }
+  if(!out.correct) out.verdict = ['💨 符散了', 'bad'];
+  else if(out.score >= 85) out.verdict = ['✨ 明鏡無塵', 'good'];
+  else if(out.score >= 65) out.verdict = ['🪶 拂淨', 'ok'];
+  else out.verdict = ['🪶 勉強認得', 'ok'];
+  if(early) out.hint = '😅 心急了：「揮！」之前手就動了。定心等口令再揮。';
+  return out;
+}
+
+/* ---------------- 看結果：重播軌跡＋判定 ---------------- */
+async function replay(res){
+  const A = res.strokes.filter(a => !a.none);
+  if(!A.length){ bg(); setOverlay(`<div class="mid">${res.verdict[0]}</div>`); lastDraw = () => { bg(); }; return; }
+  const target = res.target, sym = target ? SYM[target] : null;
+  const user = A.map(a => a.rg.norm);
+  const ghost = () => {
+    if(!sym) return;
+    if(sym.kind === 'cross'){ drawTemplateGhost('dr', 0); drawTemplateGhost('dl', 0); }
+    else { const r = A[0].rg.ranking.find(x => x.key === target); drawTemplateGhost(target, r ? r.variant : 0); }
+  };
+  // 交叉斬兩刀各自正規化，會疊在一起；改成用同一個比例畫在原始位置
+  let paths = user;
+  if(sym && sym.kind === 'cross'){
+    let m = 0.2; A.forEach(a => a.xy.forEach(p => m = Math.max(m, Math.abs(p[0]), Math.abs(p[1]))));
+    paths = A.map(a => { const c = a.xy.reduce((s,p) => [s[0]+p[0], s[1]+p[1]], [0,0]).map(v => v/a.xy.length); return resample(a.xy.map(p => [(p[0]-c[0])/(2*m), (p[1]-c[1])/(2*m)]), NPTS); });
+  }
+  setOverlay('');
+  const D = 900, t0 = performance.now();
+  while(performance.now() - t0 < D){
+    if(cancelFlag) throw 'cancel';
+    const k = (performance.now() - t0)/D; bg(); ghost();
+    paths.forEach((p, i) => { const local = paths.length > 1 ? Math.max(0, Math.min(1, k*2 - i)) : k; const n = Math.max(2, Math.round(local*p.length)); if(local > 0) fuchenTrail(p.slice(0, n), 0.72); });
+    await sleep(16);
+  }
+  const final = () => { bg(); ghost(); paths.forEach(p => { fuchenTrail(p, 0.72); startDot(p[0], 0.72); arrowHead(p, '#ffe7a8', 0.72); }); };
+  final(); lastDraw = () => { final(); setOverlay(''); };
+  const [v, cls] = res.verdict;
+  if(res.correct === false) sfx.bad(); else if(cls === 'good') sfx.good(); else sfx.ok();
+  vib(res.correct === false ? [40,60,40] : 80);
+  setOverlay(`<div class="mid" style="margin-top:auto;margin-bottom:6%">${v}${res.target && res.correct !== false ? `・${res.score}%` : ''}</div>`);
+}
+function showResult(res){
+  const el = $('#result'); el.hidden = false;
+  const sym = res.target ? SYM[res.target] : null;
+  const A = res.strokes.filter(a => !a.none);
+  let h = `<div class="verdict"><span class="v ${res.verdict[1]}">${res.verdict[0]}</span>`;
+  if(sym) h += `<span>目標：<b>${symLabel(sym)}</b></span>`;
+  if(res.target && A.length) h +=`<span>相似度 <b>${res.score}%</b></span>`;
+  h += `</div>`;
+  if(res.hint) h += `<p class="note">${res.hint}</p>`;
+  if(A.length){
+    if(sym && sym.kind !== 'shape'){
+      h += `<p>主揮方向：${A.map(a => { const d = dirLabel(a.mainDir); return `<b>${d[1]} ${d[2]}</b>（${Math.round(a.mainDir)}°）`; }).join('　＋　')}</p>`;
+    }
+    const rk = A[0].rg.ranking.slice(0, 4);
+    h += `<div class="bars"><p class="note" style="margin:0 0 2px">形狀比對（第一刀）：</p>${rk.map(r => `<div class="bar ${r.key === res.target ? 'hit' : ''}"><span>${r.name}</span><span class="track"><span class="fill" style="width:${r.score}%;display:block"></span></span><span>${r.score}%</span></div>`).join('')}</div>`;
+    const a = A[0];
+    h += `<div class="metrics"><span>揮動時間 <b>${a.dur} ms</b></span><span>最快轉速 <b>${a.peak}°/s</b></span><span>左右幅度 <b>${a.size[0]}°</b></span><span>上下幅度 <b>${a.size[1]}°</b></span></div>`;
+  } else if(res.strokes[0]) {
+    h += `<div class="metrics"><span>最快轉速 <b>${res.strokes[0].peak || 0}°/s</b></span><span>門檻 <b>${SENS[settings.sens].start}°/s</b></span></div>`;
+  }
+  el.innerHTML = h;
+}
+
+/* ---------------- 紀錄與統計 ---------------- */
+let log = store.get('fuchenLab.log', []);
+function saveAttempt(res, strokes){
+  const entry = { at: new Date().toISOString(), mode, target: res.target, input: inputMode, sens: settings.sens,
+    correct: res.correct, score: res.score, recognized: res.recognized, early: res.early, verdict: res.verdict[0],
+    strokes: res.strokes.map((a, i) => a.none ? { none:true, peak:a.peak } : {
+      mainDir: Math.round(a.mainDir), dur:a.dur, peak:a.peak, size:a.size,
+      top: a.rg.ranking.slice(0, 3).map(r => [r.key, r.score]),
+      up: strokes[i].up ? strokes[i].up.map(v => +v.toFixed(3)) : null
+    }),
+    raw: strokes.map(s => s.raw) };
+  log.push(entry);
+  // 原始資料只留最近 40 筆，避免塞爆瀏覽器空間
+  log.forEach((e, i) => { if(i < log.length - 40) delete e.raw; });
+  if(log.length > 400) log = log.slice(-400);
+  if(!store.set('fuchenLab.log', log)){ log.forEach((e, i) => { if(i < log.length - 10) delete e.raw; }); store.set('fuchenLab.log', log); }
+  renderStats();
+}
+function renderStats(){
+  const rows = SYMBOLS.map(s => {
+    const L = log.filter(e => e.target === s.key); const ok = L.filter(e => e.correct).length;
+    const sc = L.length ? Math.round(L.reduce((a,e) => a + (e.score||0), 0)/L.length) : null;
+    return `<tr><td>${symLabel(s)}</td><td class="n">${L.length}</td><td class="n">${L.length ? Math.round(ok/L.length*100)+'%' : '—'}</td><td class="n">${sc == null ? '—' : sc+'%'}</td></tr>`;
+  });
+  $('#statsBody').innerHTML = rows.join('');
+  const free = log.filter(e => !e.target).length;
+  $('#statsTotal').textContent = `共 ${log.length} 筆${free ? `（含自由揮 ${free} 筆）` : ''}`;
+}
+function exportData(){
+  return JSON.stringify({ app:'fuchen-lab', version:VERSION, exportedAt:new Date().toISOString(),
+    device:{ ua:navigator.userAgent, screen:[screen.width, screen.height], dpr:window.devicePixelRatio, rateHz },
+    calib, settings, log }, null, 1);
+}
+$('#btnCopy').addEventListener('click', async () => {
+  const txt = exportData();
+  try{ await navigator.clipboard.writeText(txt); toast('已複製測試紀錄 📋'); }
+  catch(e){ const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast('已複製測試紀錄 📋'); }catch(_){ toast('複製失敗，請改用下載'); } ta.remove(); }
+});
+$('#btnDownload').addEventListener('click', () => {
+  const blob = new Blob([exportData()], { type:'application/json' }), a = document.createElement('a');
+  const d = new Date(), stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
+  a.href = URL.createObjectURL(blob); a.download = `揮符實驗室-${stamp}.json`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+});
+$('#btnClear').addEventListener('click', () => { if(!confirm('確定要清除這支手機上所有的測試紀錄嗎？')) return; log = []; store.set('fuchenLab.log', log); renderStats(); toast('已清除'); });
+function updateDebug(){
+  const last = ring[ring.length-1];
+  $('#debug').textContent = [
+    `版本 ${VERSION}｜模式 ${inputMode}｜取樣 ${rateHz} 次/秒`,
+    `校正：${calib.done ? '是' : '否'}｜偏移 ${calib.bias.map(v => v.toFixed(2)).join(', ')} °/s｜重力正負 ${calib.gSign}`,
+    last ? `即時轉速 x ${last.wx.toFixed(0)}  y ${last.wy.toFixed(0)}  z ${last.wz.toFixed(0)} °/s` : '即時轉速 —',
+    last ? `重力 ${last.ax.toFixed(1)}, ${last.ay.toFixed(1)}, ${last.az.toFixed(1)}` : '',
+    `門檻 開始 ${SENS[settings.sens].start}°/s・結束 ${SENS[settings.sens].end}°/s`,
+    navigator.userAgent
+  ].join('\n');
+}
+
+/* ---------------- 主流程 ---------------- */
+async function runTrial(){
+  if(running) return;
+  if(inputMode === 'gyro' && !calib.done){ openCalib(); return; }
+  running = true; cancelFlag = false; audioInit(); keepAwake();
+  $('#btnGo').disabled = true; $('#btnStop').disabled = false; $('#result').hidden = true;
+  const key = mode === 'pick' ? selected : mode === 'random' ? SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)].key : null;
+  try{
+    if(key) await demo(key);
+    else { say('自由揮'); setOverlay('<div class="mid">🌀 自由揮</div><div class="sub">倒數後隨意揮一個符號</div>'); bg(); await wait(1000); }
+    const strokes = []; let early = false;
+    const n = key === 'cross' ? 2 : 1;
+    for(let i=0;i<n;i++){
+      if(i === 0) early = await countdown(3, key ? symLabel(SYM[key]) : '');
+      else { await wait(250); say('二刀'); early = (await countdown(1, '第二刀')) || early; }
+      strokes.push(await record(windowMs(key)));
+    }
+    sfx.ding(); vib(50); setOverlay('<div class="mid">叮～看結果</div>'); await wait(350);
+    const res = judge(key, strokes, early);
+    await replay(res);
+    showResult(res); saveAttempt(res, strokes);
+  }catch(e){
+    if(e !== 'cancel'){ console.error(e); toast('發生錯誤：' + e); }
+    else { drawIdle(); }
+  }finally{
+    running = false; rec = null; $('#btnGo').disabled = false; $('#btnStop').disabled = true;
+  }
+}
+
+$('#btnEnable').addEventListener('click', enableGyro);
+$('#btnTouch').addEventListener('click', enableTouch);
+$('#btnGo').addEventListener('click', runTrial);
+$('#btnStop').addEventListener('click', () => { cancelFlag = true; try{ speechSynthesis.cancel(); }catch(e){} });
+$('#btnRecal').addEventListener('click', () => { if(!running) openCalib(); });
+$('#btnCalib').addEventListener('click', runCalib);
+$('#btnCalibSkip').addEventListener('click', () => { $('#calib').hidden = true; if(!calib.done){ calib.done = true; calib.bias = [0,0,0]; } updateStatus(); });
+renderStats();
+// 電腦測試用：?touch 直接進觸控模式
+if(/[?&]touch\b/.test(location.search)) enableTouch();
+</script>
+</body>
+</html>
