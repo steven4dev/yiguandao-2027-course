@@ -644,7 +644,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261107.05</span>
+  <span class="ver">v261107.06</span>
   </div></div>
 </div>
 
@@ -5878,7 +5878,7 @@ function rideLens(fov, near = NEAR0) { camera.fov = fov; camera.near = near; cam
 /* ---------- 搭熱氣球：右上角 🎈 按鈕，站在瞭望氣球的吊籃裡，以全真島為中心順時針繞群島（第一人稱） ----------
    從瞭望氣球現在的位置升空、往外飄到高空的航道，然後依課程島的順序（順時針）一直繞，直到自己按「✕ 降落」。
    鏡頭站在籃子裡朝群島中央往下俯瞰：全部都是氣球模型本身（沒有疊在畫面上的圖），所以拖曳轉頭時繩子、立柱跟著一起轉。
-   畫面下緣露出前方的籃緣，前角的麻繩立柱往上接到頭頂的燃燒器框架；燃燒器在頭頂，噴火時火光照亮籃子和立柱，往上拖抬頭就看得到火和球皮內側。
+   畫面下緣露出前方的籃緣，前角的麻繩立柱往上接到頭頂的燃燒器框架；燃燒器在頭頂，噴火時火光照亮籃子和立柱，往下拖抬頭就看得到火和球皮內側。
    熱氣球的物理感：燃燒器噴火時往上浮、沒噴火時慢慢往下沉，再疊上忽大忽小的氣流起伏、籃子像鐘擺一樣輕輕晃（鏡頭跟著籃子一起晃）、
    風把航道吹得忽遠忽近。
    拖曳可以轉頭看四周，放開後慢慢轉回群島中央；點任何一座島（或標籤）就下來飛過去。繞完一整圈頒徽章。
@@ -5887,7 +5887,7 @@ const BAL = { on: false, t0: 0, ang: 0, ang0: 0, from: null, h: 0, v: 0, burnT: 
 const BAL_R = 86, BAL_Y = 44, BAL_W = (Math.PI * 2) / 130;   // 航道半徑、高度、每秒繞幾弧度（一圈約兩分多鐘）
 // 站位與構圖（氣球自己的座標，-z 朝群島中央）：眼睛位置、往下看的角度（弧度）、視野；
 // 算過讓前方的籃緣落在畫面下緣約 1/10、上緣露出一條細細的天空；電腦站在籃子中後方，左右兩個前角的立柱往左上、右上張開，
-// 手機畫面窄，站在籃子右後方，右前角的立柱才看得到。燃燒器在頭頂，往上拖抬頭才看得到
+// 手機畫面窄，站在籃子右後方，右前角的立柱才看得到。燃燒器在頭頂，往下拖抬頭才看得到
 const BAL_SHOT = { wide: { eye: new THREE.Vector3(0, 1.1, 0.38), pitch: 0.384, fov: 48 }, tall: { eye: new THREE.Vector3(0.46, 1.35, 0.3), pitch: 0.471, fov: 58 } };
 const balTmp = new THREE.Vector3(), balTgt = new THREE.Vector3(), balPos = new THREE.Vector3(), balFwd = new THREE.Vector3();
 const balQ = new THREE.Quaternion(), balE = new THREE.Euler(0, 0, 0, 'YXZ');
@@ -5950,8 +5950,9 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape' && BAL.on) balEnd(fa
 renderer.domElement.addEventListener('pointerdown', (e) => { if (BAL.on) BAL.drag = { x: e.clientX, y: e.clientY, look: BAL.look, lookP: BAL.lookP }; });
 addEventListener('pointermove', (e) => {
   if (!BAL.on || !BAL.drag) return;
-  BAL.look = THREE.MathUtils.clamp(BAL.drag.look - (e.clientX - BAL.drag.x) * 0.005, -2.6, 2.6);
-  BAL.lookP = THREE.MathUtils.clamp(BAL.drag.lookP + (e.clientY - BAL.drag.y) * 0.004, -1.6, 0.6);   // 往上拖可以抬頭看燃燒器和球皮內側
+  // 跟群島平常的拖曳、筋斗雲一樣是「抓住畫面拖」：手指往右，畫面跟著往右（視角往左轉）；手指往下，畫面往下（抬頭）
+  BAL.look = THREE.MathUtils.clamp(BAL.drag.look + (e.clientX - BAL.drag.x) * 0.005, -2.6, 2.6);
+  BAL.lookP = THREE.MathUtils.clamp(BAL.drag.lookP - (e.clientY - BAL.drag.y) * 0.004, -1.6, 0.6);   // 往下拖可以抬頭看燃燒器和球皮內側
 });
 addEventListener('pointerup', () => { BAL.drag = null; });
 addEventListener('pointercancel', () => { BAL.drag = null; });
