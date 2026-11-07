@@ -588,18 +588,6 @@
   @media (max-width: 720px) { .ride-hint { max-width: calc(100vw - 32px - 52px); min-width: 0; } }
   .ride-hint .ride-txt { overflow: hidden; text-overflow: ellipsis; }
   body.riding #brand, body.riding #dock { opacity: 0; pointer-events: none; transition: opacity 0.4s; }   /* 搭乘時品牌卡、時光捲軸先淡出 */
-  /* 搭熱氣球：畫面左上角的燃燒器火光（引火常亮；噴火時 --burn 從 0 到 1，--fs 是火舌大小） */
-  .bal-fire { display: none; position: fixed; z-index: 2; left: 0; top: 0; width: min(42vw, 300px); height: min(36vh, 260px); pointer-events: none; --burn: 0; --fs: 0.22; }
-  body.ballooning .bal-fire { display: block; }
-  .bal-fire .glow { position: absolute; left: -60%; top: -70%; width: 200%; height: 200%; border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(255, 190, 90, 0.85), rgba(255, 140, 50, 0.35) 45%, rgba(255, 120, 40, 0) 100%); opacity: calc(0.12 + var(--burn) * 0.75); mix-blend-mode: screen; }
-  .bal-fire svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-  .bal-fire .fl { transform-box: fill-box; transform-origin: 50% 100%; transform: scale(var(--fs)); filter: drop-shadow(0 0 6px rgba(255, 150, 60, 0.85)); }
-  @media (max-width: 1100px) { .bal-fire { top: calc(56px + env(safe-area-inset-top, 0px)); } }   /* 窄畫面的提示膠囊在左上角，火光往下讓一點 */
-  @media (max-width: 720px) { .bal-fire { width: min(62vw, 300px); } }
-  /* 搭熱氣球：畫面右側一條麻花捲的雙股麻繩，從上方往下扣在右下角的籃框上 */
-  .bal-rope { display: none; position: fixed; z-index: 2; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; filter: drop-shadow(1px 2px 2px rgba(40, 25, 10, 0.35)); }
-  body.ballooning .bal-rope { display: block; }
   .ride-off { flex: none; border: 0; border-radius: 999px; padding: 6px 14px; background: var(--brick); color: #fff; font: inherit; font-size: 13px; cursor: pointer; }
   /* 清淨菩提島：資訊卡裡的吹氣步驟（沿用濟世靈山島的樣式）、音量條、按住吹氣的雲朵 */
   .pt-ui .js-steps { grid-template-columns: repeat(3, 1fr); }
@@ -656,7 +644,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261107.04</span>
+  <span class="ver">v261107.05</span>
   </div></div>
 </div>
 
@@ -2085,7 +2073,7 @@ animators.push((t) => {
     // 每 4～10 秒噴一次火，每次不到一秒半；噴火時球皮被照得微微發亮
     if (t > s.next) { s.until = t + 0.7 + Math.random() * 0.7; s.next = s.until + 4 + Math.random() * 6; if (s.onFire) s.onFire(s.until - t); }
     const on = t < s.until;
-    s.flame.visible = s.core.visible = on && !s.hide;   // hide：搭熱氣球時人就站在燃燒器底下，改用畫面左上角的火光表現
+    s.flame.visible = s.core.visible = on;
     if (on) {
       const f = 0.8 + Math.random() * 0.4;
       s.flame.scale.set(1, f, 1);
@@ -2735,34 +2723,84 @@ const lookout = new THREE.Group();
 scene.add(lookout);
 const LOOK_BASE = new THREE.Vector3(-50, 22, -6);
 const lookoutHit = [];
+/* 瞭望氣球（也是「搭熱氣球」坐的那一顆）：照真實熱氣球的結構做，從籃子裡看出去每個接點才對得上
+   - 吊籃：方形藤籃，上面開口，上緣一圈皮革包邊；籃底 y=-1、籃緣 y≈0.08
+   - 立柱：籃子四角各一根，幾乎垂直往上，接到頭頂的燃燒器框架；外面纏著麻花捲的麻繩
+   - 燃燒器：框架（y=2）中間掛著燃燒器，引火一直亮著，噴火時 3D 大火往上衝進球皮開口、照亮球皮和籃子
+   - 吊索：從框架四角往上、往外拉到球皮開口的承載環（開口比籃子寬）
+   - 球皮：開口在燃燒器上方，比原本的大一圈；整顆照比例縮放，從外面看大小跟以前差不多 */
 {
   const b = lookout;
-  hotAirBalloon(b, '#c0503f', '#f4e9d8', 1.7, 0.85, (dur) => { burnerSound(dur, lookout, 1); balBurn(dur); });
-  // 籃子：藤編的方籃，上面是開口（搭熱氣球時站在裡面看得到籃底和內壁），上緣一圈木框
+  const BW = 0.75, RIM = 0.08, FY = 2.0, FW = 0.68, MY = 3.4, MR = 1.5;   // 籃子半寬、籃緣高度、框架高度與半寬、球皮開口高度與半徑
+  // 麻花捲麻繩的貼圖：斜紋一圈一圈繞上去
+  const twistTex = canvasTex(32, 32, (c) => {
+    c.fillStyle = '#c9a06a'; c.fillRect(0, 0, 32, 32);
+    c.fillStyle = '#9c7344';
+    for (let i = -32; i < 64; i += 11) { c.beginPath(); c.moveTo(i, 32); c.lineTo(i + 16, 0); c.lineTo(i + 21, 0); c.lineTo(i + 5, 32); c.fill(); }
+    c.fillStyle = 'rgba(255,240,210,0.35)';
+    for (let i = -32; i < 64; i += 11) { c.beginPath(); c.moveTo(i + 6, 32); c.lineTo(i + 22, 0); c.lineTo(i + 23.5, 0); c.lineTo(i + 7.5, 32); c.fill(); }
+  }, true);
+  const ropeFrom = (p0, p1, r) => {
+    const d = p1.clone().sub(p0), len = d.length(), tex = twistTex.clone(); tex.needsUpdate = true; tex.repeat.set(1, Math.round(len / (r * 5)));
+    const m = mesh(new THREE.CylinderGeometry(r, r, len, 8), new THREE.MeshLambertMaterial({ map: tex }), (p0.x + p1.x) / 2, (p0.y + p1.y) / 2, (p0.z + p1.z) / 2, b, false);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
+    return m;
+  };
+  // 球皮
+  const envPts = [[1.5, 0], [1.9, 0.7], [2.8, 1.8], [3.7, 3.2], [4.3, 4.8], [4.5, 6.2], [4.3, 7.5], [3.7, 8.6], [2.8, 9.4], [1.5, 9.9], [0, 10.05]].map(([r, y]) => new THREE.Vector2(r, y));
+  const envMat = new THREE.MeshLambertMaterial({ map: stripes('#c0503f', '#f4e9d8', 12), side: THREE.DoubleSide, emissive: '#ff8a2a', emissiveIntensity: 0 });
+  mesh(new THREE.LatheGeometry(envPts, 40), envMat, 0, MY, 0, b);
+  mesh(new THREE.TorusGeometry(MR, 0.05, 6, 32), lam('#5a3b30'), 0, MY, 0, b, false).rotation.x = Math.PI / 2;   // 開口的承載環
+  // 吊籃
   const wicker = new THREE.MeshLambertMaterial({ color: '#b98b55', side: THREE.DoubleSide }), noFace = new THREE.MeshBasicMaterial({ visible: false });
-  mesh(new THREE.BoxGeometry(1.7, 1.0, 1.7), [wicker, wicker, noFace, wicker, wicker, wicker], 0, -0.5, 0, b);
-  const rimMat = lam('#7a5236');
-  for (const [x, z, w, d] of [[0, -0.86, 1.86, 0.14], [0, 0.86, 1.86, 0.14], [-0.86, 0, 0.14, 1.58], [0.86, 0, 0.14, 1.58]]) mesh(new THREE.BoxGeometry(w, 0.14, d), rimMat, x, 0.02, z, b);
-  // 瞭望員和望遠鏡：鏡筒朝著群島中央
+  mesh(new THREE.BoxGeometry(BW * 2, 1.0, BW * 2), [wicker, wicker, noFace, wicker, wicker, wicker], 0, -0.5, 0, b);
+  const rimMat = lam('#6b4a2f');
+  for (const [x, z, w, d] of [[0, -BW, BW * 2 + 0.12, 0.12], [0, BW, BW * 2 + 0.12, 0.12], [-BW, 0, 0.12, BW * 2 - 0.12], [BW, 0, 0.12, BW * 2 - 0.12]]) mesh(new THREE.BoxGeometry(w, 0.13, d), rimMat, x, RIM - 0.065, z, b);
+  // 四角立柱（麻花捲麻繩）、燃燒器框架、往外拉到球皮開口的吊索
+  const corners = [[1, -1], [-1, -1], [1, 1], [-1, 1]];
+  const ropes = [];
+  for (const [x, z] of corners) {
+    ropes.push(ropeFrom(new THREE.Vector3(x * (BW - 0.05), RIM, z * (BW - 0.05)), new THREE.Vector3(x * FW, FY, z * FW), 0.017));
+    ropes.push(ropeFrom(new THREE.Vector3(x * FW, FY, z * FW), new THREE.Vector3(x * MR * 0.707, MY, z * MR * 0.707), 0.016));
+    mesh(new THREE.SphereGeometry(0.045, 8, 6), rimMat, x * (BW - 0.05), RIM + 0.02, z * (BW - 0.05), b, false);   // 繩子扣在籃角的結
+  }
+  const steel = lam('#7d7a80'), dark = lam('#3d3a40');
+  for (const [x, z, w, d] of [[0, -FW, FW * 2, 0.05], [0, FW, FW * 2, 0.05], [-FW, 0, 0.05, FW * 2], [FW, 0, 0.05, FW * 2]]) mesh(new THREE.BoxGeometry(w, 0.05, d), steel, x, FY, z, b, false);
+  for (const [x, z] of corners) { const p0 = new THREE.Vector3(x * FW, FY, z * FW), p1 = new THREE.Vector3(x * 0.16, FY + 0.12, z * 0.16), d = p1.clone().sub(p0); const m = mesh(new THREE.CylinderGeometry(0.018, 0.018, d.length(), 5), steel, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2, (p0.z + p1.z) / 2, b, false); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); }
+  const can = mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.28, 12), dark, 0, FY + 0.14, 0, b, false);
+  mesh(new THREE.TorusGeometry(0.2, 0.035, 6, 16), steel, 0, FY + 0.26, 0, b, false).rotation.x = Math.PI / 2;   // 燃燒器的盤管
+  // 引火（一直亮著的小火苗）和噴火的大火
+  const pilot = mesh(new THREE.ConeGeometry(0.05, 0.2, 8).translate(0, 0.1, 0), new THREE.MeshBasicMaterial({ color: '#7fb4ff', transparent: true, opacity: 0.9, depthWrite: false }), 0, FY + 0.28, 0, b, false);
+  const pilotTip = mesh(new THREE.ConeGeometry(0.035, 0.14, 8).translate(0, 0.07, 0), new THREE.MeshBasicMaterial({ color: '#ffb347', transparent: true, opacity: 0.95, depthWrite: false }), 0, FY + 0.4, 0, b, false);
+  const flame = mesh(new THREE.ConeGeometry(0.3, 1.5, 12).translate(0, 0.75, 0), new THREE.MeshBasicMaterial({ color: '#ff9a3c', transparent: true, opacity: 0.85, depthWrite: false }), 0, FY + 0.3, 0, b, false);
+  const core = mesh(new THREE.ConeGeometry(0.15, 0.95, 10).translate(0, 0.47, 0), new THREE.MeshBasicMaterial({ color: '#fff1b8', transparent: true, opacity: 0.95, depthWrite: false }), 0, FY + 0.3, 0, b, false);
+  flame.visible = core.visible = false;
+  const glowL = new THREE.PointLight('#ffb060', 0, 9, 2); glowL.position.set(0, FY + 0.8, 0); b.add(glowL);   // 噴火時照亮籃子、立柱和球皮內側
+  burners.push({ mat: envMat, flame, core, can, ropes, next: 1.5 + Math.random() * 5, until: 0, onFire: (dur) => { burnerSound(dur, lookout, 1); balBurn(dur); } });
+  animators.push((t) => {
+    pilot.scale.set(1, 0.85 + Math.sin(t * 17) * 0.1 + Math.random() * 0.08, 1); pilotTip.scale.y = 0.8 + Math.random() * 0.4;
+    glowL.intensity += ((flame.visible ? 2.2 : 0) - glowL.intensity) * 0.3;
+  });
+  // 瞭望員（站在籃底，上半身露出籃緣）和望遠鏡：鏡筒朝著群島中央
   const man = figure(lam('#efe4f2'), '', false, { hat: '#e0a632', pack: '#b9d98a' });
-  man.position.set(-0.45, 0.05, 0.45); man.rotation.y = Math.PI; man.scale.setScalar(1.15); b.add(man); b.userData.man = man;
-  const scope = new THREE.Group(); scope.position.set(0.35, 0.55, -0.35); b.add(scope);
+  man.position.set(-0.38, -0.5, 0.32); man.rotation.y = Math.PI; man.scale.setScalar(1.15); b.add(man); b.userData.man = man;
+  const scope = new THREE.Group(); scope.position.set(0.3, 0.42, -0.42); b.add(scope);
   const brass = new THREE.MeshLambertMaterial({ color: '#d8a845', emissive: '#3a2500' });
-  const tube = mesh(new THREE.CylinderGeometry(0.11, 0.17, 1.9, 14), brass, 0, 0, 0, scope); tube.rotation.x = Math.PI / 2;
-  mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.18, 14), brass, 0, 0, -0.95, scope).rotation.x = Math.PI / 2;
-  mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6, 6), lam('#5a3b30'), 0, -0.32, 0.1, scope, false);
+  const tube = mesh(new THREE.CylinderGeometry(0.1, 0.15, 1.6, 14), brass, 0, 0, 0, scope); tube.rotation.x = Math.PI / 2;
+  mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.16, 14), brass, 0, 0, -0.8, scope).rotation.x = Math.PI / 2;
+  mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.5, 6), lam('#5a3b30'), 0, -0.27, 0.1, scope, false);
   b.userData.scope = scope;
-  // 小旗子：放大鏡圖案，看得出點它可以搜尋
+  // 小旗子：放大鏡圖案，看得出點它可以搜尋（插在籃子後方的角落）
   const flagTex = canvasTex(96, 64, (c) => {
     c.fillStyle = '#f4e9d8'; c.fillRect(0, 0, 96, 64);
     c.strokeStyle = '#a3322a'; c.lineWidth = 7; c.lineCap = 'round';
     c.beginPath(); c.arc(42, 28, 14, 0, Math.PI * 2); c.stroke();
     c.beginPath(); c.moveTo(52, 38); c.lineTo(64, 50); c.stroke();
   });
-  b.userData.pole = mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.6, 6), lam('#5a3b30'), -0.85, 0.75, -0.85, b, false);
-  b.userData.flag = mesh(new THREE.BoxGeometry(0.02, 0.5, 0.75), [new THREE.MeshLambertMaterial({ map: flagTex }), new THREE.MeshLambertMaterial({ map: flagTex }), lam('#f4e9d8'), lam('#f4e9d8'), lam('#f4e9d8'), lam('#f4e9d8')], -0.85, 1.35, -0.48, b);
+  b.userData.pole = mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.4, 6), lam('#5a3b30'), -0.6, 0.6, 0.6, b, false);
+  b.userData.flag = mesh(new THREE.BoxGeometry(0.02, 0.45, 0.68), [new THREE.MeshLambertMaterial({ map: flagTex }), new THREE.MeshLambertMaterial({ map: flagTex }), lam('#f4e9d8'), lam('#f4e9d8'), lam('#f4e9d8'), lam('#f4e9d8')], -0.6, 1.08, 0.95, b);
   b.traverse((m) => { if (m.isMesh) lookoutHit.push(m); });
-  b.scale.setScalar(1.6);
+  b.scale.setScalar(1.15);
 }
 // 鏡筒指向群島中央；整顆氣球慢慢繞小圈、上下浮動
 const lookTmp = new THREE.Vector3();
@@ -5839,8 +5877,8 @@ function rideLens(fov, near = NEAR0) { camera.fov = fov; camera.near = near; cam
 
 /* ---------- 搭熱氣球：右上角 🎈 按鈕，站在瞭望氣球的吊籃裡，以全真島為中心順時針繞群島（第一人稱） ----------
    從瞭望氣球現在的位置升空、往外飄到高空的航道，然後依課程島的順序（順時針）一直繞，直到自己按「✕ 降落」。
-   鏡頭站在籃子裡朝群島中央往下俯瞰：畫面下緣露出前方的籃框，兩側有吊繩往上拉；燃燒器在頭頂上方，
-   畫面左上角一直有一小簇引火（pilot light），噴火時火舌竄出、暖光照亮左上角；中間和右邊是往下看的群島。
+   鏡頭站在籃子裡朝群島中央往下俯瞰：全部都是氣球模型本身（沒有疊在畫面上的圖），所以拖曳轉頭時繩子、立柱跟著一起轉。
+   畫面下緣露出前方的籃緣，前角的麻繩立柱往上接到頭頂的燃燒器框架；燃燒器在頭頂，噴火時火光照亮籃子和立柱，往上拖抬頭就看得到火和球皮內側。
    熱氣球的物理感：燃燒器噴火時往上浮、沒噴火時慢慢往下沉，再疊上忽大忽小的氣流起伏、籃子像鐘擺一樣輕輕晃（鏡頭跟著籃子一起晃）、
    風把航道吹得忽遠忽近。
    拖曳可以轉頭看四周，放開後慢慢轉回群島中央；點任何一座島（或標籤）就下來飛過去。繞完一整圈頒徽章。
@@ -5848,44 +5886,11 @@ function rideLens(fov, near = NEAR0) { camera.fov = fov; camera.near = near; cam
 const BAL = { on: false, t0: 0, ang: 0, ang0: 0, from: null, h: 0, v: 0, burnT: 0, look: 0, lookP: 0, drag: null, ret: null, hintKey: '', last: 0, lapDone: false, sway: 0, swayV: 0 };
 const BAL_R = 86, BAL_Y = 44, BAL_W = (Math.PI * 2) / 130;   // 航道半徑、高度、每秒繞幾弧度（一圈約兩分多鐘）
 // 站位與構圖（氣球自己的座標，-z 朝群島中央）：眼睛位置、往下看的角度（弧度）、視野；
-// 算過讓前方的籃框落在畫面下緣、籃子右前方的直角（麻繩扣的地方）在畫面右下；手機畫面窄，站在籃子右後方，直角才看得到
-const BAL_SHOT = { wide: { eye: new THREE.Vector3(0, 1.22, 0.3), pitch: 0.454, fov: 46 }, tall: { eye: new THREE.Vector3(0.65, 1.75, 0.55), pitch: 0.524, fov: 52 } };
+// 算過讓前方的籃緣落在畫面下緣約 1/10、上緣露出一條細細的天空；電腦站在籃子中後方，左右兩個前角的立柱往左上、右上張開，
+// 手機畫面窄，站在籃子右後方，右前角的立柱才看得到。燃燒器在頭頂，往上拖抬頭才看得到
+const BAL_SHOT = { wide: { eye: new THREE.Vector3(0, 1.1, 0.38), pitch: 0.384, fov: 48 }, tall: { eye: new THREE.Vector3(0.46, 1.35, 0.3), pitch: 0.471, fov: 58 } };
 const balTmp = new THREE.Vector3(), balTgt = new THREE.Vector3(), balPos = new THREE.Vector3(), balFwd = new THREE.Vector3();
 const balQ = new THREE.Quaternion(), balE = new THREE.Euler(0, 0, 0, 'YXZ');
-// 畫面左上角的燃燒器火光：一小簇常亮的引火，噴火時火舌變大、暖光照亮一角
-const balFire = document.createElement('div');
-balFire.className = 'bal-fire'; balFire.setAttribute('aria-hidden', 'true');
-balFire.innerHTML = '<i class="glow"></i><svg viewBox="0 0 300 260" preserveAspectRatio="xMinYMin meet"><defs><linearGradient id="bfO" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffd36b"/><stop offset="0.55" stop-color="#ff8a2a"/><stop offset="1" stop-color="#ff5a1f" stop-opacity="0"/></linearGradient><linearGradient id="bfI" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fffbe8"/><stop offset="1" stop-color="#ffe08a" stop-opacity="0"/></linearGradient></defs>'
-  + '<g transform="translate(45 -40) rotate(-14 50 160)"><g class="fl"><path fill="url(#bfO)" d="M50 158C24 140 18 108 32 80C40 64 40 40 50 6C60 40 60 64 68 80C82 108 76 140 50 158Z"/><path fill="url(#bfI)" d="M50 154C36 142 34 120 42 102C46 92 46 76 50 52C54 76 54 92 58 102C66 120 64 142 50 154Z"/></g>'
-  + '<rect x="33" y="157" width="34" height="13" rx="4" fill="#3d3a40"/><rect x="40" y="168" width="20" height="9" rx="2" fill="#2b292e"/><path d="M30 158h40" stroke="#6a6670" stroke-width="3" stroke-linecap="round"/></g></svg>';
-document.body.appendChild(balFire);
-let balFireK = 0;
-// 麻繩：兩股麻線扭在一起（斜紋花樣），中間亮、兩側暗看起來是圓的；下端一個繩結＋木栓扣在籃框前方的直角上。
-// 右前角往右上拉、左前角往左上拉；哪個直角在畫面裡才畫哪一條（手機畫面窄，通常只看得到右邊那條）
-const SVGNS = 'http://www.w3.org/2000/svg';
-const balRope = document.createElementNS(SVGNS, 'svg');
-balRope.setAttribute('class', 'bal-rope'); balRope.setAttribute('aria-hidden', 'true');
-balRope.innerHTML = '<defs><pattern id="brTw" width="14" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(-32)"><rect width="14" height="11" fill="#c9a06a"/><rect y="0" width="14" height="5" fill="#a57b4a"/><rect y="5" width="14" height="1.2" fill="#7c5833"/><rect y="10" width="14" height="1" fill="#e2c08c"/></pattern>'
-  + '<linearGradient id="brSh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a2410" stop-opacity="0.55"/><stop offset="0.38" stop-color="#fff2d6" stop-opacity="0.18"/><stop offset="0.62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#3a2410" stop-opacity="0.6"/></linearGradient></defs>'
-  + ('<g class="rp"><rect class="rope" fill="url(#brTw)"/><rect class="shade" fill="url(#brSh)"/>'
-  + '<g class="knot"><ellipse class="k1" fill="#a57b4a" stroke="#6b4a2a" stroke-width="1.5"/><ellipse class="k2" fill="#b98b55" stroke="#6b4a2a" stroke-width="1.5"/><rect class="peg" rx="4" fill="#6b4a2f"/></g></g>').repeat(2);
-document.body.appendChild(balRope);
-// 兩條繩：籃框右前方、左前方的直角（氣球自己的座標）和往哪一側拉（+1 右上、-1 左上）
-const BAL_ROPES = [...balRope.querySelectorAll('.rp')].map((g, i) => ({ g, corner: new THREE.Vector3(i ? -0.86 : 0.86, 0.09, -0.86), dir: i ? -1 : 1 }));
-const balCornerV = new THREE.Vector3();
-// 擺一條繩子：下端扣在籃框直角在畫面上的位置（每一幀跟著籃子算），往外側斜上拉（球皮比籃子寬，吊繩往外拉向球皮），上端超出畫面
-function balRopeLayout(balRopeG, dir, bx, by, wob) {
-  const W = innerWidth, tall = W < innerHeight, w = tall ? 13 : 17;
-  const tx = bx + dir * Math.max(70, (dir > 0 ? W - bx : bx) * 0.85), ty = -20, len = Math.hypot(bx - tx, by - ty);
-  for (const r of balRopeG.querySelectorAll('.rope, .shade')) { r.setAttribute('x', -w / 2); r.setAttribute('y', 0); r.setAttribute('width', w); r.setAttribute('height', len.toFixed(1)); }
-  const k1 = balRopeG.querySelector('.k1'), k2 = balRopeG.querySelector('.k2'), peg = balRopeG.querySelector('.peg');
-  k1.setAttribute('cx', 0); k1.setAttribute('cy', (len - w * 0.9).toFixed(1)); k1.setAttribute('rx', w * 0.85); k1.setAttribute('ry', w * 0.55);
-  k2.setAttribute('cx', 0); k2.setAttribute('cy', (len - w * 0.2).toFixed(1)); k2.setAttribute('rx', w * 0.75); k2.setAttribute('ry', w * 0.5);
-  peg.setAttribute('x', -w * 1.6); peg.setAttribute('y', (len + w * 0.15).toFixed(1)); peg.setAttribute('width', w * 3.2); peg.setAttribute('height', w * 0.7);
-  // 以下端（扣在直角上）為支點輕輕晃
-  const ang = (Math.atan2(bx - tx, by - ty) * -180) / Math.PI + wob;
-  balRopeG.setAttribute('transform', `translate(${bx.toFixed(1)} ${by.toFixed(1)}) rotate(${ang.toFixed(2)}) translate(0 ${(-len).toFixed(1)})`);
-}
 const lookBurner = burners.find((s) => s.flame.parent === lookout);
 const balBtn = document.createElement('button');
 balBtn.className = 'icon'; balBtn.id = 'balloonBtn'; balBtn.type = 'button';
@@ -5912,8 +5917,6 @@ function balStart() {
   rideLens(innerWidth < innerHeight ? BAL_SHOT.tall.fov : BAL_SHOT.wide.fov, 0.12);
   // 你就是瞭望員：站到籃子裡，他和望遠鏡先讓開；燃燒器在頭頂，3D 的火和鐵罐先藏起來，改用左上角的火光
   lookout.userData.man.visible = lookout.userData.scope.visible = lookout.userData.pole.visible = lookout.userData.flag.visible = false;   // 籃角的小旗竿離眼睛太近，像一根黑柱子，也先收起來
-  if (lookBurner) { lookBurner.hide = true; lookBurner.can.visible = false; lookBurner.ropes.forEach((r) => { r.visible = false; }); }   // 3D 吊繩離眼睛太近像黑柱子，改用右側的麻繩
-  document.body.classList.add('ballooning');
   balBtn.setAttribute('aria-pressed', 'true'); balBtn.setAttribute('aria-label', '降落：結束搭乘熱氣球');
   rideHint.hidden = false; rideHint.querySelector('.ride-off').textContent = '✕ 降落';
   rideSay('🎈 瞭望員：「抓緊籃子，升空囉！」');
@@ -5932,8 +5935,6 @@ function balEnd(keepCam) {
   rideLens(FOV0);
   camera.up.set(0, 1, 0);
   lookout.userData.man.visible = lookout.userData.scope.visible = lookout.userData.pole.visible = lookout.userData.flag.visible = true;
-  if (lookBurner) { lookBurner.hide = false; lookBurner.can.visible = true; lookBurner.ropes.forEach((r) => { r.visible = true; }); }
-  document.body.classList.remove('ballooning');
   balBtn.setAttribute('aria-pressed', 'false'); balBtn.setAttribute('aria-label', '搭熱氣球：坐進瞭望氣球繞群島');
   document.body.classList.remove('riding');
   measureFree();
@@ -5950,7 +5951,7 @@ renderer.domElement.addEventListener('pointerdown', (e) => { if (BAL.on) BAL.dra
 addEventListener('pointermove', (e) => {
   if (!BAL.on || !BAL.drag) return;
   BAL.look = THREE.MathUtils.clamp(BAL.drag.look - (e.clientX - BAL.drag.x) * 0.005, -2.6, 2.6);
-  BAL.lookP = THREE.MathUtils.clamp(BAL.drag.lookP + (e.clientY - BAL.drag.y) * 0.003, -0.3, 0.5);
+  BAL.lookP = THREE.MathUtils.clamp(BAL.drag.lookP + (e.clientY - BAL.drag.y) * 0.004, -1.6, 0.6);   // 往上拖可以抬頭看燃燒器和球皮內側
 });
 addEventListener('pointerup', () => { BAL.drag = null; });
 addEventListener('pointercancel', () => { BAL.drag = null; });
@@ -6004,7 +6005,7 @@ function balCam(dt) {
   lookout.updateMatrixWorld();
   const eye = lookout.localToWorld(balTmp.copy(S.eye));
   // 朝向：籃子的前方（朝群島中央）往下看；拖曳可以左右轉頭、上下多看一點。用籃子自己的姿態，籃子晃鏡頭就跟著晃
-  balE.set(-THREE.MathUtils.clamp(S.pitch + BAL.lookP, 0.15, 1.2), BAL.look, 0); balQ.setFromEuler(balE).premultiply(lookout.quaternion);
+  balE.set(-THREE.MathUtils.clamp(S.pitch + BAL.lookP, -1.2, 1.2), BAL.look, 0); balQ.setFromEuler(balE).premultiply(lookout.quaternion);
   balFwd.set(0, 0, -1).applyQuaternion(balQ);
   balTgt.copy(eye).addScaledVector(balFwd, 60);
   // 一開始從原本的鏡頭位置滑進籃子（約 1.5 秒），之後跟著籃子
@@ -6013,22 +6014,6 @@ function balCam(dt) {
   camera.position.copy(BAL.camPos); controls.target.copy(BAL.camTgt);
   camera.up.set(0, 1, 0).applyQuaternion(lookout.quaternion);
   camera.lookAt(BAL.camTgt);
-  // 左上角的火光：跟著燃燒器真的噴火（同時氣球往上浮），火舌一閃一閃
-  const burning = lookBurner && clock.elapsedTime < lookBurner.until;
-  balFireK += ((burning ? 1 : 0) - balFireK) * (1 - Math.exp(-dt * (burning ? 14 : 5)));
-  const flick = reduceMotion ? 0 : (Math.random() - 0.5) * 0.12;
-  balFire.style.setProperty('--burn', balFireK.toFixed(3));
-  balFire.style.setProperty('--fs', (0.22 + balFireK * 0.78 + flick * (0.3 + balFireK)).toFixed(3));
-  // 麻繩扣在籃框直角上（跟著籃子動），上段輕輕晃，噴火時抖一下
-  camera.updateMatrixWorld();
-  const wob = reduceMotion ? 0 : Math.sin(clock.elapsedTime * 1.1) * 0.35 + balFireK * Math.sin(clock.elapsedTime * 23) * 0.25;
-  for (const r of BAL_ROPES) {
-    balCornerV.copy(r.corner); lookout.localToWorld(balCornerV).project(camera);
-    const bx = (balCornerV.x + 1) / 2 * innerWidth, by = (1 - balCornerV.y) / 2 * innerHeight;
-    const show = balCornerV.z < 1 && bx > -10 && bx < innerWidth + 10 && by < innerHeight + 10;   // 直角在畫面裡才畫
-    r.g.style.display = show ? '' : 'none';
-    if (show) balRopeLayout(r.g, r.dir, bx, by, wob * r.dir);
-  }
   if (clock.elapsedTime - BAL.last > 0.3) {
     BAL.last = clock.elapsedTime;
     const p = lookout.position;
@@ -6109,7 +6094,7 @@ tags.splice(1 + COURSES.length, 0, tags.pop());
 const lookIsl = { key: 'lookout', x: LOOK_BASE.x, z: LOOK_BASE.z };
 addTag(lookIsl, '🔭 搜尋', 'small look-tag', LOOK_BASE.y, () => openSearch());
 const lookTag = tags[tags.length - 1];
-animators.push(() => { lookIsl.x = lookout.position.x; lookIsl.z = lookout.position.z; lookTag.h = lookout.position.y + 13; });
+animators.push(() => { lookIsl.x = lookout.position.x; lookIsl.z = lookout.position.z; lookTag.h = lookout.position.y + 16; });
 
 const tmpV = new THREE.Vector3();
 // 標籤避讓：依序擺放（全真島 → 課程島 → 外圈與下午島），會疊到前面標籤的就先藏起來
