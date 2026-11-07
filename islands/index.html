@@ -2781,16 +2781,17 @@ const lookoutHit = [];
     pilot.scale.set(1, 0.85 + Math.sin(t * 17) * 0.1 + Math.random() * 0.08, 1); pilotTip.scale.y = 0.8 + Math.random() * 0.4;
     glowL.intensity += ((flame.visible ? 2.2 : 0) - glowL.intensity) * 0.3;
   });
-  // 瞭望員：站在籃子左後角（墊著一個小木箱，上半身露出籃緣），搭熱氣球時就在你的左後方，一起看群島；
-  // 望遠鏡收在他身旁的籃緣上，鏡筒朝著群島中央。兩樣都在搭乘的預設畫面外面，往右拖轉頭才看得到，不會擋住群島
-  mesh(new THREE.BoxGeometry(0.42, 0.62, 0.42), lam('#8a6440'), -0.48, -0.69, 0.48, b);
-  const man = figure(lam('#efe4f2'), '', false, { pack: '#b9d98a' });   // 不戴斗笠：搭乘時從上面看下來，才認得出是個人
-  man.position.set(-0.48, -0.38, 0.48); man.rotation.y = Math.PI; man.scale.setScalar(0.85); b.add(man); b.userData.man = man;
-  const scope = new THREE.Group(); scope.position.set(-0.64, 0.26, 0.12); b.add(scope);
+  // 望遠鏡架在籃子左側的籃緣上，鏡筒朝著群島中央；瞭望員站在它正後方（墊著一個小木箱），眼睛貼著目鏡往外看，
+  // 搭熱氣球時也一樣在專心瞭望（每一幀跟著望遠鏡的方向站到目鏡後面）。兩樣都在搭乘的預設畫面外面，往左後方轉頭才看得到
+  mesh(new THREE.BoxGeometry(0.4, 0.88, 0.4), lam('#8a6440'), -0.6, -0.56, 0.52, b);
+  const man = figure(lam('#efe4f2'), '', false, { pack: '#b9d98a' });   // 不戴斗笠：搭乘時從上面看下來，才看得出他貼著望遠鏡
+  man.position.set(-0.64, -0.12, 0.53); man.rotation.y = Math.PI; man.scale.setScalar(0.8); b.add(man); b.userData.man = man;
+  const scope = new THREE.Group(); scope.position.set(-0.66, 0.4, 0.02); b.add(scope);
   const brass = new THREE.MeshLambertMaterial({ color: '#d8a845', emissive: '#3a2500' });
-  const tube = mesh(new THREE.CylinderGeometry(0.08, 0.12, 1.1, 14), brass, 0, 0, 0, scope); tube.rotation.x = Math.PI / 2;
-  mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.14, 14), brass, 0, 0, -0.55, scope).rotation.x = Math.PI / 2;
-  mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.22, 6), lam('#5a3b30'), 0, -0.13, 0.05, scope, false);
+  const tube = mesh(new THREE.CylinderGeometry(0.06, 0.11, 0.6, 14), brass, 0, 0, 0, scope); tube.rotation.x = Math.PI / 2;
+  mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.1, 14), brass, 0, 0, -0.3, scope).rotation.x = Math.PI / 2;
+  mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.08, 10), brass, 0, 0, 0.33, scope).rotation.x = Math.PI / 2;   // 目鏡
+  mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.32, 6), lam('#5a3b30'), 0, -0.16, 0, scope, false);   // 架在籃緣上的支架
   b.userData.scope = scope;
   // 小旗子：放大鏡圖案，看得出點它可以搜尋（綁在籃子後側外面，搭乘時在你背後）
   const flagTex = canvasTex(96, 64, (c) => {
@@ -2805,7 +2806,8 @@ const lookoutHit = [];
   b.scale.setScalar(1.15);
 }
 // 鏡筒指向群島中央；整顆氣球慢慢繞小圈、上下浮動
-const lookTmp = new THREE.Vector3();
+const lookTmp = new THREE.Vector3(), lookDir = new THREE.Vector3();
+const MAN_EYE = 0.99 * 0.66 * 0.8, MAN_BACK = 0.3 + 0.27;   // 瞭望員眼睛離腳底多高；身體中心要站在望遠鏡中心後面多遠（半支鏡筒＋臉到身體中心）
 animators.push((t) => {
   if (!balPose(t)) {   // 搭熱氣球中（或飄回來的途中）由搭乘那邊決定位置
     lookout.position.set(LOOK_BASE.x + Math.sin(t * 0.12) * 4, LOOK_BASE.y + Math.sin(t * 0.5) * 0.8, LOOK_BASE.z + Math.cos(t * 0.12) * 4);
@@ -2814,6 +2816,12 @@ animators.push((t) => {
   const sc = lookout.userData.scope;
   sc.lookAt(lookTmp.copy(BIRD.target));
   sc.rotateY(Math.PI);
+  // 瞭望員站到目鏡正後方、面向望遠鏡指的方向，眼睛跟目鏡一樣高
+  lookout.updateMatrixWorld();
+  lookout.worldToLocal(lookDir.copy(BIRD.target)).sub(sc.position).setY(0).normalize();
+  const m = lookout.userData.man;
+  m.position.set(sc.position.x - lookDir.x * MAN_BACK, sc.position.y - MAN_EYE, sc.position.z - lookDir.z * MAN_BACK);
+  m.rotation.y = Math.atan2(lookDir.x, lookDir.z);
   lookout.userData.flag.rotation.y = Math.sin(t * 2.2) * 0.3;
 });
 lookout.position.copy(LOOK_BASE);
@@ -5917,8 +5925,6 @@ function balStart() {
   BAL.tilt = [hTilt.enabled, vTilt.enabled]; hTilt.enabled = vTilt.enabled = false;
   BAL.camPos = camera.position.clone(); BAL.camTgt = controls.target.clone();
   rideLens(innerWidth < innerHeight ? BAL_SHOT.tall.fov : BAL_SHOT.wide.fov, 0.12);
-  // 瞭望員轉過來面向你（轉頭就看得到他的臉），下來後再轉回去看群島
-  { const m = lookout.userData.man, e = innerWidth < innerHeight ? BAL_SHOT.tall.eye : BAL_SHOT.wide.eye; m.rotation.y = Math.atan2(e.x - m.position.x, e.z - m.position.z); }
   balBtn.setAttribute('aria-pressed', 'true'); balBtn.setAttribute('aria-label', '降落：結束搭乘熱氣球');
   rideHint.hidden = false; rideHint.querySelector('.ride-off').textContent = '✕ 降落';
   rideSay('🎈 瞭望員：「抓緊籃子，升空囉！」');
@@ -5936,7 +5942,6 @@ function balEnd(keepCam) {
   if (BAL.tilt) { [hTilt.enabled, vTilt.enabled] = BAL.tilt; BAL.tilt = null; }
   rideLens(FOV0);
   camera.up.set(0, 1, 0);
-  lookout.userData.man.rotation.y = Math.PI;
   balBtn.setAttribute('aria-pressed', 'false'); balBtn.setAttribute('aria-label', '搭熱氣球：坐進瞭望氣球繞群島');
   document.body.classList.remove('riding');
   measureFree();
