@@ -640,7 +640,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261105.03</span>
+  <span class="ver">v261107.01</span>
   </div></div>
 </div>
 
@@ -2056,11 +2056,11 @@ function hotAirBalloon(parent, a, b, y0, w, onFire = null) {
     const r = mesh(new THREE.CylinderGeometry(0.02, 0.02, d.length(), 4), ropeMat, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2, (p0.z + p1.z) / 2, parent, false);
     r.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
   }
-  mesh(new THREE.CylinderGeometry(0.2, 0.24, 0.3, 10), lam('#4a4a4a'), 0, y0 - 0.95, 0, parent, false);
+  const can = mesh(new THREE.CylinderGeometry(0.2, 0.24, 0.3, 10), lam('#4a4a4a'), 0, y0 - 0.95, 0, parent, false);
   const flame = mesh(flameGeo, new THREE.MeshBasicMaterial({ color: '#ff9a3c', transparent: true, opacity: 0.85, depthWrite: false }), 0, y0 - 0.8, 0, parent, false);
   const core = mesh(coreGeo, new THREE.MeshBasicMaterial({ color: '#fff1b8', transparent: true, opacity: 0.95, depthWrite: false }), 0, y0 - 0.8, 0, parent, false);
   flame.visible = core.visible = false;
-  burners.push({ mat, flame, core, next: 1.5 + Math.random() * 5, until: 0, onFire });
+  burners.push({ mat, flame, core, can, next: 1.5 + Math.random() * 5, until: 0, onFire });
 }
 animators.push((t) => {
   for (const s of burners) {
@@ -2719,13 +2719,13 @@ const LOOK_BASE = new THREE.Vector3(-50, 22, -6);
 const lookoutHit = [];
 {
   const b = lookout;
-  hotAirBalloon(b, '#c0503f', '#f4e9d8', 1.7, 0.85, (dur) => burnerSound(dur, lookout, 1));
+  hotAirBalloon(b, '#c0503f', '#f4e9d8', 1.7, 0.85, (dur) => { burnerSound(dur, lookout, 1); balBurn(dur); });
   // 籃子：藤編的方籃，上緣一圈木框
   mesh(new THREE.BoxGeometry(1.7, 1.0, 1.7), lam('#b98b55'), 0, -0.5, 0, b);
   mesh(new THREE.BoxGeometry(1.86, 0.14, 1.86), lam('#7a5236'), 0, 0.02, 0, b);
   // 瞭望員和望遠鏡：鏡筒朝著群島中央
   const man = figure(lam('#efe4f2'), '', false, { hat: '#e0a632', pack: '#b9d98a' });
-  man.position.set(-0.45, 0.05, 0.45); man.rotation.y = Math.PI; man.scale.setScalar(1.15); b.add(man);
+  man.position.set(-0.45, 0.05, 0.45); man.rotation.y = Math.PI; man.scale.setScalar(1.15); b.add(man); b.userData.man = man;
   const scope = new THREE.Group(); scope.position.set(0.35, 0.55, -0.35); b.add(scope);
   const brass = new THREE.MeshLambertMaterial({ color: '#d8a845', emissive: '#3a2500' });
   const tube = mesh(new THREE.CylinderGeometry(0.11, 0.17, 1.9, 14), brass, 0, 0, 0, scope); tube.rotation.x = Math.PI / 2;
@@ -2747,8 +2747,10 @@ const lookoutHit = [];
 // 鏡筒指向群島中央；整顆氣球慢慢繞小圈、上下浮動
 const lookTmp = new THREE.Vector3();
 animators.push((t) => {
-  lookout.position.set(LOOK_BASE.x + Math.sin(t * 0.12) * 4, LOOK_BASE.y + Math.sin(t * 0.5) * 0.8, LOOK_BASE.z + Math.cos(t * 0.12) * 4);
-  lookout.rotation.y = Math.atan2(BIRD.target.x - lookout.position.x, BIRD.target.z - lookout.position.z) + Math.PI;
+  if (!balPose(t)) {   // 搭熱氣球中（或飄回來的途中）由搭乘那邊決定位置
+    lookout.position.set(LOOK_BASE.x + Math.sin(t * 0.12) * 4, LOOK_BASE.y + Math.sin(t * 0.5) * 0.8, LOOK_BASE.z + Math.cos(t * 0.12) * 4);
+    lookout.rotation.y = Math.atan2(BIRD.target.x - lookout.position.x, BIRD.target.z - lookout.position.z) + Math.PI;
+  }
   const sc = lookout.userData.scope;
   sc.lookAt(lookTmp.copy(BIRD.target));
   sc.rotateY(Math.PI);
@@ -5714,6 +5716,7 @@ function rideStart() {
   if (RIDE.on) return;
   audioInit();
   if (reduceMotion) { select('puti'); return; }   // 系統設定減少動態效果：不飛，直接到清淨菩提島
+  if (BAL.on) balEnd(true);
   tween = null;
   setUI({ panel: 'closed', dock: false });
   if (typeof showNavPop === 'function') showNavPop(false);
@@ -5723,6 +5726,7 @@ function rideStart() {
   controls.enabled = false; controls.autoRotate = false;
   RIDE.tilt = [hTilt.enabled, vTilt.enabled]; hTilt.enabled = vTilt.enabled = false;   // 移軸景深先關掉，遠景才看得清楚
   RIDE.camPos = camera.position.clone(); RIDE.camTgt = controls.target.clone();
+  rideLens(innerWidth < innerHeight ? 50 : 40);
   rideBtn.setAttribute('aria-pressed', 'true'); rideBtn.setAttribute('aria-label', '下雲：結束搭乘');
   rideHint.hidden = false; rideSay('☁️ 大聖：「坐穩了，出發！」');
   document.body.classList.add('riding');
@@ -5735,6 +5739,7 @@ function rideEnd(done, keepCam) {
   RIDE.on = false;
   controls.enabled = true;
   if (RIDE.tilt) { [hTilt.enabled, vTilt.enabled] = RIDE.tilt; RIDE.tilt = null; }
+  rideLens(FOV0);
   rideBtn.setAttribute('aria-pressed', 'false'); rideBtn.setAttribute('aria-label', '搭筋斗雲：跟著大聖繞群島一圈');
   document.body.classList.remove('riding');
   rideWind(false);
@@ -5788,10 +5793,11 @@ function rideCam(dt) {
   if (!RIDE.on) return;
   if (tween) { rideEnd(false, true); return; }   // 點了某座島、標籤、導覽：下雲飛過去
   if (!RIDE.drag) { RIDE.look *= Math.exp(-dt * 1.4); RIDE.lookP *= Math.exp(-dt * 1.4); }
+  // 鏡頭在雲的後上方往下俯瞰：畫面中心俯角約 25°、大聖在畫面下方三分之一，前方的島佔滿畫面，地平線推到最上緣
   const yaw = kinto.rotation.y + Math.PI + RIDE.look;   // 鏡頭在雲的後方
-  const dist = innerWidth < innerHeight ? 13 : 10.5;
-  rideCamWant.set(kinto.position.x + Math.sin(yaw) * dist, kinto.position.y + 4.2 + RIDE.lookP * 6, kinto.position.z + Math.cos(yaw) * dist);
-  rideTgtWant.copy(kinto.position).addScaledVector(rideFwd.set(Math.sin(yaw + Math.PI), 0, Math.cos(yaw + Math.PI)), 7).setY(kinto.position.y + 1.4 - RIDE.lookP * 4);
+  const tall = innerWidth < innerHeight, dist = tall ? 15 : 12, up = tall ? 11 : 9;
+  rideCamWant.set(kinto.position.x + Math.sin(yaw) * dist, kinto.position.y + up + RIDE.lookP * 6, kinto.position.z + Math.cos(yaw) * dist);
+  rideTgtWant.copy(kinto.position).addScaledVector(rideFwd.set(Math.sin(yaw + Math.PI), 0, Math.cos(yaw + Math.PI)), dist * 2).setY(kinto.position.y + up - dist * 1.4 - RIDE.lookP * 12);
   const k = 1 - Math.exp(-dt * 5);
   RIDE.camPos.lerp(rideCamWant, k); RIDE.camTgt.lerp(rideTgtWant, k);
   camera.position.copy(RIDE.camPos); controls.target.copy(RIDE.camTgt);
@@ -5803,6 +5809,149 @@ function rideCam(dt) {
     for (const isl of Object.values(islands)) { const d = Math.hypot(isl.x - kinto.position.x, isl.z - kinto.position.z) - isl.R; if (d < bd) { bd = d; best = isl; } }
     const key = best && bd < 6 ? best.key : '';
     if (key !== RIDE.hintKey && clock.elapsedTime - RIDE.t0 > 2.5) { RIDE.hintKey = key; rideSay(key ? `☁️ 正在飛過 ${isleName2(key).replace(/^[🚧]\s*/u, '')}` : '☁️ 跟著大聖騰雲駕霧中⋯　拖曳畫面可以轉頭看'); }
+  }
+}
+// 搭乘時把視野放寬一點，俯瞰時看得到更多島；下來後恢復
+const FOV0 = camera.fov, NEAR0 = camera.near;
+function rideLens(fov, near = NEAR0) { camera.fov = fov; camera.near = near; camera.updateProjectionMatrix(); }
+
+/* ---------- 搭熱氣球：右上角 🎈 按鈕，坐進瞭望氣球的籃子，以全真島為中心順時針繞群島（第一人稱） ----------
+   從瞭望氣球現在的位置升空、往外飄到高空的航道，然後依課程島的順序（順時針）一直繞，直到自己按「✕ 降落」。
+   鏡頭在籃子裡、朝群島中央往下俯瞰；熱氣球的物理感：燃燒器噴火時往上浮、沒噴火時慢慢往下沉，
+   再疊上忽大忽小的氣流起伏、籃子像鐘擺一樣輕輕晃、風把航道吹得忽遠忽近。
+   拖曳可以轉頭看四周，放開後慢慢轉回群島中央；點任何一座島（或標籤）就下來飛過去。繞完一整圈頒徽章。
+   搭乘只改變自己畫面裡的瞭望氣球，下來後它自己慢慢飄回原本的位置 */
+const BAL = { on: false, t0: 0, ang: 0, ang0: 0, from: null, h: 0, v: 0, burnT: 0, look: 0, lookP: 0, drag: null, ret: null, hintKey: '', last: 0, lapDone: false, sway: 0, swayV: 0 };
+const BAL_R = 98, BAL_Y = 46, BAL_W = (Math.PI * 2) / 130;   // 航道半徑、高度、每秒繞幾弧度（一圈約兩分多鐘）
+const BAL_EYE = new THREE.Vector3(0, 1.3, 0.15);   // 籃子裡的眼睛位置（氣球自己的座標，+z 是籃子背向群島的那一側）；手機直向往前站一點，畫面下緣只露出一小段籃子邊
+const balTmp = new THREE.Vector3(), balTgt = new THREE.Vector3(), balPos = new THREE.Vector3();
+const lookBurner = burners.find((s) => s.flame.parent === lookout);
+const balBtn = document.createElement('button');
+balBtn.className = 'icon'; balBtn.id = 'balloonBtn'; balBtn.type = 'button';
+balBtn.setAttribute('aria-pressed', 'false'); balBtn.setAttribute('aria-label', '搭熱氣球：坐進瞭望氣球繞群島'); balBtn.title = '搭熱氣球';
+balBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5a6.5 6.5 0 0 0-6.5 6.5c0 3.4 3 6.2 4.6 7.6h3.8c1.6-1.4 4.6-4.2 4.6-7.6A6.5 6.5 0 0 0 12 2.5z"/><path d="M12 2.5c-1.9 2.3-2.4 9.6-1.9 14.1M12 2.5c1.9 2.3 2.4 9.6 1.9 14.1"/><path d="M10.1 16.6l.4 2.4M13.9 16.6l-.4 2.4"/><rect x="9.8" y="19" width="4.4" height="2.8" rx="0.6"/></svg>';
+rideBtn.after(balBtn);
+// 噴火：籃子底下往上一頂（燃燒器的火也是真的在噴），晃一下
+function balBurn(dur) { if (BAL.on) { BAL.burnT = clock.elapsedTime + dur; if (!reduceMotion) BAL.swayV += 0.03; } }
+function balStart() {
+  if (BAL.on) return;
+  audioInit();
+  if (RIDE.on) rideEnd(false, true);
+  if (searching) showSearchPop(false, false);
+  setUI({ panel: 'closed', dock: false });
+  if (typeof showNavPop === 'function') showNavPop(false);
+  BAL.ret = null;
+  const p = lookout.position;
+  Object.assign(BAL, { on: true, t0: clock.elapsedTime, ang: Math.atan2(p.x, p.z), from: p.clone(), h: 0, v: 0, burnT: 0, look: 0, lookP: 0, drag: null, hintKey: '', lapDone: false, sway: 0, swayV: 0 });
+  BAL.ang0 = BAL.ang;
+  tween = null;
+  controls.enabled = false; controls.autoRotate = false;
+  BAL.tilt = [hTilt.enabled, vTilt.enabled]; hTilt.enabled = vTilt.enabled = false;
+  BAL.camPos = camera.position.clone(); BAL.camTgt = controls.target.clone();
+  rideLens(innerWidth < innerHeight ? 58 : 46, 0.15);
+  lookout.userData.man.visible = lookout.userData.scope.visible = false;   // 你就是瞭望員：站到他的位置上，他和望遠鏡先讓開，才不會擋住畫面
+  if (lookBurner) lookBurner.can.visible = false;   // 燃燒器的鐵罐就在眼前，先藏起來；噴火的火焰照樣看得到
+  balBtn.setAttribute('aria-pressed', 'true'); balBtn.setAttribute('aria-label', '降落：結束搭乘熱氣球');
+  rideHint.hidden = false; rideHint.querySelector('.ride-off').textContent = '✕ 降落';
+  rideSay('🎈 瞭望員：「抓緊籃子，升空囉！」');
+  document.body.classList.add('riding');
+  rideWind(true);
+  if (lookBurner) lookBurner.next = clock.elapsedTime + 0.6;   // 一上去就先噴一把火
+  gc('動作/搭熱氣球繞島');
+}
+// keepCam：點了別的島，鏡頭交給那邊；否則回到初始視角。氣球自己慢慢飄回原本的位置
+function balEnd(keepCam) {
+  if (!BAL.on) return;
+  BAL.on = false;
+  controls.enabled = true;
+  if (BAL.tilt) { [hTilt.enabled, vTilt.enabled] = BAL.tilt; BAL.tilt = null; }
+  rideLens(FOV0);
+  camera.up.set(0, 1, 0);
+  lookout.userData.man.visible = lookout.userData.scope.visible = true;
+  if (lookBurner) lookBurner.can.visible = true;
+  balBtn.setAttribute('aria-pressed', 'false'); balBtn.setAttribute('aria-label', '搭熱氣球：坐進瞭望氣球繞群島');
+  document.body.classList.remove('riding');
+  rideWind(false);
+  rideHint.hidden = true; rideHint.querySelector('.ride-off').textContent = '✕ 下雲';
+  BAL.ret = { from: lookout.position.clone(), t0: clock.elapsedTime, dur: Math.max(5, lookout.position.distanceTo(LOOK_BASE) / 10) };
+  if (reduceMotion) { BAL.ret = null; lookout.position.copy(LOOK_BASE); lookout.rotation.set(0, Math.atan2(BIRD.target.x - LOOK_BASE.x, BIRD.target.z - LOOK_BASE.z) + Math.PI, 0); }
+  if (!keepCam) goHome();
+}
+balBtn.addEventListener('click', () => { if (BAL.on) balEnd(false); else balStart(); });
+rideHint.querySelector('.ride-off').addEventListener('click', () => { if (BAL.on) balEnd(false); });
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && BAL.on) balEnd(false); });
+renderer.domElement.addEventListener('pointerdown', (e) => { if (BAL.on) BAL.drag = { x: e.clientX, y: e.clientY, look: BAL.look, lookP: BAL.lookP }; });
+addEventListener('pointermove', (e) => {
+  if (!BAL.on || !BAL.drag) return;
+  BAL.look = THREE.MathUtils.clamp(BAL.drag.look - (e.clientX - BAL.drag.x) * 0.005, -2.6, 2.6);
+  BAL.lookP = THREE.MathUtils.clamp(BAL.drag.lookP + (e.clientY - BAL.drag.y) * 0.003, -0.3, 0.5);
+});
+addEventListener('pointerup', () => { BAL.drag = null; });
+addEventListener('pointercancel', () => { BAL.drag = null; });
+// 搭乘中每一幀：決定氣球的位置和姿態
+function balMove(dt) {
+  {
+    const e = clock.elapsedTime - BAL.t0;
+    // 繞行：順時針（跟課程島排列同方向，角度越來越小）；風忽強忽弱，速度和航道半徑都跟著變
+    BAL.ang -= BAL_W * (1 + 0.15 * Math.sin(e * 0.11) + 0.06 * Math.sin(e * 0.37)) * dt;
+    if (!BAL.lapDone && BAL.ang0 - BAL.ang >= Math.PI * 2) { BAL.lapDone = true; award('balloon_ride'); rideSay('🎈 繞完一整圈了！想看多久都可以，按「✕ 降落」就下來'); BAL.hintKey = '-'; BAL.last = clock.elapsedTime + 4; }
+    // 垂直：噴火往上頂、平常慢慢下沉、離巡航高度越遠拉回來越用力、空氣阻力
+    if (!reduceMotion) {
+      const burn = clock.elapsedTime < BAL.burnT;
+      const acc = (burn ? 3.2 : 0) - 0.42 - 0.1 * BAL.h - 0.9 * BAL.v;
+      BAL.v += acc * dt; BAL.h += BAL.v * dt;
+      if (BAL.h < -2.4 && lookBurner && lookBurner.next > clock.elapsedTime + 0.5 && clock.elapsedTime > lookBurner.until + 1) lookBurner.next = clock.elapsedTime;   // 掉太低就補一把火
+      // 籃子像鐘擺：噴火時被頂一下，之後慢慢晃回來
+      BAL.swayV += (-1.4 * BAL.sway - 0.35 * BAL.swayV) * dt; BAL.sway += BAL.swayV * dt;
+    }
+    const wob = reduceMotion ? 0 : 1;
+    const r = BAL_R + wob * (4 * Math.sin(e * 0.07) + 1.5 * Math.sin(e * 0.19));
+    const y = BAL_Y + wob * (BAL.h + 1.6 * Math.sin(e * 0.35) + 0.7 * Math.sin(e * 0.9));   // 氣流：兩個不同週期的起伏疊在一起
+    balPos.set(Math.sin(BAL.ang) * r, y, Math.cos(BAL.ang) * r);
+    // 升空：前 16 秒從原本的位置一邊爬升、一邊往外飄到航道上
+    const k = Math.min(1, e / 16);
+    if (k < 1) balPos.lerpVectors(BAL.from, balPos, smooth(k));
+    lookout.position.copy(balPos);
+    lookout.rotation.set(wob * (0.012 * Math.sin(e * 0.7 + 1) + BAL.sway * 0.4), Math.atan2(-balPos.x, -balPos.z) + Math.PI + wob * 0.04 * Math.sin(e * 0.23), wob * (0.018 * Math.sin(e * 0.9) + BAL.sway), 'YXZ');
+  }
+}
+// 瞭望氣球的動畫裡呼叫：搭乘中（位置由 balMove 決定）或飄回去的途中，回傳 true 表示接手
+function balPose(t) {
+  if (BAL.on) return true;
+  if (BAL.ret) {
+    const r = BAL.ret, k = Math.min(1, (clock.elapsedTime - r.t0) / r.dur), s = smooth(k);
+    lookout.position.lerpVectors(r.from, balTmp.set(LOOK_BASE.x + Math.sin(t * 0.12) * 4, LOOK_BASE.y + Math.sin(t * 0.5) * 0.8, LOOK_BASE.z + Math.cos(t * 0.12) * 4), s);
+    lookout.rotation.set(0, Math.atan2(BIRD.target.x - lookout.position.x, BIRD.target.z - lookout.position.z) + Math.PI, 0);
+    if (k >= 1) BAL.ret = null;
+    return true;
+  }
+  return false;
+}
+// 每一幀（在 controls.update 之後）：搭乘中鏡頭在籃子裡，朝群島中央往下看
+function balCam(dt) {
+  if (!BAL.on) return;
+  if (tween) { balEnd(true); return; }   // 點了某座島、標籤、導覽：下來飛過去
+  if (!BAL.drag) { BAL.look *= Math.exp(-dt * 1.2); BAL.lookP *= Math.exp(-dt * 1.2); }
+  balMove(dt);
+  lookout.updateMatrixWorld();
+  const eye = lookout.localToWorld(balTmp.copy(BAL_EYE).setZ(innerWidth < innerHeight ? -0.15 : BAL_EYE.z));
+  // 看的方向：朝群島中央，俯角約 26°（手機直向畫面比較高，壓到約 34°，上緣才不會露出一大片天空）；拖曳左右轉頭、上下多看一點
+  const e = clock.elapsedTime - BAL.t0;
+  const aim = Math.atan2(-eye.x, -eye.z) + BAL.look, dist = Math.hypot(eye.x, eye.z) * (innerWidth < innerHeight ? 0.62 : 0.85) * (1 - 0.9 * Math.max(0, BAL.lookP));
+  balTgt.set(eye.x + Math.sin(aim) * dist, 6 + Math.max(0, -BAL.lookP) * 80, eye.z + Math.cos(aim) * dist);
+  // 一開始從原本的鏡頭位置滑進籃子（約 1.5 秒），之後緊緊跟著籃子
+  const k = e < 2.5 ? 1 - Math.exp(-dt * (1.5 + e * 2)) : 1;
+  BAL.camPos.lerp(eye, k); BAL.camTgt.lerp(balTgt, k);
+  camera.position.copy(BAL.camPos); controls.target.copy(BAL.camTgt);
+  // 鏡頭跟著籃子一起晃：用籃子的「上方」當鏡頭的上方
+  camera.up.set(0, 1, 0).applyQuaternion(lookout.quaternion);
+  camera.lookAt(BAL.camTgt);
+  if (clock.elapsedTime - BAL.last > 0.3) {
+    BAL.last = clock.elapsedTime;
+    let best = null, bd = 1e9;
+    for (const isl of Object.values(islands)) { const d = Math.hypot(isl.x - eye.x, isl.z - eye.z) - isl.R; if (d < bd) { bd = d; best = isl; } }
+    const key = best && bd < 12 ? best.key : '';
+    if (key !== BAL.hintKey && e > 3) { BAL.hintKey = key; rideSay(key ? `🎈 正在經過 ${isleName2(key).replace(/^[🚧]\s*/u, '')}` : '🎈 熱氣球隨風繞著群島⋯　拖曳畫面可以轉頭看'); }
   }
 }
 
@@ -5901,12 +6050,12 @@ function balloonRect(w, h) {
 function placeTags() {
   const w = innerWidth, h = innerHeight;
   placed.length = 0;
-  const bal = balloonRect(w, h);
+  const bal = BAL.on ? { l: 0, r: 0, t: 0, b: 0, near: Infinity } : balloonRect(w, h);   // 人在氣球裡：不用避開氣球
   for (const t of tags) {
     tmpV.set(t.isl.x, t.h, t.isl.z);
     const behind = t !== lookTag && tmpV.distanceTo(camera.position) > bal.near;
     tmpV.project(camera);
-    let vis = tmpV.z < 1 && Math.abs(tmpV.x) < 1.1 && Math.abs(tmpV.y) < 1.1;
+    let vis = tmpV.z < 1 && Math.abs(tmpV.x) < 1.1 && Math.abs(tmpV.y) < 1.1 && !(t === lookTag && BAL.on);
     const x = ((tmpV.x + 1) / 2) * w, y = ((1 - tmpV.y) / 2) * h;
     if (vis) {
       if (!t.w) { t.w = t.el.offsetWidth; t.hh = t.el.offsetHeight; }
@@ -6430,7 +6579,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   if (ray.intersectObjects(partyHit, false).length) { if (zyIsl.formOpen) window.open(PARTY_FORM, '_blank', 'noopener'); else select('zhongyi'); return; }
   const bh = ray.intersectObjects(bottleHit, false)[0];
   if (bh) { const i = bh.object.userData.bottle; select('bottle', i >= 0 ? 'b:' + i : 'bottle'); return; }
-  if (!searching && ray.intersectObjects(lookoutHit, false).length) { openSearch(); return; }
+  if (!searching && !BAL.on && ray.intersectObjects(lookoutHit, false).length) { openSearch(); return; }
   const hit = ray.intersectObjects(Object.values(islands).map((i) => i.group), true)[0];
   // 點到海面：收起資訊卡和時光捲軸，把畫面還給群島
   if (!hit) { setUI({ panel: 'closed', dock: false }); return; }
@@ -6650,6 +6799,7 @@ let searchFrom = null, searchFly = 0;
 // 打開搜尋：鏡頭飛到瞭望氣球旁邊停住；到定位後搜尋面板才淡入
 function openSearch() {
   if (searching) return;
+  if (BAL.on) { balEnd(true); if (BAL.ret) BAL.ret.dur = 0.01; }   // 搭熱氣球中按搜尋：氣球先回到原位，鏡頭再飛過去
   award('balloon'); gc('動作/搭熱氣球搜尋');
   if (!navPop.hidden) showNavPop(false);
   if (!soundPop.hidden) showSoundPop(false);
@@ -7147,7 +7297,7 @@ const BADGES = [
   // 預留格：徽章總數維持 6 的倍數（徽章牆一排 6 格，版面才工整）；之後新增徽章時，直接把預留格換成新的徽章，不夠再補一排
   // 預留格算進總數，在徽章牆上顯示「？」，點了顯示「敬請期待」
   { id: 'kinto_ride', e: '☁️', n: '騰雲駕霧', c: '按右上角 ☁️ 搭大聖的筋斗雲，繞群島一圈', bc: '#e0a83a', hidden: !ptOpen },
-  { id: 'soon_2', e: '🎁', n: '敬請期待', c: '新的徽章準備中', bc: '#9a9488', hidden: true, soon: true },
+  { id: 'balloon_ride', e: '🌬️', n: '乘風而行', c: '按右上角 🎈 搭熱氣球，繞群島一整圈', bc: '#c0503f' },
 ];
 const BADGE_KEY = 'islands-badges';
 let BS = { v: 1, got: {}, seen: {}, days: [] };
@@ -8230,6 +8380,7 @@ function tick() {
     camera.position.x += dx; camera.position.z += dz;
   }
   rideCam(dt);   // 搭筋斗雲：鏡頭跟在大聖背後
+  balCam(dt);    // 搭熱氣球：鏡頭在瞭望氣球的籃子裡
   composer.render();
   placeTags();
   requestAnimationFrame(tick);
