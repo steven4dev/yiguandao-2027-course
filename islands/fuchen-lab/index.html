@@ -102,7 +102,7 @@ pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:
   <section id="intro" class="card">
     <h2>手機就是您的拂塵柄</h2>
     <ul class="tips">
-      <li>🤚 <b>握法</b>：手機直握，像握拂塵的柄。<b>手機頂端就是拂絲</b>，螢幕朝著自己。</li>
+      <li>🤚 <b>握法</b>：手機直立握著，像握拂塵的柄，螢幕朝著自己。往左、往右像揮劍一樣橫掃，往下像劈；手腕甩、整隻手臂揮都可以。</li>
       <li>👀 <b>先看</b>：畫面會先示範這次要揮的符號，接著倒數 3、2、1。</li>
       <li>🪶 <b>再揮</b>：聽到「揮！」就放心大揮，<b>不用看螢幕</b>；揮完停住，聽到「叮」再拿回來看結果。</li>
       <li>🔊 請<b>打開聲音</b>（iPhone 記得關掉靜音鍵）；建議鎖定直向畫面。</li>
@@ -196,7 +196,7 @@ pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:
 
 <script>
 'use strict';
-const VERSION = 'v261107.01';
+const VERSION = 'v261107.02';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = VERSION;
@@ -445,19 +445,38 @@ function currentUp(){
   return nrm3(scl3(g, calib.gSign));
 }
 
-/* 把陀螺儀轉動累加起來，追蹤「手機頂端（拂絲）指向哪裡」，再投影成平面軌跡 */
+/* 把陀螺儀轉動換到「玩家面前的世界座標」再累加（空中滑鼠的做法）：
+   - 左右＝繞著「上方」轉（像揮劍橫掃，手機直立時是繞著手機長邊轉）
+   - 上下＝繞著玩家的「右手方向」轉（像劈下、上挑）
+   - 手機直立時，像雨刷一樣左右擺（繞著前方轉）也算左右
+   這樣不管手機是直立、斜拿還是平拿往前指，方向都對得上。
+   v261107.01 只追蹤「手機頂端指向哪裡」：直立的手機橫掃時頂端幾乎不動，才會被誤判成往上。 */
 function makeIntegrator(up){
-  let R = [1,0,0, 0,1,0, 0,0,1];        // 現在的手機座標 → 開始揮的那一刻的座標
-  const p0 = [0,1,0];                   // 手機頂端
-  let upT = sub3(up, scl3(p0, dot(up,p0)));
-  if(len3(upT) < 0.35){ const z = [0,0,1]; upT = sub3(z, scl3(p0, dot(z,p0))); } // 手機幾乎直立：往前倒＝往下
-  upT = nrm3(upT); const right = cross3(p0, upT);
-  const pts = [{ x:0, y:0, sp:0, t:0 }]; let T = 0;
+  let R = [1,0,0, 0,1,0, 0,0,1];        // 現在的手機座標 → 開始揮的那一刻的手機座標
+  const U = nrm3(up);
+  const hz = v => sub3(v, scl3(U, dot(v, U)));             // 去掉垂直分量
+  // 玩家此刻面向的方向：以螢幕背面（-Z）的水平方向為主；手機越接近平拿（螢幕朝天），越改用手機頂端（+Y）
+  // （頂端只在平拿時才參考：手機往側邊歪時，頂端的水平分量會把方向帶偏）
+  // 每一步都用「當下」的面向來分左右、上下：身體轉了，劈和挑的軸也跟著轉
+  let lastF = null;
+  const facing = R => {
+    const a = hz([-R[2], -R[5], -R[8]]), b = hz([R[1], R[4], R[7]]), wb = Math.max(0, Math.min(1, (0.6 - len3(a))/0.6));
+    let F = [a[0] + b[0]*wb, a[1] + b[1]*wb, a[2] + b[2]*wb];
+    if(len3(F) < 0.15) return lastF || nrm3(len3(a) > len3(b) ? a : b);
+    return lastF = nrm3(F);
+  };
+  const pts = [{ x:0, y:0, sp:0, t:0 }]; let T = 0, X = 0, Y = 0;
   return {
-    pts, upT, right,
+    pts,
     step(s){
       const w = [(s.wx - calib.bias[0])*D2R, (s.wy - calib.bias[1])*D2R, (s.wz - calib.bias[2])*D2R];
       const wl = len3(w), th = wl * s.dt;
+      // 角速度換到開始那一刻的座標（用這一步開始前的姿態）
+      const ww = [R[0]*w[0]+R[1]*w[1]+R[2]*w[2], R[3]*w[0]+R[4]*w[1]+R[5]*w[2], R[6]*w[0]+R[7]*w[1]+R[8]*w[2]];
+      const tip = [R[1], R[4], R[7]], F = facing(R), RT = cross3(F, U);
+      const upright = Math.max(0, dot(tip, U));             // 手機頂端朝上的程度，雨刷式左右擺才算數
+      X += (-dot(ww, U) + upright * dot(ww, F)) * s.dt;
+      Y += dot(ww, RT) * s.dt;
       if(th > 1e-9){
         const k = scl3(w, 1/wl), c = Math.cos(th), sn = Math.sin(th), v = 1 - c;
         const M = [c+k[0]*k[0]*v, k[0]*k[1]*v-k[2]*sn, k[0]*k[2]*v+k[1]*sn,
@@ -468,29 +487,9 @@ function makeIntegrator(up){
         R = N;
       }
       T += s.dt;
-      const p = [R[1], R[4], R[7]], c = Math.max(-1, Math.min(1, dot(p,p0)));
-      const ang = Math.acos(c), d = sub3(p, scl3(p0, c)), dl = len3(d);
-      let x = 0, y = 0;
-      if(dl > 1e-6){ x = ang * dot(d, right)/dl; y = ang * dot(d, upT)/dl; }
-      if(settings.mirX) x = -x; if(settings.mirY) y = -y;
-      const pt = { x, y, sp: wl*R2D, t:T, p }; pts.push(pt); return pt;
+      const pt = { x: settings.mirX ? -X : X, y: settings.mirY ? -Y : Y, sp: wl*R2D, t:T }; pts.push(pt); return pt;
     }
   };
-}
-// 揮完之後：以整個符號的「平均指向」當投影中心重新投影（等距方位投影），
-// 不然從角落起筆的大符號（例如 Z 從左上角開始）離中心越遠越變形
-function reproject(pts, up){
-  const c = [0,0,0]; for(const q of pts){ const p = q.p || [0,1,0]; c[0]+=p[0]; c[1]+=p[1]; c[2]+=p[2]; }
-  const cn = nrm3(c);
-  let upT = sub3(up, scl3(cn, dot(up,cn)));
-  if(len3(upT) < 0.35){ const z = [0,0,1]; upT = sub3(z, scl3(cn, dot(z,cn))); }
-  upT = nrm3(upT); const right = cross3(cn, upT);
-  return pts.map(q => {
-    const p = q.p || [0,1,0], cc = Math.max(-1, Math.min(1, dot(p,cn))), ang = Math.acos(cc), d = sub3(p, scl3(cn, cc)), dl = len3(d);
-    let x = 0, y = 0; if(dl > 1e-6){ x = ang*dot(d,right)/dl; y = ang*dot(d,upT)/dl; }
-    if(settings.mirX) x = -x; if(settings.mirY) y = -y;
-    return { x, y, sp:q.sp, t:q.t };
-  });
 }
 
 /* ---------------- 畫布 ---------------- */
@@ -654,7 +653,6 @@ function analyzeStroke(st){
     while(a > 0 && pts[a-1].sp > low) a--;
     while(b < pts.length-1 && pts[b+1].sp > low) b++;
     pts = pts.slice(Math.max(0, a-1), Math.min(pts.length, b+2));
-    pts = reproject(pts, st.up || [0,1,0]);
   }
   const xy = pts.map(p => [p.x, p.y]);
   const L = pathLen(xy);
