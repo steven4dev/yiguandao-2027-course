@@ -147,7 +147,7 @@ pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:
     <section class="card">
       <h3>📊 測試統計（這支手機）</h3>
       <table>
-        <thead><tr><th>符號</th><th class="n">次數</th><th class="n">認對</th><th class="n">校正前</th><th class="n">平均相似度</th></tr></thead>
+        <thead><tr><th>符號</th><th class="n">次數</th><th class="n">認對</th><th class="n">軌跡</th><th class="n">轉動</th><th class="n">標準</th></tr></thead>
         <tbody id="statsBody"></tbody>
       </table>
       <p class="note" id="statsTotal"></p>
@@ -197,7 +197,7 @@ pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:
     <div id="calStep2" hidden>
       <h2>🧭 第二步：四方拂塵</h2>
       <p>接下來依序出題 <b>⬅️ 往左、➡️ 往右、⬆️ 往上、⬇️ 往下</b>。每一題都會倒數，聽到「<b>揮！</b>」就用您<b>平常揮的方式</b>大揮一次。</p>
-      <p class="note">系統會記住您揮每個方向時手機實際怎麼轉（包括像桌球正手、反手那樣的翻面、習慣往哪邊偏、力氣多大），之後每一題都依照您的習慣判定。用平常的方式揮就好，不用刻意讓螢幕一直對著自己。</p>
+      <p class="note">系統會看手機在空中實際移動的路線，並記住您習慣往哪邊偏、左右和上下揮的幅度。揮的時候手機怎麼翻（像桌球的正手、反手）都沒關係，用平常的方式<b>整隻手臂揮出去</b>就好。</p>
       <p class="note" id="dirMsg"></p>
       <div class="row"><button class="primary" id="btnDirCal">開始四方拂塵</button><button id="btnDirSkip">略過</button></div>
     </div>
@@ -207,7 +207,7 @@ pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:
 
 <script>
 'use strict';
-const VERSION = 'v261108.01';
+const VERSION = 'v261108.02';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = VERSION;
@@ -383,7 +383,7 @@ let rec = null;              // 揮拂錄製中的狀態
 let liveListener = null;
 
 function onMotion(e){
-  const r = e.rotationRate, ag = e.accelerationIncludingGravity;
+  const r = e.rotationRate, ag = e.accelerationIncludingGravity, la = e.acceleration;
   if(!r || r.alpha == null) return;
   const now = performance.now();
   // 優先用感測器自己回報的取樣間隔；事件抵達的時間會抖動（甚至成批送達），拿來積分會讓軌跡變形
@@ -393,7 +393,8 @@ function onMotion(e){
   if(dt == null){ dt = lastT ? (now - lastT)/1000 : 0.016; if(!(dt > 0.002 && dt < 0.1)) dt = 0.016; }
   lastT = now;
   // 規格：alpha 繞 z 軸、beta 繞 x 軸、gamma 繞 y 軸（度／秒）
-  const s = { t:now, dt, wx:r.beta||0, wy:r.gamma||0, wz:r.alpha||0, ax:ag ? ag.x||0 : 0, ay:ag ? ag.y||0 : 0, az:ag ? ag.z||0 : 0 };
+  const s = { t:now, dt, wx:r.beta||0, wy:r.gamma||0, wz:r.alpha||0, ax:ag ? ag.x||0 : 0, ay:ag ? ag.y||0 : 0, az:ag ? ag.z||0 : 0,
+    lax: la && la.x != null ? la.x : null, lay: la && la.y != null ? la.y : null, laz: la && la.z != null ? la.z : null };
   motionCount++; rateWin.push(now); while(rateWin.length && now - rateWin[0] > 1000) rateWin.shift(); rateHz = rateWin.length;
   ring.push(s); while(ring.length && now - ring[0].t > 1200) ring.shift();
   if(liveListener) liveListener(s);
@@ -422,7 +423,7 @@ function enableTouch(){ audioInit(); inputMode = 'touch'; keepAwake(); showLab()
 function showLab(){ $('#intro').hidden = true; $('#lab').hidden = false; updateStatus(); resizeCanvas(); drawIdle(); }
 function updateStatus(){
   const el = $('#sensorStatus');
-  if(inputMode === 'gyro') el.innerHTML = `<b>陀螺儀</b>・${rateHz || '—'}/秒・${!calib.done ? '<span style="color:var(--warn)">未校正</span>' : calib.P ? '四方校正 ✓' : '<span style="color:var(--warn)">四方未校正</span>'}`;
+  if(inputMode === 'gyro') el.innerHTML = `<b>陀螺儀</b>・${rateHz || '—'}/秒・${!calib.done ? '<span style="color:var(--warn)">未校正</span>' : calib.MT ? '四方校正 ✓・軌跡' : calib.P ? '四方校正 ✓・轉動' : '<span style="color:var(--warn)">四方未校正</span>'}`;
   else el.innerHTML = '感測器：<b>觸控模式</b>（用手指畫）';
   $('#btnRecal').hidden = inputMode !== 'gyro';
 }
@@ -451,6 +452,7 @@ async function runCalib(){
   await sleep(600); updateStatus(); openDirStep();
 }
 // 目前「上方」在手機座標裡的方向（取最近 0.3 秒的重力平均）
+const accAvail = () => ring.some(s => s.lax != null);
 function currentUp(){
   const now = performance.now(), arr = ring.filter(s => now - s.t < 300);
   if(!arr.length) return [0,1,0];
@@ -480,7 +482,8 @@ function makeIntegrator(up){
     return lastF = nrm3(F);
   };
   const P = calib.P || null;                              // 四方校正學到的 2×3 個人揮法轉換
-  const pts = [{ x:0, y:0, lx:P ? 0 : null, ly:P ? 0 : null, sp:0, t:0 }]; let T = 0, X = 0, Y = 0, LX = 0, LY = 0;
+  const pts = [{ x:0, y:0, lx:P ? 0 : null, ly:P ? 0 : null, sp:0, act:0, a:null, t:0 }]; let T = 0, X = 0, Y = 0, LX = 0, LY = 0;
+  pts.meta = { U, F: facing([1,0,0, 0,1,0, 0,0,1]) };    // 開始那一刻的「上方」和「面向」，算移動軌跡用
   return {
     pts,
     step(s){
@@ -504,7 +507,15 @@ function makeIntegrator(up){
         R = N;
       }
       T += s.dt;
-      const pt = { x:X, y:Y, lx:P ? LX : null, ly:P ? LY : null, sp: wl*R2D, t:T }; pts.push(pt); return pt;
+      // 線性加速度（不含重力）轉到開始那一刻的座標；iOS 的正負號和規格相反，用重力校正量到的正負號修正
+      let a = null, act = wl*R2D;
+      if(s.lax != null){
+        const g = calib.gSign || 1, d = [s.lax*g, s.lay*g, s.laz*g];
+        a = [R[0]*d[0]+R[1]*d[1]+R[2]*d[2], R[3]*d[0]+R[4]*d[1]+R[5]*d[2], R[6]*d[0]+R[7]*d[1]+R[8]*d[2]];
+        act = Math.max(act, len3(d) * 25);                 // 4 m/s² 約等於 100°/s：只移動、幾乎不轉也算有在揮
+      }
+      if(pts.length === 1 && a) pts[0].a = [0,0,0];
+      const pt = { x:X, y:Y, lx:P ? LX : null, ly:P ? LY : null, sp: wl*R2D, act, a, t:T }; pts.push(pt); return pt;
     }
   };
 }
@@ -631,10 +642,12 @@ function record(ms, opts){
       const up = currentUp(), integ = makeIntegrator(up);
       rec = { active:true, integ, up, raw:[], started:false, lastActive:0, swooshed:false,
         onSample(s){
-          this.raw.push([Math.round(s.dt*1000*10)/10, +s.wx.toFixed(1), +s.wy.toFixed(1), +s.wz.toFixed(1)]);
+          const rr = [Math.round(s.dt*1000*10)/10, +s.wx.toFixed(1), +s.wy.toFixed(1), +s.wz.toFixed(1)];
+          if(s.lax != null) rr.push(+s.lax.toFixed(2), +s.lay.toFixed(2), +s.laz.toFixed(2));
+          this.raw.push(rr);
           const p = integ.step(s), now = performance.now();
-          if(p.sp > T0.start){ if(!this.started){ this.started = true; } this.lastActive = now; if(!this.swooshed){ this.swooshed = true; swoosh(Math.min(1, p.sp/800)); } }
-          else if(p.sp > T0.end && this.started) this.lastActive = now;
+          if(p.act > T0.start){ if(!this.started){ this.started = true; } this.lastActive = now; if(!this.swooshed){ this.swooshed = true; swoosh(Math.min(1, p.act/800)); } }
+          else if(p.act > T0.end && this.started) this.lastActive = now;
           if(this.started && now - this.lastActive > 300) finish('still');
         } };
       timer = setTimeout(() => finish('timeout'), ms);
@@ -669,24 +682,55 @@ function attachTouch(r, onLift){
 function detachTouch(){ if(!touchHandlers) return; const st = $('#stage'); st.removeEventListener('pointerdown', touchHandlers.down); st.removeEventListener('pointermove', touchHandlers.move); st.removeEventListener('pointerup', touchHandlers.up); st.removeEventListener('pointercancel', touchHandlers.up); touchHandlers = null; }
 
 /* ---------------- 分析一筆揮動 ---------------- */
-function analyzeStroke(st, useCal = true, thOverride = null){
-  let pts = st.pts;
+/* 三種判讀方式：
+   traj ＝ 移動軌跡：加速度（陀螺儀算出的姿態轉到同一個座標）積分成手機在空中實際走的路線，手機怎麼翻都沒關係
+   gyro ＝ 個人轉動：四方拂塵學到的「手機怎麼轉 → 左右上下」
+   std  ＝ 標準模型：假設一般的握法 */
+const MODEL_NAME = { traj:'🛤️ 移動軌跡', gyro:'🔄 個人轉動', std:'📐 標準', touch:'👆 觸控' };
+const hasTraj = pts => pts.length > 2 && pts[pts.length-1].a != null && !!pts.meta;
+function pickModel(st, model){
+  if(st.input !== 'gyro') return 'touch';
+  const pts = st.pts;
+  if(model === 'auto') return hasTraj(pts) && calib.MT ? 'traj' : (calib.P && pts.length > 1 && pts[1].lx != null ? 'gyro' : 'std');
+  if(model === 'traj' || model === 'trajRaw') return hasTraj(pts) ? model : null;
+  if(model === 'gyro') return calib.P && pts.length > 1 && pts[1].lx != null ? 'gyro' : null;
+  return 'std';
+}
+// 加速度兩次積分成位置：起手和收尾都是靜止（速度歸零），中間的漂移用直線扣掉
+function trajectory(pts, meta){
+  const U = meta.U, RT = nrm3(cross3(meta.F, U)), n = pts.length, V = [[0,0,0]];
+  for(let i=1;i<n;i++){ const dt = pts[i].t - pts[i-1].t, a = pts[i].a || [0,0,0], v = V[i-1]; V.push([v[0]+a[0]*dt, v[1]+a[1]*dt, v[2]+a[2]*dt]); }
+  const t0 = pts[0].t, span = (pts[n-1].t - t0) || 1, ve = V[n-1], out = [[0,0]]; let p = [0,0,0];
+  for(let i=1;i<n;i++){
+    const k = (pts[i].t - t0)/span, dt = pts[i].t - pts[i-1].t, v = [V[i][0]-ve[0]*k, V[i][1]-ve[1]*k, V[i][2]-ve[2]*k];
+    p = [p[0]+v[0]*dt, p[1]+v[1]*dt, p[2]+v[2]*dt]; out.push([dot(p, RT), dot(p, U)]);
+  }
+  return out;
+}
+function analyzeStroke(st, model = 'auto', thOverride = null){
+  let pts = st.pts; const m = pickModel(st, model);
+  if(!m) return { none:true, unavailable:true, peak:0 };
   if(st.input === 'gyro'){
-    const T0 = thOverride || th(); let a = -1, b = -1;
-    for(let i=0;i<pts.length;i++) if(pts[i].sp > T0.start){ a = i; break; }
-    if(a < 0) return { none:true, peak: Math.round(Math.max(0, ...pts.map(p => p.sp))) };
-    for(let i=pts.length-1;i>=a;i--) if(pts[i].sp > T0.end){ b = i; break; }
+    const T0 = thOverride || th(), act = p => p.act != null ? p.act : p.sp; let a = -1, b = -1;
+    for(let i=0;i<pts.length;i++) if(act(pts[i]) > T0.start){ a = i; break; }
+    if(a < 0) return { none:true, model:m, peak: Math.round(Math.max(0, ...pts.map(act))) };
+    for(let i=pts.length-1;i>=a;i--) if(act(pts[i]) > T0.end){ b = i; break; }
     // 揮動的起手和收尾比較慢，從過門檻的點往前、往後延伸到幾乎靜止，符號的頭尾才不會被切掉
     const low = Math.max(15, T0.end * 0.4);
-    while(a > 0 && pts[a-1].sp > low) a--;
-    while(b < pts.length-1 && pts[b+1].sp > low) b++;
-    const lr = useLearned(pts, useCal);
-    pts = pts.slice(Math.max(0, a-1), Math.min(pts.length, b+2))
-      .map(p => { const q0 = ptXY(p, lr), q = applyCal(q0[0], q0[1]); return { x:q[0], y:q[1], sp:p.sp, t:p.t }; });
+    while(a > 0 && act(pts[a-1]) > low) a--;
+    while(b < pts.length-1 && act(pts[b+1]) > low) b++;
+    const seg = pts.slice(Math.max(0, a-1), Math.min(pts.length, b+2));
+    let XY;
+    if(m === 'traj' || m === 'trajRaw'){
+      XY = trajectory(seg, pts.meta);
+      if(m === 'traj' && calib.MT){ const M = calib.MT; XY = XY.map(q => [M[0]*q[0] + M[1]*q[1], M[2]*q[0] + M[3]*q[1]]); }
+    } else XY = seg.map(p => m === 'gyro' ? [p.lx, p.ly] : [p.x, p.y]);
+    pts = seg.map((p, i) => { const q = applyCal(XY[i][0], XY[i][1]); return { x:q[0], y:q[1], sp:act(p), t:p.t }; });
   }
+  const isTraj = m === 'traj' || m === 'trajRaw';
   const xy = pts.map(p => [p.x, p.y]);
   const L = pathLen(xy);
-  if(xy.length < 3 || L < (st.input === 'gyro' ? 0.17 : 0.08)) return { none:true, peak: Math.round(Math.max(0, ...pts.map(p => p.sp || 0))) };
+  if(xy.length < 3 || L < (isTraj ? 0.05 : st.input === 'gyro' ? 0.17 : 0.08)) return { none:true, model:m, peak: Math.round(Math.max(0, ...pts.map(p => p.sp || 0))) };
   // 主揮方向：速度最快那一段的位移方向
   let pk = 1, pv = 0; const vel = [0];
   for(let i=1;i<pts.length;i++){ const dt = Math.max(0.004, pts[i].t - pts[i-1].t); const v = Math.hypot(xy[i][0]-xy[i-1][0], xy[i][1]-xy[i-1][1])/dt; vel.push(v); if(v > pv){ pv = v; pk = i; } }
@@ -695,12 +739,14 @@ function analyzeStroke(st, useCal = true, thOverride = null){
   const mainDir = (Math.atan2(dy, dx)*R2D + 360) % 360;
   let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity; for(const p of xy){ x0=Math.min(x0,p[0]); x1=Math.max(x1,p[0]); y0=Math.min(y0,p[1]); y1=Math.max(y1,p[1]); }
   const rg = recognize(xy);
-  return { none:false, xy, rg, mainDir, mainVec:[dx, dy], dur: Math.round((pts[pts.length-1].t - pts[0].t)*1000),
-    peak: Math.round(Math.max(...pts.map(p => p.sp || 0))), size: [Math.round((x1-x0)*R2D), Math.round((y1-y0)*R2D)] };
+  const unit = isTraj ? 100 : R2D;   // 移動軌跡用公分，轉動用度
+  return { none:false, model:m, xy, rg, mainDir, mainVec:[dx, dy], dur: Math.round((pts[pts.length-1].t - pts[0].t)*1000),
+    peak: Math.round(Math.max(...pts.map(p => p.sp || 0))), size: [Math.round((x1-x0)*unit), Math.round((y1-y0)*unit)], sizeUnit: isTraj ? 'cm' : '°' };
 }
-function judge(target, strokes, early, useCal = true){
-  const A = strokes.map(st => analyzeStroke(st, useCal));
-  const out = { target, early, strokes:A, correct:false, score:0, recognized:null };
+function judge(target, strokes, early, model = 'auto'){
+  const A = strokes.map(st => analyzeStroke(st, model));
+  const out = { target, early, strokes:A, correct:false, score:0, recognized:null, model: A[0] && A[0].model };
+  if(A.some(a => a.unavailable)) return null;
   if(A.some(a => a.none)){ out.verdict = ['💤 沒揮到', 'warn']; out.hint = `感測器沒偵測到夠大的揮動（門檻 ${th().start}°/s）。可以揮大力一點，或把靈敏度調成「輕」。`; return out; }
   const a = A[0];
   if(!target){ // 自由揮
@@ -761,7 +807,7 @@ async function replay(res){
   vib(res.correct === false ? [40,60,40] : 80);
   setOverlay(`<div class="mid" style="margin-top:auto;margin-bottom:6%">${v}${res.target && res.correct !== false ? `・${res.score}%` : ''}</div>`);
 }
-function showResult(res, rawRes){
+function showResult(res, alts){
   const el = $('#result'); el.hidden = false;
   const sym = res.target ? SYM[res.target] : null;
   const A = res.strokes.filter(a => !a.none);
@@ -770,7 +816,10 @@ function showResult(res, rawRes){
   if(res.target && A.length) h +=`<span>相似度 <b>${res.score}%</b></span>`;
   h += `</div>`;
   if(res.hint) h += `<p class="note">${res.hint}</p>`;
-  if(rawRes && res.target && rawRes.correct !== res.correct) h += `<p class="note">🧭 四方校正${res.correct ? '<b>救回</b>了這一揮：不校正會判成「' + rawRes.verdict[0] + '」' : '後反而沒認出來：不校正會判成「' + rawRes.verdict[0] + '」（請記下來告訴我）'}。</p>`;
+  if(alts && res.target){
+    const parts = ['traj','gyro','std'].filter(m => alts[m]).map(m => { const r = alts[m]; return `${MODEL_NAME[m]} ${r.correct ? '✓' : '✗'}${r.correct ? ' ' + r.score + '%' : ''}${m === res.model ? '（採用）' : ''}`; });
+    if(parts.length > 1) h += `<p class="note">三種判讀：${parts.join('｜')}</p>`;
+  }
   if(A.length){
     if(sym && sym.kind !== 'shape'){
       h += `<p>主揮方向：${A.map(a => { const d = dirLabel(a.mainDir); return `<b>${d[1]} ${d[2]}</b>（${Math.round(a.mainDir)}°）`; }).join('　＋　')}</p>`;
@@ -778,7 +827,7 @@ function showResult(res, rawRes){
     const rk = A[0].rg.ranking.slice(0, 4);
     h += `<div class="bars"><p class="note" style="margin:0 0 2px">形狀比對（第一刀）：</p>${rk.map(r => `<div class="bar ${r.key === res.target ? 'hit' : ''}"><span>${r.name}</span><span class="track"><span class="fill" style="width:${r.score}%;display:block"></span></span><span>${r.score}%</span></div>`).join('')}</div>`;
     const a = A[0];
-    h += `<div class="metrics"><span>揮動時間 <b>${a.dur} ms</b></span><span>最快轉速 <b>${a.peak}°/s</b></span><span>左右幅度 <b>${a.size[0]}°</b></span><span>上下幅度 <b>${a.size[1]}°</b></span></div>`;
+    h += `<div class="metrics"><span>揮動時間 <b>${a.dur} ms</b></span><span>最快轉速 <b>${a.peak}°/s</b></span><span>左右幅度 <b>${a.size[0]}${a.sizeUnit || '°'}</b></span><span>上下幅度 <b>${a.size[1]}${a.sizeUnit || '°'}</b></span></div>`;
   } else if(res.strokes[0]) {
     h += `<div class="metrics"><span>最快轉速 <b>${res.strokes[0].peak || 0}°/s</b></span><span>門檻 <b>${th().start}°/s</b></span></div>`;
   }
@@ -787,9 +836,9 @@ function showResult(res, rawRes){
 
 /* ---------------- 紀錄與統計 ---------------- */
 let log = store.get('fuchenLab.log', []);
-function saveAttempt(res, strokes, rawRes){
+function saveAttempt(res, strokes, alts){
   const entry = { at: new Date().toISOString(), mode, target: res.target, input: inputMode, sens: settings.sens, th: th().start,
-    calibrated: !!calib.P, rawCorrect: rawRes ? rawRes.correct : undefined, rawScore: rawRes ? rawRes.score : undefined,
+    model: res.model, models: alts ? Object.fromEntries(Object.entries(alts).filter(([,r]) => r).map(([m,r]) => [m, [r.correct, r.score]])) : undefined,
     correct: res.correct, score: res.score, recognized: res.recognized, early: res.early, verdict: res.verdict[0],
     strokes: res.strokes.map((a, i) => a.none ? { none:true, peak:a.peak } : {
       mainDir: Math.round(a.mainDir), dur:a.dur, peak:a.peak, size:a.size,
@@ -807,13 +856,12 @@ function saveAttempt(res, strokes, rawRes){
 function renderStats(){
   const rows = SYMBOLS.map(s => {
     const L = log.filter(e => e.target === s.key); const ok = L.filter(e => e.correct).length;
-    const R = L.filter(e => e.calibrated && e.rawCorrect !== undefined), rok = R.filter(e => e.rawCorrect).length;
-    const sc = L.length ? Math.round(L.reduce((a,e) => a + (e.score||0), 0)/L.length) : null;
-    return `<tr><td>${symLabel(s)}</td><td class="n">${L.length}</td><td class="n">${L.length ? Math.round(ok/L.length*100)+'%' : '—'}</td><td class="n" style="color:var(--muted)">${R.length ? Math.round(rok/R.length*100)+'%' : '—'}</td><td class="n">${sc == null ? '—' : sc+'%'}</td></tr>`;
+    const col = m => { const R = L.filter(e => e.models && e.models[m]); return R.length ? Math.round(R.filter(e => e.models[m][0]).length/R.length*100) + '%' : '—'; };
+    return `<tr><td>${symLabel(s)}</td><td class="n">${L.length}</td><td class="n">${L.length ? Math.round(ok/L.length*100)+'%' : '—'}</td><td class="n" style="color:var(--muted)">${col('traj')}</td><td class="n" style="color:var(--muted)">${col('gyro')}</td><td class="n" style="color:var(--muted)">${col('std')}</td></tr>`;
   });
   $('#statsBody').innerHTML = rows.join('');
   const free = log.filter(e => !e.target).length;
-  $('#statsTotal').textContent = `共 ${log.length} 筆${free ? `（含自由揮 ${free} 筆）` : ''}。「校正前」是同一批揮動不套四方校正的認對率，用來比較校正有沒有幫助。`;
+  $('#statsTotal').textContent = `共 ${log.length} 筆${free ? `（含自由揮 ${free} 筆）` : ''}。「軌跡／轉動／標準」是同一批揮動用三種方式判讀的認對率，用來比較哪一種最準。`;
 }
 function exportData(){
   return JSON.stringify({ app:'fuchen-lab', version:VERSION, exportedAt:new Date().toISOString(),
@@ -839,7 +887,7 @@ function updateDebug(){
     last ? `即時轉速 x ${last.wx.toFixed(0)}  y ${last.wy.toFixed(0)}  z ${last.wz.toFixed(0)} °/s` : '即時轉速 —',
     last ? `重力 ${last.ax.toFixed(1)}, ${last.ay.toFixed(1)}, ${last.az.toFixed(1)}` : '',
     `門檻（${settings.sens}）開始 ${th().start}°/s・結束 ${th().end}°/s`,
-    calib.P ? `個人揮法 P = [${calib.P.map(v => v.toFixed(2)).join(', ')}]` : '四方校正：無',
+    `加速度：${accAvail() ? '有' : '沒有'}｜軌跡校正 ${calib.MT ? '[' + calib.MT.map(v => v.toFixed(2)).join(', ') + ']' : '無'}｜轉動校正 ${calib.P ? '有' : '無'}`,
     navigator.userAgent
   ].join('\n');
 }
@@ -859,12 +907,14 @@ async function captureDir(step, idx, total, retry){
   bg(); say(step.name + (retry ? '，再一次' : '')); await wait(1300);
   await countdown(2, `${step.icon} ${step.name}`, { th:SENS.light });
   const st = await record(1700, { th:SENS.light, raw:true });
-  const a = analyzeStroke(st, false, SENS.light);
-  if(a.none) return null;
-  // 用原始座標（不含除錯鏡像）的主揮位移
-  const mv = applyCal(a.mainVec[0], a.mainVec[1]); // 去掉鏡像：鏡像是自己的逆運算
-  const r3 = rotOf(st.raw); if(!r3) return null;
-  return { vec: v2n(mv), axis: r3.axis, amp: r3.amp, peak: a.peak, raw: st.raw };
+  const a = analyzeStroke(st, 'std', SENS.light), t = analyzeStroke(st, 'trajRaw', SENS.light);
+  if(a.none && (!t || t.none)) return null;
+  // 用原始座標（不含除錯鏡像）的主揮位移：鏡像是自己的逆運算，再套一次就去掉了
+  const mv = a.none ? [0,0] : applyCal(a.mainVec[0], a.mainVec[1]);
+  const tv = t && !t.none ? applyCal(t.mainVec[0], t.mainVec[1]) : null;
+  const r3 = rotOf(st.raw);
+  return { vec: v2n(mv), tvec: tv ? v2n(tv) : null, tamp: tv ? Math.hypot(tv[0], tv[1]) : 0,
+    axis: r3 ? r3.axis : null, amp: r3 ? r3.amp : 0, peak: Math.max(a.peak || 0, (t && t.peak) || 0), raw: st.raw };
 }
 // 這一揮手機實際繞哪個軸轉（手機座標，含翻面），以及轉了多少度
 function rotOf(raw){
@@ -918,31 +968,54 @@ async function runDirCalib(){
       }
       // 一致性檢查：左右相反、上下相反、兩組互相垂直
       todo = []; problem = '';
-      // 用手機實際的轉動軸來比（含翻面），不受握法影響
-      if(ang3(got.L.axis, got.R.axis) < 130){ todo.push('L','R'); problem = '「往左」和「往右」手機轉的方式不夠相反'; }
-      if(ang3(got.U.axis, got.D.axis) < 130){ todo.push('U','D'); problem = (problem ? problem + '；' : '') + '「往上」和「往下」手機轉的方式不夠相反'; }
-      if(!todo.length){
-        const hv = ang3(nrm3(sub3(got.R.axis, got.L.axis)), nrm3(sub3(got.U.axis, got.D.axis)));
-        if(hv < 45 || hv > 135){ todo = ['L','R','U','D']; problem = '左右和上下手機轉的方式太接近'; }
-        else { const f = fitPersonal(got); if(Object.values(f.fit).some(a => a > 35)){ todo = ['L','R','U','D']; problem = '四個方向對不太起來'; } }
+      const useT = DIR_STEPS.every(d => got[d.key].tvec);
+      if(useT){
+        // 有加速度：用手機在空中實際移動的方向來比（手機怎麼翻都不影響）
+        const T = k => got[k].tvec;
+        if(v2ang(T('L'), T('R')) < 140){ todo.push('L','R'); problem = '「往左」和「往右」移動的方向不夠相反'; }
+        if(v2ang(T('U'), T('D')) < 140){ todo.push('U','D'); problem = (problem ? problem + '；' : '') + '「往上」和「往下」移動的方向不夠相反'; }
+        if(!todo.length){ const hv = v2ang(v2n([T('R')[0]-T('L')[0], T('R')[1]-T('L')[1]]), v2n([T('U')[0]-T('D')[0], T('U')[1]-T('D')[1]])); if(hv < 50 || hv > 130){ todo = ['L','R','U','D']; problem = '左右和上下移動的方向太接近'; } }
+      } else {
+        // 沒有加速度：用手機實際的轉動軸來比（含翻面）
+        if(DIR_STEPS.some(d => !got[d.key].axis)) { todo = ['L','R','U','D']; problem = '有幾揮幾乎沒有轉動'; }
+        else {
+          if(ang3(got.L.axis, got.R.axis) < 130){ todo.push('L','R'); problem = '「往左」和「往右」手機轉的方式不夠相反'; }
+          if(ang3(got.U.axis, got.D.axis) < 130){ todo.push('U','D'); problem = (problem ? problem + '；' : '') + '「往上」和「往下」手機轉的方式不夠相反'; }
+          if(!todo.length){
+            const hv = ang3(nrm3(sub3(got.R.axis, got.L.axis)), nrm3(sub3(got.U.axis, got.D.axis)));
+            if(hv < 45 || hv > 135){ todo = ['L','R','U','D']; problem = '左右和上下手機轉的方式太接近'; }
+            else { const f = fitPersonal(got); if(Object.values(f.fit).some(a => a > 35)){ todo = ['L','R','U','D']; problem = '四個方向對不太起來'; } }
+          }
+        }
       }
       if(todo.length){ sfx.bad(); setOverlay(`<div class="mid">🔁 再揮一次</div><div class="sub">${problem}，請再揮一次這幾個方向</div>`); say('再揮一次'); await wait(2400); }
     }
     if(todo.length) throw 'inconsistent';
     // 個人揮法：每個方向手機實際怎麼轉（含正手、反手的翻面），換成畫面上的左右、上下
-    const fp = fitPersonal(got);
-    const hs = (got.L.amp + got.R.amp)/2, vs = (got.U.amp + got.D.amp)/2;
+    const hasAxes = DIR_STEPS.every(d => got[d.key].axis), useT = DIR_STEPS.every(d => got[d.key].tvec);
+    const fp = hasAxes ? fitPersonal(got) : null;
+    // 移動軌跡的 2×2 校正：把這位玩家的「右」對到 (1,0)、「上」對到 (0,1)，順便修正左右上下的幅度比例
+    let MT = null;
+    if(useT){
+      const T = k => got[k].tvec, h = v2n([T('R')[0]-T('L')[0], T('R')[1]-T('L')[1]]), v = v2n([T('U')[0]-T('D')[0], T('U')[1]-T('D')[1]]);
+      const r = Math.max(0.5, Math.min(2, ((got.U.tamp + got.D.tamp)/2) / ((got.L.tamp + got.R.tamp)/2 || 1))), sh = r < 1 ? 1 : 1/r, sv = r < 1 ? r : 1;
+      const H = [h[0]*sh, h[1]*sh], V = [v[0]*sv, v[1]*sv], det = H[0]*V[1] - V[0]*H[1];
+      MT = [V[1]/det, -V[0]/det, -H[1]/det, H[0]/det];
+    }
+    const hs = (got.L.amp + got.R.amp)/2 || 1, vs = (got.U.amp + got.D.amp)/2;
     const avgPeak = (got.L.peak + got.R.peak + got.U.peak + got.D.peak)/4;
     const start = Math.round(Math.max(50, Math.min(220, avgPeak*0.4)));
     // 用標準模型判讀時，四揮會被看成哪裡：拿來畫說明圖、判斷有沒有對調
     const stdOK = Object.fromEntries(DIR_STEPS.map(s => [s.key, v2ang(got[s.key].vec, s.ideal) <= 35]));
-    delete calib.M; calib.P = fp.P; calib.dirSkipped = false; calib.autoTh = { start, end: Math.round(start*0.42) };
+    delete calib.M; calib.P = fp ? fp.P : null; calib.MT = MT; calib.dirSkipped = false; calib.autoTh = { start, end: Math.round(start*0.42) };
     calib.dirInfo = { at: Date.now(), vecs: Object.fromEntries(DIR_STEPS.map(s => [s.key, got[s.key].vec.map(x => +x.toFixed(3))])),
-      axes: Object.fromEntries(DIR_STEPS.map(s => [s.key, got[s.key].axis.map(x => +x.toFixed(3))])),
+      axes: hasAxes ? Object.fromEntries(DIR_STEPS.map(s => [s.key, got[s.key].axis.map(x => +x.toFixed(3))])) : null,
       amps: Object.fromEntries(DIR_STEPS.map(s => [s.key, Math.round(got[s.key].amp)])),
       peaks: Object.fromEntries(DIR_STEPS.map(s => [s.key, got[s.key].peak])),
-      fit: Object.fromEntries(Object.entries(fp.fit).map(([k,v]) => [k, Math.round(v)])),
-      hStyle: styleOf(nrm3(sub3(got.R.axis, got.L.axis)), false), vStyle: styleOf(nrm3(sub3(got.U.axis, got.D.axis)), true),
+      fit: fp ? Object.fromEntries(Object.entries(fp.fit).map(([k,v]) => [k, Math.round(v)])) : {},
+      hStyle: hasAxes ? styleOf(nrm3(sub3(got.R.axis, got.L.axis)), false) : '—', vStyle: hasAxes ? styleOf(nrm3(sub3(got.U.axis, got.D.axis)), true) : '—',
+      model: useT ? 'traj' : 'gyro', tvecs: useT ? Object.fromEntries(DIR_STEPS.map(s => [s.key, got[s.key].tvec.map(x => +x.toFixed(3))])) : null,
+      tamps: useT ? Object.fromEntries(DIR_STEPS.map(s => [s.key, Math.round(got[s.key].tamp*100)])) : null,
       stdOK, avgPeak: Math.round(avgPeak), rounds: round, vhRatio: +(vs/hs).toFixed(2) };
     calib.dirRaw = Object.fromEntries(DIR_STEPS.map(s => [s.key, got[s.key].raw]));
     store.set('fuchenLab.calib', calib);
@@ -970,7 +1043,8 @@ function drawCalibResult(){
       if(label){ const c = toC([v[0]*0.6, v[1]*0.6], 0.72); ctx.save(); ctx.font = '700 15px "Noto Sans TC", sans-serif'; ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, c[0], c[1]); ctx.restore(); }
     };
     DIR_STEPS.forEach(s => arrow(s.ideal, 'rgba(160,200,255,.55)', 4, [6,8]));
-    DIR_STEPS.forEach(s => arrow(info.vecs[s.key], '#ffd27a', 6, null, s.name.slice(1)));
+    const vv = info.tvecs || info.vecs;
+    DIR_STEPS.forEach(s => arrow(vv[s.key], '#ffd27a', 6, null, s.name.slice(1)));
     setOverlay('');
   };
   draw(); lastDraw = draw;
@@ -978,25 +1052,26 @@ function drawCalibResult(){
 function showCalibCard(){
   const i = calib.dirInfo; if(!i || !i.hStyle) return;
   const el = $('#result'); el.hidden = false;
-  const off = DIR_STEPS.filter(d => !i.stdOK[d.key]).map(d => d.name);
+  const traj = i.model === 'traj';
+  const vecs = i.tvecs || i.vecs, off = DIR_STEPS.filter(d => v2ang(vecs[d.key], d.ideal) > 35).map(d => d.name);
   el.innerHTML = `<div class="verdict"><span class="v good">🧭 四方拂塵完成</span></div>
-    <p>系統已經學會您的揮法：</p>
-    <ul class="tips">
-      <li>⬅️➡️ 左右揮時：<b>${i.hStyle}</b></li>
-      <li>⬆️⬇️ 上下揮時：<b>${i.vStyle}</b></li>
-    </ul>
-    <p class="note">畫面上的<b style="color:var(--gold)">金色箭頭</b>是用「標準方式」判讀您這四揮的結果，淡藍虛線是應該的方向。${off.length ? `其中「${off.join('、')}」用標準方式會判錯，` : '用標準方式也大致對，'}校正後一律依照您自己的揮法判定（連手機翻面也算進去）。</p>
-    <div class="metrics"><span>平均揮速 <b>${i.avgPeak}°/s</b></span><span>自動門檻 <b>${calib.autoTh.start}°/s</b></span>
-    <span>上下 ÷ 左右幅度 <b>${Math.round(i.vhRatio*100)}%</b></span><span>四向對準誤差 <b>≤ ${Math.max(...Object.values(i.fit))}°</b></span></div>
+    <p>判定方式：<b>${traj ? '🛤️ 移動軌跡' : '🔄 個人轉動'}</b>${traj ? '——看手機在空中實際移動的路線，揮的時候手機怎麼翻都沒關係。' : '（這支手機沒有提供加速度，改用轉動來判斷）'}</p>
+    ${i.hStyle !== '—' ? `<ul class="tips">
+      <li>⬅️➡️ 左右揮時手機的轉法：<b>${i.hStyle}</b></li>
+      <li>⬆️⬇️ 上下揮時手機的轉法：<b>${i.vStyle}</b></li>
+    </ul>` : ''}
+    <p class="note">畫面上的<b style="color:var(--gold)">金色箭頭</b>是您這四揮${traj ? '實際移動的方向' : '用標準方式判讀的方向'}，淡藍虛線是應該的方向。${off.length ? `「${off.join('、')}」偏得比較多，` : ''}之後每一題都會依照您的揮法扶正。</p>
+    <div class="metrics"><span>平均揮速 <b>${i.avgPeak}°/s</b></span><span>自動門檻 <b>${calib.autoTh.start}</b></span>
+    ${traj ? `<span>左右移動 <b>${Math.round((i.tamps.L + i.tamps.R)/2)} cm</b></span><span>上下移動 <b>${Math.round((i.tamps.U + i.tamps.D)/2)} cm</b></span>` : `<span>四向對準誤差 <b>≤ ${Math.max(0, ...Object.values(i.fit))}°</b></span>`}</div>
     ${i.rounds > 1 ? `<p class="note">（重揮了 ${i.rounds - 1} 輪才通過一致性檢查）</p>` : ''}
-    <p class="note">換了握法（例如直立改橫拿、換手）請按上方「🧘 重新校正」。</p>`;
+    <p class="note">換了握法或換手，請按上方「🧘 重新校正」。</p>`;
 }
 
 /* ---------------- 主流程 ---------------- */
 async function runTrial(){
   if(running) return;
   if(inputMode === 'gyro' && !calib.done){ openCalib(); return; }
-  if(inputMode === 'gyro' && !calib.P && !calib.dirSkipped){ openDirStep(calib.M ? '這一版改成學「手機實際怎麼轉」（連正手、反手的翻面一起學），請再做一次四方拂塵。' : ''); return; }
+  if(inputMode === 'gyro' && !calib.dirSkipped && (accAvail() ? !calib.MT : !calib.P)){ openDirStep(calib.M || calib.P ? '這一版改成看「手機在空中實際移動的路線」，揮的時候手機怎麼翻都沒關係。請再做一次四方拂塵。' : ''); return; }
   running = true; cancelFlag = false; audioInit(); keepAwake();
   $('#btnGo').disabled = true; $('#btnStop').disabled = false; $('#result').hidden = true;
   const key = mode === 'pick' ? selected : mode === 'random' ? SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)].key : null;
@@ -1011,10 +1086,10 @@ async function runTrial(){
       strokes.push(await record(windowMs(key)));
     }
     sfx.ding(); vib(50); setOverlay('<div class="mid">叮～看結果</div>'); await wait(350);
-    const res = judge(key, strokes, early);
-    const rawRes = inputMode === 'gyro' && calib.P ? judge(key, strokes, early, false) : null;
+    const res = judge(key, strokes, early, 'auto');
+    const alts = inputMode === 'gyro' ? Object.fromEntries(['traj','gyro','std'].map(m => [m, judge(key, strokes, early, m)])) : {};
     await replay(res);
-    showResult(res, rawRes); saveAttempt(res, strokes, rawRes);
+    showResult(res, alts); saveAttempt(res, strokes, alts);
   }catch(e){
     if(e !== 'cancel'){ console.error(e); toast('發生錯誤：' + e); }
     else { drawIdle(); }
