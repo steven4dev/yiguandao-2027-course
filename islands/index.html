@@ -5860,22 +5860,23 @@ balFire.innerHTML = '<i class="glow"></i><svg viewBox="0 0 300 260" preserveAspe
   + '<rect x="33" y="157" width="34" height="13" rx="4" fill="#3d3a40"/><rect x="40" y="168" width="20" height="9" rx="2" fill="#2b292e"/><path d="M30 158h40" stroke="#6a6670" stroke-width="3" stroke-linecap="round"/></g></svg>';
 document.body.appendChild(balFire);
 let balFireK = 0;
-// 右側的麻繩：兩股麻線扭在一起（斜紋花樣），中間亮、兩側暗看起來是圓的；下端一個繩結＋木栓扣在籃框上
+// 麻繩：兩股麻線扭在一起（斜紋花樣），中間亮、兩側暗看起來是圓的；下端一個繩結＋木栓扣在籃框前方的直角上。
+// 右前角往右上拉、左前角往左上拉；哪個直角在畫面裡才畫哪一條（手機畫面窄，通常只看得到右邊那條）
 const SVGNS = 'http://www.w3.org/2000/svg';
 const balRope = document.createElementNS(SVGNS, 'svg');
 balRope.setAttribute('class', 'bal-rope'); balRope.setAttribute('aria-hidden', 'true');
 balRope.innerHTML = '<defs><pattern id="brTw" width="14" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(-32)"><rect width="14" height="11" fill="#c9a06a"/><rect y="0" width="14" height="5" fill="#a57b4a"/><rect y="5" width="14" height="1.2" fill="#7c5833"/><rect y="10" width="14" height="1" fill="#e2c08c"/></pattern>'
   + '<linearGradient id="brSh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a2410" stop-opacity="0.55"/><stop offset="0.38" stop-color="#fff2d6" stop-opacity="0.18"/><stop offset="0.62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#3a2410" stop-opacity="0.6"/></linearGradient></defs>'
-  + '<g class="rp"><rect class="rope" fill="url(#brTw)"/><rect class="shade" fill="url(#brSh)"/>'
-  + '<g class="knot"><ellipse class="k1" fill="#a57b4a" stroke="#6b4a2a" stroke-width="1.5"/><ellipse class="k2" fill="#b98b55" stroke="#6b4a2a" stroke-width="1.5"/><rect class="peg" rx="4" fill="#6b4a2f"/></g></g>';
+  + ('<g class="rp"><rect class="rope" fill="url(#brTw)"/><rect class="shade" fill="url(#brSh)"/>'
+  + '<g class="knot"><ellipse class="k1" fill="#a57b4a" stroke="#6b4a2a" stroke-width="1.5"/><ellipse class="k2" fill="#b98b55" stroke="#6b4a2a" stroke-width="1.5"/><rect class="peg" rx="4" fill="#6b4a2f"/></g></g>').repeat(2);
 document.body.appendChild(balRope);
-const balRopeG = balRope.querySelector('.rp');
-const BAL_CORNER = new THREE.Vector3(0.86, 0.09, -0.86);   // 籃框右前方的直角（氣球自己的座標）：麻繩扣在這裡
+// 兩條繩：籃框右前方、左前方的直角（氣球自己的座標）和往哪一側拉（+1 右上、-1 左上）
+const BAL_ROPES = [...balRope.querySelectorAll('.rp')].map((g, i) => ({ g, corner: new THREE.Vector3(i ? -0.86 : 0.86, 0.09, -0.86), dir: i ? -1 : 1 }));
 const balCornerV = new THREE.Vector3();
-// 擺繩子：下端扣在籃框直角在畫面上的位置（每一幀跟著籃子算），往右上斜拉（球皮比籃子寬，吊繩往外拉向球皮），上端超出畫面
-function balRopeLayout(bx, by, wob) {
+// 擺一條繩子：下端扣在籃框直角在畫面上的位置（每一幀跟著籃子算），往外側斜上拉（球皮比籃子寬，吊繩往外拉向球皮），上端超出畫面
+function balRopeLayout(balRopeG, dir, bx, by, wob) {
   const W = innerWidth, tall = W < innerHeight, w = tall ? 13 : 17;
-  const tx = bx + Math.max(70, (W - bx) * 0.85), ty = -20, len = Math.hypot(bx - tx, by - ty);
+  const tx = bx + dir * Math.max(70, (dir > 0 ? W - bx : bx) * 0.85), ty = -20, len = Math.hypot(bx - tx, by - ty);
   for (const r of balRopeG.querySelectorAll('.rope, .shade')) { r.setAttribute('x', -w / 2); r.setAttribute('y', 0); r.setAttribute('width', w); r.setAttribute('height', len.toFixed(1)); }
   const k1 = balRopeG.querySelector('.k1'), k2 = balRopeG.querySelector('.k2'), peg = balRopeG.querySelector('.peg');
   k1.setAttribute('cx', 0); k1.setAttribute('cy', (len - w * 0.9).toFixed(1)); k1.setAttribute('rx', w * 0.85); k1.setAttribute('ry', w * 0.55);
@@ -6020,9 +6021,14 @@ function balCam(dt) {
   balFire.style.setProperty('--fs', (0.22 + balFireK * 0.78 + flick * (0.3 + balFireK)).toFixed(3));
   // 麻繩扣在籃框直角上（跟著籃子動），上段輕輕晃，噴火時抖一下
   camera.updateMatrixWorld();
-  balCornerV.copy(BAL_CORNER); lookout.localToWorld(balCornerV).project(camera);
   const wob = reduceMotion ? 0 : Math.sin(clock.elapsedTime * 1.1) * 0.35 + balFireK * Math.sin(clock.elapsedTime * 23) * 0.25;
-  balRopeLayout((balCornerV.x + 1) / 2 * innerWidth, (1 - balCornerV.y) / 2 * innerHeight, wob);
+  for (const r of BAL_ROPES) {
+    balCornerV.copy(r.corner); lookout.localToWorld(balCornerV).project(camera);
+    const bx = (balCornerV.x + 1) / 2 * innerWidth, by = (1 - balCornerV.y) / 2 * innerHeight;
+    const show = balCornerV.z < 1 && bx > -10 && bx < innerWidth + 10 && by < innerHeight + 10;   // 直角在畫面裡才畫
+    r.g.style.display = show ? '' : 'none';
+    if (show) balRopeLayout(r.g, r.dir, bx, by, wob * r.dir);
+  }
   if (clock.elapsedTime - BAL.last > 0.3) {
     BAL.last = clock.elapsedTime;
     const p = lookout.position;
