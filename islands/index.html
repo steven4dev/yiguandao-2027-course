@@ -5871,10 +5871,10 @@ balRope.innerHTML = '<defs><pattern id="brTw" width="14" height="11" patternUnit
 document.body.appendChild(balRope);
 const balRopeG = balRope.querySelector('.rp');
 let balRopeL = null;
-// 依畫面大小擺繩子：下端在右下角的籃框上，往上略往中間收（像往頭頂的球皮收攏），上端超出畫面
+// 依畫面大小擺繩子：下端扣在右下角的籃框上，往右上斜拉（球皮比籃子寬，吊繩往外拉向球皮），上端超出畫面
 function balRopeLayout() {
   const W = innerWidth, H = innerHeight, tall = W < H;
-  const bx = W * (tall ? 0.86 : 0.885), by = H * (tall ? 0.865 : 0.86), tx = W * (tall ? 0.76 : 0.8), ty = -20;
+  const bx = W * (tall ? 0.78 : 0.84), by = H * (tall ? 0.865 : 0.86), tx = W * (tall ? 0.97 : 0.975), ty = -20;
   const w = tall ? 13 : 17, len = Math.hypot(bx - tx, by - ty);
   balRopeL = { tx, ty, ang: (Math.atan2(bx - tx, by - ty) * -180) / Math.PI };
   for (const r of balRopeG.querySelectorAll('.rope, .shade')) { r.setAttribute('x', -w / 2); r.setAttribute('y', 0); r.setAttribute('width', w); r.setAttribute('height', len); }
