@@ -644,7 +644,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261107.05</span>
+  <span class="ver">v261107.08</span>
   </div></div>
 </div>
 
@@ -2731,7 +2731,7 @@ const lookoutHit = [];
    - 球皮：開口在燃燒器上方，比原本的大一圈；整顆照比例縮放，從外面看大小跟以前差不多 */
 {
   const b = lookout;
-  const BW = 0.75, RIM = 0.08, FY = 2.0, FW = 0.68, MY = 3.4, MR = 1.5;   // 籃子半寬、籃緣高度、框架高度與半寬、球皮開口高度與半徑
+  const BW = 1.0, RIM = 0.08, FY = 2.3, FW = 0.9, MY = 3.6, MR = 1.9;   // 籃子半寬（寬 2，站得下你和瞭望員）、籃緣高度、框架高度與半寬、球皮開口高度與半徑
   // 麻花捲麻繩的貼圖：斜紋一圈一圈繞上去
   const twistTex = canvasTex(32, 32, (c) => {
     c.fillStyle = '#c9a06a'; c.fillRect(0, 0, 32, 32);
@@ -2747,7 +2747,7 @@ const lookoutHit = [];
     return m;
   };
   // 球皮
-  const envPts = [[1.5, 0], [1.9, 0.7], [2.8, 1.8], [3.7, 3.2], [4.3, 4.8], [4.5, 6.2], [4.3, 7.5], [3.7, 8.6], [2.8, 9.4], [1.5, 9.9], [0, 10.05]].map(([r, y]) => new THREE.Vector2(r, y));
+  const envPts = [[1.5, 0], [1.9, 0.7], [2.8, 1.8], [3.7, 3.2], [4.3, 4.8], [4.5, 6.2], [4.3, 7.5], [3.7, 8.6], [2.8, 9.4], [1.5, 9.9], [0, 10.05]].map(([r, y]) => new THREE.Vector2(r * 1.27, y * 1.15));   // 跟著籃子放大
   const envMat = new THREE.MeshLambertMaterial({ map: stripes('#c0503f', '#f4e9d8', 12), side: THREE.DoubleSide, emissive: '#ff8a2a', emissiveIntensity: 0 });
   mesh(new THREE.LatheGeometry(envPts, 40), envMat, 0, MY, 0, b);
   mesh(new THREE.TorusGeometry(MR, 0.05, 6, 32), lam('#5a3b30'), 0, MY, 0, b, false).rotation.x = Math.PI / 2;   // 開口的承載環
@@ -2781,29 +2781,33 @@ const lookoutHit = [];
     pilot.scale.set(1, 0.85 + Math.sin(t * 17) * 0.1 + Math.random() * 0.08, 1); pilotTip.scale.y = 0.8 + Math.random() * 0.4;
     glowL.intensity += ((flame.visible ? 2.2 : 0) - glowL.intensity) * 0.3;
   });
-  // 瞭望員（站在籃底，上半身露出籃緣）和望遠鏡：鏡筒朝著群島中央
-  const man = figure(lam('#efe4f2'), '', false, { hat: '#e0a632', pack: '#b9d98a' });
-  man.position.set(-0.38, -0.5, 0.32); man.rotation.y = Math.PI; man.scale.setScalar(1.15); b.add(man); b.userData.man = man;
-  const scope = new THREE.Group(); scope.position.set(0.3, 0.42, -0.42); b.add(scope);
+  // 望遠鏡架在籃子左側的籃緣上，鏡筒朝著群島中央；瞭望員站在它正後方（墊著一個小木箱），眼睛貼著目鏡往外看，
+  // 搭熱氣球時也一樣在專心瞭望（每一幀跟著望遠鏡的方向站到目鏡後面）。兩樣都在搭乘的預設畫面外面，往左後方轉頭才看得到
+  mesh(new THREE.BoxGeometry(0.4, 0.88, 0.4), lam('#8a6440'), -0.84, -0.56, 0.72, b);
+  const man = figure(lam('#efe4f2'), '', false, { pack: '#b9d98a' });   // 不戴斗笠：搭乘時從上面看下來，才看得出他貼著望遠鏡
+  man.position.set(-0.88, -0.12, 0.72); man.rotation.y = Math.PI; man.scale.setScalar(0.8); b.add(man); b.userData.man = man;
+  const scope = new THREE.Group(); scope.position.set(-0.88, 0.4, 0.15); b.add(scope);
   const brass = new THREE.MeshLambertMaterial({ color: '#d8a845', emissive: '#3a2500' });
-  const tube = mesh(new THREE.CylinderGeometry(0.1, 0.15, 1.6, 14), brass, 0, 0, 0, scope); tube.rotation.x = Math.PI / 2;
-  mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.16, 14), brass, 0, 0, -0.8, scope).rotation.x = Math.PI / 2;
-  mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.5, 6), lam('#5a3b30'), 0, -0.27, 0.1, scope, false);
+  const tube = mesh(new THREE.CylinderGeometry(0.06, 0.11, 0.6, 14), brass, 0, 0, 0, scope); tube.rotation.x = Math.PI / 2;
+  mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.1, 14), brass, 0, 0, -0.3, scope).rotation.x = Math.PI / 2;
+  mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.08, 10), brass, 0, 0, 0.33, scope).rotation.x = Math.PI / 2;   // 目鏡
+  mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.32, 6), lam('#5a3b30'), 0, -0.16, 0, scope, false);   // 架在籃緣上的支架
   b.userData.scope = scope;
-  // 小旗子：放大鏡圖案，看得出點它可以搜尋（插在籃子後方的角落）
+  // 小旗子：放大鏡圖案，看得出點它可以搜尋（綁在籃子後側外面，搭乘時在你背後）
   const flagTex = canvasTex(96, 64, (c) => {
     c.fillStyle = '#f4e9d8'; c.fillRect(0, 0, 96, 64);
     c.strokeStyle = '#a3322a'; c.lineWidth = 7; c.lineCap = 'round';
     c.beginPath(); c.arc(42, 28, 14, 0, Math.PI * 2); c.stroke();
     c.beginPath(); c.moveTo(52, 38); c.lineTo(64, 50); c.stroke();
   });
-  b.userData.pole = mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.4, 6), lam('#5a3b30'), -0.6, 0.6, 0.6, b, false);
-  b.userData.flag = mesh(new THREE.BoxGeometry(0.02, 0.45, 0.68), [new THREE.MeshLambertMaterial({ map: flagTex }), new THREE.MeshLambertMaterial({ map: flagTex }), lam('#f4e9d8'), lam('#f4e9d8'), lam('#f4e9d8'), lam('#f4e9d8')], -0.6, 1.08, 0.95, b);
+  b.userData.pole = mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.7, 6), lam('#5a3b30'), 0.3, 0.45, 1.07, b, false);
+  b.userData.flag = mesh(new THREE.BoxGeometry(0.02, 0.45, 0.68), [new THREE.MeshLambertMaterial({ map: flagTex }), new THREE.MeshLambertMaterial({ map: flagTex }), lam('#f4e9d8'), lam('#f4e9d8'), lam('#f4e9d8'), lam('#f4e9d8')], 0.3, 1.05, 1.43, b);
   b.traverse((m) => { if (m.isMesh) lookoutHit.push(m); });
   b.scale.setScalar(1.15);
 }
 // 鏡筒指向群島中央；整顆氣球慢慢繞小圈、上下浮動
-const lookTmp = new THREE.Vector3();
+const lookTmp = new THREE.Vector3(), lookDir = new THREE.Vector3();
+const MAN_EYE = 0.99 * 0.66 * 0.8, MAN_BACK = 0.3 + 0.27;   // 瞭望員眼睛離腳底多高；身體中心要站在望遠鏡中心後面多遠（半支鏡筒＋臉到身體中心）
 animators.push((t) => {
   if (!balPose(t)) {   // 搭熱氣球中（或飄回來的途中）由搭乘那邊決定位置
     lookout.position.set(LOOK_BASE.x + Math.sin(t * 0.12) * 4, LOOK_BASE.y + Math.sin(t * 0.5) * 0.8, LOOK_BASE.z + Math.cos(t * 0.12) * 4);
@@ -2812,6 +2816,12 @@ animators.push((t) => {
   const sc = lookout.userData.scope;
   sc.lookAt(lookTmp.copy(BIRD.target));
   sc.rotateY(Math.PI);
+  // 瞭望員站到目鏡正後方、面向望遠鏡指的方向，眼睛跟目鏡一樣高
+  lookout.updateMatrixWorld();
+  lookout.worldToLocal(lookDir.copy(BIRD.target)).sub(sc.position).setY(0).normalize();
+  const m = lookout.userData.man;
+  m.position.set(sc.position.x - lookDir.x * MAN_BACK, sc.position.y - MAN_EYE, sc.position.z - lookDir.z * MAN_BACK);
+  m.rotation.y = Math.atan2(lookDir.x, lookDir.z);
   lookout.userData.flag.rotation.y = Math.sin(t * 2.2) * 0.3;
 });
 lookout.position.copy(LOOK_BASE);
@@ -5878,7 +5888,7 @@ function rideLens(fov, near = NEAR0) { camera.fov = fov; camera.near = near; cam
 /* ---------- 搭熱氣球：右上角 🎈 按鈕，站在瞭望氣球的吊籃裡，以全真島為中心順時針繞群島（第一人稱） ----------
    從瞭望氣球現在的位置升空、往外飄到高空的航道，然後依課程島的順序（順時針）一直繞，直到自己按「✕ 降落」。
    鏡頭站在籃子裡朝群島中央往下俯瞰：全部都是氣球模型本身（沒有疊在畫面上的圖），所以拖曳轉頭時繩子、立柱跟著一起轉。
-   畫面下緣露出前方的籃緣，前角的麻繩立柱往上接到頭頂的燃燒器框架；燃燒器在頭頂，噴火時火光照亮籃子和立柱，往上拖抬頭就看得到火和球皮內側。
+   畫面下緣露出前方的籃緣，前角的麻繩立柱往上接到頭頂的燃燒器框架；燃燒器在頭頂，噴火時火光照亮籃子和立柱，往下拖抬頭就看得到火和球皮內側。
    熱氣球的物理感：燃燒器噴火時往上浮、沒噴火時慢慢往下沉，再疊上忽大忽小的氣流起伏、籃子像鐘擺一樣輕輕晃（鏡頭跟著籃子一起晃）、
    風把航道吹得忽遠忽近。
    拖曳可以轉頭看四周，放開後慢慢轉回群島中央；點任何一座島（或標籤）就下來飛過去。繞完一整圈頒徽章。
@@ -5887,8 +5897,8 @@ const BAL = { on: false, t0: 0, ang: 0, ang0: 0, from: null, h: 0, v: 0, burnT: 
 const BAL_R = 86, BAL_Y = 44, BAL_W = (Math.PI * 2) / 130;   // 航道半徑、高度、每秒繞幾弧度（一圈約兩分多鐘）
 // 站位與構圖（氣球自己的座標，-z 朝群島中央）：眼睛位置、往下看的角度（弧度）、視野；
 // 算過讓前方的籃緣落在畫面下緣約 1/10、上緣露出一條細細的天空；電腦站在籃子中後方，左右兩個前角的立柱往左上、右上張開，
-// 手機畫面窄，站在籃子右後方，右前角的立柱才看得到。燃燒器在頭頂，往上拖抬頭才看得到
-const BAL_SHOT = { wide: { eye: new THREE.Vector3(0, 1.1, 0.38), pitch: 0.384, fov: 48 }, tall: { eye: new THREE.Vector3(0.46, 1.35, 0.3), pitch: 0.471, fov: 58 } };
+// 手機畫面窄，站在籃子右後方，右前角的立柱才看得到。燃燒器在頭頂，往下拖抬頭才看得到
+const BAL_SHOT = { wide: { eye: new THREE.Vector3(0, 1.3, 0.35), pitch: 0.384, fov: 48 }, tall: { eye: new THREE.Vector3(0.65, 1.6, 0.2), pitch: 0.471, fov: 58 } };
 const balTmp = new THREE.Vector3(), balTgt = new THREE.Vector3(), balPos = new THREE.Vector3(), balFwd = new THREE.Vector3();
 const balQ = new THREE.Quaternion(), balE = new THREE.Euler(0, 0, 0, 'YXZ');
 const lookBurner = burners.find((s) => s.flame.parent === lookout);
@@ -5915,8 +5925,6 @@ function balStart() {
   BAL.tilt = [hTilt.enabled, vTilt.enabled]; hTilt.enabled = vTilt.enabled = false;
   BAL.camPos = camera.position.clone(); BAL.camTgt = controls.target.clone();
   rideLens(innerWidth < innerHeight ? BAL_SHOT.tall.fov : BAL_SHOT.wide.fov, 0.12);
-  // 你就是瞭望員：站到籃子裡，他和望遠鏡先讓開；燃燒器在頭頂，3D 的火和鐵罐先藏起來，改用左上角的火光
-  lookout.userData.man.visible = lookout.userData.scope.visible = lookout.userData.pole.visible = lookout.userData.flag.visible = false;   // 籃角的小旗竿離眼睛太近，像一根黑柱子，也先收起來
   balBtn.setAttribute('aria-pressed', 'true'); balBtn.setAttribute('aria-label', '降落：結束搭乘熱氣球');
   rideHint.hidden = false; rideHint.querySelector('.ride-off').textContent = '✕ 降落';
   rideSay('🎈 瞭望員：「抓緊籃子，升空囉！」');
@@ -5934,7 +5942,6 @@ function balEnd(keepCam) {
   if (BAL.tilt) { [hTilt.enabled, vTilt.enabled] = BAL.tilt; BAL.tilt = null; }
   rideLens(FOV0);
   camera.up.set(0, 1, 0);
-  lookout.userData.man.visible = lookout.userData.scope.visible = lookout.userData.pole.visible = lookout.userData.flag.visible = true;
   balBtn.setAttribute('aria-pressed', 'false'); balBtn.setAttribute('aria-label', '搭熱氣球：坐進瞭望氣球繞群島');
   document.body.classList.remove('riding');
   measureFree();
@@ -5950,8 +5957,9 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape' && BAL.on) balEnd(fa
 renderer.domElement.addEventListener('pointerdown', (e) => { if (BAL.on) BAL.drag = { x: e.clientX, y: e.clientY, look: BAL.look, lookP: BAL.lookP }; });
 addEventListener('pointermove', (e) => {
   if (!BAL.on || !BAL.drag) return;
-  BAL.look = THREE.MathUtils.clamp(BAL.drag.look - (e.clientX - BAL.drag.x) * 0.005, -2.6, 2.6);
-  BAL.lookP = THREE.MathUtils.clamp(BAL.drag.lookP + (e.clientY - BAL.drag.y) * 0.004, -1.6, 0.6);   // 往上拖可以抬頭看燃燒器和球皮內側
+  // 跟群島平常的拖曳、筋斗雲一樣是「抓住畫面拖」：手指往右，畫面跟著往右（視角往左轉）；手指往下，畫面往下（抬頭）
+  BAL.look = THREE.MathUtils.clamp(BAL.drag.look + (e.clientX - BAL.drag.x) * 0.005, -2.6, 2.6);
+  BAL.lookP = THREE.MathUtils.clamp(BAL.drag.lookP - (e.clientY - BAL.drag.y) * 0.004, -1.6, 0.6);   // 往下拖可以抬頭看燃燒器和球皮內側
 });
 addEventListener('pointerup', () => { BAL.drag = null; });
 addEventListener('pointercancel', () => { BAL.drag = null; });
@@ -6094,7 +6102,7 @@ tags.splice(1 + COURSES.length, 0, tags.pop());
 const lookIsl = { key: 'lookout', x: LOOK_BASE.x, z: LOOK_BASE.z };
 addTag(lookIsl, '🔭 搜尋', 'small look-tag', LOOK_BASE.y, () => openSearch());
 const lookTag = tags[tags.length - 1];
-animators.push(() => { lookIsl.x = lookout.position.x; lookIsl.z = lookout.position.z; lookTag.h = lookout.position.y + 16; });
+animators.push(() => { lookIsl.x = lookout.position.x; lookIsl.z = lookout.position.z; lookTag.h = lookout.position.y + 18.5; });
 
 const tmpV = new THREE.Vector3();
 // 標籤避讓：依序擺放（全真島 → 課程島 → 外圈與下午島），會疊到前面標籤的就先藏起來
