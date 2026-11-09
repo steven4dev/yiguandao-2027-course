@@ -6,6 +6,12 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0d151d">
 <title>拂塵試煉｜拂塵淨心島</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
 <meta name="description" content="拂塵淨心島的體感小遊戲：手機就是拂塵柄，看清符印、倒數、大揮一拂，把六塵精淨化成蓮花。">
 <style>
 :root{
@@ -163,7 +169,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.12';
+const VERSION = 'v261109.13';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -616,6 +622,18 @@ function drawDust(c, m, x, y, R, t, opt = {}){
   c.restore();
 }
 function silhouette(cv){ const c = cv.getContext('2d'); c.save(); c.setTransform(1,0,0,1,0,0); c.globalCompositeOperation = 'source-in'; c.fillStyle = '#4a5d72'; c.fillRect(0, 0, cv.width, cv.height); c.globalCompositeOperation = 'destination-over'; c.shadowColor = 'rgba(160,190,220,.55)'; c.shadowBlur = 14; c.drawImage(cv, 0, 0); c.restore(); }
+// 畫塵靈：3D 模組載入成功就用 3D（window.D3），失敗或不支援就用上面的 2D 畫法
+let d3Off = /[?&]2d\b/.test(location.search);
+// 標題畫面閒著時，先把 18 隻塵靈（和淨化後的樣子）的 3D 模型做好
+(function prewarm(){ const q = []; MONS.forEach(m => { q.push([m, {}]); q.push([m, { pure:true }]); });
+  const step = () => { if(!q.length || d3Off) return; if(!window.D3){ setTimeout(step, 500); return; } if(D3.off) return;
+    if(!document.getElementById('scrTitle').hidden){ const [m, o] = q.shift(); try{ D3.prep(m, o); }catch(e){ d3Off = true; return; } }
+    setTimeout(step, 250); };
+  setTimeout(step, 1200); })();
+function dust(c, m, x, y, R, t, opt = {}){
+  if(window.D3 && !d3Off && !D3.off){ try{ return opt.snap ? D3.snap(c, m, x, y, R, t, opt) : D3.draw(c, m, x, y, R, t, opt); }catch(e){ d3Off = true; console.warn('3D 塵靈關閉，改用 2D：', e); } }
+  drawDust(c, m, x, y, R, t, opt);
+}
 
 
 // 組合技：兩揮剛好是這幾組時，會打出有名字的招式
@@ -698,13 +716,47 @@ const I = {
 };
 const N = { D2:73.42, A2:110, Bb2:116.54, C3:130.81, D3:146.83, F3:174.61, G3:196, A3:220, Bb3:233.08, C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392, A4:440, C5:523.25, D5:587.33, F5:698.46, G5:783.99, A5:880, C6:1046.5, D6:1174.66 };
 const ok = () => !!(actx && AU);
+/* 電影級打擊音效（v261109.13）：一擊拆成好幾層一起響
+   破空裂響 crack（左右聲道錯開）＋次低頻 sub（肚子震）＋金屬鳴響 clang（鏘～）＋電影號角 braam（轟——）＋琉璃碎光 shatter */
+function distCurve(k){ const n = 1024, c = new Float32Array(n); for(let i=0;i<n;i++){ const x = i/(n-1)*2 - 1; c[i] = (1 + k)*x/(1 + k*Math.abs(x)); } return c; }
+function panNode(p){ if(!actx.createStereoPanner) return actx.createGain(); const s = actx.createStereoPanner(); s.pan.value = p; return s; }
+const X = {
+  crack(t, g = 0.8){
+    [[-0.6, 0], [0.6, 0.009]].forEach(([p, dl]) => { const n = noiseSrc(t + dl, 0.08), hp = actx.createBiquadFilter(), pk = actx.createBiquadFilter(), ng = actx.createGain(), pn = panNode(p);
+      hp.type = 'highpass'; hp.frequency.value = 1600; pk.type = 'peaking'; pk.frequency.value = 4200; pk.Q.value = 1.2; pk.gain.value = 9; env(ng, t + dl, 0.0008, g*0.7, 0.06); n.connect(hp).connect(pk).connect(ng).connect(pn); route(pn, AU.sfxBus, 0.4); });
+    const o = actx.createOscillator(), og = actx.createGain(); o.type = 'square'; o.frequency.setValueAtTime(1800, t); o.frequency.exponentialRampToValueAtTime(300, t + 0.03); env(og, t, 0.0005, g*0.12, 0.035); o.connect(og); route(og, AU.sfxBus, 0.3); o.start(t); o.stop(t + 0.06);
+  },
+  sub(t, g = 1, dur = 1.1){ const o = actx.createOscillator(), ws = actx.createWaveShaper(), lp = actx.createBiquadFilter(), og = actx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(95, t); o.frequency.exponentialRampToValueAtTime(30, t + dur*0.7); ws.curve = distCurve(3); lp.type = 'lowpass'; lp.frequency.value = 240;
+    env(og, t, 0.003, g, dur); o.connect(ws).connect(lp).connect(og); route(og, AU.sfxBus, 0.12); o.start(t); o.stop(t + dur + 0.1); },
+  clang(t, f = 587, g = 0.22, pan = 0){ const pn = panNode(pan); route(pn, AU.sfxBus, 0.6);
+    for(const [r, a, d] of [[1, 1, 1.9], [2.32, 0.55, 1.4], [3.86, 0.42, 1.0], [5.41, 0.28, 0.75], [7.11, 0.18, 0.5], [9.2, 0.1, 0.35]]) for(const det of [-0.003, 0.003]){
+      const o = actx.createOscillator(), og = actx.createGain(); o.type = r === 1 ? 'triangle' : 'sine'; o.frequency.value = f*r*(1 + det); env(og, t, 0.002, g*a*0.5, d); o.connect(og).connect(pn); o.start(t); o.stop(t + d + 0.1); } },
+  braam(t, g = 0.3, dur = 1.7){ const sum = actx.createGain(), ws = actx.createWaveShaper(), lp = actx.createBiquadFilter(), og = actx.createGain();
+    ws.curve = distCurve(6); lp.type = 'lowpass'; lp.Q.value = 3; lp.frequency.setValueAtTime(160, t); lp.frequency.exponentialRampToValueAtTime(2400, t + 0.12); lp.frequency.exponentialRampToValueAtTime(260, t + dur);
+    og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(g, t + 0.03); og.gain.setValueAtTime(g, t + dur*0.45); og.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    for(const f of [36.71, 36.71*1.004, 73.42, 73.42*0.996, 110, 146.83]){ const o = actx.createOscillator(), og2 = actx.createGain(); o.type = 'sawtooth'; o.frequency.value = f; og2.gain.value = f < 50 ? 0.5 : 0.3; o.connect(og2).connect(sum); o.start(t); o.stop(t + dur + 0.1); }
+    sum.connect(ws).connect(lp).connect(og); route(og, AU.sfxBus, 0.45); },
+  shatter(t, g = 0.3){
+    for(let i=0;i<16;i++){ const tt = t + Math.random()*0.3, o = actx.createOscillator(), og = actx.createGain(), pn = panNode(Math.random()*1.6 - 0.8); o.type = 'sine'; o.frequency.value = 2200 + Math.random()*5200;
+      env(og, tt, 0.001, g*(0.3 + Math.random()*0.5), 0.12 + Math.random()*0.4); o.connect(og).connect(pn); route(pn, AU.sfxBus, 0.6); o.start(tt); o.stop(tt + 0.6); }
+    const n = noiseSrc(t, 0.6), hp = actx.createBiquadFilter(), ng = actx.createGain(); hp.type = 'highpass'; hp.frequency.value = 4500; env(ng, t, 0.001, g*0.6, 0.5); n.connect(hp).connect(ng); route(ng, AU.sfxBus, 0.5); }
+};
 function swoosh(strength = 1, t){ if(ok()) I.whoosh(t ?? now0(), Math.min(1, strength)); }
 const sfx = {
   beat(t){ if(!ok()) return; t = t ?? now0(); I.taiko(t, 62, 1.0); I.boom(t, 0.35); },                                                     // 倒數：每一拍一記大太鼓
   go(t){ if(!ok()) return; t = t ?? now0(); I.taiko(t, 58, 1.2); I.boom(t, 0.9); I.cymbal(t, 0.32); I.whoosh(t + 0.02, 1); },               // 揮：最大的一擊
   ding(t){ if(!ok()) return; t = t ?? now0(); I.bell(t, 1174.66, 0.2); I.bell(t + 0.05, 1760, 0.08); },
   purify(t){ if(!ok()) return; t = t ?? now0(); I.boom(t, 0.8); I.taiko(t, 70, 0.8); [N.D5, N.F5, N.G5, N.A5, N.D6].forEach((f, i) => I.bell(t + 0.08 + i*0.07, f, 0.14)); I.choir(t + 0.05, [N.D4, N.A4], 1.6, 0.1); },
-  capture(t){ if(!ok()) return; t = t ?? now0(); I.boom(t, 1.0); I.taiko(t, 60, 0.9); I.gong(t + 0.02, 110, 0.3, 3); [N.D5, N.F5, N.G5, N.A5, N.C6, N.D6].forEach((f, i) => I.bell(t + 0.7 + i*0.08, f, 0.13)); I.choir(t + 0.7, [N.D4, N.F4, N.A4, N.D5], 2.2, 0.12); },
+  // 收服：打中的瞬間「啪＋轟＋鏘」，0.7 秒塵靈碎開時琉璃碎光＋銅鑼，接著鐘聲和合唱；完美一擊再加電影號角和合唱重音
+  capture(perfect){ if(!ok()) return; const t = now0();
+    X.crack(t, 0.9); X.sub(t, 1, 1.2); I.taiko(t, 50, 1); X.clang(t, N.D5, 0.2, 0.2); X.braam(t, perfect ? 0.32 : 0.17, perfect ? 1.8 : 1.2);
+    if(perfect){ X.clang(t + 0.012, N.A5, 0.16, -0.3); I.choir(t + 0.02, [N.D4, N.A4, N.D5], 1.3, 0.1); I.cymbal(t, 0.28); } else I.cymbal(t, 0.14);
+    X.shatter(t + 0.7, 0.3); I.gong(t + 0.7, 110, 0.25, 3);
+    [N.D5, N.F5, N.G5, N.A5, N.C6, N.D6].forEach((f, i) => I.bell(t + 0.8 + i*0.08, f, 0.12)); I.choir(t + 0.8, [N.D4, N.F4, N.A4, N.D5], 2.2, 0.12); },
+  // 魔王被打中：最重的一記
+  bossHit(perfect){ if(!ok()) return; const t = now0(); X.crack(t, 1); X.sub(t, 1.1, 1.5); X.braam(t, perfect ? 0.42 : 0.32, 2.2); I.gong(t, 55, 0.45, 5); I.taiko(t, 45, 1.2); I.taiko(t + 0.18, 45, 1.0); X.clang(t, N.D4, 0.22);
+    [N.D5, N.F5, N.A5].forEach((f, i) => I.bell(t + 0.4 + i*0.08, f, 0.1)); },
   combo(t){ if(!ok()) return; t = t ?? now0(); I.brass(t, [N.D3, N.A3, N.D4, N.F4], 0.35, 0.18); I.brass(t + 0.2, [N.D3, N.A3, N.D4, N.A4], 0.8, 0.2); I.taiko(t, 55, 1.0); I.taiko(t + 0.2, 55, 1.0); I.gong(t + 0.2, 82, 0.5, 4); },
   miss(t){ if(!ok()) return; t = t ?? now0(); I.taiko(t, 45, 0.6, AU.sfxBus, 0.15); [N.A4, N.F4, N.D4].forEach((f, i) => I.bell(t + 0.12 + i*0.14, f, 0.07)); },
   appear(t){ if(!ok()) return; t = t ?? now0(); I.whoosh(t, 0.35); I.taiko(t + 0.15, 95, 0.4); I.bell(t + 0.2, N.A4, 0.08); },
@@ -987,7 +1039,7 @@ function drawMonster(t){
   if(!m.boss){
     ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y + bob); ctx.scale(sc, sc);
     if(m.state === 'laugh') ctx.rotate(Math.sin(t/60)*0.08);
-    drawDust(ctx, m.def, 0, 0, m.r*1.3, t/1000, { seed:m.seed, gold:m.gold });
+    dust(ctx, m.def, 0, 0, m.r*1.3, t/1000, { seed:m.seed, gold:m.gold });
     ctx.restore();
   } else {
   ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y + bob);
@@ -1102,20 +1154,20 @@ function drawCountdown(t){
 }
 
 /* ---------------- 收服演出（四段）：① 定格震動閃白 → ② 符印燒入、光裂紋 → ③ 塵殼碎裂、白色小精靈鞠躬 → ④ 化蓮飛進淨心錄 ---------------- */
-let capFx = null, comboFx = null, shakeAmp = 0;
+let capFx = null, comboFx = null, shakeAmp = 0, capPerfect = false;
 function bookPos(){ const r = $('#btnBook').getBoundingClientRect(); return { x: r.left + r.width/2, y: r.top + r.height/2 }; }
 function startCapture(m, sym, weak, isNew){
   const cracks = [], shards = [];
   for(let i=0;i<10;i++){ const a = i/10*TAU + Math.random()*0.3, pts = [[0,0]]; let rr = 0; for(let k=0;k<5;k++){ rr += 0.18 + Math.random()*0.08; pts.push([Math.cos(a + (Math.random()-.5)*0.4)*rr, Math.sin(a + (Math.random()-.5)*0.4)*rr]); } cracks.push(pts); }
   for(let i=0;i<26;i++){ const a = Math.random()*TAU, v = 2 + Math.random()*5; shards.push({ x:Math.cos(a)*0.3, y:Math.sin(a)*0.3, vx:Math.cos(a)*v, vy:Math.sin(a)*v - 3, rot:Math.random()*6, vr:(Math.random()-.5)*0.4, s:0.08 + Math.random()*0.12 }); }
   m.state = 'gone';
-  return new Promise(res => { capFx = { t0: performance.now(), m, sym, weak, isNew, cracks, shards, sparks:[], done: res }; shakeAmp = 10; sfx.capture(); vib(120); });
+  return new Promise(res => { capFx = { t0: performance.now(), m, sym, weak, isNew, cracks, shards, sparks:[], dir: Math.random() < 0.5 ? -1 : 1, done: res }; shakeAmp = capPerfect ? 16 : 11; sfx.capture(capPerfect); vib(capPerfect ? [60,40,140] : 120); });
 }
 function drawCapture(t){
   const A = capFx; if(!A) return;
   const e = performance.now() - A.t0, m = A.m, cx = m.x, cy = m.y, R = m.r*1.3, u = U(), bp = bookPos();
   if(e < 700){
-    drawDust(ctx, m.def, cx, cy, R, e < 120 ? A.t0/1000 : t/1000, { seed:m.seed, gold:m.gold });
+    dust(ctx, m.def, cx, cy, R, e < 120 ? A.t0/1000 : t/1000, { seed:m.seed, gold:m.gold, hit: e/1000, dir: A.dir, whiten: Math.max(0, Math.min(1, (e - 380)/320)) });
     const tp = tplFor(A.sym);
     if(tp && e > 120){ const k = Math.min(1, (e - 120)/380), n = Math.max(2, Math.ceil(k*(tp.length - 1)) + 1);
       for(const [col, w, blur] of [['#ffe08a', R*0.09, 30], ['#fffaf0', R*0.03, 8]]){ ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = col; ctx.lineWidth = w; ctx.shadowColor = '#ffcc55'; ctx.shadowBlur = blur;
@@ -1128,7 +1180,7 @@ function drawCapture(t){
     for(const s of A.shards){ const X = cx + (s.x*R + s.vx*k*60), Y = cy + (s.y*R + s.vy*k*60 + 300*k*k), al = Math.max(0, 1 - k*1.1); if(al <= 0) continue;
       ctx.save(); ctx.translate(X, Y); ctx.rotate(s.rot + s.vr*k*20); ctx.globalAlpha = al; ctx.fillStyle = m.gold ? '#e8bd5a' : m.def.fam.dark; ctx.beginPath(); ctx.moveTo(0, -s.s*R); ctx.lineTo(s.s*R*0.8, s.s*R*0.5); ctx.lineTo(-s.s*R*0.7, s.s*R*0.6); ctx.closePath(); ctx.fill(); ctx.restore(); }
     if(e < 1500){ const appear = Math.min(1, (e - 700)/220), bow = e > 950 ? Math.sin(Math.min(1, (e - 950)/500)*Math.PI) : 0, sc = 0.4 + 0.6*appear;
-      ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc); drawDust(ctx, m.def, 0, 0, R*0.7, t/1000, { pure:true, rot: bow*0.35, scaleY: 1 - bow*0.12 }); ctx.restore(); }
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc); dust(ctx, m.def, 0, 0, R*0.7, t/1000, { pure:true, rot: bow*0.35, scaleY: 1 - bow*0.12 }); ctx.restore(); }
   }
   if(e >= 1500 && e < 2250){ const k = Math.min(1, (e - 1500)/700), ease = k*k*(3 - 2*k); const X = cx + (bp.x - cx)*ease - Math.sin(k*Math.PI)*40, Y = cy + (bp.y - cy)*ease - Math.sin(k*Math.PI)*60;
     A.sparks.push({ x:X, y:Y, life:1 }); ctx.save(); ctx.font = `${R*0.6*(1 - 0.6*k)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.shadowColor = '#ffd27a'; ctx.shadowBlur = 20; ctx.fillText('🪷', X, Y); ctx.restore(); }
@@ -1359,12 +1411,12 @@ async function encounter(opt){
       const word = base >= 85 ? '✨ 明鏡無塵' : base >= 65 ? '🪶 拂淨' : '🪶 拂去了';
       spawnSpark(monster.x, monster.y, 40); spawnDust(monster.x, monster.y, 36, 'rgba(150,140,130,.9)', 1.4); spawnText(monster.x, monster.y - monster.r*1.4, word, '#ffe7a8'); spawnText(monster.x, monster.y - monster.r*0.9, `+${pts}`, '#7fe0a6');
       monster.hp--; monster.state = 'hit'; monster.tHit = performance.now(); if(monster.hp <= 0) setTimeout(() => spawnLotus(MON.x, MON.y), 300);
-      sfx.purify(); vib(80); hud(); await wait(1300);
+      sfx.bossHit(perfect); vib(perfect ? [60,40,120] : 90); shakeAmp = perfect ? 16 : 12; hud(); await wait(1300);
     } else {
       const cname = keys.length === 3 ? '三才連拂' : multi ? COMBO_NAME[keys.join('+')] : null;
       if(cname) await startCombo(cname);
       spawnText(MON.x, MON.y + monster.r*2.2, `+${pts}`, '#7fe0a6');
-      const isNew = dexAdd(def, gold); caught.push({ def, lv, gold, isNew });
+      const isNew = dexAdd(def, gold); caught.push({ def, lv, gold, isNew }); capPerfect = perfect;
       await startCapture(monster, keys[keys.length - 1], weak, isNew);
       hud(); await wait(200);
     }
@@ -1530,7 +1582,7 @@ async function runCalib(){
 let dexCards = [], dexModalM = null;
 function fitCv(cv){ const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1), w = Math.round(r.width*d), h = Math.round(r.height*d); if(cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; } return { w:r.width, h:r.height, d }; }
 function silhouette(cv){ const c = cv.getContext('2d'); c.save(); c.setTransform(1,0,0,1,0,0); c.globalCompositeOperation = 'source-in'; c.fillStyle = '#4a5d72'; c.fillRect(0, 0, cv.width, cv.height); c.globalCompositeOperation = 'destination-over'; c.shadowColor = 'rgba(160,190,220,.55)'; c.shadowBlur = 14; c.drawImage(cv, 0, 0); c.restore(); }
-function drawCardCv(cv, m, t, opt){ const { w, h, d } = fitCv(cv), c = cv.getContext('2d'); c.setTransform(d,0,0,d,0,0); c.clearRect(0, 0, w, h); drawDust(c, m, w/2, h*0.6, w*0.3, t, opt); if(opt.sil) silhouette(cv); }
+function drawCardCv(cv, m, t, opt){ const { w, h, d } = fitCv(cv), c = cv.getContext('2d'); c.setTransform(d,0,0,d,0,0); c.clearRect(0, 0, w, h); dust(c, m, w/2, h*0.6, w*0.3, t, opt); if(opt.sil) silhouette(cv); }
 function openDex(){
   const n = dexCount(); $('#dexN').textContent = `${n} / ${MONS.length}`;
   $('#dexList').innerHTML = ''; dexCards = [];
@@ -1552,7 +1604,7 @@ function openDexCard(m){
   $('#dmQuote').innerHTML = e ? `${m.quote}<small>心性小語（示範，正式版請道場審定）</small>` : '收服之後才會解鎖心性小語。';
   $('#dexModal').hidden = false;
 }
-function drawDex(t){ const s = t/1000; dexCards.forEach(({ cv, m, e }, i) => drawCardCv(cv, m, s, { seed:i, sil: !e, gold: e && e.gold && Math.sin(s*0.5 + i) > 0.6 })); if(!$('#dexModal').hidden && dexModalM) drawCardCv($('#dmCv'), dexModalM, s, { sil: !dex.m[dexModalM.name] }); }
+function drawDex(t){ const s = t/1000; dexCards.forEach(({ cv, m, e }, i) => drawCardCv(cv, m, s, { seed:i, sil: !e, snap:true, gold: e && e.gold && Math.sin(s*0.5 + i) > 0.6 })); if(!$('#dexModal').hidden && dexModalM) drawCardCv($('#dmCv'), dexModalM, s, { sil: !dex.m[dexModalM.name] }); }
 $('#btnDexT').addEventListener('click', openDex);
 $('#btnDexR').addEventListener('click', openDex);
 $('#btnDexClose').addEventListener('click', () => { $('#scrDex').hidden = true; });
@@ -1574,6 +1626,254 @@ $('#btnQuit').addEventListener('click', () => { cancelFlag = true; try{ speechSy
 fu = new Fuchen(); resize(); requestAnimationFrame(frame);
 // 電腦測試用：?touch 直接進觸控模式
 if(/[?&]touch\b/.test(location.search)){ inputMode = 'touch'; $('#scrTitle').hidden = true; runGame(); }
+</script>
+<script type="module">
+/* ================= 3D 塵靈（v261109.13）=================
+   每一隻塵靈是 Three.js 的立體模型，在畫面外的 WebGL 畫布算好，再貼進遊戲的 2D 畫布，
+   所以背景、提示路徑、拂塵、字都維持原本的上下順序。載入失敗或手機不支援 WebGL 時，自動改回 2D 畫法。 */
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+const glCv = document.createElement('canvas');
+const renderer = new THREE.WebGLRenderer({ canvas: glCv, antialias: true, alpha: true });
+renderer.setPixelRatio(1); renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05; renderer.setClearColor(0x000000, 0);
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+const E = 2.2, DIST = 7.6;   // 畫面半高 2.2 個單位（身體半徑約 1），留空間給配件
+const camera = new THREE.PerspectiveCamera(2*Math.atan(E/DIST)*180/Math.PI, 1, 0.1, 50); camera.position.set(0, 0.5, DIST); camera.lookAt(0, 0, 0);
+scene.add(new THREE.HemisphereLight(0xfff1dc, 0x1b2236, 0.55));
+const key = new THREE.DirectionalLight(0xfff0d8, 2.0); key.position.set(-3, 4, 5); scene.add(key);
+const rim = new THREE.DirectionalLight(0x9fc4ff, 2.6); rim.position.set(3.5, 2, -4); scene.add(rim);
+const rim2 = new THREE.DirectionalLight(0xffd29a, 1.2); rim2.position.set(-4, -1, -3); scene.add(rim2);
+// ---------- 程式產生的貼圖 ----------
+function canvasTex(size, draw, srgb = true){ const c = document.createElement('canvas'); c.width = c.height = size; draw(c.getContext('2d'), size); const t = new THREE.CanvasTexture(c); if(srgb) t.colorSpace = THREE.SRGBColorSpace; return t; }
+const rnd = (a, b) => a + Math.random()*(b - a);
+// 絨毛＋塵點：淺色底、細細的纖維、點點灰塵（乘上各系顏色）
+const SPECK = canvasTex(512, (c, s) => { c.fillStyle = '#fff'; c.fillRect(0, 0, s, s);
+  for(let i=0;i<5000;i++){ c.strokeStyle = `rgba(${rnd(150,220)|0},${rnd(140,210)|0},${rnd(130,200)|0},${rnd(0.05,0.16)})`; c.lineWidth = rnd(0.6, 1.4); const x = rnd(0, s), y = rnd(0, s), a = rnd(0, 6.28), l = rnd(2, 7); c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a)*l, y + Math.sin(a)*l); c.stroke(); }
+  for(let i=0;i<260;i++){ c.fillStyle = `rgba(90,78,66,${rnd(0.12,0.35)})`; c.beginPath(); c.arc(rnd(0, s), rnd(0, s), rnd(0.8, 3.2), 0, 6.29); c.fill(); } });
+SPECK.wrapS = SPECK.wrapT = THREE.RepeatWrapping; SPECK.repeat.set(3, 2);
+const BUMP = canvasTex(512, (c, s) => { c.fillStyle = '#808080'; c.fillRect(0, 0, s, s);
+  for(let i=0;i<9000;i++){ const v = rnd(90, 170)|0; c.strokeStyle = `rgba(${v},${v},${v},0.35)`; c.lineWidth = rnd(0.8, 1.6); const x = rnd(0, s), y = rnd(0, s), a = rnd(0, 6.28), l = rnd(2, 6); c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a)*l, y + Math.sin(a)*l); c.stroke(); } }, false);
+BUMP.wrapS = BUMP.wrapT = THREE.RepeatWrapping; BUMP.repeat.set(3, 2);
+const glowTex = (stops) => canvasTex(128, (c, s) => { const g = c.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2); stops.forEach(([o, col]) => g.addColorStop(o, col)); c.fillStyle = g; c.fillRect(0, 0, s, s); });
+const SOFT = glowTex([[0, 'rgba(255,255,255,1)'], [0.4, 'rgba(255,255,255,.45)'], [1, 'rgba(255,255,255,0)']]);
+const SPARK = glowTex([[0, 'rgba(255,255,255,1)'], [0.15, 'rgba(255,240,200,.9)'], [0.5, 'rgba(255,200,100,.25)'], [1, 'rgba(255,180,80,0)']]);
+const SHADOW = glowTex([[0, 'rgba(0,0,0,.6)'], [0.6, 'rgba(0,0,0,.25)'], [1, 'rgba(0,0,0,0)']]);
+const BLUSH = glowTex([[0, 'rgba(255,120,130,.6)'], [0.6, 'rgba(255,130,140,.25)'], [1, 'rgba(255,140,150,0)']]);
+const SMOKE = canvasTex(128, (c, s) => { for(let i=0;i<14;i++){ const x = rnd(40, 88), y = rnd(40, 88), r = rnd(18, 40), g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, 'rgba(255,255,255,.35)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, s, s); } });
+const textTex = (ch, color, font = '900 92px sans-serif') => canvasTex(128, (c, s) => { c.font = font; c.textAlign = 'center'; c.textBaseline = 'middle'; c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = 6; c.fillStyle = color; c.fillText(ch, s/2, s/2 + 4); });
+const sprite = (map, color = 0xffffff, add = false, op = 1) => new THREE.Sprite(new THREE.SpriteMaterial({ map, color, transparent: true, depthWrite: false, opacity: op, blending: add ? THREE.AdditiveBlending : THREE.NormalBlending }));
+
+// ---------- 材質 ----------
+const white = new THREE.Color('#fff');
+function bodyMat(hex, st, o = {}){
+  const col = new THREE.Color(hex);
+  const m = new THREE.MeshPhysicalMaterial({ color: col, map: SPECK, bumpMap: BUMP, bumpScale: 2.2, roughness: 0.66, metalness: 0,
+    sheen: 1, sheenRoughness: 0.42, sheenColor: col.clone().lerp(white, 0.65), clearcoat: 0.12, clearcoatRoughness: 0.55 });
+  if(o.gold){ m.metalness = 0.45; m.roughness = 0.32; m.sheenColor = new THREE.Color('#fff3c0'); m.clearcoat = 0.6; m.bumpScale = 1; }
+  const rimCol = o.gold ? new THREE.Color('#ffe7a0') : o.pure ? new THREE.Color('#ffe9b8') : st === 3 ? new THREE.Color('#ff7a8a') : col.clone().lerp(new THREE.Color('#cfe4ff'), 0.6);
+  m.userData.u = { rimColor: { value: rimCol }, rimStr: { value: st === 3 ? 0.55 : 0.4 }, flash: { value: 0 } };
+  m.userData.base = col.clone();
+  m.onBeforeCompile = sh => { Object.assign(sh.uniforms, m.userData.u);
+    sh.fragmentShader = 'uniform vec3 rimColor; uniform float rimStr; uniform float flash;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>',
+      '#include <emissivemap_fragment>\n float fr = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 2.3);\n totalEmissiveRadiance += rimColor * fr * rimStr + vec3(flash);'); };
+  return m;
+}
+const gold = () => new THREE.MeshPhysicalMaterial({ color: '#d9ad55', metalness: 1, roughness: 0.28, clearcoat: 0.4 });
+const darkGloss = (c = '#1d1512') => new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.05 });
+
+// ---------- 身形 ----------
+function fixSeams(geo){ const p = geo.attributes.position, n = geo.attributes.normal, map = new Map();
+  for(let i=0;i<p.count;i++){ const k = `${p.getX(i).toFixed(4)},${p.getY(i).toFixed(4)},${p.getZ(i).toFixed(4)}`; let e = map.get(k); if(!e){ e = { n: new THREE.Vector3(), ids: [] }; map.set(k, e); } e.n.x += n.getX(i); e.n.y += n.getY(i); e.n.z += n.getZ(i); e.ids.push(i); }
+  for(const e of map.values()){ if(e.ids.length < 2) continue; e.n.normalize(); for(const i of e.ids) n.setXYZ(i, e.n.x, e.n.y, e.n.z); } }
+function radialGeo(R, post, seg = 96){ const geo = new THREE.SphereGeometry(1, seg, Math.round(seg*0.75)), p = geo.attributes.position, v = new THREE.Vector3();
+  for(let i=0;i<p.count;i++){ v.fromBufferAttribute(p, i).normalize(); v.multiplyScalar(R(v.x, v.y, v.z)); if(post) post(v); p.setXYZ(i, v.x, v.y, v.z); }
+  geo.computeVertexNormals(); fixSeams(geo); return geo; }
+function cloudR(S){ return (x, y, z) => { let acc = 0; for(const [cx, cy, cz, r] of S){ const b = x*cx + y*cy + z*cz, disc = b*b - (cx*cx + cy*cy + cz*cz - r*r); if(disc >= 0){ const t = b + Math.sqrt(disc); if(t > 0) acc += Math.pow(t, 10); } } return Math.pow(acc, 1/10) || 0.5; }; }
+function bodyGeo(fam, st){
+  if(fam === 'se') return radialGeo((x, y, z) => 1 + 0.015*Math.sin(5*x + 3*y)*Math.sin(4*z), v => { const k = 1 - 0.13*v.y; v.x *= 0.9*k; v.z *= 0.86*k; v.y *= 1.06; });
+  if(fam === 'xiang') return radialGeo(cloudR([[0,0.36,0,0.6],[-0.56,0.06,0,0.5],[0.56,0.06,0,0.5],[-0.3,-0.36,0.08,0.52],[0.3,-0.36,0.08,0.52],[0,-0.04,0.24,0.58],[0,0.06,-0.24,0.55],[0,0,0,0.6]]));
+  if(fam === 'chu') return radialGeo((x, y, z) => Math.pow(x**4 + y**4 + (z/0.62)**4, -0.25), v => { const q = Math.min(1, (v.x*v.x + v.y*v.y)/1.7); v.z *= 1 - 0.5*q; const c = 1 + 0.12*Math.pow(Math.abs(v.x*v.y), 1.5); v.x *= c*0.98; v.y *= c*0.9; });
+  if(fam === 'fa') return radialGeo((x, y, z) => { const a = Math.atan2(y, x); return 0.9 + 0.1*Math.abs(Math.sin(a*3))*(1 - 0.6*Math.abs(z)) + 0.04*Math.abs(Math.sin(7*x + 2)*Math.sin(7*y + 1)*Math.sin(7*z + 0.5)); }, v => { v.y *= 0.93; }, 128);
+  if(fam === 'sheng'){ const P = [[0.0,-0.85],[0.3,-0.86],[0.7,-0.9],[1.0,-0.93],[1.06,-0.82],[0.97,-0.62],[0.86,-0.25],[0.8,0.2],[0.74,0.58],[0.58,0.84],[0.3,0.97],[0.0,1.0]];
+    const pts = new THREE.SplineCurve(P.map(p => new THREE.Vector2(p[0], p[1]))).getPoints(90).map(p => new THREE.Vector2(Math.max(0.0005, p.x), p.y)); return new THREE.LatheGeometry(pts, 96); }
+  return radialGeo(() => 1, v => { v.y *= 0.9; if(v.y < -0.72) v.y = -0.72 + (v.y + 0.72)*0.35; v.x *= 1.03; v.z *= 1.0; });   // 味：麻糬
+}
+
+// ---------- 把五官、配件貼到身體表面 ----------
+const rc = new THREE.Raycaster();
+function placeOn(targets, d, obj, push = 0){ d = d.clone().normalize(); rc.set(d.clone().multiplyScalar(6), d.clone().negate());
+  const h = rc.intersectObjects(targets, false)[0]; if(!h){ obj.position.copy(d); return obj; }
+  const n = h.face.normal.clone().transformDirection(h.object.matrixWorld); obj.position.copy(h.point).addScaledVector(n, push); obj.lookAt(h.point.clone().add(n)); return obj; }
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+function hornGeo(){ const g = new THREE.ConeGeometry(0.15, 0.62, 28, 18); g.translate(0, 0.31, 0); const p = g.attributes.position, col = [], a = new THREE.Color('#3a2e3e'), b = new THREE.Color('#e6d6bc');
+  for(let i=0;i<p.count;i++){ const y = p.getY(i)/0.62; p.setX(i, p.getX(i) + 0.3*y*y); const c = a.clone().lerp(b, Math.pow(y, 2.2)); col.push(c.r, c.g, c.b); }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals(); return g; }
+function stick(a, b, r, mat){ const d = b.clone().sub(a), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 14), mat); m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(V(0, 1, 0), d.normalize()); return m; }
+
+function build(def, o = {}){
+  const fam = def.fam.key, st = o.pure ? 1 : def.stage, F = def.fam, bodyCol = o.pure ? '#fbfaf6' : o.gold ? '#f3cf63' : F.color;
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+  const M = { root, body, mats: [], eyes: [], upd: [], def };
+  // 身體
+  let front;
+  if(fam === 'wei' && st === 2){ const cols = o.gold ? [bodyCol, bodyCol, bodyCol] : ['#f6b9c8', '#fbf2e2', F.color];
+    [[0.62, 0.42], [0, 0.48], [-0.62, 0.44]].forEach(([y, r], i) => { const m = new THREE.Mesh(radialGeo(() => r, null, 96), bodyMat(cols[i], st, o)); m.position.y = y; body.add(m); M.mats.push(m.material); if(i === 1) front = [m]; });
+    body.add(stick(V(0, 1.3, 0), V(0, -1.35, 0), 0.045, new THREE.MeshStandardMaterial({ color: '#b98a52', roughness: 0.7 })));
+  } else { const m = new THREE.Mesh(bodyGeo(fam, st), bodyMat(bodyCol, st, o)); body.add(m); M.mats.push(m.material); front = [m]; }
+  root.updateMatrixWorld(true);
+  const sc = fam === 'wei' && st === 2 ? 0.5 : 1;   // 糰子串：五官畫在中間那顆上，比例縮小
+  const fy = fam === 'wei' && st === 2 ? 0 : 0;
+  // 眼睛：亮面黑眼珠＋兩顆反光點，會眨眼
+  const eyeMat = darkGloss();
+  if(o.pure) for(const s of [-1, 1]){ const g = new THREE.TorusGeometry(0.085, 0.018, 8, 24, Math.PI*0.8); g.rotateZ(Math.PI*0.1); const e = new THREE.Mesh(g, darkGloss('#4a3b30')); placeOn(front, V(s*0.33, 0.12, 1), e, 0.01); body.add(e); }
+  else for(const s of [-1, 1]){
+    const e = new THREE.Group(), ball = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), eyeMat);
+    ball.scale.set((st === 3 ? 0.1 : 0.11)*sc, (st === 3 ? 0.11 : 0.145)*sc, 0.07*sc); e.add(ball);
+    const hl = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({ color: st === 3 ? 0xff6a4a : 0xffffff }));
+    hl.scale.setScalar((st === 3 ? 0.036 : 0.034)*sc); hl.position.set(0.03*sc, 0.05*sc, 0.058*sc); e.add(hl);
+    if(st < 3){ const h2 = hl.clone(); h2.scale.setScalar(0.015*sc); h2.position.set(-0.035*sc, -0.055*sc, 0.055*sc); e.add(h2); }
+    placeOn(front, V(s*0.33, 0.1 + fy, 1), e, 0); body.add(e); M.eyes.push(e);
+    if(st >= 2){ const bg = new THREE.CapsuleGeometry(0.026*sc, 0.17*sc, 4, 10); bg.rotateZ(Math.PI/2); const br = new THREE.Mesh(bg, darkGloss('#2a1f18'));
+      placeOn(front, V(s*0.33, 0.33 + fy, 1), br, 0.02*sc); br.rotateZ(s*(st === 3 ? 0.42 : 0.14)); body.add(br); }
+  }
+  // 腮紅
+  if(st < 3) for(const s of [-1, 1]){ const c = new THREE.Mesh(new THREE.CircleGeometry(0.11*sc, 24), new THREE.MeshBasicMaterial({ map: BLUSH, transparent: true, depthWrite: false })); placeOn(front, V(s*0.56, -0.08, 1), c, 0.012); c.scale.x = 1.25; body.add(c); }
+  // 嘴巴
+  const mouthDark = new THREE.MeshStandardMaterial({ color: '#4a1612', roughness: 0.6 });
+  if(fam === 'sheng' || (fam === 'wei' && st === 3)){
+    const big = fam === 'wei', m = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), mouthDark), sx = big ? 0.42 : 0.12 + 0.06*st, sy = big ? 0.26 : 0.08 + 0.05*st;
+    m.scale.set(sx, sy, 0.05); placeOn(front, V(0, big ? -0.3 : -0.22, 1), m, -0.01); body.add(m);
+    const tg = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12), new THREE.MeshStandardMaterial({ color: '#e8746a', roughness: 0.5 })); tg.scale.set(0.5, 0.35, 0.6); tg.position.set(0, -0.45, 0.4); m.add(tg);
+    if(big) for(const s of [-1, 1]){ const f = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.5, 12), new THREE.MeshPhysicalMaterial({ color: '#fffaf0', roughness: 0.2, clearcoat: 1 })); f.rotation.x = Math.PI; f.position.set(s*0.5, 0.62, 0.6); m.add(f); }
+    M.upd.push(t => { m.scale.y = sy*(0.8 + 0.35*Math.abs(Math.sin(t*(big ? 4 : 5)))); });
+  } else if(fam === 'chu' && st === 1){ const m = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.016, 10, 28), darkGloss('#2a1f18')); placeOn(front, V(0, -0.2, 1), m, 0.006); body.add(m); }
+  else { const r = st === 3 ? 0.16 : st === 2 ? 0.13 : 0.11, arcA = st === 3 ? 0.62 : 0.7, g = new THREE.TorusGeometry(r*sc, 0.02*sc, 10, 36, Math.PI*arcA); g.rotateZ(-Math.PI/2 - Math.PI*arcA/2);
+    const m = new THREE.Mesh(g, darkGloss('#2a1f18')); placeOn(front, V(0, (st === 3 ? 0.02 : 0.0) + fy, 1), m, 0.008); body.add(m);
+    if(st === 3) for(const s of [-1, 1]){ const f = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.085, 10), new THREE.MeshPhysicalMaterial({ color: '#fffaf0', roughness: 0.2, clearcoat: 1 })); f.rotation.x = Math.PI; f.position.set(s*0.065, -r + 0.005, 0.01); m.add(f); } }
+  // 第三階段：彎角（根部深紫、尖端骨白）
+  if(st === 3 && fam !== 'sheng') for(const s of [-1, 1]){ const h = new THREE.Mesh(hornGeo(), new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.35, clearcoat: 0.8 }));
+    placeOn(front, V(s*0.42, 0.9, 0.1), h, -0.06); h.rotation.set(0, 0, -s*0.38); h.scale.x = s; body.add(h); }
+  if(!o.pure) accessories(M, fam, st, front);
+  if(o.pure){ const l = sprite(textTex('🪷', '#fff', '96px sans-serif')); l.scale.setScalar(0.62); l.position.set(0, 1.2, 0.1); body.add(l); }
+  if(o.gold){ const a = sprite(SOFT, 0xffd27a, true, 0.5); a.scale.setScalar(3.8); a.position.z = -0.8; root.add(a); M.upd.push(t => { a.material.opacity = 0.4 + 0.12*Math.sin(t*2.5); }); }
+  // 氣場、地上的影子、飄浮的塵點
+  if(st >= 2){ const a = sprite(SOFT, st === 3 ? 0x7a1f4a : 0xffffff, st !== 3, st === 3 ? 0.55 : 0.18); a.scale.setScalar(st === 3 ? 4.4 : 3.6); a.position.z = -0.8; root.add(a); M.upd.push(t => { a.material.opacity = (st === 3 ? 0.5 : 0.16) + 0.08*Math.sin(t*2); }); }
+  const motes = []; for(let i=0;i<26;i++){ const p = sprite(SPARK, o.gold ? 0xfff0a0 : st === 3 ? 0xff9a9a : 0xffe2a8, true, 0); p.userData = { a: rnd(0, 6.28), r: rnd(1.1, 1.9), y: rnd(-1, 1.3), sp: rnd(0.15, 0.4), s: rnd(0.04, 0.09), ph: rnd(0, 6.28) }; root.add(p); motes.push(p); }
+  M.upd.push(t => { for(const p of motes){ const u = p.userData, a = u.a + t*u.sp; p.position.set(Math.cos(a)*u.r, u.y + Math.sin(t*0.7 + u.ph)*0.15, Math.sin(a)*u.r*0.7); p.scale.setScalar(u.s); p.material.opacity = 0.35 + 0.35*Math.sin(t*2 + u.ph); } });
+  return M;
+}
+
+function accessories(M, fam, st, front){
+  const B = M.body, U = M.upd;
+  if(fam === 'se'){
+    const mirror = () => { const g = new THREE.Group(), fr = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.045, 14, 48), gold()); fr.scale.y = 1.3; g.add(fr);
+      const gl = new THREE.Mesh(new THREE.CircleGeometry(0.29, 48), new THREE.MeshPhysicalMaterial({ color: '#eaf7ff', metalness: 1, roughness: 0.03 })); gl.scale.y = 1.3; g.add(gl);
+      const bk = new THREE.Mesh(new THREE.CircleGeometry(0.3, 48), gold()); bk.scale.y = 1.3; bk.rotation.y = Math.PI; bk.position.z = -0.01; g.add(bk);
+      g.add(stick(V(0, -0.38, 0), V(0, -0.85, 0), 0.045, gold())); return g; };
+    if(st === 1){ const m = mirror(); m.position.set(1.0, 0.0, 0.35); m.scale.setScalar(0.85); B.add(m); U.push(t => { m.rotation.set(0.1, -0.5 + Math.sin(t*1.5)*0.25, -0.35 + Math.sin(t*2)*0.1); }); }
+    if(st >= 2){ const m = mirror(); m.position.set(0, 1.42, 0); m.scale.setScalar(0.62); B.add(m); U.push(t => { m.rotation.y = Math.sin(t*0.9)*0.4; }); }
+    if(st >= 2){ const sp = []; for(let k=0;k<5;k++){ const s = sprite(textTex('✦', '#fff0ff'), 0xffffff, true); s.scale.setScalar(0.28); B.add(s); sp.push(s); }
+      U.push(t => sp.forEach((s, k) => { const a = t*1.2 + k*1.26; s.position.set(Math.cos(a)*1.25, 0.25 + Math.sin(a*1.7)*0.35, Math.sin(a)*0.9); s.material.opacity = 0.5 + 0.5*Math.sin(t*3 + k); })); }
+    if(st === 3){ const masks = ['#f6f1e7', '#e9c2d6', '#cfc6f2'].map((c, k) => { const tex = canvasTex(256, (x, s) => { x.fillStyle = c; x.fillRect(0, 0, s, s); x.fillStyle = '#2a1f18';
+          x.beginPath(); x.ellipse(s*0.36, s*0.42, s*0.06, s*0.09, 0, 0, 6.29); x.ellipse(s*0.64, s*0.42, s*0.06, s*0.09, 0, 0, 6.29); x.fill(); x.strokeStyle = '#2a1f18'; x.lineWidth = s*0.03; x.beginPath();
+          if(k === 1) x.arc(s/2, s*0.72, s*0.08, 1.1*Math.PI, 1.9*Math.PI); else x.arc(s/2, s*0.6, s*0.09, 0.15*Math.PI, 0.85*Math.PI); x.stroke();
+          x.fillStyle = k === 2 ? 'rgba(120,90,200,.5)' : 'rgba(230,120,150,.45)'; x.beginPath(); x.ellipse(s*0.25, s*0.6, s*0.06, s*0.035, 0, 0, 6.29); x.ellipse(s*0.75, s*0.6, s*0.06, s*0.035, 0, 0, 6.29); x.fill(); });
+        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28, 0, Math.PI), new THREE.MeshPhysicalMaterial({ map: tex, roughness: 0.35, clearcoat: 0.6, side: THREE.DoubleSide })); m.scale.set(0.26, 0.33, 0.13); M.root.add(m); return m; });
+      U.push(t => masks.forEach((m, k) => { const a = t*0.8 + k*Math.PI*2/3; m.position.set(Math.cos(a)*1.22, 0.15 + Math.sin(a*2)*0.12, Math.sin(a)*1.0); m.lookAt(camera.position); })); }
+  }
+  if(fam === 'sheng'){
+    const horn = (big) => { const g = new THREE.Group(); const P = [[0.05,0],[0.055,0.25],[0.085,0.48],[0.16,0.64],[0.34,0.76],[0.36,0.78]].map(p => new THREE.Vector2(p[0], p[1]));
+      const h = new THREE.Mesh(new THREE.LatheGeometry(P, 48), new THREE.MeshPhysicalMaterial({ color: '#d9ad55', metalness: 1, roughness: 0.25, side: THREE.DoubleSide })); g.add(h);
+      const rimR = new THREE.Mesh(new THREE.TorusGeometry(0.355, 0.02, 10, 48), gold()); rimR.rotation.x = Math.PI/2; rimR.position.y = 0.775; g.add(rimR);
+      const waves = []; if(big) for(let k=0;k<3;k++){ const tg = new THREE.TorusGeometry(1, 0.025, 8, 40, 1.3); tg.rotateZ(Math.PI/2 - 0.65); const w = new THREE.Mesh(tg, new THREE.MeshBasicMaterial({ color: '#ffd9a8', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide })); g.add(w); waves.push(w); }
+      g.userData.waves = waves; return g; };
+    const place = (h, x, y, rz, s) => { h.position.set(x, y, 0.15); h.rotation.set(0, 0, rz); h.scale.setScalar(s); B.add(h); const ws = h.userData.waves; if(ws.length) U.push(t => ws.forEach((w, k) => { const ph = (t*1.3 + k/3) % 1; w.position.y = 0.7 + ph*0.9; w.scale.setScalar(0.25 + ph*0.55); w.material.opacity = (1 - ph)*0.8; })); };
+    if(st === 1) place(horn(false), 0.72, 0.6, -0.85, 0.75);
+    if(st === 2) place(horn(true), 0.7, 0.62, -0.85, 1.0);
+    if(st === 3){ place(horn(true), -0.5, 0.82, 0.55, 0.95); place(horn(true), 0.5, 0.82, -0.55, 0.95); }
+  }
+  if(fam === 'xiang'){
+    const smoke = (o, n, size, rise, col) => { const ps = []; for(let i=0;i<n;i++){ const s = sprite(SMOKE, col, false, 0); B.add(s); ps.push({ s, L: i/n, ph: rnd(0, 6) }); }
+      U.push((t, dt) => ps.forEach(p => { p.L += dt/2.4; if(p.L > 1) p.L -= 1; const L = p.L; p.s.position.set(o.x + Math.sin(L*5 + t*1.4 + p.ph)*0.16*L, o.y + L*rise, o.z); p.s.scale.setScalar(size*(0.35 + L*1.5)); p.s.material.opacity = Math.sin(L*Math.PI)*0.55; p.s.material.rotation = L*2 + p.ph; })); };
+    if(st === 1) smoke(V(0.55, 0.75, 0.2), 9, 0.45, 1.3, 0xe8e6ff);
+    if(st >= 2){ B.add(stick(V(0.62, 0.5, 0.25), V(0.66, 1.4, 0.25), 0.028, new THREE.MeshStandardMaterial({ color: '#9a3b2a', roughness: 0.7 })));
+      const ember = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 12), new THREE.MeshBasicMaterial({ color: '#ffb347' })); ember.position.set(0.66, 1.42, 0.25); B.add(ember);
+      const eg = sprite(SPARK, 0xff9a40, true, 0.9); eg.scale.setScalar(0.35); eg.position.copy(ember.position); B.add(eg); U.push(t => { eg.material.opacity = 0.6 + 0.35*Math.sin(t*7); });
+      smoke(V(0.66, 1.45, 0.25), 10, 0.4, 1.4, 0xece8ff); smoke(V(-0.6, 0.6, 0.1), 7, 0.5, 1.1, 0xd8d4ff); }
+    if(st === 3){ smoke(V(-0.2, 0.9, 0.0), 9, 0.55, 1.5, 0xc9b8ff); smoke(V(0.2, 0.9, -0.1), 9, 0.55, 1.5, 0xd9c8ff); }
+  }
+  if(fam === 'wei'){
+    if(st === 1) B.add(stick(V(0.45, -0.3, 0.2), V(1.15, -1.05, 0.25), 0.045, new THREE.MeshStandardMaterial({ color: '#b98a52', roughness: 0.7 })));
+    if(st === 3){ const fs = ['🍡', '🍰', '🍜', '🍙'].map(ch => { const s = sprite(textTex(ch, '#fff', '92px sans-serif')); s.scale.setScalar(0.5); B.add(s); return s; });
+      U.push(t => fs.forEach((s, k) => { const a = t*1.1 + k*Math.PI/2; s.position.set(Math.cos(a)*1.45, 0.35 + Math.sin(a*2)*0.1, Math.sin(a)*1.0); })); }
+  }
+  if(fam === 'chu'){
+    const zs = [0, 1, 2].map(() => { const s = sprite(textTex('z', '#cfe6ff')); B.add(s); return s; });
+    U.push(t => zs.forEach((s, k) => { const ph = (t*0.45 + k/3) % 1; s.position.set(0.7 + ph*0.55, 0.85 + ph*0.9, 0.2); s.scale.setScalar(0.18 + ph*0.22); s.material.opacity = Math.sin(ph*Math.PI); }));
+    if(st >= 2){ const tex = canvasTex(256, (c, s) => { c.fillStyle = '#8fa8e6'; c.fillRect(0, 0, s, s); c.fillStyle = 'rgba(255,255,255,.35)'; for(let i=0;i<8;i++) c.fillRect(i*s/8, 0, s/20, s); c.fillStyle = 'rgba(255,240,180,.8)'; for(let i=0;i<30;i++){ c.beginPath(); c.arc(rnd(0, s), rnd(0, s), 3, 0, 6.29); c.fill(); } });
+      const g = new THREE.PlaneGeometry(2.7, 1.0, 64, 20), p = g.attributes.position;
+      for(let i=0;i<p.count;i++){ const x = p.getX(i), y = p.getY(i), th = x/0.95, R = 1.1*(1 + 0.2*(0.5 - y)) + 0.05*Math.sin(x*9)*(0.6 - y); p.setXYZ(i, Math.sin(th)*R, -0.78 + y*0.7 + 0.06*Math.cos(x*2.2)*(y + 0.5), Math.cos(th)*R*0.72); }
+      g.computeVertexNormals(); const bl = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9, side: THREE.DoubleSide })); B.add(bl); }
+    if(st === 3){ const g = new THREE.CylinderGeometry(0.4, 0.36, 0.34, 60, 6, true), p = g.attributes.position;
+      for(let i=0;i<p.count;i++){ const y = p.getY(i); if(y > 0.1){ const a = Math.atan2(p.getZ(i), p.getX(i)), tri = Math.abs(((a/(Math.PI*2))*5*2 % 2 + 2) % 2 - 1); p.setY(i, y + 0.16*tri); } }
+      g.computeVertexNormals(); const cr = new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ color: '#d9ad55', metalness: 1, roughness: 0.25, side: THREE.DoubleSide })); cr.position.set(0, 1.0, 0); cr.rotation.z = 0.12; B.add(cr);
+      [['#e0405a', 0], ['#4a7be0', 0.6], ['#4a7be0', -0.6]].forEach(([c, a]) => { const gm = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 12), new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.05, clearcoat: 1, emissive: c, emissiveIntensity: 0.3 })); gm.position.set(Math.sin(a)*0.39, 0.0, Math.cos(a)*0.39); cr.add(gm); }); }
+  }
+  if(fam === 'fa'){
+    const q = n => [...Array(n)].map(() => { const s = sprite(textTex('?', '#dcfff4')); s.scale.setScalar(0.42); B.add(s); return s; });
+    if(st === 1){ const [s] = q(1); U.push(t => { s.position.set(0.75, 1.0 + Math.sin(t*2)*0.06, 0.2); s.material.rotation = 0.2 + Math.sin(t*1.5)*0.15; }); }
+    if(st >= 2){ const qs = q(3); U.push(t => qs.forEach((s, k) => { const a = t*1.3 + k*Math.PI*2/3; s.position.set(Math.cos(a)*1.25, 0.95 + Math.sin(a*2)*0.1, Math.sin(a)*0.75); s.material.rotation = a; })); }
+    if(st === 3){ const rings = [0, 1, 2].map(k => { const pts = []; for(let i=0;i<80;i++){ const a = i/80*Math.PI*2, r = 1.25 + 0.15*Math.sin(a*3 + k); pts.push(V(Math.cos(a)*r, Math.sin(a*2 + k)*0.12, Math.sin(a)*r)); }
+        const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 160, 0.03, 8, true), new THREE.MeshPhysicalMaterial({ color: '#1f4a42', roughness: 0.3, clearcoat: 1, transparent: true, opacity: 0.8 }));
+        m.rotation.set(0.5 + k*0.5, k, 0.3*k); M.root.add(m); return m; });
+      U.push(t => rings.forEach((m, k) => { m.rotation.y = t*(0.4 + k*0.15)*(k % 2 ? -1 : 1); })); }
+  }
+}
+
+
+const shadow = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), new THREE.MeshBasicMaterial({ map: SHADOW, transparent: true, depthWrite: false })); shadow.rotation.x = -Math.PI/2; scene.add(shadow);
+const cache = new Map(), snaps = new Map(), SIZE = [0.72, 0.86, 1.0];
+let built = false;
+function model(def, o){ const k = def.name + (o.pure ? '|p' : '') + (o.gold ? '|g' : ''); let M = cache.get(k); if(!M){ M = build(def, o); M.size = SIZE[(o.pure ? 1 : def.stage) - 1]; M.lastT = null; cache.set(k, M); built = true; } return M; }
+const cream = new THREE.Color('#fffaf0');
+// 依遊戲給的時間和狀態擺好姿勢：呼吸、左右轉身、眨眼；hit＝被打中後經過的秒數（壓扁、後退、閃白），whiten＝變白的程度
+function pose(M, t, o){
+  const dt = M.lastT == null ? 0.016 : Math.max(0, Math.min(0.05, t - M.lastT)); M.lastT = t;
+  for(const u of M.upd) u(t, dt);
+  const R = M.root, s = M.size, br = Math.sin(t*2.4)*0.022; let sx = 1 + br, sy = 1 - br, px = 0, pz = 0, rx = 0, rz = 0, fl = 0;
+  if(o.hit != null){ const tau = o.hit, e = Math.exp(-6*tau), dir = o.dir || 1; sx += 0.3*e*Math.cos(tau*26); sy -= 0.3*e*Math.cos(tau*26); px = -dir*0.45*Math.exp(-5*tau)*Math.sin(Math.min(tau*12, Math.PI/2)); pz = -0.5*Math.exp(-4*tau)*Math.min(1, tau*14); rx = -0.35*e; rz = dir*0.25*e; fl = 2.2*Math.exp(-11*tau); }
+  const wt = o.whiten || 0;
+  M.mats.forEach(m => { m.userData.u.flash.value = Math.max(fl, wt*0.6); m.color.copy(m.userData.base).lerp(cream, Math.min(1, wt*1.4)); });
+  R.position.set(px, Math.sin(t*2)*0.05, pz); R.rotation.set(rx, Math.sin(t*0.6)*0.38, Math.sin(t*0.9)*0.035 + rz + (o.rot || 0));
+  const ys = o.scaleY || 1; R.scale.set(sx*s, sy*s*ys, s);
+  const bl = ((t + (o.seed || 0)) % 3.7) < 0.12 ? 0.12 : 1; M.eyes.forEach(e => e.scale.y = bl);
+  shadow.position.y = -1.18*s; shadow.scale.setScalar(s*(1 - Math.sin(t*2)*0.05)); shadow.material.opacity = 0.75;
+}
+const BUCKET = [128, 192, 256, 320, 384, 512, 640];
+let curPx = 0;
+// 自動調整：手機算 3D 太慢時先降解析度，再不行就改回 2D（網址加 ?3d 可以強制維持 3D，測試用）
+const FORCE = /[?&]3d\b/.test(location.search); let qual = 1, ema = 0, nMeas = 0;
+function measure(ms){ ema = nMeas ? ema*0.85 + ms*0.15 : ms; nMeas++; if(FORCE || nMeas < 20) return;
+  if(ema > 16 && qual > 0.5){ qual = Math.max(0.5, qual - 0.25); nMeas = 0; console.info('3D 塵靈降低解析度', qual); }
+  else if(ema > 30 && qual <= 0.5){ window.D3.off = true; console.info('3D 塵靈太慢，改用 2D'); } }
+function render(M, px){ px = BUCKET.find(b => b >= px*qual) || 640; if(px !== curPx){ renderer.setSize(px, px, false); curPx = px; } scene.add(M.root); renderer.render(scene, camera); scene.remove(M.root); }
+// 和 drawDust 一樣的參數：(畫布, 塵靈, 中心 x, y, R, 秒, 選項)
+function draw(c, def, x, y, Rr, t, o = {}){
+  built = false; const M = model(def, o); pose(M, t, o);
+  const D = 2*E*0.9*Rr, tr = c.getTransform(), k = Math.hypot(tr.a, tr.b) || 1, sz = curPx, t0 = performance.now();
+  render(M, D*k); c.drawImage(glCv, x - D/2, y - D/2, D, D);
+  if(!built && sz === curPx && !o.noMeasure) measure(performance.now() - t0); return true;
+}
+// 淨心錄卡片：每隻只算一次，存成圖片重複使用
+function snap(c, def, x, y, Rr, t, o = {}){
+  const key = def.name + (o.gold ? '|g' : ''); let img = snaps.get(key);
+  if(!img){ const M = model(def, { gold: o.gold }); M.lastT = null; pose(M, 0.4, {}); render(M, 256); img = document.createElement('canvas'); img.width = img.height = curPx; img.getContext('2d').drawImage(glCv, 0, 0); snaps.set(key, img); }
+  const D = 2*E*0.9*Rr; c.drawImage(img, x - D/2, y - D/2 + Math.sin(t*2 + (o.seed || 0))*Rr*0.03, D, D); return true;
+}
+// 預先做好模型、編好著色器（在標題畫面閒著的時候一隻一隻做，進戰鬥就不會卡一下）
+function prep(def, o = {}){ const M = model(def, o); pose(M, 0, {}); render(M, 128); }
+window.D3 = { draw, snap, prep, off: false };
 </script>
 </body>
 </html>
