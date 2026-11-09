@@ -644,7 +644,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261109.01</span>
+  <span class="ver">v261109.02</span>
   </div></div>
 </div>
 
@@ -5617,12 +5617,21 @@ kinto.visible = ptOpen;
 scene.add(kinto);
 const kintoHit = [];
 {
-  // 雲：一團暖白帶金的雲朵，後面拖一條捲捲的雲尾
+  // 雲：流線型的祥雲（雲的前方是 +z）。前面是大聖腳下飽滿的雲頭，往後越收越細、拉成一條長長的雲尾，尾巴末端往上翹、捲成一個小漩渦
   const cloudM = new THREE.MeshLambertMaterial({ color: '#fff4cf', emissive: '#ffd36a', emissiveIntensity: 0.28 });
   const cloudM2 = new THREE.MeshLambertMaterial({ color: '#ffe9a8', emissive: '#f2b84a', emissiveIntensity: 0.22 });
   const CL = new THREE.Group(); kinto.add(CL); kinto.userData.cloud = CL;
-  for (const [x, y, z, r, m] of [[0, 0, 0, 1.05, cloudM], [0.95, -0.08, 0.15, 0.78, cloudM], [-0.95, -0.1, 0.1, 0.8, cloudM], [0.35, 0.2, -0.6, 0.72, cloudM2], [-0.4, 0.15, 0.65, 0.66, cloudM2], [0.2, -0.25, 0.75, 0.6, cloudM]]) {
-    const s = mesh(new THREE.SphereGeometry(r, 16, 12), m, x, y, z, CL, false); s.scale.y = 0.62;
+  for (const [x, y, z, r, m, sy] of [
+    // 雲頭：大聖站的地方，前端圓潤
+    [0, 0, 0.35, 1.05, cloudM, 0.62], [0.85, -0.08, 0.3, 0.72, cloudM, 0.62], [-0.85, -0.08, 0.3, 0.72, cloudM, 0.62],
+    [0.25, -0.2, 1.0, 0.62, cloudM, 0.62], [-0.3, 0.1, 0.95, 0.55, cloudM2, 0.62],
+    // 雲身：往後收窄、微微往上
+    [0.45, 0.02, -0.5, 0.78, cloudM2, 0.62], [-0.45, -0.02, -0.55, 0.74, cloudM, 0.62], [0, 0.05, -1.25, 0.66, cloudM, 0.64],
+    [0.15, 0.12, -1.85, 0.52, cloudM2, 0.68], [-0.05, 0.22, -2.35, 0.42, cloudM, 0.72], [0.05, 0.36, -2.75, 0.33, cloudM2, 0.78],
+    // 雲尾末端往上捲一圈
+    [0, 0.58, -3.0, 0.26, cloudM, 0.9], [0, 0.86, -2.98, 0.21, cloudM2, 0.95], [0, 1.02, -2.72, 0.17, cloudM, 1], [0, 0.95, -2.5, 0.13, cloudM2, 1],
+  ]) {
+    const s = mesh(new THREE.SphereGeometry(r, 16, 12), m, x, y, z, CL, false); s.scale.y = sy;
   }
   // 齊天大聖：臉是膚色、頭頂和後腦勺一圈棕色毛、兩隻圓耳朵、金箍、虎皮裙、金箍棒、一條捲尾巴
   const wk = figure(lam('#f3d2a2'), '', false);
@@ -5695,7 +5704,7 @@ animators.push((t, dt = 1 / 60) => {
   const u = kinto.userData, wk = u.wk;
   if (moving) { u.staff.rotation.set(0, 0, -0.5); wk.userData.arms[0].rotation.z = THREE.MathUtils.damp(wk.userData.arms[0].rotation.z, -1.9, 6, 1 / 60); wk.rotation.y = 0; }
   else { u.staff.rotation.set(0, 0, -0.5 + t * 6); wk.userData.arms[0].rotation.z = -2.4 + Math.sin(t * 8) * 0.35; wk.rotation.y = Math.sin(t * 0.7) * 0.5; }
-  // 飛行時從雲後面噴出煙霧：剛噴出來小而濃，往後、往外飄開，越來越大、越來越淡。
+  // 飛行時從雲尾噴出煙霧：剛噴出來小而濃，往後、往外飄開，越來越大、越來越淡。
   // 用實際經過的時間算：畫面卡頓、兩格之間雲飛得比較遠時，在中間補噴幾陣，煙霧才會連成一條
   const kdt = Math.min(0.25, Math.max(0, t - (kinto.userData.lastT ?? t))); kinto.userData.lastT = t;
   const kPrev = kinto.userData.prev || (kinto.userData.prev = kinto.position.clone());
@@ -5703,7 +5712,7 @@ animators.push((t, dt = 1 / 60) => {
     const n = Math.min(6, Math.floor((t - kintoPuffAt) / 0.035));
     for (let i = 1; i <= n; i++) {
       const p = kintoPuffs[kintoPuffI++ % kintoPuffs.length], f = i / n;
-      kintoTmp.set((Math.random() - 0.5) * 0.5, -0.1 + (Math.random() - 0.5) * 0.3, -1.6).applyEuler(kinto.rotation).add(kintoAhead.lerpVectors(kPrev, kinto.position, f));
+      kintoTmp.set((Math.random() - 0.5) * 0.4, 0.1 + (Math.random() - 0.5) * 0.3, -2.7).applyEuler(kinto.rotation).add(kintoAhead.lerpVectors(kPrev, kinto.position, f));
       p.m.position.copy(kintoTmp);
       p.vel.set((Math.random() - 0.5) * 0.8, 0.15 + Math.random() * 0.3, -1.2 - Math.random() * 0.8).applyEuler(kinto.rotation);
       p.age = (1 - f) * kdt; p.life = 1.1 + Math.random() * 0.6; p.size = 0.7 + Math.random() * 0.4; p.m.visible = true;
