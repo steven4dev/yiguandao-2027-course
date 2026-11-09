@@ -97,7 +97,7 @@ pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:
 <div class="wrap">
   <header class="top">
     <div class="brand">🪶 揮符實驗室<small>拂塵島・動作感測測試（不會出現在群島上）</small></div>
-    <span class="ver" id="ver"></span>
+    <span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><a href="../fuchen-game/" style="font-weight:800;color:var(--accent);text-decoration:none">🎮 拂塵試煉</a><span class="ver" id="ver"></span></span>
   </header>
 
   <!-- 開場：安全提醒＋啟用感測器 -->
@@ -208,7 +208,7 @@ pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:
 
 <script>
 'use strict';
-const VERSION = 'v261109.03';
+const VERSION = 'v261109.04';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = VERSION;
