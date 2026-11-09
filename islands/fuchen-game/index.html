@@ -14,6 +14,10 @@
 </script>
 <meta name="description" content="拂塵淨心島的體感小遊戲：手機就是拂塵柄，看清符印、倒數、大揮一拂，把六塵精淨化成蓮花。">
 <style>
+.ambush{position:fixed;inset:0;pointer-events:none;z-index:30;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 35%,rgba(170,20,40,.6) 100%);animation:amb 2.4s ease-out forwards}
+@keyframes amb{0%{opacity:0}8%{opacity:1}30%{opacity:.55}45%{opacity:.9}100%{opacity:0}}
+.ambush-t{color:#ff8a7a;animation:ambT .5s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes ambT{0%{transform:scale(2.2);opacity:0}100%{transform:scale(1);opacity:1}}
 :root{
   --ink:#f6ecd8; --muted:#b9ab95; --gold:#e8bd5a; --gold-soft:rgba(232,189,90,.18); --good:#7fe0a6; --bad:#ff8a7a;
   --panel:rgba(20,16,12,.82); --line:rgba(232,189,90,.35); --btn:#e8bd5a; --btn-ink:#22190f; --bg:#0d151d;
@@ -109,15 +113,15 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     <p class="note" style="margin-top:0">拂塵淨心島・體感小遊戲（測試版）</p>
     <p>「時時勤拂拭，勿使惹塵埃。」六塵的塵靈從霧裡飄出來了！手機就是您的拂塵柄：<b>看清符印</b>、等倒數、聽到「<b>揮</b>」就大揮一拂，把它們淨化、<b>收進淨心錄</b>。塵妖要<b>兩連擊</b>才收得服。</p>
     <ul>
-      <li>🤚 手機直立握著，螢幕大致朝向自己；<b>整隻手臂揮出去</b>，手腕怎麼翻都沒關係。</li>
+      <li>🤚 手機直立握著，螢幕大致朝向自己；<b>整隻手臂揮出去</b>（大約一個手臂長），手腕怎麼翻都沒關係。<b>只擺手腕會被判「動作太小」</b>。</li>
       <li>👀 揮的時候不用看螢幕，聽到「叮」再回來看拂塵的招式。</li>
       <li>🔊 請打開聲音（iPhone 關掉靜音鍵）。</li>
     </ul>
     <p><b>⚠️ 安全第一</b>：握緊手機、最好戴掛繩，周圍 1.5 公尺內不要有人和易碎物品。</p>
     <div class="row">
       <div class="diff" id="diffSel" role="group" aria-label="難度">
-        <button data-d="easy">🌱 入門<small>現在的難度</small></button>
-        <button data-d="normal">🪶 修行<small>判定較嚴、提示會退場</small></button>
+        <button data-d="easy">🌱 入門<small>從上下左右開始</small></button>
+        <button data-d="normal">🪶 修行<small>開場塵魔突襲、動作要夠大</small></button>
         <button data-d="hard">🔥 精進<small>兩盞心燈、倒數兩拍</small></button>
       </div>
       <button class="primary big" id="btnStart">開始試煉</button>
@@ -169,7 +173,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.15';
+const VERSION = 'v261109.16';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1390,18 +1394,25 @@ function detachTouch(){ if(!touchHandlers) return; cv.removeEventListener('point
 
 /* 判定：和揮符實驗室同一套（移動軌跡優先；沒有加速度時用標準轉動） */
 function modelFor(st){ if(st.input !== 'gyro') return 'auto'; if(hasTraj(st.pts)) return calib.MT ? 'traj' : 'trajRaw'; return 'std'; }
+// 動作大小：手腕擺一擺（幾公分）跟整隻手臂大揮（實測方向揮 20～54 公分、形狀 43～137 公分）差很多。
+// 太小＝修行、精進直接不算（熱身和入門只提醒）；偏小＝算過，但提醒再大一點。只有「移動軌跡」模式量得到公分。
+const SMALL = { dir: 10, shape: 22 }, NEAR = { dir: 16, shape: 32 };
+function sizeCheck(sym, a, st){ if(!st || st.input !== 'gyro' || a.sizeUnit !== 'cm' || !a.size) return {}; const big = Math.max(...a.size), k = sym.kind === 'dir' ? 'dir' : 'shape';
+  return { big, small: big < SMALL[k], nearSmall: big >= SMALL[k] && big < NEAR[k] }; }
 function judgeSwing(key, st, th0, lenient){
-  const dd = lenient ? DIFFS.easy : D();
+  const dd = lenient ? DIFFS.easy : D(), soft = lenient || diffKey === 'easy';
   const a = analyzeStroke(st, modelFor(st), th0 || null);
   if(a.none) return { none:true, a };
-  const sym = SYMS[key];
-  if(sym.kind === 'dir'){ const err = angDiff(a.mainDir, sym.dir); return { a, ok: err <= dd.dirErr, score: Math.max(0, Math.round((1 - err/70)*100)) }; }
+  const sym = SYMS[key], sz = sizeCheck(sym, a, st), fail = sz.small && !soft;
+  if(sym.kind === 'dir'){ const err = angDiff(a.mainDir, sym.dir); return { a, ...sz, ok: err <= dd.dirErr && !fail, score: Math.max(0, Math.round((1 - err/70)*100)) }; }
   const top = a.rg.ranking[0], mine = a.rg.ranking.find(r => r.key === key);
   const sc = mine ? mine.score : 0;
   // 門檻依實測調整：阿法類形狀複雜、真人揮對時分數本來就偏低（46～55%），門檻低 15 分
   const need = dd.shapeMin - (key === 'alpha' || key === 'ralpha' ? 15 : 0);
-  return { a, ok: top.key === key && sc >= need, score: sc, close: top.key === key && sc < need };
+  return { a, ...sz, ok: top.key === key && sc >= need && !fail, score: sc, close: top.key === key && sc < need };
 }
+// 動作太小時的教學卡：講清楚怎麼揮才對
+async function coachBig(r){ say('動作再大一點'); center(`<div class="mid">🤏 手腕擺一擺不算喔</div><div class="sub">剛剛只揮了大約 ${r.big} 公分。像拿拂塵掃大殿：從肩膀出力、整隻手臂揮出去，大約一個手臂長</div>`); await wait(2400); center(''); }
 // 把這一揮的路線（正規化座標）換成畫面上繞著怪物的位置
 function pathOnScreen(a){
   const xy = a.xy; if(!xy || xy.length < 2) return null;
@@ -1414,9 +1425,9 @@ function playReplay(pts, dur){ return new Promise(res => { replayAnim = { pts, t
 /* ---------------- 一隻怪物的回合（塵精一揮、塵妖與塵魔兩連擊） ---------------- */
 async function encounter(opt){
   const { keys, def, lv, gold, boss, wave, tutorial } = opt;
-  if(!monster || monster.state === 'gone' || !boss){
+  if(!monster || monster.state === 'gone' || (!boss && !(opt.ambush && monster.def === def))){
     monster = { type: opt.type, def, lv, gold, sym:keys[0], x:MON.x, y:MON.y, r:U()*(boss ? 0.2 : 0.14), t0:performance.now(), state:'enter', boss:!!boss, hp: boss ? opt.hp : 1, maxHp: boss ? opt.hp : 1, seed:Math.random()*10 };
-    boss ? (sfx.boss(), ok() && bossVoice(now0() + 0.6, 0.8)) : sfx.appear(def);
+    boss ? (sfx.boss(), actx && bossVoice(now0() + 0.6, 0.8)) : sfx.appear(def);
   } else { monster.sym = keys[0]; }
   hud(wave);
   const multi = keys.length > 1;
@@ -1426,7 +1437,7 @@ async function encounter(opt){
   await wait(boss ? 900 : 600);
   // 拂塵沿著提示路線示範（連擊就依序示範）
   // 提示：入門每隻都示範；修行、精進只有前 3 隻示範，之後路線只亮一下；塵魔、魔王只標起點和終點
-  const hm = tutorial || D().hints === 'full' ? 'full' : (boss || (def && def.stage === 3)) ? 'markers' : encN < 3 ? 'full' : 'brief';
+  const hm = opt.hm || (tutorial || D().hints === 'full' ? 'full' : (boss || (def && def.stage === 3)) ? 'markers' : encN < 3 ? 'full' : 'brief');
   if(!tutorial) encN++;
   for(const k of keys){
     hint = makeHint(k); if(!hint) continue;
@@ -1460,6 +1471,8 @@ async function encounter(opt){
     const perfect = rs.every(r => r.score >= 85);
     const pts = (base + (combo > 1 ? combo*10 : 0) + (multi ? 50*(keys.length - 1) : 0) + (perfect ? 60 : 0))*(weak ? 2 : 1); score += pts;
     if(perfect && !boss) spawnText(MON.x, MON.y - monster.r*2.1, '✨ 明鏡無塵 +60', '#ffe08a');
+    if(rs.some(r => r.small || r.nearSmall)) spawnText(MON.x, MON.y + monster.r*2.7, '💪 可以再揮大一點', '#ffe08a');
+    if(opt.ambush){ score += 100; spawnText(MON.x, MON.y - monster.r*2.6, '🛡️ 擋下下馬威！+100', '#7fe0a6'); }
     if(boss){
       const word = base >= 85 ? '✨ 明鏡無塵' : base >= 65 ? '🪶 拂淨' : '🪶 拂去了';
       spawnSpark(monster.x, monster.y, 40); spawnDust(monster.x, monster.y, 36, 'rgba(150,140,130,.9)', 1.4); spawnText(monster.x, monster.y - monster.r*1.4, word, '#ffe7a8'); spawnText(monster.x, monster.y - monster.r*0.9, `+${pts}`, '#7fe0a6');
@@ -1475,14 +1488,17 @@ async function encounter(opt){
     }
   } else {
     combo = 0;
-    const idx = rs.indexOf(r0), why = r0.none ? '💤 沒揮到' : r0.close ? `💨 不夠像（${r0.score}%）` : '💨 符散了';
-    spawnDust(monster.x, monster.y, 18, 'rgba(150,140,130,.8)', 0.8); spawnText(monster.x, monster.y - monster.r*1.6, multi ? `第 ${idx + 1} 揮${r0.none ? '沒揮到' : r0.close ? `不夠像（${r0.score}%）` : '散了'}` : why, '#ff8a7a');
-    if(r0.a && !r0.none && !r0.close && SYMS[keys[idx]].kind === 'shape'){ const top = r0.a.rg.ranking[0]; if(SYMS[top.key]) spawnText(monster.x, monster.y - monster.r*1.1, `像是「${SYMS[top.key].name}」`, '#f6ecd8'); }
+    const idx = rs.indexOf(r0), why = r0.none ? '💤 沒揮到' : r0.small ? '🤏 動作太小' : r0.close ? `💨 不夠像（${r0.score}%）` : '💨 符散了';
+    spawnDust(monster.x, monster.y, 18, 'rgba(150,140,130,.8)', 0.8); spawnText(monster.x, monster.y - monster.r*1.6, multi ? `第 ${idx + 1} 揮${r0.none ? '沒揮到' : r0.small ? '動作太小' : r0.close ? `不夠像（${r0.score}%）` : '散了'}` : why, '#ff8a7a');
+    if(r0.a && !r0.none && !r0.close && !r0.small && SYMS[keys[idx]].kind === 'shape'){ const top = r0.a.rg.ranking[0]; if(SYMS[top.key]) spawnText(monster.x, monster.y - monster.r*1.1, `像是「${SYMS[top.key].name}」`, '#f6ecd8'); }
     monster.state = 'laugh'; monster.tHit = performance.now();
-    if(!tutorial){ lives--; }
-    sfx.miss(boss ? null : def); if(boss && ok()) bossVoice(now0() + 0.45, 0.6); vib([40,60,40]); hud(); await wait(1300);
+    if(!tutorial && !opt.ambush){ lives--; }
+    sfx.miss(boss ? null : def); if(boss && actx) bossVoice(now0() + 0.45, 0.6); vib([40,60,40]); hud(); await wait(1300);
     if(!boss){ monster.state = 'hit'; monster.tHit = performance.now(); await wait(450); }   // 沒收服：塵靈逃走
+    if(opt.ambush){ center('<div class="mid">塵魔大笑著逃走了…</div><div class="sub">下馬威沒擋下，不扣心燈。定下心，從頭收服！</div>'); await wait(2000); center(''); }
   }
+  // 熱身或打中時也揮得太小：補一張教學卡（揮空時本來就有提示，這裡只在太小時加強說明）
+  if(rs.some(r => r.small) && !boss) await coachBig(rs.find(r => r.small));
   return { ok, r: r0 };
 }
 
@@ -1497,17 +1513,20 @@ function spawnDef(stage){
 }
 // 出題：塵精一個符印（偶爾剛好是它怕的）；塵妖、塵魔兩連擊（多半是有名字的組合技）
 const EASY = ['left','right','down','up','v','circle'], MID = ['v','circle','z','n','alpha','s'], HARD = ['rs','rz','rn','ralpha','z','n','s','alpha'];
-const NAMED = [['left','right'], ['up','down'], ['s','circle'], ['alpha','ralpha']];
-function keysFor(stage, fam){
+const NAMED_ALL = [['left','right'], ['up','down'], ['s','circle'], ['alpha','ralpha']];
+// 上下左右只留給「入門」；修行、精進一開始就是形狀符號
+const STAGE1 = () => diffKey === 'easy' ? EASY : MID;
+const NAMEDP = () => diffKey === 'easy' ? NAMED_ALL : NAMED_ALL.filter(c => !c.some(k => SYMS[k].kind === 'dir'));
+function keysFor(stage, fam){ const NAMED = NAMEDP();
   if(stage === 3 && diffKey !== 'easy'){   // 塵魔：三連擊，多半是組合技再接一個難的符號
     const base = Math.random() < 0.5 ? pick(NAMED).slice() : [pick(HARD), pick(MID)];
     return [...base, pick(HARD.filter(x => !base.includes(x)))];
   }
   if(stage === 2 && diffKey !== 'easy' && Math.random() < 0.6){ const a = pick(MID); return [a, pick(MID.filter(x => x !== a))]; }   // 塵妖偏向 Z、N、S、阿法
-  if(stage === 1) return [Math.random() < 0.35 && EASY.includes(fam.weak) ? fam.weak : pick(EASY)];
+  if(stage === 1){ const P = STAGE1(); return [Math.random() < 0.35 && P.includes(fam.weak) ? fam.weak : pick(P)]; }
   if(Math.random() < 0.6) return pick(NAMED).slice();
   const pool = stage === 2 ? MID : HARD, a = pick(pool); let b = pick(pool.filter(x => x !== a));
-  if(Math.random() < 0.4 && fam.weak !== a && SYMS[fam.weak]) b = fam.weak;
+  if(Math.random() < 0.4 && fam.weak !== a && SYMS[fam.weak] && (diffKey === 'easy' || SYMS[fam.weak].kind !== 'dir')) b = fam.weak;
   return [a, b];
 }
 /* 難度：入門＝原本的難度；修行（預設）＝判定變嚴、關卡變長、提示逐步退場；精進＝再少一盞心燈、倒數全部兩拍、塵魔更多 */
@@ -1520,6 +1539,18 @@ let diffKey = store.get('fuchenGame.diff', 'normal'); if(!DIFFS[diffKey]) diffKe
 const D = () => DIFFS[diffKey];
 let encN = 0;   // 這一局第幾隻（熱身不算），用來決定提示退場
 let caught = [];
+// 下馬威的開場：畫面一暗、紅光一閃、大震動，塵魔的聲音＋低吼，接著塵魔從上面砸下來
+async function ambushIntro(sp){
+  bgmHold(true); dimTarget = 0.55; shakeAmp = 22; vib([80, 60, 160]);
+  const v = document.createElement('div'); v.className = 'ambush'; document.body.appendChild(v); setTimeout(() => v.remove(), 2600);
+  if(ok()){ sfx.boss(); X.crack(now0(), 1); X.sub(now0(), 1, 1.4); famVoice(sp.def, now0() + 0.5); }
+  center(`<div class="mid ambush-t">⚠️ 塵魔突襲！</div><div class="sub">${sp.def.fam.name}系塵魔「${sp.def.name}」擋住去路——還沒熱身就殺過來了！</div>`); say('塵魔突襲');
+  // 塵魔從上面砸下來，落地時畫面再震一次，接著嘲笑玩家
+  monster = { def: sp.def, lv: sp.lv, gold: sp.gold, sym: null, x: MON.x, y: MON.y, r: U()*0.14, t0: performance.now(), state: 'enter', boss: false, hp: 1, maxHp: 1, seed: Math.random()*10 };
+  await wait(900); shakeAmp = 24; vib(120); spawnDust(MON.x, MON.y + U()*0.12, 30, 'rgba(120,90,110,.85)', 1.3); if(ok()){ I.taiko(now0(), 45, 1.2); X.sub(now0(), 0.9, 1); }
+  monster.state = 'laugh'; monster.tHit = performance.now(); spawnText(MON.x, MON.y - U()*0.3, '嘿嘿…你拂得動我嗎？', '#ffb3a8');
+  await wait(1900); monster.state = 'idle'; dimTarget = 0; bgmHold(false); center('');
+}
 async function runGame(){
   encN = 0;
   audioInit(); bgmStart('battle');
@@ -1529,9 +1560,12 @@ async function runGame(){
   $('#modeTag').textContent = inputMode === 'touch' ? '👆 觸控模式' : accAvail() ? '🛤️ 移動軌跡' : '🔄 轉動判讀';
   let result = 'clear';
   try{
+    // 下馬威（修行、精進）：一開場塵魔就殺出來，先震一下，再要求兩連擊
+    const amb = diffKey !== 'easy' ? spawnDef(3) : null;
+    if(amb) await ambushIntro(amb);
     // 教學：四方拂塵（第一次玩、或還沒有四方校正時）——順便學這位玩家的揮法和力氣
     if(inputMode === 'gyro' && (!calib.MT || !calib.autoTh)){
-      center('<div class="mid">🧭 四方拂塵</div><div class="sub">先用四隻小塵精熱身，系統會記住您的揮法</div>'); say('四方拂塵'); await wait(2200);
+      center(amb ? '<div class="mid">🧭 先穩住陣腳：四方拂塵</div><div class="sub">塵魔召來四隻小塵精！照方向「整隻手臂」大揮，系統會記住您的揮法</div>' : '<div class="mid">🧭 四方拂塵</div><div class="sub">先用四隻小塵精熱身，系統會記住您的揮法</div>'); say('四方拂塵'); await wait(2400);
       const got = {}, peaks = [];
       for(const [k, d] of [['left','L'],['right','R'],['up','U'],['down','D']]){
         const r = await encounter({ keys:[k], ...spawnDef(1), wave:'熱身・四方拂塵', tutorial:'熱身：照著方向大揮一次' });
@@ -1539,6 +1573,9 @@ async function runGame(){
       }
       learnFromWarmup(got, peaks);
     }
+    if(amb){ const a = pick(MID), b = diffKey === 'hard' ? pick(HARD.filter(x => x !== a)) : pick(MID.filter(x => x !== a));
+      center(`<div class="mid" style="color:#ff9a8a">⚔️ 接招！</div><div class="sub">${amb.def.name}要你一開場就兩連擊</div>`); await wait(1500);
+      await encounter({ keys:[a, b], ...amb, ambush:true, hm:'full', wave:'⚠️ 開場突襲・塵魔' }); monster = null; }
     const plan = diffKey === 'easy' ? [
       { wave:'第一波・塵精', stages:[1, 1, 1] },
       { wave:'第二波・塵妖', stages:[Math.random() < 0.25 ? 3 : 2, 2] }
