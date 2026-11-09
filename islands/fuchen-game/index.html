@@ -114,7 +114,7 @@ button.big{width:100%;font-size:1.1rem;padding:14px}
 
 <script>
 'use strict';
-const VERSION = 'v261109.02';
+const VERSION = 'v261109.03';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -526,82 +526,119 @@ function drawBackground(t){
   drawAltar(t);
 }
 // 千絲拂塵台：白玉圓台上立著一支巨大的拂塵，淨化越多越亮
+/* ---------------- 拂塵的畫法（照實物：竹節木柄＋網罩圓頭＋一整束馬尾） ---------------- */
+// 木柄：有竹節、尾端黑色握把
+function drawHandle(x0, y0, x1, y1, w){
+  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy) || 1, ux = dx/L, uy = dy/L, nx = -uy, ny = ux;
+  ctx.save(); ctx.lineCap = 'round';
+  ctx.strokeStyle = '#7a5130'; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+  ctx.strokeStyle = '#c99a62'; ctx.lineWidth = w*0.45; ctx.beginPath(); ctx.moveTo(x0 + nx*w*0.12, y0 + ny*w*0.12); ctx.lineTo(x1 + nx*w*0.12, y1 + ny*w*0.12); ctx.stroke();   // 木頭的亮面
+  // 竹節
+  ctx.strokeStyle = '#5a3a20'; ctx.lineWidth = Math.max(1.5, w*0.16);
+  for(let k=0.18;k<0.95;k+=0.16){ const cx = x0 + dx*k, cy = y0 + dy*k; ctx.beginPath(); ctx.moveTo(cx - nx*w*0.55, cy - ny*w*0.55); ctx.lineTo(cx + nx*w*0.55, cy + ny*w*0.55); ctx.stroke(); }
+  // 握把尾端
+  ctx.strokeStyle = '#2b211b'; ctx.lineWidth = w*1.05; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + ux*w*1.4, y0 + uy*w*1.4); ctx.stroke();
+  ctx.restore();
+}
+// 網罩圓頭：深色、編織紋、接柄處一圈金屬環
+function drawBulb(x, y, ang, len, wid){
+  ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+  const g = ctx.createRadialGradient(-len*0.15, -wid*0.25, wid*0.05, 0, 0, len*0.6); g.addColorStop(0, '#6d6a66'); g.addColorStop(1, '#1f1e1d');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, 0, len/2, wid/2, 0, 0, Math.PI*2); ctx.fill();
+  ctx.save(); ctx.clip();
+  ctx.strokeStyle = 'rgba(200,200,195,.45)'; ctx.lineWidth = 1;
+  for(let k=-len;k<=len;k+=len*0.16){ ctx.beginPath(); ctx.moveTo(k - wid, -wid); ctx.lineTo(k + wid, wid); ctx.stroke(); ctx.beginPath(); ctx.moveTo(k - wid, wid); ctx.lineTo(k + wid, -wid); ctx.stroke(); }
+  ctx.restore();
+  ctx.fillStyle = '#c9a24e'; ctx.fillRect(-len/2 - wid*0.12, -wid*0.32, wid*0.22, wid*0.64);
+  ctx.restore();
+}
+// 一整束馬尾：沿著「脊」畫出由粗到細的一束，再疊上一根根細毛
+function smoothSpine(sp, it = 2){
+  let p = sp.map(q => ({ x:q.x, y:q.y }));
+  for(let r=0;r<it;r++){ const o = [p[0]]; for(let i=0;i<p.length-1;i++){ const a = p[i], b = p[i+1]; o.push({ x:a.x*0.75 + b.x*0.25, y:a.y*0.75 + b.y*0.25 }, { x:a.x*0.25 + b.x*0.75, y:a.y*0.25 + b.y*0.75 }); } o.push(p[p.length-1]); p = o; }
+  return p;
+}
+function drawHair(sp0, w0, glowK, seed){
+  const sp = smoothSpine(sp0), n = sp.length; if(n < 3) return;
+  const nor = sp.map((p, i) => { const a = sp[Math.max(0, i-1)], b = sp[Math.min(n-1, i+1)], dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1; return { x:-dy/l, y:dx/l }; });
+  const wAt = i => { const t = i/(n-1); return w0 * Math.pow(1 - t, 0.75) * (0.9 + 0.25*Math.sin(t*Math.PI)); };
+  ctx.save();
+  if(glowK > 0.05){ ctx.shadowColor = 'rgba(255,220,140,.95)'; ctx.shadowBlur = 22*glowK; }
+  // 整束的底色
+  ctx.beginPath();
+  for(let i=0;i<n;i++){ const w = wAt(i)/2; ctx[i ? 'lineTo' : 'moveTo'](sp[i].x + nor[i].x*w, sp[i].y + nor[i].y*w); }
+  for(let i=n-1;i>=0;i--){ const w = wAt(i)/2; ctx.lineTo(sp[i].x - nor[i].x*w, sp[i].y - nor[i].y*w); }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(244,238,226,.92)'; ctx.fill();
+  ctx.shadowBlur = 0;
+  // 一根根的毛：從圓頭散出、到末端收攏，帶一點各自的波動
+  const strands = 46;
+  for(let k=0;k<strands;k++){
+    const o = (k/(strands-1))*2 - 1, ph = (seed || 0) + k*1.37, shade = k % 3 === 0;
+    ctx.strokeStyle = shade ? 'rgba(196,186,166,.55)' : 'rgba(255,255,255,.75)'; ctx.lineWidth = shade ? 1.1 : 0.9;
+    ctx.beginPath();
+    const ext = 1 + (k % 5 === 0 ? 0.06 : 0);   // 少數幾根比較長、從末端岔出來
+    for(let i=0;i<n;i++){
+      const t = i/(n-1), w = wAt(i)/2, wig = Math.sin(t*7 + ph)*w*0.10, x = sp[i].x + nor[i].x*(o*w*0.95 + wig), y = sp[i].y + nor[i].y*(o*w*0.95 + wig);
+      ctx[i ? 'lineTo' : 'moveTo'](x, y);
+    }
+    if(ext > 1){ const a = sp[n-4], b = sp[n-1]; ctx.lineTo(b.x + (b.x - a.x)*0.6 + o*5, b.y + (b.y - a.y)*0.6); }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+// 千絲拂塵台：白玉圓台上立著一支巨大的拂塵，馬尾從網罩垂下、隨風輕擺；淨化越多越亮
 function drawAltar(t){
   const cx = W/2, base = H*0.97, u = U();
   glow += ((Math.min(1, purified/16)) - glow) * 0.02;
-  // 光柱
   if(glow > 0.05){ const lg = ctx.createLinearGradient(cx, 0, cx, base); lg.addColorStop(0, `rgba(255,220,140,0)`); lg.addColorStop(1, `rgba(255,220,140,${0.18*glow})`); ctx.fillStyle = lg; ctx.fillRect(cx - u*0.08, 0, u*0.16, base); }
-  // 台
   ctx.fillStyle = '#d9e3df'; ctx.beginPath(); ctx.ellipse(cx, base, u*0.34, u*0.06, 0, 0, Math.PI*2); ctx.fill();
   ctx.fillStyle = '#b9c7c2'; ctx.fillRect(cx - u*0.34, base - u*0.03, u*0.68, u*0.03);
   ctx.fillStyle = '#eef3f1'; ctx.beginPath(); ctx.ellipse(cx, base - u*0.03, u*0.34, u*0.06, 0, 0, Math.PI*2); ctx.fill();
-  // 巨型拂塵：柄朝下、拂絲朝天
-  const top = base - u*0.62;
-  ctx.strokeStyle = '#8a5a34'; ctx.lineWidth = u*0.022; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(cx, base - u*0.04); ctx.lineTo(cx, base - u*0.30); ctx.stroke();
-  ctx.fillStyle = '#e8bd5a'; ctx.beginPath(); ctx.arc(cx, base - u*0.31, u*0.022, 0, Math.PI*2); ctx.fill();
-  for(let i=0;i<46;i++){
-    const k = i/45 - 0.5, sway = Math.sin(t/1400 + i*0.37)*u*0.02, x2 = cx + k*u*0.20 + sway;
-    ctx.strokeStyle = `rgba(255,248,232,${0.35 + 0.5*glow})`; ctx.lineWidth = 1.1;
-    if(glow > 0.1){ ctx.shadowColor = 'rgba(255,220,140,.9)'; ctx.shadowBlur = 8*glow; }
-    ctx.beginPath(); ctx.moveTo(cx, base - u*0.32); ctx.quadraticCurveTo(cx + k*u*0.06, base - u*0.48, x2, top + Math.abs(k)*u*0.08); ctx.stroke();
-  }
-  ctx.shadowBlur = 0;
+  // 柄立在台上，略往左斜；網罩在上，馬尾往右垂下成一道弧
+  const hx0 = cx - u*0.02, hy0 = base - u*0.04, bx = cx - u*0.09, by = base - u*0.52;
+  drawHandle(hx0, hy0, bx, by, u*0.036);
+  const ang = Math.atan2(by - hy0, bx - hx0);
+  const bulbLen = u*0.075, tipX = bx + Math.cos(ang)*bulbLen*0.45, tipY = by + Math.sin(ang)*bulbLen*0.45;
+  const sp = []; const n = 12, sway = Math.sin(t/1600);
+  for(let i=0;i<n;i++){ const k = i/(n-1); sp.push({ x: tipX + Math.sin(k*Math.PI*0.55)*u*0.16 + sway*k*k*u*0.02, y: tipY - u*0.01 + k*u*0.40 }); }
+  drawHair(sp, u*0.13, glow, 3.1);
+  drawBulb(bx, by, ang, u*0.11, u*0.08);
 }
 
-/* ---------------- 玩家的拂塵（拂絲用簡單物理模擬，會甩、會飄） ---------------- */
+/* ---------------- 玩家的拂塵：馬尾用一條會甩的「脊」做物理，揮動時整束甩出去 ---------------- */
 class Fuchen{
-  constructor(){ this.N = 34; this.K = 10; this.strands = []; this.head = { x:0, y:0 }; this.prev = { x:0, y:0 }; this.trail = []; this.glow = 0;
-    // 每根拂絲的個性：長短、輕重、受風程度都不一樣，才會散成一把而不是一條線
-    this.prop = Array.from({length:this.N}, (_, i) => ({ len: 0.8 + Math.random()*0.4, grav: 0.22 + Math.random()*0.22, wind: 0.6 + Math.random()*0.8, ph: Math.random()*6.28, alpha: 0.55 + Math.random()*0.45 })); }
-  reset(x, y){ this.head = { x, y }; this.prev = { x, y }; this.strands = Array.from({length:this.N}, (_, i) => Array.from({length:this.K}, (_, j) => ({ x, y: y + j*4, px:x, py: y + j*4 }))); this.trail = []; }
+  constructor(){ this.K = 15; this.spine = []; this.head = { x:0, y:0 }; this.prev = { x:0, y:0 }; this.trail = []; this.glow = 0; this.dir = { x:0, y:-1 }; }
+  reset(x, y){ this.head = { x, y }; this.prev = { x, y }; this.spine = Array.from({length:this.K}, (_, j) => ({ x, y: y + j*6, px:x, py: y + j*6 })); this.trail = []; }
   moveTo(x, y){ this.prev = { ...this.head }; this.head = { x, y }; }
+  // 網罩圓頭的位置與方向：柄從手（右下角）伸過來
+  bulb(){ const u = U(), h = this.head, dx = h.x - GRIP.x, dy = h.y - GRIP.y, d = Math.hypot(dx, dy) || 1; return { ux:dx/d, uy:dy/d, d, len:u*0.085, wid:u*0.062 }; }
   update(){
-    const u = U(), hx = this.head.x, hy = this.head.y, now = performance.now()/1000;
-    // 拂絲根部沿著「垂直於柄」的方向排開成一小把
-    const gx = GRIP.x - hx, gy = GRIP.y - hy, gl = Math.hypot(gx, gy) || 1, px = -gy/gl, py = gx/gl;
-    this.strands.forEach((s, i) => {
-      const pr = this.prop[i], L = u*0.40*pr.len/this.K, k0 = i/(this.N-1) - 0.5;
-      s[0].x = hx + px*k0*u*0.05; s[0].y = hy + py*k0*u*0.05;
-      for(let j=1;j<s.length;j++){
-        const p = s[j], vx = (p.x - p.px)*0.92, vy = (p.y - p.py)*0.92; p.px = p.x; p.py = p.y;
-        const w = Math.sin(now*1.3 + pr.ph + j*0.4)*0.06*pr.wind*(j/this.K);   // 微風
-        p.x += vx + w + k0*0.05*(j/this.K); p.y += vy + pr.grav;               // 越往末端越散開
-      }
-      for(let it=0;it<3;it++) for(let j=1;j<s.length;j++){ const a = s[j-1], b = s[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, k = (d - L)/d; b.x -= dx*k*(j === 1 ? 1 : 0.5); b.y -= dy*k*(j === 1 ? 1 : 0.5); if(j > 1){ a.x += dx*k*0.5; a.y += dy*k*0.5; } }
-      s[0].x = hx + px*k0*u*0.05; s[0].y = hy + py*k0*u*0.05;
-    });
+    const u = U(), b = this.bulb(), rootX = this.head.x + b.ux*b.len*0.4, rootY = this.head.y + b.uy*b.len*0.4, L = u*0.55/(this.K-1);
+    const s = this.spine; s[0].x = rootX; s[0].y = rootY;
+    // 第二節順著柄的方向出來，馬尾才會從網罩「接著」垂下
+    for(let j=1;j<s.length;j++){ const p = s[j], vx = (p.x - p.px)*0.9, vy = (p.y - p.py)*0.9; p.px = p.x; p.py = p.y; p.x += vx + Math.sin(performance.now()/900 + j*0.5)*0.05; p.y += vy + 0.9; }
+    for(let it=0;it<4;it++){
+      for(let j=1;j<s.length;j++){ const a = s[j-1], c = s[j], dx = c.x - a.x, dy = c.y - a.y, d = Math.hypot(dx, dy) || 1, k = (d - L)/d; if(j === 1){ c.x -= dx*k; c.y -= dy*k; } else { a.x += dx*k*0.5; a.y += dy*k*0.5; c.x -= dx*k*0.5; c.y -= dy*k*0.5; } }
+      s[0].x = rootX; s[0].y = rootY;
+      const tx = rootX + b.ux*L*0.5, ty = rootY + L*0.8; s[1].x += (tx - s[1].x)*0.25; s[1].y += (ty - s[1].y)*0.25;   // 從網罩先略往前、再往下垂
+    }
     this.glow *= 0.96;
     this.trail = this.trail.filter(p => (p.life -= 0.035) > 0);
   }
   draw(){
-    const u = U(), h = this.head;
-    // 光帶殘影
+    const u = U(), h = this.head, b = this.bulb();
     if(this.trail.length > 1){
       ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      for(let i=1;i<this.trail.length;i++){ const a = this.trail[i-1], b = this.trail[i], al = Math.min(a.life, b.life);
-        ctx.strokeStyle = `rgba(255,214,120,${0.55*al})`; ctx.lineWidth = u*0.05*al; ctx.shadowColor = 'rgba(255,200,90,.9)'; ctx.shadowBlur = 20;
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+      for(let i=1;i<this.trail.length;i++){ const a = this.trail[i-1], c = this.trail[i], al = Math.min(a.life, c.life);
+        ctx.strokeStyle = `rgba(255,214,120,${0.5*al})`; ctx.lineWidth = u*0.06*al; ctx.shadowColor = 'rgba(255,200,90,.9)'; ctx.shadowBlur = 20;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(c.x, c.y); ctx.stroke(); }
       ctx.restore();
     }
-    // 柄：從手（右下角）伸到拂塵頭
-    const gx = GRIP.x, gy = GRIP.y, dx = h.x - gx, dy = h.y - gy, d = Math.hypot(dx, dy) || 1, hl = Math.min(d, u*0.55);
-    const sx = h.x - dx/d*hl, sy = h.y - dy/d*hl;
-    ctx.save(); ctx.lineCap = 'round';
-    ctx.strokeStyle = '#6e4325'; ctx.lineWidth = u*0.03; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(h.x, h.y); ctx.stroke();
-    ctx.strokeStyle = '#a06a3c'; ctx.lineWidth = u*0.012; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(h.x, h.y); ctx.stroke();
-    ctx.fillStyle = '#e8bd5a'; ctx.beginPath(); ctx.arc(h.x, h.y, u*0.022, 0, Math.PI*2); ctx.fill();
-    // 拂絲
-    const g = this.glow;
-    if(g > 0.05){ ctx.shadowColor = 'rgba(255,220,140,.95)'; ctx.shadowBlur = 14*g; }
-    const path = s => { ctx.beginPath(); ctx.moveTo(s[0].x, s[0].y); for(let j=1;j<s.length-1;j++){ const mx = (s[j].x + s[j+1].x)/2, my = (s[j].y + s[j+1].y)/2; ctx.quadraticCurveTo(s[j].x, s[j].y, mx, my); } ctx.lineTo(s[s.length-1].x, s[s.length-1].y); };
-    // 底下一層柔光，讓整束拂絲有份量
-    ctx.strokeStyle = `rgba(255,246,225,${0.10 + 0.15*g})`; ctx.lineWidth = u*0.018;
-    for(let i=0;i<this.strands.length;i+=3){ path(this.strands[i]); ctx.stroke(); }
-    // 一根一根的拂絲
-    this.strands.forEach((s, i) => { ctx.strokeStyle = `rgba(255,250,238,${this.prop[i].alpha*(0.8 + 0.2*g)})`; ctx.lineWidth = 1.4; path(s); ctx.stroke(); });
-    // 綁拂絲的金色束口
-    ctx.fillStyle = '#e8bd5a'; ctx.beginPath(); ctx.arc(h.x, h.y, u*0.026, 0, Math.PI*2); ctx.fill();
-    ctx.restore();
+    const hl = Math.min(b.d, u*0.6), sx = h.x - b.ux*hl, sy = h.y - b.uy*hl;
+    drawHair(this.spine, u*0.11, this.glow, 1.7);
+    drawHandle(sx, sy, h.x - b.ux*b.len*0.4, h.y - b.uy*b.len*0.4, u*0.032);
+    drawBulb(h.x, h.y, Math.atan2(b.uy, b.ux), b.len, b.wid);
   }
 }
 let fu = null;
