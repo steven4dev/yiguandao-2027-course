@@ -114,7 +114,7 @@ button.big{width:100%;font-size:1.1rem;padding:14px}
 
 <script>
 'use strict';
-const VERSION = 'v261109.04';
+const VERSION = 'v261109.05';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -736,22 +736,22 @@ function drawHint(t){
   const u = U(), a = h.a, p = h.pts, total = h.cum[h.cum.length-1];
   ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   // 深色外框讓金線在任何背景都看得清楚
-  ctx.strokeStyle = `rgba(0,0,0,${0.45*a})`; ctx.lineWidth = u*0.05; ctx.beginPath(); p.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.stroke();
-  ctx.strokeStyle = `rgba(255,214,120,${0.9*a})`; ctx.lineWidth = u*0.026; ctx.shadowColor = 'rgba(255,200,90,.9)'; ctx.shadowBlur = 18; ctx.stroke();
+  ctx.strokeStyle = `rgba(0,0,0,${0.18*a})`; ctx.lineWidth = u*0.04; ctx.beginPath(); p.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.stroke();
+  ctx.strokeStyle = `rgba(255,214,120,${0.42*a})`; ctx.lineWidth = u*0.02; ctx.shadowColor = 'rgba(255,200,90,.6)'; ctx.shadowBlur = 10; ctx.stroke();
   ctx.shadowBlur = 0;
   // 沿途的方向箭頭
   const gap = Math.max(u*0.16, total/8);
-  for(let d=gap*0.75; d<total-gap*0.5; d+=gap){ const q = atLen(h, d); arrowAt(q.x, q.y, q.ang, u*0.055, `rgba(255,246,220,${0.95*a})`); }
+  for(let d=gap*0.75; d<total-gap*0.5; d+=gap){ const q = atLen(h, d); arrowAt(q.x, q.y, q.ang, u*0.05, `rgba(255,246,220,${0.55*a})`); }
   // 會跑的光點（起點 → 終點，反覆）
   const k = ((t % 1700)/1700), dd = k*total;
-  for(let j=8;j>=0;j--){ const q = atLen(h, Math.max(0, dd - j*u*0.02)); ctx.fillStyle = `rgba(255,255,255,${a*(1 - j/9)*0.9})`; ctx.beginPath(); ctx.arc(q.x, q.y, u*0.022*(1 - j/12), 0, Math.PI*2); ctx.fill(); }
+  for(let j=8;j>=0;j--){ const q = atLen(h, Math.max(0, dd - j*u*0.02)); ctx.fillStyle = `rgba(255,255,255,${a*(1 - j/9)*0.75})`; ctx.beginPath(); ctx.arc(q.x, q.y, u*0.022*(1 - j/12), 0, Math.PI*2); ctx.fill(); }
   // 終點大箭頭＋「終」
   const closed = Math.hypot(p[0][0] - p[p.length-1][0], p[0][1] - p[p.length-1][1]) < u*0.12;
   const e = atLen(h, closed ? total - u*0.16 : total - 0.5);
-  arrowAt(e.x, e.y, e.ang, u*0.11, `rgba(255,210,122,${a})`);
+  arrowAt(e.x, e.y, e.ang, u*0.1, `rgba(255,210,122,${0.75*a})`);
   // 起點綠圈＋「起」
-  const s0 = p[0]; ctx.fillStyle = `rgba(127,224,166,${a})`; ctx.beginPath(); ctx.arc(s0[0], s0[1], u*0.05, 0, Math.PI*2); ctx.fill();
-  ctx.strokeStyle = `rgba(255,255,255,${0.9*a})`; ctx.lineWidth = 3; ctx.stroke();
+  const s0 = p[0]; ctx.fillStyle = `rgba(127,224,166,${0.8*a})`; ctx.beginPath(); ctx.arc(s0[0], s0[1], u*0.05, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = `rgba(255,255,255,${0.6*a})`; ctx.lineWidth = 2; ctx.stroke();
   ctx.font = `900 ${Math.round(u*0.05)}px "Noto Sans TC", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = `rgba(20,40,28,${a})`; ctx.fillText('起', s0[0], s0[1] + 1);
   const bx0 = hintBox(); let ex = e.x + Math.cos(e.ang)*u*0.12, ey = e.y + Math.sin(e.ang)*u*0.12;
@@ -761,8 +761,8 @@ function drawHint(t){
 }
 function frame(t){
   drawBackground(t);
-  drawMonster(t);
-  drawHint(t);
+  drawHint(t);       // 提示在後面
+  drawMonster(t);    // 怪物在前景
   if(replayAnim){
     const k = Math.max(0, Math.min(1, (t - replayAnim.t0)/replayAnim.dur)), n = replayAnim.pts.length, idx = Math.min(n-1, Math.floor(k*(n-1)));
     const p = replayAnim.pts[idx]; fu.moveTo(p[0], p[1]); fu.trail.push({ x:p[0], y:p[1], life:1 }); fu.glow = 1;
