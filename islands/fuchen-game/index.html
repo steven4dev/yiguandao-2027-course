@@ -89,7 +89,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 <div class="center" id="center"></div>
 <div class="bottom" id="bottomBar" hidden>
   <span class="tag" id="modeTag"></span>
-  <button id="btnQuit">離開</button>
+  <span style="display:flex;gap:8px"><button id="btnMusic">🎵 音樂 開</button><button id="btnQuit">離開</button></span>
 </div>
 
 <!-- 開場 -->
@@ -154,7 +154,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.10';
+const VERSION = 'v261109.11';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -618,32 +618,114 @@ const dex = Object.assign({ v:1, m:{} }, store.get(DEX_KEY, {}));
 function dexAdd(def, gold){ const isNew = !dex.m[def.name]; const e = dex.m[def.name] || { n:0, first: new Date().toLocaleDateString('zh-TW') }; e.n++; if(gold) e.gold = true; dex.m[def.name] = e; store.set(DEX_KEY, dex); return isNew; }
 const dexCount = () => MONS.filter(m => dex.m[m.name]).length;
 
-/* ---------------- 聲音、語音、震動 ---------------- */
-let actx = null, noiseBuf = null, zhVoice = null;
-function audioInit(){ try{ if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if(actx.state === 'suspended') actx.resume(); }catch(e){ actx = null; } }
-function tone(freq, dur, type='sine', gain=0.25, when=0){
-  if(!actx) return; const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain(); o.type = type; o.frequency.value = freq;
-  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g).connect(actx.destination); o.start(t); o.stop(t + dur + 0.05);
+/* ---------------- 聲音：史詩風格，全部即時合成（不用音檔） ----------------
+   配方：太鼓＋銅鑼＋合唱般的長音＋大殿殘響，旋律用 D 小調五聲音階（D F G A C）。
+   音訊路線：各樂器 → 音效匯流排／音樂匯流排 → 主音量 → 壓縮器 → 喇叭；另外送一份到殘響（大殿的空間感）。 */
+let actx = null, AU = null, noiseBuf = null, zhVoice = null;
+function audioInit(){
+  try{ if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if(actx.state === 'suspended' && actx.resume && !(window.OfflineAudioContext && actx instanceof OfflineAudioContext)) actx.resume().catch(() => {}); }catch(e){ actx = null; return; }
+  if(AU) return;
+  const c = actx, master = c.createGain(); master.gain.value = 0.9;
+  const comp = c.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.25;
+  master.connect(comp).connect(c.destination);
+  // 大殿殘響：3 秒衰減的雜訊當空間響應
+  const rev = c.createConvolver(), len = Math.floor(c.sampleRate*3), ib = c.createBuffer(2, len, c.sampleRate);
+  for(let ch=0;ch<2;ch++){ const d = ib.getChannelData(ch); for(let i=0;i<len;i++){ const k = i/len; d[i] = i < c.sampleRate*0.012 ? 0 : (Math.random()*2 - 1)*Math.pow(1 - k, 2.6); } }
+  rev.buffer = ib; const revOut = c.createGain(); revOut.gain.value = 0.5; rev.connect(revOut).connect(master);
+  const sfxBus = c.createGain(); sfxBus.connect(master);
+  const musicBus = c.createGain(); musicBus.gain.value = store.get('fuchenGame.music', true) ? 0.55 : 0; musicBus.connect(master);
+  noiseBuf = c.createBuffer(1, c.sampleRate*2, c.sampleRate); const nd = noiseBuf.getChannelData(0); for(let i=0;i<nd.length;i++) nd[i] = Math.random()*2 - 1;
+  AU = { c, master, rev, sfxBus, musicBus };
 }
-function swoosh(strength=1){
-  if(!actx) return;
-  if(!noiseBuf){ noiseBuf = actx.createBuffer(1, actx.sampleRate*0.6, actx.sampleRate); const d = noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1; }
-  const t = actx.currentTime, src = actx.createBufferSource(), bp = actx.createBiquadFilter(), g = actx.createGain();
-  src.buffer = noiseBuf; bp.type = 'bandpass'; bp.Q.value = 1.2; bp.frequency.setValueAtTime(500, t); bp.frequency.exponentialRampToValueAtTime(1200 + 1800*Math.min(1,strength), t + 0.25);
-  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
-  src.connect(bp).connect(g).connect(actx.destination); src.start(t); src.stop(t + 0.5);
-}
-const sfx = {
-  beat(){ tone(660, 0.12, 'triangle', 0.3); },
-  go(){ tone(988, 0.35, 'square', 0.18); tone(1318, 0.3, 'triangle', 0.15, 0.02); },
-  ding(){ tone(1568, 0.6, 'sine', 0.25); tone(2093, 0.5, 'sine', 0.12, 0.05); },
-  purify(){ [784,988,1175,1568,2093].forEach((f,i) => tone(f, 0.4, 'triangle', 0.16, i*0.07)); },
-  ok(){ tone(880, 0.25, 'triangle', 0.2); tone(1175, 0.3, 'triangle', 0.15, 0.08); },
-  miss(){ tone(330, 0.3, 'sawtooth', 0.12); tone(247, 0.45, 'sawtooth', 0.1, 0.12); },
-  appear(){ tone(392, 0.2, 'sine', 0.15); tone(523, 0.25, 'sine', 0.12, 0.1); },
-  boss(){ [196,185,175,165].forEach((f,i) => tone(f, 0.4, 'sawtooth', 0.1, i*0.18)); }
+const now0 = () => actx.currentTime + 0.01;
+function route(node, bus, wet = 0.3){ node.connect(bus); if(wet > 0){ const w = actx.createGain(); w.gain.value = wet; node.connect(w).connect(AU.rev); } }
+function env(g, t, a, peak, dec){ g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + dec); }
+function noiseSrc(t, dur){ const s = actx.createBufferSource(); s.buffer = noiseBuf; s.start(t, Math.random()*0.5); s.stop(t + dur); return s; }
+// 樂器
+const I = {
+  taiko(t, f = 62, g = 0.9, bus = AU.sfxBus, wet = 0.35){   // 太鼓：音高快速往下掉的低音＋鼓皮的拍擊聲
+    const c = actx, o = c.createOscillator(), og = c.createGain(); o.type = 'sine';
+    o.frequency.setValueAtTime(f*2.4, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.09); o.frequency.exponentialRampToValueAtTime(f*0.8, t + 0.7);
+    env(og, t, 0.004, g, 0.75); o.connect(og); route(og, bus, wet); o.start(t); o.stop(t + 0.9);
+    const n = noiseSrc(t, 0.12), lp = c.createBiquadFilter(), ng = c.createGain(); lp.type = 'lowpass'; lp.frequency.value = 900; env(ng, t, 0.002, g*0.5, 0.09); n.connect(lp).connect(ng); route(ng, bus, wet*0.6);
+  },
+  rim(t, g = 0.25, bus = AU.musicBus){ const n = noiseSrc(t, 0.06), bp = actx.createBiquadFilter(), ng = actx.createGain(); bp.type = 'bandpass'; bp.frequency.value = 2500; bp.Q.value = 2; env(ng, t, 0.001, g, 0.05); n.connect(bp).connect(ng); route(ng, bus, 0.2); },
+  gong(t, f = 82, g = 0.6, dur = 4.5, bus = AU.sfxBus){   // 銅鑼：幾個不成倍數的泛音、慢慢衰減，再加一點金屬的嘶聲
+    [1, 1.48, 2.02, 2.74, 3.3, 4.12, 5.4].forEach((p, i) => { const o = actx.createOscillator(), og = actx.createGain(); o.type = 'sine';
+      o.frequency.setValueAtTime(f*p*1.012, t); o.frequency.exponentialRampToValueAtTime(f*p, t + 1.2);
+      og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(g/(i + 1.3), t + 0.02 + i*0.015); og.gain.exponentialRampToValueAtTime(0.0001, t + dur*(1 - i*0.08));
+      o.connect(og); route(og, bus, 0.65); o.start(t); o.stop(t + dur); });
+    const n = noiseSrc(t, 0.4), hp = actx.createBiquadFilter(), ng = actx.createGain(); hp.type = 'highpass'; hp.frequency.value = 3000; env(ng, t, 0.003, g*0.3, 0.35); n.connect(hp).connect(ng); route(ng, bus, 0.7);
+  },
+  bell(t, f, g = 0.25, bus = AU.sfxBus){ [1, 2.76, 5.4, 8.9].forEach((p, i) => { const o = actx.createOscillator(), og = actx.createGain(); o.type = 'sine'; o.frequency.value = f*p; env(og, t, 0.003, g/(i*1.8 + 1), 1.6 - i*0.3); o.connect(og); route(og, bus, 0.5); o.start(t); o.stop(t + 1.7); }); },
+  pad(t, freqs, dur, g = 0.08, bus = AU.musicBus, bright = 900){   // 弦樂長音：三條微微走音的鋸齒波，柔和的濾波
+    freqs.forEach(f => { for(const det of [-7, 0, 7]){ const o = actx.createOscillator(), lp = actx.createBiquadFilter(), og = actx.createGain(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det; lp.type = 'lowpass'; lp.frequency.value = bright;
+      og.gain.setValueAtTime(0.0001, t); og.gain.linearRampToValueAtTime(g/3, t + Math.min(1.2, dur*0.4)); og.gain.linearRampToValueAtTime(g/3*0.8, t + dur*0.8); og.gain.linearRampToValueAtTime(0.0001, t + dur + 0.8);
+      o.connect(lp).connect(og); route(og, bus, 0.55); o.start(t); o.stop(t + dur + 0.9); } });
+  },
+  choir(t, freqs, dur, g = 0.12, bus = AU.sfxBus){   // 合唱「啊——」：鋸齒波通過三個母音共振峰
+    freqs.forEach(f => { for(const det of [-10, -3, 4, 11]){ const o = actx.createOscillator(), og = actx.createGain(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det;
+      og.gain.setValueAtTime(0.0001, t); og.gain.linearRampToValueAtTime(g/4, t + 0.3); og.gain.linearRampToValueAtTime(g/4*0.7, t + dur*0.7); og.gain.linearRampToValueAtTime(0.0001, t + dur);
+      for(const [ff, q, gg] of [[730, 8, 1], [1090, 10, 0.6], [2440, 12, 0.25]]){ const bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = ff; bp.Q.value = q; const fg = actx.createGain(); fg.gain.value = gg*2.2; o.connect(bp).connect(fg).connect(og); }
+      route(og, bus, 0.6); o.start(t); o.stop(t + dur + 0.1); } });
+  },
+  brass(t, freqs, dur = 0.6, g = 0.16, bus = AU.sfxBus){   // 銅管重音：濾波器快速打開再收回
+    freqs.forEach(f => { for(const det of [-6, 6]){ const o = actx.createOscillator(), lp = actx.createBiquadFilter(), og = actx.createGain(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det; lp.type = 'lowpass'; lp.Q.value = 2;
+      lp.frequency.setValueAtTime(300, t); lp.frequency.exponentialRampToValueAtTime(2800, t + 0.08); lp.frequency.exponentialRampToValueAtTime(900, t + dur);
+      env(og, t, 0.03, g/2, dur); o.connect(lp).connect(og); route(og, bus, 0.45); o.start(t); o.stop(t + dur + 0.1); } });
+  },
+  boom(t, g = 0.8, bus = AU.sfxBus){ const o = actx.createOscillator(), og = actx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(32, t + 0.7); env(og, t, 0.005, g, 0.9); o.connect(og); route(og, bus, 0.25); o.start(t); o.stop(t + 1); },
+  cymbal(t, g = 0.3, bus = AU.sfxBus){ const n = noiseSrc(t, 1.6), hp = actx.createBiquadFilter(), ng = actx.createGain(); hp.type = 'highpass'; hp.frequency.value = 5500; env(ng, t, 0.002, g, 1.4); n.connect(hp).connect(ng); route(ng, bus, 0.6); },
+  whoosh(t, s = 1, bus = AU.sfxBus){   // 破風聲：帶通濾波的雜訊快速往上掃，由左掃到右
+    const n = noiseSrc(t, 0.7), bp = actx.createBiquadFilter(), ng = actx.createGain(); bp.type = 'bandpass'; bp.Q.value = 1.6;
+    bp.frequency.setValueAtTime(350, t); bp.frequency.exponentialRampToValueAtTime(1500 + 2500*s, t + 0.18); bp.frequency.exponentialRampToValueAtTime(500, t + 0.55);
+    ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(0.7*Math.max(0.4, s), t + 0.12); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+    let last = n.connect(bp).connect(ng);
+    if(actx.createStereoPanner){ const pan = actx.createStereoPanner(); pan.pan.setValueAtTime(-0.8, t); pan.pan.linearRampToValueAtTime(0.8, t + 0.5); last = last.connect(pan); }
+    route(last, bus, 0.3);
+  },
+  flute(t, f, g = 0.06, bus = AU.musicBus){ const o = actx.createOscillator(), og = actx.createGain(), lfo = actx.createOscillator(), lg = actx.createGain(); o.type = 'triangle'; o.frequency.value = f; lfo.frequency.value = 5.5; lg.gain.value = f*0.012; lfo.connect(lg).connect(o.frequency);
+    og.gain.setValueAtTime(0.0001, t); og.gain.linearRampToValueAtTime(g, t + 0.08); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.7); o.connect(og); route(og, bus, 0.5); o.start(t); lfo.start(t); o.stop(t + 0.75); lfo.stop(t + 0.75); }
 };
+const N = { D2:73.42, A2:110, Bb2:116.54, C3:130.81, D3:146.83, F3:174.61, G3:196, A3:220, Bb3:233.08, C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392, A4:440, C5:523.25, D5:587.33, F5:698.46, G5:783.99, A5:880, C6:1046.5, D6:1174.66 };
+const ok = () => !!(actx && AU);
+function swoosh(strength = 1, t){ if(ok()) I.whoosh(t ?? now0(), Math.min(1, strength)); }
+const sfx = {
+  beat(t){ if(!ok()) return; t = t ?? now0(); I.taiko(t, 62, 1.0); I.boom(t, 0.35); },                                                     // 倒數：每一拍一記大太鼓
+  go(t){ if(!ok()) return; t = t ?? now0(); I.taiko(t, 58, 1.2); I.boom(t, 0.9); I.cymbal(t, 0.32); I.whoosh(t + 0.02, 1); },               // 揮：最大的一擊
+  ding(t){ if(!ok()) return; t = t ?? now0(); I.bell(t, 1174.66, 0.2); I.bell(t + 0.05, 1760, 0.08); },
+  purify(t){ if(!ok()) return; t = t ?? now0(); I.boom(t, 0.8); I.taiko(t, 70, 0.8); [N.D5, N.F5, N.G5, N.A5, N.D6].forEach((f, i) => I.bell(t + 0.08 + i*0.07, f, 0.14)); I.choir(t + 0.05, [N.D4, N.A4], 1.6, 0.1); },
+  capture(t){ if(!ok()) return; t = t ?? now0(); I.boom(t, 1.0); I.taiko(t, 60, 0.9); I.gong(t + 0.02, 110, 0.3, 3); [N.D5, N.F5, N.G5, N.A5, N.C6, N.D6].forEach((f, i) => I.bell(t + 0.7 + i*0.08, f, 0.13)); I.choir(t + 0.7, [N.D4, N.F4, N.A4, N.D5], 2.2, 0.12); },
+  combo(t){ if(!ok()) return; t = t ?? now0(); I.brass(t, [N.D3, N.A3, N.D4, N.F4], 0.35, 0.18); I.brass(t + 0.2, [N.D3, N.A3, N.D4, N.A4], 0.8, 0.2); I.taiko(t, 55, 1.0); I.taiko(t + 0.2, 55, 1.0); I.gong(t + 0.2, 82, 0.5, 4); },
+  miss(t){ if(!ok()) return; t = t ?? now0(); I.taiko(t, 45, 0.6, AU.sfxBus, 0.15); [N.A4, N.F4, N.D4].forEach((f, i) => I.bell(t + 0.12 + i*0.14, f, 0.07)); },
+  appear(t){ if(!ok()) return; t = t ?? now0(); I.whoosh(t, 0.35); I.taiko(t + 0.15, 95, 0.4); I.bell(t + 0.2, N.A4, 0.08); },
+  boss(t){ if(!ok()) return; t = t ?? now0(); I.gong(t, 55, 0.62, 6); I.taiko(t, 50, 1.0); I.taiko(t + 0.3, 50, 1.0); I.boom(t, 0.8); I.choir(t + 0.2, [N.D3, N.A3], 2.6, 0.14); },
+  victory(t){ if(!ok()) return; t = t ?? now0();
+    [[N.D4, N.A4], [N.F4, N.C5], [N.G4, N.D5], [N.A4, N.F5]].forEach((ch, i) => I.brass(t + i*0.22, ch, 0.35, 0.16));
+    for(let i=0;i<8;i++) I.taiko(t + i*0.11, 70 - i*2, 0.5 + i*0.06);
+    I.brass(t + 0.9, [N.D4, N.A4, N.D5, N.F5], 1.4, 0.2); I.gong(t + 0.9, 82, 0.6, 5); I.choir(t + 0.9, [N.D4, N.F4, N.A4, N.D5], 3, 0.14); I.cymbal(t + 0.9, 0.3); },
+  defeat(t){ if(!ok()) return; t = t ?? now0(); I.pad(t, [N.D3, N.F3, N.A3], 1.2, 0.12, AU.sfxBus, 700); I.pad(t + 1.2, [N.C3, N.F3, N.A3], 1.2, 0.1, AU.sfxBus, 600); I.pad(t + 2.4, [N.Bb2, N.D3, N.F3], 2, 0.1, AU.sfxBus, 500); I.taiko(t, 48, 0.6); I.taiko(t + 1.2, 45, 0.5); }
+};
+/* 背景音樂：84 拍、每小節 16 格。太鼓節奏＋每兩小節換一次和弦的長音＋偶爾一句笛聲；
+   battle＝一般、boss＝加低音持續音與密集鼓點、hold＝倒數時只剩低音（營造緊張）。 */
+const BGM = { on:false, base:'battle', mode:'battle', next:0, step:0, timer:0 };
+const CHORDS = [[N.D3, N.A3, N.D4, N.F4], [N.Bb2, N.F3, N.Bb3, N.D4], [N.C3, N.G3, N.C4, N.E4], [N.A2, N.E4/2, N.A3, N.C4]];
+function bgmStart(mode = 'battle'){ if(!ok()) return; BGM.base = BGM.mode = mode; if(BGM.on) return; BGM.on = true; BGM.step = 0; BGM.next = actx.currentTime + 0.1; BGM.timer = setInterval(bgmTick, 50); }
+function bgmStop(){ BGM.on = false; clearInterval(BGM.timer); }
+function bgmSet(mode){ BGM.base = BGM.mode = mode; }
+function bgmHold(on){ BGM.mode = on ? 'hold' : BGM.base; }
+function bgmTick(){ if(!BGM.on || !ok()) return; const spb = 60/84/4; while(BGM.next < actx.currentTime + 0.25){ bgmStep(BGM.step, BGM.next); BGM.next += spb; BGM.step++; } }
+function bgmStep(step, t){
+  const s = step % 16, bar = Math.floor(step/16), mode = BGM.mode, bus = AU.musicBus;
+  if(mode === 'hold'){ if(s === 0) I.pad(t, [N.D2, N.D3], 2.6, 0.08, bus, 450); if(s === 0 || s === 8) I.taiko(t, 45, 0.3, bus, 0.3); return; }
+  if(s === 0 && bar % 2 === 0) I.pad(t, CHORDS[(bar/2) % 4], 3.6, mode === 'boss' ? 0.11 : 0.08, bus, mode === 'boss' ? 1300 : 900);
+  if(s === 0 || s === 10) I.taiko(t, 55, 0.55, bus, 0.3);
+  if(s === 8) I.taiko(t, 80, 0.35, bus, 0.3);
+  if(s === 4 || s === 12 || s === 14) I.rim(t, 0.1, bus);
+  if(mode === 'boss'){ if(s % 2 === 1) I.taiko(t, 110, 0.12, bus, 0.2); if(s === 0) I.pad(t, [N.D2], 1.8, 0.1, bus, 300); if(s === 0 && bar % 4 === 0) I.gong(t, 55, 0.15, 4, bus); }
+  else if(bar % 4 === 3 && [0, 3, 6, 8].includes(s)) I.flute(t, [N.D5, N.C5, N.A4, N.G4][[0, 3, 6, 8].indexOf(s)], 0.05, bus);
+}
+function setMusic(on){ store.set('fuchenGame.music', on); if(AU) AU.musicBus.gain.setTargetAtTime(on ? 0.55 : 0, actx.currentTime, 0.1); const b = $('#btnMusic'); if(b) b.textContent = on ? '🎵 音樂 開' : '🔇 音樂 關'; }
 function pickVoice(){ try{ const vs = speechSynthesis.getVoices(); zhVoice = vs.find(v => /zh[-_]TW/i.test(v.lang)) || vs.find(v => /zh/i.test(v.lang)) || null; }catch(e){} }
 if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
 function say(text){ if(!('speechSynthesis' in window)) return; try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-TW'; if(zhVoice) u.voice = zhVoice; u.rate = 1.1; speechSynthesis.speak(u); }catch(e){} }
@@ -1018,7 +1100,7 @@ function startCapture(m, sym, weak, isNew){
   for(let i=0;i<10;i++){ const a = i/10*TAU + Math.random()*0.3, pts = [[0,0]]; let rr = 0; for(let k=0;k<5;k++){ rr += 0.18 + Math.random()*0.08; pts.push([Math.cos(a + (Math.random()-.5)*0.4)*rr, Math.sin(a + (Math.random()-.5)*0.4)*rr]); } cracks.push(pts); }
   for(let i=0;i<26;i++){ const a = Math.random()*TAU, v = 2 + Math.random()*5; shards.push({ x:Math.cos(a)*0.3, y:Math.sin(a)*0.3, vx:Math.cos(a)*v, vy:Math.sin(a)*v - 3, rot:Math.random()*6, vr:(Math.random()-.5)*0.4, s:0.08 + Math.random()*0.12 }); }
   m.state = 'gone';
-  return new Promise(res => { capFx = { t0: performance.now(), m, sym, weak, isNew, cracks, shards, sparks:[], done: res }; shakeAmp = 10; sfx.purify(); vib(120); });
+  return new Promise(res => { capFx = { t0: performance.now(), m, sym, weak, isNew, cracks, shards, sparks:[], done: res }; shakeAmp = 10; sfx.capture(); vib(120); });
 }
 function drawCapture(t){
   const A = capFx; if(!A) return;
@@ -1056,7 +1138,7 @@ function drawCapture(t){
   if(e > 2900){ const d = A.done; capFx = null; d(); }
 }
 // 組合技的招式特效（約 1.3 秒）
-function startCombo(name){ sfx.purify(); vib(100); return new Promise(res => { comboFx = { name, fx: COMBO_FX[name], t0: performance.now(), done: res }; }); }
+function startCombo(name){ sfx.combo(); vib(100); return new Promise(res => { comboFx = { name, fx: COMBO_FX[name], t0: performance.now(), done: res }; }); }
 function drawComboFx(){
   const A = comboFx; if(!A) return;
   const e = performance.now() - A.t0, k = Math.min(1, e/700), al = Math.min(1, (1300 - e)/400), cx = MON.x, cy = MON.y, R = U()*0.22;
@@ -1150,7 +1232,7 @@ function center(html){ $('#center').innerHTML = html || ''; }
 
 /* ---------------- 一次揮拂：倒數 → 揮 → 叮 ---------------- */
 async function countdown(beats){
-  center(''); dimTarget = 0.65; document.body.dataset.phase = 'count';
+  center(''); dimTarget = 0.65; document.body.dataset.phase = 'count'; bgmHold(true);
   for(let i=beats;i>=1;i--){ cd = { text:String(i), t0:performance.now(), dur:0.9, burst:false }; sfx.beat(); vib(30); await wait(900); }
 }
 function record(ms, th0, word = '揮'){
@@ -1236,7 +1318,7 @@ async function encounter(opt){
     if(i > 0){ sfx.ding(); await wait(350); }
     const st = await record(SYMS[keys[i]].kind === 'dir' ? 1600 : 2800, th0, i > 0 ? '再揮' : '揮'); strokes.push(st); lastStroke = st; if(i < keys.length - 1){ document.body.dataset.key = keys[i + 1]; document.body.dataset.phase = 'gap'; }
   }
-  document.body.dataset.phase = ''; sfx.ding(); vib(50); center('<div class="mid">叮～</div>'); await wait(250); center('');
+  document.body.dataset.phase = ''; bgmHold(false); sfx.ding(); vib(50); center('<div class="mid">叮～</div>'); await wait(250); center('');
   const rs = keys.map((k, i) => judgeSwing(k, strokes[i], th0)); tries++;
   // 拂塵招式重播：每一揮依序重播，標準路線淡淡留著對照
   for(let i=0;i<keys.length;i++){ const r = rs[i], scr = !r.none ? pathOnScreen(r.a) : null; hint = makeHint(keys[i]); if(hint){ hint.a = 0; hint.target = 0.3; } if(scr){ swoosh(1); await playReplay(scr, multi ? 650 : 900); } }
@@ -1294,6 +1376,7 @@ function keysFor(stage, fam){
 }
 let caught = [];
 async function runGame(){
+  audioInit(); bgmStart('battle');
   caught = []; $('#bookN').textContent = dexCount();
   lives = 3; score = 0; combo = 0; maxCombo = 0; hits = 0; tries = 0; purified = 0; cancelFlag = false;
   $('#hud').hidden = false; $('#bottomBar').hidden = false; $('#btnBook').hidden = false; hud('');
@@ -1319,6 +1402,7 @@ async function runGame(){
       for(const st of w.stages){ const sp = spawnDef(st); await encounter({ keys: keysFor(st, sp.def.fam), ...sp, wave: st === 3 ? '⚠️ 塵魔出沒' : w.wave }); if(lives <= 0) throw 'over'; }
     }
     // 魔王：無明塵王（三擊，最後一擊一定是「圓明一拂」）
+    bgmSet('boss');
     center('<div class="mid">⚠️ 無明塵王</div><div class="sub">六塵合體！連拂三次，最後用「圓」收服</div>'); say('無明塵王'); await wait(2400);
     const bossKeys = [...shuffle(['v','z','n','alpha','s','rs','rz','rn','ralpha']).slice(0, 2), 'circle'];
     const bossType = { name:'無明塵王', acc:'🌑', body:'#8d84a6', mood:'' };
@@ -1330,6 +1414,7 @@ async function runGame(){
     center('<div class="mid">🌕 圓明一拂！</div>'); for(let i=0;i<5;i++){ setTimeout(() => { spawnSpark(W*Math.random(), H*0.2 + H*0.4*Math.random(), 30); spawnLotus(W*(0.2 + 0.6*Math.random()), H*0.6); }, i*250); }
     purified = Math.max(purified, 16); sfx.purify(); await wait(2200);   // 滿月
   }catch(e){ if(e === 'over') result = 'over'; else if(e === 'cancel') result = 'quit'; else { console.error(e); result = 'quit'; } }
+  bgmStop();
   center(''); monster = null; cd = null; dimTarget = 0; capFx = null; comboFx = null; document.body.dataset.phase = ''; $('#hud').hidden = true; $('#bottomBar').hidden = true; $('#btnBook').hidden = true;
   $('#btnDexT').textContent = `📖 淨心錄（${dexCount()} / ${MONS.length}）`;
   if(result !== 'quit') showResult(result); else $('#scrTitle').hidden = false;
@@ -1359,6 +1444,7 @@ function showResult(kind){
   $('#resCaught').innerHTML = caught.length ? `<b>本局收入淨心錄</b><div class="caught">${caught.map(c => `<span>${c.gold ? '✨' : ''}${c.def.name}<small>Lv ${c.lv}</small>${c.isNew ? '<i>NEW</i>' : ''}</span>`).join('')}</div>` : '<span class="note">這一局沒有收服塵靈，下次加油！</span>';
   $('#resQuote').innerHTML = `${pick(QUOTES)}${QUOTES_DEMO ? '<small>（示範慈語，正式版會換成審定的文字）</small>' : ''}`;
   $('#scrResult').hidden = false;
+  kind === 'over' ? sfx.defeat() : sfx.victory();
   const best = store.get('fuchenGame.best', 0); if(score > best) store.set('fuchenGame.best', score);
 }
 
@@ -1424,6 +1510,8 @@ $('#btnDexT').textContent = `📖 淨心錄（${dexCount()} / ${MONS.length}）`
 
 /* ---------------- 按鈕 ---------------- */
 $('#btnStart').addEventListener('click', startGyro);
+$('#btnMusic').addEventListener('click', () => setMusic(!store.get('fuchenGame.music', true)));
+setMusic(store.get('fuchenGame.music', true));
 $('#btnTouch').addEventListener('click', () => { audioInit(); inputMode = 'touch'; keepAwake(); $('#scrTitle').hidden = true; runGame(); });
 $('#btnCalib').addEventListener('click', runCalib);
 $('#btnCalibReuse').addEventListener('click', () => { $('#scrCalib').hidden = true; runGame(); });
