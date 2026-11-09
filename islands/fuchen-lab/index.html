@@ -207,7 +207,7 @@ pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:
 
 <script>
 'use strict';
-const VERSION = 'v261108.02';
+const VERSION = 'v261109.01';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = VERSION;
@@ -294,12 +294,15 @@ function resample(pts, n){
   while(out.length < n) out.push([src[src.length-1][0], src[src.length-1][1]]);
   return out.slice(0, n);
 }
-// 等比例縮放（保留長寬比與方向）、重心移到原點
+// 縮放、重心移到原點。長寬比只「拉近一半」（比例開根號）：手臂大揮常把 N、Z 畫得很瘦長，
+// 完全保留會認不出來；完全拉成正方形又會把直線拉變形
 function normalize(pts){
   let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
   for(const p of pts){ x0=Math.min(x0,p[0]); x1=Math.max(x1,p[0]); y0=Math.min(y0,p[1]); y1=Math.max(y1,p[1]); }
-  const s = Math.max(x1-x0, y1-y0) || 1; let cx=0, cy=0;
-  const q = pts.map(p => [p[0]/s, p[1]/s]); for(const p of q){ cx+=p[0]; cy+=p[1]; } cx/=q.length; cy/=q.length;
+  const w = x1-x0, h = y1-y0, s = Math.max(w, h) || 1; let cx=0, cy=0;
+  const r = Math.min(w, h)/s, k = r > 1e-6 ? Math.sqrt(r)/r : 1;      // 短邊放大 k 倍：比例變成 √r
+  const sx = w < h ? k/s : 1/s, sy = h < w ? k/s : 1/s;
+  const q = pts.map(p => [p[0]*sx, p[1]*sy]); for(const p of q){ cx+=p[0]; cy+=p[1]; } cx/=q.length; cy/=q.length;
   return q.map(p => [p[0]-cx, p[1]-cy]);
 }
 const prep = pts => normalize(resample(pts, NPTS));
@@ -377,6 +380,8 @@ document.addEventListener('visibilitychange', () => { if(document.visibilityStat
 /* ---------------- 感測器 ---------------- */
 let inputMode = null;        // 'gyro' | 'touch'
 const calib = Object.assign({ bias:[0,0,0], gSign:1, done:false }, store.get('fuchenLab.calib', {}));
+// 軸向修正前存的校正（偏移量、四方拂塵）都用錯的軸，全部作廢、請重新校正
+if(calib.axisVer !== 2){ for(const k of ['bias','gSign','done','P','MT','M','dirInfo','dirRaw','autoTh','dirSkipped']) delete calib[k]; Object.assign(calib, { bias:[0,0,0], gSign:1, done:false, axisVer:2 }); }
 const ring = [];             // 最近 1.2 秒的原始資料
 let lastT = 0, motionCount = 0, rateHz = 0, rateWin = [], peakSeen = 0;
 let rec = null;              // 揮拂錄製中的狀態
@@ -392,8 +397,9 @@ function onMotion(e){
   else if(e.interval > 0.002 && e.interval < 0.1) dt = e.interval;      // 少數舊瀏覽器回報秒
   if(dt == null){ dt = lastT ? (now - lastT)/1000 : 0.016; if(!(dt > 0.002 && dt < 0.1)) dt = 0.016; }
   lastT = now;
-  // 規格：alpha 繞 z 軸、beta 繞 x 軸、gamma 繞 y 軸（度／秒）
-  const s = { t:now, dt, wx:r.beta||0, wy:r.gamma||0, wz:r.alpha||0, ax:ag ? ag.x||0 : 0, ay:ag ? ag.y||0 : 0, az:ag ? ag.z||0 : 0,
+  // 實測（iPhone、Chrome）：rotationRate 的 alpha 繞 x 軸、beta 繞 y 軸、gamma 繞 z 軸（度／秒）。
+  // v261109.01 以前照舊版規格寫成 alpha 繞 z 軸，三個軸整個錯開；用「揮完靜止時速度應該歸零」從實測資料找出正確對應。
+  const s = { t:now, dt, wx:r.alpha||0, wy:r.beta||0, wz:r.gamma||0, ax:ag ? ag.x||0 : 0, ay:ag ? ag.y||0 : 0, az:ag ? ag.z||0 : 0,
     lax: la && la.x != null ? la.x : null, lay: la && la.y != null ? la.y : null, laz: la && la.z != null ? la.z : null };
   motionCount++; rateWin.push(now); while(rateWin.length && now - rateWin[0] > 1000) rateWin.shift(); rateHz = rateWin.length;
   ring.push(s); while(ring.length && now - ring[0].t > 1200) ring.shift();
@@ -446,7 +452,7 @@ async function runCalib(){
   const g = [mean('ax'), mean('ay'), mean('az')], gl = len3(g);
   if(wsd > 6){ $('#calibMsg').textContent = '手有點晃，請靠著身體、穩住再試一次。'; $('#btnCalib').disabled = false; sfx.bad(); return; }
   if(gl > 3 && Math.abs(g[1])/gl < 0.6){ $('#calibMsg').textContent = '手機好像沒有直立。請讓手機頂端朝上、螢幕朝著自己再試一次。'; $('#btnCalib').disabled = false; sfx.bad(); return; }
-  calib.bias = bias; calib.gSign = gl > 3 ? (g[1] >= 0 ? 1 : -1) : 1; calib.done = true; calib.at = Date.now();
+  calib.bias = bias; calib.gSign = gl > 3 ? (g[1] >= 0 ? 1 : -1) : 1; calib.done = true; calib.at = Date.now(); calib.axisVer = 2;
   store.set('fuchenLab.calib', calib);
   $('#calibBar').style.width = '100%'; $('#calibMsg').textContent = '校正完成 ✨'; sfx.ding(); vib(60);
   await sleep(600); updateStatus(); openDirStep();
@@ -696,6 +702,25 @@ function pickModel(st, model){
   if(model === 'gyro') return calib.P && pts.length > 1 && pts[1].lx != null ? 'gyro' : null;
   return 'std';
 }
+// 大揮之後手會往回收（回彈）：最後一次明顯減速之後，如果是一段比較慢、比較短、方向大致相反的移動，就把它剪掉
+function trimRecoil(xy, ts){
+  const n = xy.length; if(n < 8) return n;
+  const sp = [0]; for(let i=1;i<n;i++) sp.push(Math.hypot(xy[i][0]-xy[i-1][0], xy[i][1]-xy[i-1][1]) / Math.max(0.004, ts[i]-ts[i-1]));
+  const sm = sp.map((v,i) => (sp[Math.max(0,i-1)] + v + sp[Math.min(n-1,i+1)])/3), vmax = Math.max(...sm);
+  const total = pathLen(xy); let cut = n;
+  for(let k=n-3;k>=3;k--){
+    if(!(sm[k] <= sm[k-1] && sm[k] <= sm[k+1] && sm[k] < vmax*0.3)) continue;          // 速度的低點
+    const tail = xy.slice(k), tl = pathLen(tail); if(tl < total*0.08) continue;
+    if(Math.max(...sm.slice(k)) > vmax*0.5) continue;                                   // 收手比較慢
+    // 前一筆：從上一次明顯減速（或起點）到這裡
+    let j = k - 2; while(j > 1 && !(sm[j] <= sm[j-1] && sm[j] <= sm[j+1] && sm[j] < vmax*0.3)) j--;
+    const prev = [xy[k][0]-xy[j][0], xy[k][1]-xy[j][1]], back = [xy[n-1][0]-xy[k][0], xy[n-1][1]-xy[k][1]];
+    const pl = Math.hypot(...prev), bl = Math.hypot(...back); if(pl < 1e-6 || bl < 1e-6) continue;
+    const cosv = (prev[0]*back[0] + prev[1]*back[1]) / (pl*bl);
+    if(cosv < -0.5 && bl < pl*0.55) cut = k + 1;                                        // 方向大致相反、而且比較短
+  }
+  return cut;
+}
 // 加速度兩次積分成位置：起手和收尾都是靜止（速度歸零），中間的漂移用直線扣掉
 function trajectory(pts, meta){
   const U = meta.U, RT = nrm3(cross3(meta.F, U)), n = pts.length, V = [[0,0,0]];
@@ -726,6 +751,7 @@ function analyzeStroke(st, model = 'auto', thOverride = null){
       if(m === 'traj' && calib.MT){ const M = calib.MT; XY = XY.map(q => [M[0]*q[0] + M[1]*q[1], M[2]*q[0] + M[3]*q[1]]); }
     } else XY = seg.map(p => m === 'gyro' ? [p.lx, p.ly] : [p.x, p.y]);
     pts = seg.map((p, i) => { const q = applyCal(XY[i][0], XY[i][1]); return { x:q[0], y:q[1], sp:act(p), t:p.t }; });
+    if(m === 'traj' || m === 'trajRaw'){ const c = trimRecoil(pts.map(p => [p.x, p.y]), pts.map(p => p.t)); if(c < pts.length) pts = pts.slice(0, c); }
   }
   const isTraj = m === 'traj' || m === 'trajRaw';
   const xy = pts.map(p => [p.x, p.y]);
