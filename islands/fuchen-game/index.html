@@ -33,12 +33,20 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .hud .mid{font-size:.9rem;color:var(--gold);text-align:center}
 .hud .score{font-size:1rem;text-align:right}
 .hud .score small{display:block;font-size:.72rem;color:var(--muted);font-weight:600}
+.banner{position:fixed;left:0;right:0;top:40%;transform:translateY(-50%);pointer-events:none;z-index:25;text-align:center;overflow:hidden;padding:14px 0}
+.banner .band{position:absolute;left:0;right:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(8,10,14,0),rgba(8,10,14,.72) 15%,rgba(8,10,14,.72) 85%,rgba(8,10,14,0));border-top:2px solid rgba(232,189,90,.75);border-bottom:2px solid rgba(232,189,90,.75);animation:bandIO var(--dur) ease-in-out both}
+.banner.red .band{border-color:rgba(255,110,100,.85);background:linear-gradient(90deg,rgba(40,6,10,0),rgba(40,6,10,.78) 15%,rgba(40,6,10,.78) 85%,rgba(40,6,10,0))}
+.banner .bt{position:relative;display:inline-block;white-space:nowrap;font-size:clamp(2.3rem,12vw,4.4rem);font-weight:900;letter-spacing:.04em;color:#ffe7a8;text-shadow:0 0 24px rgba(255,200,90,.85),0 3px 0 #6b4a12;animation:fly var(--dur) cubic-bezier(.2,.75,.8,.25) both}
+.banner.red .bt{color:#ffb0a6;text-shadow:0 0 24px rgba(255,80,70,.9),0 3px 0 #5a1010}
+.banner .bs{position:relative;display:block;white-space:nowrap;font-size:clamp(.95rem,4.2vw,1.25rem);font-weight:800;color:var(--ink);margin-top:6px;animation:fly var(--dur) cubic-bezier(.2,.75,.8,.25) .08s both}
+@keyframes fly{0%{transform:translateX(-110vw)}35%{transform:translateX(-3vw)}68%{transform:translateX(3vw)}100%{transform:translateX(115vw)}}
+@keyframes bandIO{0%{opacity:0;transform:scaleY(.2)}15%{opacity:1;transform:scaleY(1)}85%{opacity:1;transform:scaleY(1)}100%{opacity:0;transform:scaleY(.2)}}
 .center{position:fixed;left:16px;right:16px;top:79%;transform:translateY(-50%);text-align:center;pointer-events:none;text-shadow:0 0 18px rgba(0,0,0,.8)}
 .center .big{font-size:clamp(4rem,26vw,9rem);font-weight:900;line-height:1;color:#fff;text-shadow:0 0 30px rgba(255,214,120,.9)}
 .center .mid{font-size:clamp(1.4rem,7vw,2.2rem);font-weight:900;display:inline-block;background:rgba(8,10,14,.62);border:1px solid var(--line);border-radius:999px;padding:4px 18px}
 .center .sub{font-size:.95rem;color:var(--ink);margin:8px auto 0;display:table;background:rgba(8,10,14,.62);border-radius:999px;padding:3px 14px}
 .bottom{position:fixed;left:0;right:0;bottom:0;padding:8px 16px calc(env(safe-area-inset-bottom) + 12px);display:flex;justify-content:space-between;align-items:center;pointer-events:none}
-.bottom button{pointer-events:auto}
+.bottom button{pointer-events:auto;font-size:.85rem;padding-left:10px;padding-right:10px}
 .tag{font-size:.8rem;color:var(--muted);text-shadow:0 1px 4px #000}
 button{font:inherit;cursor:pointer;border-radius:14px;border:1px solid var(--line);background:rgba(30,24,18,.75);color:var(--ink);padding:10px 16px}
 button.primary{background:var(--btn);color:var(--btn-ink);border-color:transparent;font-weight:900}
@@ -103,7 +111,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 <div class="center" id="center"></div>
 <div class="bottom" id="bottomBar" hidden>
   <span class="tag" id="modeTag"></span>
-  <span style="display:flex;gap:8px"><button id="btnMusic">🎵 音樂 開</button><button id="btnQuit">離開</button></span>
+  <span style="display:flex;gap:8px"><button id="btnVoice">🗣️ 語音 關</button><button id="btnMusic">🎵 音樂 開</button><button id="btnQuit">離開</button></span>
 </div>
 
 <!-- 開場 -->
@@ -173,7 +181,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.16';
+const VERSION = 'v261109.17';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -840,7 +848,11 @@ function bgmStep(step, t){
 function setMusic(on){ store.set('fuchenGame.music', on); if(AU) AU.musicBus.gain.setTargetAtTime(on ? 0.55 : 0, actx.currentTime, 0.1); const b = $('#btnMusic'); if(b) b.textContent = on ? '🎵 音樂 開' : '🔇 音樂 關'; }
 function pickVoice(){ try{ const vs = speechSynthesis.getVoices(); zhVoice = vs.find(v => /zh[-_]TW/i.test(v.lang)) || vs.find(v => /zh/i.test(v.lang)) || null; }catch(e){} }
 if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-function say(text){ if(!('speechSynthesis' in window)) return; try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-TW'; if(zhVoice) u.voice = zhVoice; u.rate = 1.1; speechSynthesis.speak(u); }catch(e){} }
+// 語音報讀（唸題目、唸波次）：預設關閉，玩家自己按「🗣️ 語音」打開
+// iPhone 規定語音要由玩家按一下才能啟動，所以開的那一下順便唸一句，之後每一輪都一致
+const voiceOn = () => store.get('fuchenGame.voice', false);
+function setVoice(on){ store.set('fuchenGame.voice', on); const b = $('#btnVoice'); if(b) b.textContent = on ? '🗣️ 語音 開' : '🗣️ 語音 關'; if(!('speechSynthesis' in window)) return; try{ speechSynthesis.cancel(); if(on){ const u = new SpeechSynthesisUtterance('語音開啟'); u.lang = 'zh-TW'; if(zhVoice) u.voice = zhVoice; speechSynthesis.speak(u); } }catch(e){} }
+function say(text){ if(!('speechSynthesis' in window) || !voiceOn()) return; try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-TW'; if(zhVoice) u.voice = zhVoice; u.rate = 1.1; speechSynthesis.speak(u); }catch(e){} }
 function vib(ms){ if(navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){} }
 let wakeLock = null;
 async function keepAwake(){ try{ if('wakeLock' in navigator && !wakeLock){ wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => wakeLock = null); } }catch(e){} }
@@ -1539,17 +1551,22 @@ let diffKey = store.get('fuchenGame.diff', 'normal'); if(!DIFFS[diffKey]) diffKe
 const D = () => DIFFS[diffKey];
 let encN = 0;   // 這一局第幾隻（熱身不算），用來決定提示退場
 let caught = [];
+// 彈幕標題：大字從左邊飛進來、在正中間放慢停一下、再往右飛出去（約 2.6 秒），背後一條光帶
+function banner(title, sub = '', opt = {}){ const dur = opt.dur || 2600, el = document.createElement('div'); el.className = 'banner' + (opt.red ? ' red' : ''); el.style.setProperty('--dur', dur + 'ms');
+  el.innerHTML = `<div class="band"></div><span class="bt">${title}</span>${sub ? `<span class="bs">${sub}</span>` : ''}`; document.body.appendChild(el);
+  if(ok()){ I.whoosh(now0(), 0.55); I.taiko(now0() + dur/1000*0.3, opt.red ? 48 : 62, 0.7); }
+  return new Promise(res => setTimeout(() => { el.remove(); res(); }, dur)); }
 // 下馬威的開場：畫面一暗、紅光一閃、大震動，塵魔的聲音＋低吼，接著塵魔從上面砸下來
 async function ambushIntro(sp){
   bgmHold(true); dimTarget = 0.55; shakeAmp = 22; vib([80, 60, 160]);
   const v = document.createElement('div'); v.className = 'ambush'; document.body.appendChild(v); setTimeout(() => v.remove(), 2600);
   if(ok()){ sfx.boss(); X.crack(now0(), 1); X.sub(now0(), 1, 1.4); famVoice(sp.def, now0() + 0.5); }
-  center(`<div class="mid ambush-t">⚠️ 塵魔突襲！</div><div class="sub">${sp.def.fam.name}系塵魔「${sp.def.name}」擋住去路——還沒熱身就殺過來了！</div>`); say('塵魔突襲');
+  banner('⚠️ 塵魔突襲！', `${sp.def.fam.name}系塵魔「${sp.def.name}」擋住去路`, { red: true, dur: 2800 }); say('塵魔突襲');
   // 塵魔從上面砸下來，落地時畫面再震一次，接著嘲笑玩家
   monster = { def: sp.def, lv: sp.lv, gold: sp.gold, sym: null, x: MON.x, y: MON.y, r: U()*0.14, t0: performance.now(), state: 'enter', boss: false, hp: 1, maxHp: 1, seed: Math.random()*10 };
   await wait(900); shakeAmp = 24; vib(120); spawnDust(MON.x, MON.y + U()*0.12, 30, 'rgba(120,90,110,.85)', 1.3); if(ok()){ I.taiko(now0(), 45, 1.2); X.sub(now0(), 0.9, 1); }
   monster.state = 'laugh'; monster.tHit = performance.now(); spawnText(MON.x, MON.y - U()*0.3, '嘿嘿…你拂得動我嗎？', '#ffb3a8');
-  await wait(1900); monster.state = 'idle'; dimTarget = 0; bgmHold(false); center('');
+  await wait(1900); monster.state = 'idle'; dimTarget = 0; bgmHold(false);
 }
 async function runGame(){
   encN = 0;
@@ -1565,7 +1582,7 @@ async function runGame(){
     if(amb) await ambushIntro(amb);
     // 教學：四方拂塵（第一次玩、或還沒有四方校正時）——順便學這位玩家的揮法和力氣
     if(inputMode === 'gyro' && (!calib.MT || !calib.autoTh)){
-      center(amb ? '<div class="mid">🧭 先穩住陣腳：四方拂塵</div><div class="sub">塵魔召來四隻小塵精！照方向「整隻手臂」大揮，系統會記住您的揮法</div>' : '<div class="mid">🧭 四方拂塵</div><div class="sub">先用四隻小塵精熱身，系統會記住您的揮法</div>'); say('四方拂塵'); await wait(2400);
+      say('四方拂塵'); await banner(amb ? '🧭 先穩住陣腳' : '🧭 熱身・四方拂塵', amb ? '塵魔召來四隻小塵精！整隻手臂照方向大揮' : '照方向整隻手臂大揮，系統會記住您的揮法');
       const got = {}, peaks = [];
       for(const [k, d] of [['left','L'],['right','R'],['up','U'],['down','D']]){
         const r = await encounter({ keys:[k], ...spawnDef(1), wave:'熱身・四方拂塵', tutorial:'熱身：照著方向大揮一次' });
@@ -1574,7 +1591,7 @@ async function runGame(){
       learnFromWarmup(got, peaks);
     }
     if(amb){ const a = pick(MID), b = diffKey === 'hard' ? pick(HARD.filter(x => x !== a)) : pick(MID.filter(x => x !== a));
-      center(`<div class="mid" style="color:#ff9a8a">⚔️ 接招！</div><div class="sub">${amb.def.name}要你一開場就兩連擊</div>`); await wait(1500);
+      await banner('⚔️ 接招！', `${amb.def.name}要你一開場就兩連擊`, { red: true, dur: 2200 });
       await encounter({ keys:[a, b], ...amb, ambush:true, hm:'full', wave:'⚠️ 開場突襲・塵魔' }); monster = null; }
     const plan = diffKey === 'easy' ? [
       { wave:'第一波・塵精', stages:[1, 1, 1] },
@@ -1586,7 +1603,7 @@ async function runGame(){
     ];
     for(const w of plan){
       const tip = w.stages.every(s => s === 3) && diffKey !== 'easy' ? '塵魔要三連擊，倒數只有兩拍，提示只標起點和終點！' : w.stages.some(s => s > 1) ? '塵妖要兩連擊才收得服！' : '';
-      center(`<div class="mid">${w.wave}</div>${tip ? `<div class="sub">${tip}</div>` : ''}`); say(w.wave.split('・')[1]); await wait(2000);
+      say(w.wave.split('・')[1]); await banner(w.wave, tip, { red: w.stages.every(s => s === 3) });
       for(const st of w.stages){ const sp = spawnDef(st); await encounter({ keys: keysFor(st, sp.def.fam), ...sp, beats: st === 3 && diffKey !== 'easy' ? 2 : undefined, wave: st === 3 ? '⚠️ 塵魔出沒' : w.wave }); if(lives <= 0) throw 'over'; }
     }
     // 魔王：無明塵王（三擊，最後一擊一定是「圓明一拂」）
@@ -1594,7 +1611,7 @@ async function runGame(){
     const BP = ['v','z','n','alpha','s','rs','rz','rn','ralpha'];
     const bossKeys = diffKey === 'easy' ? [...shuffle(BP).slice(0, 2).map(k => [k]), ['circle']]
       : [...Array.from({ length:3 }, () => { const a = pick(BP); return [a, pick(BP.filter(x => x !== a))]; }), ['circle']];   // 修行、精進：前三擊兩連擊，最後「圓明一拂」
-    center(`<div class="mid">⚠️ 無明塵王</div><div class="sub">六塵合體！連拂 ${bossKeys.length} 次，最後用「圓」收服</div>`); say('無明塵王'); await wait(2400);
+    say('無明塵王'); await banner('⚠️ 魔王・無明塵王', `六塵合體！連拂 ${bossKeys.length} 次，最後用「圓」收服`, { red: true, dur: 3000 });
     const bossType = { name:'無明塵王', acc:'🌑', body:'#8d84a6', mood:'' };
     monster = null;
     for(let bi=0; bi<bossKeys.length; bi++){
@@ -1603,7 +1620,7 @@ async function runGame(){
       while(true){ r = await encounter({ keys:ks, type:bossType, boss:true, hp:bossKeys.length, wave:'魔王・無明塵王' }); if(lives <= 0) throw 'over'; if(r.ok) break;
         if(bi < bossKeys.length - 1){ const a = pick(BP); ks = ks.length > 1 ? [a, pick(BP.filter(x => x !== a))] : [a]; } }
     }
-    center('<div class="mid">🌕 圓明一拂！</div>'); for(let i=0;i<5;i++){ setTimeout(() => { spawnSpark(W*Math.random(), H*0.2 + H*0.4*Math.random(), 30); spawnLotus(W*(0.2 + 0.6*Math.random()), H*0.6); }, i*250); }
+    banner('🌕 圓明一拂！', '無明塵王淨化了', { dur: 2400 }); for(let i=0;i<5;i++){ setTimeout(() => { spawnSpark(W*Math.random(), H*0.2 + H*0.4*Math.random(), 30); spawnLotus(W*(0.2 + 0.6*Math.random()), H*0.6); }, i*250); }
     purified = Math.max(purified, 16); sfx.purify(); await wait(2200);   // 滿月
   }catch(e){ if(e === 'over') result = 'over'; else if(e === 'cancel') result = 'quit'; else { console.error(e); result = 'quit'; } }
   bgmStop();
@@ -1707,6 +1724,7 @@ const syncDiff = () => document.querySelectorAll('#diffSel button').forEach(b =>
 $('#diffSel').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; diffKey = b.dataset.d; store.set('fuchenGame.diff', diffKey); syncDiff(); });
 syncDiff();
 $('#btnMusic').addEventListener('click', () => setMusic(!store.get('fuchenGame.music', true)));
+$('#btnVoice').addEventListener('click', () => setVoice(!voiceOn())); setVoice(voiceOn());
 setMusic(store.get('fuchenGame.music', true));
 $('#btnTouch').addEventListener('click', () => { audioInit(); inputMode = 'touch'; keepAwake(); $('#scrTitle').hidden = true; runGame(); });
 $('#btnCalib').addEventListener('click', runCalib);
