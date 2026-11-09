@@ -45,6 +45,7 @@ a{color:#8fc7ff}
   <button data-hit="perfect">✨ 完美一擊</button>
   <button data-hit="capture">🪷 收服</button>
   <button data-hit="boss">💥 魔王重擊</button>
+  <button id="btnVoice">👂 只聽這一系的聲音</button>
 </div>
 <div class="row" id="snd"><span class="lbl">音效對照</span><button data-v="new">🎬 新版（電影級）</button><button data-v="old">🎵 現行</button></div>
 <div class="row" id="view"><span class="lbl">造型對照</span><button data-v="3d">🧊 3D 新版</button><button data-v="2d">🖼️ 2D 現行</button></div>
@@ -64,6 +65,8 @@ a{color:#8fc7ff}
 <li>破空裂響「啪」（左右聲道錯開，聲音比較寬）＋次低頻「轟」（肚子會震）＋金屬鳴響「鏘～」</li>
 <li>完美一擊：先「吸」一口氣再爆開，加電影預告片的低音號角「轟——」和一聲合唱</li>
 <li>收服：命中後塵靈變白、旋轉縮小，碎成光點，伴著琉璃碎光聲、鐘聲和合唱</li>
+<li><b>六系各有自己的聲音</b>：色＝玻璃清音＋鏡子「叮」；聲＝走音小喇叭＋嘰嘰喳喳；香＝煙「呼——」＋頌缽；味＝麻糬「啵」＋「咕嚕」；觸＝枕頭悶「噗」＋打哈欠；法＝搖晃電子音＋「嗯？」</li>
+<li><b>三個階段聲音不同</b>：塵精音高輕巧、塵妖正常、塵魔低沉厚重，還會低吼；選上面的系別和階段，按「命中」或「👂」試聽</li>
 <li>畫面配合：打中瞬間停格一下（hit-stop），完美一擊會慢動作；閃光、衝擊波、刀光、鏡頭震動</li>
 </ul>
 <p>建議戴耳機或接音響聽，手機喇叭的低頻會比較弱。</p>
@@ -219,7 +222,8 @@ function audioInit(){
   if(AU) return;
   const c = actx, master = c.createGain(); master.gain.value = 0.9;
   const comp = c.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.25;
-  master.connect(comp).connect(c.destination);
+  const lim = c.createDynamicsCompressor(); lim.threshold.value = -3; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.1;   // 最後一道限幅，避免破音
+  master.connect(comp).connect(lim).connect(c.destination);
   // 大殿殘響：3 秒衰減的雜訊當空間響應
   const rev = c.createConvolver(), len = Math.floor(c.sampleRate*3), ib = c.createBuffer(2, len, c.sampleRate);
   for(let ch=0;ch<2;ch++){ const d = ib.getChannelData(ch); for(let i=0;i<len;i++){ const k = i/len; d[i] = i < c.sampleRate*0.012 ? 0 : (Math.random()*2 - 1)*Math.pow(1 - k, 2.6); } }
@@ -354,6 +358,54 @@ const X = {
     const n = noiseSrc(t, 0.6), hp = actx.createBiquadFilter(), ng = actx.createGain(); hp.type = 'highpass'; hp.frequency.value = 4500; env(ng, t, 0.001, g*0.6, 0.5); n.connect(hp).connect(ng); route(ng, AU.sfxBus, 0.5);
   }
 };
+
+/* 六系的聲音個性（v261109.14）：同一記打擊聲上，再疊一段各系自己的「聲音」；
+   塵精音高、輕巧，塵妖正常，塵魔低沉、加低吼。全部即時合成，不用音檔，只多幾 KB 的程式。 */
+function tone(t, type, f0, f1, dur, g, o = {}){ const os = actx.createOscillator(), og = actx.createGain(); os.type = type; os.frequency.setValueAtTime(f0, t); if(f1 && f1 !== f0) os.frequency.exponentialRampToValueAtTime(f1, t + (o.glide || dur));
+  if(o.vib){ const l = actx.createOscillator(), lg = actx.createGain(); l.frequency.value = o.vib; lg.gain.value = f0*(o.vibAmt || 0.02); l.connect(lg).connect(os.frequency); l.start(t); l.stop(t + dur + 0.2); }
+  let last = os; if(o.bp){ const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = o.bp; f.Q.value = o.q || 2; last = last.connect(f); } if(o.lp){ const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; last = last.connect(f); }
+  const a = o.a || 0.004; env(og, t, a, g, dur); const pn = panNode(o.pan || 0); last.connect(og).connect(pn); route(pn, AU.sfxBus, o.wet ?? 0.4); os.start(t); os.stop(t + a + dur + 0.1); }
+function noiseHit(t, dur, g, type, f, q = 1, o = {}){ const n = noiseSrc(t, dur + 0.25), fl = actx.createBiquadFilter(), ng = actx.createGain(); fl.type = type; fl.frequency.setValueAtTime(f, t); if(o.f1) fl.frequency.exponentialRampToValueAtTime(o.f1, t + dur); fl.Q.value = q;
+  env(ng, t, o.a || 0.003, g, dur); const pn = panNode(o.pan || 0); n.connect(fl).connect(ng).connect(pn); route(pn, AU.sfxBus, o.wet ?? 0.4); }
+const FAM_VOICE = {
+  // 色：鏡面琉璃——一串往上跳的玻璃清音，最後鏡子「叮～」一閃
+  se(t, k, g){ [0, 4, 7, 12, 16].forEach((s, i) => { const f = 1046.5*k*Math.pow(2, s/12); tone(t + i*0.04, 'sine', f, f, 0.5, g*0.12, { pan: -0.6 + i*0.3, wet: 0.6 }); tone(t + i*0.04, 'sine', f*2.76, f*2.76, 0.25, g*0.04, { wet: 0.6 }); });
+    tone(t + 0.22, 'triangle', 2637*k, 2637*k, 0.9, g*0.08, { vib: 9, vibAmt: 0.01, wet: 0.7 }); },
+  // 聲：走音的小喇叭「叭！」＋一串左右亂竄、嘰嘰喳喳的閒話
+  sheng(t, k, g){ tone(t, 'sawtooth', 330*k, 300*k, 0.32, g*0.2, { bp: 1100, q: 1.5, vib: 6, vibAmt: 0.03 }); tone(t, 'sawtooth', 333*k, 302*k, 0.32, g*0.15, { bp: 700, q: 2 });
+    for(let i=0;i<5;i++){ const f = 1200*k*(1 + 0.25*Math.sin(i*2.3)), p = i % 2 ? 0.6 : -0.6; noiseHit(t + 0.12 + i*0.075, 0.045, g*0.16*(1 - i*0.15), 'bandpass', f, 7, { pan: p }); tone(t + 0.12 + i*0.075, 'square', f/3, f/3*1.2, 0.04, g*0.03, { pan: p }); } },
+  // 香：一口煙「呼——」飄過，加頌缽的嗡鳴（兩個略不同的音互相拍動）
+  xiang(t, k, g){ noiseHit(t, 0.9, g*0.22, 'bandpass', 500, 1.2, { f1: 2400, a: 0.18, pan: -0.4, wet: 0.7 });
+    for(const [f, gg, d] of [[392, 0.1, 2.2], [394.5, 0.1, 2.2], [392*2.71, 0.035, 1.2]]) tone(t + 0.05, 'sine', f*k, f*k, d, g*gg, { a: 0.03, wet: 0.7 }); },
+  // 味：麻糬「啵」一聲彈開＋大口「咕嚕」吞下去
+  wei(t, k, g){ tone(t, 'sine', 300*k, 1100*k, 0.07, g*0.32, { glide: 0.05 }); noiseHit(t, 0.02, g*0.2, 'bandpass', 2000, 2);
+    tone(t + 0.1, 'sine', 420*k, 140*k, 0.2, g*0.28, { lp: 900 }); tone(t + 0.24, 'sine', 320*k, 110*k, 0.16, g*0.2, { lp: 800 }); },
+  // 觸：打進枕頭的悶「噗」＋懶洋洋打哈欠的下滑音
+  chu(t, k, g){ noiseHit(t, 0.28, g*0.5, 'lowpass', 380, 0.7); tone(t, 'sine', 90, 50, 0.3, g*0.35);
+    tone(t + 0.14, 'triangle', 620*k, 300*k, 1.0, g*0.1, { a: 0.08, bp: 900, q: 1.5, vib: 4.5, vibAmt: 0.025 }); },
+  // 法：念頭亂轉——搖晃的電子音左右飄，最後一聲「嗯？」往上揚
+  fa(t, k, g){ tone(t, 'sine', 330*k, 330*k, 0.7, g*0.13, { vib: 9, vibAmt: 0.09, pan: -0.5 }); tone(t + 0.04, 'sine', 495*k, 495*k, 0.6, g*0.09, { vib: 11, vibAmt: 0.11, pan: 0.5 });
+    tone(t + 0.32, 'triangle', 260*k, 360*k, 0.32, g*0.12, { glide: 0.28, vib: 5, vibAmt: 0.015 }); }
+};
+// 塵魔的低吼：兩條低音鋸齒波加破音，通過「喔」的共振峰
+function growl(t, g, dur = 0.9){ const sum = actx.createGain(), ws = actx.createWaveShaper(), og = actx.createGain(); ws.curve = distCurve(5);
+  const os = [[70, 48], [71.5, 47]].map(([a, b]) => { const o = actx.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(a, t); o.frequency.exponentialRampToValueAtTime(b, t + dur); o.connect(sum); o.start(t); o.stop(t + dur + 0.2); return o; });
+  sum.connect(ws); for(const [f, q, gg] of [[420, 6, 1], [800, 8, 0.5]]){ const bp = actx.createBiquadFilter(), fg = actx.createGain(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q; fg.gain.value = gg; ws.connect(bp).connect(fg).connect(og); }
+  env(og, t, 0.06, g, dur); route(og, AU.sfxBus, 0.4); }
+const STAGE_K = [1, 1.45, 1, 0.62], STAGE_G = [1, 0.8, 1, 1.2];   // 塵精音高、塵魔低沉；個性聲的音量
+function famVoice(def, t, gain = 1){ if(!ok() || !def) return; const st = def.stage, f = FAM_VOICE[def.fam.key]; if(f) f(t, STAGE_K[st], STAGE_G[st]*gain); if(st === 3) growl(t + 0.05, 0.22*gain); }
+// 收服的整組聲音：打擊聲的輕重跟著階段走，再疊上該系的個性聲；金色塵靈多一串金鈴
+function captureSfx(perfect, def, gold, tail = true, t0){ if(!ok()) return; const t = t0 ?? now0(), st = def ? def.stage : 2;
+  const L = [null, { cr: 0.6, sub: 0.5, sd: 0.8, tk: [62, 0.6], cl: N.D6, br: 0 }, { cr: 0.72, sub: 0.75, sd: 1.1, tk: [52, 0.78], cl: N.D5, br: 0.13 }, { cr: 0.85, sub: 0.92, sd: 1.5, tk: [45, 0.95], cl: N.D4, br: 0.26 }][st];
+  X.crack(t, L.cr); X.sub(t, L.sub, L.sd); I.taiko(t, L.tk[0], L.tk[1]); if(st === 3) I.taiko(t + 0.16, L.tk[0], 0.9); X.clang(t, L.cl, 0.2, 0.2);
+  const br = L.br + (perfect ? 0.15 : 0); if(br > 0) X.braam(t, br, st === 3 ? 2 : 1.4);
+  if(perfect){ X.clang(t + 0.012, N.A5, 0.16, -0.3); I.choir(t + 0.02, [N.D4, N.A4, N.D5], 1.3, 0.1); I.cymbal(t, 0.28); } else I.cymbal(t, 0.12 + 0.04*st);
+  famVoice(def, t + 0.04);
+  if(gold) [N.A5, N.D6, 1396.9, 1760].forEach((f, i) => I.bell(t + 0.3 + i*0.06, f, 0.08));
+  if(!tail) return;
+  X.shatter(t + 0.7, 0.3); I.gong(t + 0.7, st === 3 ? 82 : 110, 0.25, 3);
+  [N.D5, N.F5, N.G5, N.A5, N.C6, N.D6].forEach((f, i) => I.bell(t + 0.8 + i*0.08, f, 0.12)); I.choir(t + 0.8, [N.D4, N.F4, N.A4, N.D5], 2.2, 0.12); }
+
 // 新版音效組合；回傳「真正打中」的時間差（秒），畫面依這個時間差同步爆開
 const sfx2 = {
   hit(){ const t = now0(); X.crack(t, 0.85); X.sub(t, 0.9, 0.9); I.taiko(t, 52, 0.9); X.clang(t, N.D5, 0.2, 0.2); I.cymbal(t, 0.16); return 0; },
@@ -363,6 +415,10 @@ const sfx2 = {
   boss(){ const t = now0(), T = t + 0.3; X.swell(t, 0.3, 0.4); X.crack(T, 1); X.sub(T, 1.1, 1.5); X.braam(T, 0.42, 2.4); I.gong(T, 55, 0.5, 5); I.taiko(T, 45, 1.2); I.taiko(T + 0.18, 45, 1.0); X.clang(T, N.D4, 0.22); return 0.3; }
 };
 // 現行版本（拂塵試煉 v261109.12 的音效），方便對照
+const curDef = () => MONS.find(m => m.fam.key === cur.fam && m.stage === cur.st);
+sfx2.hit = () => { captureSfx(false, curDef(), false, false); return 0; };
+sfx2.perfect = () => { const t = now0(); X.swell(t, 0.42, 0.45); setTimeout(() => captureSfx(true, curDef(), false, false), 420); return 0.42; };
+sfx2.capture = () => { captureSfx(false, curDef(), false, true); return 0; };
 const sfxOld = { hit(){ sfx.purify(); return 0; }, perfect(){ sfx.purify(); return 0; }, capture(){ sfx.capture(); return 0; }, boss(){ sfx.purify(); return 0; } };
 
 /* ================= 3D 塵靈 ================= */
@@ -403,11 +459,12 @@ const sprite = (map, color = 0xffffff, add = false, op = 1) => new THREE.Sprite(
 
 // ---------- 材質 ----------
 const white = new THREE.Color('#fff');
-function bodyMat(hex, st){
+function bodyMat(hex, st, o = {}){
   const col = new THREE.Color(hex);
   const m = new THREE.MeshPhysicalMaterial({ color: col, map: SPECK, bumpMap: BUMP, bumpScale: 2.2, roughness: 0.66, metalness: 0,
     sheen: 1, sheenRoughness: 0.42, sheenColor: col.clone().lerp(white, 0.65), clearcoat: 0.12, clearcoatRoughness: 0.55 });
-  const rimCol = st === 3 ? new THREE.Color('#ff7a8a') : col.clone().lerp(new THREE.Color('#cfe4ff'), 0.6);
+  if(o.gold){ m.metalness = 0.45; m.roughness = 0.32; m.sheenColor = new THREE.Color('#fff3c0'); m.clearcoat = 0.6; m.bumpScale = 1; }
+  const rimCol = o.gold ? new THREE.Color('#ffe7a0') : o.pure ? new THREE.Color('#ffe9b8') : st === 3 ? new THREE.Color('#ff7a8a') : col.clone().lerp(new THREE.Color('#cfe4ff'), 0.6);
   m.userData.u = { rimColor: { value: rimCol }, rimStr: { value: st === 3 ? 0.55 : 0.4 }, flash: { value: 0 } };
   m.userData.base = col.clone();
   m.onBeforeCompile = sh => { Object.assign(sh.uniforms, m.userData.u);
@@ -422,7 +479,7 @@ const darkGloss = (c = '#1d1512') => new THREE.MeshPhysicalMaterial({ color: c, 
 function fixSeams(geo){ const p = geo.attributes.position, n = geo.attributes.normal, map = new Map();
   for(let i=0;i<p.count;i++){ const k = `${p.getX(i).toFixed(4)},${p.getY(i).toFixed(4)},${p.getZ(i).toFixed(4)}`; let e = map.get(k); if(!e){ e = { n: new THREE.Vector3(), ids: [] }; map.set(k, e); } e.n.x += n.getX(i); e.n.y += n.getY(i); e.n.z += n.getZ(i); e.ids.push(i); }
   for(const e of map.values()){ if(e.ids.length < 2) continue; e.n.normalize(); for(const i of e.ids) n.setXYZ(i, e.n.x, e.n.y, e.n.z); } }
-function radialGeo(R, post, seg = 128){ const geo = new THREE.SphereGeometry(1, seg, Math.round(seg*0.75)), p = geo.attributes.position, v = new THREE.Vector3();
+function radialGeo(R, post, seg = 96){ const geo = new THREE.SphereGeometry(1, seg, Math.round(seg*0.75)), p = geo.attributes.position, v = new THREE.Vector3();
   for(let i=0;i<p.count;i++){ v.fromBufferAttribute(p, i).normalize(); v.multiplyScalar(R(v.x, v.y, v.z)); if(post) post(v); p.setXYZ(i, v.x, v.y, v.z); }
   geo.computeVertexNormals(); fixSeams(geo); return geo; }
 function cloudR(S){ return (x, y, z) => { let acc = 0; for(const [cx, cy, cz, r] of S){ const b = x*cx + y*cy + z*cz, disc = b*b - (cx*cx + cy*cy + cz*cz - r*r); if(disc >= 0){ const t = b + Math.sqrt(disc); if(t > 0) acc += Math.pow(t, 10); } } return Math.pow(acc, 1/10) || 0.5; }; }
@@ -430,7 +487,7 @@ function bodyGeo(fam, st){
   if(fam === 'se') return radialGeo((x, y, z) => 1 + 0.015*Math.sin(5*x + 3*y)*Math.sin(4*z), v => { const k = 1 - 0.13*v.y; v.x *= 0.9*k; v.z *= 0.86*k; v.y *= 1.06; });
   if(fam === 'xiang') return radialGeo(cloudR([[0,0.36,0,0.6],[-0.56,0.06,0,0.5],[0.56,0.06,0,0.5],[-0.3,-0.36,0.08,0.52],[0.3,-0.36,0.08,0.52],[0,-0.04,0.24,0.58],[0,0.06,-0.24,0.55],[0,0,0,0.6]]));
   if(fam === 'chu') return radialGeo((x, y, z) => Math.pow(x**4 + y**4 + (z/0.62)**4, -0.25), v => { const q = Math.min(1, (v.x*v.x + v.y*v.y)/1.7); v.z *= 1 - 0.5*q; const c = 1 + 0.12*Math.pow(Math.abs(v.x*v.y), 1.5); v.x *= c*0.98; v.y *= c*0.9; });
-  if(fam === 'fa') return radialGeo((x, y, z) => { const a = Math.atan2(y, x); return 0.9 + 0.1*Math.abs(Math.sin(a*3))*(1 - 0.6*Math.abs(z)) + 0.04*Math.abs(Math.sin(7*x + 2)*Math.sin(7*y + 1)*Math.sin(7*z + 0.5)); }, v => { v.y *= 0.93; }, 160);
+  if(fam === 'fa') return radialGeo((x, y, z) => { const a = Math.atan2(y, x); return 0.9 + 0.1*Math.abs(Math.sin(a*3))*(1 - 0.6*Math.abs(z)) + 0.04*Math.abs(Math.sin(7*x + 2)*Math.sin(7*y + 1)*Math.sin(7*z + 0.5)); }, v => { v.y *= 0.93; }, 128);
   if(fam === 'sheng'){ const P = [[0.0,-0.85],[0.3,-0.86],[0.7,-0.9],[1.0,-0.93],[1.06,-0.82],[0.97,-0.62],[0.86,-0.25],[0.8,0.2],[0.74,0.58],[0.58,0.84],[0.3,0.97],[0.0,1.0]];
     const pts = new THREE.SplineCurve(P.map(p => new THREE.Vector2(p[0], p[1]))).getPoints(90).map(p => new THREE.Vector2(Math.max(0.0005, p.x), p.y)); return new THREE.LatheGeometry(pts, 96); }
   return radialGeo(() => 1, v => { v.y *= 0.9; if(v.y < -0.72) v.y = -0.72 + (v.y + 0.72)*0.35; v.x *= 1.03; v.z *= 1.0; });   // 味：麻糬
@@ -447,73 +504,76 @@ function hornGeo(){ const g = new THREE.ConeGeometry(0.15, 0.62, 28, 18); g.tran
   g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals(); return g; }
 function stick(a, b, r, mat){ const d = b.clone().sub(a), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 14), mat); m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(V(0, 1, 0), d.normalize()); return m; }
 
-function build(def){
-  const fam = def.fam.key, st = def.stage, F = def.fam;
+function build(def, o = {}){
+  const fam = def.fam.key, st = o.pure ? 1 : def.stage, F = def.fam, bodyCol = o.pure ? '#fbfaf6' : o.gold ? '#f3cf63' : F.color;
   const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
   const M = { root, body, mats: [], eyes: [], upd: [], def };
   // 身體
   let front;
-  if(fam === 'wei' && st === 2){ const cols = ['#f6b9c8', '#fbf2e2', F.color];
-    [[0.62, 0.42], [0, 0.48], [-0.62, 0.44]].forEach(([y, r], i) => { const m = new THREE.Mesh(radialGeo(() => r, null, 96), bodyMat(cols[i], st)); m.position.y = y; body.add(m); M.mats.push(m.material); if(i === 1) front = [m]; });
-    body.add(stick(V(0, 1.3, 0), V(0, -1.35, 0), 0.045, new THREE.MeshStandardMaterial({ color: '#b98a52', roughness: 0.7 })));
-  } else { const m = new THREE.Mesh(bodyGeo(fam, st), bodyMat(F.color, st)); body.add(m); M.mats.push(m.material); front = [m]; }
+  if(fam === 'wei' && st === 2){ const cols = o.gold ? [bodyCol, bodyCol, bodyCol] : ['#f6b9c8', '#fbf2e2', F.color];
+    [[0.62, 0.42], [0, 0.48], [-0.62, 0.44]].forEach(([y, r], i) => { const m = new THREE.Mesh(radialGeo(() => r, null, 96), bodyMat(cols[i], st, o)); m.position.y = y; body.add(m); M.mats.push(m.material); if(i === 1) front = [m]; });
+    const sk = stick(V(0, 1.3, 0), V(0, -1.35, 0), 0.045, new THREE.MeshStandardMaterial({ color: '#b98a52', roughness: 0.7 })); sk.userData = { pass: 1, nm: '竹籤' }; body.add(sk);
+  } else { const m = new THREE.Mesh(bodyGeo(fam, st), bodyMat(bodyCol, st, o)); body.add(m); M.mats.push(m.material); front = [m]; }
   root.updateMatrixWorld(true);
   const sc = fam === 'wei' && st === 2 ? 0.5 : 1;   // 糰子串：五官畫在中間那顆上，比例縮小
   const fy = fam === 'wei' && st === 2 ? 0 : 0;
   // 眼睛：亮面黑眼珠＋兩顆反光點，會眨眼
   const eyeMat = darkGloss();
-  for(const s of [-1, 1]){
+  if(o.pure) for(const s of [-1, 1]){ const g = new THREE.TorusGeometry(0.085, 0.018, 8, 24, Math.PI*0.8); g.rotateZ(Math.PI*0.1); const e = new THREE.Mesh(g, darkGloss('#4a3b30')); e.userData.face = 1; placeOn(front, V(s*0.33, 0.12, 1), e, 0.01); body.add(e); }
+  else for(const s of [-1, 1]){
     const e = new THREE.Group(), ball = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), eyeMat);
     ball.scale.set((st === 3 ? 0.1 : 0.11)*sc, (st === 3 ? 0.11 : 0.145)*sc, 0.07*sc); e.add(ball);
     const hl = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({ color: st === 3 ? 0xff6a4a : 0xffffff }));
     hl.scale.setScalar((st === 3 ? 0.036 : 0.034)*sc); hl.position.set(0.03*sc, 0.05*sc, 0.058*sc); e.add(hl);
     if(st < 3){ const h2 = hl.clone(); h2.scale.setScalar(0.015*sc); h2.position.set(-0.035*sc, -0.055*sc, 0.055*sc); e.add(h2); }
-    placeOn(front, V(s*0.33, 0.1 + fy, 1), e, 0); body.add(e); M.eyes.push(e);
+    e.userData.face = 1; placeOn(front, V(s*0.33, 0.1 + fy, 1), e, 0); body.add(e); M.eyes.push(e);
     if(st >= 2){ const bg = new THREE.CapsuleGeometry(0.026*sc, 0.17*sc, 4, 10); bg.rotateZ(Math.PI/2); const br = new THREE.Mesh(bg, darkGloss('#2a1f18'));
-      placeOn(front, V(s*0.33, 0.33 + fy, 1), br, 0.02*sc); br.rotateZ(s*(st === 3 ? 0.42 : 0.14)); body.add(br); }
+      br.userData.face = 1; placeOn(front, V(s*0.33, 0.33 + fy, 1), br, 0.02*sc); br.rotateZ(s*(st === 3 ? 0.42 : 0.14)); body.add(br); }
   }
   // 腮紅
-  if(st < 3) for(const s of [-1, 1]){ const c = new THREE.Mesh(new THREE.CircleGeometry(0.11*sc, 24), new THREE.MeshBasicMaterial({ map: BLUSH, transparent: true, depthWrite: false })); placeOn(front, V(s*0.56, -0.08, 1), c, 0.012); c.scale.x = 1.25; body.add(c); }
+  if(st < 3) for(const s of [-1, 1]){ const c = new THREE.Mesh(new THREE.CircleGeometry(0.11*sc, 24), new THREE.MeshBasicMaterial({ map: BLUSH, transparent: true, depthWrite: false })); c.userData.face = 1; placeOn(front, V(s*0.56, -0.08, 1), c, 0.012); c.scale.x = 1.25; body.add(c); }
   // 嘴巴
   const mouthDark = new THREE.MeshStandardMaterial({ color: '#4a1612', roughness: 0.6 });
   if(fam === 'sheng' || (fam === 'wei' && st === 3)){
     const big = fam === 'wei', m = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), mouthDark), sx = big ? 0.42 : 0.12 + 0.06*st, sy = big ? 0.26 : 0.08 + 0.05*st;
-    m.scale.set(sx, sy, 0.05); placeOn(front, V(0, big ? -0.3 : -0.22, 1), m, -0.01); body.add(m);
+    m.scale.set(sx, sy, 0.05); m.userData.face = 1; placeOn(front, V(0, big ? -0.3 : -0.22, 1), m, -0.01); body.add(m);
     const tg = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12), new THREE.MeshStandardMaterial({ color: '#e8746a', roughness: 0.5 })); tg.scale.set(0.5, 0.35, 0.6); tg.position.set(0, -0.45, 0.4); m.add(tg);
     if(big) for(const s of [-1, 1]){ const f = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.5, 12), new THREE.MeshPhysicalMaterial({ color: '#fffaf0', roughness: 0.2, clearcoat: 1 })); f.rotation.x = Math.PI; f.position.set(s*0.5, 0.62, 0.6); m.add(f); }
     M.upd.push(t => { m.scale.y = sy*(0.8 + 0.35*Math.abs(Math.sin(t*(big ? 4 : 5)))); });
-  } else if(fam === 'chu' && st === 1){ const m = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.016, 10, 28), darkGloss('#2a1f18')); placeOn(front, V(0, -0.2, 1), m, 0.006); body.add(m); }
+  } else if(fam === 'chu' && st === 1){ const m = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.016, 10, 28), darkGloss('#2a1f18')); m.userData.face = 1; placeOn(front, V(0, -0.2, 1), m, 0.006); body.add(m); }
   else { const r = st === 3 ? 0.16 : st === 2 ? 0.13 : 0.11, arcA = st === 3 ? 0.62 : 0.7, g = new THREE.TorusGeometry(r*sc, 0.02*sc, 10, 36, Math.PI*arcA); g.rotateZ(-Math.PI/2 - Math.PI*arcA/2);
-    const m = new THREE.Mesh(g, darkGloss('#2a1f18')); placeOn(front, V(0, (st === 3 ? 0.02 : 0.0) + fy, 1), m, 0.008); body.add(m);
+    const m = new THREE.Mesh(g, darkGloss('#2a1f18')); m.userData.face = 1; placeOn(front, V(0, (st === 3 ? 0.02 : 0.0) + fy, 1), m, 0.008); body.add(m);
     if(st === 3) for(const s of [-1, 1]){ const f = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.085, 10), new THREE.MeshPhysicalMaterial({ color: '#fffaf0', roughness: 0.2, clearcoat: 1 })); f.rotation.x = Math.PI; f.position.set(s*0.065, -r + 0.005, 0.01); m.add(f); } }
   // 第三階段：彎角（根部深紫、尖端骨白）
   if(st === 3 && fam !== 'sheng') for(const s of [-1, 1]){ const h = new THREE.Mesh(hornGeo(), new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.35, clearcoat: 0.8 }));
-    placeOn(front, V(s*0.42, 0.9, 0.1), h, -0.06); h.rotation.set(0, 0, -s*0.38); h.scale.x = s; body.add(h); }
-  accessories(M, fam, st, front);
+    h.userData = { pass: 1, nm: '彎角' }; placeOn(front, V(s*(fam === 'chu' ? 0.8 : 0.42), fam === 'chu' ? 0.78 : 0.9, 0.1), h, -0.06); h.rotation.set(0, 0, -s*(fam === 'chu' ? 0.7 : 0.38)); h.scale.x = s; body.add(h); }
+  if(!o.pure) accessories(M, fam, st, front);
+  if(o.pure){ const l = sprite(textTex('🪷', '#fff', '96px sans-serif')); l.scale.setScalar(0.62); l.position.set(0, 1.42, 0.1); l.userData.nm = '蓮花'; body.add(l); }
+  if(o.gold){ const a = sprite(SOFT, 0xffd27a, true, 0.5); a.scale.setScalar(3.8); a.position.z = -0.8; a.userData.fx = 1; root.add(a); M.upd.push(t => { a.material.opacity = 0.4 + 0.12*Math.sin(t*2.5); }); }
   // 氣場、地上的影子、飄浮的塵點
-  if(st >= 2){ const a = sprite(SOFT, st === 3 ? 0x7a1f4a : 0xffffff, st !== 3, st === 3 ? 0.55 : 0.18); a.scale.setScalar(st === 3 ? 4.4 : 3.6); a.position.z = -0.8; root.add(a); M.upd.push(t => { a.material.opacity = (st === 3 ? 0.5 : 0.16) + 0.08*Math.sin(t*2); }); }
-  const motes = []; for(let i=0;i<26;i++){ const p = sprite(SPARK, st === 3 ? 0xff9a9a : 0xffe2a8, true, 0); p.userData = { a: rnd(0, 6.28), r: rnd(1.1, 1.9), y: rnd(-1, 1.3), sp: rnd(0.15, 0.4), s: rnd(0.04, 0.09), ph: rnd(0, 6.28) }; root.add(p); motes.push(p); }
-  M.upd.push(t => { for(const p of motes){ const u = p.userData, a = u.a + t*u.sp; p.position.set(Math.cos(a)*u.r, u.y + Math.sin(t*0.7 + u.ph)*0.15, Math.sin(a)*u.r*0.7); p.scale.setScalar(u.s); p.material.opacity = 0.35 + 0.35*Math.sin(t*2 + u.ph); } });
+  if(st >= 2){ const a = sprite(SOFT, st === 3 ? 0x7a1f4a : 0xffffff, st !== 3, st === 3 ? 0.55 : 0.18); a.scale.setScalar(st === 3 ? 4.4 : 3.6); a.position.z = -0.8; a.userData.fx = 1; root.add(a); M.upd.push(t => { a.material.opacity = (st === 3 ? 0.5 : 0.16) + 0.08*Math.sin(t*2); }); }
+  const motes = []; for(let i=0;i<26;i++){ const p = sprite(SPARK, o.gold ? 0xfff0a0 : st === 3 ? 0xff9a9a : 0xffe2a8, true, 0); p.userData = { fx: 1, a: rnd(0, 6.28), r: rnd(1.4, 1.95), y: rnd(-1, 1.3), sp: rnd(0.15, 0.4), s: rnd(0.04, 0.09), ph: rnd(0, 6.28) }; root.add(p); motes.push(p); }
+  M.upd.push(t => { for(const p of motes){ const u = p.userData, a = u.a + t*u.sp; p.position.set(Math.cos(a)*u.r, u.y + Math.sin(t*0.7 + u.ph)*0.15, Math.sin(a)*u.r*0.8); p.scale.setScalar(u.s); p.material.opacity = 0.35 + 0.35*Math.sin(t*2 + u.ph); } });
   return M;
 }
 
 function accessories(M, fam, st, front){
   const B = M.body, U = M.upd;
   if(fam === 'se'){
-    const mirror = () => { const g = new THREE.Group(), fr = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.045, 14, 48), gold()); fr.scale.y = 1.3; g.add(fr);
+    const mirror = (handle = true) => { const g = new THREE.Group(), fr = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.045, 14, 48), gold()); fr.scale.y = 1.3; g.add(fr);
       const gl = new THREE.Mesh(new THREE.CircleGeometry(0.29, 48), new THREE.MeshPhysicalMaterial({ color: '#eaf7ff', metalness: 1, roughness: 0.03 })); gl.scale.y = 1.3; g.add(gl);
       const bk = new THREE.Mesh(new THREE.CircleGeometry(0.3, 48), gold()); bk.scale.y = 1.3; bk.rotation.y = Math.PI; bk.position.z = -0.01; g.add(bk);
-      g.add(stick(V(0, -0.38, 0), V(0, -0.85, 0), 0.045, gold())); return g; };
-    if(st === 1){ const m = mirror(); m.position.set(1.0, 0.0, 0.35); m.scale.setScalar(0.85); B.add(m); U.push(t => { m.rotation.set(0.1, -0.5 + Math.sin(t*1.5)*0.25, -0.35 + Math.sin(t*2)*0.1); }); }
-    if(st >= 2){ const m = mirror(); m.position.set(0, 1.42, 0); m.scale.setScalar(0.62); B.add(m); U.push(t => { m.rotation.y = Math.sin(t*0.9)*0.4; }); }
-    if(st >= 2){ const sp = []; for(let k=0;k<5;k++){ const s = sprite(textTex('✦', '#fff0ff'), 0xffffff, true); s.scale.setScalar(0.28); B.add(s); sp.push(s); }
-      U.push(t => sp.forEach((s, k) => { const a = t*1.2 + k*1.26; s.position.set(Math.cos(a)*1.25, 0.25 + Math.sin(a*1.7)*0.35, Math.sin(a)*0.9); s.material.opacity = 0.5 + 0.5*Math.sin(t*3 + k); })); }
+      if(handle) g.add(stick(V(0, -0.38, 0), V(0, -0.85, 0), 0.045, gold())); return g; };
+    if(st === 1){ const m = mirror(); m.userData.nm = '手鏡'; m.scale.setScalar(0.85); B.add(m); U.push(t => { m.position.set(1.36, 0.05 + Math.sin(t*1.7)*0.05, 0.3); m.rotation.set(0.1, -0.5 + Math.sin(t*1.5)*0.25, -0.3 + Math.sin(t*2)*0.08); }); }
+    if(st >= 2){ const m = mirror(false); m.userData.nm = '鏡冠'; m.scale.setScalar(0.62); B.add(m); U.push(t => { m.position.set(0, 1.62 + Math.sin(t*1.6)*0.04, 0); m.rotation.y = Math.sin(t*0.9)*0.4; }); }
+    if(st >= 2){ const sp = []; for(let k=0;k<5;k++){ const s = sprite(textTex('✦', '#fff0ff'), 0xffffff, true); s.scale.setScalar(0.28); s.userData.nm = '星光'; B.add(s); sp.push(s); }
+      U.push(t => sp.forEach((s, k) => { const a = t*1.2 + k*1.26; s.position.set(Math.cos(a)*1.42, 0.25 + Math.sin(a*1.7)*0.35, Math.sin(a)*1.18); s.material.opacity = 0.5 + 0.5*Math.sin(t*3 + k); })); }
     if(st === 3){ const masks = ['#f6f1e7', '#e9c2d6', '#cfc6f2'].map((c, k) => { const tex = canvasTex(256, (x, s) => { x.fillStyle = c; x.fillRect(0, 0, s, s); x.fillStyle = '#2a1f18';
           x.beginPath(); x.ellipse(s*0.36, s*0.42, s*0.06, s*0.09, 0, 0, 6.29); x.ellipse(s*0.64, s*0.42, s*0.06, s*0.09, 0, 0, 6.29); x.fill(); x.strokeStyle = '#2a1f18'; x.lineWidth = s*0.03; x.beginPath();
           if(k === 1) x.arc(s/2, s*0.72, s*0.08, 1.1*Math.PI, 1.9*Math.PI); else x.arc(s/2, s*0.6, s*0.09, 0.15*Math.PI, 0.85*Math.PI); x.stroke();
           x.fillStyle = k === 2 ? 'rgba(120,90,200,.5)' : 'rgba(230,120,150,.45)'; x.beginPath(); x.ellipse(s*0.25, s*0.6, s*0.06, s*0.035, 0, 0, 6.29); x.ellipse(s*0.75, s*0.6, s*0.06, s*0.035, 0, 0, 6.29); x.fill(); });
-        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28, 0, Math.PI), new THREE.MeshPhysicalMaterial({ map: tex, roughness: 0.35, clearcoat: 0.6, side: THREE.DoubleSide })); m.scale.set(0.26, 0.33, 0.13); M.root.add(m); return m; });
-      U.push(t => masks.forEach((m, k) => { const a = t*0.8 + k*Math.PI*2/3; m.position.set(Math.cos(a)*1.22, 0.15 + Math.sin(a*2)*0.12, Math.sin(a)*1.0); m.lookAt(camera.position); })); }
+        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28, 0, Math.PI), new THREE.MeshPhysicalMaterial({ map: tex, roughness: 0.35, clearcoat: 0.6, side: THREE.DoubleSide })); m.scale.set(0.26, 0.33, 0.13); m.userData.nm = '面具'; M.root.add(m); return m; });
+      U.push(t => masks.forEach((m, k) => { const a = t*0.8 + k*Math.PI*2/3; m.position.set(Math.cos(a)*1.36, 0.15 + Math.sin(a*2)*0.12, Math.sin(a)*1.16); m.lookAt(camera.position); })); }
   }
   if(fam === 'sheng'){
     const horn = (big) => { const g = new THREE.Group(); const P = [[0.05,0],[0.055,0.25],[0.085,0.48],[0.16,0.64],[0.34,0.76],[0.36,0.78]].map(p => new THREE.Vector2(p[0], p[1]));
@@ -521,48 +581,52 @@ function accessories(M, fam, st, front){
       const rimR = new THREE.Mesh(new THREE.TorusGeometry(0.355, 0.02, 10, 48), gold()); rimR.rotation.x = Math.PI/2; rimR.position.y = 0.775; g.add(rimR);
       const waves = []; if(big) for(let k=0;k<3;k++){ const tg = new THREE.TorusGeometry(1, 0.025, 8, 40, 1.3); tg.rotateZ(Math.PI/2 - 0.65); const w = new THREE.Mesh(tg, new THREE.MeshBasicMaterial({ color: '#ffd9a8', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide })); g.add(w); waves.push(w); }
       g.userData.waves = waves; return g; };
-    const place = (h, x, y, rz, s) => { h.position.set(x, y, 0.15); h.rotation.set(0, 0, rz); h.scale.setScalar(s); B.add(h); const ws = h.userData.waves; if(ws.length) U.push(t => ws.forEach((w, k) => { const ph = (t*1.3 + k/3) % 1; w.position.y = 0.7 + ph*0.9; w.scale.setScalar(0.25 + ph*0.55); w.material.opacity = (1 - ph)*0.8; })); };
-    if(st === 1) place(horn(false), 0.72, 0.6, -0.85, 0.75);
-    if(st === 2) place(horn(true), 0.7, 0.62, -0.85, 1.0);
-    if(st === 3){ place(horn(true), -0.5, 0.82, 0.55, 0.95); place(horn(true), 0.5, 0.82, -0.55, 0.95); }
+    const place = (h, dir, sz) => { const tmp = new THREE.Object3D(); placeOn(front, dir, tmp, 0); const n = V(0, 0, 1).applyQuaternion(tmp.quaternion), up = n.clone().lerp(dir.clone().normalize(), 0.3).normalize();
+      h.position.copy(tmp.position).addScaledVector(n, 0.01); h.quaternion.setFromUnitVectors(V(0, 1, 0), up); h.scale.setScalar(sz); h.userData.nm = '喇叭'; B.add(h);
+      const ws = h.userData.waves; ws.forEach(w => w.userData.fx = 1); if(ws.length) U.push(t => ws.forEach((w, k) => { const ph = (t*1.3 + k/3) % 1; w.position.y = 0.7 + ph*0.9; w.scale.setScalar(0.25 + ph*0.55); w.material.opacity = (1 - ph)*0.8; })); };
+    if(st === 1) place(horn(false), V(0.8, 0.75, 0.3), 0.75);
+    if(st === 2) place(horn(true), V(0.8, 0.75, 0.3), 1.0);
+    if(st === 3){ place(horn(true), V(-0.75, 0.75, 0.25), 0.72); place(horn(true), V(0.75, 0.75, 0.25), 0.72); }
   }
   if(fam === 'xiang'){
-    const smoke = (o, n, size, rise, col) => { const ps = []; for(let i=0;i<n;i++){ const s = sprite(SMOKE, col, false, 0); B.add(s); ps.push({ s, L: i/n, ph: rnd(0, 6) }); }
+    const smoke = (o, n, size, rise, col) => { const ps = []; for(let i=0;i<n;i++){ const s = sprite(SMOKE, col, false, 0); s.userData.fx = 1; B.add(s); ps.push({ s, L: i/n, ph: rnd(0, 6) }); }
       U.push((t, dt) => ps.forEach(p => { p.L += dt/2.4; if(p.L > 1) p.L -= 1; const L = p.L; p.s.position.set(o.x + Math.sin(L*5 + t*1.4 + p.ph)*0.16*L, o.y + L*rise, o.z); p.s.scale.setScalar(size*(0.35 + L*1.5)); p.s.material.opacity = Math.sin(L*Math.PI)*0.55; p.s.material.rotation = L*2 + p.ph; })); };
     if(st === 1) smoke(V(0.55, 0.75, 0.2), 9, 0.45, 1.3, 0xe8e6ff);
-    if(st >= 2){ B.add(stick(V(0.62, 0.5, 0.25), V(0.66, 1.4, 0.25), 0.028, new THREE.MeshStandardMaterial({ color: '#9a3b2a', roughness: 0.7 })));
-      const ember = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 12), new THREE.MeshBasicMaterial({ color: '#ffb347' })); ember.position.set(0.66, 1.42, 0.25); B.add(ember);
-      const eg = sprite(SPARK, 0xff9a40, true, 0.9); eg.scale.setScalar(0.35); eg.position.copy(ember.position); B.add(eg); U.push(t => { eg.material.opacity = 0.6 + 0.35*Math.sin(t*7); });
-      smoke(V(0.66, 1.45, 0.25), 10, 0.4, 1.4, 0xece8ff); smoke(V(-0.6, 0.6, 0.1), 7, 0.5, 1.1, 0xd8d4ff); }
+    if(st >= 2){ const ix = st === 3 ? 0.0 : 0.5, iz = st === 3 ? 0.3 : 0.2; rc.set(V(ix, 4, iz), V(0, -1, 0)); const hit = rc.intersectObjects(front, false)[0], y0 = hit ? hit.point.y : 0.8;
+      const ins = stick(V(ix, y0 - 0.1, iz), V(ix + 0.04, y0 + 0.8, iz), 0.028, new THREE.MeshStandardMaterial({ color: '#9a3b2a', roughness: 0.7 })); ins.userData = { pass: 1, nm: '線香' }; B.add(ins);
+      const ember = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 12), new THREE.MeshBasicMaterial({ color: '#ffb347' })); ember.position.set(ix + 0.04, y0 + 0.82, iz); ember.userData.nm = '線香'; B.add(ember);
+      const eg = sprite(SPARK, 0xff9a40, true, 0.9); eg.userData.fx = 1; eg.scale.setScalar(0.35); eg.position.copy(ember.position); B.add(eg); U.push(t => { eg.material.opacity = 0.6 + 0.35*Math.sin(t*7); });
+      smoke(ember.position.clone().add(V(0, 0.03, 0)), 10, 0.4, 1.4, 0xece8ff); smoke(V(-0.6, 0.6, 0.1), 7, 0.5, 1.1, 0xd8d4ff); }
     if(st === 3){ smoke(V(-0.2, 0.9, 0.0), 9, 0.55, 1.5, 0xc9b8ff); smoke(V(0.2, 0.9, -0.1), 9, 0.55, 1.5, 0xd9c8ff); }
   }
   if(fam === 'wei'){
-    if(st === 1) B.add(stick(V(0.45, -0.3, 0.2), V(1.15, -1.05, 0.25), 0.045, new THREE.MeshStandardMaterial({ color: '#b98a52', roughness: 0.7 })));
-    if(st === 3){ const fs = ['🍡', '🍰', '🍜', '🍙'].map(ch => { const s = sprite(textTex(ch, '#fff', '92px sans-serif')); s.scale.setScalar(0.5); B.add(s); return s; });
-      U.push(t => fs.forEach((s, k) => { const a = t*1.1 + k*Math.PI/2; s.position.set(Math.cos(a)*1.45, 0.35 + Math.sin(a*2)*0.1, Math.sin(a)*1.0); })); }
+    if(st === 1){ const sk = stick(V(0.45, -0.3, 0.2), V(1.15, -1.05, 0.25), 0.045, new THREE.MeshStandardMaterial({ color: '#b98a52', roughness: 0.7 })); sk.userData = { pass: 1, nm: '竹籤' }; B.add(sk); }
+    if(st === 3){ const fs = ['🍡', '🍰', '🍜', '🍙'].map(ch => { const s = sprite(textTex(ch, '#fff', '92px sans-serif')); s.scale.setScalar(0.5); s.userData.nm = '食物'; B.add(s); return s; });
+      U.push(t => fs.forEach((s, k) => { const a = t*1.1 + k*Math.PI/2; s.position.set(Math.cos(a)*1.58, 0.35 + Math.sin(a*2)*0.1, Math.sin(a)*1.3); })); }
   }
   if(fam === 'chu'){
-    const zs = [0, 1, 2].map(() => { const s = sprite(textTex('z', '#cfe6ff')); B.add(s); return s; });
-    U.push(t => zs.forEach((s, k) => { const ph = (t*0.45 + k/3) % 1; s.position.set(0.7 + ph*0.55, 0.85 + ph*0.9, 0.2); s.scale.setScalar(0.18 + ph*0.22); s.material.opacity = Math.sin(ph*Math.PI); }));
+    const zs = [0, 1, 2].map(() => { const s = sprite(textTex('z', '#cfe6ff')); s.userData.nm = 'z'; B.add(s); return s; });
+    U.push(t => zs.forEach((s, k) => { const ph = (t*0.45 + k/3) % 1; s.position.set(0.95 + ph*0.5, 1.1 + ph*0.85, 0.3); s.scale.setScalar(0.18 + ph*0.22); s.material.opacity = Math.sin(ph*Math.PI); }));
     if(st >= 2){ const tex = canvasTex(256, (c, s) => { c.fillStyle = '#8fa8e6'; c.fillRect(0, 0, s, s); c.fillStyle = 'rgba(255,255,255,.35)'; for(let i=0;i<8;i++) c.fillRect(i*s/8, 0, s/20, s); c.fillStyle = 'rgba(255,240,180,.8)'; for(let i=0;i<30;i++){ c.beginPath(); c.arc(rnd(0, s), rnd(0, s), 3, 0, 6.29); c.fill(); } });
       const g = new THREE.PlaneGeometry(2.7, 1.0, 64, 20), p = g.attributes.position;
       for(let i=0;i<p.count;i++){ const x = p.getX(i), y = p.getY(i), th = x/0.95, R = 1.1*(1 + 0.2*(0.5 - y)) + 0.05*Math.sin(x*9)*(0.6 - y); p.setXYZ(i, Math.sin(th)*R, -0.78 + y*0.7 + 0.06*Math.cos(x*2.2)*(y + 0.5), Math.cos(th)*R*0.72); }
-      g.computeVertexNormals(); const bl = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9, side: THREE.DoubleSide })); B.add(bl); }
+      g.computeVertexNormals(); const bl = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9, side: THREE.DoubleSide })); bl.userData.nm = '被子'; B.add(bl); }
     if(st === 3){ const g = new THREE.CylinderGeometry(0.4, 0.36, 0.34, 60, 6, true), p = g.attributes.position;
       for(let i=0;i<p.count;i++){ const y = p.getY(i); if(y > 0.1){ const a = Math.atan2(p.getZ(i), p.getX(i)), tri = Math.abs(((a/(Math.PI*2))*5*2 % 2 + 2) % 2 - 1); p.setY(i, y + 0.16*tri); } }
-      g.computeVertexNormals(); const cr = new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ color: '#d9ad55', metalness: 1, roughness: 0.25, side: THREE.DoubleSide })); cr.position.set(0, 1.0, 0); cr.rotation.z = 0.12; B.add(cr);
+      g.computeVertexNormals(); const cr = new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ color: '#d9ad55', metalness: 1, roughness: 0.25, side: THREE.DoubleSide })); cr.position.set(0, 1.0, 0); cr.rotation.z = 0.12; cr.userData = { pass: 1, nm: '王冠' }; B.add(cr);
       [['#e0405a', 0], ['#4a7be0', 0.6], ['#4a7be0', -0.6]].forEach(([c, a]) => { const gm = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 12), new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.05, clearcoat: 1, emissive: c, emissiveIntensity: 0.3 })); gm.position.set(Math.sin(a)*0.39, 0.0, Math.cos(a)*0.39); cr.add(gm); }); }
   }
   if(fam === 'fa'){
-    const q = n => [...Array(n)].map(() => { const s = sprite(textTex('?', '#dcfff4')); s.scale.setScalar(0.42); B.add(s); return s; });
-    if(st === 1){ const [s] = q(1); U.push(t => { s.position.set(0.75, 1.0 + Math.sin(t*2)*0.06, 0.2); s.material.rotation = 0.2 + Math.sin(t*1.5)*0.15; }); }
-    if(st >= 2){ const qs = q(3); U.push(t => qs.forEach((s, k) => { const a = t*1.3 + k*Math.PI*2/3; s.position.set(Math.cos(a)*1.25, 0.95 + Math.sin(a*2)*0.1, Math.sin(a)*0.75); s.material.rotation = a; })); }
-    if(st === 3){ const rings = [0, 1, 2].map(k => { const pts = []; for(let i=0;i<80;i++){ const a = i/80*Math.PI*2, r = 1.25 + 0.15*Math.sin(a*3 + k); pts.push(V(Math.cos(a)*r, Math.sin(a*2 + k)*0.12, Math.sin(a)*r)); }
+    const q = n => [...Array(n)].map(() => { const s = sprite(textTex('?', '#dcfff4')); s.scale.setScalar(0.42); s.userData.nm = '問號'; B.add(s); return s; });
+    if(st === 1){ const [s] = q(1); U.push(t => { s.position.set(0.88, 1.2 + Math.sin(t*2)*0.06, 0.25); s.material.rotation = 0.2 + Math.sin(t*1.5)*0.15; }); }
+    if(st >= 2){ const qs = q(3); U.push(t => qs.forEach((s, k) => { const a = t*1.3 + k*Math.PI*2/3; s.position.set(Math.cos(a)*1.32, 1.3 + Math.sin(a*2)*0.08, Math.sin(a)*1.05); s.material.rotation = a; })); }
+    if(st === 3){ const rings = [0, 1, 2].map(k => { const pts = []; for(let i=0;i<80;i++){ const a = i/80*Math.PI*2, r = 1.66 + 0.06*Math.sin(a*3 + k); pts.push(V(Math.cos(a)*r, Math.sin(a*2 + k)*0.06, Math.sin(a)*r)); }
         const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 160, 0.03, 8, true), new THREE.MeshPhysicalMaterial({ color: '#1f4a42', roughness: 0.3, clearcoat: 1, transparent: true, opacity: 0.8 }));
-        m.rotation.set(0.5 + k*0.5, k, 0.3*k); M.root.add(m); return m; });
+        m.rotation.set(0.5 + k*0.5, k, 0.3*k); m.userData.nm = '念環'; M.root.add(m); return m; });
       U.push(t => rings.forEach((m, k) => { m.rotation.y = t*(0.4 + k*0.15)*(k % 2 ? -1 : 1); })); }
   }
 }
+
 
 // ---------- 場景物件：影子、特效 ----------
 const shadow = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), new THREE.MeshBasicMaterial({ map: SHADOW, transparent: true, depthWrite: false })); shadow.rotation.x = -Math.PI/2; shadow.position.y = -1.32; scene.add(shadow);
@@ -662,6 +726,7 @@ seg('fam', () => cur.fam, v => { cur.fam = v; setMonster(); });
 seg('stg', () => cur.st, v => { cur.st = +v; setMonster(); });
 seg('view', () => view, v => { view = v; if(M) M.root.visible = v === '3d'; shadow.visible = ring.visible = v === '3d'; });
 seg('snd', () => soundSet, v => { soundSet = v; audioInit(); });
+document.getElementById('btnVoice').addEventListener('click', () => { audioInit(); famVoice(curDef(), now0() + 0.02); });
 document.querySelectorAll('[data-hit]').forEach(b => b.addEventListener('click', () => { if(capture && !capture.done) return; hit(b.dataset.hit); }));
 // 拖曳旋轉，看看立體感
 let drag = null; stage.addEventListener('pointerdown', e => { drag = { x: e.clientX, y0: dragYaw }; }); addEventListener('pointerup', () => drag = null);
