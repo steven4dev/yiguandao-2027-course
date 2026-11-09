@@ -644,7 +644,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261109.03</span>
+  <span class="ver">v261109.04</span>
   </div></div>
 </div>
 
@@ -5617,23 +5617,22 @@ kinto.visible = ptOpen;
 scene.add(kinto);
 const kintoHit = [];
 {
-  // 雲：水滴形的流線雲（雲的前方是 +z）。前端圓鈍迎風、往後平順收細，尾巴順著氣流水平拖在後方（不往上翹），
-  // 尾端分成兩道細細的雲絲往後拉，接上噴出的煙霧
+  // 雲：水滴形的雲（雲的前方是 +z）。從上面看是「前面一個正圓、後面用往外鼓的弧線慢慢收到尾巴」，前後都沒有尖角（不會像風箏）。
+  // 做法：沿著中線排一串雲團，每團的半徑照水滴的輪廓 w(z) 給，外輪廓就是平滑的水滴；最寬約 2、長約 4.3（寬長比約 0.47）。
+  // 頂上再加幾團小雲做出蓬鬆感（都在輪廓裡面，不會變寬）；每團只壓扁一點點，看起來圓鼓鼓的
   const cloudM = new THREE.MeshLambertMaterial({ color: '#fff4cf', emissive: '#ffd36a', emissiveIntensity: 0.28 });
   const cloudM2 = new THREE.MeshLambertMaterial({ color: '#ffe9a8', emissive: '#f2b84a', emissiveIntensity: 0.22 });
   const CL = new THREE.Group(); kinto.add(CL); kinto.userData.cloud = CL;
-  for (const [x, y, z, r, m, sy] of [
-    // 雲頭：大聖站的地方，前端圓鈍
-    [0, 0, 0.4, 1.05, cloudM, 0.6], [0.82, -0.06, 0.3, 0.72, cloudM, 0.6], [-0.82, -0.06, 0.3, 0.72, cloudM, 0.6],
-    [0.2, -0.12, 1.05, 0.6, cloudM, 0.6], [-0.25, -0.05, 1.0, 0.55, cloudM2, 0.6],
-    // 雲身：往後平順收細，高度不變
-    [0.4, 0, -0.5, 0.8, cloudM2, 0.58], [-0.4, -0.02, -0.55, 0.78, cloudM, 0.58], [0, 0, -1.25, 0.66, cloudM, 0.56],
-    [0, -0.02, -1.9, 0.5, cloudM2, 0.55], [0, -0.03, -2.45, 0.37, cloudM, 0.55],
-    // 尾端兩道雲絲：微微往外分開、越來越細
-    [0.22, -0.04, -2.95, 0.26, cloudM2, 0.6], [-0.22, -0.04, -2.95, 0.26, cloudM, 0.6],
-    [0.36, -0.05, -3.4, 0.18, cloudM, 0.65], [-0.36, -0.05, -3.4, 0.18, cloudM2, 0.65],
-    [0.46, -0.06, -3.78, 0.12, cloudM2, 0.7], [-0.46, -0.06, -3.78, 0.12, cloudM, 0.7],
-  ]) {
+  const DR = 1.0, DZ0 = 0.3, DZT = -3.0;   // 雲頭半徑、雲頭圓心、尾巴末端
+  const dropW = (z) => (z >= DZ0 ? Math.sqrt(Math.max(0, DR * DR - (z - DZ0) ** 2)) : DR * Math.pow(1 - (DZ0 - z) / (DZ0 - DZT), 0.8));
+  const puffs = [];
+  // 中線的雲團排密一點、左右微微錯開、大小有點變化（固定的變化，不用亂數），表面才像蓬鬆的雲而不是一圈一圈的貝殼紋
+  for (let z = DZ0, n = 0; z > DZT + 0.1; z -= 0.22, n++) {
+    const w = Math.max(0.09, dropW(z)), j = [0, 0.07, -0.05, 0.04, -0.08, 0.06][n % 6], v = [1, 0.93, 0.97, 0.9, 0.95, 0.92][n % 6];
+    puffs.push([j * w, -0.05 * (DZ0 - z) + j * 0.5 * w, z, w * v + (1 - v) * 0.05, n % 3 ? cloudM : cloudM2, 0.82]);
+  }
+  puffs.push([0.28, 0.34, 0.55, 0.5, cloudM2, 0.9], [-0.3, 0.3, 0.0, 0.52, cloudM, 0.9], [0.2, 0.26, -0.7, 0.45, cloudM2, 0.9], [-0.15, 0.18, -1.4, 0.36, cloudM, 0.9]);
+  for (const [x, y, z, r, m, sy] of puffs) {
     const s = mesh(new THREE.SphereGeometry(r, 16, 12), m, x, y, z, CL, false); s.scale.y = sy;
   }
   // 齊天大聖：臉是膚色、頭頂和後腦勺一圈棕色毛、兩隻圓耳朵、金箍、虎皮裙、金箍棒、一條捲尾巴
@@ -5715,7 +5714,7 @@ animators.push((t, dt = 1 / 60) => {
     const n = Math.min(6, Math.floor((t - kintoPuffAt) / 0.035));
     for (let i = 1; i <= n; i++) {
       const p = kintoPuffs[kintoPuffI++ % kintoPuffs.length], f = i / n;
-      kintoTmp.set((Math.random() - 0.5) * 0.9, -0.05 + (Math.random() - 0.5) * 0.2, -3.6).applyEuler(kinto.rotation).add(kintoAhead.lerpVectors(kPrev, kinto.position, f));
+      kintoTmp.set((Math.random() - 0.5) * 0.3, -0.08 + (Math.random() - 0.5) * 0.2, -2.9).applyEuler(kinto.rotation).add(kintoAhead.lerpVectors(kPrev, kinto.position, f));
       p.m.position.copy(kintoTmp);
       p.vel.set((Math.random() - 0.5) * 0.8, 0.15 + Math.random() * 0.3, -1.2 - Math.random() * 0.8).applyEuler(kinto.rotation);
       p.age = (1 - f) * kdt; p.life = 1.1 + Math.random() * 0.6; p.size = 0.7 + Math.random() * 0.4; p.m.visible = true;
