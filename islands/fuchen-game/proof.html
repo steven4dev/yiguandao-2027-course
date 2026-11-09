@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0d151d">
+<title>拂塵試煉 2.0 打樣｜拂塵淨心島</title>
+<meta name="description" content="拂塵試煉 2.0 的設計打樣：塵靈造型、收服演出、組合技、淨心錄圖鑑。">
+<style>
+:root{ --bg:#0d151d; --panel:#16202b; --ink:#f6ecd8; --muted:#a99c88; --gold:#e8bd5a; --gold-soft:rgba(232,189,90,.16); --line:rgba(232,189,90,.3); --good:#7fe0a6; }
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){ --bg:#0d151d; } }
+:root[data-theme="light"]{ --bg:#0d151d; }
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:560px;margin:0 auto;padding:12px 16px 40px}
+header h1{margin:6px 0 2px;font-size:1.35rem;color:var(--gold);letter-spacing:1px}
+header p{margin:0;font-size:.82rem;color:var(--muted)}
+.tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 0;background:var(--bg)}
+.tabs button{font:inherit;font-size:.86rem;padding:9px 4px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--gold-soft);border-color:var(--gold);font-weight:800;color:var(--gold)}
+section[hidden]{display:none}
+h2{font-size:1.1rem;margin:10px 0 4px;color:var(--gold)}
+.note{font-size:.82rem;color:var(--muted);line-height:1.6;margin:4px 0 10px}
+.fam{background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:10px 10px 6px;margin:10px 0}
+.fam-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:0 4px 4px}
+.fam-h b{font-size:1rem}
+.fam-h span{font-size:.78rem;color:var(--muted)}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.card{background:rgba(255,255,255,.03);border-radius:12px;padding:4px 2px 8px;text-align:center;cursor:pointer;border:1px solid transparent}
+.card:active{border-color:var(--gold)}
+.card canvas{width:100%;aspect-ratio:1/1;display:block}
+.card .nm{font-weight:800;font-size:.92rem}
+.card .lv{font-size:.72rem;color:var(--muted)}
+.stage-wrap{position:relative;border-radius:18px;overflow:hidden;background:#0b1420;scroll-margin-top:64px}
+.stage-wrap canvas{display:block;width:100%;aspect-ratio:4/5;max-height:62vh}
+.pick{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.pick button,.btn{font:inherit;font-size:.85rem;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.pick button[aria-pressed="true"]{background:var(--gold-soft);border-color:var(--gold);color:var(--gold);font-weight:800}
+.btn.primary{background:var(--gold);color:#22190f;border-color:transparent;font-weight:900;font-size:1rem;padding:12px 18px;width:100%}
+.opts{display:flex;gap:14px;flex-wrap:wrap;font-size:.86rem;margin:8px 2px}
+.opts label{display:flex;gap:6px;align-items:center}
+.dex-top{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--panel);border-radius:14px;padding:10px 12px;margin:8px 0}
+.dex-top b{color:var(--gold);font-size:1.1rem}
+.bar{height:8px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--gold)}
+.lock{opacity:.55}
+.modal{position:fixed;inset:0;background:rgba(4,6,10,.75);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal[hidden]{display:none}
+.modal .box{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px;position:relative}
+.modal canvas{width:60%;margin:0 auto;display:block;aspect-ratio:1/1}
+.modal h3{margin:4px 0;text-align:center;font-size:1.3rem}
+.modal .tag{text-align:center;color:var(--muted);font-size:.85rem}
+.modal dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:12px 0;font-size:.9rem}
+.modal dt{color:var(--muted)}
+.quote{border-left:3px solid var(--gold);background:var(--gold-soft);border-radius:8px;padding:10px 12px;line-height:1.7}
+.quote small{display:block;color:var(--muted);font-size:.72rem;margin-top:4px}
+.close{position:absolute;right:10px;top:8px;border:0;background:none;color:var(--muted);font-size:1.4rem;cursor:pointer}
+.combo-chips{display:flex;gap:8px;justify-content:center;margin:8px 0}
+.legend{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.legend div{background:var(--panel);border-radius:12px;padding:8px 10px;font-size:.82rem;line-height:1.5}
+.legend b{color:var(--gold)}
+.ver{text-align:center;color:rgba(255,255,255,.3);font-size:.7rem;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🪶 拂塵試煉 2.0・打樣</h1>
+    <p>拂塵淨心島｜塵靈造型、收服演出、組合技、淨心錄。名字與心性小語都是示範版。</p>
+  </header>
+  <div class="tabs" role="tablist">
+    <button data-tab="t1" aria-pressed="true">① 塵靈造型</button>
+    <button data-tab="t2" aria-pressed="false">② 收服演出</button>
+    <button data-tab="t3" aria-pressed="false">③ 組合技</button>
+    <button data-tab="t4" aria-pressed="false">④ 淨心錄</button>
+  </div>
+
+  <section id="t1">
+    <h2>六系 × 三階段</h2>
+    <p class="note">每一系一種身形；進化後體型變大、長出配件、表情變兇。第一階段可愛（降低距離感），第三階段比較有壓迫感（念頭養大了很難收拾）。點任一隻看詳細資料。</p>
+    <div class="opts"><label><input type="checkbox" id="optGold"> 看金色版（稀有）</label><label><input type="checkbox" id="optPure"> 看淨化後的小精靈</label></div>
+    <div id="famList"></div>
+  </section>
+
+  <section id="t2" hidden>
+    <h2>收服演出（四段）</h2>
+    <p class="note">① 定格＋震動＋閃白 → ② 揮的符印化成金色烙在身上、光的裂紋蔓延 → ③ 塵殼碎裂，露出純白小精靈、鞠躬 → ④ 化成蓮花飛進右上角的淨心錄，「收服！」</p>
+    <div class="stage-wrap" id="sw2"><canvas id="cv2"></canvas></div>
+    <button class="btn primary" id="play2" style="margin-top:10px">▶ 播放收服演出</button>
+    <div class="opts"><label><input type="checkbox" id="optWeak" checked> 用剋制的符印（效果絕佳！）</label><label><input type="checkbox" id="optNew" checked> 第一次收服（NEW）</label><label><input type="checkbox" id="optGold2"> 金色塵靈</label></div>
+    <div class="pick" id="pick2"></div>
+  </section>
+
+  <section id="t3" hidden>
+    <h2>組合技</h2>
+    <p class="note">先記住符印順序 → 倒數一次 → 聽口令連續揮（「揮！」「叮・揮！」）。一般怪物最多 2 連擊，3 連擊以上只給魔王。全部揮對才觸發招式與特效。</p>
+    <div class="stage-wrap" id="sw3"><canvas id="cv3"></canvas></div>
+    <button class="btn primary" id="play3" style="margin-top:10px">▶ 播放組合技</button>
+    <div class="pick" id="pick3"></div>
+    <div class="legend" id="legend3"></div>
+  </section>
+
+  <section id="t4" hidden>
+    <h2>淨心錄</h2>
+    <p class="note">還沒收服的只顯示剪影和出沒等級，吊玩家胃口。收齊一系解鎖群島徽章。下方是「玩了幾局之後」的模擬進度。</p>
+    <div class="dex-top"><div><div>已收服 <b id="dexN">0</b> / 18</div><div class="bar"><i id="dexBar"></i></div></div><button class="btn" id="dexAll">預覽全部收服</button></div>
+    <div id="dexList"></div>
+    <h2 style="margin-top:18px">稀有與傳說（第二期）</h2>
+    <div class="row3" id="dexRare"></div>
+  </section>
+  <div class="ver">打樣 v261109.01</div>
+</div>
+
+<div class="modal" id="modal" hidden><div class="box"><button class="close" id="mClose" aria-label="關閉">×</button><canvas id="mCv"></canvas><h3 id="mName"></h3><div class="tag" id="mTag"></div><dl id="mDl"></dl><div class="quote" id="mQuote"></div></div></div>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const TAU = Math.PI*2;
+
+/* ================= 資料：六系 × 三階段（名字、心性小語皆示範） ================= */
+const FAMS = [
+  { key:'se',   name:'色', mood:'愛比較',   color:'#d3a6e3', dark:'#7e5a92', weak:'circle', weakName:'○ 圓',  weakWhy:'本自圓滿，不必比較' },
+  { key:'sheng',name:'聲', mood:'愛批評',   color:'#f2b47c', dark:'#9a5b2a', weak:'s',      weakName:'S 字', weakWhy:'迴轉語氣，以柔化剛' },
+  { key:'xiang',name:'香', mood:'被誘惑',   color:'#b9bdf0', dark:'#5e64a8', weak:'down',   weakName:'⬇ 劈', weakWhy:'當下斬斷誘惑' },
+  { key:'wei',  name:'味', mood:'貪口腹',   color:'#cfe28c', dark:'#6f8a2a', weak:'v',      weakName:'V 字', weakWhy:'知足打勾：夠了' },
+  { key:'chu',  name:'觸', mood:'貪安逸',   color:'#a2cdea', dark:'#3f78a0', weak:'up',     weakName:'⬆ 挑', weakWhy:'振作起身' },
+  { key:'fa',   name:'法', mood:'胡思亂想', color:'#93dccb', dark:'#2f8a76', weak:'alpha',  weakName:'α 阿法',weakWhy:'回到初心' }
+];
+const MONS = [
+  ['se',1,'鏡鏡','照鏡子是看自己，不是比別人。'],['se',2,'照妝妖','妝再美，不如心裡乾淨。'],['se',3,'千面魔','換了千張臉，最累的是自己。'],
+  ['sheng',1,'嘰嘰','話到嘴邊，先停三秒。'],['sheng',2,'流言妖','聽到閒話不轉傳，就是拂塵。'],['sheng',3,'謗聲魔','說人是非，塵先落在自己心上。'],
+  ['xiang',1,'薰薰','香氣來了，先問自己真的需要嗎？'],['xiang',2,'迷香妖','越迷人的，越要看清楚。'],['xiang',3,'醉夢魔','醒來才發現，夢裡什麼也沒帶走。'],
+  ['wei',1,'饞饞','吃八分飽，心更輕鬆。'],['wei',2,'饕餮妖','知足的人，一碗也是滿漢全席。'],['wei',3,'吞天魔','填不滿的不是胃，是心。'],
+  ['chu',1,'懶懶','先站起來，事情就做了一半。'],['chu',2,'軟骨妖','舒服的地方，最容易停下腳步。'],['chu',3,'沉眠魔','該醒的時候，不要再按貪睡。'],
+  ['fa',1,'念念','念頭來了，看著它，不跟著它。'],['fa',2,'妄想妖','想得越多，做得越少。'],['fa',3,'執念魔','放下不是失去，是騰出雙手。']
+].map(([f,st,name,quote]) => ({ fam: FAMS.find(x => x.key === f), stage: st, name, quote, lv: st === 1 ? 'Lv 1–9' : st === 2 ? 'Lv 10–19' : 'Lv 20+', hits: st === 1 ? 1 : 2 }));
+const STAGE_NAME = ['', '塵精', '塵妖', '塵魔'];
+
+/* ================= 塵靈繪製 ================= */
+function shade(hex, k){ const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255; const f = v => Math.max(0, Math.min(255, Math.round(v*(1+k)))); return `rgb(${f(r)},${f(g)},${f(b)})`; }
+// 各系的身形（以 r 為單位、原點在中心）
+function bodyPath(c, fam, st, r, t){
+  const w = (a, k=1) => 1 + 0.035*k*Math.sin(a*3 + t*2.2) + 0.025*k*Math.sin(a*5 - t*1.6);
+  c.beginPath();
+  if(fam === 'se'){ // 蛋形，上面略尖
+    for(let i=0;i<=48;i++){ const a = i/48*TAU, rr = r*w(a)*(1 - 0.12*Math.max(0, -Math.sin(a))); i ? c.lineTo(Math.cos(a)*rr*0.92, Math.sin(a)*rr) : c.moveTo(Math.cos(a)*rr*0.92, Math.sin(a)*rr); }
+  } else if(fam === 'sheng'){ // 鐘形：上圓下開
+    c.moveTo(-r*0.95, r*0.85); c.bezierCurveTo(-r*0.75, r*0.3, -r*0.95, -r*0.9, 0, -r*0.95); c.bezierCurveTo(r*0.95, -r*0.9, r*0.75, r*0.3, r*0.95, r*0.85);
+    c.quadraticCurveTo(r*0.5, r*1.05 + Math.sin(t*3)*r*0.03, 0, r*0.92); c.quadraticCurveTo(-r*0.5, r*1.05 - Math.sin(t*3)*r*0.03, -r*0.95, r*0.85);
+  } else if(fam === 'xiang'){ // 雲朵
+    const bumps = [[0,-0.35,0.62],[-0.55,-0.05,0.5],[0.55,-0.05,0.5],[-0.3,0.38,0.52],[0.3,0.38,0.52],[0,0.15,0.6]];
+    for(const [x,y,rr] of bumps){ c.moveTo((x + rr)*r, y*r); c.arc(x*r + Math.sin(t*2 + x*5)*r*0.02, y*r + Math.cos(t*2 + y*5)*r*0.02, rr*r, 0, TAU); }
+  } else if(fam === 'wei'){ // 糰子：第一階段一顆、第二階段三顆串、第三階段大嘴圓球
+    if(st === 2){ for(const [y,rr] of [[-0.62,0.42],[0,0.48],[0.62,0.44]]){ c.moveTo(rr*r, y*r); c.arc(0, y*r, rr*r, 0, TAU); } }
+    else { for(let i=0;i<=48;i++){ const a = i/48*TAU, rr = r*w(a); i ? c.lineTo(Math.cos(a)*rr, Math.sin(a)*rr*0.95) : c.moveTo(Math.cos(a)*rr, Math.sin(a)*rr*0.95); } }
+  } else if(fam === 'chu'){ // 枕頭：四角捏起來的圓角方形
+    const s = r*0.95, p = r*0.18 + Math.sin(t*1.5)*r*0.02;
+    c.moveTo(-s, -s + p); c.quadraticCurveTo(0, -s - p*0.6, s, -s + p); c.quadraticCurveTo(s + p*0.6, 0, s, s - p); c.quadraticCurveTo(0, s + p*0.6, -s, s - p); c.quadraticCurveTo(-s - p*0.6, 0, -s, -s + p);
+  } else { // 法：腦袋雲（6 個鼓包）
+    for(let i=0;i<=72;i++){ const a = i/72*TAU, rr = r*(0.9 + 0.1*Math.abs(Math.sin(a*3)) )*w(a, 0.6); i ? c.lineTo(Math.cos(a)*rr, Math.sin(a)*rr*0.92) : c.moveTo(Math.cos(a)*rr, Math.sin(a)*rr*0.92); }
+  }
+  c.closePath();
+}
+function drawEyes(c, st, r, t, opt){
+  const blink = (Math.sin(t*1.3 + (opt.seed||0)) > 0.985) ? 0.15 : 1, ex = r*0.32, ey = -r*0.1;
+  if(opt.pure){ c.strokeStyle = '#4a3b30'; c.lineWidth = r*0.06; c.lineCap = 'round'; for(const s of [-1,1]){ c.beginPath(); c.arc(s*ex, ey + r*0.02, r*0.1, Math.PI*1.1, Math.PI*1.9); c.stroke(); } return; }
+  for(const s of [-1,1]){
+    c.fillStyle = '#2a1f18'; c.beginPath(); c.ellipse(s*ex, ey, r*(st === 3 ? 0.1 : 0.11), r*(st === 3 ? 0.11 : 0.14)*blink, 0, 0, TAU); c.fill();
+    c.fillStyle = st === 3 ? '#ff6a4a' : '#fff'; c.beginPath(); c.arc(s*ex + r*0.03, ey - r*0.045, r*(st === 3 ? 0.04 : 0.035), 0, TAU); c.fill();
+    if(st >= 2){ c.strokeStyle = '#2a1f18'; c.lineWidth = r*0.05; c.lineCap = 'round'; c.beginPath(); const tilt = st === 3 ? 0.14 : 0.07; c.moveTo(s*(ex - r*0.14), ey - r*0.2 - (st === 3 ? -tilt*r : 0)); c.lineTo(s*(ex + r*0.12), ey - r*0.2 - tilt*r*(st === 3 ? -1 : 1)); c.stroke(); }
+  }
+}
+function drawMouth(c, fam, st, r, t, opt){
+  c.strokeStyle = '#2a1f18'; c.lineWidth = r*0.05; c.lineCap = 'round';
+  if(opt.pure){ c.beginPath(); c.arc(0, r*0.16, r*0.07, 0.1*Math.PI, 0.9*Math.PI); c.stroke(); return; }
+  if(fam === 'wei' && st === 3){ c.fillStyle = '#5a1f1a'; c.beginPath(); c.ellipse(0, r*0.3, r*0.45, r*0.28 + Math.sin(t*4)*r*0.04, 0, 0, TAU); c.fill(); c.fillStyle = '#e8746a'; c.beginPath(); c.ellipse(0, r*0.44, r*0.22, r*0.1, 0, 0, TAU); c.fill(); c.fillStyle = '#fff'; for(const s of [-1,1]){ c.beginPath(); c.moveTo(s*r*0.25, r*0.06); c.lineTo(s*r*0.18, r*0.18); c.lineTo(s*r*0.11, r*0.06); c.fill(); } return; }
+  if(fam === 'sheng'){ c.fillStyle = '#5a1f1a'; c.beginPath(); c.ellipse(0, r*0.22, r*(0.12 + 0.06*st), r*(0.08 + 0.05*st)*(0.8 + 0.3*Math.abs(Math.sin(t*5))), 0, 0, TAU); c.fill(); }
+  else if(st === 3){ c.beginPath(); c.moveTo(-r*0.18, r*0.2); c.quadraticCurveTo(0, r*0.12, r*0.18, r*0.2); c.stroke(); c.fillStyle = '#fff'; for(const s of [-1,1]){ c.beginPath(); c.moveTo(s*r*0.12, r*0.17); c.lineTo(s*r*0.08, r*0.27); c.lineTo(s*r*0.04, r*0.16); c.fill(); } }
+  else if(fam === 'chu'){ c.beginPath(); c.ellipse(0, r*0.2, r*0.06, r*0.05, 0, 0, TAU); c.stroke(); }
+  else { c.beginPath(); c.arc(0, r*0.12, r*(st === 2 ? 0.14 : 0.12), 0.15*Math.PI, 0.85*Math.PI); c.stroke(); }
+  if(st < 3){ c.fillStyle = 'rgba(255,140,140,.45)'; for(const s of [-1,1]){ c.beginPath(); c.ellipse(s*r*0.56, r*0.1, r*0.1, r*0.06, 0, 0, TAU); c.fill(); } }
+}
+// 各系配件
+function drawAcc(c, fam, st, r, t, opt){
+  c.save();
+  if(fam === 'se'){
+    // 手鏡 → 頭頂鏡冠 → 環繞的面具
+    const mirror = (x, y, s, a) => { c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = '#c9a24e'; c.fillRect(-s*0.08, s*0.35, s*0.16, s*0.5); c.beginPath(); c.ellipse(0, 0, s*0.32, s*0.42, 0, 0, TAU); c.fill(); c.fillStyle = '#dff3ff'; c.beginPath(); c.ellipse(0, 0, s*0.25, s*0.34, 0, 0, TAU); c.fill(); c.fillStyle = 'rgba(255,255,255,.8)'; c.beginPath(); c.ellipse(-s*0.07, -s*0.1, s*0.06, s*0.14, 0.4, 0, TAU); c.fill(); c.restore(); };
+    if(st === 1) mirror(r*0.95, r*0.15, r*0.7, 0.3 + Math.sin(t*2)*0.1);
+    if(st >= 2){ mirror(0, -r*1.15, r*0.75, 0); for(let k=0;k<4;k++){ const a = t*1.5 + k*1.6; c.fillStyle = `rgba(255,240,255,${0.5 + 0.5*Math.sin(a*2)})`; c.font = `${r*0.25}px sans-serif`; c.fillText('✦', Math.cos(a)*r*1.15, Math.sin(a)*r*0.9); } }
+    if(st === 3){ for(let k=0;k<3;k++){ const a = t*0.8 + k*TAU/3, x = Math.cos(a)*r*1.35, y = Math.sin(a)*r*0.5 + r*0.2; c.save(); c.translate(x, y); c.fillStyle = ['#f6f1e7','#e9c2d6','#cfc6f2'][k]; c.beginPath(); c.ellipse(0, 0, r*0.22, r*0.28, 0, 0, TAU); c.fill(); c.fillStyle = '#2a1f18'; c.beginPath(); c.ellipse(-r*0.07, -r*0.04, r*0.035, r*0.05, 0, 0, TAU); c.ellipse(r*0.07, -r*0.04, r*0.035, r*0.05, 0, 0, TAU); c.fill(); c.strokeStyle = '#2a1f18'; c.lineWidth = r*0.025; c.beginPath(); c.arc(0, r*0.1, r*0.06, k === 1 ? 1.1*Math.PI : 0.1*Math.PI, k === 1 ? 1.9*Math.PI : 0.9*Math.PI); c.stroke(); c.restore(); } }
+  }
+  if(fam === 'sheng'){
+    // 小喇叭 → 大喇叭＋聲波 → 雙喇叭角＋滿天聲波
+    const horn = (x, y, s, a) => { c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = '#c9a24e'; c.beginPath(); c.moveTo(0, -s*0.12); c.lineTo(s*0.7, -s*0.4); c.lineTo(s*0.7, s*0.4); c.lineTo(0, s*0.12); c.closePath(); c.fill(); c.fillStyle = '#7a5a1a'; c.beginPath(); c.ellipse(s*0.7, 0, s*0.1, s*0.4, 0, 0, TAU); c.fill(); c.restore(); };
+    const waves = (x, y, n, a, s) => { c.strokeStyle = 'rgba(255,220,170,.8)'; c.lineWidth = r*0.05; for(let k=1;k<=n;k++){ const ph = ((t*1.6 + k*0.3) % 1); c.globalAlpha = 1 - ph; c.beginPath(); c.arc(x, y, s*(0.3 + ph*0.9), a - 0.6, a + 0.6); c.stroke(); } c.globalAlpha = 1; };
+    if(st === 1){ horn(r*0.75, -r*0.55, r*0.6, -0.5); }
+    if(st === 2){ horn(r*0.7, -r*0.5, r*0.9, -0.55); waves(r*1.35, -r*1.0, 3, -0.55, r); }
+    if(st === 3){ horn(-r*0.45, -r*0.85, r*0.85, -2.1); horn(r*0.45, -r*0.85, r*0.85, -1.05); waves(-r*0.9, -r*1.5, 3, -2.1, r); waves(r*0.9, -r*1.5, 3, -1.05, r); }
+  }
+  if(fam === 'xiang'){
+    // 煙圈 → 線香＋煙 → 夢幻漩渦眼
+    const wisp = (x, y, s, ph) => { c.strokeStyle = 'rgba(230,230,255,.75)'; c.lineWidth = r*0.05; c.beginPath(); for(let i=0;i<=20;i++){ const k = i/20; const xx = x + Math.sin(k*6 + t*2 + ph)*s*0.25, yy = y - k*s; i ? c.lineTo(xx, yy) : c.moveTo(xx, yy); } c.stroke(); };
+    if(st === 1){ wisp(r*0.6, -r*0.7, r*0.7, 0); }
+    if(st >= 2){ c.fillStyle = '#9a3b2a'; c.fillRect(r*0.55, -r*1.25, r*0.06, r*0.75); c.fillStyle = '#ffb347'; c.beginPath(); c.arc(r*0.58, -r*1.27, r*0.05, 0, TAU); c.fill(); wisp(r*0.58, -r*1.3, r*0.8, 0); wisp(-r*0.6, -r*0.6, r*0.6, 2); }
+    if(st === 3){ for(let k=0;k<3;k++) wisp(-r*0.9 + k*r*0.9, -r*0.8, r*0.9, k*2); }
+  }
+  if(fam === 'wei'){
+    if(st === 1){ c.strokeStyle = '#a87b46'; c.lineWidth = r*0.08; c.beginPath(); c.moveTo(r*0.6, r*0.4); c.lineTo(r*1.15, r*1.0); c.stroke(); }
+    if(st === 2){ c.strokeStyle = '#a87b46'; c.lineWidth = r*0.09; c.beginPath(); c.moveTo(0, -r*1.25); c.lineTo(0, r*1.3); c.stroke(); }
+    if(st === 3){ for(let k=0;k<4;k++){ const a = t*1.2 + k*TAU/4; c.font = `${r*0.35}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(['🍡','🍰','🍜','🍙'][k], Math.cos(a)*r*1.3, Math.sin(a)*r*0.7 - r*0.3); } }
+  }
+  if(fam === 'chu'){
+    const z = (x, y, s) => { c.fillStyle = 'rgba(200,230,255,.9)'; c.font = `900 ${s}px sans-serif`; c.fillText('z', x, y); };
+    const ph = (t*0.8) % 1;
+    if(st === 1){ z(r*0.65, -r*0.75 - ph*r*0.3, r*0.3); z(r*0.9, -r*1.05 - ph*r*0.3, r*0.22); }
+    if(st >= 2){ c.fillStyle = 'rgba(120,150,220,.85)'; c.beginPath(); c.moveTo(-r*1.05, -r*0.3); c.quadraticCurveTo(0, -r*0.65, r*1.05, -r*0.3); c.lineTo(r*1.2, r*0.95); c.quadraticCurveTo(0, r*1.2, -r*1.2, r*0.95); c.closePath(); c.globalAlpha = 0.55; c.fill(); c.globalAlpha = 1; z(r*0.75, -r*0.9 - ph*r*0.3, r*0.32); z(r*1.0, -r*1.2 - ph*r*0.3, r*0.24); }
+    if(st === 3){ c.fillStyle = '#c9a24e'; c.beginPath(); c.moveTo(-r*0.45, -r*0.95); for(let i=0;i<=4;i++) c.lineTo(-r*0.45 + i*r*0.225, -r*(i%2 ? 1.12 : 1.3)); c.lineTo(r*0.45, -r*0.95); c.closePath(); c.fill(); }
+  }
+  if(fam === 'fa'){
+    const q = (x, y, s, a) => { c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = 'rgba(220,255,245,.9)'; c.font = `900 ${s}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', 0, 0); c.restore(); };
+    if(st === 1) q(r*0.7, -r*0.85, r*0.5, 0.2);
+    if(st >= 2){ for(let k=0;k<3;k++){ const a = t*1.4 + k*TAU/3; q(Math.cos(a)*r*1.2, Math.sin(a)*r*0.5 - r*0.7, r*0.35, a); } }
+    if(st === 3){ c.strokeStyle = 'rgba(30,60,55,.8)'; c.lineWidth = r*0.05; for(let k=0;k<3;k++){ c.beginPath(); for(let i=0;i<=60;i++){ const a = i/60*TAU*2 + k*2 + t; const rr = r*(1.05 + 0.18*Math.sin(a*3 + k)); i ? c.lineTo(Math.cos(a)*rr, Math.sin(a)*rr*0.9) : c.moveTo(Math.cos(a)*rr, Math.sin(a)*rr*0.9); } c.stroke(); } }
+  }
+  c.restore();
+}
+// 角（第三階段）
+function drawHorns(c, r){ c.fillStyle = '#3a2e3e'; for(const s of [-1,1]){ c.beginPath(); c.moveTo(s*r*0.35, -r*0.8); c.quadraticCurveTo(s*r*0.6, -r*1.25, s*r*0.75, -r*1.35); c.quadraticCurveTo(s*r*0.55, -r*1.0, s*r*0.55, -r*0.7); c.closePath(); c.fill(); } }
+function drawDust(c, m, x, y, R, t, opt = {}){
+  const fam = m.fam.key, st = m.stage, r = R*(st === 1 ? 0.62 : st === 2 ? 0.76 : 0.9), gold = opt.gold, pure = opt.pure;
+  const body = pure ? '#fbfaf6' : gold ? '#f3cf63' : m.fam.color, dark = pure ? '#d9d4c8' : gold ? '#a8781c' : m.fam.dark;
+  c.save(); c.translate(x, y + Math.sin(t*2 + (opt.seed||0))*r*0.05);
+  if(opt.scaleY) c.scale(1/opt.scaleY, opt.scaleY);
+  if(opt.rot) c.rotate(opt.rot);
+  // 氣場
+  if(!pure && st >= 2){ const g = c.createRadialGradient(0, 0, r*0.6, 0, 0, r*1.7); g.addColorStop(0, st === 3 ? 'rgba(120,40,80,.45)' : 'rgba(255,255,255,.12)'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, r*1.7, 0, TAU); c.fill(); }
+  if(gold){ const g = c.createRadialGradient(0, 0, r*0.5, 0, 0, r*1.9); g.addColorStop(0, 'rgba(255,220,120,.55)'); g.addColorStop(1, 'rgba(255,220,120,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, r*1.9, 0, TAU); c.fill(); }
+  if(!pure) drawAcc(c, fam, st, r, t, opt);   // 有些配件在身體後面
+  if(!pure && st === 3) drawHorns(c, r);
+  bodyPath(c, fam, pure ? 1 : st, r, t);
+  const bg = c.createRadialGradient(-r*0.3, -r*0.4, r*0.08, 0, 0, r*1.15); bg.addColorStop(0, '#ffffff'); bg.addColorStop(0.3, body); bg.addColorStop(1, dark);
+  c.fillStyle = bg; c.fill('nonzero');
+  if(!pure && !gold){ c.fillStyle = 'rgba(85,75,65,.22)'; c.fill('nonzero'); c.save(); c.clip('nonzero'); for(let i=0;i<10;i++){ const a = i*2.3, rr = r*(0.25 + 0.55*((i*37)%10)/10); c.fillStyle = 'rgba(80,70,60,.25)'; c.beginPath(); c.arc(Math.cos(a)*rr, Math.sin(a)*rr*0.8, r*0.06, 0, TAU); c.fill(); } c.restore(); }
+  if(gold){ c.save(); c.clip('nonzero'); for(let k=0;k<5;k++){ const a = t*2 + k*1.3; c.fillStyle = `rgba(255,255,255,${0.4 + 0.4*Math.sin(a*2)})`; c.beginPath(); c.arc(Math.cos(a)*r*0.6, Math.sin(a*1.3)*r*0.6, r*0.05, 0, TAU); c.fill(); } c.restore(); }
+  if(fam === 'wei' && st === 2 && !pure){ c.save(); c.translate(0, r*0); }
+  drawEyes(c, pure ? 1 : st, r, t, opt);
+  drawMouth(c, fam, pure ? 1 : st, r, t, opt);
+  if(fam === 'wei' && st === 2 && !pure) c.restore();
+  if(pure){ // 淨化後：頭上一朵小蓮花
+    c.font = `${r*0.55}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🪷', 0, -r*1.05);
+  }
+  c.restore();
+}
+function silhouette(cv){ const c = cv.getContext('2d'); c.save(); c.setTransform(1,0,0,1,0,0); c.globalCompositeOperation = 'source-in'; c.fillStyle = '#4a5d72'; c.fillRect(0, 0, cv.width, cv.height); c.globalCompositeOperation = 'destination-over'; c.shadowColor = 'rgba(160,190,220,.55)'; c.shadowBlur = 14; c.drawImage(cv, 0, 0); c.restore(); }
+
+/* ================= 共用：canvas 尺寸 ================= */
+function fit(cv){ const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); const w = Math.round(r.width*d), h = Math.round(r.height*d); if(cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; } return { w:r.width, h:r.height, d }; }
+
+/* ================= ① 塵靈造型 ================= */
+const famList = $('#famList'), cards = [];
+FAMS.forEach(f => {
+  const box = document.createElement('div'); box.className = 'fam';
+  box.innerHTML = `<div class="fam-h"><b style="color:${f.color}">${f.name}系・${f.mood}</b><span>怕：${f.weakName}（${f.weakWhy}）</span></div><div class="row3"></div>`;
+  MONS.filter(m => m.fam === f).forEach(m => {
+    const el = document.createElement('div'); el.className = 'card'; el.innerHTML = `<canvas></canvas><div class="nm">${m.name}</div><div class="lv">${STAGE_NAME[m.stage]}・${m.lv}</div>`;
+    el.onclick = () => openModal(m, true); box.querySelector('.row3').appendChild(el); cards.push({ cv: el.querySelector('canvas'), m });
+  });
+  famList.appendChild(box);
+});
+
+/* ================= 詳細資料卡 ================= */
+let modalM = null;
+function openModal(m, known){
+  modalM = { m, known };
+  $('#mName').textContent = known ? m.name : '？？？';
+  $('#mTag').textContent = `${m.fam.name}系・${STAGE_NAME[m.stage]}・${m.lv}`;
+  $('#mDl').innerHTML = known ? `<dt>代表</dt><dd>${m.fam.mood}</dd><dt>要揮幾下</dt><dd>${m.hits === 1 ? '1 個符印' : '2 連擊（組合技）'}</dd><dt>怕的符印</dt><dd>${m.fam.weakName}・${m.fam.weakWhy}</dd><dt>收服次數</dt><dd>${known === 'dex' ? (2 + m.name.length) + ' 次' : '—'}</dd><dt>第一次收服</dt><dd>${known === 'dex' ? '2026/11/09' : '—'}</dd>`
+    : `<dt>出沒</dt><dd>${m.lv} 的試煉中</dd><dt>線索</dt><dd>${m.fam.name}系的${STAGE_NAME[m.stage]}</dd>`;
+  $('#mQuote').innerHTML = known ? `${m.quote}<small>心性小語（示範，正式版請道場審定）</small>` : '收服之後才會解鎖心性小語。';
+  $('#modal').hidden = false;
+}
+$('#mClose').onclick = () => { $('#modal').hidden = true; modalM = null; };
+$('#modal').onclick = e => { if(e.target.id === 'modal'){ $('#modal').hidden = true; modalM = null; } };
+
+/* ================= ② 收服演出 ================= */
+const cv2 = $('#cv2'), c2 = cv2.getContext('2d');
+let pick2 = MONS[4], anim2 = null;
+MONS.forEach(m => { const b = document.createElement('button'); b.textContent = m.name; b.setAttribute('aria-pressed', String(m === pick2)); b.onclick = () => { pick2 = m; anim2 = null; document.querySelectorAll('#pick2 button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }; $('#pick2').appendChild(b); });
+const SYMPATH = {
+  circle: Array.from({length:41}, (_, i) => { const a = Math.PI/2 - TAU*i/40; return [Math.cos(a)*0.5, Math.sin(a)*0.5]; }),
+  s: (() => { const p = []; for(let i=0;i<=20;i++){ const a = (20 + 250*i/20)*Math.PI/180; p.push([0.25*Math.cos(a), 0.25 + 0.25*Math.sin(a)]); } for(let i=1;i<=20;i++){ const a = (90 - 250*i/20)*Math.PI/180; p.push([0.25*Math.cos(a), -0.25 + 0.25*Math.sin(a)]); } return p; })(),
+  down: [[0,0.5],[0,-0.5]], up: [[0,-0.5],[0,0.5]], left: [[0.5,0],[-0.5,0]], right: [[-0.5,0],[0.5,0]],
+  v: [[-0.45,0.45],[0,-0.45],[0.45,0.45]], z: [[-0.45,0.45],[0.45,0.45],[-0.45,-0.45],[0.45,-0.45]],
+  alpha: Array.from({length:41}, (_, i) => { const t = 1.25 - 2.5*i/40; return [(t*t - 1)*0.32 + 0.12, t*(t*t - 1)*0.32]; })
+};
+function seg(p, k){ const n = p.length - 1, f = k*n, i = Math.min(n - 1, Math.floor(f)), u = f - i; return [p[i][0] + (p[i+1][0] - p[i][0])*u, p[i][1] + (p[i+1][1] - p[i][1])*u]; }
+function strokeSym(c, key, cx, cy, S, prog, style){
+  const p = SYMPATH[key]; if(!p) return; const n = Math.max(2, Math.ceil(prog*(p.length - 1)) + 1);
+  c.save(); c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = style.color; c.lineWidth = style.w; c.shadowColor = style.glow; c.shadowBlur = style.blur;
+  c.beginPath(); for(let i=0;i<n;i++){ const q = i === n - 1 ? seg(p, prog) : p[i]; const X = cx + q[0]*S, Y = cy - q[1]*S; i ? c.lineTo(X, Y) : c.moveTo(X, Y); } c.stroke(); c.restore();
+}
+function bgNight(c, w, h, t){ const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#0b1420'); g.addColorStop(1, '#17293b'); c.fillStyle = g; c.fillRect(0, 0, w, h); for(let i=0;i<40;i++){ const x = (i*97 % 100)/100*w, y = (i*53 % 60)/100*h; c.globalAlpha = 0.3 + 0.3*Math.sin(t + i); c.fillStyle = '#fff6dc'; c.fillRect(x, y, 1.5, 1.5); } c.globalAlpha = 1; }
+function bookIcon(c, x, y, s, pulse){ c.save(); c.translate(x, y); c.scale(1 + pulse*0.25, 1 + pulse*0.25); c.fillStyle = '#7a2e22'; c.fillRect(-s*0.5, -s*0.38, s, s*0.76); c.fillStyle = '#f3e6c4'; c.fillRect(-s*0.42, -s*0.3, s*0.84, s*0.6); c.fillStyle = '#7a2e22'; c.fillRect(-s*0.03, -s*0.38, s*0.06, s*0.76); c.fillStyle = '#c9a24e'; c.font = `900 ${s*0.3}px "Noto Sans TC", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('淨', -s*0.2, 0); c.fillText('心', s*0.2, 0); if(pulse > 0){ c.shadowColor = '#ffd27a'; c.shadowBlur = 30*pulse; c.strokeStyle = `rgba(255,214,120,${pulse})`; c.lineWidth = 3; c.strokeRect(-s*0.5, -s*0.38, s, s*0.76); } c.restore(); }
+function playCapture(){
+  const shards = [], sparks = [], cracks = [];
+  for(let i=0;i<10;i++){ const a = i/10*TAU + Math.random()*0.3, pts = [[0,0]]; let rr = 0; for(let k=0;k<5;k++){ rr += 0.18 + Math.random()*0.08; pts.push([Math.cos(a + (Math.random()-.5)*0.4)*rr, Math.sin(a + (Math.random()-.5)*0.4)*rr]); } cracks.push(pts); }
+  for(let i=0;i<26;i++){ const a = Math.random()*TAU, v = 2 + Math.random()*5; shards.push({ a, x:Math.cos(a)*0.3, y:Math.sin(a)*0.3, vx:Math.cos(a)*v, vy:Math.sin(a)*v - 3, rot:Math.random()*6, vr:(Math.random()-.5)*0.4, s:0.08 + Math.random()*0.12 }); }
+  anim2 = { t0: performance.now(), shards, sparks, cracks, weak: $('#optWeak').checked, isNew: $('#optNew').checked, gold: $('#optGold2').checked, sym: pick2.fam.weak };
+  if(!$('#optWeak').checked) anim2.sym = pick2.fam.weak === 'circle' ? 'z' : 'circle';
+}
+$('#play2').onclick = () => { $('#sw2').scrollIntoView({ behavior:'smooth', block:'start' }); playCapture(); };
+function drawCapture(t){
+  const { w, h } = fit(cv2), d = cv2.width/w; c2.setTransform(d,0,0,d,0,0);
+  const now = performance.now(), A = anim2, e = A ? (now - A.t0) : 99999, cx = w/2, cy = h*0.46, R = Math.min(w, h)*0.3;
+  let shake = 0; if(A && e < 520) shake = (1 - e/520)*10;
+  c2.save(); c2.translate((Math.random()-.5)*shake, (Math.random()-.5)*shake);
+  bgNight(c2, w, h, t);
+  const book = { x: w - 40, y: 46 };
+  const arrive = A ? Math.max(0, 1 - Math.abs(e - 2200)/250) : 0;
+  bookIcon(c2, book.x, book.y, 44, arrive);
+  if(!A){ drawDust(c2, pick2, cx, cy, R, t, { seed:1 }); c2.fillStyle = 'rgba(246,236,216,.8)'; c2.font = '700 15px "Noto Sans TC", sans-serif'; c2.textAlign = 'center'; c2.fillText(`${pick2.name}・Lv ${pick2.stage === 1 ? 6 : pick2.stage === 2 ? 14 : 23}`, cx, cy + R*1.15); c2.fillStyle = 'rgba(246,236,216,.5)'; c2.fillText('按下方「播放收服演出」', cx, h - 24); c2.restore(); return; }
+  const tt = A.hold ? A.hold : t;  // 定格時表情不動
+  if(e < 120 && !A.hold) A.hold = t;
+  if(e >= 120) A.hold = 0;
+  // ① ② 塵殼還在（0～700ms）
+  if(e < 700){
+    drawDust(c2, pick2, cx, cy, R, A.hold || t, { seed:1, gold:A.gold });
+    if(e > 120){ const k = Math.min(1, (e - 120)/380); strokeSym(c2, A.sym, cx, cy, R*1.5, k, { color:'#ffe08a', w:R*0.09, glow:'#ffcc55', blur:30 }); strokeSym(c2, A.sym, cx, cy, R*1.5, k, { color:'#fffaf0', w:R*0.03, glow:'#fff', blur:8 }); }
+    if(e > 320){ const k = Math.min(1, (e - 320)/380); c2.save(); c2.strokeStyle = '#fff6d0'; c2.lineWidth = 2.5; c2.shadowColor = '#ffd27a'; c2.shadowBlur = 14; for(const cr of A.cracks){ const n = Math.ceil(k*(cr.length - 1)); c2.beginPath(); for(let i=0;i<=n;i++){ const q = cr[i]; i ? c2.lineTo(cx + q[0]*R, cy + q[1]*R) : c2.moveTo(cx + q[0]*R, cy + q[1]*R); } c2.stroke(); } c2.restore(); }
+  }
+  // ③ 碎殼飛散、白色小精靈出現並鞠躬（700～1500ms）
+  if(e >= 700){
+    const k = (e - 700)/1000;
+    for(const s of A.shards){ const X = cx + (s.x*R + s.vx*k*60), Y = cy + (s.y*R + s.vy*k*60 + 300*k*k), al = Math.max(0, 1 - k*1.1); if(al <= 0) continue; c2.save(); c2.translate(X, Y); c2.rotate(s.rot + s.vr*k*20); c2.globalAlpha = al; c2.fillStyle = A.gold ? '#e8bd5a' : pick2.fam.dark; c2.beginPath(); c2.moveTo(0, -s.s*R); c2.lineTo(s.s*R*0.8, s.s*R*0.5); c2.lineTo(-s.s*R*0.7, s.s*R*0.6); c2.closePath(); c2.fill(); c2.restore(); }
+    if(e < 1500){ const appear = Math.min(1, (e - 700)/220), bow = e > 950 ? Math.sin(Math.min(1, (e - 950)/500)*Math.PI) : 0;
+      const sc = 0.4 + 0.6*appear; c2.save(); c2.translate(cx, cy); c2.scale(sc, sc); drawDust(c2, pick2, 0, 0, R*0.7, t, { pure:true, rot: bow*0.35, scaleY: 1 - bow*0.12 }); c2.restore();
+      if(appear < 1){ c2.fillStyle = `rgba(255,255,255,${0.8*(1 - appear)})`; c2.fillRect(0, 0, w, h); } }
+  }
+  // ④ 化成蓮花飛進淨心錄（1500～2200ms）
+  if(e >= 1500 && e < 2250){ const k = Math.min(1, (e - 1500)/700), ease = k*k*(3 - 2*k); const X = cx + (book.x - cx)*ease + Math.sin(k*Math.PI)*-40, Y = cy + (book.y - cy)*ease - Math.sin(k*Math.PI)*60;
+    A.sparks.push({ x:X, y:Y, life:1 }); c2.font = `${R*0.6*(1 - 0.6*k)}px sans-serif`; c2.textAlign = 'center'; c2.textBaseline = 'middle'; c2.shadowColor = '#ffd27a'; c2.shadowBlur = 20; c2.fillText('🪷', X, Y); c2.shadowBlur = 0; }
+  for(let i=A.sparks.length-1;i>=0;i--){ const s = A.sparks[i]; s.life -= 0.035; if(s.life <= 0){ A.sparks.splice(i,1); continue; } c2.fillStyle = A.gold ? `hsla(${(i*30 + e/5) % 360},90%,75%,${s.life})` : `rgba(255,230,160,${s.life})`; c2.beginPath(); c2.arc(s.x + (Math.random()-.5)*4, s.y + (Math.random()-.5)*4, 3*s.life + 1, 0, TAU); c2.fill(); }
+  // 文字：效果絕佳、收服！
+  c2.textAlign = 'center'; c2.textBaseline = 'middle';
+  if(A.weak && e > 150 && e < 1300){ const k = Math.min(1, (e - 150)/150); c2.save(); c2.globalAlpha = Math.min(1, (1300 - e)/200); c2.font = `900 ${22 + 6*k}px "Noto Sans TC", sans-serif`; c2.fillStyle = '#ffe08a'; c2.shadowColor = '#000'; c2.shadowBlur = 8; c2.fillText('效果絕佳！', cx, cy - R*1.45); c2.restore(); }
+  if(e > 1700){ const k = Math.min(1, (e - 1700)/250), al = Math.min(1, (4200 - e)/400);
+    c2.save(); c2.globalAlpha = Math.max(0, al); c2.translate(cx, h*0.5); c2.scale(0.7 + 0.3*k, 0.7 + 0.3*k);
+    c2.fillStyle = 'rgba(8,10,14,.65)'; c2.fillRect(-w*0.42, -50, w*0.84, 100);
+    c2.font = '900 36px "Noto Sans TC", sans-serif'; c2.fillStyle = A.gold ? '#ffe08a' : '#fff6dc'; c2.shadowColor = '#ffd27a'; c2.shadowBlur = 18; c2.fillText(A.gold ? '✨ 收服！' : '收服！', 0, -14);
+    c2.shadowBlur = 0; c2.font = '800 17px "Noto Sans TC", sans-serif'; c2.fillStyle = '#f6ecd8'; c2.fillText(`${A.gold ? '金色・' : ''}${pick2.name}  Lv ${pick2.stage === 1 ? 6 : pick2.stage === 2 ? 14 : 23}`, 0, 24);
+    if(A.isNew){ c2.fillStyle = '#e8453c'; c2.beginPath(); c2.roundRect ? c2.roundRect(w*0.3, -46, 50, 22, 11) : c2.rect(w*0.3, -46, 50, 22); c2.fill(); c2.fillStyle = '#fff'; c2.font = '900 13px sans-serif'; c2.fillText('NEW', w*0.3 + 25, -35); }
+    c2.restore(); }
+  if(e > 120 && e < 360){ c2.fillStyle = `rgba(255,255,255,${0.75*(1 - (e - 120)/240)})`; c2.fillRect(0, 0, w, h); }   // 閃白
+  c2.restore();
+  if(e > 4300) anim2 = null;
+}
+
+/* ================= ③ 組合技 ================= */
+const COMBOS = [
+  { name:'十方淨',   syms:['left','right'],  desc:'金色十字光斬', fx:'cross' },
+  { name:'劈山拂',   syms:['up','down'],     desc:'上下兩道光柱', fx:'pillar' },
+  { name:'太極迴拂', syms:['s','circle'],    desc:'陰陽光輪旋轉', fx:'taiji' },
+  { name:'阿法雙蓮', syms:['alpha','alpha'], desc:'左右兩朵蓮花綻放', fx:'lotus', mirror2:true },
+  { name:'圓明一拂', syms:['circle'],        desc:'滿月光爆（魔王必殺技）', fx:'moon' }
+];
+const ICON = { left:'⬅', right:'➡', up:'⬆', down:'⬇', s:'S', circle:'○', alpha:'α', v:'V', z:'Z' };
+let pick3 = COMBOS[0], anim3 = null;
+COMBOS.forEach(cb => { const b = document.createElement('button'); b.textContent = cb.name; b.setAttribute('aria-pressed', String(cb === pick3)); b.onclick = () => { pick3 = cb; anim3 = null; document.querySelectorAll('#pick3 button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }; $('#pick3').appendChild(b); });
+$('#legend3').innerHTML = COMBOS.map(cb => `<div><b>${cb.name}</b>　${cb.syms.map((s, i) => cb.mirror2 && i === 1 ? '<span style="display:inline-block;transform:scaleX(-1)">α</span>' : ICON[s]).join(' ＋ ')}<br>${cb.desc}</div>`).join('');
+$('#play3').onclick = () => { $('#sw3').scrollIntoView({ behavior:'smooth', block:'start' }); anim3 = { t0: performance.now(), seeds: [] }; };
+const comboMon = MONS[5];
+function drawCombo(t){
+  const { w, h } = fit(cv3), d = cv3.width/w; c3.setTransform(d,0,0,d,0,0);
+  const A = anim3, e = A ? performance.now() - A.t0 : -1, cx = w/2, cy = h*0.5, R = Math.min(w, h)*0.28;
+  bgNight(c3, w, h, t);
+  const cb = pick3, n = cb.syms.length, stepMs = 900, total = n*stepMs;
+  // 上方符印順序
+  const chipW = 54, x0 = cx - (n*chipW + (n - 1)*10)/2;
+  for(let i=0;i<n;i++){ const done = e >= 0 && e > (i + 1)*stepMs - 350, act = e >= 0 && e > i*stepMs && !done; const X = x0 + i*(chipW + 10);
+    c3.fillStyle = done ? 'rgba(232,189,90,.9)' : act ? 'rgba(255,255,255,.25)' : 'rgba(255,255,255,.08)'; c3.beginPath(); c3.roundRect ? c3.roundRect(X, 22, chipW, 46, 12) : c3.rect(X, 22, chipW, 46); c3.fill();
+    c3.save(); c3.translate(X + chipW/2, 46); if(cb.mirror2 && i === 1) c3.scale(-1, 1); c3.fillStyle = done ? '#22190f' : '#f6ecd8'; c3.font = '900 24px "Noto Sans TC", sans-serif'; c3.textAlign = 'center'; c3.textBaseline = 'middle'; c3.fillText(ICON[cb.syms[i]], 0, 0); c3.restore(); }
+  const fxStart = total, fxE = e - fxStart;
+  const capturedYet = fxE > 1400;
+  if(!capturedYet || e < 0) drawDust(c3, comboMon, cx, cy, R, t, { seed:2 });
+  // 每一揮：金色軌跡
+  if(e >= 0 && e < total){ const i = Math.floor(e/stepMs), k = Math.min(1, (e - i*stepMs)/(stepMs*0.55)); const key = cb.syms[i];
+    c3.save(); if(cb.mirror2 && i === 1){ c3.translate(cx, 0); c3.scale(-1, 1); c3.translate(-cx, 0); }
+    strokeSym(c3, key, cx, cy, R*1.9, k, { color:'#ffe08a', w:R*0.1, glow:'#ffcc55', blur:28 }); strokeSym(c3, key, cx, cy, R*1.9, k, { color:'#fff', w:R*0.03, glow:'#fff', blur:6 }); c3.restore();
+    c3.fillStyle = '#fff6dc'; c3.font = '900 22px "Noto Sans TC", sans-serif'; c3.textAlign = 'center'; c3.fillText(i === 0 ? '揮！' : '叮・揮！', cx, h - 40); }
+  // 招式特效
+  if(e >= total && fxE < 1600){
+    const k = Math.min(1, fxE/700), al = Math.min(1, (1600 - fxE)/400);
+    c3.save(); c3.globalAlpha = al; c3.shadowColor = '#ffd27a'; c3.shadowBlur = 30;
+    if(cb.fx === 'cross'){ c3.fillStyle = 'rgba(255,230,150,.95)'; const L = w*0.9*k, T = 10 + 8*(1 - k); c3.fillRect(cx - L/2, cy - T/2, L, T); c3.fillRect(cx - T/2, cy - L/2, T, L); for(let i=0;i<10;i++){ const a = i/10*TAU + 0.3; c3.strokeStyle = 'rgba(255,240,200,.6)'; c3.lineWidth = 2; c3.beginPath(); c3.moveTo(cx, cy); c3.lineTo(cx + Math.cos(a)*R*2.2*k, cy + Math.sin(a)*R*2.2*k); c3.stroke(); } }
+    if(cb.fx === 'pillar'){ for(const s of [-1, 1]){ const g = c3.createLinearGradient(cx, cy, cx, cy + s*h*0.6); g.addColorStop(0, 'rgba(255,240,190,.95)'); g.addColorStop(1, 'rgba(255,240,190,0)'); c3.fillStyle = g; c3.fillRect(cx - R*0.35*(1.2 - k*0.4), s > 0 ? cy : cy - h*0.6*k, R*0.7*(1.2 - k*0.4), h*0.6*k); } }
+    if(cb.fx === 'taiji'){ c3.globalAlpha = al*0.85; c3.translate(cx, cy); c3.rotate(fxE/200); const rr = R*(0.5 + 0.55*k); c3.fillStyle = 'rgba(255,248,230,.9)'; c3.beginPath(); c3.arc(0, 0, rr, -Math.PI/2, Math.PI/2); c3.arc(0, rr/2, rr/2, Math.PI/2, -Math.PI/2, true); c3.arc(0, -rr/2, rr/2, Math.PI/2, -Math.PI/2); c3.fill(); c3.fillStyle = 'rgba(40,46,60,.85)'; c3.beginPath(); c3.arc(0, 0, rr, Math.PI/2, Math.PI*1.5); c3.arc(0, -rr/2, rr/2, -Math.PI/2, Math.PI/2, true); c3.arc(0, rr/2, rr/2, -Math.PI/2, Math.PI/2); c3.fill(); c3.strokeStyle = 'rgba(255,214,120,.9)'; c3.lineWidth = 4; c3.beginPath(); c3.arc(0, 0, rr*1.15, 0, TAU); c3.stroke(); }
+    if(cb.fx === 'lotus'){ for(const s of [-1, 1]){ c3.font = `${R*(0.5 + 1.1*k)}px sans-serif`; c3.textAlign = 'center'; c3.textBaseline = 'middle'; c3.fillText('🪷', cx + s*R*1.1, cy + R*0.2); } for(let i=0;i<14;i++){ const a = i/14*TAU; c3.fillStyle = `rgba(255,190,220,${0.8*(1 - k)})`; c3.beginPath(); c3.arc(cx + Math.cos(a)*R*1.8*k, cy + Math.sin(a)*R*1.8*k, 5, 0, TAU); c3.fill(); } }
+    if(cb.fx === 'moon'){ const rr = R*(0.6 + 2.2*k); const g = c3.createRadialGradient(cx, cy, 0, cx, cy, rr); g.addColorStop(0, 'rgba(255,253,240,1)'); g.addColorStop(0.5, 'rgba(255,236,170,.8)'); g.addColorStop(1, 'rgba(255,236,170,0)'); c3.fillStyle = g; c3.beginPath(); c3.arc(cx, cy, rr, 0, TAU); c3.fill(); if(fxE < 60) for(let i=0;i<60;i++){ const a = -Math.PI/2 + (Math.random() - .5)*Math.PI*1.4, v = 1.5 + Math.random()*3; A.seeds.push({ x:cx + (Math.random()-.5)*R, y:cy + (Math.random()-.5)*R, vx:Math.cos(a)*v, vy:Math.sin(a)*v, life:1, pink: i % 5 === 1 || i % 5 === 3 }); } }
+    c3.restore();
+    c3.save(); c3.globalAlpha = al; c3.font = '900 34px "Noto Sans TC", sans-serif'; c3.textAlign = 'center'; c3.fillStyle = '#fff6dc'; c3.shadowColor = '#ffb84a'; c3.shadowBlur = 20; c3.fillText(`「${cb.name}」`, cx, h*0.86); c3.restore();
+  }
+  if(A) for(let i=A.seeds.length-1;i>=0;i--){ const p = A.seeds[i]; p.x += p.vx; p.y += p.vy; p.vy -= 0.02; p.life -= 0.012; if(p.life <= 0){ A.seeds.splice(i,1); continue; } c3.globalAlpha = p.life; c3.fillStyle = p.pink ? '#FBCFE8' : '#FFF7D6'; c3.beginPath(); c3.arc(p.x, p.y, 3, 0, TAU); c3.fill(); c3.fillRect(p.x - 0.5, p.y + 3, 1, 8); c3.globalAlpha = 1; }
+  if(capturedYet && fxE < 2600){ const k = Math.min(1, (fxE - 1400)/300); c3.save(); c3.translate(cx, cy); c3.scale(0.4 + 0.6*k, 0.4 + 0.6*k); drawDust(c3, comboMon, 0, 0, R*0.7, t, { pure:true }); c3.restore(); c3.font = '900 26px "Noto Sans TC", sans-serif'; c3.textAlign = 'center'; c3.fillStyle = '#fff6dc'; c3.fillText(`收服！${comboMon.name}`, cx, h - 40); }
+  if(e < 0){ c3.fillStyle = 'rgba(246,236,216,.5)'; c3.font = '700 15px "Noto Sans TC", sans-serif'; c3.textAlign = 'center'; c3.fillText(`${comboMon.name}（塵妖・要 2 連擊）　按下方播放`, cx, h - 30); }
+  if(e > total + 3200) anim3 = null;
+}
+const cv3 = $('#cv3'), c3 = cv3.getContext('2d');
+
+/* ================= ④ 淨心錄 ================= */
+let dexAll = false;
+const OWN = new Set(['鏡鏡','嘰嘰','薰薰','饞饞','懶懶','念念','流言妖','軟骨妖']);
+const dexCards = [];
+function buildDex(){
+  $('#dexList').innerHTML = ''; dexCards.length = 0;
+  const own = m => dexAll || OWN.has(m.name), n = MONS.filter(own).length;
+  $('#dexN').textContent = n; $('#dexBar').style.width = (n/18*100) + '%'; $('#dexAll').textContent = dexAll ? '回到模擬進度' : '預覽全部收服';
+  FAMS.forEach(f => {
+    const ms = MONS.filter(m => m.fam === f), all = ms.every(own), box = document.createElement('div'); box.className = 'fam';
+    box.innerHTML = `<div class="fam-h"><b style="color:${f.color}">${f.name}系</b><span>${all ? '🏅 已收齊・解鎖徽章' : `${ms.filter(own).length}/3`}</span></div><div class="row3"></div>`;
+    ms.forEach(m => { const k = own(m), el = document.createElement('div'); el.className = 'card' + (k ? '' : ' lock');
+      el.innerHTML = `<canvas></canvas><div class="nm">${k ? m.name : '？？？'}</div><div class="lv">${k ? `收服 ${2 + m.name.length} 次` : m.lv + ' 出沒'}</div>`;
+      el.onclick = () => openModal(m, k ? 'dex' : false); box.querySelector('.row3').appendChild(el); dexCards.push({ cv: el.querySelector('canvas'), m, known: k }); });
+    $('#dexList').appendChild(box);
+  });
+  $('#dexRare').innerHTML = ['金色鏡鏡','金色嘰嘰','金色薰薰','貪','嗔','癡'].map((n, i) => `<div class="card lock"><canvas data-rare="${i}"></canvas><div class="nm">？？？</div><div class="lv">${i < 3 ? '稀有・機率 3%' : '傳說・魔王關'}</div></div>`).join('');
+}
+$('#dexAll').onclick = () => { dexAll = !dexAll; buildDex(); };
+buildDex();
+
+/* ================= 分頁與繪製迴圈 ================= */
+let tab = 't1';
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); ['t1','t2','t3','t4'].forEach(id => $('#' + id).hidden = id !== tab); window.scrollTo(0, 0); });
+function drawCard(cv, m, t, opt){ const { w, h } = fit(cv), d = cv.width/w, c = cv.getContext('2d'); c.setTransform(d,0,0,d,0,0); c.clearRect(0, 0, w, h); drawDust(c, m, w/2, h*0.6, w*0.3, t, opt); if(opt.sil) silhouette(cv); }
+function loop(now){
+  const t = now/1000;
+  if(tab === 't1'){ const gold = $('#optGold').checked, pure = $('#optPure').checked; cards.forEach(({cv, m}, i) => drawCard(cv, m, t, { gold, pure, seed:i })); }
+  if(tab === 't2') drawCapture(t);
+  if(tab === 't3') drawCombo(t);
+  if(tab === 't4'){ dexCards.forEach(({cv, m, known}, i) => drawCard(cv, m, t, { seed:i, sil: !known })); document.querySelectorAll('#dexRare canvas').forEach((cv, i) => drawCard(cv, i < 3 ? MONS[i*3] : MONS[2 + (i-3)*6], t, { gold: i < 3, sil:true })); }
+  if(modalM){ const cv = $('#mCv'); drawCard(cv, modalM.m, t, { sil: !modalM.known }); }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
