@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>3D 塵靈打樣</title>
+<style>
+:root{--bg:#0b1018;--card:#151d2b;--ink:#f3ead8;--mute:#9aa6b8;--gold:#e9b44c;--line:#2a3548}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"PingFang TC","Noto Sans TC",sans-serif}
+main{max-width:560px;margin:0 auto;padding:12px 16px 48px}
+h1{font-size:19px;margin:6px 0 2px}
+.sub{color:var(--mute);font-size:13px;margin:0 0 10px}
+#stage{position:relative;width:100%;aspect-ratio:3/4;max-height:66vh;border-radius:18px;overflow:hidden;touch-action:pan-y;
+  background:radial-gradient(120% 80% at 50% 28%,#26365a 0%,#141d2e 55%,#080c14 100%)}
+#stage canvas{position:absolute;inset:0;width:100%;height:100%}
+#flash{position:absolute;inset:0;background:#fff7e0;opacity:0;pointer-events:none}
+#name{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:14px;color:#f6ecd8;text-shadow:0 2px 8px #000;pointer-events:none}
+#tip{position:absolute;left:0;right:0;top:10px;text-align:center;font-size:12px;color:rgba(246,236,216,.6);pointer-events:none}
+.row{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.lbl{font-size:12px;color:var(--mute);width:100%;margin-bottom:-2px}
+button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;cursor:pointer}
+button[aria-pressed=true]{background:#3a2e12;border-color:var(--gold);color:#ffe7a8}
+.act button{flex:1 1 40%;padding:12px 8px;font-size:15px;background:#1d2638}
+.note{font-size:13px;color:var(--mute);line-height:1.75}
+.note b{color:var(--ink)}
+.note li{margin:2px 0}
+a{color:#8fc7ff}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<main>
+<h1>🪶 3D 塵靈＋電影級音效・打樣</h1>
+<p class="sub">拂塵試煉 2.1 打樣（還沒放進遊戲）。按下面的按鈕看效果；記得打開聲音。</p>
+<div id="stage"><canvas id="c3"></canvas><canvas id="c2"></canvas><div id="flash"></div><div id="tip">👆 左右拖曳可以轉動塵靈</div><div id="name"></div></div>
+
+<div class="row act">
+  <button data-hit="hit">⚔️ 命中</button>
+  <button data-hit="perfect">✨ 完美一擊</button>
+  <button data-hit="capture">🪷 收服</button>
+  <button data-hit="boss">💥 魔王重擊</button>
+</div>
+<div class="row" id="snd"><span class="lbl">音效對照</span><button data-v="new">🎬 新版（電影級）</button><button data-v="old">🎵 現行</button></div>
+<div class="row" id="view"><span class="lbl">造型對照</span><button data-v="3d">🧊 3D 新版</button><button data-v="2d">🖼️ 2D 現行</button></div>
+<div class="row" id="fam"><span class="lbl">六系</span></div>
+<div class="row" id="stg"><span class="lbl">階段</span><button data-v="1">塵精</button><button data-v="2">塵妖</button><button data-v="3">塵魔</button></div>
+
+<div class="note">
+<p><b>🧊 3D 造型</b></p>
+<ul>
+<li>真正的立體模型＋打光：暖色主光、冷色輪廓光，邊緣有一圈光暈，轉身時看得到側面和背面。</li>
+<li>細節：表面有絨毛纖維和點點塵埃（塵靈的「塵」），眼睛是亮面的、會反光、會眨眼；鏡子是真的鏡面、喇叭和王冠是金屬。</li>
+<li>配件真的繞著身體轉：面具、問號、食物轉到後面就會被身體擋住，不會再有圖層錯亂。</li>
+<li>塵魔：彎角（根部深紫、尖端骨白）、紅色眼光、暗紅氣場。</li>
+</ul>
+<p><b>🎬 命中音效拆成好幾層一起響</b></p>
+<ul>
+<li>破空裂響「啪」（左右聲道錯開，聲音比較寬）＋次低頻「轟」（肚子會震）＋金屬鳴響「鏘～」</li>
+<li>完美一擊：先「吸」一口氣再爆開，加電影預告片的低音號角「轟——」和一聲合唱</li>
+<li>收服：命中後塵靈變白、旋轉縮小，碎成光點，伴著琉璃碎光聲、鐘聲和合唱</li>
+<li>畫面配合：打中瞬間停格一下（hit-stop），完美一擊會慢動作；閃光、衝擊波、刀光、鏡頭震動</li>
+</ul>
+<p>建議戴耳機或接音響聽，手機喇叭的低頻會比較弱。</p>
+</div>
+</main>
+<script type="module">
+const store = { get: (k, d) => d, set(){} };
+const TAU = Math.PI*2;
+/* ================= 資料：六系 × 三階段（名字、心性小語皆示範） ================= */
+const FAMS = [
+  { key:'se',   name:'色', mood:'愛比較',   color:'#d3a6e3', dark:'#7e5a92', weak:'circle', weakName:'○ 圓',  weakWhy:'本自圓滿，不必比較' },
+  { key:'sheng',name:'聲', mood:'愛批評',   color:'#f2b47c', dark:'#9a5b2a', weak:'s',      weakName:'S 字', weakWhy:'迴轉語氣，以柔化剛' },
+  { key:'xiang',name:'香', mood:'被誘惑',   color:'#b9bdf0', dark:'#5e64a8', weak:'down',   weakName:'⬇ 劈', weakWhy:'當下斬斷誘惑' },
+  { key:'wei',  name:'味', mood:'貪口腹',   color:'#cfe28c', dark:'#6f8a2a', weak:'v',      weakName:'V 字', weakWhy:'知足打勾：夠了' },
+  { key:'chu',  name:'觸', mood:'貪安逸',   color:'#a2cdea', dark:'#3f78a0', weak:'up',     weakName:'⬆ 挑', weakWhy:'振作起身' },
+  { key:'fa',   name:'法', mood:'胡思亂想', color:'#93dccb', dark:'#2f8a76', weak:'alpha',  weakName:'α 阿法',weakWhy:'回到初心' }
+];
+const MONS = [
+  ['se',1,'鏡鏡','照鏡子是看自己，不是比別人。'],['se',2,'照妝妖','妝再美，不如心裡乾淨。'],['se',3,'千面魔','換了千張臉，最累的是自己。'],
+  ['sheng',1,'嘰嘰','話到嘴邊，先停三秒。'],['sheng',2,'流言妖','聽到閒話不轉傳，就是拂塵。'],['sheng',3,'謗聲魔','說人是非，塵先落在自己心上。'],
+  ['xiang',1,'薰薰','香氣來了，先問自己真的需要嗎？'],['xiang',2,'迷香妖','越迷人的，越要看清楚。'],['xiang',3,'醉夢魔','醒來才發現，夢裡什麼也沒帶走。'],
+  ['wei',1,'饞饞','吃八分飽，心更輕鬆。'],['wei',2,'饕餮妖','知足的人，一碗也是滿漢全席。'],['wei',3,'吞天魔','填不滿的不是胃，是心。'],
+  ['chu',1,'懶懶','先站起來，事情就做了一半。'],['chu',2,'軟骨妖','舒服的地方，最容易停下腳步。'],['chu',3,'沉眠魔','該醒的時候，不要再按貪睡。'],
+  ['fa',1,'念念','念頭來了，看著它，不跟著它。'],['fa',2,'妄想妖','想得越多，做得越少。'],['fa',3,'執念魔','放下不是失去，是騰出雙手。']
+].map(([f,st,name,quote]) => ({ fam: FAMS.find(x => x.key === f), stage: st, name, quote, lv: st === 1 ? 'Lv 1–9' : st === 2 ? 'Lv 10–19' : 'Lv 20+', hits: st === 1 ? 1 : 2 }));
+const STAGE_NAME = ['', '塵精', '塵妖', '塵魔'];
+
+/* ================= 塵靈繪製 ================= */
+// 各系的身形（以 r 為單位、原點在中心）
+function bodyPath(c, fam, st, r, t){
+  const w = (a, k=1) => 1 + 0.035*k*Math.sin(a*3 + t*2.2) + 0.025*k*Math.sin(a*5 - t*1.6);
+  c.beginPath();
+  if(fam === 'se'){ // 蛋形，上面略尖
+    for(let i=0;i<=48;i++){ const a = i/48*TAU, rr = r*w(a)*(1 - 0.12*Math.max(0, -Math.sin(a))); i ? c.lineTo(Math.cos(a)*rr*0.92, Math.sin(a)*rr) : c.moveTo(Math.cos(a)*rr*0.92, Math.sin(a)*rr); }
+  } else if(fam === 'sheng'){ // 鐘形：上圓下開
+    c.moveTo(-r*0.95, r*0.85); c.bezierCurveTo(-r*0.75, r*0.3, -r*0.95, -r*0.9, 0, -r*0.95); c.bezierCurveTo(r*0.95, -r*0.9, r*0.75, r*0.3, r*0.95, r*0.85);
+    c.quadraticCurveTo(r*0.5, r*1.05 + Math.sin(t*3)*r*0.03, 0, r*0.92); c.quadraticCurveTo(-r*0.5, r*1.05 - Math.sin(t*3)*r*0.03, -r*0.95, r*0.85);
+  } else if(fam === 'xiang'){ // 雲朵
+    const bumps = [[0,-0.35,0.62],[-0.55,-0.05,0.5],[0.55,-0.05,0.5],[-0.3,0.38,0.52],[0.3,0.38,0.52],[0,0.15,0.6]];
+    for(const [x,y,rr] of bumps){ c.moveTo((x + rr)*r, y*r); c.arc(x*r + Math.sin(t*2 + x*5)*r*0.02, y*r + Math.cos(t*2 + y*5)*r*0.02, rr*r, 0, TAU); }
+  } else if(fam === 'wei'){ // 糰子：第一階段一顆、第二階段三顆串、第三階段大嘴圓球
+    if(st === 2){ for(const [y,rr] of [[-0.62,0.42],[0,0.48],[0.62,0.44]]){ c.moveTo(rr*r, y*r); c.arc(0, y*r, rr*r, 0, TAU); } }
+    else { for(let i=0;i<=48;i++){ const a = i/48*TAU, rr = r*w(a); i ? c.lineTo(Math.cos(a)*rr, Math.sin(a)*rr*0.95) : c.moveTo(Math.cos(a)*rr, Math.sin(a)*rr*0.95); } }
+  } else if(fam === 'chu'){ // 枕頭：四角捏起來的圓角方形
+    const s = r*0.95, p = r*0.18 + Math.sin(t*1.5)*r*0.02;
+    c.moveTo(-s, -s + p); c.quadraticCurveTo(0, -s - p*0.6, s, -s + p); c.quadraticCurveTo(s + p*0.6, 0, s, s - p); c.quadraticCurveTo(0, s + p*0.6, -s, s - p); c.quadraticCurveTo(-s - p*0.6, 0, -s, -s + p);
+  } else { // 法：腦袋雲（6 個鼓包）
+    for(let i=0;i<=72;i++){ const a = i/72*TAU, rr = r*(0.9 + 0.1*Math.abs(Math.sin(a*3)) )*w(a, 0.6); i ? c.lineTo(Math.cos(a)*rr, Math.sin(a)*rr*0.92) : c.moveTo(Math.cos(a)*rr, Math.sin(a)*rr*0.92); }
+  }
+  c.closePath();
+}
+function drawEyes(c, st, r, t, opt){
+  const blink = (Math.sin(t*1.3 + (opt.seed||0)) > 0.985) ? 0.15 : 1, ex = r*0.32, ey = -r*0.1;
+  if(opt.pure){ c.strokeStyle = '#4a3b30'; c.lineWidth = r*0.06; c.lineCap = 'round'; for(const s of [-1,1]){ c.beginPath(); c.arc(s*ex, ey + r*0.02, r*0.1, Math.PI*1.1, Math.PI*1.9); c.stroke(); } return; }
+  for(const s of [-1,1]){
+    c.fillStyle = '#2a1f18'; c.beginPath(); c.ellipse(s*ex, ey, r*(st === 3 ? 0.1 : 0.11), r*(st === 3 ? 0.11 : 0.14)*blink, 0, 0, TAU); c.fill();
+    c.fillStyle = st === 3 ? '#ff6a4a' : '#fff'; c.beginPath(); c.arc(s*ex + r*0.03, ey - r*0.045, r*(st === 3 ? 0.04 : 0.035), 0, TAU); c.fill();
+    if(st >= 2){ c.strokeStyle = '#2a1f18'; c.lineWidth = r*0.05; c.lineCap = 'round'; c.beginPath(); const tilt = st === 3 ? 0.14 : 0.07; c.moveTo(s*(ex - r*0.14), ey - r*0.2 - (st === 3 ? -tilt*r : 0)); c.lineTo(s*(ex + r*0.12), ey - r*0.2 - tilt*r*(st === 3 ? -1 : 1)); c.stroke(); }
+  }
+}
+function drawMouth(c, fam, st, r, t, opt){
+  c.strokeStyle = '#2a1f18'; c.lineWidth = r*0.05; c.lineCap = 'round';
+  if(opt.pure){ c.beginPath(); c.arc(0, r*0.16, r*0.07, 0.1*Math.PI, 0.9*Math.PI); c.stroke(); return; }
+  if(fam === 'wei' && st === 3){ c.fillStyle = '#5a1f1a'; c.beginPath(); c.ellipse(0, r*0.3, r*0.45, r*0.28 + Math.sin(t*4)*r*0.04, 0, 0, TAU); c.fill(); c.fillStyle = '#e8746a'; c.beginPath(); c.ellipse(0, r*0.44, r*0.22, r*0.1, 0, 0, TAU); c.fill(); c.fillStyle = '#fff'; for(const s of [-1,1]){ c.beginPath(); c.moveTo(s*r*0.25, r*0.06); c.lineTo(s*r*0.18, r*0.18); c.lineTo(s*r*0.11, r*0.06); c.fill(); } return; }
+  if(fam === 'sheng'){ c.fillStyle = '#5a1f1a'; c.beginPath(); c.ellipse(0, r*0.22, r*(0.12 + 0.06*st), r*(0.08 + 0.05*st)*(0.8 + 0.3*Math.abs(Math.sin(t*5))), 0, 0, TAU); c.fill(); }
+  else if(st === 3){ c.beginPath(); c.moveTo(-r*0.18, r*0.2); c.quadraticCurveTo(0, r*0.12, r*0.18, r*0.2); c.stroke(); c.fillStyle = '#fff'; for(const s of [-1,1]){ c.beginPath(); c.moveTo(s*r*0.12, r*0.17); c.lineTo(s*r*0.08, r*0.27); c.lineTo(s*r*0.04, r*0.16); c.fill(); } }
+  else if(fam === 'chu'){ c.beginPath(); c.ellipse(0, r*0.2, r*0.06, r*0.05, 0, 0, TAU); c.stroke(); }
+  else { c.beginPath(); c.arc(0, r*0.12, r*(st === 2 ? 0.14 : 0.12), 0.15*Math.PI, 0.85*Math.PI); c.stroke(); }
+  if(st < 3){ c.fillStyle = 'rgba(255,140,140,.45)'; for(const s of [-1,1]){ c.beginPath(); c.ellipse(s*r*0.56, r*0.1, r*0.1, r*0.06, 0, 0, TAU); c.fill(); } }
+}
+// 各系配件
+// pass：'back' 畫在身體後面、'front' 畫在身體前面；繞著身體轉的配件（面具、食物、問號）轉到前面時才畫在前面
+function drawAcc(c, fam, st, r, t, opt, pass = 'back'){
+  const F = pass === 'front', depthOk = a => (Math.sin(a) > 0) === F;
+  c.save();
+  if(fam === 'se'){
+    // 手鏡 → 頭頂鏡冠 → 環繞的面具
+    const mirror = (x, y, s, a) => { c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = '#c9a24e'; c.fillRect(-s*0.08, s*0.35, s*0.16, s*0.5); c.beginPath(); c.ellipse(0, 0, s*0.32, s*0.42, 0, 0, TAU); c.fill(); c.fillStyle = '#dff3ff'; c.beginPath(); c.ellipse(0, 0, s*0.25, s*0.34, 0, 0, TAU); c.fill(); c.fillStyle = 'rgba(255,255,255,.8)'; c.beginPath(); c.ellipse(-s*0.07, -s*0.1, s*0.06, s*0.14, 0.4, 0, TAU); c.fill(); c.restore(); };
+    if(!F && st === 1) mirror(r*0.95, r*0.15, r*0.7, 0.3 + Math.sin(t*2)*0.1);
+    if(st >= 2){ if(!F) mirror(0, -r*1.15, r*0.75, 0); for(let k=0;k<4;k++){ const a = t*1.5 + k*1.6; if(!depthOk(a)) continue; c.fillStyle = `rgba(255,240,255,${0.5 + 0.5*Math.sin(a*2)})`; c.font = `${r*0.25}px sans-serif`; c.fillText('✦', Math.cos(a)*r*1.15, Math.sin(a)*r*0.9); } }
+    if(st === 3){ for(let k=0;k<3;k++){ const a = t*0.8 + k*TAU/3, x = Math.cos(a)*r*1.35, y = Math.sin(a)*r*0.5 + r*0.2; if(!depthOk(a)) continue; c.save(); c.translate(x, y); c.fillStyle = ['#f6f1e7','#e9c2d6','#cfc6f2'][k]; c.beginPath(); c.ellipse(0, 0, r*0.22, r*0.28, 0, 0, TAU); c.fill(); c.fillStyle = '#2a1f18'; c.beginPath(); c.ellipse(-r*0.07, -r*0.04, r*0.035, r*0.05, 0, 0, TAU); c.ellipse(r*0.07, -r*0.04, r*0.035, r*0.05, 0, 0, TAU); c.fill(); c.strokeStyle = '#2a1f18'; c.lineWidth = r*0.025; c.beginPath(); c.arc(0, r*0.1, r*0.06, k === 1 ? 1.1*Math.PI : 0.1*Math.PI, k === 1 ? 1.9*Math.PI : 0.9*Math.PI); c.stroke(); c.restore(); } }
+  }
+  if(fam === 'sheng' && !F){
+    // 小喇叭 → 大喇叭＋聲波 → 雙喇叭角＋滿天聲波
+    const horn = (x, y, s, a) => { c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = '#c9a24e'; c.beginPath(); c.moveTo(0, -s*0.12); c.lineTo(s*0.7, -s*0.4); c.lineTo(s*0.7, s*0.4); c.lineTo(0, s*0.12); c.closePath(); c.fill(); c.fillStyle = '#7a5a1a'; c.beginPath(); c.ellipse(s*0.7, 0, s*0.1, s*0.4, 0, 0, TAU); c.fill(); c.restore(); };
+    const waves = (x, y, n, a, s) => { c.strokeStyle = 'rgba(255,220,170,.8)'; c.lineWidth = r*0.05; for(let k=1;k<=n;k++){ const ph = ((t*1.6 + k*0.3) % 1); c.globalAlpha = 1 - ph; c.beginPath(); c.arc(x, y, s*(0.3 + ph*0.9), a - 0.6, a + 0.6); c.stroke(); } c.globalAlpha = 1; };
+    if(st === 1){ horn(r*0.75, -r*0.55, r*0.6, -0.5); }
+    if(st === 2){ horn(r*0.7, -r*0.5, r*0.9, -0.55); waves(r*1.35, -r*1.0, 3, -0.55, r); }
+    if(st === 3){ horn(-r*0.45, -r*0.85, r*0.85, -2.1); horn(r*0.45, -r*0.85, r*0.85, -1.05); waves(-r*0.9, -r*1.5, 3, -2.1, r); waves(r*0.9, -r*1.5, 3, -1.05, r); }
+  }
+  if(fam === 'xiang' && !F){
+    // 煙圈 → 線香＋煙 → 夢幻漩渦眼
+    const wisp = (x, y, s, ph) => { c.strokeStyle = 'rgba(230,230,255,.75)'; c.lineWidth = r*0.05; c.beginPath(); for(let i=0;i<=20;i++){ const k = i/20; const xx = x + Math.sin(k*6 + t*2 + ph)*s*0.25, yy = y - k*s; i ? c.lineTo(xx, yy) : c.moveTo(xx, yy); } c.stroke(); };
+    if(st === 1){ wisp(r*0.6, -r*0.7, r*0.7, 0); }
+    if(st >= 2){ c.fillStyle = '#9a3b2a'; c.fillRect(r*0.55, -r*1.25, r*0.06, r*0.75); c.fillStyle = '#ffb347'; c.beginPath(); c.arc(r*0.58, -r*1.27, r*0.05, 0, TAU); c.fill(); wisp(r*0.58, -r*1.3, r*0.8, 0); wisp(-r*0.6, -r*0.6, r*0.6, 2); }
+    if(st === 3){ for(let k=0;k<3;k++) wisp(-r*0.9 + k*r*0.9, -r*0.8, r*0.9, k*2); }
+  }
+  if(fam === 'wei'){
+    if(!F && st === 1){ c.strokeStyle = '#a87b46'; c.lineWidth = r*0.08; c.beginPath(); c.moveTo(r*0.6, r*0.4); c.lineTo(r*1.15, r*1.0); c.stroke(); }
+    if(!F && st === 2){ c.strokeStyle = '#a87b46'; c.lineWidth = r*0.09; c.beginPath(); c.moveTo(0, -r*1.25); c.lineTo(0, r*1.3); c.stroke(); }
+    if(st === 3){ for(let k=0;k<4;k++){ const a = t*1.2 + k*TAU/4; if(!depthOk(a)) continue; c.font = `${r*0.35}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(['🍡','🍰','🍜','🍙'][k], Math.cos(a)*r*1.3, Math.sin(a)*r*0.7 - r*0.3); } }
+  }
+  if(fam === 'chu' && !F){
+    const z = (x, y, s) => { c.fillStyle = 'rgba(200,230,255,.9)'; c.font = `900 ${s}px sans-serif`; c.fillText('z', x, y); };
+    const ph = (t*0.8) % 1;
+    if(st === 1){ z(r*0.65, -r*0.75 - ph*r*0.3, r*0.3); z(r*0.9, -r*1.05 - ph*r*0.3, r*0.22); }
+    if(st >= 2){ c.fillStyle = 'rgba(120,150,220,.85)'; c.beginPath(); c.moveTo(-r*1.05, -r*0.3); c.quadraticCurveTo(0, -r*0.65, r*1.05, -r*0.3); c.lineTo(r*1.2, r*0.95); c.quadraticCurveTo(0, r*1.2, -r*1.2, r*0.95); c.closePath(); c.globalAlpha = 0.55; c.fill(); c.globalAlpha = 1; z(r*0.75, -r*0.9 - ph*r*0.3, r*0.32); z(r*1.0, -r*1.2 - ph*r*0.3, r*0.24); }
+    if(st === 3){ c.fillStyle = '#c9a24e'; c.beginPath(); c.moveTo(-r*0.45, -r*0.95); for(let i=0;i<=4;i++) c.lineTo(-r*0.45 + i*r*0.225, -r*(i%2 ? 1.12 : 1.3)); c.lineTo(r*0.45, -r*0.95); c.closePath(); c.fill(); }
+  }
+  if(fam === 'fa'){
+    const q = (x, y, s, a) => { c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = 'rgba(220,255,245,.9)'; c.font = `900 ${s}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', 0, 0); c.restore(); };
+    if(!F && st === 1) q(r*0.7, -r*0.85, r*0.5, 0.2);
+    if(st >= 2){ for(let k=0;k<3;k++){ const a = t*1.4 + k*TAU/3; if(!depthOk(a)) continue; q(Math.cos(a)*r*1.2, Math.sin(a)*r*0.5 - r*0.7, r*0.35, a); } }
+    if(!F && st === 3){ c.strokeStyle = 'rgba(30,60,55,.8)'; c.lineWidth = r*0.05; for(let k=0;k<3;k++){ c.beginPath(); for(let i=0;i<=60;i++){ const a = i/60*TAU*2 + k*2 + t; const rr = r*(1.05 + 0.18*Math.sin(a*3 + k)); i ? c.lineTo(Math.cos(a)*rr, Math.sin(a)*rr*0.9) : c.moveTo(Math.cos(a)*rr, Math.sin(a)*rr*0.9); } c.stroke(); } }
+  }
+  c.restore();
+}
+// 角（第三階段）
+function drawHorns(c, r){ c.fillStyle = '#3a2e3e'; for(const s of [-1,1]){ c.beginPath(); c.moveTo(s*r*0.35, -r*0.8); c.quadraticCurveTo(s*r*0.6, -r*1.25, s*r*0.75, -r*1.35); c.quadraticCurveTo(s*r*0.55, -r*1.0, s*r*0.55, -r*0.7); c.closePath(); c.fill(); } }
+function drawDust(c, m, x, y, R, t, opt = {}){
+  const fam = m.fam.key, st = m.stage, r = R*(st === 1 ? 0.62 : st === 2 ? 0.76 : 0.9), gold = opt.gold, pure = opt.pure;
+  const body = pure ? '#fbfaf6' : gold ? '#f3cf63' : m.fam.color, dark = pure ? '#d9d4c8' : gold ? '#a8781c' : m.fam.dark;
+  c.save(); c.translate(x, y + Math.sin(t*2 + (opt.seed||0))*r*0.05);
+  if(opt.scaleY) c.scale(1/opt.scaleY, opt.scaleY);
+  if(opt.rot) c.rotate(opt.rot);
+  // 氣場
+  if(!pure && st >= 2){ const g = c.createRadialGradient(0, 0, r*0.6, 0, 0, r*1.7); g.addColorStop(0, st === 3 ? 'rgba(120,40,80,.45)' : 'rgba(255,255,255,.12)'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, r*1.7, 0, TAU); c.fill(); }
+  if(gold){ const g = c.createRadialGradient(0, 0, r*0.5, 0, 0, r*1.9); g.addColorStop(0, 'rgba(255,220,120,.55)'); g.addColorStop(1, 'rgba(255,220,120,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, r*1.9, 0, TAU); c.fill(); }
+  if(!pure) drawAcc(c, fam, st, r, t, opt, 'back');   // 身體後面的配件
+  if(!pure && st === 3) drawHorns(c, r);
+  bodyPath(c, fam, pure ? 1 : st, r, t);
+  const bg = c.createRadialGradient(-r*0.3, -r*0.4, r*0.08, 0, 0, r*1.15); bg.addColorStop(0, '#ffffff'); bg.addColorStop(0.3, body); bg.addColorStop(1, dark);
+  c.fillStyle = bg; c.fill('nonzero');
+  if(!pure && !gold){ c.fillStyle = 'rgba(85,75,65,.22)'; c.fill('nonzero'); c.save(); c.clip('nonzero'); for(let i=0;i<10;i++){ const a = i*2.3, rr = r*(0.25 + 0.55*((i*37)%10)/10); c.fillStyle = 'rgba(80,70,60,.25)'; c.beginPath(); c.arc(Math.cos(a)*rr, Math.sin(a)*rr*0.8, r*0.06, 0, TAU); c.fill(); } c.restore(); }
+  if(gold){ c.save(); c.clip('nonzero'); for(let k=0;k<5;k++){ const a = t*2 + k*1.3; c.fillStyle = `rgba(255,255,255,${0.4 + 0.4*Math.sin(a*2)})`; c.beginPath(); c.arc(Math.cos(a)*r*0.6, Math.sin(a*1.3)*r*0.6, r*0.05, 0, TAU); c.fill(); } c.restore(); }
+  if(fam === 'wei' && st === 2 && !pure){ c.save(); c.translate(0, r*0); }
+  drawEyes(c, pure ? 1 : st, r, t, opt);
+  drawMouth(c, fam, pure ? 1 : st, r, t, opt);
+  if(fam === 'wei' && st === 2 && !pure) c.restore();
+  if(!pure) drawAcc(c, fam, st, r, t, opt, 'front');   // 轉到前面的配件蓋在身體上
+  if(pure){ // 淨化後：頭上一朵小蓮花
+    c.font = `${r*0.55}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🪷', 0, -r*1.05);
+  }
+  c.restore();
+}
+function silhouette(cv){ const c = cv.getContext('2d'); c.save(); c.setTransform(1,0,0,1,0,0); c.globalCompositeOperation = 'source-in'; c.fillStyle = '#4a5d72'; c.fillRect(0, 0, cv.width, cv.height); c.globalCompositeOperation = 'destination-over'; c.shadowColor = 'rgba(160,190,220,.55)'; c.shadowBlur = 14; c.drawImage(cv, 0, 0); c.restore(); }
+/* ---------------- 聲音：史詩風格，全部即時合成（不用音檔） ----------------
+   配方：太鼓＋銅鑼＋合唱般的長音＋大殿殘響，旋律用 D 小調五聲音階（D F G A C）。
+   音訊路線：各樂器 → 音效匯流排／音樂匯流排 → 主音量 → 壓縮器 → 喇叭；另外送一份到殘響（大殿的空間感）。 */
+let actx = null, AU = null, noiseBuf = null, zhVoice = null;
+function audioInit(){
+  try{ if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if(actx.state === 'suspended' && actx.resume && !(window.OfflineAudioContext && actx instanceof OfflineAudioContext)) actx.resume().catch(() => {}); }catch(e){ actx = null; return; }
+  if(AU) return;
+  const c = actx, master = c.createGain(); master.gain.value = 0.9;
+  const comp = c.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.25;
+  master.connect(comp).connect(c.destination);
+  // 大殿殘響：3 秒衰減的雜訊當空間響應
+  const rev = c.createConvolver(), len = Math.floor(c.sampleRate*3), ib = c.createBuffer(2, len, c.sampleRate);
+  for(let ch=0;ch<2;ch++){ const d = ib.getChannelData(ch); for(let i=0;i<len;i++){ const k = i/len; d[i] = i < c.sampleRate*0.012 ? 0 : (Math.random()*2 - 1)*Math.pow(1 - k, 2.6); } }
+  rev.buffer = ib; const revOut = c.createGain(); revOut.gain.value = 0.5; rev.connect(revOut).connect(master);
+  const sfxBus = c.createGain(); sfxBus.connect(master);
+  const musicBus = c.createGain(); musicBus.gain.value = store.get('fuchenGame.music', true) ? 0.55 : 0; musicBus.connect(master);
+  noiseBuf = c.createBuffer(1, c.sampleRate*2, c.sampleRate); const nd = noiseBuf.getChannelData(0); for(let i=0;i<nd.length;i++) nd[i] = Math.random()*2 - 1;
+  AU = { c, master, rev, sfxBus, musicBus };
+}
+const now0 = () => actx.currentTime + 0.01;
+function route(node, bus, wet = 0.3){ node.connect(bus); if(wet > 0){ const w = actx.createGain(); w.gain.value = wet; node.connect(w).connect(AU.rev); } }
+function env(g, t, a, peak, dec){ g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + dec); }
+function noiseSrc(t, dur){ const s = actx.createBufferSource(); s.buffer = noiseBuf; s.start(t, Math.random()*0.5); s.stop(t + dur); return s; }
+// 樂器
+const I = {
+  taiko(t, f = 62, g = 0.9, bus = AU.sfxBus, wet = 0.35){   // 太鼓：音高快速往下掉的低音＋鼓皮的拍擊聲
+    const c = actx, o = c.createOscillator(), og = c.createGain(); o.type = 'sine';
+    o.frequency.setValueAtTime(f*2.4, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.09); o.frequency.exponentialRampToValueAtTime(f*0.8, t + 0.7);
+    env(og, t, 0.004, g, 0.75); o.connect(og); route(og, bus, wet); o.start(t); o.stop(t + 0.9);
+    const n = noiseSrc(t, 0.12), lp = c.createBiquadFilter(), ng = c.createGain(); lp.type = 'lowpass'; lp.frequency.value = 900; env(ng, t, 0.002, g*0.5, 0.09); n.connect(lp).connect(ng); route(ng, bus, wet*0.6);
+  },
+  rim(t, g = 0.25, bus = AU.musicBus){ const n = noiseSrc(t, 0.06), bp = actx.createBiquadFilter(), ng = actx.createGain(); bp.type = 'bandpass'; bp.frequency.value = 2500; bp.Q.value = 2; env(ng, t, 0.001, g, 0.05); n.connect(bp).connect(ng); route(ng, bus, 0.2); },
+  gong(t, f = 82, g = 0.6, dur = 4.5, bus = AU.sfxBus){   // 銅鑼：幾個不成倍數的泛音、慢慢衰減，再加一點金屬的嘶聲
+    [1, 1.48, 2.02, 2.74, 3.3, 4.12, 5.4].forEach((p, i) => { const o = actx.createOscillator(), og = actx.createGain(); o.type = 'sine';
+      o.frequency.setValueAtTime(f*p*1.012, t); o.frequency.exponentialRampToValueAtTime(f*p, t + 1.2);
+      og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(g/(i + 1.3), t + 0.02 + i*0.015); og.gain.exponentialRampToValueAtTime(0.0001, t + dur*(1 - i*0.08));
+      o.connect(og); route(og, bus, 0.65); o.start(t); o.stop(t + dur); });
+    const n = noiseSrc(t, 0.4), hp = actx.createBiquadFilter(), ng = actx.createGain(); hp.type = 'highpass'; hp.frequency.value = 3000; env(ng, t, 0.003, g*0.3, 0.35); n.connect(hp).connect(ng); route(ng, bus, 0.7);
+  },
+  bell(t, f, g = 0.25, bus = AU.sfxBus){ [1, 2.76, 5.4, 8.9].forEach((p, i) => { const o = actx.createOscillator(), og = actx.createGain(); o.type = 'sine'; o.frequency.value = f*p; env(og, t, 0.003, g/(i*1.8 + 1), 1.6 - i*0.3); o.connect(og); route(og, bus, 0.5); o.start(t); o.stop(t + 1.7); }); },
+  pad(t, freqs, dur, g = 0.08, bus = AU.musicBus, bright = 900){   // 弦樂長音：三條微微走音的鋸齒波，柔和的濾波
+    freqs.forEach(f => { for(const det of [-7, 0, 7]){ const o = actx.createOscillator(), lp = actx.createBiquadFilter(), og = actx.createGain(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det; lp.type = 'lowpass'; lp.frequency.value = bright;
+      og.gain.setValueAtTime(0.0001, t); og.gain.linearRampToValueAtTime(g/3, t + Math.min(1.2, dur*0.4)); og.gain.linearRampToValueAtTime(g/3*0.8, t + dur*0.8); og.gain.linearRampToValueAtTime(0.0001, t + dur + 0.8);
+      o.connect(lp).connect(og); route(og, bus, 0.55); o.start(t); o.stop(t + dur + 0.9); } });
+  },
+  choir(t, freqs, dur, g = 0.12, bus = AU.sfxBus){   // 合唱「啊——」：鋸齒波通過三個母音共振峰
+    freqs.forEach(f => { for(const det of [-10, -3, 4, 11]){ const o = actx.createOscillator(), og = actx.createGain(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det;
+      og.gain.setValueAtTime(0.0001, t); og.gain.linearRampToValueAtTime(g/4, t + 0.3); og.gain.linearRampToValueAtTime(g/4*0.7, t + dur*0.7); og.gain.linearRampToValueAtTime(0.0001, t + dur);
+      for(const [ff, q, gg] of [[730, 8, 1], [1090, 10, 0.6], [2440, 12, 0.25]]){ const bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = ff; bp.Q.value = q; const fg = actx.createGain(); fg.gain.value = gg*2.2; o.connect(bp).connect(fg).connect(og); }
+      route(og, bus, 0.6); o.start(t); o.stop(t + dur + 0.1); } });
+  },
+  brass(t, freqs, dur = 0.6, g = 0.16, bus = AU.sfxBus){   // 銅管重音：濾波器快速打開再收回
+    freqs.forEach(f => { for(const det of [-6, 6]){ const o = actx.createOscillator(), lp = actx.createBiquadFilter(), og = actx.createGain(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det; lp.type = 'lowpass'; lp.Q.value = 2;
+      lp.frequency.setValueAtTime(300, t); lp.frequency.exponentialRampToValueAtTime(2800, t + 0.08); lp.frequency.exponentialRampToValueAtTime(900, t + dur);
+      env(og, t, 0.03, g/2, dur); o.connect(lp).connect(og); route(og, bus, 0.45); o.start(t); o.stop(t + dur + 0.1); } });
+  },
+  boom(t, g = 0.8, bus = AU.sfxBus){ const o = actx.createOscillator(), og = actx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(32, t + 0.7); env(og, t, 0.005, g, 0.9); o.connect(og); route(og, bus, 0.25); o.start(t); o.stop(t + 1); },
+  cymbal(t, g = 0.3, bus = AU.sfxBus){ const n = noiseSrc(t, 1.6), hp = actx.createBiquadFilter(), ng = actx.createGain(); hp.type = 'highpass'; hp.frequency.value = 5500; env(ng, t, 0.002, g, 1.4); n.connect(hp).connect(ng); route(ng, bus, 0.6); },
+  whoosh(t, s = 1, bus = AU.sfxBus){   // 破風聲：帶通濾波的雜訊快速往上掃，由左掃到右
+    const n = noiseSrc(t, 0.7), bp = actx.createBiquadFilter(), ng = actx.createGain(); bp.type = 'bandpass'; bp.Q.value = 1.6;
+    bp.frequency.setValueAtTime(350, t); bp.frequency.exponentialRampToValueAtTime(1500 + 2500*s, t + 0.18); bp.frequency.exponentialRampToValueAtTime(500, t + 0.55);
+    ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(0.7*Math.max(0.4, s), t + 0.12); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+    let last = n.connect(bp).connect(ng);
+    if(actx.createStereoPanner){ const pan = actx.createStereoPanner(); pan.pan.setValueAtTime(-0.8, t); pan.pan.linearRampToValueAtTime(0.8, t + 0.5); last = last.connect(pan); }
+    route(last, bus, 0.3);
+  },
+  flute(t, f, g = 0.06, bus = AU.musicBus){ const o = actx.createOscillator(), og = actx.createGain(), lfo = actx.createOscillator(), lg = actx.createGain(); o.type = 'triangle'; o.frequency.value = f; lfo.frequency.value = 5.5; lg.gain.value = f*0.012; lfo.connect(lg).connect(o.frequency);
+    og.gain.setValueAtTime(0.0001, t); og.gain.linearRampToValueAtTime(g, t + 0.08); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.7); o.connect(og); route(og, bus, 0.5); o.start(t); lfo.start(t); o.stop(t + 0.75); lfo.stop(t + 0.75); }
+};
+const N = { D2:73.42, A2:110, Bb2:116.54, C3:130.81, D3:146.83, F3:174.61, G3:196, A3:220, Bb3:233.08, C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392, A4:440, C5:523.25, D5:587.33, F5:698.46, G5:783.99, A5:880, C6:1046.5, D6:1174.66 };
+const ok = () => !!(actx && AU);
+function swoosh(strength = 1, t){ if(ok()) I.whoosh(t ?? now0(), Math.min(1, strength)); }
+const sfx = {
+  beat(t){ if(!ok()) return; t = t ?? now0(); I.taiko(t, 62, 1.0); I.boom(t, 0.35); },                                                     // 倒數：每一拍一記大太鼓
+  go(t){ if(!ok()) return; t = t ?? now0(); I.taiko(t, 58, 1.2); I.boom(t, 0.9); I.cymbal(t, 0.32); I.whoosh(t + 0.02, 1); },               // 揮：最大的一擊
+  ding(t){ if(!ok()) return; t = t ?? now0(); I.bell(t, 1174.66, 0.2); I.bell(t + 0.05, 1760, 0.08); },
+  purify(t){ if(!ok()) return; t = t ?? now0(); I.boom(t, 0.8); I.taiko(t, 70, 0.8); [N.D5, N.F5, N.G5, N.A5, N.D6].forEach((f, i) => I.bell(t + 0.08 + i*0.07, f, 0.14)); I.choir(t + 0.05, [N.D4, N.A4], 1.6, 0.1); },
+  capture(t){ if(!ok()) return; t = t ?? now0(); I.boom(t, 1.0); I.taiko(t, 60, 0.9); I.gong(t + 0.02, 110, 0.3, 3); [N.D5, N.F5, N.G5, N.A5, N.C6, N.D6].forEach((f, i) => I.bell(t + 0.7 + i*0.08, f, 0.13)); I.choir(t + 0.7, [N.D4, N.F4, N.A4, N.D5], 2.2, 0.12); },
+  combo(t){ if(!ok()) return; t = t ?? now0(); I.brass(t, [N.D3, N.A3, N.D4, N.F4], 0.35, 0.18); I.brass(t + 0.2, [N.D3, N.A3, N.D4, N.A4], 0.8, 0.2); I.taiko(t, 55, 1.0); I.taiko(t + 0.2, 55, 1.0); I.gong(t + 0.2, 82, 0.5, 4); },
+  miss(t){ if(!ok()) return; t = t ?? now0(); I.taiko(t, 45, 0.6, AU.sfxBus, 0.15); [N.A4, N.F4, N.D4].forEach((f, i) => I.bell(t + 0.12 + i*0.14, f, 0.07)); },
+  appear(t){ if(!ok()) return; t = t ?? now0(); I.whoosh(t, 0.35); I.taiko(t + 0.15, 95, 0.4); I.bell(t + 0.2, N.A4, 0.08); },
+  boss(t){ if(!ok()) return; t = t ?? now0(); I.gong(t, 55, 0.62, 6); I.taiko(t, 50, 1.0); I.taiko(t + 0.3, 50, 1.0); I.boom(t, 0.8); I.choir(t + 0.2, [N.D3, N.A3], 2.6, 0.14); },
+  victory(t){ if(!ok()) return; t = t ?? now0();
+    [[N.D4, N.A4], [N.F4, N.C5], [N.G4, N.D5], [N.A4, N.F5]].forEach((ch, i) => I.brass(t + i*0.22, ch, 0.35, 0.16));
+    for(let i=0;i<8;i++) I.taiko(t + i*0.11, 70 - i*2, 0.5 + i*0.06);
+    I.brass(t + 0.9, [N.D4, N.A4, N.D5, N.F5], 1.4, 0.2); I.gong(t + 0.9, 82, 0.6, 5); I.choir(t + 0.9, [N.D4, N.F4, N.A4, N.D5], 3, 0.14); I.cymbal(t + 0.9, 0.3); },
+  defeat(t){ if(!ok()) return; t = t ?? now0(); I.pad(t, [N.D3, N.F3, N.A3], 1.2, 0.12, AU.sfxBus, 700); I.pad(t + 1.2, [N.C3, N.F3, N.A3], 1.2, 0.1, AU.sfxBus, 600); I.pad(t + 2.4, [N.Bb2, N.D3, N.F3], 2, 0.1, AU.sfxBus, 500); I.taiko(t, 48, 0.6); I.taiko(t + 1.2, 45, 0.5); }
+};
+/* ================= 電影級打擊音效（新版） =================
+   一記「攻擊成功」拆成好幾層，同時響：
+   ① 破空裂響 crack：極短的高頻爆裂，像拂塵甩到空氣「啪」一聲（左右聲道錯開一點點，聲音變寬）
+   ② 次低頻 sub：90 → 30 Hz 往下掉的低頻，加一點破音，電影院「轟」的那種肚子震
+   ③ 金屬鳴響 clang：不成倍數的泛音、彼此微微走音，像刀劍相擊後「鏘～」的餘韻
+   ④ 電影號角 braam：幾條低音鋸齒波加破音，濾波器猛開再慢慢收，好萊塢預告片的「轟——」
+   ⑤ 反向吸氣 swell：完美一擊之前，聲音先「吸」進來再爆開
+   ⑥ 碎光 shatter：收服時一陣細碎的高音，像琉璃碎成光點 */
+function distCurve(k){ const n = 1024, c = new Float32Array(n); for(let i=0;i<n;i++){ const x = i/(n-1)*2 - 1; c[i] = (1 + k)*x/(1 + k*Math.abs(x)); } return c; }
+function panNode(p){ if(!actx.createStereoPanner) return actx.createGain(); const s = actx.createStereoPanner(); s.pan.value = p; return s; }
+const X = {
+  crack(t, g = 0.8){
+    [[-0.6, 0], [0.6, 0.009]].forEach(([p, dl]) => {
+      const n = noiseSrc(t + dl, 0.08), hp = actx.createBiquadFilter(), pk = actx.createBiquadFilter(), ng = actx.createGain(), pn = panNode(p);
+      hp.type = 'highpass'; hp.frequency.value = 1600; pk.type = 'peaking'; pk.frequency.value = 4200; pk.Q.value = 1.2; pk.gain.value = 9;
+      env(ng, t + dl, 0.0008, g*0.7, 0.06); n.connect(hp).connect(pk).connect(ng).connect(pn); route(pn, AU.sfxBus, 0.4);
+    });
+    const o = actx.createOscillator(), og = actx.createGain(); o.type = 'square'; o.frequency.setValueAtTime(1800, t); o.frequency.exponentialRampToValueAtTime(300, t + 0.03);
+    env(og, t, 0.0005, g*0.12, 0.035); o.connect(og); route(og, AU.sfxBus, 0.3); o.start(t); o.stop(t + 0.06);
+  },
+  sub(t, g = 1, dur = 1.1){
+    const o = actx.createOscillator(), ws = actx.createWaveShaper(), lp = actx.createBiquadFilter(), og = actx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(95, t); o.frequency.exponentialRampToValueAtTime(30, t + dur*0.7);
+    ws.curve = distCurve(3); lp.type = 'lowpass'; lp.frequency.value = 240;
+    env(og, t, 0.003, g, dur); o.connect(ws).connect(lp).connect(og); route(og, AU.sfxBus, 0.12); o.start(t); o.stop(t + dur + 0.1);
+  },
+  clang(t, f = 587, g = 0.22, pan = 0){
+    const P = [[1, 1, 1.9], [2.32, 0.55, 1.4], [3.86, 0.42, 1.0], [5.41, 0.28, 0.75], [7.11, 0.18, 0.5], [9.2, 0.1, 0.35]];
+    const pn = panNode(pan); route(pn, AU.sfxBus, 0.6);
+    for(const [r, a, d] of P) for(const det of [-0.003, 0.003]){
+      const o = actx.createOscillator(), og = actx.createGain(); o.type = r === 1 ? 'triangle' : 'sine'; o.frequency.value = f*r*(1 + det);
+      env(og, t, 0.002, g*a*0.5, d); o.connect(og).connect(pn); o.start(t); o.stop(t + d + 0.1);
+    }
+  },
+  braam(t, g = 0.3, dur = 1.7){
+    const sum = actx.createGain(), ws = actx.createWaveShaper(), lp = actx.createBiquadFilter(), og = actx.createGain();
+    ws.curve = distCurve(6); lp.type = 'lowpass'; lp.Q.value = 3;
+    lp.frequency.setValueAtTime(160, t); lp.frequency.exponentialRampToValueAtTime(2400, t + 0.12); lp.frequency.exponentialRampToValueAtTime(260, t + dur);
+    og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(g, t + 0.03); og.gain.setValueAtTime(g, t + dur*0.45); og.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    for(const f of [36.71, 36.71*1.004, 73.42, 73.42*0.996, 110, 146.83]){ const o = actx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; const og2 = actx.createGain(); og2.gain.value = f < 50 ? 0.5 : 0.3; o.connect(og2).connect(sum); o.start(t); o.stop(t + dur + 0.1); }
+    sum.connect(ws).connect(lp).connect(og); route(og, AU.sfxBus, 0.45);
+  },
+  swell(t, dur = 0.42, g = 0.45){
+    const n = noiseSrc(t, dur + 0.02), bp = actx.createBiquadFilter(), ng = actx.createGain();
+    bp.type = 'bandpass'; bp.Q.value = 1.4; bp.frequency.setValueAtTime(350, t); bp.frequency.exponentialRampToValueAtTime(7000, t + dur);
+    ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(g, t + dur); ng.gain.setValueAtTime(0.0001, t + dur + 0.005);
+    n.connect(bp).connect(ng); route(ng, AU.sfxBus, 0.5);
+    const o = actx.createOscillator(), og = actx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(60, t); o.frequency.exponentialRampToValueAtTime(240, t + dur);
+    og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(g*0.5, t + dur); og.gain.setValueAtTime(0.0001, t + dur + 0.005); o.connect(og); route(og, AU.sfxBus, 0.2); o.start(t); o.stop(t + dur + 0.02);
+  },
+  shatter(t, g = 0.3){
+    for(let i=0;i<16;i++){ const tt = t + Math.random()*0.3, f = 2200 + Math.random()*5200, o = actx.createOscillator(), og = actx.createGain(), pn = panNode(Math.random()*1.6 - 0.8);
+      o.type = 'sine'; o.frequency.value = f; env(og, tt, 0.001, g*(0.3 + Math.random()*0.5), 0.12 + Math.random()*0.4); o.connect(og).connect(pn); route(pn, AU.sfxBus, 0.6); o.start(tt); o.stop(tt + 0.6); }
+    const n = noiseSrc(t, 0.6), hp = actx.createBiquadFilter(), ng = actx.createGain(); hp.type = 'highpass'; hp.frequency.value = 4500; env(ng, t, 0.001, g*0.6, 0.5); n.connect(hp).connect(ng); route(ng, AU.sfxBus, 0.5);
+  }
+};
+// 新版音效組合；回傳「真正打中」的時間差（秒），畫面依這個時間差同步爆開
+const sfx2 = {
+  hit(){ const t = now0(); X.crack(t, 0.85); X.sub(t, 0.9, 0.9); I.taiko(t, 52, 0.9); X.clang(t, N.D5, 0.2, 0.2); I.cymbal(t, 0.16); return 0; },
+  perfect(){ const t = now0(), T = t + 0.42; X.swell(t, 0.42, 0.45); X.crack(T, 1); X.sub(T, 1, 1.2); X.braam(T, 0.3, 1.8); X.clang(T, N.A5, 0.18, -0.3); X.clang(T + 0.012, N.D5, 0.2, 0.3); I.taiko(T, 48, 1.1); I.cymbal(T, 0.28); I.choir(T + 0.02, [N.D4, N.A4, N.D5], 1.3, 0.1); return 0.42; },
+  capture(){ const t = now0(); X.crack(t, 0.9); X.sub(t, 1, 1.3); I.taiko(t, 50, 1); X.braam(t, 0.2, 1.3); X.shatter(t + 0.9, 0.32); I.gong(t + 0.9, 110, 0.28, 3);
+    [N.D5, N.F5, N.G5, N.A5, N.C6, N.D6].forEach((f, i) => I.bell(t + 1.0 + i*0.08, f, 0.12)); I.choir(t + 1.0, [N.D4, N.F4, N.A4, N.D5], 2.2, 0.12); return 0; },
+  boss(){ const t = now0(), T = t + 0.3; X.swell(t, 0.3, 0.4); X.crack(T, 1); X.sub(T, 1.1, 1.5); X.braam(T, 0.42, 2.4); I.gong(T, 55, 0.5, 5); I.taiko(T, 45, 1.2); I.taiko(T + 0.18, 45, 1.0); X.clang(T, N.D4, 0.22); return 0.3; }
+};
+// 現行版本（拂塵試煉 v261109.12 的音效），方便對照
+const sfxOld = { hit(){ sfx.purify(); return 0; }, perfect(){ sfx.purify(); return 0; }, capture(){ sfx.capture(); return 0; }, boss(){ sfx.purify(); return 0; } };
+
+/* ================= 3D 塵靈 ================= */
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const stage = document.getElementById('stage'), cvs3 = document.getElementById('c3'), cvs2 = document.getElementById('c2'), c2 = cvs2.getContext('2d');
+const renderer = new THREE.WebGLRenderer({ canvas: cvs3, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1)); renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+const camera = new THREE.PerspectiveCamera(32, 3/4, 0.1, 50); const CAM0 = new THREE.Vector3(0, 0.4, 7.6); camera.position.copy(CAM0); camera.lookAt(0, 0.05, 0);
+scene.add(new THREE.HemisphereLight(0xfff1dc, 0x1b2236, 0.55));
+const key = new THREE.DirectionalLight(0xfff0d8, 2.0); key.position.set(-3, 4, 5); scene.add(key);
+const rim = new THREE.DirectionalLight(0x9fc4ff, 2.6); rim.position.set(3.5, 2, -4); scene.add(rim);
+const rim2 = new THREE.DirectionalLight(0xffd29a, 1.2); rim2.position.set(-4, -1, -3); scene.add(rim2);
+const hitLight = new THREE.PointLight(0xfff0c0, 0, 8); hitLight.position.set(0, 0.2, 2.2); scene.add(hitLight);
+
+// ---------- 程式產生的貼圖 ----------
+function canvasTex(size, draw, srgb = true){ const c = document.createElement('canvas'); c.width = c.height = size; draw(c.getContext('2d'), size); const t = new THREE.CanvasTexture(c); if(srgb) t.colorSpace = THREE.SRGBColorSpace; return t; }
+const rnd = (a, b) => a + Math.random()*(b - a);
+// 絨毛＋塵點：淺色底、細細的纖維、點點灰塵（乘上各系顏色）
+const SPECK = canvasTex(512, (c, s) => { c.fillStyle = '#fff'; c.fillRect(0, 0, s, s);
+  for(let i=0;i<5000;i++){ c.strokeStyle = `rgba(${rnd(150,220)|0},${rnd(140,210)|0},${rnd(130,200)|0},${rnd(0.05,0.16)})`; c.lineWidth = rnd(0.6, 1.4); const x = rnd(0, s), y = rnd(0, s), a = rnd(0, 6.28), l = rnd(2, 7); c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a)*l, y + Math.sin(a)*l); c.stroke(); }
+  for(let i=0;i<260;i++){ c.fillStyle = `rgba(90,78,66,${rnd(0.12,0.35)})`; c.beginPath(); c.arc(rnd(0, s), rnd(0, s), rnd(0.8, 3.2), 0, 6.29); c.fill(); } });
+SPECK.wrapS = SPECK.wrapT = THREE.RepeatWrapping; SPECK.repeat.set(3, 2);
+const BUMP = canvasTex(512, (c, s) => { c.fillStyle = '#808080'; c.fillRect(0, 0, s, s);
+  for(let i=0;i<9000;i++){ const v = rnd(90, 170)|0; c.strokeStyle = `rgba(${v},${v},${v},0.35)`; c.lineWidth = rnd(0.8, 1.6); const x = rnd(0, s), y = rnd(0, s), a = rnd(0, 6.28), l = rnd(2, 6); c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a)*l, y + Math.sin(a)*l); c.stroke(); } }, false);
+BUMP.wrapS = BUMP.wrapT = THREE.RepeatWrapping; BUMP.repeat.set(3, 2);
+const glowTex = (stops) => canvasTex(128, (c, s) => { const g = c.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2); stops.forEach(([o, col]) => g.addColorStop(o, col)); c.fillStyle = g; c.fillRect(0, 0, s, s); });
+const SOFT = glowTex([[0, 'rgba(255,255,255,1)'], [0.4, 'rgba(255,255,255,.45)'], [1, 'rgba(255,255,255,0)']]);
+const SPARK = glowTex([[0, 'rgba(255,255,255,1)'], [0.15, 'rgba(255,240,200,.9)'], [0.5, 'rgba(255,200,100,.25)'], [1, 'rgba(255,180,80,0)']]);
+const SHADOW = glowTex([[0, 'rgba(0,0,0,.6)'], [0.6, 'rgba(0,0,0,.25)'], [1, 'rgba(0,0,0,0)']]);
+const BLUSH = glowTex([[0, 'rgba(255,120,130,.6)'], [0.6, 'rgba(255,130,140,.25)'], [1, 'rgba(255,140,150,0)']]);
+const SMOKE = canvasTex(128, (c, s) => { for(let i=0;i<14;i++){ const x = rnd(40, 88), y = rnd(40, 88), r = rnd(18, 40), g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, 'rgba(255,255,255,.35)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, s, s); } });
+const textTex = (ch, color, font = '900 92px sans-serif') => canvasTex(128, (c, s) => { c.font = font; c.textAlign = 'center'; c.textBaseline = 'middle'; c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = 6; c.fillStyle = color; c.fillText(ch, s/2, s/2 + 4); });
+const sprite = (map, color = 0xffffff, add = false, op = 1) => new THREE.Sprite(new THREE.SpriteMaterial({ map, color, transparent: true, depthWrite: false, opacity: op, blending: add ? THREE.AdditiveBlending : THREE.NormalBlending }));
+
+// ---------- 材質 ----------
+const white = new THREE.Color('#fff');
+function bodyMat(hex, st){
+  const col = new THREE.Color(hex);
+  const m = new THREE.MeshPhysicalMaterial({ color: col, map: SPECK, bumpMap: BUMP, bumpScale: 2.2, roughness: 0.66, metalness: 0,
+    sheen: 1, sheenRoughness: 0.42, sheenColor: col.clone().lerp(white, 0.65), clearcoat: 0.12, clearcoatRoughness: 0.55 });
+  const rimCol = st === 3 ? new THREE.Color('#ff7a8a') : col.clone().lerp(new THREE.Color('#cfe4ff'), 0.6);
+  m.userData.u = { rimColor: { value: rimCol }, rimStr: { value: st === 3 ? 0.55 : 0.4 }, flash: { value: 0 } };
+  m.userData.base = col.clone();
+  m.onBeforeCompile = sh => { Object.assign(sh.uniforms, m.userData.u);
+    sh.fragmentShader = 'uniform vec3 rimColor; uniform float rimStr; uniform float flash;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>',
+      '#include <emissivemap_fragment>\n float fr = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 2.3);\n totalEmissiveRadiance += rimColor * fr * rimStr + vec3(flash);'); };
+  return m;
+}
+const gold = () => new THREE.MeshPhysicalMaterial({ color: '#d9ad55', metalness: 1, roughness: 0.28, clearcoat: 0.4 });
+const darkGloss = (c = '#1d1512') => new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.05 });
+
+// ---------- 身形 ----------
+function fixSeams(geo){ const p = geo.attributes.position, n = geo.attributes.normal, map = new Map();
+  for(let i=0;i<p.count;i++){ const k = `${p.getX(i).toFixed(4)},${p.getY(i).toFixed(4)},${p.getZ(i).toFixed(4)}`; let e = map.get(k); if(!e){ e = { n: new THREE.Vector3(), ids: [] }; map.set(k, e); } e.n.x += n.getX(i); e.n.y += n.getY(i); e.n.z += n.getZ(i); e.ids.push(i); }
+  for(const e of map.values()){ if(e.ids.length < 2) continue; e.n.normalize(); for(const i of e.ids) n.setXYZ(i, e.n.x, e.n.y, e.n.z); } }
+function radialGeo(R, post, seg = 128){ const geo = new THREE.SphereGeometry(1, seg, Math.round(seg*0.75)), p = geo.attributes.position, v = new THREE.Vector3();
+  for(let i=0;i<p.count;i++){ v.fromBufferAttribute(p, i).normalize(); v.multiplyScalar(R(v.x, v.y, v.z)); if(post) post(v); p.setXYZ(i, v.x, v.y, v.z); }
+  geo.computeVertexNormals(); fixSeams(geo); return geo; }
+function cloudR(S){ return (x, y, z) => { let acc = 0; for(const [cx, cy, cz, r] of S){ const b = x*cx + y*cy + z*cz, disc = b*b - (cx*cx + cy*cy + cz*cz - r*r); if(disc >= 0){ const t = b + Math.sqrt(disc); if(t > 0) acc += Math.pow(t, 10); } } return Math.pow(acc, 1/10) || 0.5; }; }
+function bodyGeo(fam, st){
+  if(fam === 'se') return radialGeo((x, y, z) => 1 + 0.015*Math.sin(5*x + 3*y)*Math.sin(4*z), v => { const k = 1 - 0.13*v.y; v.x *= 0.9*k; v.z *= 0.86*k; v.y *= 1.06; });
+  if(fam === 'xiang') return radialGeo(cloudR([[0,0.36,0,0.6],[-0.56,0.06,0,0.5],[0.56,0.06,0,0.5],[-0.3,-0.36,0.08,0.52],[0.3,-0.36,0.08,0.52],[0,-0.04,0.24,0.58],[0,0.06,-0.24,0.55],[0,0,0,0.6]]));
+  if(fam === 'chu') return radialGeo((x, y, z) => Math.pow(x**4 + y**4 + (z/0.62)**4, -0.25), v => { const q = Math.min(1, (v.x*v.x + v.y*v.y)/1.7); v.z *= 1 - 0.5*q; const c = 1 + 0.12*Math.pow(Math.abs(v.x*v.y), 1.5); v.x *= c*0.98; v.y *= c*0.9; });
+  if(fam === 'fa') return radialGeo((x, y, z) => { const a = Math.atan2(y, x); return 0.9 + 0.1*Math.abs(Math.sin(a*3))*(1 - 0.6*Math.abs(z)) + 0.04*Math.abs(Math.sin(7*x + 2)*Math.sin(7*y + 1)*Math.sin(7*z + 0.5)); }, v => { v.y *= 0.93; }, 160);
+  if(fam === 'sheng'){ const P = [[0.0,-0.85],[0.3,-0.86],[0.7,-0.9],[1.0,-0.93],[1.06,-0.82],[0.97,-0.62],[0.86,-0.25],[0.8,0.2],[0.74,0.58],[0.58,0.84],[0.3,0.97],[0.0,1.0]];
+    const pts = new THREE.SplineCurve(P.map(p => new THREE.Vector2(p[0], p[1]))).getPoints(90).map(p => new THREE.Vector2(Math.max(0.0005, p.x), p.y)); return new THREE.LatheGeometry(pts, 96); }
+  return radialGeo(() => 1, v => { v.y *= 0.9; if(v.y < -0.72) v.y = -0.72 + (v.y + 0.72)*0.35; v.x *= 1.03; v.z *= 1.0; });   // 味：麻糬
+}
+
+// ---------- 把五官、配件貼到身體表面 ----------
+const rc = new THREE.Raycaster();
+function placeOn(targets, d, obj, push = 0){ d = d.clone().normalize(); rc.set(d.clone().multiplyScalar(6), d.clone().negate());
+  const h = rc.intersectObjects(targets, false)[0]; if(!h){ obj.position.copy(d); return obj; }
+  const n = h.face.normal.clone().transformDirection(h.object.matrixWorld); obj.position.copy(h.point).addScaledVector(n, push); obj.lookAt(h.point.clone().add(n)); return obj; }
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+function hornGeo(){ const g = new THREE.ConeGeometry(0.15, 0.62, 28, 18); g.translate(0, 0.31, 0); const p = g.attributes.position, col = [], a = new THREE.Color('#3a2e3e'), b = new THREE.Color('#e6d6bc');
+  for(let i=0;i<p.count;i++){ const y = p.getY(i)/0.62; p.setX(i, p.getX(i) + 0.3*y*y); const c = a.clone().lerp(b, Math.pow(y, 2.2)); col.push(c.r, c.g, c.b); }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals(); return g; }
+function stick(a, b, r, mat){ const d = b.clone().sub(a), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 14), mat); m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(V(0, 1, 0), d.normalize()); return m; }
+
+function build(def){
+  const fam = def.fam.key, st = def.stage, F = def.fam;
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+  const M = { root, body, mats: [], eyes: [], upd: [], def };
+  // 身體
+  let front;
+  if(fam === 'wei' && st === 2){ const cols = ['#f6b9c8', '#fbf2e2', F.color];
+    [[0.62, 0.42], [0, 0.48], [-0.62, 0.44]].forEach(([y, r], i) => { const m = new THREE.Mesh(radialGeo(() => r, null, 96), bodyMat(cols[i], st)); m.position.y = y; body.add(m); M.mats.push(m.material); if(i === 1) front = [m]; });
+    body.add(stick(V(0, 1.3, 0), V(0, -1.35, 0), 0.045, new THREE.MeshStandardMaterial({ color: '#b98a52', roughness: 0.7 })));
+  } else { const m = new THREE.Mesh(bodyGeo(fam, st), bodyMat(F.color, st)); body.add(m); M.mats.push(m.material); front = [m]; }
+  root.updateMatrixWorld(true);
+  const sc = fam === 'wei' && st === 2 ? 0.5 : 1;   // 糰子串：五官畫在中間那顆上，比例縮小
+  const fy = fam === 'wei' && st === 2 ? 0 : 0;
+  // 眼睛：亮面黑眼珠＋兩顆反光點，會眨眼
+  const eyeMat = darkGloss();
+  for(const s of [-1, 1]){
+    const e = new THREE.Group(), ball = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), eyeMat);
+    ball.scale.set((st === 3 ? 0.1 : 0.11)*sc, (st === 3 ? 0.11 : 0.145)*sc, 0.07*sc); e.add(ball);
+    const hl = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({ color: st === 3 ? 0xff6a4a : 0xffffff }));
+    hl.scale.setScalar((st === 3 ? 0.036 : 0.034)*sc); hl.position.set(0.03*sc, 0.05*sc, 0.058*sc); e.add(hl);
+    if(st < 3){ const h2 = hl.clone(); h2.scale.setScalar(0.015*sc); h2.position.set(-0.035*sc, -0.055*sc, 0.055*sc); e.add(h2); }
+    placeOn(front, V(s*0.33, 0.1 + fy, 1), e, 0); body.add(e); M.eyes.push(e);
+    if(st >= 2){ const bg = new THREE.CapsuleGeometry(0.026*sc, 0.17*sc, 4, 10); bg.rotateZ(Math.PI/2); const br = new THREE.Mesh(bg, darkGloss('#2a1f18'));
+      placeOn(front, V(s*0.33, 0.33 + fy, 1), br, 0.02*sc); br.rotateZ(s*(st === 3 ? 0.42 : 0.14)); body.add(br); }
+  }
+  // 腮紅
+  if(st < 3) for(const s of [-1, 1]){ const c = new THREE.Mesh(new THREE.CircleGeometry(0.11*sc, 24), new THREE.MeshBasicMaterial({ map: BLUSH, transparent: true, depthWrite: false })); placeOn(front, V(s*0.56, -0.08, 1), c, 0.012); c.scale.x = 1.25; body.add(c); }
+  // 嘴巴
+  const mouthDark = new THREE.MeshStandardMaterial({ color: '#4a1612', roughness: 0.6 });
+  if(fam === 'sheng' || (fam === 'wei' && st === 3)){
+    const big = fam === 'wei', m = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), mouthDark), sx = big ? 0.42 : 0.12 + 0.06*st, sy = big ? 0.26 : 0.08 + 0.05*st;
+    m.scale.set(sx, sy, 0.05); placeOn(front, V(0, big ? -0.3 : -0.22, 1), m, -0.01); body.add(m);
+    const tg = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12), new THREE.MeshStandardMaterial({ color: '#e8746a', roughness: 0.5 })); tg.scale.set(0.5, 0.35, 0.6); tg.position.set(0, -0.45, 0.4); m.add(tg);
+    if(big) for(const s of [-1, 1]){ const f = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.5, 12), new THREE.MeshPhysicalMaterial({ color: '#fffaf0', roughness: 0.2, clearcoat: 1 })); f.rotation.x = Math.PI; f.position.set(s*0.5, 0.62, 0.6); m.add(f); }
+    M.upd.push(t => { m.scale.y = sy*(0.8 + 0.35*Math.abs(Math.sin(t*(big ? 4 : 5)))); });
+  } else if(fam === 'chu' && st === 1){ const m = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.016, 10, 28), darkGloss('#2a1f18')); placeOn(front, V(0, -0.2, 1), m, 0.006); body.add(m); }
+  else { const r = st === 3 ? 0.16 : st === 2 ? 0.13 : 0.11, arcA = st === 3 ? 0.62 : 0.7, g = new THREE.TorusGeometry(r*sc, 0.02*sc, 10, 36, Math.PI*arcA); g.rotateZ(-Math.PI/2 - Math.PI*arcA/2);
+    const m = new THREE.Mesh(g, darkGloss('#2a1f18')); placeOn(front, V(0, (st === 3 ? 0.02 : 0.0) + fy, 1), m, 0.008); body.add(m);
+    if(st === 3) for(const s of [-1, 1]){ const f = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.085, 10), new THREE.MeshPhysicalMaterial({ color: '#fffaf0', roughness: 0.2, clearcoat: 1 })); f.rotation.x = Math.PI; f.position.set(s*0.065, -r + 0.005, 0.01); m.add(f); } }
+  // 第三階段：彎角（根部深紫、尖端骨白）
+  if(st === 3 && fam !== 'sheng') for(const s of [-1, 1]){ const h = new THREE.Mesh(hornGeo(), new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.35, clearcoat: 0.8 }));
+    placeOn(front, V(s*0.42, 0.9, 0.1), h, -0.06); h.rotation.set(0, 0, -s*0.38); h.scale.x = s; body.add(h); }
+  accessories(M, fam, st, front);
+  // 氣場、地上的影子、飄浮的塵點
+  if(st >= 2){ const a = sprite(SOFT, st === 3 ? 0x7a1f4a : 0xffffff, st !== 3, st === 3 ? 0.55 : 0.18); a.scale.setScalar(st === 3 ? 4.4 : 3.6); a.position.z = -0.8; root.add(a); M.upd.push(t => { a.material.opacity = (st === 3 ? 0.5 : 0.16) + 0.08*Math.sin(t*2); }); }
+  const motes = []; for(let i=0;i<26;i++){ const p = sprite(SPARK, st === 3 ? 0xff9a9a : 0xffe2a8, true, 0); p.userData = { a: rnd(0, 6.28), r: rnd(1.1, 1.9), y: rnd(-1, 1.3), sp: rnd(0.15, 0.4), s: rnd(0.04, 0.09), ph: rnd(0, 6.28) }; root.add(p); motes.push(p); }
+  M.upd.push(t => { for(const p of motes){ const u = p.userData, a = u.a + t*u.sp; p.position.set(Math.cos(a)*u.r, u.y + Math.sin(t*0.7 + u.ph)*0.15, Math.sin(a)*u.r*0.7); p.scale.setScalar(u.s); p.material.opacity = 0.35 + 0.35*Math.sin(t*2 + u.ph); } });
+  return M;
+}
+
+function accessories(M, fam, st, front){
+  const B = M.body, U = M.upd;
+  if(fam === 'se'){
+    const mirror = () => { const g = new THREE.Group(), fr = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.045, 14, 48), gold()); fr.scale.y = 1.3; g.add(fr);
+      const gl = new THREE.Mesh(new THREE.CircleGeometry(0.29, 48), new THREE.MeshPhysicalMaterial({ color: '#eaf7ff', metalness: 1, roughness: 0.03 })); gl.scale.y = 1.3; g.add(gl);
+      const bk = new THREE.Mesh(new THREE.CircleGeometry(0.3, 48), gold()); bk.scale.y = 1.3; bk.rotation.y = Math.PI; bk.position.z = -0.01; g.add(bk);
+      g.add(stick(V(0, -0.38, 0), V(0, -0.85, 0), 0.045, gold())); return g; };
+    if(st === 1){ const m = mirror(); m.position.set(1.0, 0.0, 0.35); m.scale.setScalar(0.85); B.add(m); U.push(t => { m.rotation.set(0.1, -0.5 + Math.sin(t*1.5)*0.25, -0.35 + Math.sin(t*2)*0.1); }); }
+    if(st >= 2){ const m = mirror(); m.position.set(0, 1.42, 0); m.scale.setScalar(0.62); B.add(m); U.push(t => { m.rotation.y = Math.sin(t*0.9)*0.4; }); }
+    if(st >= 2){ const sp = []; for(let k=0;k<5;k++){ const s = sprite(textTex('✦', '#fff0ff'), 0xffffff, true); s.scale.setScalar(0.28); B.add(s); sp.push(s); }
+      U.push(t => sp.forEach((s, k) => { const a = t*1.2 + k*1.26; s.position.set(Math.cos(a)*1.25, 0.25 + Math.sin(a*1.7)*0.35, Math.sin(a)*0.9); s.material.opacity = 0.5 + 0.5*Math.sin(t*3 + k); })); }
+    if(st === 3){ const masks = ['#f6f1e7', '#e9c2d6', '#cfc6f2'].map((c, k) => { const tex = canvasTex(256, (x, s) => { x.fillStyle = c; x.fillRect(0, 0, s, s); x.fillStyle = '#2a1f18';
+          x.beginPath(); x.ellipse(s*0.36, s*0.42, s*0.06, s*0.09, 0, 0, 6.29); x.ellipse(s*0.64, s*0.42, s*0.06, s*0.09, 0, 0, 6.29); x.fill(); x.strokeStyle = '#2a1f18'; x.lineWidth = s*0.03; x.beginPath();
+          if(k === 1) x.arc(s/2, s*0.72, s*0.08, 1.1*Math.PI, 1.9*Math.PI); else x.arc(s/2, s*0.6, s*0.09, 0.15*Math.PI, 0.85*Math.PI); x.stroke();
+          x.fillStyle = k === 2 ? 'rgba(120,90,200,.5)' : 'rgba(230,120,150,.45)'; x.beginPath(); x.ellipse(s*0.25, s*0.6, s*0.06, s*0.035, 0, 0, 6.29); x.ellipse(s*0.75, s*0.6, s*0.06, s*0.035, 0, 0, 6.29); x.fill(); });
+        const m = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28, 0, Math.PI), new THREE.MeshPhysicalMaterial({ map: tex, roughness: 0.35, clearcoat: 0.6, side: THREE.DoubleSide })); m.scale.set(0.26, 0.33, 0.13); M.root.add(m); return m; });
+      U.push(t => masks.forEach((m, k) => { const a = t*0.8 + k*Math.PI*2/3; m.position.set(Math.cos(a)*1.22, 0.15 + Math.sin(a*2)*0.12, Math.sin(a)*1.0); m.lookAt(camera.position); })); }
+  }
+  if(fam === 'sheng'){
+    const horn = (big) => { const g = new THREE.Group(); const P = [[0.05,0],[0.055,0.25],[0.085,0.48],[0.16,0.64],[0.34,0.76],[0.36,0.78]].map(p => new THREE.Vector2(p[0], p[1]));
+      const h = new THREE.Mesh(new THREE.LatheGeometry(P, 48), new THREE.MeshPhysicalMaterial({ color: '#d9ad55', metalness: 1, roughness: 0.25, side: THREE.DoubleSide })); g.add(h);
+      const rimR = new THREE.Mesh(new THREE.TorusGeometry(0.355, 0.02, 10, 48), gold()); rimR.rotation.x = Math.PI/2; rimR.position.y = 0.775; g.add(rimR);
+      const waves = []; if(big) for(let k=0;k<3;k++){ const tg = new THREE.TorusGeometry(1, 0.025, 8, 40, 1.3); tg.rotateZ(Math.PI/2 - 0.65); const w = new THREE.Mesh(tg, new THREE.MeshBasicMaterial({ color: '#ffd9a8', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide })); g.add(w); waves.push(w); }
+      g.userData.waves = waves; return g; };
+    const place = (h, x, y, rz, s) => { h.position.set(x, y, 0.15); h.rotation.set(0, 0, rz); h.scale.setScalar(s); B.add(h); const ws = h.userData.waves; if(ws.length) U.push(t => ws.forEach((w, k) => { const ph = (t*1.3 + k/3) % 1; w.position.y = 0.7 + ph*0.9; w.scale.setScalar(0.25 + ph*0.55); w.material.opacity = (1 - ph)*0.8; })); };
+    if(st === 1) place(horn(false), 0.72, 0.6, -0.85, 0.75);
+    if(st === 2) place(horn(true), 0.7, 0.62, -0.85, 1.0);
+    if(st === 3){ place(horn(true), -0.5, 0.82, 0.55, 0.95); place(horn(true), 0.5, 0.82, -0.55, 0.95); }
+  }
+  if(fam === 'xiang'){
+    const smoke = (o, n, size, rise, col) => { const ps = []; for(let i=0;i<n;i++){ const s = sprite(SMOKE, col, false, 0); B.add(s); ps.push({ s, L: i/n, ph: rnd(0, 6) }); }
+      U.push((t, dt) => ps.forEach(p => { p.L += dt/2.4; if(p.L > 1) p.L -= 1; const L = p.L; p.s.position.set(o.x + Math.sin(L*5 + t*1.4 + p.ph)*0.16*L, o.y + L*rise, o.z); p.s.scale.setScalar(size*(0.35 + L*1.5)); p.s.material.opacity = Math.sin(L*Math.PI)*0.55; p.s.material.rotation = L*2 + p.ph; })); };
+    if(st === 1) smoke(V(0.55, 0.75, 0.2), 9, 0.45, 1.3, 0xe8e6ff);
+    if(st >= 2){ B.add(stick(V(0.62, 0.5, 0.25), V(0.66, 1.4, 0.25), 0.028, new THREE.MeshStandardMaterial({ color: '#9a3b2a', roughness: 0.7 })));
+      const ember = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 12), new THREE.MeshBasicMaterial({ color: '#ffb347' })); ember.position.set(0.66, 1.42, 0.25); B.add(ember);
+      const eg = sprite(SPARK, 0xff9a40, true, 0.9); eg.scale.setScalar(0.35); eg.position.copy(ember.position); B.add(eg); U.push(t => { eg.material.opacity = 0.6 + 0.35*Math.sin(t*7); });
+      smoke(V(0.66, 1.45, 0.25), 10, 0.4, 1.4, 0xece8ff); smoke(V(-0.6, 0.6, 0.1), 7, 0.5, 1.1, 0xd8d4ff); }
+    if(st === 3){ smoke(V(-0.2, 0.9, 0.0), 9, 0.55, 1.5, 0xc9b8ff); smoke(V(0.2, 0.9, -0.1), 9, 0.55, 1.5, 0xd9c8ff); }
+  }
+  if(fam === 'wei'){
+    if(st === 1) B.add(stick(V(0.45, -0.3, 0.2), V(1.15, -1.05, 0.25), 0.045, new THREE.MeshStandardMaterial({ color: '#b98a52', roughness: 0.7 })));
+    if(st === 3){ const fs = ['🍡', '🍰', '🍜', '🍙'].map(ch => { const s = sprite(textTex(ch, '#fff', '92px sans-serif')); s.scale.setScalar(0.5); B.add(s); return s; });
+      U.push(t => fs.forEach((s, k) => { const a = t*1.1 + k*Math.PI/2; s.position.set(Math.cos(a)*1.45, 0.35 + Math.sin(a*2)*0.1, Math.sin(a)*1.0); })); }
+  }
+  if(fam === 'chu'){
+    const zs = [0, 1, 2].map(() => { const s = sprite(textTex('z', '#cfe6ff')); B.add(s); return s; });
+    U.push(t => zs.forEach((s, k) => { const ph = (t*0.45 + k/3) % 1; s.position.set(0.7 + ph*0.55, 0.85 + ph*0.9, 0.2); s.scale.setScalar(0.18 + ph*0.22); s.material.opacity = Math.sin(ph*Math.PI); }));
+    if(st >= 2){ const tex = canvasTex(256, (c, s) => { c.fillStyle = '#8fa8e6'; c.fillRect(0, 0, s, s); c.fillStyle = 'rgba(255,255,255,.35)'; for(let i=0;i<8;i++) c.fillRect(i*s/8, 0, s/20, s); c.fillStyle = 'rgba(255,240,180,.8)'; for(let i=0;i<30;i++){ c.beginPath(); c.arc(rnd(0, s), rnd(0, s), 3, 0, 6.29); c.fill(); } });
+      const g = new THREE.PlaneGeometry(2.7, 1.0, 64, 20), p = g.attributes.position;
+      for(let i=0;i<p.count;i++){ const x = p.getX(i), y = p.getY(i), th = x/0.95, R = 1.1*(1 + 0.2*(0.5 - y)) + 0.05*Math.sin(x*9)*(0.6 - y); p.setXYZ(i, Math.sin(th)*R, -0.78 + y*0.7 + 0.06*Math.cos(x*2.2)*(y + 0.5), Math.cos(th)*R*0.72); }
+      g.computeVertexNormals(); const bl = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9, side: THREE.DoubleSide })); B.add(bl); }
+    if(st === 3){ const g = new THREE.CylinderGeometry(0.4, 0.36, 0.34, 60, 6, true), p = g.attributes.position;
+      for(let i=0;i<p.count;i++){ const y = p.getY(i); if(y > 0.1){ const a = Math.atan2(p.getZ(i), p.getX(i)), tri = Math.abs(((a/(Math.PI*2))*5*2 % 2 + 2) % 2 - 1); p.setY(i, y + 0.16*tri); } }
+      g.computeVertexNormals(); const cr = new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ color: '#d9ad55', metalness: 1, roughness: 0.25, side: THREE.DoubleSide })); cr.position.set(0, 1.0, 0); cr.rotation.z = 0.12; B.add(cr);
+      [['#e0405a', 0], ['#4a7be0', 0.6], ['#4a7be0', -0.6]].forEach(([c, a]) => { const gm = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 12), new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.05, clearcoat: 1, emissive: c, emissiveIntensity: 0.3 })); gm.position.set(Math.sin(a)*0.39, 0.0, Math.cos(a)*0.39); cr.add(gm); }); }
+  }
+  if(fam === 'fa'){
+    const q = n => [...Array(n)].map(() => { const s = sprite(textTex('?', '#dcfff4')); s.scale.setScalar(0.42); B.add(s); return s; });
+    if(st === 1){ const [s] = q(1); U.push(t => { s.position.set(0.75, 1.0 + Math.sin(t*2)*0.06, 0.2); s.material.rotation = 0.2 + Math.sin(t*1.5)*0.15; }); }
+    if(st >= 2){ const qs = q(3); U.push(t => qs.forEach((s, k) => { const a = t*1.3 + k*Math.PI*2/3; s.position.set(Math.cos(a)*1.25, 0.95 + Math.sin(a*2)*0.1, Math.sin(a)*0.75); s.material.rotation = a; })); }
+    if(st === 3){ const rings = [0, 1, 2].map(k => { const pts = []; for(let i=0;i<80;i++){ const a = i/80*Math.PI*2, r = 1.25 + 0.15*Math.sin(a*3 + k); pts.push(V(Math.cos(a)*r, Math.sin(a*2 + k)*0.12, Math.sin(a)*r)); }
+        const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 160, 0.03, 8, true), new THREE.MeshPhysicalMaterial({ color: '#1f4a42', roughness: 0.3, clearcoat: 1, transparent: true, opacity: 0.8 }));
+        m.rotation.set(0.5 + k*0.5, k, 0.3*k); M.root.add(m); return m; });
+      U.push(t => rings.forEach((m, k) => { m.rotation.y = t*(0.4 + k*0.15)*(k % 2 ? -1 : 1); })); }
+  }
+}
+
+// ---------- 場景物件：影子、特效 ----------
+const shadow = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), new THREE.MeshBasicMaterial({ map: SHADOW, transparent: true, depthWrite: false })); shadow.rotation.x = -Math.PI/2; shadow.position.y = -1.32; scene.add(shadow);
+const ring = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.4), new THREE.MeshBasicMaterial({ map: canvasTex(256, (c, s) => { c.strokeStyle = 'rgba(233,180,76,.55)'; c.lineWidth = 3; c.beginPath(); c.arc(s/2, s/2, s*0.44, 0, 6.29); c.stroke(); c.lineWidth = 1.5; c.beginPath(); c.arc(s/2, s/2, s*0.38, 0, 6.29); c.stroke(); for(let i=0;i<24;i++){ const a = i/24*6.283; c.beginPath(); c.moveTo(s/2 + Math.cos(a)*s*0.38, s/2 + Math.sin(a)*s*0.38); c.lineTo(s/2 + Math.cos(a)*s*0.44, s/2 + Math.sin(a)*s*0.44); c.stroke(); } }), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.55 }));
+ring.rotation.x = -Math.PI/2; ring.position.y = -1.33; scene.add(ring);
+const sparks = [...Array(140)].map(() => { const s = sprite(SPARK, 0xffffff, true, 0); s.visible = false; scene.add(s); return { s, v: new THREE.Vector3(), life: 0, max: 1 }; });
+function burst(n, pos, speed, color = 0xffe2a0, size = 0.16, up = 0){ let k = 0; for(const p of sparks){ if(k >= n) break; if(p.life > 0) continue; k++;
+  p.s.visible = true; p.s.material.color.set(color); p.s.position.copy(pos); const d = V(rnd(-1, 1), rnd(-1, 1), rnd(-0.5, 1)).normalize(); p.v.copy(d).multiplyScalar(speed*rnd(0.4, 1.2)); p.v.y += up; p.max = p.life = rnd(0.5, 1.1); p.size = size*rnd(0.6, 1.4); } }
+const shock = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 96), new THREE.MeshBasicMaterial({ color: 0xfff0c8, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0, side: THREE.DoubleSide })); scene.add(shock);
+const slashTex = canvasTex(256, (c, s) => { const g = c.createLinearGradient(0, 0, s, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, 'rgba(255,250,230,1)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; const h = c.createLinearGradient(0, 0, 0, s); c.fillRect(0, s*0.46, s, s*0.08); c.globalAlpha = 0.4; c.fillRect(0, s*0.4, s, s*0.2); });
+const slash = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 0.9), new THREE.MeshBasicMaterial({ map: slashTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0, color: 0xfff0c0 })); slash.position.z = 1.2; scene.add(slash);
+const lotus = sprite(textTex('🪷', '#fff', '96px sans-serif'), 0xffffff, false, 0); scene.add(lotus);
+
+// ---------- 狀態 ----------
+let M = null, cur = { fam: 'se', st: 1 }, view = '3d', soundSet = 'new';
+let timeScale = 1, hitStopUntil = 0, slowUntil = 0, fx = null, capture = null, appear = 0, shakeAmp = 0, dragYaw = 0, texts = [];
+const flashEl = document.getElementById('flash');
+function setMonster(){
+  if(M){ scene.remove(M.root); M.root.traverse(o => { if(o.geometry) o.geometry.dispose(); }); }
+  const def = MONS.find(m => m.fam.key === cur.fam && m.stage === cur.st);
+  M = build(def); const s = cur.st === 1 ? 0.72 : cur.st === 2 ? 0.86 : 1.0; M.size = s; M.root.scale.setScalar(0.001); scene.add(M.root); appear = 0.0001; capture = null; fx = null;
+  document.getElementById('name').textContent = `${def.fam.name}系・${STAGE_NAME[def.stage]}・${def.name}`;
+  M.root.visible = view === '3d';
+}
+
+// ---------- 打擊 ----------
+function hit(kind){
+  audioInit(); const S = soundSet === 'new' ? sfx2 : sfxOld; const delay = (S[kind] || S.hit)() || 0;
+  setTimeout(() => impact(kind), delay*1000);
+}
+function impact(kind){
+  if(!M) return; const now = clock.elapsedTime, power = kind === 'boss' ? 1.6 : kind === 'perfect' ? 1.35 : kind === 'capture' ? 1.2 : 1;
+  hitStopUntil = now + (kind === 'perfect' || kind === 'boss' ? 0.11 : 0.06); slowUntil = kind === 'perfect' || kind === 'boss' ? now + 0.5 : 0;
+  fx = { t0: now, power, dir: Math.random() < 0.5 ? -1 : 1 };
+  shakeAmp = 0.09*power; flashEl.style.transition = 'none'; flashEl.style.opacity = String(0.35 + 0.25*(power - 1)); requestAnimationFrame(() => { flashEl.style.transition = 'opacity .35s ease-out'; flashEl.style.opacity = '0'; });
+  const c = V(0, 0.1, 0.6); burst(Math.round(40*power), c, 4.2*power, kind === 'boss' ? 0xffb080 : 0xffe2a0, 0.18); burst(Math.round(18*power), c, 2.2, 0xffffff, 0.1);
+  slash.rotation.z = fx.dir*rnd(0.45, 0.75); slash.userData.t0 = now;
+  shock.userData.t0 = now; hitLight.intensity = 30*power;
+  const word = kind === 'perfect' ? '✨ 明鏡無塵' : kind === 'boss' ? '💥 重擊！' : kind === 'capture' ? '收服！' : '🪶 拂淨';
+  texts.push({ txt: word, t0: performance.now(), big: kind !== 'hit' });
+  if(kind === 'capture') capture = { t0: now + 0.25 };
+}
+
+// ---------- 2D 對照（現行畫法） ----------
+function draw2D(t){ const w = cvs2.width/dpr, h = cvs2.height/dpr; c2.setTransform(dpr, 0, 0, dpr, 0, 0); c2.clearRect(0, 0, w, h);
+  if(view === '2d' && M){ const R = Math.min(w, h)*0.22; let sx = 1, sy = 1, ox = 0;
+    if(fx){ const tau = clock.elapsedTime - fx.t0, e = Math.exp(-7*tau); sx = 1 + 0.25*e*Math.cos(tau*24); sy = 1/sx; ox = -fx.dir*R*0.3*e; }
+    c2.save(); c2.translate(w/2 + ox, h*0.47); c2.scale(sx, sy); drawDust(c2, M.def, 0, 0, R, t); c2.restore(); }
+  // 漂浮字
+  texts = texts.filter(x => performance.now() - x.t0 < 1400);
+  for(const x of texts){ const k = (performance.now() - x.t0)/1400; c2.globalAlpha = k < 0.15 ? k/0.15 : 1 - Math.max(0, (k - 0.6)/0.4); c2.font = `900 ${x.big ? 30 : 24}px system-ui, sans-serif`; c2.textAlign = 'center';
+    c2.lineWidth = 5; c2.strokeStyle = 'rgba(40,20,0,.75)'; c2.strokeText(x.txt, w/2, h*0.2 - k*30); c2.fillStyle = '#ffe7a8'; c2.fillText(x.txt, w/2, h*0.2 - k*30); c2.globalAlpha = 1; }
+}
+
+// ---------- 主迴圈 ----------
+const clock = new THREE.Clock(); let simT = 0, dpr = 1;
+function resize(){ const r = stage.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1); renderer.setSize(r.width, r.height, false); camera.aspect = r.width/r.height; camera.updateProjectionMatrix(); cvs2.width = r.width*dpr; cvs2.height = r.height*dpr; }
+addEventListener('resize', resize);
+function loop(){
+  requestAnimationFrame(loop);
+  const rdt = Math.min(0.05, clock.getDelta()), now = clock.elapsedTime;
+  timeScale = now < hitStopUntil ? 0.02 : now < slowUntil ? 0.35 : 1; const dt = rdt*timeScale; simT += dt; const t = simT;
+  if(M){ const R = M.root, s = M.size;
+    for(const u of M.upd) u(t, dt);
+    // 出場：從煙裡彈出來
+    let sc = 1; if(appear > 0){ appear += rdt; const a = Math.min(1, appear/0.6); sc = a < 1 ? 1 - Math.pow(1 - a, 3)*Math.cos(a*9)*1.0 : 1; if(a >= 1) appear = 0; }
+    const br = Math.sin(t*2.4)*0.022; let sx = 1 + br, sy = 1 - br, px = 0, pz = 0, rx = 0, rzz = 0;
+    if(fx){ const tau = now - fx.t0, e = Math.exp(-6*tau); sx += 0.32*fx.power*e*Math.cos(tau*26); sy -= 0.32*fx.power*e*Math.cos(tau*26); px = -fx.dir*0.5*fx.power*Math.exp(-5*tau)*Math.sin(Math.min(tau*12, Math.PI/2)); pz = -0.5*fx.power*Math.exp(-4*tau)*Math.min(1, tau*14); rx = -0.35*e; rzz = fx.dir*0.25*e;
+      const fl = Math.max(0, 2.2*fx.power*Math.exp(-11*tau)); M.mats.forEach(m => m.userData.u.flash.value = fl); if(tau > 1.5) fx = null; }
+    let cap = 1, capY = 0, spin = 0;
+    if(capture && now > capture.t0){ const k = Math.min(1, (now - capture.t0)/1.2);
+      M.mats.forEach(m => { m.color.copy(m.userData.base).lerp(new THREE.Color('#fffaf0'), Math.min(1, k*1.6)); m.userData.u.rimColor.value.lerp(new THREE.Color('#ffd27a'), 0.08); m.userData.u.flash.value = Math.max(m.userData.u.flash.value, k*0.6); });
+      cap = k < 0.55 ? 1 + 0.08*Math.sin(k*30) : Math.max(0, 1 - Math.pow((k - 0.55)/0.45, 2)); capY = k*0.5; spin = k*k*14;
+      if(k >= 1 && !capture.done){ capture.done = true; burst(70, V(0, 0.4, 0.3), 3.2, 0xffe7a8, 0.2, 1.2); burst(30, V(0, 0.4, 0.3), 2, 0xffb6c8, 0.14, 1.5); lotus.userData.t0 = now; R.visible = false; setTimeout(() => { setMonster(); }, 2200); } }
+    R.position.set(px, Math.sin(t*2)*0.06 + capY, pz); R.rotation.set(rx, Math.sin(t*0.6)*0.38 + dragYaw + spin, Math.sin(t*0.9)*0.035 + rzz);
+    R.scale.set(sx*s*sc*cap, sy*s*sc*cap, s*sc*cap);
+    // 眨眼
+    const bl = (t % 3.7) < 0.12 ? 0.12 : 1; M.eyes.forEach(e => e.scale.y = bl);
+    shadow.scale.setScalar(s*(1 - Math.sin(t*2)*0.05)*cap); shadow.material.opacity = 0.9*cap;
+  }
+  // 特效
+  for(const p of sparks){ if(p.life <= 0) continue; p.life -= dt; if(p.life <= 0){ p.s.visible = false; continue; } p.v.multiplyScalar(Math.pow(0.15, dt)); p.v.y -= 1.2*dt; p.s.position.addScaledVector(p.v, dt); const k = p.life/p.max; p.s.scale.setScalar(p.size*(0.4 + k)); p.s.material.opacity = Math.min(1, k*1.6); }
+  if(shock.userData.t0 != null){ const k = (now - shock.userData.t0)/0.5; if(k < 1){ shock.position.set(0, 0.1, 0.8); shock.lookAt(camera.position); shock.scale.setScalar(0.4 + k*3.2); shock.material.opacity = (1 - k)*0.9; } else { shock.material.opacity = 0; shock.userData.t0 = null; } }
+  if(slash.userData.t0 != null){ const k = (now - slash.userData.t0)/0.35; if(k < 1){ slash.scale.set(0.3 + k*1.4, 1 - k*0.6, 1); slash.material.opacity = (1 - k); } else { slash.material.opacity = 0; slash.userData.t0 = null; } }
+  hitLight.intensity *= Math.pow(0.02, rdt);
+  if(lotus.userData.t0 != null){ const k = (now - lotus.userData.t0)/2.0; if(k < 1){ lotus.position.set(0, 0.3 + k*0.9, 0.5); lotus.scale.setScalar(0.3 + Math.min(1, k*3)*0.6); lotus.material.opacity = k < 0.7 ? 1 : (1 - k)/0.3; } else { lotus.material.opacity = 0; lotus.userData.t0 = null; } }
+  // 鏡頭震動
+  shakeAmp *= Math.pow(0.004, rdt); camera.position.set(CAM0.x + rnd(-1, 1)*shakeAmp, CAM0.y + rnd(-1, 1)*shakeAmp, CAM0.z); camera.lookAt(0, 0.05, 0);
+  ring.material.opacity = 0.35 + 0.15*Math.sin(simT*1.5); ring.rotation.z = simT*0.1;
+  renderer.render(scene, camera); draw2D(simT);
+}
+
+// ---------- 介面 ----------
+function seg(id, get, set){ const el = document.getElementById(id); el.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; set(b.dataset.v); sync(); }); const sync = () => el.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(get())))); sync(); return sync; }
+const famRow = document.getElementById('fam'); FAMS.forEach(f => { const b = document.createElement('button'); b.dataset.v = f.key; b.textContent = `${f.name}系`; famRow.appendChild(b); });
+seg('fam', () => cur.fam, v => { cur.fam = v; setMonster(); });
+seg('stg', () => cur.st, v => { cur.st = +v; setMonster(); });
+seg('view', () => view, v => { view = v; if(M) M.root.visible = v === '3d'; shadow.visible = ring.visible = v === '3d'; });
+seg('snd', () => soundSet, v => { soundSet = v; audioInit(); });
+document.querySelectorAll('[data-hit]').forEach(b => b.addEventListener('click', () => { if(capture && !capture.done) return; hit(b.dataset.hit); }));
+// 拖曳旋轉，看看立體感
+let drag = null; stage.addEventListener('pointerdown', e => { drag = { x: e.clientX, y0: dragYaw }; }); addEventListener('pointerup', () => drag = null);
+addEventListener('pointermove', e => { if(drag) dragYaw = drag.y0 + (e.clientX - drag.x)*0.012; });
+resize(); setMonster(); loop();
+window.__p3d = { hit, setFam: (f, s) => { cur.fam = f; cur.st = s; setMonster(); }, get M(){ return M; } };
+</script>
+</body>
+</html>
