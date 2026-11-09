@@ -644,7 +644,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261107.08</span>
+  <span class="ver">v261109.01</span>
   </div></div>
 </div>
 
@@ -2781,17 +2781,21 @@ const lookoutHit = [];
     pilot.scale.set(1, 0.85 + Math.sin(t * 17) * 0.1 + Math.random() * 0.08, 1); pilotTip.scale.y = 0.8 + Math.random() * 0.4;
     glowL.intensity += ((flame.visible ? 2.2 : 0) - glowL.intensity) * 0.3;
   });
-  // 望遠鏡架在籃子左側的籃緣上，鏡筒朝著群島中央；瞭望員站在它正後方（墊著一個小木箱），眼睛貼著目鏡往外看，
-  // 搭熱氣球時也一樣在專心瞭望（每一幀跟著望遠鏡的方向站到目鏡後面）。兩樣都在搭乘的預設畫面外面，往左後方轉頭才看得到
-  mesh(new THREE.BoxGeometry(0.4, 0.88, 0.4), lam('#8a6440'), -0.84, -0.56, 0.72, b);
+  // 瞭望員站在籃子左側（墊著一個小木箱），面朝籃外；望遠鏡架在左側籃緣上、伸出籃外往斜下方指，
+  // 他眼睛貼著目鏡越過籃緣往下看底下的島（視線不會穿過籃子裡面）。搭熱氣球時也一樣，在預設畫面外面，往左轉頭才看得到
+  const MAN_S = 0.8, EYE_UP = 0.99 * 0.66 * MAN_S, EYE_FWD = 0.48 * 0.66 * MAN_S;   // 人偶眼睛離腳底多高、在身體中心前面多遠
+  const eyeP = new THREE.Vector3(-BW + 0.06, 0.5, 0), sDir = new THREE.Vector3(-Math.cos(0.52), -Math.sin(0.52), 0);   // 目鏡的位置；鏡筒往左下 30°
+  const feetY = eyeP.y - EYE_UP, stoolH = feetY + 1;   // 腳底高度；木箱從籃底（y=-1）墊到腳底
+  mesh(new THREE.BoxGeometry(0.4, stoolH, 0.4), lam('#8a6440'), eyeP.x + EYE_FWD + 0.03, -1 + stoolH / 2, 0, b);
   const man = figure(lam('#efe4f2'), '', false, { pack: '#b9d98a' });   // 不戴斗笠：搭乘時從上面看下來，才看得出他貼著望遠鏡
-  man.position.set(-0.88, -0.12, 0.72); man.rotation.y = Math.PI; man.scale.setScalar(0.8); b.add(man); b.userData.man = man;
-  const scope = new THREE.Group(); scope.position.set(-0.88, 0.4, 0.15); b.add(scope);
+  man.position.set(eyeP.x + EYE_FWD + 0.03, feetY, 0); man.rotation.y = -Math.PI / 2; man.scale.setScalar(MAN_S); b.add(man); b.userData.man = man;
+  const scope = new THREE.Group(); scope.position.copy(eyeP).addScaledVector(sDir, 0.36); b.add(scope);
+  scope.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), sDir);   // 鏡筒（物鏡在 -z）朝左下
+  mesh(new THREE.CylinderGeometry(0.035, 0.035, eyeP.y - 0.05 - RIM, 6), lam('#5a3b30'), -BW, (eyeP.y - 0.05 + RIM) / 2, 0, b, false);   // 架在籃緣上的支架
   const brass = new THREE.MeshLambertMaterial({ color: '#d8a845', emissive: '#3a2500' });
   const tube = mesh(new THREE.CylinderGeometry(0.06, 0.11, 0.6, 14), brass, 0, 0, 0, scope); tube.rotation.x = Math.PI / 2;
   mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.1, 14), brass, 0, 0, -0.3, scope).rotation.x = Math.PI / 2;
   mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.08, 10), brass, 0, 0, 0.33, scope).rotation.x = Math.PI / 2;   // 目鏡
-  mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.32, 6), lam('#5a3b30'), 0, -0.16, 0, scope, false);   // 架在籃緣上的支架
   b.userData.scope = scope;
   // 小旗子：放大鏡圖案，看得出點它可以搜尋（綁在籃子後側外面，搭乘時在你背後）
   const flagTex = canvasTex(96, 64, (c) => {
@@ -2805,23 +2809,12 @@ const lookoutHit = [];
   b.traverse((m) => { if (m.isMesh) lookoutHit.push(m); });
   b.scale.setScalar(1.15);
 }
-// 鏡筒指向群島中央；整顆氣球慢慢繞小圈、上下浮動
-const lookTmp = new THREE.Vector3(), lookDir = new THREE.Vector3();
-const MAN_EYE = 0.99 * 0.66 * 0.8, MAN_BACK = 0.3 + 0.27;   // 瞭望員眼睛離腳底多高；身體中心要站在望遠鏡中心後面多遠（半支鏡筒＋臉到身體中心）
+// 整顆氣球慢慢繞小圈、上下浮動
 animators.push((t) => {
   if (!balPose(t)) {   // 搭熱氣球中（或飄回來的途中）由搭乘那邊決定位置
     lookout.position.set(LOOK_BASE.x + Math.sin(t * 0.12) * 4, LOOK_BASE.y + Math.sin(t * 0.5) * 0.8, LOOK_BASE.z + Math.cos(t * 0.12) * 4);
     lookout.rotation.y = Math.atan2(BIRD.target.x - lookout.position.x, BIRD.target.z - lookout.position.z) + Math.PI;
   }
-  const sc = lookout.userData.scope;
-  sc.lookAt(lookTmp.copy(BIRD.target));
-  sc.rotateY(Math.PI);
-  // 瞭望員站到目鏡正後方、面向望遠鏡指的方向，眼睛跟目鏡一樣高
-  lookout.updateMatrixWorld();
-  lookout.worldToLocal(lookDir.copy(BIRD.target)).sub(sc.position).setY(0).normalize();
-  const m = lookout.userData.man;
-  m.position.set(sc.position.x - lookDir.x * MAN_BACK, sc.position.y - MAN_EYE, sc.position.z - lookDir.z * MAN_BACK);
-  m.rotation.y = Math.atan2(lookDir.x, lookDir.z);
   lookout.userData.flag.rotation.y = Math.sin(t * 2.2) * 0.3;
 });
 lookout.position.copy(LOOK_BASE);
@@ -5733,25 +5726,31 @@ animators.push((t, dt = 1 / 60) => {
 });
 
 /* ---------- 搭筋斗雲：右上角 ☁️ 按鈕，跟著大聖繞群島一圈（第三人稱跟拍） ----------
-   從筋斗雲現在的位置起飛 → 越過全真島 → 依課程順序飛過 9 座課程島（中途繞到外海的濟世靈山島、清淨菩提島）→ 降落回全真島後方。
+   從筋斗雲現在的位置起飛，全程只往同一個方向（順時針）轉、沒有髮夾彎：先繞著全真島盤旋往外升高 → 沿內圈依課程順序飛過課程島，
+   第 4 堂之後用一個大弧線擺到外海、掠過濟世靈山島和清淨菩提島，再用大弧線收回內圈 → 第 9 堂之後往內收，繞全真島盤旋降落回停靠點。
+   轉彎時大聖和雲朵往彎內側壓（像騎機車壓車），鏡頭也跟著傾一點點。
    鏡頭在大聖背後略高的位置跟拍；拖曳可以轉頭看四周，放開後慢慢轉回前方。點任何一座島（或標籤）就下雲飛過去；再按一次 ☁️ 或「✕ 下雲」也可以提早下來。
    搭乘只改變自己畫面裡的筋斗雲，別人看到的還是原本的來回航班 */
 let kintoOff = 2;   // 來回航班的時間錯位；搭完回到全真島時調整成「剛靠岸」，雲才不會瞬間跳走
-const RIDE = { on: false, t0: 0, dur: 60, curve: null, look: 0, lookP: 0, drag: null, ret: null, tilt: null, wind: null, hintKey: '', last: 0 };
+const RIDE = { on: false, t0: 0, dur: 60, curve: null, len: 1, bank: 0, look: 0, lookP: 0, drag: null, ret: null, tilt: null, wind: null, hintKey: '', last: 0 };
+const rideTa = new THREE.Vector3(), rideTb = new THREE.Vector3();
 const RIDE_SPEED = 9;   // 每秒飛幾個單位（整圈約一分鐘）
 const rideTmp = new THREE.Vector3(), rideFwd = new THREE.Vector3(), rideCamWant = new THREE.Vector3(), rideTgtWant = new THREE.Vector3();
+// 航線用極座標畫：從起點的角度一路順時針轉兩圈（720°），半徑和高度都用平滑的 S 曲線變化，轉彎半徑最小約 15，不會急轉。
+// x 是「走過的角度 − 175°」（停靠點在 175°），各段：起飛盤旋（-175～15）、內圈（15～80）、外海大弧（80～255）、內圈（255～315）、降落盤旋（315～545）
 function rideRoute() {
-  const at = (isl, r, y) => { const a = Math.atan2(isl.x, isl.z); return new THREE.Vector3(Math.sin(a) * r, y, Math.cos(a) * r); };
-  const P = [kinto.position.clone(), kinto.position.clone().setY(Math.max(kinto.position.y, 16)).lerp(new THREE.Vector3(0, 20, 0), 0.35), new THREE.Vector3(0, 21, 8)];
-  const C = (k) => at(islands[k], 40, 14);
-  P.push(C('c1'), C('c2'), C('c3'), C('c4'));
-  P.push(new THREE.Vector3(jsIsl.x, 19, jsIsl.z).lerp(C('c4'), 0.15));   // 外海的濟世靈山島
-  P.push(C('c5'));
-  P.push(new THREE.Vector3(ptIsl.x, 18, ptIsl.z));                         // 清淨菩提島上空
-  P.push(C('c6'), C('c7'), C('c8'), C('c9'));
-  P.push(new THREE.Vector3(30, 15, -4), new THREE.Vector3(KINTO_A.x + 12, 12, KINTO_A.z - 6), KINTO_A.clone());   // 從東邊繞回全真島後方降落
-  const c = new THREE.CatmullRomCurve3(P, false, 'centripetal', 0.5);
-  return c;
+  const D = Math.PI / 180, ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const p0 = kinto.position, a0 = Math.atan2(p0.x, p0.z) / D, r0 = Math.max(13.5, Math.hypot(p0.x, p0.z)), y0 = p0.y;
+  const P = [p0.clone()];
+  for (let t = 3; t < 720; t += 3) {
+    const x = t - 175, a = (a0 - t) * D;
+    const bump = ss(80, 150, x) * (1 - ss(185, 255, x));   // 外海大弧：濟世靈山島、清淨菩提島
+    const r = r0 + (30 - r0) * ss(-175, -40, x) + 14 * ss(-40, 15, x) + 41 * bump - 14 * ss(315, 370, x) - 16.5 * ss(370, 545, x);
+    const y = y0 + (22 - y0) * ss(-175, -60, x) - 7 * ss(-40, 15, x) + 5 * bump + 4 * ss(315, 370, x) - 10 * ss(450, 545, x);
+    P.push(new THREE.Vector3(Math.sin(a) * r, y, Math.cos(a) * r));
+  }
+  P.push(KINTO_A.clone());
+  return new THREE.CatmullRomCurve3(P, false, 'centripetal', 0.5);
 }
 const rideBtn = document.createElement('button');
 rideBtn.className = 'icon'; rideBtn.id = 'kintoBtn'; rideBtn.type = 'button';
@@ -5789,8 +5788,10 @@ function rideStart() {
   setUI({ panel: 'closed', dock: false });
   if (typeof showNavPop === 'function') showNavPop(false);
   RIDE.curve = rideRoute();
-  RIDE.dur = RIDE.curve.getLength() / RIDE_SPEED;
-  Object.assign(RIDE, { on: true, t0: clock.elapsedTime, look: 0, lookP: 0, drag: null, ret: null, hintKey: '' });
+  RIDE.len = RIDE.curve.getLength();
+  RIDE.dur = RIDE.len / RIDE_SPEED;
+  kinto.rotation.order = 'YXZ';   // 先轉方向、再抬頭低頭、最後左右傾（壓車）
+  Object.assign(RIDE, { on: true, t0: clock.elapsedTime, bank: 0, look: 0, lookP: 0, drag: null, ret: null, hintKey: '' });
   controls.enabled = false; controls.autoRotate = false;
   RIDE.tilt = [hTilt.enabled, vTilt.enabled]; hTilt.enabled = vTilt.enabled = false;   // 移軸景深先關掉，遠景才看得清楚
   RIDE.camPos = camera.position.clone(); RIDE.camTgt = controls.target.clone();
@@ -5845,7 +5846,13 @@ function rideKinto(t) {
     kinto.position.y += Math.sin(t * 2.2) * 0.2;
     kinto.rotation.y = Math.atan2(rideFwd.x, rideFwd.z);
     kinto.rotation.x = THREE.MathUtils.damp(kinto.rotation.x, -Math.asin(THREE.MathUtils.clamp(rideFwd.y, -1, 1)) * 0.7, 4, 1 / 60);
-    kinto.rotation.z = THREE.MathUtils.damp(kinto.rotation.z, Math.sin(t * 1.3) * 0.05, 4, 1 / 60);
+    // 壓車：看前後 3 單位的方向差算出轉彎有多急，往彎內側傾（左轉往左、右轉往右），最多約 30°
+    const ds = 3 / RIDE.len;
+    RIDE.curve.getTangentAt(Math.max(0, s - ds), rideTa); RIDE.curve.getTangentAt(Math.min(1, s + ds), rideTb);
+    let dh = Math.atan2(rideTb.x, rideTb.z) - Math.atan2(rideTa.x, rideTa.z); dh = Math.atan2(Math.sin(dh), Math.cos(dh));
+    const want = THREE.MathUtils.clamp((dh / 6) * RIDE_SPEED * 0.85, -0.52, 0.52);   // 正值＝左轉
+    RIDE.bank = THREE.MathUtils.damp(RIDE.bank, want, 2.5, 1 / 60);
+    kinto.rotation.z = -RIDE.bank + Math.sin(t * 1.3) * 0.03;
     if (u >= 1) rideEnd(true);
     return true;
   }
@@ -5872,12 +5879,13 @@ function rideCam(dt) {
   RIDE.camPos.lerp(rideCamWant, k); RIDE.camTgt.lerp(rideTgtWant, k);
   camera.position.copy(RIDE.camPos); controls.target.copy(RIDE.camTgt);
   camera.lookAt(RIDE.camTgt);
+  camera.rotateZ(RIDE.bank * 0.35);   // 鏡頭也跟著壓一點點（只有雲朵的三分之一多），比較有感覺又不會暈
   // 路過提示：下面哪座島最近就說正在飛過哪裡
   if (clock.elapsedTime - RIDE.last > 0.3) {
     RIDE.last = clock.elapsedTime;
     let best = null, bd = 1e9;
     for (const isl of Object.values(islands)) { const d = Math.hypot(isl.x - kinto.position.x, isl.z - kinto.position.z) - isl.R; if (d < bd) { bd = d; best = isl; } }
-    const key = best && bd < 6 ? best.key : '';
+    const key = best && bd < 12 ? best.key : '';
     if (key !== RIDE.hintKey && clock.elapsedTime - RIDE.t0 > 2.5) { RIDE.hintKey = key; rideSay(key ? `☁️ 正在飛過 ${isleName2(key).replace(/^[🚧]\s*/u, '')}` : '☁️ 跟著大聖騰雲駕霧中⋯　拖曳畫面可以轉頭看'); }
   }
 }
