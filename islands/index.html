@@ -5617,20 +5617,22 @@ kinto.visible = ptOpen;
 scene.add(kinto);
 const kintoHit = [];
 {
-  // 雲：圓鼓鼓的水滴形雲（雲的前方是 +z）。前端圓鈍迎風、胖嘟嘟的雲頭，往後沿著中線平順收細成一道尾巴，接上噴出的煙霧。
-  // 每團雲只壓扁一點點、寬長比約 0.5（寬約 2.2、長約 4.5），整朵看起來蓬鬆可愛，不會扁平寬大得像魟魚
+  // 雲：水滴形的雲（雲的前方是 +z）。從上面看是「前面一個正圓、後面用往外鼓的弧線慢慢收到尾巴」，前後都沒有尖角（不會像風箏）。
+  // 做法：沿著中線排一串雲團，每團的半徑照水滴的輪廓 w(z) 給，外輪廓就是平滑的水滴；最寬約 2、長約 4.3（寬長比約 0.47）。
+  // 頂上再加幾團小雲做出蓬鬆感（都在輪廓裡面，不會變寬）；每團只壓扁一點點，看起來圓鼓鼓的
   const cloudM = new THREE.MeshLambertMaterial({ color: '#fff4cf', emissive: '#ffd36a', emissiveIntensity: 0.28 });
   const cloudM2 = new THREE.MeshLambertMaterial({ color: '#ffe9a8', emissive: '#f2b84a', emissiveIntensity: 0.22 });
   const CL = new THREE.Group(); kinto.add(CL); kinto.userData.cloud = CL;
-  for (const [x, y, z, r, m, sy] of [
-    // 雲頭：大聖站的地方，圓鼓鼓
-    [0, 0, 0.35, 0.95, cloudM, 0.84], [0.52, -0.1, 0.2, 0.58, cloudM, 0.88], [-0.52, -0.1, 0.2, 0.58, cloudM, 0.88],
-    [0.15, -0.15, 0.95, 0.6, cloudM, 0.85], [-0.25, 0.05, 0.9, 0.52, cloudM2, 0.88], [0.3, 0.3, -0.2, 0.55, cloudM2, 0.9],
-    // 雲身到尾巴：沿著中線往後收細成一道，高度不變
-    [0.22, -0.05, -0.55, 0.66, cloudM2, 0.85], [-0.22, -0.08, -0.6, 0.64, cloudM, 0.85], [0, -0.05, -1.2, 0.58, cloudM, 0.84],
-    [0.05, -0.06, -1.72, 0.44, cloudM2, 0.86], [-0.03, -0.07, -2.15, 0.32, cloudM, 0.88], [0.02, -0.08, -2.5, 0.22, cloudM2, 0.9],
-    [0, -0.08, -2.78, 0.14, cloudM, 0.92],
-  ]) {
+  const DR = 1.0, DZ0 = 0.3, DZT = -3.0;   // 雲頭半徑、雲頭圓心、尾巴末端
+  const dropW = (z) => (z >= DZ0 ? Math.sqrt(Math.max(0, DR * DR - (z - DZ0) ** 2)) : DR * Math.pow(1 - (DZ0 - z) / (DZ0 - DZT), 0.8));
+  const puffs = [];
+  // 中線的雲團排密一點、左右微微錯開、大小有點變化（固定的變化，不用亂數），表面才像蓬鬆的雲而不是一圈一圈的貝殼紋
+  for (let z = DZ0, n = 0; z > DZT + 0.1; z -= 0.22, n++) {
+    const w = Math.max(0.09, dropW(z)), j = [0, 0.07, -0.05, 0.04, -0.08, 0.06][n % 6], v = [1, 0.93, 0.97, 0.9, 0.95, 0.92][n % 6];
+    puffs.push([j * w, -0.05 * (DZ0 - z) + j * 0.5 * w, z, w * v + (1 - v) * 0.05, n % 3 ? cloudM : cloudM2, 0.82]);
+  }
+  puffs.push([0.28, 0.34, 0.55, 0.5, cloudM2, 0.9], [-0.3, 0.3, 0.0, 0.52, cloudM, 0.9], [0.2, 0.26, -0.7, 0.45, cloudM2, 0.9], [-0.15, 0.18, -1.4, 0.36, cloudM, 0.9]);
+  for (const [x, y, z, r, m, sy] of puffs) {
     const s = mesh(new THREE.SphereGeometry(r, 16, 12), m, x, y, z, CL, false); s.scale.y = sy;
   }
   // 齊天大聖：臉是膚色、頭頂和後腦勺一圈棕色毛、兩隻圓耳朵、金箍、虎皮裙、金箍棒、一條捲尾巴
