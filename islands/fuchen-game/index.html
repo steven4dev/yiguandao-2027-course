@@ -117,7 +117,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.07';
+const VERSION = 'v261109.08';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -503,8 +503,8 @@ addEventListener('resize', resize);
 const U = () => Math.min(W, H*0.62);            // 畫面基本單位（直向手機約等於寬度）
 let MON = { x:0, y:0 }, REST = { x:0, y:0 }, GRIP = { x:0, y:0 };
 function layoutScene(){
-  MON = { x:W/2, y:H*0.38 };
-  REST = { x:W*0.70, y:H*0.66 };
+  MON = { x:W/2, y:H*0.46 };          // 怪物在畫面中心
+  REST = { x:W*0.72, y:H*0.74 };
   GRIP = { x:W*0.98, y:H*1.02 };
   if(fu) fu.reset(REST.x, REST.y);
 }
@@ -820,7 +820,8 @@ function drawCountdown(t){
 let replayAnim = null;   // { pts:[[x,y]], t0, dur }
 /* ---------------- 全畫面揮動提示：粗金線＋沿途箭頭＋起點「起」、終點大箭頭「終」＋一顆會跑的光點 ---------------- */
 let hint = null;          // { key, pts, a, target }
-const hintBox = () => ({ cx: W/2, cy: H*0.40, size: Math.min(W*0.86, H*0.50) });
+// 提示路徑以怪物為中心，四周留白（左右各約 17%，上下不碰到資訊列和符號名稱）
+const hintBox = () => ({ cx: W/2, cy: H*0.46, size: Math.min(W*0.66, H*0.40) });
 function makeHint(key){
   const tp = tplFor(key); if(!tp) return null;
   const b = hintBox(), pts = resample(tp, 90).map(p => [b.cx + p[0]*b.size, b.cy - p[1]*b.size]);
