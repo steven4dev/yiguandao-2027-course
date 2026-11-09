@@ -209,7 +209,7 @@ pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:
 
 <script>
 'use strict';
-const VERSION = 'v261109.06';
+const VERSION = 'v261109.07';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = VERSION;
@@ -255,12 +255,19 @@ const rot90 = p => p.map(([x,y]) => [-y, x]);   // 逆時針轉 90°
 function infPath(){ const p=[]; for(let i=0;i<=72;i++){ const t=i/72*2*Math.PI; p.push([Math.sin(t), Math.sin(t)*Math.cos(t)]); } return p; }
 // γ 伽瑪：阿法轉 90°，圈在下面、兩條尾巴朝上；左上起筆 → 往下交叉繞圈 → 右上收筆（也接受反過來）
 function gammaVariants(){ return alphaVariants().map(rot90); }
-// δ 德爾塔：右上起筆往左勾，順著左邊往下，逆時針繞一圈收回
-function deltaPath(){ return [[0.45,0.95],[0.05,1.0],[-0.28,0.78],[-0.45,0.35]].concat(arc(0,-0.4,0.6,150,510,36)); }
+// δ 德爾塔（v261109.07 依實測改）：頂上起筆往左勾一下，S 形往右下滑，順時針繞一圈收在左側
+// 另外保留「往左下、逆時針」的寫法當第二種
+function deltaVariants(){
+  const a = [[0.05,1.0],[-0.25,0.95],[-0.35,0.78],[-0.2,0.55],[0.15,0.3],[0.38,0.05]].concat(arc(0,-0.45,0.45,25,-250,36));
+  const b = [[0.45,0.95],[0.05,1.0],[-0.28,0.78],[-0.45,0.35]].concat(arc(0,-0.4,0.6,150,510,36));
+  return [a, b];
+}
 // ρ 柔：下方起筆往上一豎，到頂後順時針繞一圈回到豎線
 function rhoPath(){ return [[-0.6,-1.5],[-0.6,0.3]].concat(arc(0,0.3,0.6,180,-180,36)); }
-// 🌀 漩渦：從外圈右邊起筆，逆時針往內繞兩圈
-function spiralPath(){ const p=[]; for(let i=0;i<=90;i++){ const t=i/90, a=t*4*Math.PI, r=1-t*0.85; p.push([r*Math.cos(a), r*Math.sin(a)]); } return p; }
+// 🌀 漩渦（v261109.07 依實測改）：從外圈右上起筆，逆時針往內繞 1.5～2 圈。
+// 大揮時常揮成直立的橢圓、起筆位置也不一定，所以多放幾種：起筆角度 × 圈數 × 圓／直立橢圓
+function spiralPath(a0, turns, sx){ const p=[]; for(let i=0;i<=90;i++){ const t=i/90, a=a0*D2R + t*turns*2*Math.PI, r=1-t*0.8; p.push([sx*r*Math.cos(a), r*Math.sin(a)]); } return p; }
+function spiralVariants(){ const v=[]; for(const a0 of [45,0,90]) for(const n of [1.5,2]) for(const sx of [1,0.6]) v.push(spiralPath(a0,n,sx)); return v; }
 // ★ 五芒星：頂點起筆 → 左下 → 右 → 左 → 右下 → 回頂點
 const starPath = () => [90,234,18,162,306,90].map(a => [Math.cos(a*D2R), Math.sin(a*D2R)]);
 
@@ -315,11 +322,11 @@ const TEMPLATE_DEFS = {
   caret:  { name:'∧ 人字', v:[[[-1,-1],[0,1],[1,-1]]] },
   inf:    { name:'∞ 無極', v:[infPath()] },
   gamma:  { name:'γ 伽瑪', v:gammaVariants() },
-  delta:  { name:'δ 德爾塔', v:[deltaPath()] },
+  delta:  { name:'δ 德爾塔', v:deltaVariants() },
   rho:    { name:'ρ 柔',   v:[rhoPath()] },
   sq:     { name:'□ 方',   v:[[[-1,1],[-1,-1],[1,-1],[1,1],[-1,1]]] },
   star:   { name:'★ 五芒星', v:[starPath()] },
-  spiral: { name:'🌀 漩渦', v:[spiralPath()] }
+  spiral: { name:'🌀 漩渦', v:spiralVariants() }
 };
 const NPTS = 64;
 function pathLen(p){ let L=0; for(let i=1;i<p.length;i++) L += Math.hypot(p[i][0]-p[i-1][0], p[i][1]-p[i-1][1]); return L; }
