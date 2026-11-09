@@ -50,6 +50,29 @@ button.big{width:100%;font-size:1.1rem;padding:14px}
 .quote small{display:block;color:var(--muted);font-size:.75rem;margin-top:4px}
 .ver{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom) + 4px);font-size:.65rem;color:rgba(255,255,255,.35);pointer-events:none}
 .mir{display:inline-block;transform:scaleX(-1)}
+/* 淨心錄 */
+#btnBook{position:fixed;right:14px;top:calc(env(safe-area-inset-top) + 50px);width:48px;height:38px;padding:0;border-radius:6px;border:3px solid #7a2e22;background:#f3e6c4;color:#7a2e22;font-weight:900;display:flex;align-items:center;justify-content:center;gap:2px;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+#btnBook[hidden]{display:none}
+#btnBook b{font-size:.8rem}
+#btnBook span{position:absolute;right:-8px;bottom:-8px;background:#e8bd5a;color:#22190f;border-radius:999px;font-size:.66rem;min-width:18px;height:18px;line-height:18px;text-align:center}
+#btnBook.pulse{animation:bookPulse .6s ease-out}
+@keyframes bookPulse{0%{transform:scale(1);box-shadow:0 0 0 rgba(255,214,120,0)}40%{transform:scale(1.35);box-shadow:0 0 28px rgba(255,214,120,.95)}100%{transform:scale(1);box-shadow:0 2px 8px rgba(0,0,0,.5)}}
+#scrDex,#dexModal{background:rgba(6,9,13,.97);z-index:30;align-items:flex-start}
+#dexModal{z-index:31;align-items:center}
+.dexp,#dexModal .panel{max-width:520px;background:#17120d}
+.dexp h2 small{font-size:.85rem;color:var(--muted);font-weight:600}
+.dfam{background:rgba(255,255,255,.04);border-radius:14px;padding:8px;margin:8px 0}
+.dfam-h{display:flex;justify-content:space-between;font-size:.88rem;padding:0 4px 4px}
+.drow{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.dcard{text-align:center;border-radius:10px;padding:2px 0 6px;cursor:pointer;background:rgba(255,255,255,.03)}
+.dcard canvas{width:100%;aspect-ratio:1/1;display:block}
+.dcard .nm{font-weight:800;font-size:.86rem}
+.dcard .lv{font-size:.7rem;color:var(--muted)}
+.dcard.lock{opacity:.7}
+.caught{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.caught span{background:rgba(255,255,255,.07);border-radius:10px;padding:4px 8px;font-size:.88rem}
+.caught small{color:var(--muted);margin-left:4px}
+.caught i{font-style:normal;background:#e8453c;color:#fff;border-radius:6px;font-size:.66rem;padding:0 4px;margin-left:4px}
 /* 倒數時只有數字亮：上方資訊列、下方按鈕也一起暗下來 */
 .hud,.bottom{transition:opacity .25s}
 body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
@@ -74,7 +97,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
   <div class="panel">
     <h1>🪶 拂塵試煉</h1>
     <p class="note" style="margin-top:0">拂塵淨心島・體感小遊戲（測試版）</p>
-    <p>「時時勤拂拭，勿使惹塵埃。」六塵精從霧裡飄出來了！手機就是您的拂塵柄：<b>看清符印</b>、等倒數、聽到「<b>揮！</b>」就大揮一拂，把它們淨化成蓮花。</p>
+    <p>「時時勤拂拭，勿使惹塵埃。」六塵的塵靈從霧裡飄出來了！手機就是您的拂塵柄：<b>看清符印</b>、等倒數、聽到「<b>揮！</b>」就大揮一拂，把它們淨化、<b>收進淨心錄</b>。塵妖要<b>兩連擊</b>才收得服。</p>
     <ul>
       <li>🤚 手機直立握著，螢幕大致朝向自己；<b>整隻手臂揮出去</b>，手腕怎麼翻都沒關係。</li>
       <li>👀 揮的時候不用看螢幕，聽到「叮」再回來看拂塵的招式。</li>
@@ -84,6 +107,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     <div class="row">
       <button class="primary big" id="btnStart">開始試煉</button>
       <button id="btnTouch">沒有動作感測？用手指畫</button>
+      <button id="btnDexT">📖 淨心錄</button>
     </div>
     <p class="note" id="titleMsg"></p>
   </div>
@@ -106,18 +130,31 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     <h2 id="resTitle">✨ 試煉圓滿</h2>
     <p id="resLine"></p>
     <div class="stats" id="resStats"></div>
+    <div id="resCaught" style="margin:10px 0"></div>
     <div class="quote" id="resQuote"></div>
     <div class="row">
       <button class="primary big" id="btnAgain">再試煉一次</button>
+      <button id="btnDexR">📖 看淨心錄</button>
       <button id="btnLab" onclick="location.href='../fuchen-lab/'">回揮符實驗室</button>
     </div>
   </div>
 </section>
+<!-- 淨心錄 -->
+<section class="screen" id="scrDex" hidden>
+  <div class="panel dexp">
+    <h2>📖 淨心錄 <small id="dexN"></small></h2>
+    <p class="note">收服過的塵靈會收在這裡；還沒遇到的只看得到剪影和出沒等級。收齊一系可以解鎖群島徽章（之後開放）。</p>
+    <div id="dexList"></div>
+    <div class="row"><button class="primary big" id="btnDexClose">關閉</button></div>
+  </div>
+</section>
+<div class="screen" id="dexModal" hidden><div class="panel"><canvas id="dmCv" style="width:56%;aspect-ratio:1/1;display:block;margin:0 auto"></canvas><h2 id="dmName" style="text-align:center"></h2><p class="note" id="dmTag" style="text-align:center;margin-top:0"></p><div class="stats" id="dmDl"></div><div class="quote" id="dmQuote"></div><div class="row"><button class="primary big" id="dmClose">關閉</button></div></div></div>
+<button id="btnBook" hidden aria-label="淨心錄"><b>淨</b><b>心</b><span id="bookN">0</span></button>
 <div class="ver" id="ver"></div>
 
 <script>
 'use strict';
-const VERSION = 'v261109.08';
+const VERSION = 'v261109.09';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -419,15 +456,6 @@ const SYMS = {
 };
 const symHTML = k => { const s = SYMS[k]; if(!s.mir && s.name.startsWith(s.icon)) return s.name; return (s.mir ? MIR(s.icon) : s.icon) + ' ' + s.name; };
 
-/* 六塵精：色、聲、香、味、觸、法 */
-const DUSTS = [
-  { name:'色塵精', acc:'🪞', body:'#c9a3d9', mood:'愛比較' },
-  { name:'聲塵精', acc:'📢', body:'#f0b27a', mood:'愛批評' },
-  { name:'香塵精', acc:'🌫️', body:'#b7b9e8', mood:'被誘惑' },
-  { name:'味塵精', acc:'🍡', body:'#c8de8a', mood:'貪口腹' },
-  { name:'觸塵精', acc:'💤', body:'#9cc8e8', mood:'貪安逸' },
-  { name:'法塵精', acc:'❓', body:'#8fd6c4', mood:'胡思亂想' }
-];
 // 示範金句（正式上線前換成道場審定的文字）
 const QUOTES = [
   '心如明鏡台，時時勤拂拭。今天拂去一點塵，明天就多一分光。',
@@ -438,6 +466,154 @@ const QUOTES = [
   '六塵外境紛紛擾擾，守住本心，便是最好的拂塵。'
 ];
 const QUOTES_DEMO = true;
+
+/* ================= 塵靈：六系 × 三階段（和 2.0 打樣頁 proof.html 同一份造型與資料） ================= */
+const TAU = Math.PI*2;
+/* ================= 資料：六系 × 三階段（名字、心性小語皆示範） ================= */
+const FAMS = [
+  { key:'se',   name:'色', mood:'愛比較',   color:'#d3a6e3', dark:'#7e5a92', weak:'circle', weakName:'○ 圓',  weakWhy:'本自圓滿，不必比較' },
+  { key:'sheng',name:'聲', mood:'愛批評',   color:'#f2b47c', dark:'#9a5b2a', weak:'s',      weakName:'S 字', weakWhy:'迴轉語氣，以柔化剛' },
+  { key:'xiang',name:'香', mood:'被誘惑',   color:'#b9bdf0', dark:'#5e64a8', weak:'down',   weakName:'⬇ 劈', weakWhy:'當下斬斷誘惑' },
+  { key:'wei',  name:'味', mood:'貪口腹',   color:'#cfe28c', dark:'#6f8a2a', weak:'v',      weakName:'V 字', weakWhy:'知足打勾：夠了' },
+  { key:'chu',  name:'觸', mood:'貪安逸',   color:'#a2cdea', dark:'#3f78a0', weak:'up',     weakName:'⬆ 挑', weakWhy:'振作起身' },
+  { key:'fa',   name:'法', mood:'胡思亂想', color:'#93dccb', dark:'#2f8a76', weak:'alpha',  weakName:'α 阿法',weakWhy:'回到初心' }
+];
+const MONS = [
+  ['se',1,'鏡鏡','照鏡子是看自己，不是比別人。'],['se',2,'照妝妖','妝再美，不如心裡乾淨。'],['se',3,'千面魔','換了千張臉，最累的是自己。'],
+  ['sheng',1,'嘰嘰','話到嘴邊，先停三秒。'],['sheng',2,'流言妖','聽到閒話不轉傳，就是拂塵。'],['sheng',3,'謗聲魔','說人是非，塵先落在自己心上。'],
+  ['xiang',1,'薰薰','香氣來了，先問自己真的需要嗎？'],['xiang',2,'迷香妖','越迷人的，越要看清楚。'],['xiang',3,'醉夢魔','醒來才發現，夢裡什麼也沒帶走。'],
+  ['wei',1,'饞饞','吃八分飽，心更輕鬆。'],['wei',2,'饕餮妖','知足的人，一碗也是滿漢全席。'],['wei',3,'吞天魔','填不滿的不是胃，是心。'],
+  ['chu',1,'懶懶','先站起來，事情就做了一半。'],['chu',2,'軟骨妖','舒服的地方，最容易停下腳步。'],['chu',3,'沉眠魔','該醒的時候，不要再按貪睡。'],
+  ['fa',1,'念念','念頭來了，看著它，不跟著它。'],['fa',2,'妄想妖','想得越多，做得越少。'],['fa',3,'執念魔','放下不是失去，是騰出雙手。']
+].map(([f,st,name,quote]) => ({ fam: FAMS.find(x => x.key === f), stage: st, name, quote, lv: st === 1 ? 'Lv 1–9' : st === 2 ? 'Lv 10–19' : 'Lv 20+', hits: st === 1 ? 1 : 2 }));
+const STAGE_NAME = ['', '塵精', '塵妖', '塵魔'];
+
+/* ================= 塵靈繪製 ================= */
+// 各系的身形（以 r 為單位、原點在中心）
+function bodyPath(c, fam, st, r, t){
+  const w = (a, k=1) => 1 + 0.035*k*Math.sin(a*3 + t*2.2) + 0.025*k*Math.sin(a*5 - t*1.6);
+  c.beginPath();
+  if(fam === 'se'){ // 蛋形，上面略尖
+    for(let i=0;i<=48;i++){ const a = i/48*TAU, rr = r*w(a)*(1 - 0.12*Math.max(0, -Math.sin(a))); i ? c.lineTo(Math.cos(a)*rr*0.92, Math.sin(a)*rr) : c.moveTo(Math.cos(a)*rr*0.92, Math.sin(a)*rr); }
+  } else if(fam === 'sheng'){ // 鐘形：上圓下開
+    c.moveTo(-r*0.95, r*0.85); c.bezierCurveTo(-r*0.75, r*0.3, -r*0.95, -r*0.9, 0, -r*0.95); c.bezierCurveTo(r*0.95, -r*0.9, r*0.75, r*0.3, r*0.95, r*0.85);
+    c.quadraticCurveTo(r*0.5, r*1.05 + Math.sin(t*3)*r*0.03, 0, r*0.92); c.quadraticCurveTo(-r*0.5, r*1.05 - Math.sin(t*3)*r*0.03, -r*0.95, r*0.85);
+  } else if(fam === 'xiang'){ // 雲朵
+    const bumps = [[0,-0.35,0.62],[-0.55,-0.05,0.5],[0.55,-0.05,0.5],[-0.3,0.38,0.52],[0.3,0.38,0.52],[0,0.15,0.6]];
+    for(const [x,y,rr] of bumps){ c.moveTo((x + rr)*r, y*r); c.arc(x*r + Math.sin(t*2 + x*5)*r*0.02, y*r + Math.cos(t*2 + y*5)*r*0.02, rr*r, 0, TAU); }
+  } else if(fam === 'wei'){ // 糰子：第一階段一顆、第二階段三顆串、第三階段大嘴圓球
+    if(st === 2){ for(const [y,rr] of [[-0.62,0.42],[0,0.48],[0.62,0.44]]){ c.moveTo(rr*r, y*r); c.arc(0, y*r, rr*r, 0, TAU); } }
+    else { for(let i=0;i<=48;i++){ const a = i/48*TAU, rr = r*w(a); i ? c.lineTo(Math.cos(a)*rr, Math.sin(a)*rr*0.95) : c.moveTo(Math.cos(a)*rr, Math.sin(a)*rr*0.95); } }
+  } else if(fam === 'chu'){ // 枕頭：四角捏起來的圓角方形
+    const s = r*0.95, p = r*0.18 + Math.sin(t*1.5)*r*0.02;
+    c.moveTo(-s, -s + p); c.quadraticCurveTo(0, -s - p*0.6, s, -s + p); c.quadraticCurveTo(s + p*0.6, 0, s, s - p); c.quadraticCurveTo(0, s + p*0.6, -s, s - p); c.quadraticCurveTo(-s - p*0.6, 0, -s, -s + p);
+  } else { // 法：腦袋雲（6 個鼓包）
+    for(let i=0;i<=72;i++){ const a = i/72*TAU, rr = r*(0.9 + 0.1*Math.abs(Math.sin(a*3)) )*w(a, 0.6); i ? c.lineTo(Math.cos(a)*rr, Math.sin(a)*rr*0.92) : c.moveTo(Math.cos(a)*rr, Math.sin(a)*rr*0.92); }
+  }
+  c.closePath();
+}
+function drawEyes(c, st, r, t, opt){
+  const blink = (Math.sin(t*1.3 + (opt.seed||0)) > 0.985) ? 0.15 : 1, ex = r*0.32, ey = -r*0.1;
+  if(opt.pure){ c.strokeStyle = '#4a3b30'; c.lineWidth = r*0.06; c.lineCap = 'round'; for(const s of [-1,1]){ c.beginPath(); c.arc(s*ex, ey + r*0.02, r*0.1, Math.PI*1.1, Math.PI*1.9); c.stroke(); } return; }
+  for(const s of [-1,1]){
+    c.fillStyle = '#2a1f18'; c.beginPath(); c.ellipse(s*ex, ey, r*(st === 3 ? 0.1 : 0.11), r*(st === 3 ? 0.11 : 0.14)*blink, 0, 0, TAU); c.fill();
+    c.fillStyle = st === 3 ? '#ff6a4a' : '#fff'; c.beginPath(); c.arc(s*ex + r*0.03, ey - r*0.045, r*(st === 3 ? 0.04 : 0.035), 0, TAU); c.fill();
+    if(st >= 2){ c.strokeStyle = '#2a1f18'; c.lineWidth = r*0.05; c.lineCap = 'round'; c.beginPath(); const tilt = st === 3 ? 0.14 : 0.07; c.moveTo(s*(ex - r*0.14), ey - r*0.2 - (st === 3 ? -tilt*r : 0)); c.lineTo(s*(ex + r*0.12), ey - r*0.2 - tilt*r*(st === 3 ? -1 : 1)); c.stroke(); }
+  }
+}
+function drawMouth(c, fam, st, r, t, opt){
+  c.strokeStyle = '#2a1f18'; c.lineWidth = r*0.05; c.lineCap = 'round';
+  if(opt.pure){ c.beginPath(); c.arc(0, r*0.16, r*0.07, 0.1*Math.PI, 0.9*Math.PI); c.stroke(); return; }
+  if(fam === 'wei' && st === 3){ c.fillStyle = '#5a1f1a'; c.beginPath(); c.ellipse(0, r*0.3, r*0.45, r*0.28 + Math.sin(t*4)*r*0.04, 0, 0, TAU); c.fill(); c.fillStyle = '#e8746a'; c.beginPath(); c.ellipse(0, r*0.44, r*0.22, r*0.1, 0, 0, TAU); c.fill(); c.fillStyle = '#fff'; for(const s of [-1,1]){ c.beginPath(); c.moveTo(s*r*0.25, r*0.06); c.lineTo(s*r*0.18, r*0.18); c.lineTo(s*r*0.11, r*0.06); c.fill(); } return; }
+  if(fam === 'sheng'){ c.fillStyle = '#5a1f1a'; c.beginPath(); c.ellipse(0, r*0.22, r*(0.12 + 0.06*st), r*(0.08 + 0.05*st)*(0.8 + 0.3*Math.abs(Math.sin(t*5))), 0, 0, TAU); c.fill(); }
+  else if(st === 3){ c.beginPath(); c.moveTo(-r*0.18, r*0.2); c.quadraticCurveTo(0, r*0.12, r*0.18, r*0.2); c.stroke(); c.fillStyle = '#fff'; for(const s of [-1,1]){ c.beginPath(); c.moveTo(s*r*0.12, r*0.17); c.lineTo(s*r*0.08, r*0.27); c.lineTo(s*r*0.04, r*0.16); c.fill(); } }
+  else if(fam === 'chu'){ c.beginPath(); c.ellipse(0, r*0.2, r*0.06, r*0.05, 0, 0, TAU); c.stroke(); }
+  else { c.beginPath(); c.arc(0, r*0.12, r*(st === 2 ? 0.14 : 0.12), 0.15*Math.PI, 0.85*Math.PI); c.stroke(); }
+  if(st < 3){ c.fillStyle = 'rgba(255,140,140,.45)'; for(const s of [-1,1]){ c.beginPath(); c.ellipse(s*r*0.56, r*0.1, r*0.1, r*0.06, 0, 0, TAU); c.fill(); } }
+}
+// 各系配件
+function drawAcc(c, fam, st, r, t, opt){
+  c.save();
+  if(fam === 'se'){
+    // 手鏡 → 頭頂鏡冠 → 環繞的面具
+    const mirror = (x, y, s, a) => { c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = '#c9a24e'; c.fillRect(-s*0.08, s*0.35, s*0.16, s*0.5); c.beginPath(); c.ellipse(0, 0, s*0.32, s*0.42, 0, 0, TAU); c.fill(); c.fillStyle = '#dff3ff'; c.beginPath(); c.ellipse(0, 0, s*0.25, s*0.34, 0, 0, TAU); c.fill(); c.fillStyle = 'rgba(255,255,255,.8)'; c.beginPath(); c.ellipse(-s*0.07, -s*0.1, s*0.06, s*0.14, 0.4, 0, TAU); c.fill(); c.restore(); };
+    if(st === 1) mirror(r*0.95, r*0.15, r*0.7, 0.3 + Math.sin(t*2)*0.1);
+    if(st >= 2){ mirror(0, -r*1.15, r*0.75, 0); for(let k=0;k<4;k++){ const a = t*1.5 + k*1.6; c.fillStyle = `rgba(255,240,255,${0.5 + 0.5*Math.sin(a*2)})`; c.font = `${r*0.25}px sans-serif`; c.fillText('✦', Math.cos(a)*r*1.15, Math.sin(a)*r*0.9); } }
+    if(st === 3){ for(let k=0;k<3;k++){ const a = t*0.8 + k*TAU/3, x = Math.cos(a)*r*1.35, y = Math.sin(a)*r*0.5 + r*0.2; c.save(); c.translate(x, y); c.fillStyle = ['#f6f1e7','#e9c2d6','#cfc6f2'][k]; c.beginPath(); c.ellipse(0, 0, r*0.22, r*0.28, 0, 0, TAU); c.fill(); c.fillStyle = '#2a1f18'; c.beginPath(); c.ellipse(-r*0.07, -r*0.04, r*0.035, r*0.05, 0, 0, TAU); c.ellipse(r*0.07, -r*0.04, r*0.035, r*0.05, 0, 0, TAU); c.fill(); c.strokeStyle = '#2a1f18'; c.lineWidth = r*0.025; c.beginPath(); c.arc(0, r*0.1, r*0.06, k === 1 ? 1.1*Math.PI : 0.1*Math.PI, k === 1 ? 1.9*Math.PI : 0.9*Math.PI); c.stroke(); c.restore(); } }
+  }
+  if(fam === 'sheng'){
+    // 小喇叭 → 大喇叭＋聲波 → 雙喇叭角＋滿天聲波
+    const horn = (x, y, s, a) => { c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = '#c9a24e'; c.beginPath(); c.moveTo(0, -s*0.12); c.lineTo(s*0.7, -s*0.4); c.lineTo(s*0.7, s*0.4); c.lineTo(0, s*0.12); c.closePath(); c.fill(); c.fillStyle = '#7a5a1a'; c.beginPath(); c.ellipse(s*0.7, 0, s*0.1, s*0.4, 0, 0, TAU); c.fill(); c.restore(); };
+    const waves = (x, y, n, a, s) => { c.strokeStyle = 'rgba(255,220,170,.8)'; c.lineWidth = r*0.05; for(let k=1;k<=n;k++){ const ph = ((t*1.6 + k*0.3) % 1); c.globalAlpha = 1 - ph; c.beginPath(); c.arc(x, y, s*(0.3 + ph*0.9), a - 0.6, a + 0.6); c.stroke(); } c.globalAlpha = 1; };
+    if(st === 1){ horn(r*0.75, -r*0.55, r*0.6, -0.5); }
+    if(st === 2){ horn(r*0.7, -r*0.5, r*0.9, -0.55); waves(r*1.35, -r*1.0, 3, -0.55, r); }
+    if(st === 3){ horn(-r*0.45, -r*0.85, r*0.85, -2.1); horn(r*0.45, -r*0.85, r*0.85, -1.05); waves(-r*0.9, -r*1.5, 3, -2.1, r); waves(r*0.9, -r*1.5, 3, -1.05, r); }
+  }
+  if(fam === 'xiang'){
+    // 煙圈 → 線香＋煙 → 夢幻漩渦眼
+    const wisp = (x, y, s, ph) => { c.strokeStyle = 'rgba(230,230,255,.75)'; c.lineWidth = r*0.05; c.beginPath(); for(let i=0;i<=20;i++){ const k = i/20; const xx = x + Math.sin(k*6 + t*2 + ph)*s*0.25, yy = y - k*s; i ? c.lineTo(xx, yy) : c.moveTo(xx, yy); } c.stroke(); };
+    if(st === 1){ wisp(r*0.6, -r*0.7, r*0.7, 0); }
+    if(st >= 2){ c.fillStyle = '#9a3b2a'; c.fillRect(r*0.55, -r*1.25, r*0.06, r*0.75); c.fillStyle = '#ffb347'; c.beginPath(); c.arc(r*0.58, -r*1.27, r*0.05, 0, TAU); c.fill(); wisp(r*0.58, -r*1.3, r*0.8, 0); wisp(-r*0.6, -r*0.6, r*0.6, 2); }
+    if(st === 3){ for(let k=0;k<3;k++) wisp(-r*0.9 + k*r*0.9, -r*0.8, r*0.9, k*2); }
+  }
+  if(fam === 'wei'){
+    if(st === 1){ c.strokeStyle = '#a87b46'; c.lineWidth = r*0.08; c.beginPath(); c.moveTo(r*0.6, r*0.4); c.lineTo(r*1.15, r*1.0); c.stroke(); }
+    if(st === 2){ c.strokeStyle = '#a87b46'; c.lineWidth = r*0.09; c.beginPath(); c.moveTo(0, -r*1.25); c.lineTo(0, r*1.3); c.stroke(); }
+    if(st === 3){ for(let k=0;k<4;k++){ const a = t*1.2 + k*TAU/4; c.font = `${r*0.35}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(['🍡','🍰','🍜','🍙'][k], Math.cos(a)*r*1.3, Math.sin(a)*r*0.7 - r*0.3); } }
+  }
+  if(fam === 'chu'){
+    const z = (x, y, s) => { c.fillStyle = 'rgba(200,230,255,.9)'; c.font = `900 ${s}px sans-serif`; c.fillText('z', x, y); };
+    const ph = (t*0.8) % 1;
+    if(st === 1){ z(r*0.65, -r*0.75 - ph*r*0.3, r*0.3); z(r*0.9, -r*1.05 - ph*r*0.3, r*0.22); }
+    if(st >= 2){ c.fillStyle = 'rgba(120,150,220,.85)'; c.beginPath(); c.moveTo(-r*1.05, -r*0.3); c.quadraticCurveTo(0, -r*0.65, r*1.05, -r*0.3); c.lineTo(r*1.2, r*0.95); c.quadraticCurveTo(0, r*1.2, -r*1.2, r*0.95); c.closePath(); c.globalAlpha = 0.55; c.fill(); c.globalAlpha = 1; z(r*0.75, -r*0.9 - ph*r*0.3, r*0.32); z(r*1.0, -r*1.2 - ph*r*0.3, r*0.24); }
+    if(st === 3){ c.fillStyle = '#c9a24e'; c.beginPath(); c.moveTo(-r*0.45, -r*0.95); for(let i=0;i<=4;i++) c.lineTo(-r*0.45 + i*r*0.225, -r*(i%2 ? 1.12 : 1.3)); c.lineTo(r*0.45, -r*0.95); c.closePath(); c.fill(); }
+  }
+  if(fam === 'fa'){
+    const q = (x, y, s, a) => { c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = 'rgba(220,255,245,.9)'; c.font = `900 ${s}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', 0, 0); c.restore(); };
+    if(st === 1) q(r*0.7, -r*0.85, r*0.5, 0.2);
+    if(st >= 2){ for(let k=0;k<3;k++){ const a = t*1.4 + k*TAU/3; q(Math.cos(a)*r*1.2, Math.sin(a)*r*0.5 - r*0.7, r*0.35, a); } }
+    if(st === 3){ c.strokeStyle = 'rgba(30,60,55,.8)'; c.lineWidth = r*0.05; for(let k=0;k<3;k++){ c.beginPath(); for(let i=0;i<=60;i++){ const a = i/60*TAU*2 + k*2 + t; const rr = r*(1.05 + 0.18*Math.sin(a*3 + k)); i ? c.lineTo(Math.cos(a)*rr, Math.sin(a)*rr*0.9) : c.moveTo(Math.cos(a)*rr, Math.sin(a)*rr*0.9); } c.stroke(); } }
+  }
+  c.restore();
+}
+// 角（第三階段）
+function drawHorns(c, r){ c.fillStyle = '#3a2e3e'; for(const s of [-1,1]){ c.beginPath(); c.moveTo(s*r*0.35, -r*0.8); c.quadraticCurveTo(s*r*0.6, -r*1.25, s*r*0.75, -r*1.35); c.quadraticCurveTo(s*r*0.55, -r*1.0, s*r*0.55, -r*0.7); c.closePath(); c.fill(); } }
+function drawDust(c, m, x, y, R, t, opt = {}){
+  const fam = m.fam.key, st = m.stage, r = R*(st === 1 ? 0.62 : st === 2 ? 0.76 : 0.9), gold = opt.gold, pure = opt.pure;
+  const body = pure ? '#fbfaf6' : gold ? '#f3cf63' : m.fam.color, dark = pure ? '#d9d4c8' : gold ? '#a8781c' : m.fam.dark;
+  c.save(); c.translate(x, y + Math.sin(t*2 + (opt.seed||0))*r*0.05);
+  if(opt.scaleY) c.scale(1/opt.scaleY, opt.scaleY);
+  if(opt.rot) c.rotate(opt.rot);
+  // 氣場
+  if(!pure && st >= 2){ const g = c.createRadialGradient(0, 0, r*0.6, 0, 0, r*1.7); g.addColorStop(0, st === 3 ? 'rgba(120,40,80,.45)' : 'rgba(255,255,255,.12)'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, r*1.7, 0, TAU); c.fill(); }
+  if(gold){ const g = c.createRadialGradient(0, 0, r*0.5, 0, 0, r*1.9); g.addColorStop(0, 'rgba(255,220,120,.55)'); g.addColorStop(1, 'rgba(255,220,120,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, r*1.9, 0, TAU); c.fill(); }
+  if(!pure) drawAcc(c, fam, st, r, t, opt);   // 有些配件在身體後面
+  if(!pure && st === 3) drawHorns(c, r);
+  bodyPath(c, fam, pure ? 1 : st, r, t);
+  const bg = c.createRadialGradient(-r*0.3, -r*0.4, r*0.08, 0, 0, r*1.15); bg.addColorStop(0, '#ffffff'); bg.addColorStop(0.3, body); bg.addColorStop(1, dark);
+  c.fillStyle = bg; c.fill('nonzero');
+  if(!pure && !gold){ c.fillStyle = 'rgba(85,75,65,.22)'; c.fill('nonzero'); c.save(); c.clip('nonzero'); for(let i=0;i<10;i++){ const a = i*2.3, rr = r*(0.25 + 0.55*((i*37)%10)/10); c.fillStyle = 'rgba(80,70,60,.25)'; c.beginPath(); c.arc(Math.cos(a)*rr, Math.sin(a)*rr*0.8, r*0.06, 0, TAU); c.fill(); } c.restore(); }
+  if(gold){ c.save(); c.clip('nonzero'); for(let k=0;k<5;k++){ const a = t*2 + k*1.3; c.fillStyle = `rgba(255,255,255,${0.4 + 0.4*Math.sin(a*2)})`; c.beginPath(); c.arc(Math.cos(a)*r*0.6, Math.sin(a*1.3)*r*0.6, r*0.05, 0, TAU); c.fill(); } c.restore(); }
+  if(fam === 'wei' && st === 2 && !pure){ c.save(); c.translate(0, r*0); }
+  drawEyes(c, pure ? 1 : st, r, t, opt);
+  drawMouth(c, fam, pure ? 1 : st, r, t, opt);
+  if(fam === 'wei' && st === 2 && !pure) c.restore();
+  if(pure){ // 淨化後：頭上一朵小蓮花
+    c.font = `${r*0.55}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🪷', 0, -r*1.05);
+  }
+  c.restore();
+}
+function silhouette(cv){ const c = cv.getContext('2d'); c.save(); c.setTransform(1,0,0,1,0,0); c.globalCompositeOperation = 'source-in'; c.fillStyle = '#4a5d72'; c.fillRect(0, 0, cv.width, cv.height); c.globalCompositeOperation = 'destination-over'; c.shadowColor = 'rgba(160,190,220,.55)'; c.shadowBlur = 14; c.drawImage(cv, 0, 0); c.restore(); }
+
+
+// 組合技：兩揮剛好是這幾組時，會打出有名字的招式
+const COMBO_NAME = { 'left+right':'十方淨', 'up+down':'劈山拂', 's+circle':'太極迴拂', 'alpha+ralpha':'阿法雙蓮' };
+const COMBO_FX = { '十方淨':'cross', '劈山拂':'pillar', '太極迴拂':'taiji', '阿法雙蓮':'lotus' };
+/* 淨心錄：收服過的塵靈記在這支手機上（心燈用完也照樣保留） */
+const DEX_KEY = 'fuchenGame.dex';
+const dex = Object.assign({ v:1, m:{} }, store.get(DEX_KEY, {}));
+function dexAdd(def, gold){ const isNew = !dex.m[def.name]; const e = dex.m[def.name] || { n:0, first: new Date().toLocaleDateString('zh-TW') }; e.n++; if(gold) e.gold = true; dex.m[def.name] = e; store.set(DEX_KEY, dex); return isNew; }
+const dexCount = () => MONS.filter(m => dex.m[m.name]).length;
 
 /* ---------------- 聲音、語音、震動 ---------------- */
 let actx = null, noiseBuf = null, zhVoice = null;
@@ -714,6 +890,12 @@ function drawMonster(t){
   if(m.state === 'hit'){ const k = Math.min(1, (t - m.tHit)/500); sc = 1 + 0.25*k; alpha = 1 - k; x += Math.sin(t/20)*6*(1-k); if(k >= 1){ m.state = m.boss && m.hp > 0 ? 'idle' : 'gone'; if(m.state === 'idle'){ m.t0 = t - 2000; } } }
   if(m.state === 'laugh'){ const k = Math.min(1, (t - m.tHit)/700); sc = 1 + 0.12*Math.sin(k*Math.PI); y += Math.sin(t/60)*3; if(k >= 1) m.state = 'idle'; }
   const bob = Math.sin(t/500)*u*0.015, r = m.r*sc;
+  if(!m.boss){
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y + bob); ctx.scale(sc, sc);
+    if(m.state === 'laugh') ctx.rotate(Math.sin(t/60)*0.08);
+    drawDust(ctx, m.def, 0, 0, m.r*1.3, t/1000, { seed:m.seed, gold:m.gold });
+    ctx.restore();
+  } else {
   ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y + bob);
   // 灰塵光暈
   const halo = ctx.createRadialGradient(0, 0, r*0.6, 0, 0, r*1.6); halo.addColorStop(0, 'rgba(120,110,100,.35)'); halo.addColorStop(1, 'rgba(120,110,100,0)'); ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(0, 0, r*1.6, 0, Math.PI*2); ctx.fill();
@@ -740,10 +922,19 @@ function drawMonster(t){
   // 頭上的小道具
   ctx.font = `${Math.round(r*0.55)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(m.type.acc, r*0.75, -r*0.8);
   ctx.restore();
-  // 名牌
+  }
+  // 名牌：名字＋等級；收服過這一系，就知道它怕什麼符印
   if(m.state !== 'hit'){
-    ctx.save(); ctx.font = `800 ${Math.round(u*0.045)}px "Noto Sans TC", sans-serif`; ctx.textAlign = 'center'; ctx.fillStyle = '#f6ecd8'; ctx.shadowColor = '#000'; ctx.shadowBlur = 6;
-    ctx.fillText(m.boss ? `無明塵王　${'●'.repeat(m.hp)}${'○'.repeat(m.maxHp - m.hp)}` : `${m.type.name}・${m.type.mood}`, x, y + bob + m.r*1.25); ctx.restore();
+    ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = '#f6ecd8'; ctx.shadowColor = '#000'; ctx.shadowBlur = 6;
+    ctx.font = `800 ${Math.round(u*0.045)}px "Noto Sans TC", sans-serif`;
+    if(m.boss) ctx.fillText(`無明塵王　${'●'.repeat(m.hp)}${'○'.repeat(m.maxHp - m.hp)}`, x, y + bob + m.r*1.25);
+    else {
+      ctx.fillStyle = m.gold ? '#ffe08a' : '#f6ecd8'; ctx.fillText(`${m.gold ? '✨ 金色・' : ''}${m.def.name}  Lv ${m.lv}`, x, y + bob + m.r*1.4);
+      const knows = MONS.some(o => o.fam === m.def.fam && dex.m[o.name]);
+      ctx.font = `700 ${Math.round(u*0.034)}px "Noto Sans TC", sans-serif`; ctx.fillStyle = 'rgba(246,236,216,.75)';
+      ctx.fillText(`${m.def.fam.name}系${STAGE_NAME[m.def.stage]}・${m.def.fam.mood}${knows ? `・怕 ${m.def.fam.weakName}` : ''}${!dex.m[m.def.name] ? '・未收服' : ''}`, x, y + bob + m.r*1.4 + u*0.05);
+    }
+    ctx.restore();
   }
   // 要揮的符印：金色虛線疊在怪物身上
   if(m.sym && (m.state === 'idle' || m.state === 'enter' || m.state === 'laugh') && showGhost){
@@ -816,6 +1007,69 @@ function drawCountdown(t){
   }
 }
 
+/* ---------------- 收服演出（四段）：① 定格震動閃白 → ② 符印燒入、光裂紋 → ③ 塵殼碎裂、白色小精靈鞠躬 → ④ 化蓮飛進淨心錄 ---------------- */
+let capFx = null, comboFx = null, shakeAmp = 0;
+function bookPos(){ const r = $('#btnBook').getBoundingClientRect(); return { x: r.left + r.width/2, y: r.top + r.height/2 }; }
+function startCapture(m, sym, weak, isNew){
+  const cracks = [], shards = [];
+  for(let i=0;i<10;i++){ const a = i/10*TAU + Math.random()*0.3, pts = [[0,0]]; let rr = 0; for(let k=0;k<5;k++){ rr += 0.18 + Math.random()*0.08; pts.push([Math.cos(a + (Math.random()-.5)*0.4)*rr, Math.sin(a + (Math.random()-.5)*0.4)*rr]); } cracks.push(pts); }
+  for(let i=0;i<26;i++){ const a = Math.random()*TAU, v = 2 + Math.random()*5; shards.push({ x:Math.cos(a)*0.3, y:Math.sin(a)*0.3, vx:Math.cos(a)*v, vy:Math.sin(a)*v - 3, rot:Math.random()*6, vr:(Math.random()-.5)*0.4, s:0.08 + Math.random()*0.12 }); }
+  m.state = 'gone';
+  return new Promise(res => { capFx = { t0: performance.now(), m, sym, weak, isNew, cracks, shards, sparks:[], done: res }; shakeAmp = 10; sfx.purify(); vib(120); });
+}
+function drawCapture(t){
+  const A = capFx; if(!A) return;
+  const e = performance.now() - A.t0, m = A.m, cx = m.x, cy = m.y, R = m.r*1.3, u = U(), bp = bookPos();
+  if(e < 700){
+    drawDust(ctx, m.def, cx, cy, R, e < 120 ? A.t0/1000 : t/1000, { seed:m.seed, gold:m.gold });
+    const tp = tplFor(A.sym);
+    if(tp && e > 120){ const k = Math.min(1, (e - 120)/380), n = Math.max(2, Math.ceil(k*(tp.length - 1)) + 1);
+      for(const [col, w, blur] of [['#ffe08a', R*0.09, 30], ['#fffaf0', R*0.03, 8]]){ ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = col; ctx.lineWidth = w; ctx.shadowColor = '#ffcc55'; ctx.shadowBlur = blur;
+        ctx.beginPath(); for(let i=0;i<n && i<tp.length;i++){ const X = cx + tp[i][0]*R*1.6, Y = cy - tp[i][1]*R*1.6; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); } ctx.stroke(); ctx.restore(); } }
+    if(e > 320){ const k = Math.min(1, (e - 320)/380); ctx.save(); ctx.strokeStyle = '#fff6d0'; ctx.lineWidth = 2.5; ctx.shadowColor = '#ffd27a'; ctx.shadowBlur = 14;
+      for(const cr of A.cracks){ const n = Math.ceil(k*(cr.length - 1)); ctx.beginPath(); for(let i=0;i<=n;i++){ const q = cr[i]; i ? ctx.lineTo(cx + q[0]*R, cy + q[1]*R) : ctx.moveTo(cx + q[0]*R, cy + q[1]*R); } ctx.stroke(); } ctx.restore(); }
+  }
+  if(e >= 700){
+    const k = (e - 700)/1000;
+    for(const s of A.shards){ const X = cx + (s.x*R + s.vx*k*60), Y = cy + (s.y*R + s.vy*k*60 + 300*k*k), al = Math.max(0, 1 - k*1.1); if(al <= 0) continue;
+      ctx.save(); ctx.translate(X, Y); ctx.rotate(s.rot + s.vr*k*20); ctx.globalAlpha = al; ctx.fillStyle = m.gold ? '#e8bd5a' : m.def.fam.dark; ctx.beginPath(); ctx.moveTo(0, -s.s*R); ctx.lineTo(s.s*R*0.8, s.s*R*0.5); ctx.lineTo(-s.s*R*0.7, s.s*R*0.6); ctx.closePath(); ctx.fill(); ctx.restore(); }
+    if(e < 1500){ const appear = Math.min(1, (e - 700)/220), bow = e > 950 ? Math.sin(Math.min(1, (e - 950)/500)*Math.PI) : 0, sc = 0.4 + 0.6*appear;
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc); drawDust(ctx, m.def, 0, 0, R*0.7, t/1000, { pure:true, rot: bow*0.35, scaleY: 1 - bow*0.12 }); ctx.restore(); }
+  }
+  if(e >= 1500 && e < 2250){ const k = Math.min(1, (e - 1500)/700), ease = k*k*(3 - 2*k); const X = cx + (bp.x - cx)*ease - Math.sin(k*Math.PI)*40, Y = cy + (bp.y - cy)*ease - Math.sin(k*Math.PI)*60;
+    A.sparks.push({ x:X, y:Y, life:1 }); ctx.save(); ctx.font = `${R*0.6*(1 - 0.6*k)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.shadowColor = '#ffd27a'; ctx.shadowBlur = 20; ctx.fillText('🪷', X, Y); ctx.restore(); }
+  if(e >= 2200 && !A.arrived){ A.arrived = true; const b = $('#btnBook'); b.classList.remove('pulse'); void b.offsetWidth; b.classList.add('pulse'); $('#bookN').textContent = dexCount(); }
+  for(let i=A.sparks.length-1;i>=0;i--){ const s = A.sparks[i]; s.life -= 0.035; if(s.life <= 0){ A.sparks.splice(i,1); continue; } ctx.fillStyle = m.gold ? `hsla(${(i*30 + e/5) % 360},90%,75%,${s.life})` : `rgba(255,230,160,${s.life})`; ctx.beginPath(); ctx.arc(s.x, s.y, 3*s.life + 1, 0, TAU); ctx.fill(); }
+  ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if(A.weak && e > 150 && e < 1300){ const k = Math.min(1, (e - 150)/150); ctx.globalAlpha = Math.min(1, (1300 - e)/200); ctx.font = `900 ${Math.round(u*(0.07 + 0.02*k))}px "Noto Sans TC", sans-serif`; ctx.fillStyle = '#ffe08a'; ctx.shadowColor = '#000'; ctx.shadowBlur = 8; ctx.fillText('效果絕佳！', cx, cy - R*1.5); ctx.globalAlpha = 1; }
+  if(e > 1700){ const k = Math.min(1, (e - 1700)/250), al = Math.max(0, Math.min(1, (2900 - e)/300));
+    ctx.globalAlpha = al; ctx.translate(W/2, H*0.5); ctx.scale(0.7 + 0.3*k, 0.7 + 0.3*k);
+    ctx.fillStyle = 'rgba(8,10,14,.68)'; ctx.fillRect(-W*0.42, -u*0.15, W*0.84, u*0.3);
+    ctx.font = `900 ${Math.round(u*0.1)}px "Noto Sans TC", sans-serif`; ctx.fillStyle = m.gold ? '#ffe08a' : '#fff6dc'; ctx.shadowColor = '#ffd27a'; ctx.shadowBlur = 18; ctx.fillText(m.gold ? '✨ 收服！' : '收服！', 0, -u*0.04);
+    ctx.shadowBlur = 0; ctx.font = `800 ${Math.round(u*0.048)}px "Noto Sans TC", sans-serif`; ctx.fillStyle = '#f6ecd8'; ctx.fillText(`${m.gold ? '金色・' : ''}${m.def.name}  Lv ${m.lv}　收入淨心錄`, 0, u*0.07);
+    if(A.isNew){ ctx.fillStyle = '#e8453c'; ctx.fillRect(W*0.3, -u*0.14, u*0.15, u*0.065); ctx.fillStyle = '#fff'; ctx.font = `900 ${Math.round(u*0.038)}px sans-serif`; ctx.fillText('NEW', W*0.3 + u*0.075, -u*0.107); } }
+  ctx.restore();
+  if(e > 120 && e < 360){ ctx.fillStyle = `rgba(255,255,255,${0.75*(1 - (e - 120)/240)})`; ctx.fillRect(0, 0, W, H); }
+  if(e > 2900){ const d = A.done; capFx = null; d(); }
+}
+// 組合技的招式特效（約 1.3 秒）
+function startCombo(name){ sfx.purify(); vib(100); return new Promise(res => { comboFx = { name, fx: COMBO_FX[name], t0: performance.now(), done: res }; }); }
+function drawComboFx(){
+  const A = comboFx; if(!A) return;
+  const e = performance.now() - A.t0, k = Math.min(1, e/700), al = Math.min(1, (1300 - e)/400), cx = MON.x, cy = MON.y, R = U()*0.22;
+  ctx.save(); ctx.globalAlpha = Math.max(0, al); ctx.shadowColor = '#ffd27a'; ctx.shadowBlur = 30;
+  if(A.fx === 'cross'){ ctx.fillStyle = 'rgba(255,230,150,.95)'; const L = W*0.9*k, T = 10 + 8*(1 - k); ctx.fillRect(cx - L/2, cy - T/2, L, T); ctx.fillRect(cx - T/2, cy - L/2, T, L); for(let i=0;i<10;i++){ const a = i/10*TAU + 0.3; ctx.strokeStyle = 'rgba(255,240,200,.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a)*R*2.4*k, cy + Math.sin(a)*R*2.4*k); ctx.stroke(); } }
+  if(A.fx === 'pillar'){ for(const s of [-1, 1]){ const g = ctx.createLinearGradient(cx, cy, cx, cy + s*H*0.6); g.addColorStop(0, 'rgba(255,240,190,.95)'); g.addColorStop(1, 'rgba(255,240,190,0)'); ctx.fillStyle = g; ctx.fillRect(cx - R*0.35*(1.2 - k*0.4), s > 0 ? cy : cy - H*0.6*k, R*0.7*(1.2 - k*0.4), H*0.6*k); } }
+  if(A.fx === 'taiji'){ ctx.globalAlpha = Math.max(0, al)*0.85; ctx.translate(cx, cy); ctx.rotate(e/200); const rr = R*(0.5 + 0.6*k);
+    ctx.fillStyle = 'rgba(255,248,230,.9)'; ctx.beginPath(); ctx.arc(0, 0, rr, -Math.PI/2, Math.PI/2); ctx.arc(0, rr/2, rr/2, Math.PI/2, -Math.PI/2, true); ctx.arc(0, -rr/2, rr/2, Math.PI/2, -Math.PI/2); ctx.fill();
+    ctx.fillStyle = 'rgba(40,46,60,.85)'; ctx.beginPath(); ctx.arc(0, 0, rr, Math.PI/2, Math.PI*1.5); ctx.arc(0, -rr/2, rr/2, -Math.PI/2, Math.PI/2, true); ctx.arc(0, rr/2, rr/2, -Math.PI/2, Math.PI/2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,214,120,.9)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, rr*1.15, 0, TAU); ctx.stroke(); ctx.setTransform(DPR,0,0,DPR,0,0); }
+  if(A.fx === 'lotus'){ for(const s of [-1, 1]){ ctx.font = `${R*(0.5 + 1.1*k)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🪷', cx + s*R*1.1, cy + R*0.2); } }
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha = Math.max(0, al); ctx.font = `900 ${Math.round(U()*0.1)}px "Noto Sans TC", sans-serif`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff6dc'; ctx.shadowColor = '#ffb84a'; ctx.shadowBlur = 20; ctx.fillText(`「${A.name}」`, W/2, H*0.24); ctx.restore();
+  if(e > 1300){ const d = A.done; comboFx = null; d(); }
+}
+
 /* ---------------- 主迴圈 ---------------- */
 let replayAnim = null;   // { pts:[[x,y]], t0, dur }
 /* ---------------- 全畫面揮動提示：粗金線＋沿途箭頭＋起點「起」、終點大箭頭「終」＋一顆會跑的光點 ---------------- */
@@ -860,6 +1114,7 @@ function drawHint(t){
   ctx.restore();
 }
 function frame(t){
+  shakeAmp *= 0.9; ctx.save(); if(shakeAmp > 0.3) ctx.translate((Math.random()-.5)*shakeAmp, (Math.random()-.5)*shakeAmp);
   drawBackground(t);
   drawHint(t);       // 提示在後面
   drawMonster(t);    // 怪物在前景
@@ -872,7 +1127,11 @@ function frame(t){
   }
   if(fu){ fu.update(); fu.draw(); }
   drawParticles();
+  drawComboFx();
+  drawCapture(t);
   drawCountdown(t);
+  ctx.restore();
+  if(!$('#scrDex').hidden) drawDex(t);
   requestAnimationFrame(frame);
 }
 
@@ -891,10 +1150,10 @@ async function countdown(beats){
   center(''); dimTarget = 0.65; document.body.dataset.phase = 'count';
   for(let i=beats;i>=1;i--){ cd = { text:String(i), t0:performance.now(), hold:0.55, burst:false }; sfx.beat(); vib(30); await wait(900); }
 }
-function record(ms, th0){
+function record(ms, th0, word = '揮！'){
   return new Promise((resolve, reject) => {
     const T0 = th0 || th(); sfx.go(); vib(140);
-    dimTarget = 0; cd = { text:'揮！', t0:performance.now(), hold:0.4, burst:false }; document.body.dataset.phase = 'swing';
+    dimTarget = 0; cd = { text:word, t0:performance.now(), hold:0.4, burst:false }; document.body.dataset.phase = 'swing';
     let done = false, timer = 0;
     const finish = () => { if(done) return; done = true; clearTimeout(timer); clearInterval(poll); if(rec) rec.active = false; detachTouch(); resolve({ pts: rec.integ ? rec.integ.pts : rec.touchPts, input: inputMode, raw: rec.raw }); };
     const poll = setInterval(() => { if(cancelFlag && !done){ done = true; clearTimeout(timer); clearInterval(poll); if(rec) rec.active = false; detachTouch(); reject('cancel'); } }, 50);
@@ -947,64 +1206,94 @@ function pathOnScreen(a){
 }
 function playReplay(pts, dur){ return new Promise(res => { replayAnim = { pts, t0: performance.now(), dur, done: res }; }); }
 
-/* ---------------- 一隻怪物的回合 ---------------- */
+/* ---------------- 一隻怪物的回合（塵精一揮、塵妖與塵魔兩連擊） ---------------- */
 async function encounter(opt){
-  const { key, type, boss, wave, tutorial } = opt;
+  const { keys, def, lv, gold, boss, wave, tutorial } = opt;
   if(!monster || monster.state === 'gone' || !boss){
-    monster = { type, sym:key, x:MON.x, y:MON.y, r:U()*(boss ? 0.2 : 0.14), t0:performance.now(), state:'enter', boss:!!boss, hp: boss ? opt.hp : 1, maxHp: boss ? opt.hp : 1, seed:Math.random()*10 };
+    monster = { type: opt.type, def, lv, gold, sym:keys[0], x:MON.x, y:MON.y, r:U()*(boss ? 0.2 : 0.14), t0:performance.now(), state:'enter', boss:!!boss, hp: boss ? opt.hp : 1, maxHp: boss ? opt.hp : 1, seed:Math.random()*10 };
     boss ? sfx.boss() : sfx.appear();
-  } else { monster.sym = key; }
+  } else { monster.sym = keys[0]; }
   hud(wave);
-  const sub = [SYMS[key].note || '', SYMS[key].both ? '順時針、逆時針都可以' : '', tutorial || ''].filter(Boolean).join('・');
-  center(`<div class="mid">${symHTML(key)}</div>${sub ? `<div class="sub">${sub}</div>` : ''}`);
-  say(SYMS[key].say);
-  hint = makeHint(key);
+  const multi = keys.length > 1;
+  const sub = [multi ? `連擊：依序揮 ${keys.length} 下` : '', !multi && SYMS[keys[0]].note || '', !multi && SYMS[keys[0]].both ? '順時針、逆時針都可以' : '', tutorial || ''].filter(Boolean).join('・');
+  center(`<div class="mid">${keys.map(symHTML).join('　＋　')}</div>${sub ? `<div class="sub">${sub}</div>` : ''}`);
+  say((multi ? '連擊，' : '') + keys.map(k => SYMS[k].say).join('，'));
   await wait(boss ? 900 : 600);
-  // 拂塵沿著提示路線示範一次
-  if(hint){ fu.glow = 0.6; await playReplay(hint.pts.map(q => [q[0], q[1]]), SYMS[key].kind === 'dir' ? 700 : 1500); }
+  // 拂塵沿著提示路線示範（連擊就依序示範）
+  for(const k of keys){ hint = makeHint(k); if(hint){ fu.glow = 0.6; await playReplay(hint.pts.map(q => [q[0], q[1]]), SYMS[k].kind === 'dir' ? 650 : 1300); } await wait(multi ? 250 : 0); }
   await wait(300);
   if(monster.state === 'enter') monster.state = 'idle';
+  document.body.dataset.key = keys[0];
   await countdown(3);
   center('');
   if(hint) hint.target = 0;
-  const th0 = tutorial ? SENS.light : null;
-  const st = await record(SYMS[key].kind === 'dir' ? 1600 : 2800, th0); lastStroke = st;
+  const th0 = tutorial ? SENS.light : null, strokes = [];
+  for(let i=0;i<keys.length;i++){
+    document.body.dataset.key = keys[i];   // 這一揮要畫的符號（自動測試用）
+    if(i > 0){ sfx.ding(); await wait(350); }
+    const st = await record(SYMS[keys[i]].kind === 'dir' ? 1600 : 2800, th0, i > 0 ? '再揮！' : '揮！'); strokes.push(st); lastStroke = st; if(i < keys.length - 1){ document.body.dataset.key = keys[i + 1]; document.body.dataset.phase = 'gap'; }
+  }
   document.body.dataset.phase = ''; sfx.ding(); vib(50); center('<div class="mid">叮～</div>'); await wait(250); center('');
-  const r = judgeSwing(key, st, th0); tries++;
-  // 拂塵招式重播
-  const scr = !r.none ? pathOnScreen(r.a) : null;
-  if(hint) hint.target = 0.3;   // 重播時把標準路線淡淡留著，對照自己揮得像不像
-  if(scr){ swoosh(1); await playReplay(scr, 900); }
+  const rs = keys.map((k, i) => judgeSwing(k, strokes[i], th0)); tries++;
+  // 拂塵招式重播：每一揮依序重播，標準路線淡淡留著對照
+  for(let i=0;i<keys.length;i++){ const r = rs[i], scr = !r.none ? pathOnScreen(r.a) : null; hint = makeHint(keys[i]); if(hint){ hint.a = 0; hint.target = 0.3; } if(scr){ swoosh(1); await playReplay(scr, multi ? 650 : 900); } }
   if(hint) hint.target = 0;
-  if(r.ok){
+  const ok = rs.every(r => r.ok), r0 = rs.find(r => !r.ok) || rs[0];
+  if(ok){
     hits++; combo++; maxCombo = Math.max(maxCombo, combo); purified++;
-    const pts = Math.round(r.score) + (combo > 1 ? combo*10 : 0); score += pts;
-    const word = r.score >= 85 ? '✨ 明鏡無塵' : r.score >= 65 ? '🪶 拂淨' : '🪶 拂去了';
-    spawnSpark(monster.x, monster.y, 40); spawnDust(monster.x, monster.y, 36, 'rgba(150,140,130,.9)', 1.4); spawnText(monster.x, monster.y - monster.r*1.4, word, '#ffe7a8'); spawnText(monster.x, monster.y - monster.r*0.9, `+${pts}`, '#7fe0a6');
-    if(boss){ monster.hp--; }
-    monster.state = 'hit'; monster.tHit = performance.now();
-    if(!boss || monster.hp <= 0) setTimeout(() => spawnLotus(MON.x, MON.y), 300);
-    sfx.purify(); vib(80);
+    const weak = !boss && def && keys.includes(def.fam.weak);
+    const base = Math.round(rs.reduce((a, r) => a + r.score, 0)/rs.length);
+    const pts = (base + (combo > 1 ? combo*10 : 0) + (multi ? 50 : 0))*(weak ? 2 : 1); score += pts;
+    if(boss){
+      const word = base >= 85 ? '✨ 明鏡無塵' : base >= 65 ? '🪶 拂淨' : '🪶 拂去了';
+      spawnSpark(monster.x, monster.y, 40); spawnDust(monster.x, monster.y, 36, 'rgba(150,140,130,.9)', 1.4); spawnText(monster.x, monster.y - monster.r*1.4, word, '#ffe7a8'); spawnText(monster.x, monster.y - monster.r*0.9, `+${pts}`, '#7fe0a6');
+      monster.hp--; monster.state = 'hit'; monster.tHit = performance.now(); if(monster.hp <= 0) setTimeout(() => spawnLotus(MON.x, MON.y), 300);
+      sfx.purify(); vib(80); hud(); await wait(1300);
+    } else {
+      const cname = multi ? COMBO_NAME[keys.join('+')] : null;
+      if(cname) await startCombo(cname);
+      spawnText(MON.x, MON.y + monster.r*2.2, `+${pts}`, '#7fe0a6');
+      const isNew = dexAdd(def, gold); caught.push({ def, lv, gold, isNew });
+      await startCapture(monster, keys[keys.length - 1], weak, isNew);
+      hud(); await wait(200);
+    }
   } else {
     combo = 0;
-    const why = r.none ? '💤 沒揮到' : '💨 符散了';
-    spawnDust(monster.x, monster.y, 18, 'rgba(150,140,130,.8)', 0.8); spawnText(monster.x, monster.y - monster.r*1.4, why, '#ff8a7a');
-    if(r.a && !r.none && SYMS[key].kind === 'shape'){ const top = r.a.rg.ranking[0]; if(SYMS[top.key]) spawnText(monster.x, monster.y - monster.r*0.95, `像是「${SYMS[top.key].name}」`, '#f6ecd8'); }
+    const idx = rs.indexOf(r0), why = r0.none ? '💤 沒揮到' : '💨 符散了';
+    spawnDust(monster.x, monster.y, 18, 'rgba(150,140,130,.8)', 0.8); spawnText(monster.x, monster.y - monster.r*1.6, multi ? `第 ${idx + 1} 揮${r0.none ? '沒揮到' : '散了'}` : why, '#ff8a7a');
+    if(r0.a && !r0.none && SYMS[keys[idx]].kind === 'shape'){ const top = r0.a.rg.ranking[0]; if(SYMS[top.key]) spawnText(monster.x, monster.y - monster.r*1.1, `像是「${SYMS[top.key].name}」`, '#f6ecd8'); }
     monster.state = 'laugh'; monster.tHit = performance.now();
     if(!tutorial){ lives--; }
-    sfx.miss(); vib([40,60,40]);
+    sfx.miss(); vib([40,60,40]); hud(); await wait(1300);
+    if(!boss){ monster.state = 'hit'; monster.tHit = performance.now(); await wait(450); }   // 沒收服：塵靈逃走
   }
-  hud();
-  await wait(1300);
-  return r;
+  return { ok, r: r0 };
 }
 
 /* ---------------- 關卡 ---------------- */
 const pick = arr => arr[Math.floor(Math.random()*arr.length)];
 function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+// 出怪：隨機一系，等級照階段；約 3% 機率是金色塵靈
+function spawnDef(stage){
+  const fam = pick(FAMS), def = MONS.find(m => m.fam === fam && m.stage === stage);
+  const lv = stage === 1 ? 1 + Math.floor(Math.random()*9) : stage === 2 ? 10 + Math.floor(Math.random()*10) : 20 + Math.floor(Math.random()*10);
+  return { def, lv, gold: Math.random() < 0.03 };
+}
+// 出題：塵精一個符印（偶爾剛好是它怕的）；塵妖、塵魔兩連擊（多半是有名字的組合技）
+const EASY = ['left','right','down','up','v','circle'], MID = ['v','circle','z','n','alpha','s'], HARD = ['rs','rz','rn','ralpha','z','n','s','alpha'];
+const NAMED = [['left','right'], ['up','down'], ['s','circle'], ['alpha','ralpha']];
+function keysFor(stage, fam){
+  if(stage === 1) return [Math.random() < 0.35 && EASY.includes(fam.weak) ? fam.weak : pick(EASY)];
+  if(Math.random() < 0.6) return pick(NAMED).slice();
+  const pool = stage === 2 ? MID : HARD, a = pick(pool); let b = pick(pool.filter(x => x !== a));
+  if(Math.random() < 0.4 && fam.weak !== a && SYMS[fam.weak]) b = fam.weak;
+  return [a, b];
+}
+let caught = [];
 async function runGame(){
+  caught = []; $('#bookN').textContent = dexCount();
   lives = 3; score = 0; combo = 0; maxCombo = 0; hits = 0; tries = 0; purified = 0; cancelFlag = false;
-  $('#hud').hidden = false; $('#bottomBar').hidden = false; hud('');
+  $('#hud').hidden = false; $('#bottomBar').hidden = false; $('#btnBook').hidden = false; hud('');
   $('#modeTag').textContent = inputMode === 'touch' ? '👆 觸控模式' : accAvail() ? '🛤️ 移動軌跡' : '🔄 轉動判讀';
   let result = 'clear';
   try{
@@ -1013,19 +1302,18 @@ async function runGame(){
       center('<div class="mid">🧭 四方拂塵</div><div class="sub">先用四隻小塵精熱身，系統會記住您的揮法</div>'); say('四方拂塵'); await wait(2200);
       const got = {}, peaks = [];
       for(const [k, d] of [['left','L'],['right','R'],['up','U'],['down','D']]){
-        const r = await encounter({ key:k, type:pick(DUSTS), wave:'熱身・四方拂塵', tutorial:'熱身：照著方向大揮一次' });
+        const r = await encounter({ keys:[k], ...spawnDef(1), wave:'熱身・四方拂塵', tutorial:'熱身：照著方向大揮一次' });
         if(lastStroke && lastStroke.input === 'gyro'){ const t = analyzeStroke(lastStroke, 'trajRaw', SENS.light); if(!t.none && !t.unavailable){ got[d] = { v: applyCal(t.mainVec[0], t.mainVec[1]), amp: Math.hypot(t.mainVec[0], t.mainVec[1]) }; peaks.push(t.peak); } }
       }
       learnFromWarmup(got, peaks);
     }
     const plan = [
-      { wave:'第一波・方向', keys: shuffle(['left','right','down','up']) },
-      { wave:'第二波・符印', keys: shuffle(['v','circle','z','n','alpha','s']).slice(0, 4) },
-      { wave:'第三波・反符', keys: shuffle(['rs','rz','rn','ralpha']).slice(0, 3) }
+      { wave:'第一波・塵精', stages:[1, 1, 1] },
+      { wave:'第二波・塵妖', stages:[Math.random() < 0.25 ? 3 : 2, 2] }
     ];
     for(const w of plan){
-      center(`<div class="mid">${w.wave}</div>`); say(w.wave.split('・')[0]); await wait(1600);
-      for(const k of w.keys){ await encounter({ key:k, type:pick(DUSTS), wave:w.wave }); if(lives <= 0) throw 'over'; }
+      center(`<div class="mid">${w.wave}</div>${w.stages.some(s => s > 1) ? '<div class="sub">塵妖要兩連擊才收得服！</div>' : ''}`); say(w.wave.split('・')[1]); await wait(1800);
+      for(const st of w.stages){ const sp = spawnDef(st); await encounter({ keys: keysFor(st, sp.def.fam), ...sp, wave: st === 3 ? '⚠️ 塵魔出沒' : w.wave }); if(lives <= 0) throw 'over'; }
     }
     // 魔王：無明塵王（三擊，最後一擊一定是「圓明一拂」）
     center('<div class="mid">⚠️ 無明塵王</div><div class="sub">六塵合體！連拂三次，最後用「圓」收服</div>'); say('無明塵王'); await wait(2400);
@@ -1034,12 +1322,13 @@ async function runGame(){
     monster = null;
     for(const k of bossKeys){
       let r;
-      do { r = await encounter({ key:k, type:bossType, boss:true, hp:3, wave:'魔王・無明塵王' }); if(lives <= 0) throw 'over'; } while(!r.ok);
+      do { r = await encounter({ keys:[k], type:bossType, boss:true, hp:3, wave:'魔王・無明塵王' }); if(lives <= 0) throw 'over'; } while(!r.ok);
     }
     center('<div class="mid">🌕 圓明一拂！</div>'); for(let i=0;i<5;i++){ setTimeout(() => { spawnSpark(W*Math.random(), H*0.2 + H*0.4*Math.random(), 30); spawnLotus(W*(0.2 + 0.6*Math.random()), H*0.6); }, i*250); }
     purified = Math.max(purified, 16); sfx.purify(); await wait(2200);   // 滿月
   }catch(e){ if(e === 'over') result = 'over'; else if(e === 'cancel') result = 'quit'; else { console.error(e); result = 'quit'; } }
-  center(''); monster = null; cd = null; dimTarget = 0; document.body.dataset.phase = ''; $('#hud').hidden = true; $('#bottomBar').hidden = true;
+  center(''); monster = null; cd = null; dimTarget = 0; capFx = null; comboFx = null; document.body.dataset.phase = ''; $('#hud').hidden = true; $('#bottomBar').hidden = true; $('#btnBook').hidden = true;
+  $('#btnDexT').textContent = `📖 淨心錄（${dexCount()} / ${MONS.length}）`;
   if(result !== 'quit') showResult(result); else $('#scrTitle').hidden = false;
 }
 let lastStroke = null;
@@ -1064,6 +1353,7 @@ function showResult(kind){
   $('#resTitle').textContent = kind === 'over' ? '🪔 心燈用完了' : '✨ 試煉圓滿';
   $('#resLine').innerHTML = kind === 'over' ? '別灰心，塵埃本來就要天天拂。定下心再來一次！' : `無明塵王收服了！評價：<b>${rating}</b>`;
   $('#resStats').innerHTML = `<span>淨化 <b>${hits}</b> 隻</span><span>命中率 <b>${acc}%</b></span><span>最高連擊 <b>${maxCombo}</b></span><span>得分 <b>${score}</b></span>`;
+  $('#resCaught').innerHTML = caught.length ? `<b>本局收入淨心錄</b><div class="caught">${caught.map(c => `<span>${c.gold ? '✨' : ''}${c.def.name}<small>Lv ${c.lv}</small>${c.isNew ? '<i>NEW</i>' : ''}</span>`).join('')}</div>` : '<span class="note">這一局沒有收服塵靈，下次加油！</span>';
   $('#resQuote').innerHTML = `${pick(QUOTES)}${QUOTES_DEMO ? '<small>（示範慈語，正式版會換成審定的文字）</small>' : ''}`;
   $('#scrResult').hidden = false;
   const best = store.get('fuchenGame.best', 0); if(score > best) store.set('fuchenGame.best', score);
@@ -1096,6 +1386,39 @@ async function runCalib(){
   sfx.ding(); vib(60); $('#calibBar').style.width = '100%'; $('#calibMsg').textContent = '定心完成 ✨'; await sleep(500);
   $('#scrCalib').hidden = true; runGame();
 }
+/* ---------------- 淨心錄畫面 ---------------- */
+let dexCards = [], dexModalM = null;
+function fitCv(cv){ const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1), w = Math.round(r.width*d), h = Math.round(r.height*d); if(cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; } return { w:r.width, h:r.height, d }; }
+function silhouette(cv){ const c = cv.getContext('2d'); c.save(); c.setTransform(1,0,0,1,0,0); c.globalCompositeOperation = 'source-in'; c.fillStyle = '#4a5d72'; c.fillRect(0, 0, cv.width, cv.height); c.globalCompositeOperation = 'destination-over'; c.shadowColor = 'rgba(160,190,220,.55)'; c.shadowBlur = 14; c.drawImage(cv, 0, 0); c.restore(); }
+function drawCardCv(cv, m, t, opt){ const { w, h, d } = fitCv(cv), c = cv.getContext('2d'); c.setTransform(d,0,0,d,0,0); c.clearRect(0, 0, w, h); drawDust(c, m, w/2, h*0.6, w*0.3, t, opt); if(opt.sil) silhouette(cv); }
+function openDex(){
+  const n = dexCount(); $('#dexN').textContent = `${n} / ${MONS.length}`;
+  $('#dexList').innerHTML = ''; dexCards = [];
+  FAMS.forEach(f => {
+    const ms = MONS.filter(m => m.fam === f), got = ms.filter(m => dex.m[m.name]).length, box = document.createElement('div'); box.className = 'dfam';
+    box.innerHTML = `<div class="dfam-h"><b style="color:${f.color}">${f.name}系・${f.mood}</b><span>${got === 3 ? '🏅 已收齊' : `${got}/3`}${got ? `　怕 ${f.weakName}` : ''}</span></div><div class="drow"></div>`;
+    ms.forEach(m => { const e = dex.m[m.name], el = document.createElement('div'); el.className = 'dcard' + (e ? '' : ' lock');
+      el.innerHTML = `<canvas></canvas><div class="nm">${e ? (e.gold ? '✨' : '') + m.name : '？？？'}</div><div class="lv">${e ? `收服 ${e.n} 次` : m.lv + ' 出沒'}</div>`;
+      el.onclick = () => openDexCard(m); box.querySelector('.drow').appendChild(el); dexCards.push({ cv: el.querySelector('canvas'), m, e }); });
+    $('#dexList').appendChild(box);
+  });
+  $('#scrDex').hidden = false;
+}
+function openDexCard(m){
+  const e = dex.m[m.name]; dexModalM = m;
+  $('#dmName').textContent = e ? m.name : '？？？'; $('#dmTag').textContent = `${m.fam.name}系・${STAGE_NAME[m.stage]}・${m.lv}`;
+  $('#dmDl').innerHTML = e ? `<span>代表 <b>${m.fam.mood}</b></span><span>要揮 <b>${m.hits === 1 ? '1 下' : '2 連擊'}</b></span><span>怕 <b>${m.fam.weakName}</b></span><span>收服 <b>${e.n} 次</b></span><span style="grid-column:1/-1">第一次收服 <b>${e.first}</b>${e.gold ? '・✨ 收過金色' : ''}</span>`
+    : `<span style="grid-column:1/-1">在 <b>${m.lv}</b> 的試煉中出沒（${m.fam.name}系的${STAGE_NAME[m.stage]}）</span>`;
+  $('#dmQuote').innerHTML = e ? `${m.quote}<small>心性小語（示範，正式版請道場審定）</small>` : '收服之後才會解鎖心性小語。';
+  $('#dexModal').hidden = false;
+}
+function drawDex(t){ const s = t/1000; dexCards.forEach(({ cv, m, e }, i) => drawCardCv(cv, m, s, { seed:i, sil: !e, gold: e && e.gold && Math.sin(s*0.5 + i) > 0.6 })); if(!$('#dexModal').hidden && dexModalM) drawCardCv($('#dmCv'), dexModalM, s, { sil: !dex.m[dexModalM.name] }); }
+$('#btnDexT').addEventListener('click', openDex);
+$('#btnDexR').addEventListener('click', openDex);
+$('#btnDexClose').addEventListener('click', () => { $('#scrDex').hidden = true; });
+$('#dmClose').addEventListener('click', () => { $('#dexModal').hidden = true; dexModalM = null; });
+$('#btnDexT').textContent = `📖 淨心錄（${dexCount()} / ${MONS.length}）`;
+
 /* ---------------- 按鈕 ---------------- */
 $('#btnStart').addEventListener('click', startGyro);
 $('#btnTouch').addEventListener('click', () => { audioInit(); inputMode = 'touch'; keepAwake(); $('#scrTitle').hidden = true; runGame(); });
