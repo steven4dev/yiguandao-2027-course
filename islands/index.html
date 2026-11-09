@@ -644,7 +644,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261109.04</span>
+  <span class="ver">v261109.05</span>
   </div></div>
 </div>
 
@@ -5191,6 +5191,123 @@ const PT3 = {};   // 吹氣會動到的 3D 物件
 // 字型載入後再畫一次，石碑上的字才會是楷體
 if (document.fonts) document.fonts.ready.then(() => PT3.redrawStele());
 
+/* =========================================================
+   拂塵淨心島：全真島右後方的外海（135°、離中心 108），跟法會島、輔導島、清淨菩提島都留一大片海。
+   島中央一座兩層白玉台，木架上斜架著一支巨大的拂塵（照實物：黑色握把、竹節木柄、金屬套環、網罩圓頭、紅色綁繩、白色馬尾），
+   馬尾從圓頭順著柄的方向出來、拱一下再垂到台邊。四周六尊小塵靈石像：色、聲、香、味、觸、法。
+   互動是體感小遊戲「拂塵試煉」（islands/fuchen-game/），從資訊卡進去。
+   ========================================================= */
+// 跟清淨菩提島、濟世靈山島一樣先封起來：一般人看到施工圍籬和「施工中」。
+// 測試的人在網址加上 ?fuchen=測試碼（islands/?fuchen=fcq-7k3p#fuchen）打開測試模式，記在那支手機上；?fuchen=off 關掉。
+const FC_LIVE = false;
+const FC_TEST_TOKEN = 'fcq-7k3p', FC_TEST_KEY = 'islands-fuchen-test';
+const fcTester = (() => {
+  try {
+    const q = new URLSearchParams(location.search), v = q.get('fuchen');
+    if (v === FC_TEST_TOKEN) localStorage.setItem(FC_TEST_KEY, '1');
+    else if (v === 'off') localStorage.removeItem(FC_TEST_KEY);
+    if (v !== null) { q.delete('fuchen'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }   // 測試碼不留在網址上
+    return localStorage.getItem(FC_TEST_KEY) === '1';
+  } catch (e) { return false; }
+})();
+const fcOpen = FC_LIVE || fcTester;
+const FC_ANG = (135 * Math.PI) / 180, FC_R = 13;
+const fcIsl = makeIsland('fuchen', FC_R, Math.sin(FC_ANG) * 108, Math.cos(FC_ANG) * 108, 'fuchen');
+{
+  const g = fcIsl.group;
+  const mark = new THREE.Group(); mark.rotation.y = Math.round(Math.atan2(HOME.pos.x - fcIsl.x, HOME.pos.z - fcIsl.z) / (Math.PI / 3)) * (Math.PI / 3); g.add(mark);
+  fcIsl.mark = mark;
+  const UP = new THREE.Vector3(0, 1, 0);
+  // 兩點之間放一根圓柱（柄、套環、綁繩都用它）
+  const rod = (a, b, r, mat, parent, seg = 12) => {
+    const d = b.clone().sub(a), m = mesh(new THREE.CylinderGeometry(r, r, d.length(), seg), mat, 0, 0, 0, parent);
+    m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); return m;
+  };
+  /* —— 白玉台＋小徑 —— */
+  const jadeM = lam('#e3ebe6'), jadeM2 = lam('#f3f7f4'), woodM = lam('#7a5130'), woodDark = lam('#5a3a20');
+  mesh(new THREE.CylinderGeometry(4.6, 5.0, 0.6, 28), jadeM, 0, 0.3, -0.6, mark);
+  mesh(new THREE.CylinderGeometry(3.9, 4.2, 0.4, 28), jadeM2, 0, 0.8, -0.6, mark);
+  addObst(mark, { x: 0, z: -0.6, r: 5.0 });
+  for (let i = 0; i < 5; i++) { const st = mesh(new THREE.CylinderGeometry(0.75, 0.8, 0.14, 8), lam('#c9ccc2'), (i % 2 ? 0.35 : -0.35), 0.07, 5.2 + i * 1.5, mark); st.rotation.y = i; }
+  /* —— 巨型拂塵：握把在台上，往左上斜，木架托住柄的中段 —— */
+  const FU = new THREE.Group(); FU.position.set(0, 1.0, -0.6); mark.add(FU);
+  const grip = new THREE.Vector3(2.6, 0.15, 0.4), head = new THREE.Vector3(-1.5, 7.4, -0.5), dir = head.clone().sub(grip).normalize();
+  const along = (k) => grip.clone().add(dir.clone().multiplyScalar(k));
+  const L = head.distanceTo(grip), HR = 0.22;
+  rod(grip, along(1.7), HR * 1.15, lam('#25201c'), FU);                                   // 黑色握把
+  rod(along(1.7), along(L - 0.75), HR, lam('#b9895a'), FU);                              // 竹節木柄
+  for (let k = 2.6; k < L - 1; k += 1.25) rod(along(k), along(k + 0.09), HR * 1.12, woodDark, FU, 10);   // 竹節
+  rod(along(L - 0.8), along(L - 0.5), HR * 1.4, lam('#c9a24e'), FU);                     // 金屬套環
+  // 網罩圓頭：蛋形、菱形編織紋
+  const meshTex = canvasTex(128, 128, (c) => { c.fillStyle = '#3a3734'; c.fillRect(0, 0, 128, 128); c.strokeStyle = 'rgba(205,205,198,.55)'; c.lineWidth = 3; for (let k = -128; k <= 256; k += 16) { c.beginPath(); c.moveTo(k, 0); c.lineTo(k - 128, 128); c.stroke(); c.beginPath(); c.moveTo(k - 128, 0); c.lineTo(k, 128); c.stroke(); } }, true);
+  meshTex.repeat.set(3, 2);
+  const bulb = mesh(new THREE.SphereGeometry(0.62, 18, 14), new THREE.MeshLambertMaterial({ map: meshTex }), 0, 0, 0, FU);
+  bulb.scale.set(1, 1.45, 1); bulb.position.copy(along(L)); bulb.quaternion.setFromUnitVectors(UP, dir);
+  const tip = along(L + 0.8);
+  rod(along(L + 0.62), along(L + 0.95), 0.36, lam('#a82b24'), FU);                       // 紅色綁繩
+  // 白色馬尾：從綁繩順著柄的方向出來，拱一下再往左垂到台邊；幾束粗細不同的馬尾疊成一大把，越往末端越細
+  const hairM = lam('#f6f2ea', { emissive: '#2b2720' }), hairM2 = lam('#e8e1d2');
+  const side = new THREE.Vector3(0, 0, 1);
+  const base = [tip, tip.clone().add(dir.clone().multiplyScalar(1.1)).add(new THREE.Vector3(-0.5, 0.3, 0)), new THREE.Vector3(-3.6, 8.2, -0.5), new THREE.Vector3(-4.6, 6.4, -0.4), new THREE.Vector3(-4.9, 3.9, -0.3), new THREE.Vector3(-4.7, 2.0, -0.2)];
+  const strands = [[0, 0, 0.62, hairM], [0.18, 0.1, 0.42, hairM2], [-0.2, -0.1, 0.44, hairM], [0.05, 0.25, 0.36, hairM], [-0.08, -0.28, 0.36, hairM2]];
+  for (const [ox, oz, r0, m] of strands) {
+    const pts = base.map((p, i) => i === 0 ? p.clone() : p.clone().add(new THREE.Vector3(ox * i * 0.5, 0, 0)).add(side.clone().multiplyScalar(oz * i * 0.4)));
+    const curve = new THREE.CatmullRomCurve3(pts), TS = 48, RS = 10;
+    const geo = new THREE.TubeGeometry(curve, TS, r0, RS, false), pos = geo.attributes.position, c = new THREE.Vector3(), v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {   // 由粗到細：出綁繩後略為散開，再收細到末端
+      const t = Math.floor(i / (RS + 1)) / TS, k = (1 + 0.6 * Math.sin(Math.min(1, t / 0.25) * Math.PI / 2)) * Math.pow(1 - t, 0.85) + 0.02;
+      curve.getPointAt(Math.min(1, t), c); v.fromBufferAttribute(pos, i).sub(c).multiplyScalar(k).add(c); pos.setXYZ(i, v.x, v.y, v.z);
+    }
+    geo.computeVertexNormals(); mesh(geo, m, 0, 0, 0, FU);
+  }
+  // 木架：一根立柱，頂端的托架托住柄
+  const cradle = along(L * 0.45);
+  rod(new THREE.Vector3(cradle.x + 0.15, 0, cradle.z), new THREE.Vector3(cradle.x, cradle.y - 0.3, cradle.z), 0.16, woodM, FU);
+  rod(cradle.clone().add(new THREE.Vector3(-0.45, -0.15, 0)), cradle.clone().add(new THREE.Vector3(0.45, -0.35, 0)), 0.1, woodDark, FU);
+  mesh(new THREE.CylinderGeometry(0.6, 0.7, 0.18, 10), woodDark, cradle.x + 0.15, 0.09, cradle.z, FU);
+  /* —— 六尊小塵靈石像：色、聲、香、味、觸、法（各系的顏色） —— */
+  const DUST_C = ['#d3a6e3', '#f2b47c', '#b9bdf0', '#cfe28c', '#a2cdea', '#93dccb'], eyeM = lam('#2a1f18');
+  DUST_C.forEach((col, i) => {
+    const a = Math.PI * 0.62 + (i / 5) * Math.PI * 0.76 + Math.PI, x = Math.sin(a) * 7.6, z = Math.cos(a) * 7.6 - 0.6;
+    const S = new THREE.Group(); S.position.set(x, 0, z); S.rotation.y = Math.atan2(-x, -(z + 0.6)) + Math.PI; mark.add(S);
+    mesh(new THREE.CylinderGeometry(0.75, 0.85, 0.5, 8), lam('#c9ccc2'), 0, 0.25, 0, S);
+    const b = mesh(new THREE.IcosahedronGeometry(0.72, 1), lam(col), 0, 1.15, 0, S); b.scale.set(1, 0.92, 1);
+    for (const ex of [-0.24, 0.24]) mesh(new THREE.SphereGeometry(0.09, 8, 6), eyeM, ex, 1.25, 0.64, S);
+    addObst(mark, { x, z, r: 0.9 });
+  });
+  /* —— 松樹、花叢 —— */
+  for (const [x, z, h] of [[-8.6, -5.2, 2.6], [8.2, -5.8, 2.3], [-7.4, 4.6, 2.0], [9.0, 2.8, 1.9]]) pine(x, z, h, mark);
+  bush(5.6, 5.4, 0.6, mark, lam('#f2b8cb')); bush(-5.2, 6.6, 0.55, mark, lam('#f6d27a')); bush(-9.2, -0.6, 0.5, mark, hillMat2);
+  // 還沒開放：施工圍籬＋「施工中」告示牌（跟清淨菩提島一樣；測試模式看不到圍籬）
+  if (!fcOpen) {
+    const FN = new THREE.Group(); FN.userData.noMerge = true; g.add(FN);
+    const fTex = canvasTex(256, 64, (c) => {
+      c.fillStyle = '#f4f1ea'; c.fillRect(0, 0, 256, 64);
+      c.fillStyle = '#e0602a'; for (let i = -1; i < 9; i++) { c.beginPath(); c.moveTo(i * 32, 64); c.lineTo(i * 32 + 16, 64); c.lineTo(i * 32 + 40, 0); c.lineTo(i * 32 + 24, 0); c.fill(); }
+      c.fillStyle = '#2f6b45'; c.fillRect(0, 0, 256, 6); c.fillRect(0, 58, 256, 6);
+    }, true);
+    const postM = lam('#5f6b73'), RF = FC_R * 0.97;
+    for (let k = 0; k < 6; k++) {
+      const a0 = Math.PI / 6 + (k * Math.PI) / 3, a1 = a0 + Math.PI / 3;
+      const p0 = new THREE.Vector3(Math.sin(a0) * RF, 0, Math.cos(a0) * RF), p1 = new THREE.Vector3(Math.sin(a1) * RF, 0, Math.cos(a1) * RF);
+      const len = p0.distanceTo(p1), mid = p0.clone().add(p1).multiplyScalar(0.5);
+      const m = new THREE.MeshLambertMaterial({ map: fTex.clone(), side: THREE.DoubleSide }); m.map.repeat.set(len / 4, 1); m.map.needsUpdate = true;
+      const panel = mesh(new THREE.PlaneGeometry(len, 1.6), m, mid.x, 0.8, mid.z, FN, false);
+      panel.rotation.y = Math.atan2(p1.x - p0.x, p1.z - p0.z) + Math.PI / 2;
+      for (let i = 0; i <= Math.round(len / 3); i++) { const q = p0.clone().lerp(p1, i / Math.round(len / 3)); mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.8, 6), postM, q.x, 0.9, q.z, FN, false); }
+    }
+    const sTex = canvasTex(512, 200, (c) => {
+      c.fillStyle = '#f2b632'; c.fillRect(0, 0, 512, 200);
+      c.fillStyle = '#1f1a1a'; c.font = 'bold 50px "Noto Sans TC", "PingFang TC", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText('🚧 拂塵淨心島 施工中', 256, 80); c.font = 'bold 40px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText('即將開放・敬請期待', 256, 154);
+    });
+    const sy = new THREE.Group(); sy.rotation.y = mark.rotation.y; FN.add(sy);
+    const edgeR = RF * Math.cos(Math.PI / 6), signY = lam('#f2b632');
+    mesh(new THREE.BoxGeometry(5.2, 2, 0.1), [signY, signY, signY, signY, new THREE.MeshLambertMaterial({ map: sTex }), signY], 0, 1.75, edgeR + 0.25, sy);
+    for (const x of [-2.2, 2.2]) mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.8, 6), postM, x, 1.4, edgeR + 0.18, sy);
+  }
+}
+
 /* ---------- 清淨菩提島：吹散無明 ----------
    流程（狀態機）：idle → perm（請開啟麥克風）→ calib（先聽 0.8 秒環境音當底噪）→ blow（吹氣累積 progress 0～100）→ cleared（雲開見日）→ 回到 idle
    吹氣偵測只用 Web Audio 的 AnalyserNode 即時算音量和頻譜，不錄音、不上傳，聲音也不會接到喇叭。
@@ -6115,6 +6232,7 @@ addTag(zyIsl, '🏮 中一島・凝聚晚會 11/28', 'main', 8);   // 跟忠恕�
 addTag(bottleIsl, '🍾 漂流瓶島', 'small', 4.8);
 addTag(jsIsl, jsOpen ? '⛰️ 濟世靈山島・抽籤' : '🚧 濟世靈山島・施工中', 'main', 13);
 addTag(ptIsl, ptOpen ? '清淨菩提島 🎮' : '🚧 清淨菩提島・施工中', 'main', 12);   // 跟有小遊戲的課程島一樣，名字後面加 🎮
+addTag(fcIsl, fcOpen ? '拂塵淨心島 🎮' : '🚧 拂塵淨心島・施工中', 'main', 12);
 // 登島是重要入口：渡口島的標籤排在全真島和課程島之後、其他小標籤之前
 tags.splice(1 + COURSES.length, 0, tags.pop());
 // 瞭望氣球的小標籤跟著氣球飄，點了就是搜尋
@@ -6402,6 +6520,18 @@ function renderPanel() {
     html = `<header><span class="eyebrow">外海・雲開見日洲</span><h2>🪷 清淨菩提島</h2><p class="sub">對著麥克風長吹一口氣，吹散遮住靈山的雲霧</p></header>
       <div id="ptSlot"></div>
       <p class="note">島的中央是一座古樸的智慧石碑，碑前的蓮池裡有一朵含苞的清淨蓮花；左邊一棵菩提樹，後面一座小靈山，前面是踏石小徑和兩座石燈。雲霧散開後，蓮花綻放發光、石碑浮現金字，天上會落下一道光。</p>
+      <button class="back" data-go="temple">← 回到全真島</button>`;
+  } else if (isl && isl.kind === 'fuchen' && !fcOpen) {
+    title = '拂塵淨心島'; info = '施工中・敬請期待';
+    html = `<header><span class="eyebrow">外海・施工中</span><h2>🚧 拂塵淨心島</h2><p class="sub">新島正在整地施工，整座島用施工圍籬圍起來，完工後開放</p></header>
+      <p class="note">圍籬裡面隱約看得到一座白玉台，木架上斜架著一支巨大的拂塵，白色的馬尾垂到台邊；四周站著六尊圓滾滾的小石像。聽說完工後要拿起手機當拂塵，敬請期待。</p>
+      <button class="back" data-go="temple">← 回到全真島</button>`;
+  } else if (isl && isl.kind === 'fuchen') {
+    title = '拂塵淨心島'; info = '拂塵試煉・體感打怪';
+    html = `<header><span class="eyebrow">外海・${FC_LIVE ? '拂塵試煉' : '測試中'}</span><h2>🪶 拂塵淨心島</h2><p class="sub">時時勤拂拭，勿使惹塵埃——手機就是拂塵柄，大揮一拂，把六塵精淨化收進淨心錄</p></header>
+      <div class="cta"><p>${fcTester && !FC_LIVE ? '🔧 測試中：只有這支手機看得到入口，其他人看到的是施工圍籬。<br>' : ''}看清符印、等倒數、聽到「揮！」就整隻手臂揮出去；塵精一揮、塵妖要兩連擊，最後收服無明塵王。收服的塵靈會收進「淨心錄」。</p><a href="fuchen-game/">🎮 進入拂塵試煉</a></div>
+      <p class="note">島中央是一座兩層白玉台，木架上斜架著一支巨大的拂塵：黑色握把、竹節木柄、網罩圓頭、紅色綁繩，白色馬尾垂到台邊。四周六尊小塵靈石像，代表色、聲、香、味、觸、法六塵。</p>
+      ${fcTester && !FC_LIVE ? '<p class="note"><a class="cta-link" href="fuchen-lab/">🧪 揮符實驗室（測感測器）</a>　<a class="cta-link" href="?fuchen=off#fuchen">結束測試</a></p>' : ''}
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongshu') {
     title = '忠恕島'; info = '施工中・敬請期待';
@@ -6760,7 +6890,7 @@ function renderNav() {
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島</span></a>
     <button class="home" data-howto><span aria-hidden="true">👆</span><span>操作說明：旋轉、平移、縮放</span></button>
-    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('hope', '🍎 希望島・祈福樹與噴泉')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${jsOpen ? navItem('jishi', '⛰️ 濟世靈山島・濟公活佛體感抽籤', JS_DAILY && jsTodayFortune() ? '今日已抽' : '') : navItem('jishi', '🚧 濟世靈山島・施工中')}${ptOpen ? navItem('puti', '🪷 清淨菩提島・吹散無明、雲開見日', ptToday() ? '今日已雲開' : '') : navItem('puti', '🚧 清淨菩提島・施工中')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
+    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('hope', '🍎 希望島・祈福樹與噴泉')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${jsOpen ? navItem('jishi', '⛰️ 濟世靈山島・濟公活佛體感抽籤', JS_DAILY && jsTodayFortune() ? '今日已抽' : '') : navItem('jishi', '🚧 濟世靈山島・施工中')}${ptOpen ? navItem('puti', '🪷 清淨菩提島・吹散無明、雲開見日', ptToday() ? '今日已雲開' : '') : navItem('puti', '🚧 清淨菩提島・施工中')}${fcOpen ? navItem('fuchen', '🪶 拂塵淨心島・拂塵試煉（體感打怪）') : navItem('fuchen', '🚧 拂塵淨心島・施工中')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
@@ -6797,6 +6927,8 @@ const PLACES = [
     : { key: 'jishi', icon: '🚧', title: '濟世靈山島', sub: '施工中・敬請期待', words: ['濟世靈山島', '靈山', '施工', '建置中'] },
   ptOpen ? { key: 'puti', icon: '🪷', title: '清淨菩提島', sub: '雲開見日洲・對著麥克風吹散雲霧，每天一句破關金句', words: ['清淨菩提島', '菩提島', '菩提', '雲開見日', '雲開見日洲', '清淨', '蓮花', '石碑', '吹氣', '雲霧', '無明', '金句', '麥克風'] }
     : { key: 'puti', icon: '🚧', title: '清淨菩提島', sub: '施工中・敬請期待', words: ['清淨菩提島', '菩提島', '菩提', '雲開見日', '施工', '建置中'] },
+  fcOpen ? { key: 'fuchen', icon: '🪶', title: '拂塵淨心島', sub: '拂塵試煉・手機當拂塵柄，淨化六塵精收進淨心錄', words: ['拂塵淨心島', '拂塵島', '拂塵', '淨心', '試煉', '六塵', '塵靈', '淨心錄', '體感', '打怪'] }
+    : { key: 'fuchen', icon: '🚧', title: '拂塵淨心島', sub: '施工中・敬請期待', words: ['拂塵淨心島', '拂塵島', '拂塵', '淨心', '施工', '建置中'] },
   { key: 'newisle', icon: '🚧', title: '忠恕島', sub: '忠恕道院・施工中', words: ['忠恕島', '忠恕道院', '忠恕', '大殿', '施工', '建置中'] },
   { key: 'zhongyi', icon: '🏮', title: '中一島', sub: '中一堂・全真青年凝聚晚會 11/28', words: ['中一島', '中一堂', '中一', '忠恕道場', '凝聚晚會', '晚會', '烤肉', '烤盤', '住宿', '青年'] },
   { key: 'hope', icon: '🍎', title: '希望島', sub: '祈福樹與噴泉', words: ['希望島', '希望', '祈福樹', '祈福', '蘋果', '噴泉', '許願'] },
