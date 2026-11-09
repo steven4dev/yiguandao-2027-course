@@ -97,7 +97,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
   <div class="panel">
     <h1>🪶 拂塵試煉</h1>
     <p class="note" style="margin-top:0">拂塵淨心島・體感小遊戲（測試版）</p>
-    <p>「時時勤拂拭，勿使惹塵埃。」六塵的塵靈從霧裡飄出來了！手機就是您的拂塵柄：<b>看清符印</b>、等倒數、聽到「<b>揮！</b>」就大揮一拂，把它們淨化、<b>收進淨心錄</b>。塵妖要<b>兩連擊</b>才收得服。</p>
+    <p>「時時勤拂拭，勿使惹塵埃。」六塵的塵靈從霧裡飄出來了！手機就是您的拂塵柄：<b>看清符印</b>、等倒數、聽到「<b>揮</b>」就大揮一拂，把它們淨化、<b>收進淨心錄</b>。塵妖要<b>兩連擊</b>才收得服。</p>
     <ul>
       <li>🤚 手機直立握著，螢幕大致朝向自己；<b>整隻手臂揮出去</b>，手腕怎麼翻都沒關係。</li>
       <li>👀 揮的時候不用看螢幕，聽到「叮」再回來看拂塵的招式。</li>
@@ -135,7 +135,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     <div class="row">
       <button class="primary big" id="btnAgain">再試煉一次</button>
       <button id="btnDexR">📖 看淨心錄</button>
-      <button id="btnLab" onclick="location.href='../fuchen-lab/'">回揮符實驗室</button>
+      <button id="btnIsle" onclick="location.href='../#fuchen'">🏝️ 回到拂塵淨心島</button>
     </div>
   </div>
 </section>
@@ -154,7 +154,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.09';
+const VERSION = 'v261109.10';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -532,16 +532,18 @@ function drawMouth(c, fam, st, r, t, opt){
   if(st < 3){ c.fillStyle = 'rgba(255,140,140,.45)'; for(const s of [-1,1]){ c.beginPath(); c.ellipse(s*r*0.56, r*0.1, r*0.1, r*0.06, 0, 0, TAU); c.fill(); } }
 }
 // 各系配件
-function drawAcc(c, fam, st, r, t, opt){
+// pass：'back' 畫在身體後面、'front' 畫在身體前面；繞著身體轉的配件（面具、食物、問號）轉到前面時才畫在前面
+function drawAcc(c, fam, st, r, t, opt, pass = 'back'){
+  const F = pass === 'front', depthOk = a => (Math.sin(a) > 0) === F;
   c.save();
   if(fam === 'se'){
     // 手鏡 → 頭頂鏡冠 → 環繞的面具
     const mirror = (x, y, s, a) => { c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = '#c9a24e'; c.fillRect(-s*0.08, s*0.35, s*0.16, s*0.5); c.beginPath(); c.ellipse(0, 0, s*0.32, s*0.42, 0, 0, TAU); c.fill(); c.fillStyle = '#dff3ff'; c.beginPath(); c.ellipse(0, 0, s*0.25, s*0.34, 0, 0, TAU); c.fill(); c.fillStyle = 'rgba(255,255,255,.8)'; c.beginPath(); c.ellipse(-s*0.07, -s*0.1, s*0.06, s*0.14, 0.4, 0, TAU); c.fill(); c.restore(); };
-    if(st === 1) mirror(r*0.95, r*0.15, r*0.7, 0.3 + Math.sin(t*2)*0.1);
-    if(st >= 2){ mirror(0, -r*1.15, r*0.75, 0); for(let k=0;k<4;k++){ const a = t*1.5 + k*1.6; c.fillStyle = `rgba(255,240,255,${0.5 + 0.5*Math.sin(a*2)})`; c.font = `${r*0.25}px sans-serif`; c.fillText('✦', Math.cos(a)*r*1.15, Math.sin(a)*r*0.9); } }
-    if(st === 3){ for(let k=0;k<3;k++){ const a = t*0.8 + k*TAU/3, x = Math.cos(a)*r*1.35, y = Math.sin(a)*r*0.5 + r*0.2; c.save(); c.translate(x, y); c.fillStyle = ['#f6f1e7','#e9c2d6','#cfc6f2'][k]; c.beginPath(); c.ellipse(0, 0, r*0.22, r*0.28, 0, 0, TAU); c.fill(); c.fillStyle = '#2a1f18'; c.beginPath(); c.ellipse(-r*0.07, -r*0.04, r*0.035, r*0.05, 0, 0, TAU); c.ellipse(r*0.07, -r*0.04, r*0.035, r*0.05, 0, 0, TAU); c.fill(); c.strokeStyle = '#2a1f18'; c.lineWidth = r*0.025; c.beginPath(); c.arc(0, r*0.1, r*0.06, k === 1 ? 1.1*Math.PI : 0.1*Math.PI, k === 1 ? 1.9*Math.PI : 0.9*Math.PI); c.stroke(); c.restore(); } }
+    if(!F && st === 1) mirror(r*0.95, r*0.15, r*0.7, 0.3 + Math.sin(t*2)*0.1);
+    if(st >= 2){ if(!F) mirror(0, -r*1.15, r*0.75, 0); for(let k=0;k<4;k++){ const a = t*1.5 + k*1.6; if(!depthOk(a)) continue; c.fillStyle = `rgba(255,240,255,${0.5 + 0.5*Math.sin(a*2)})`; c.font = `${r*0.25}px sans-serif`; c.fillText('✦', Math.cos(a)*r*1.15, Math.sin(a)*r*0.9); } }
+    if(st === 3){ for(let k=0;k<3;k++){ const a = t*0.8 + k*TAU/3, x = Math.cos(a)*r*1.35, y = Math.sin(a)*r*0.5 + r*0.2; if(!depthOk(a)) continue; c.save(); c.translate(x, y); c.fillStyle = ['#f6f1e7','#e9c2d6','#cfc6f2'][k]; c.beginPath(); c.ellipse(0, 0, r*0.22, r*0.28, 0, 0, TAU); c.fill(); c.fillStyle = '#2a1f18'; c.beginPath(); c.ellipse(-r*0.07, -r*0.04, r*0.035, r*0.05, 0, 0, TAU); c.ellipse(r*0.07, -r*0.04, r*0.035, r*0.05, 0, 0, TAU); c.fill(); c.strokeStyle = '#2a1f18'; c.lineWidth = r*0.025; c.beginPath(); c.arc(0, r*0.1, r*0.06, k === 1 ? 1.1*Math.PI : 0.1*Math.PI, k === 1 ? 1.9*Math.PI : 0.9*Math.PI); c.stroke(); c.restore(); } }
   }
-  if(fam === 'sheng'){
+  if(fam === 'sheng' && !F){
     // 小喇叭 → 大喇叭＋聲波 → 雙喇叭角＋滿天聲波
     const horn = (x, y, s, a) => { c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = '#c9a24e'; c.beginPath(); c.moveTo(0, -s*0.12); c.lineTo(s*0.7, -s*0.4); c.lineTo(s*0.7, s*0.4); c.lineTo(0, s*0.12); c.closePath(); c.fill(); c.fillStyle = '#7a5a1a'; c.beginPath(); c.ellipse(s*0.7, 0, s*0.1, s*0.4, 0, 0, TAU); c.fill(); c.restore(); };
     const waves = (x, y, n, a, s) => { c.strokeStyle = 'rgba(255,220,170,.8)'; c.lineWidth = r*0.05; for(let k=1;k<=n;k++){ const ph = ((t*1.6 + k*0.3) % 1); c.globalAlpha = 1 - ph; c.beginPath(); c.arc(x, y, s*(0.3 + ph*0.9), a - 0.6, a + 0.6); c.stroke(); } c.globalAlpha = 1; };
@@ -549,7 +551,7 @@ function drawAcc(c, fam, st, r, t, opt){
     if(st === 2){ horn(r*0.7, -r*0.5, r*0.9, -0.55); waves(r*1.35, -r*1.0, 3, -0.55, r); }
     if(st === 3){ horn(-r*0.45, -r*0.85, r*0.85, -2.1); horn(r*0.45, -r*0.85, r*0.85, -1.05); waves(-r*0.9, -r*1.5, 3, -2.1, r); waves(r*0.9, -r*1.5, 3, -1.05, r); }
   }
-  if(fam === 'xiang'){
+  if(fam === 'xiang' && !F){
     // 煙圈 → 線香＋煙 → 夢幻漩渦眼
     const wisp = (x, y, s, ph) => { c.strokeStyle = 'rgba(230,230,255,.75)'; c.lineWidth = r*0.05; c.beginPath(); for(let i=0;i<=20;i++){ const k = i/20; const xx = x + Math.sin(k*6 + t*2 + ph)*s*0.25, yy = y - k*s; i ? c.lineTo(xx, yy) : c.moveTo(xx, yy); } c.stroke(); };
     if(st === 1){ wisp(r*0.6, -r*0.7, r*0.7, 0); }
@@ -557,11 +559,11 @@ function drawAcc(c, fam, st, r, t, opt){
     if(st === 3){ for(let k=0;k<3;k++) wisp(-r*0.9 + k*r*0.9, -r*0.8, r*0.9, k*2); }
   }
   if(fam === 'wei'){
-    if(st === 1){ c.strokeStyle = '#a87b46'; c.lineWidth = r*0.08; c.beginPath(); c.moveTo(r*0.6, r*0.4); c.lineTo(r*1.15, r*1.0); c.stroke(); }
-    if(st === 2){ c.strokeStyle = '#a87b46'; c.lineWidth = r*0.09; c.beginPath(); c.moveTo(0, -r*1.25); c.lineTo(0, r*1.3); c.stroke(); }
-    if(st === 3){ for(let k=0;k<4;k++){ const a = t*1.2 + k*TAU/4; c.font = `${r*0.35}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(['🍡','🍰','🍜','🍙'][k], Math.cos(a)*r*1.3, Math.sin(a)*r*0.7 - r*0.3); } }
+    if(!F && st === 1){ c.strokeStyle = '#a87b46'; c.lineWidth = r*0.08; c.beginPath(); c.moveTo(r*0.6, r*0.4); c.lineTo(r*1.15, r*1.0); c.stroke(); }
+    if(!F && st === 2){ c.strokeStyle = '#a87b46'; c.lineWidth = r*0.09; c.beginPath(); c.moveTo(0, -r*1.25); c.lineTo(0, r*1.3); c.stroke(); }
+    if(st === 3){ for(let k=0;k<4;k++){ const a = t*1.2 + k*TAU/4; if(!depthOk(a)) continue; c.font = `${r*0.35}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(['🍡','🍰','🍜','🍙'][k], Math.cos(a)*r*1.3, Math.sin(a)*r*0.7 - r*0.3); } }
   }
-  if(fam === 'chu'){
+  if(fam === 'chu' && !F){
     const z = (x, y, s) => { c.fillStyle = 'rgba(200,230,255,.9)'; c.font = `900 ${s}px sans-serif`; c.fillText('z', x, y); };
     const ph = (t*0.8) % 1;
     if(st === 1){ z(r*0.65, -r*0.75 - ph*r*0.3, r*0.3); z(r*0.9, -r*1.05 - ph*r*0.3, r*0.22); }
@@ -570,9 +572,9 @@ function drawAcc(c, fam, st, r, t, opt){
   }
   if(fam === 'fa'){
     const q = (x, y, s, a) => { c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = 'rgba(220,255,245,.9)'; c.font = `900 ${s}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', 0, 0); c.restore(); };
-    if(st === 1) q(r*0.7, -r*0.85, r*0.5, 0.2);
-    if(st >= 2){ for(let k=0;k<3;k++){ const a = t*1.4 + k*TAU/3; q(Math.cos(a)*r*1.2, Math.sin(a)*r*0.5 - r*0.7, r*0.35, a); } }
-    if(st === 3){ c.strokeStyle = 'rgba(30,60,55,.8)'; c.lineWidth = r*0.05; for(let k=0;k<3;k++){ c.beginPath(); for(let i=0;i<=60;i++){ const a = i/60*TAU*2 + k*2 + t; const rr = r*(1.05 + 0.18*Math.sin(a*3 + k)); i ? c.lineTo(Math.cos(a)*rr, Math.sin(a)*rr*0.9) : c.moveTo(Math.cos(a)*rr, Math.sin(a)*rr*0.9); } c.stroke(); } }
+    if(!F && st === 1) q(r*0.7, -r*0.85, r*0.5, 0.2);
+    if(st >= 2){ for(let k=0;k<3;k++){ const a = t*1.4 + k*TAU/3; if(!depthOk(a)) continue; q(Math.cos(a)*r*1.2, Math.sin(a)*r*0.5 - r*0.7, r*0.35, a); } }
+    if(!F && st === 3){ c.strokeStyle = 'rgba(30,60,55,.8)'; c.lineWidth = r*0.05; for(let k=0;k<3;k++){ c.beginPath(); for(let i=0;i<=60;i++){ const a = i/60*TAU*2 + k*2 + t; const rr = r*(1.05 + 0.18*Math.sin(a*3 + k)); i ? c.lineTo(Math.cos(a)*rr, Math.sin(a)*rr*0.9) : c.moveTo(Math.cos(a)*rr, Math.sin(a)*rr*0.9); } c.stroke(); } }
   }
   c.restore();
 }
@@ -587,7 +589,7 @@ function drawDust(c, m, x, y, R, t, opt = {}){
   // 氣場
   if(!pure && st >= 2){ const g = c.createRadialGradient(0, 0, r*0.6, 0, 0, r*1.7); g.addColorStop(0, st === 3 ? 'rgba(120,40,80,.45)' : 'rgba(255,255,255,.12)'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, r*1.7, 0, TAU); c.fill(); }
   if(gold){ const g = c.createRadialGradient(0, 0, r*0.5, 0, 0, r*1.9); g.addColorStop(0, 'rgba(255,220,120,.55)'); g.addColorStop(1, 'rgba(255,220,120,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, r*1.9, 0, TAU); c.fill(); }
-  if(!pure) drawAcc(c, fam, st, r, t, opt);   // 有些配件在身體後面
+  if(!pure) drawAcc(c, fam, st, r, t, opt, 'back');   // 身體後面的配件
   if(!pure && st === 3) drawHorns(c, r);
   bodyPath(c, fam, pure ? 1 : st, r, t);
   const bg = c.createRadialGradient(-r*0.3, -r*0.4, r*0.08, 0, 0, r*1.15); bg.addColorStop(0, '#ffffff'); bg.addColorStop(0.3, body); bg.addColorStop(1, dark);
@@ -598,6 +600,7 @@ function drawDust(c, m, x, y, R, t, opt = {}){
   drawEyes(c, pure ? 1 : st, r, t, opt);
   drawMouth(c, fam, pure ? 1 : st, r, t, opt);
   if(fam === 'wei' && st === 2 && !pure) c.restore();
+  if(!pure) drawAcc(c, fam, st, r, t, opt, 'front');   // 轉到前面的配件蓋在身體上
   if(pure){ // 淨化後：頭上一朵小蓮花
     c.font = `${r*0.55}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🪷', 0, -r*1.05);
   }
@@ -957,7 +960,7 @@ const seeds = [];
 const CALM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const glyphCv = document.createElement('canvas'), gctx = glyphCv.getContext('2d');
 function cdFont(text){ const u = U(); return Math.round(text.length > 1 ? u*0.34 : u*0.62); }
-function burstGlyph(text, cx, cy){
+function burstGlyph(text, cx, cy, sc = 1){
   if(CALM) return;
   const fs = cdFont(text), wC = Math.ceil(fs*(text.length*1.05 + 0.2)), hC = Math.ceil(fs*1.25);
   glyphCv.width = wC; glyphCv.height = hC; gctx.clearRect(0, 0, wC, hC);
@@ -967,7 +970,7 @@ function burstGlyph(text, cx, cy){
   for(let i=pts.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [pts[i], pts[j]] = [pts[j], pts[i]]; }
   pts.slice(0, 80).forEach(([x, y], k) => {
     const a = -Math.PI/2 + (Math.random() - .5)*Math.PI*1.3, v = 1.4 + Math.random()*2.6;
-    seeds.push({ x: cx + x - wC/2, y: cy + y - hC/2, vx: Math.cos(a)*v, vy: Math.sin(a)*v - 0.6, sway: (Math.random() - .5)*0.06, ph: Math.random()*6.28,
+    seeds.push({ x: cx + (x - wC/2)*sc, y: cy + (y - hC/2)*sc, vx: Math.cos(a)*v, vy: Math.sin(a)*v - 0.6, sway: (Math.random() - .5)*0.06, ph: Math.random()*6.28,
       rot: (Math.random() - .5)*0.02, ang: (Math.random() - .5)*0.6, life: 1, delay: Math.random()*0.12, pink: k % 5 === 1 || k % 5 === 3 });
   });
 }
@@ -976,12 +979,12 @@ function drawCountdown(t){
   if(dim > 0.01){ ctx.fillStyle = `rgba(4,6,10,${dim})`; ctx.fillRect(0, 0, W, H); }
   // 數字
   if(cd){
-    const e = (t - cd.t0)/1000, fs = cdFont(cd.text), cx = W/2, cy = H/2;
-    if(!cd.burst && e >= cd.hold){ cd.burst = true; burstGlyph(cd.text, cx, cy); }
-    const appear = Math.min(1, e/0.15), fade = cd.burst ? Math.max(0, 1 - (e - cd.hold)/(CALM ? 0.3 : 0.18)) : 1;
-    if(fade > 0){
-      const sc = 0.6 + 0.4*(1 - Math.pow(1 - appear, 3));
-      ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc); ctx.globalAlpha = appear*fade;
+    // 一出現就是最亮；接著慢慢放大、同時淡掉，淡到一半時整個字散成蒲公英飄走
+    const e = (t - cd.t0)/1000, fs = cdFont(cd.text), cx = W/2, cy = H/2, k = Math.min(1, e/cd.dur);
+    const sc = CALM ? 1 : 0.85 + 0.75*(1 - Math.pow(1 - k, 2)), fade = 1 - Math.pow(k, 1.6);
+    if(!cd.burst && k >= 0.38){ cd.burst = true; burstGlyph(cd.text, cx, cy, sc); }
+    if(fade > 0.01){
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc); ctx.globalAlpha = fade*Math.min(1, e/0.08);
       ctx.font = `900 ${fs}px "Noto Sans TC", "PingFang TC", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       const g = ctx.createLinearGradient(0, -fs/2, 0, fs/2); g.addColorStop(0, '#ffffff'); g.addColorStop(0.55, '#fff3cf'); g.addColorStop(1, '#f2c96a');
       ctx.shadowColor = 'rgba(255,214,120,.95)'; ctx.shadowBlur = fs*0.18; ctx.fillStyle = g; ctx.fillText(cd.text, 0, 0);
@@ -1148,12 +1151,12 @@ function center(html){ $('#center').innerHTML = html || ''; }
 /* ---------------- 一次揮拂：倒數 → 揮 → 叮 ---------------- */
 async function countdown(beats){
   center(''); dimTarget = 0.65; document.body.dataset.phase = 'count';
-  for(let i=beats;i>=1;i--){ cd = { text:String(i), t0:performance.now(), hold:0.55, burst:false }; sfx.beat(); vib(30); await wait(900); }
+  for(let i=beats;i>=1;i--){ cd = { text:String(i), t0:performance.now(), dur:0.9, burst:false }; sfx.beat(); vib(30); await wait(900); }
 }
-function record(ms, th0, word = '揮！'){
+function record(ms, th0, word = '揮'){
   return new Promise((resolve, reject) => {
     const T0 = th0 || th(); sfx.go(); vib(140);
-    dimTarget = 0; cd = { text:word, t0:performance.now(), hold:0.4, burst:false }; document.body.dataset.phase = 'swing';
+    dimTarget = 0; cd = { text:word, t0:performance.now(), dur:0.8, burst:false }; document.body.dataset.phase = 'swing';
     let done = false, timer = 0;
     const finish = () => { if(done) return; done = true; clearTimeout(timer); clearInterval(poll); if(rec) rec.active = false; detachTouch(); resolve({ pts: rec.integ ? rec.integ.pts : rec.touchPts, input: inputMode, raw: rec.raw }); };
     const poll = setInterval(() => { if(cancelFlag && !done){ done = true; clearTimeout(timer); clearInterval(poll); if(rec) rec.active = false; detachTouch(); reject('cancel'); } }, 50);
@@ -1231,7 +1234,7 @@ async function encounter(opt){
   for(let i=0;i<keys.length;i++){
     document.body.dataset.key = keys[i];   // 這一揮要畫的符號（自動測試用）
     if(i > 0){ sfx.ding(); await wait(350); }
-    const st = await record(SYMS[keys[i]].kind === 'dir' ? 1600 : 2800, th0, i > 0 ? '再揮！' : '揮！'); strokes.push(st); lastStroke = st; if(i < keys.length - 1){ document.body.dataset.key = keys[i + 1]; document.body.dataset.phase = 'gap'; }
+    const st = await record(SYMS[keys[i]].kind === 'dir' ? 1600 : 2800, th0, i > 0 ? '再揮' : '揮'); strokes.push(st); lastStroke = st; if(i < keys.length - 1){ document.body.dataset.key = keys[i + 1]; document.body.dataset.phase = 'gap'; }
   }
   document.body.dataset.phase = ''; sfx.ding(); vib(50); center('<div class="mid">叮～</div>'); await wait(250); center('');
   const rs = keys.map((k, i) => judgeSwing(k, strokes[i], th0)); tries++;
