@@ -50,6 +50,9 @@ button.big{width:100%;font-size:1.1rem;padding:14px}
 .quote small{display:block;color:var(--muted);font-size:.75rem;margin-top:4px}
 .ver{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom) + 4px);font-size:.65rem;color:rgba(255,255,255,.35);pointer-events:none}
 .mir{display:inline-block;transform:scaleX(-1)}
+/* 倒數時只有數字亮：上方資訊列、下方按鈕也一起暗下來 */
+.hud,.bottom{transition:opacity .25s}
+body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 </style>
 </head>
 <body>
@@ -114,7 +117,7 @@ button.big{width:100%;font-size:1.1rem;padding:14px}
 
 <script>
 'use strict';
-const VERSION = 'v261109.06';
+const VERSION = 'v261109.07';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -504,7 +507,6 @@ function layoutScene(){
   REST = { x:W*0.70, y:H*0.66 };
   GRIP = { x:W*0.98, y:H*1.02 };
   if(fu) fu.reset(REST.x, REST.y);
-  altarFu = null;
 }
 
 /* 背景：夜色、星點、遠山、雲霧，下方是千絲拂塵台 */
@@ -524,9 +526,26 @@ function drawBackground(t){
   // 雲霧
   for(const m of mist){ m.x += m.s/60; if(m.x > 1.3) m.x = -0.5; const gx = ctx.createRadialGradient(m.x*W, m.y*H, 0, m.x*W, m.y*H, m.w*W*0.5);
     gx.addColorStop(0, 'rgba(190,210,230,.10)'); gx.addColorStop(1, 'rgba(190,210,230,0)'); ctx.fillStyle = gx; ctx.fillRect(0, 0, W, H); }
-  drawAltar(t);
+  drawMoon(t);
 }
 // 千絲拂塵台：白玉圓台上立著一支巨大的拂塵，淨化越多越亮
+/* 夜空中的明月（心如明鏡）：每淨化一隻就亮一點、由眉月漸漸變圓，打倒魔王時是滿月 */
+function drawMoon(t){
+  const u = U(), x = W*0.80, y = H*0.13, r = u*0.065;
+  glow += ((Math.min(1, purified/16)) - glow) * 0.03;
+  const k = 0.12 + 0.88*glow;                                   // 0.12＝細細的眉月，1＝滿月
+  const halo = ctx.createRadialGradient(x, y, r*0.8, x, y, r*(2.4 + 2*glow));
+  halo.addColorStop(0, `rgba(255,238,190,${0.18 + 0.35*glow})`); halo.addColorStop(1, 'rgba(255,238,190,0)');
+  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(x, y, r*(2.4 + 2*glow), 0, Math.PI*2); ctx.fill();
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.clip();
+  ctx.fillStyle = 'rgba(40,52,70,.9)'; ctx.fillRect(x - r, y - r, r*2, r*2);   // 暗面
+  const mg = ctx.createRadialGradient(x - r*0.3, y - r*0.3, r*0.1, x, y, r*1.1); mg.addColorStop(0, '#fffdf2'); mg.addColorStop(1, '#f1d98f');
+  ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+  if(k < 0.999){ ctx.fillStyle = 'rgba(30,42,60,.96)'; ctx.beginPath(); ctx.arc(x - r*2*k, y - r*0.15*k, r*1.02, 0, Math.PI*2); ctx.fill(); }   // 用陰影圓遮出月相
+  ctx.restore();
+}
+
 /* ---------------- 拂塵（照實物結構設計） ----------------
    從握把到末端：黑色握把 → 竹節木柄 → 金屬套環（柄接圓頭）→ 網罩圓頭（蛋形，靠馬尾那端較窄）
    → 紅色綁繩（圓頭接馬尾）→ 馬尾（根部寬度＝圓頭末端寬度，出來後略為散開、再慢慢收細）
@@ -663,28 +682,6 @@ class Fuchen{
     drawBulb(h.x, h.y, Math.atan2(a.y, a.x), z.bulbLen, z.bulbWid, z.handleW);
   }
 }
-// 千絲拂塵台：白玉圓台上的木架，斜架著一支巨大的拂塵，馬尾自然垂下、隨風輕擺；淨化越多越亮
-let altarFu = null;
-function altarPose(){ const cx = W/2, base = H*0.97, u = U(); return { grip:{ x:cx + u*0.22, y:base - u*0.07 }, head:{ x:cx - u*0.12, y:base - u*0.50 } }; }
-function drawAltar(t){
-  const cx = W/2, base = H*0.97, u = U();
-  glow += ((Math.min(1, purified/16)) - glow) * 0.02;
-  if(glow > 0.05){ const lg = ctx.createLinearGradient(cx, 0, cx, base); lg.addColorStop(0, `rgba(255,220,140,0)`); lg.addColorStop(1, `rgba(255,220,140,${0.18*glow})`); ctx.fillStyle = lg; ctx.fillRect(cx - u*0.08, 0, u*0.16, base); }
-  ctx.fillStyle = '#d9e3df'; ctx.beginPath(); ctx.ellipse(cx, base, u*0.34, u*0.06, 0, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#b9c7c2'; ctx.fillRect(cx - u*0.34, base - u*0.03, u*0.68, u*0.03);
-  ctx.fillStyle = '#eef3f1'; ctx.beginPath(); ctx.ellipse(cx, base - u*0.03, u*0.34, u*0.06, 0, 0, Math.PI*2); ctx.fill();
-  const pose = altarPose();
-  if(!altarFu){ altarFu = new Fuchen({ scale:1.3, grip:() => altarPose().grip, seed:3.1, wind:0.8, hairLen:0.46, handleLen:0.9, trail:false }); altarFu.reset(pose.head.x, pose.head.y); }
-  altarFu.head = pose.head;
-  // 木架：一根立柱，頂端的托架托住柄的中段
-  const k = 0.5, px = pose.grip.x + (pose.head.x - pose.grip.x)*k, py = pose.grip.y + (pose.head.y - pose.grip.y)*k;
-  ctx.save(); ctx.lineCap = 'round';
-  ctx.strokeStyle = '#5e3d22'; ctx.lineWidth = u*0.03; ctx.beginPath(); ctx.moveTo(px + u*0.01, base - u*0.04); ctx.lineTo(px, py + u*0.03); ctx.stroke();
-  ctx.fillStyle = '#5e3d22'; ctx.beginPath(); ctx.ellipse(px + u*0.01, base - u*0.035, u*0.06, u*0.015, 0, 0, Math.PI*2); ctx.fill();
-  ctx.strokeStyle = '#7a5130'; ctx.lineWidth = u*0.018; ctx.beginPath(); ctx.moveTo(px - u*0.04, py + u*0.005); ctx.quadraticCurveTo(px, py + u*0.06, px + u*0.04, py - u*0.005); ctx.stroke();
-  ctx.restore();
-  altarFu.update(); altarFu.draw(glow);
-}
 let fu = null;
 
 /* ---------------- 怪物 ---------------- */
@@ -761,6 +758,64 @@ function shade(hex, k){ const n = parseInt(hex.slice(1), 16); let r = n >> 16, g
 function tplFor(key){ const t = TEMPLATES.find(t => t.key === key); return t ? t.variants[0] : null; }
 let showGhost = false;
 
+/* ---------------- 倒數：畫面中央的大數字、周圍暗下來，數字最後散成蒲公英 ---------------- */
+// 蒲公英種子的樣子沿用《褪下仙衣》回理天的蓮花：白色中心、奶油金外圈（每 5 顆有 2 顆粉色），下面拖一條漸淡的細絲
+let cd = null;            // { text, t0, hold, burst }
+let dim = 0, dimTarget = 0;
+const seeds = [];
+const CALM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const glyphCv = document.createElement('canvas'), gctx = glyphCv.getContext('2d');
+function cdFont(text){ const u = U(); return Math.round(text.length > 1 ? u*0.34 : u*0.62); }
+function burstGlyph(text, cx, cy){
+  if(CALM) return;
+  const fs = cdFont(text), wC = Math.ceil(fs*(text.length*1.05 + 0.2)), hC = Math.ceil(fs*1.25);
+  glyphCv.width = wC; glyphCv.height = hC; gctx.clearRect(0, 0, wC, hC);
+  gctx.font = `900 ${fs}px "Noto Sans TC", "PingFang TC", sans-serif`; gctx.textAlign = 'center'; gctx.textBaseline = 'middle'; gctx.fillStyle = '#fff'; gctx.fillText(text, wC/2, hC/2);
+  const data = gctx.getImageData(0, 0, wC, hC).data, step = Math.max(3, Math.round(fs/22)), pts = [];
+  for(let y=0;y<hC;y+=step) for(let x=0;x<wC;x+=step) if(data[(y*wC + x)*4 + 3] > 140) pts.push([x, y]);
+  for(let i=pts.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [pts[i], pts[j]] = [pts[j], pts[i]]; }
+  pts.slice(0, 80).forEach(([x, y], k) => {
+    const a = -Math.PI/2 + (Math.random() - .5)*Math.PI*1.3, v = 1.4 + Math.random()*2.6;
+    seeds.push({ x: cx + x - wC/2, y: cy + y - hC/2, vx: Math.cos(a)*v, vy: Math.sin(a)*v - 0.6, sway: (Math.random() - .5)*0.06, ph: Math.random()*6.28,
+      rot: (Math.random() - .5)*0.02, ang: (Math.random() - .5)*0.6, life: 1, delay: Math.random()*0.12, pink: k % 5 === 1 || k % 5 === 3 });
+  });
+}
+function drawCountdown(t){
+  dim += (dimTarget - dim)*0.18;
+  if(dim > 0.01){ ctx.fillStyle = `rgba(4,6,10,${dim})`; ctx.fillRect(0, 0, W, H); }
+  // 數字
+  if(cd){
+    const e = (t - cd.t0)/1000, fs = cdFont(cd.text), cx = W/2, cy = H/2;
+    if(!cd.burst && e >= cd.hold){ cd.burst = true; burstGlyph(cd.text, cx, cy); }
+    const appear = Math.min(1, e/0.15), fade = cd.burst ? Math.max(0, 1 - (e - cd.hold)/(CALM ? 0.3 : 0.18)) : 1;
+    if(fade > 0){
+      const sc = 0.6 + 0.4*(1 - Math.pow(1 - appear, 3));
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc); ctx.globalAlpha = appear*fade;
+      ctx.font = `900 ${fs}px "Noto Sans TC", "PingFang TC", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const g = ctx.createLinearGradient(0, -fs/2, 0, fs/2); g.addColorStop(0, '#ffffff'); g.addColorStop(0.55, '#fff3cf'); g.addColorStop(1, '#f2c96a');
+      ctx.shadowColor = 'rgba(255,214,120,.95)'; ctx.shadowBlur = fs*0.18; ctx.fillStyle = g; ctx.fillText(cd.text, 0, 0);
+      ctx.shadowBlur = fs*0.05; ctx.fillText(cd.text, 0, 0);
+      ctx.restore();
+    }
+  }
+  // 蒲公英種子（在暗幕上面，一樣亮）
+  for(let i=seeds.length-1;i>=0;i--){
+    const p = seeds[i];
+    if(p.delay > 0){ p.delay -= 1/60; continue; }
+    p.ph += 0.08; p.x += p.vx + Math.sin(p.ph)*0.6; p.y += p.vy; p.vx *= 0.985; p.vy = p.vy*0.985 - 0.02; p.ang += p.rot; p.life -= 1/66;
+    if(p.life <= 0){ seeds.splice(i, 1); continue; }
+    const al = Math.min(1, p.life*1.6);
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.ang); ctx.globalAlpha = al;
+    const tg = ctx.createLinearGradient(0, 3, 0, 12); tg.addColorStop(0, 'rgba(255,247,214,.8)'); tg.addColorStop(1, 'rgba(255,247,214,0)');
+    ctx.fillStyle = tg; ctx.fillRect(-0.5, 3, 1, 9);                                     // 細絲
+    const dg = ctx.createRadialGradient(0, 0, 0, 0, 0, 3.6);
+    if(p.pink){ dg.addColorStop(0, '#ffffff'); dg.addColorStop(0.45, '#FBCFE8'); dg.addColorStop(1, 'rgba(251,207,232,0)'); ctx.shadowColor = 'rgba(244,114,182,.6)'; }
+    else { dg.addColorStop(0, '#ffffff'); dg.addColorStop(0.45, '#FFF7D6'); dg.addColorStop(1, 'rgba(255,247,214,0)'); ctx.shadowColor = 'rgba(253,230,138,.8)'; }
+    ctx.shadowBlur = 6; ctx.fillStyle = dg; ctx.beginPath(); ctx.arc(0, 0, 3.6, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+}
+
 /* ---------------- 主迴圈 ---------------- */
 let replayAnim = null;   // { pts:[[x,y]], t0, dur }
 /* ---------------- 全畫面揮動提示：粗金線＋沿途箭頭＋起點「起」、終點大箭頭「終」＋一顆會跑的光點 ---------------- */
@@ -816,6 +871,7 @@ function frame(t){
   }
   if(fu){ fu.update(); fu.draw(); }
   drawParticles();
+  drawCountdown(t);
   requestAnimationFrame(frame);
 }
 
@@ -831,11 +887,13 @@ function center(html){ $('#center').innerHTML = html || ''; }
 
 /* ---------------- 一次揮拂：倒數 → 揮 → 叮 ---------------- */
 async function countdown(beats){
-  for(let i=beats;i>=1;i--){ center(`<div class="big">${i}</div>`); sfx.beat(); vib(30); await wait(680); }
+  center(''); dimTarget = 0.65; document.body.dataset.phase = 'count';
+  for(let i=beats;i>=1;i--){ cd = { text:String(i), t0:performance.now(), hold:0.55, burst:false }; sfx.beat(); vib(30); await wait(900); }
 }
 function record(ms, th0){
   return new Promise((resolve, reject) => {
-    const T0 = th0 || th(); sfx.go(); vib(140); center('<div class="big">揮！</div>');
+    const T0 = th0 || th(); sfx.go(); vib(140);
+    dimTarget = 0; cd = { text:'揮！', t0:performance.now(), hold:0.4, burst:false }; document.body.dataset.phase = 'swing';
     let done = false, timer = 0;
     const finish = () => { if(done) return; done = true; clearTimeout(timer); clearInterval(poll); if(rec) rec.active = false; detachTouch(); resolve({ pts: rec.integ ? rec.integ.pts : rec.touchPts, input: inputMode, raw: rec.raw }); };
     const poll = setInterval(() => { if(cancelFlag && !done){ done = true; clearTimeout(timer); clearInterval(poll); if(rec) rec.active = false; detachTouch(); reject('cancel'); } }, 50);
@@ -910,7 +968,7 @@ async function encounter(opt){
   if(hint) hint.target = 0;
   const th0 = tutorial ? SENS.light : null;
   const st = await record(SYMS[key].kind === 'dir' ? 1600 : 2800, th0); lastStroke = st;
-  sfx.ding(); vib(50); center('<div class="mid">叮～</div>'); await wait(250); center('');
+  document.body.dataset.phase = ''; sfx.ding(); vib(50); center('<div class="mid">叮～</div>'); await wait(250); center('');
   const r = judgeSwing(key, st, th0); tries++;
   // 拂塵招式重播
   const scr = !r.none ? pathOnScreen(r.a) : null;
@@ -978,9 +1036,9 @@ async function runGame(){
       do { r = await encounter({ key:k, type:bossType, boss:true, hp:3, wave:'魔王・無明塵王' }); if(lives <= 0) throw 'over'; } while(!r.ok);
     }
     center('<div class="mid">🌕 圓明一拂！</div>'); for(let i=0;i<5;i++){ setTimeout(() => { spawnSpark(W*Math.random(), H*0.2 + H*0.4*Math.random(), 30); spawnLotus(W*(0.2 + 0.6*Math.random()), H*0.6); }, i*250); }
-    purified += 4; sfx.purify(); await wait(2200);
+    purified = Math.max(purified, 16); sfx.purify(); await wait(2200);   // 滿月
   }catch(e){ if(e === 'over') result = 'over'; else if(e === 'cancel') result = 'quit'; else { console.error(e); result = 'quit'; } }
-  center(''); monster = null; $('#hud').hidden = true; $('#bottomBar').hidden = true;
+  center(''); monster = null; cd = null; dimTarget = 0; document.body.dataset.phase = ''; $('#hud').hidden = true; $('#bottomBar').hidden = true;
   if(result !== 'quit') showResult(result); else $('#scrTitle').hidden = false;
 }
 let lastStroke = null;
