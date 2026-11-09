@@ -50,6 +50,10 @@ button.big{width:100%;font-size:1.1rem;padding:14px}
 .quote small{display:block;color:var(--muted);font-size:.75rem;margin-top:4px}
 .ver{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom) + 4px);font-size:.65rem;color:rgba(255,255,255,.35);pointer-events:none}
 .mir{display:inline-block;transform:scaleX(-1)}
+.diff{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.diff button{padding:8px 4px;font-size:.92rem;line-height:1.35;display:flex;flex-direction:column;align-items:center}
+.diff button small{font-size:.66rem;color:var(--muted);font-weight:500}
+.diff button[aria-pressed="true"]{background:var(--gold-soft);border-color:var(--gold);color:var(--gold);font-weight:900}
 /* 淨心錄 */
 #btnBook{position:fixed;right:14px;top:calc(env(safe-area-inset-top) + 50px);width:48px;height:38px;padding:0;border-radius:6px;border:3px solid #7a2e22;background:#f3e6c4;color:#7a2e22;font-weight:900;display:flex;align-items:center;justify-content:center;gap:2px;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.5)}
 #btnBook[hidden]{display:none}
@@ -105,6 +109,11 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     </ul>
     <p><b>⚠️ 安全第一</b>：握緊手機、最好戴掛繩，周圍 1.5 公尺內不要有人和易碎物品。</p>
     <div class="row">
+      <div class="diff" id="diffSel" role="group" aria-label="難度">
+        <button data-d="easy">🌱 入門<small>現在的難度</small></button>
+        <button data-d="normal">🪶 修行<small>判定較嚴、提示會退場</small></button>
+        <button data-d="hard">🔥 精進<small>兩盞心燈、倒數兩拍</small></button>
+      </div>
       <button class="primary big" id="btnStart">開始試煉</button>
       <button id="btnTouch">沒有動作感測？用手指畫</button>
       <button id="btnDexT">📖 淨心錄</button>
@@ -154,7 +163,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.11';
+const VERSION = 'v261109.12';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -611,11 +620,11 @@ function silhouette(cv){ const c = cv.getContext('2d'); c.save(); c.setTransform
 
 // 組合技：兩揮剛好是這幾組時，會打出有名字的招式
 const COMBO_NAME = { 'left+right':'十方淨', 'up+down':'劈山拂', 's+circle':'太極迴拂', 'alpha+ralpha':'阿法雙蓮' };
-const COMBO_FX = { '十方淨':'cross', '劈山拂':'pillar', '太極迴拂':'taiji', '阿法雙蓮':'lotus' };
+const COMBO_FX = { '十方淨':'cross', '劈山拂':'pillar', '太極迴拂':'taiji', '阿法雙蓮':'lotus', '三才連拂':'taiji' };
 /* 淨心錄：收服過的塵靈記在這支手機上（心燈用完也照樣保留） */
 const DEX_KEY = 'fuchenGame.dex';
 const dex = Object.assign({ v:1, m:{} }, store.get(DEX_KEY, {}));
-function dexAdd(def, gold){ const isNew = !dex.m[def.name]; const e = dex.m[def.name] || { n:0, first: new Date().toLocaleDateString('zh-TW') }; e.n++; if(gold) e.gold = true; dex.m[def.name] = e; store.set(DEX_KEY, dex); return isNew; }
+function dexAdd(def, gold){ const isNew = !dex.m[def.name]; const e = dex.m[def.name] || { n:0, first: new Date().toLocaleDateString('zh-TW') }; e.n++; if(gold) e.gold = true; if(diffKey === 'hard') e.hard = true; dex.m[def.name] = e; store.set(DEX_KEY, dex); return isNew; }
 const dexCount = () => MONS.filter(m => dex.m[m.name]).length;
 
 /* ---------------- 聲音：史詩風格，全部即時合成（不用音檔） ----------------
@@ -1175,6 +1184,7 @@ function drawHint(t){
   const u = U(), a = h.a, p = h.pts, total = h.cum[h.cum.length-1];
   ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   // 深色外框讓金線在任何背景都看得清楚
+  if(!h.markers){   // 只標起終點時不畫路線、箭頭和光點
   ctx.strokeStyle = `rgba(0,0,0,${0.18*a})`; ctx.lineWidth = u*0.04; ctx.beginPath(); p.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.stroke();
   ctx.strokeStyle = `rgba(255,214,120,${0.42*a})`; ctx.lineWidth = u*0.02; ctx.shadowColor = 'rgba(255,200,90,.6)'; ctx.shadowBlur = 10; ctx.stroke();
   ctx.shadowBlur = 0;
@@ -1184,6 +1194,7 @@ function drawHint(t){
   // 會跑的光點（起點 → 終點，反覆）
   const k = ((t % 1700)/1700), dd = k*total;
   for(let j=8;j>=0;j--){ const q = atLen(h, Math.max(0, dd - j*u*0.02)); ctx.fillStyle = `rgba(255,255,255,${a*(1 - j/9)*0.75})`; ctx.beginPath(); ctx.arc(q.x, q.y, u*0.022*(1 - j/12), 0, Math.PI*2); ctx.fill(); }
+  }
   // 終點大箭頭＋「終」
   const closed = Math.hypot(p[0][0] - p[p.length-1][0], p[0][1] - p[p.length-1][1]) < u*0.12;
   const e = atLen(h, closed ? total - u*0.16 : total - 0.5);
@@ -1223,10 +1234,10 @@ function frame(t){
 /* ---------------- HUD ---------------- */
 let lives = 3, score = 0, combo = 0, maxCombo = 0, hits = 0, tries = 0;
 function hud(waveText){
-  $('#lamps').innerHTML = [0,1,2].map(i => `<span class="${i < lives ? '' : 'off'}">🪔</span>`).join('');
+  $('#lamps').innerHTML = Array.from({ length: D().lives }, (_, i) => `<span class="${i < lives ? '' : 'off'}">🪔</span>`).join('');
   if(waveText != null) $('#wave').textContent = waveText;
   $('#score').textContent = score; $('#combo').textContent = combo > 1 ? `連擊 ×${combo}` : '';
-  $('#modeTag').textContent = inputMode === 'touch' ? '👆 觸控模式' : accAvail() ? '🛤️ 移動軌跡' : '🔄 轉動判讀';
+  $('#modeTag').textContent = `${D().name}・` + (inputMode === 'touch' ? '👆 觸控' : accAvail() ? '🛤️ 軌跡' : '🔄 轉動');
 }
 function center(html){ $('#center').innerHTML = html || ''; }
 
@@ -1274,13 +1285,17 @@ function detachTouch(){ if(!touchHandlers) return; cv.removeEventListener('point
 
 /* 判定：和揮符實驗室同一套（移動軌跡優先；沒有加速度時用標準轉動） */
 function modelFor(st){ if(st.input !== 'gyro') return 'auto'; if(hasTraj(st.pts)) return calib.MT ? 'traj' : 'trajRaw'; return 'std'; }
-function judgeSwing(key, st, th0){
+function judgeSwing(key, st, th0, lenient){
+  const dd = lenient ? DIFFS.easy : D();
   const a = analyzeStroke(st, modelFor(st), th0 || null);
   if(a.none) return { none:true, a };
   const sym = SYMS[key];
-  if(sym.kind === 'dir'){ const err = angDiff(a.mainDir, sym.dir); return { a, ok: err <= 35, score: Math.max(0, Math.round((1 - err/70)*100)) }; }
+  if(sym.kind === 'dir'){ const err = angDiff(a.mainDir, sym.dir); return { a, ok: err <= dd.dirErr, score: Math.max(0, Math.round((1 - err/70)*100)) }; }
   const top = a.rg.ranking[0], mine = a.rg.ranking.find(r => r.key === key);
-  return { a, ok: top.key === key, score: mine ? mine.score : 0 };
+  const sc = mine ? mine.score : 0;
+  // 門檻依實測調整：阿法類形狀複雜、真人揮對時分數本來就偏低（46～55%），門檻低 15 分
+  const need = dd.shapeMin - (key === 'alpha' || key === 'ralpha' ? 15 : 0);
+  return { a, ok: top.key === key && sc >= need, score: sc, close: top.key === key && sc < need };
 }
 // 把這一揮的路線（正規化座標）換成畫面上繞著怪物的位置
 function pathOnScreen(a){
@@ -1305,11 +1320,20 @@ async function encounter(opt){
   say((multi ? '連擊，' : '') + keys.map(k => SYMS[k].say).join('，'));
   await wait(boss ? 900 : 600);
   // 拂塵沿著提示路線示範（連擊就依序示範）
-  for(const k of keys){ hint = makeHint(k); if(hint){ fu.glow = 0.6; await playReplay(hint.pts.map(q => [q[0], q[1]]), SYMS[k].kind === 'dir' ? 650 : 1300); } await wait(multi ? 250 : 0); }
+  // 提示：入門每隻都示範；修行、精進只有前 3 隻示範，之後路線只亮一下；塵魔、魔王只標起點和終點
+  const hm = tutorial || D().hints === 'full' ? 'full' : (boss || (def && def.stage === 3)) ? 'markers' : encN < 3 ? 'full' : 'brief';
+  if(!tutorial) encN++;
+  for(const k of keys){
+    hint = makeHint(k); if(!hint) continue;
+    if(hm === 'markers') hint.markers = true;
+    if(hm === 'full'){ fu.glow = 0.6; await playReplay(hint.pts.map(q => [q[0], q[1]]), SYMS[k].kind === 'dir' ? 650 : 1300); }
+    else { await wait(hm === 'brief' ? (multi ? 1100 : 1500) : (multi ? 900 : 1200)); hint.target = 0; await wait(250); }
+    await wait(multi ? 250 : 0);
+  }
   await wait(300);
   if(monster.state === 'enter') monster.state = 'idle';
   document.body.dataset.key = keys[0];
-  await countdown(3);
+  await countdown(opt.beats || D().beats);
   center('');
   if(hint) hint.target = 0;
   const th0 = tutorial ? SENS.light : null, strokes = [];
@@ -1319,7 +1343,7 @@ async function encounter(opt){
     const st = await record(SYMS[keys[i]].kind === 'dir' ? 1600 : 2800, th0, i > 0 ? '再揮' : '揮'); strokes.push(st); lastStroke = st; if(i < keys.length - 1){ document.body.dataset.key = keys[i + 1]; document.body.dataset.phase = 'gap'; }
   }
   document.body.dataset.phase = ''; bgmHold(false); sfx.ding(); vib(50); center('<div class="mid">叮～</div>'); await wait(250); center('');
-  const rs = keys.map((k, i) => judgeSwing(k, strokes[i], th0)); tries++;
+  const rs = keys.map((k, i) => judgeSwing(k, strokes[i], th0, !!tutorial)); tries++;
   // 拂塵招式重播：每一揮依序重播，標準路線淡淡留著對照
   for(let i=0;i<keys.length;i++){ const r = rs[i], scr = !r.none ? pathOnScreen(r.a) : null; hint = makeHint(keys[i]); if(hint){ hint.a = 0; hint.target = 0.3; } if(scr){ swoosh(1); await playReplay(scr, multi ? 650 : 900); } }
   if(hint) hint.target = 0;
@@ -1328,14 +1352,16 @@ async function encounter(opt){
     hits++; combo++; maxCombo = Math.max(maxCombo, combo); purified++;
     const weak = !boss && def && keys.includes(def.fam.weak);
     const base = Math.round(rs.reduce((a, r) => a + r.score, 0)/rs.length);
-    const pts = (base + (combo > 1 ? combo*10 : 0) + (multi ? 50 : 0))*(weak ? 2 : 1); score += pts;
+    const perfect = rs.every(r => r.score >= 85);
+    const pts = (base + (combo > 1 ? combo*10 : 0) + (multi ? 50*(keys.length - 1) : 0) + (perfect ? 60 : 0))*(weak ? 2 : 1); score += pts;
+    if(perfect && !boss) spawnText(MON.x, MON.y - monster.r*2.1, '✨ 明鏡無塵 +60', '#ffe08a');
     if(boss){
       const word = base >= 85 ? '✨ 明鏡無塵' : base >= 65 ? '🪶 拂淨' : '🪶 拂去了';
       spawnSpark(monster.x, monster.y, 40); spawnDust(monster.x, monster.y, 36, 'rgba(150,140,130,.9)', 1.4); spawnText(monster.x, monster.y - monster.r*1.4, word, '#ffe7a8'); spawnText(monster.x, monster.y - monster.r*0.9, `+${pts}`, '#7fe0a6');
       monster.hp--; monster.state = 'hit'; monster.tHit = performance.now(); if(monster.hp <= 0) setTimeout(() => spawnLotus(MON.x, MON.y), 300);
       sfx.purify(); vib(80); hud(); await wait(1300);
     } else {
-      const cname = multi ? COMBO_NAME[keys.join('+')] : null;
+      const cname = keys.length === 3 ? '三才連拂' : multi ? COMBO_NAME[keys.join('+')] : null;
       if(cname) await startCombo(cname);
       spawnText(MON.x, MON.y + monster.r*2.2, `+${pts}`, '#7fe0a6');
       const isNew = dexAdd(def, gold); caught.push({ def, lv, gold, isNew });
@@ -1344,9 +1370,9 @@ async function encounter(opt){
     }
   } else {
     combo = 0;
-    const idx = rs.indexOf(r0), why = r0.none ? '💤 沒揮到' : '💨 符散了';
-    spawnDust(monster.x, monster.y, 18, 'rgba(150,140,130,.8)', 0.8); spawnText(monster.x, monster.y - monster.r*1.6, multi ? `第 ${idx + 1} 揮${r0.none ? '沒揮到' : '散了'}` : why, '#ff8a7a');
-    if(r0.a && !r0.none && SYMS[keys[idx]].kind === 'shape'){ const top = r0.a.rg.ranking[0]; if(SYMS[top.key]) spawnText(monster.x, monster.y - monster.r*1.1, `像是「${SYMS[top.key].name}」`, '#f6ecd8'); }
+    const idx = rs.indexOf(r0), why = r0.none ? '💤 沒揮到' : r0.close ? `💨 不夠像（${r0.score}%）` : '💨 符散了';
+    spawnDust(monster.x, monster.y, 18, 'rgba(150,140,130,.8)', 0.8); spawnText(monster.x, monster.y - monster.r*1.6, multi ? `第 ${idx + 1} 揮${r0.none ? '沒揮到' : r0.close ? `不夠像（${r0.score}%）` : '散了'}` : why, '#ff8a7a');
+    if(r0.a && !r0.none && !r0.close && SYMS[keys[idx]].kind === 'shape'){ const top = r0.a.rg.ranking[0]; if(SYMS[top.key]) spawnText(monster.x, monster.y - monster.r*1.1, `像是「${SYMS[top.key].name}」`, '#f6ecd8'); }
     monster.state = 'laugh'; monster.tHit = performance.now();
     if(!tutorial){ lives--; }
     sfx.miss(); vib([40,60,40]); hud(); await wait(1300);
@@ -1368,17 +1394,32 @@ function spawnDef(stage){
 const EASY = ['left','right','down','up','v','circle'], MID = ['v','circle','z','n','alpha','s'], HARD = ['rs','rz','rn','ralpha','z','n','s','alpha'];
 const NAMED = [['left','right'], ['up','down'], ['s','circle'], ['alpha','ralpha']];
 function keysFor(stage, fam){
+  if(stage === 3 && diffKey !== 'easy'){   // 塵魔：三連擊，多半是組合技再接一個難的符號
+    const base = Math.random() < 0.5 ? pick(NAMED).slice() : [pick(HARD), pick(MID)];
+    return [...base, pick(HARD.filter(x => !base.includes(x)))];
+  }
+  if(stage === 2 && diffKey !== 'easy' && Math.random() < 0.6){ const a = pick(MID); return [a, pick(MID.filter(x => x !== a))]; }   // 塵妖偏向 Z、N、S、阿法
   if(stage === 1) return [Math.random() < 0.35 && EASY.includes(fam.weak) ? fam.weak : pick(EASY)];
   if(Math.random() < 0.6) return pick(NAMED).slice();
   const pool = stage === 2 ? MID : HARD, a = pick(pool); let b = pick(pool.filter(x => x !== a));
   if(Math.random() < 0.4 && fam.weak !== a && SYMS[fam.weak]) b = fam.weak;
   return [a, b];
 }
+/* 難度：入門＝原本的難度；修行（預設）＝判定變嚴、關卡變長、提示逐步退場；精進＝再少一盞心燈、倒數全部兩拍、塵魔更多 */
+const DIFFS = {
+  easy:   { name:'🌱 入門', shapeMin:0,  dirErr:35, lives:3, beats:3, hints:'full' },
+  normal: { name:'🪶 修行', shapeMin:55, dirErr:25, lives:3, beats:3, hints:'fade' },
+  hard:   { name:'🔥 精進', shapeMin:62, dirErr:25, lives:2, beats:2, hints:'fade' }
+};
+let diffKey = store.get('fuchenGame.diff', 'normal'); if(!DIFFS[diffKey]) diffKey = 'normal';
+const D = () => DIFFS[diffKey];
+let encN = 0;   // 這一局第幾隻（熱身不算），用來決定提示退場
 let caught = [];
 async function runGame(){
+  encN = 0;
   audioInit(); bgmStart('battle');
   caught = []; $('#bookN').textContent = dexCount();
-  lives = 3; score = 0; combo = 0; maxCombo = 0; hits = 0; tries = 0; purified = 0; cancelFlag = false;
+  lives = D().lives; score = 0; combo = 0; maxCombo = 0; hits = 0; tries = 0; purified = 0; cancelFlag = false;
   $('#hud').hidden = false; $('#bottomBar').hidden = false; $('#btnBook').hidden = false; hud('');
   $('#modeTag').textContent = inputMode === 'touch' ? '👆 觸控模式' : accAvail() ? '🛤️ 移動軌跡' : '🔄 轉動判讀';
   let result = 'clear';
@@ -1393,23 +1434,32 @@ async function runGame(){
       }
       learnFromWarmup(got, peaks);
     }
-    const plan = [
+    const plan = diffKey === 'easy' ? [
       { wave:'第一波・塵精', stages:[1, 1, 1] },
       { wave:'第二波・塵妖', stages:[Math.random() < 0.25 ? 3 : 2, 2] }
+    ] : [
+      { wave:'第一波・塵精', stages:[1, 1] },
+      { wave:'第二波・塵妖', stages:[2, 2, diffKey === 'hard' && Math.random() < 0.5 ? 3 : 2] },
+      { wave:'第三波・塵魔', stages:[3] }
     ];
     for(const w of plan){
-      center(`<div class="mid">${w.wave}</div>${w.stages.some(s => s > 1) ? '<div class="sub">塵妖要兩連擊才收得服！</div>' : ''}`); say(w.wave.split('・')[1]); await wait(1800);
-      for(const st of w.stages){ const sp = spawnDef(st); await encounter({ keys: keysFor(st, sp.def.fam), ...sp, wave: st === 3 ? '⚠️ 塵魔出沒' : w.wave }); if(lives <= 0) throw 'over'; }
+      const tip = w.stages.every(s => s === 3) && diffKey !== 'easy' ? '塵魔要三連擊，倒數只有兩拍，提示只標起點和終點！' : w.stages.some(s => s > 1) ? '塵妖要兩連擊才收得服！' : '';
+      center(`<div class="mid">${w.wave}</div>${tip ? `<div class="sub">${tip}</div>` : ''}`); say(w.wave.split('・')[1]); await wait(2000);
+      for(const st of w.stages){ const sp = spawnDef(st); await encounter({ keys: keysFor(st, sp.def.fam), ...sp, beats: st === 3 && diffKey !== 'easy' ? 2 : undefined, wave: st === 3 ? '⚠️ 塵魔出沒' : w.wave }); if(lives <= 0) throw 'over'; }
     }
     // 魔王：無明塵王（三擊，最後一擊一定是「圓明一拂」）
     bgmSet('boss');
-    center('<div class="mid">⚠️ 無明塵王</div><div class="sub">六塵合體！連拂三次，最後用「圓」收服</div>'); say('無明塵王'); await wait(2400);
-    const bossKeys = [...shuffle(['v','z','n','alpha','s','rs','rz','rn','ralpha']).slice(0, 2), 'circle'];
+    const BP = ['v','z','n','alpha','s','rs','rz','rn','ralpha'];
+    const bossKeys = diffKey === 'easy' ? [...shuffle(BP).slice(0, 2).map(k => [k]), ['circle']]
+      : [...Array.from({ length:3 }, () => { const a = pick(BP); return [a, pick(BP.filter(x => x !== a))]; }), ['circle']];   // 修行、精進：前三擊兩連擊，最後「圓明一拂」
+    center(`<div class="mid">⚠️ 無明塵王</div><div class="sub">六塵合體！連拂 ${bossKeys.length} 次，最後用「圓」收服</div>`); say('無明塵王'); await wait(2400);
     const bossType = { name:'無明塵王', acc:'🌑', body:'#8d84a6', mood:'' };
     monster = null;
-    for(const k of bossKeys){
-      let r;
-      do { r = await encounter({ keys:[k], type:bossType, boss:true, hp:3, wave:'魔王・無明塵王' }); if(lives <= 0) throw 'over'; } while(!r.ok);
+    for(let bi=0; bi<bossKeys.length; bi++){
+      let r, ks = bossKeys[bi];
+      // 失誤後換一組新題目（最後的「圓明一拂」不變），不會一直卡在同一個不擅長的符號
+      while(true){ r = await encounter({ keys:ks, type:bossType, boss:true, hp:bossKeys.length, wave:'魔王・無明塵王' }); if(lives <= 0) throw 'over'; if(r.ok) break;
+        if(bi < bossKeys.length - 1){ const a = pick(BP); ks = ks.length > 1 ? [a, pick(BP.filter(x => x !== a))] : [a]; } }
     }
     center('<div class="mid">🌕 圓明一拂！</div>'); for(let i=0;i<5;i++){ setTimeout(() => { spawnSpark(W*Math.random(), H*0.2 + H*0.4*Math.random(), 30); spawnLotus(W*(0.2 + 0.6*Math.random()), H*0.6); }, i*250); }
     purified = Math.max(purified, 16); sfx.purify(); await wait(2200);   // 滿月
@@ -1439,6 +1489,7 @@ function showResult(kind){
   const acc = tries ? Math.round(hits/tries*100) : 0;
   const rating = kind === 'over' ? '🌫️ 塵埃未盡' : acc >= 90 ? '✨ 明鏡無塵' : acc >= 70 ? '🪶 時時勤拂' : '🌱 勿使惹塵';
   $('#resTitle').textContent = kind === 'over' ? '🪔 心燈用完了' : '✨ 試煉圓滿';
+  $('#resTitle').textContent += `・${D().name}`;
   $('#resLine').innerHTML = kind === 'over' ? '別灰心，塵埃本來就要天天拂。定下心再來一次！' : `無明塵王收服了！評價：<b>${rating}</b>`;
   $('#resStats').innerHTML = `<span>淨化 <b>${hits}</b> 隻</span><span>命中率 <b>${acc}%</b></span><span>最高連擊 <b>${maxCombo}</b></span><span>得分 <b>${score}</b></span>`;
   $('#resCaught').innerHTML = caught.length ? `<b>本局收入淨心錄</b><div class="caught">${caught.map(c => `<span>${c.gold ? '✨' : ''}${c.def.name}<small>Lv ${c.lv}</small>${c.isNew ? '<i>NEW</i>' : ''}</span>`).join('')}</div>` : '<span class="note">這一局沒有收服塵靈，下次加油！</span>';
@@ -1496,7 +1547,7 @@ function openDex(){
 function openDexCard(m){
   const e = dex.m[m.name]; dexModalM = m;
   $('#dmName').textContent = e ? m.name : '？？？'; $('#dmTag').textContent = `${m.fam.name}系・${STAGE_NAME[m.stage]}・${m.lv}`;
-  $('#dmDl').innerHTML = e ? `<span>代表 <b>${m.fam.mood}</b></span><span>要揮 <b>${m.hits === 1 ? '1 下' : '2 連擊'}</b></span><span>怕 <b>${m.fam.weakName}</b></span><span>收服 <b>${e.n} 次</b></span><span style="grid-column:1/-1">第一次收服 <b>${e.first}</b>${e.gold ? '・✨ 收過金色' : ''}</span>`
+  $('#dmDl').innerHTML = e ? `<span>代表 <b>${m.fam.mood}</b></span><span>要揮 <b>${m.hits === 1 ? '1 下' : '2 連擊'}</b></span><span>怕 <b>${m.fam.weakName}</b></span><span>收服 <b>${e.n} 次</b></span><span style="grid-column:1/-1">第一次收服 <b>${e.first}</b>${e.gold ? '・✨ 收過金色' : ''}${e.hard ? '・🔥 精進收服' : ''}</span>`
     : `<span style="grid-column:1/-1">在 <b>${m.lv}</b> 的試煉中出沒（${m.fam.name}系的${STAGE_NAME[m.stage]}）</span>`;
   $('#dmQuote').innerHTML = e ? `${m.quote}<small>心性小語（示範，正式版請道場審定）</small>` : '收服之後才會解鎖心性小語。';
   $('#dexModal').hidden = false;
@@ -1510,6 +1561,9 @@ $('#btnDexT').textContent = `📖 淨心錄（${dexCount()} / ${MONS.length}）`
 
 /* ---------------- 按鈕 ---------------- */
 $('#btnStart').addEventListener('click', startGyro);
+const syncDiff = () => document.querySelectorAll('#diffSel button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.d === diffKey)));
+$('#diffSel').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; diffKey = b.dataset.d; store.set('fuchenGame.diff', diffKey); syncDiff(); });
+syncDiff();
 $('#btnMusic').addEventListener('click', () => setMusic(!store.get('fuchenGame.music', true)));
 setMusic(store.get('fuchenGame.music', true));
 $('#btnTouch').addEventListener('click', () => { audioInit(); inputMode = 'touch'; keepAwake(); $('#scrTitle').hidden = true; runGame(); });
