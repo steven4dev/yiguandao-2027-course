@@ -5618,16 +5618,16 @@ scene.add(kinto);
 const kintoHit = [];
 {
   // 雲：圓鼓鼓的水滴形雲（雲的前方是 +z）。前端圓鈍迎風、胖嘟嘟的雲頭，往後沿著中線平順收細成一道尾巴，接上噴出的煙霧。
-  // 每團雲只壓扁一點點，整朵看起來蓬鬆可愛，不會扁得像魟魚
+  // 每團雲只壓扁一點點、寬長比約 0.5（寬約 2.2、長約 4.5），整朵看起來蓬鬆可愛，不會扁平寬大得像魟魚
   const cloudM = new THREE.MeshLambertMaterial({ color: '#fff4cf', emissive: '#ffd36a', emissiveIntensity: 0.28 });
   const cloudM2 = new THREE.MeshLambertMaterial({ color: '#ffe9a8', emissive: '#f2b84a', emissiveIntensity: 0.22 });
   const CL = new THREE.Group(); kinto.add(CL); kinto.userData.cloud = CL;
   for (const [x, y, z, r, m, sy] of [
     // 雲頭：大聖站的地方，圓鼓鼓
-    [0, 0, 0.35, 1.0, cloudM, 0.82], [0.75, -0.1, 0.25, 0.68, cloudM, 0.85], [-0.75, -0.1, 0.25, 0.68, cloudM, 0.85],
+    [0, 0, 0.35, 0.95, cloudM, 0.84], [0.52, -0.1, 0.2, 0.58, cloudM, 0.88], [-0.52, -0.1, 0.2, 0.58, cloudM, 0.88],
     [0.15, -0.15, 0.95, 0.6, cloudM, 0.85], [-0.25, 0.05, 0.9, 0.52, cloudM2, 0.88], [0.3, 0.3, -0.2, 0.55, cloudM2, 0.9],
     // 雲身到尾巴：沿著中線往後收細成一道，高度不變
-    [0.3, -0.05, -0.55, 0.72, cloudM2, 0.82], [-0.3, -0.08, -0.6, 0.7, cloudM, 0.82], [0, -0.05, -1.2, 0.58, cloudM, 0.84],
+    [0.22, -0.05, -0.55, 0.66, cloudM2, 0.85], [-0.22, -0.08, -0.6, 0.64, cloudM, 0.85], [0, -0.05, -1.2, 0.58, cloudM, 0.84],
     [0.05, -0.06, -1.72, 0.44, cloudM2, 0.86], [-0.03, -0.07, -2.15, 0.32, cloudM, 0.88], [0.02, -0.08, -2.5, 0.22, cloudM2, 0.9],
     [0, -0.08, -2.78, 0.14, cloudM, 0.92],
   ]) {
