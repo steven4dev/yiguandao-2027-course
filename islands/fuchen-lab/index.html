@@ -56,6 +56,7 @@ button.big{width:100%;font-size:1.1rem;padding:14px}
 .grid button .ic{font-size:1.35rem;font-weight:800;line-height:1.4;font-family:"Georgia","Times New Roman",serif}
 .grid button[aria-pressed="true"]{background:var(--gold-soft);border-color:var(--gold);font-weight:700}
 .mir{display:inline-block;transform:scaleX(-1)}
+.nw{font-size:10px;margin-left:4px;padding:0 4px;border-radius:6px;background:#e9b44c;color:#2a1a00;vertical-align:middle}
 .grid.dim{opacity:.4;pointer-events:none}
 .stage{position:relative;margin:12px 0;border-radius:18px;overflow:hidden;background:var(--stage);aspect-ratio:1/1;touch-action:none}
 .stage canvas{display:block;width:100%;height:100%}
@@ -208,7 +209,7 @@ pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:
 
 <script>
 'use strict';
-const VERSION = 'v261109.05';
+const VERSION = 'v261109.06';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = VERSION;
@@ -248,6 +249,20 @@ function alphaVariants(){
   return [f, f.slice().reverse()];
 }
 function sCurve(){ return arc(0,0.5,0.5,20,270,24).concat(arc(0,-0.5,0.5,90,-160,24).slice(1)); }
+// ---- 第一批新題（v261109.06，實測中）：全部一筆到底 ----
+const rot90 = p => p.map(([x,y]) => [-y, x]);   // 逆時針轉 90°
+// ∞ 無極：從中心往右上出發，先繞右圈、回中心、再繞左圈、回中心
+function infPath(){ const p=[]; for(let i=0;i<=72;i++){ const t=i/72*2*Math.PI; p.push([Math.sin(t), Math.sin(t)*Math.cos(t)]); } return p; }
+// γ 伽瑪：阿法轉 90°，圈在下面、兩條尾巴朝上；左上起筆 → 往下交叉繞圈 → 右上收筆（也接受反過來）
+function gammaVariants(){ return alphaVariants().map(rot90); }
+// δ 德爾塔：右上起筆往左勾，順著左邊往下，逆時針繞一圈收回
+function deltaPath(){ return [[0.45,0.95],[0.05,1.0],[-0.28,0.78],[-0.45,0.35]].concat(arc(0,-0.4,0.6,150,510,36)); }
+// ρ 柔：下方起筆往上一豎，到頂後順時針繞一圈回到豎線
+function rhoPath(){ return [[-0.6,-1.5],[-0.6,0.3]].concat(arc(0,0.3,0.6,180,-180,36)); }
+// 🌀 漩渦：從外圈右邊起筆，逆時針往內繞兩圈
+function spiralPath(){ const p=[]; for(let i=0;i<=90;i++){ const t=i/90, a=t*4*Math.PI, r=1-t*0.85; p.push([r*Math.cos(a), r*Math.sin(a)]); } return p; }
+// ★ 五芒星：頂點起筆 → 左下 → 右 → 左 → 右下 → 回頂點
+const starPath = () => [90,234,18,162,306,90].map(a => [Math.cos(a*D2R), Math.sin(a*D2R)]);
 
 const SYMBOLS = [
   { key:'left',   icon:'⬅',  name:'左揮',   say:'左揮',   kind:'dir', dir:180 },
@@ -262,7 +277,16 @@ const SYMBOLS = [
   { key:'rs',     icon:'<span class="mir">S</span>', name:'反向 S', say:'反向 S', kind:'shape' },
   { key:'rz',     icon:'<span class="mir">Z</span>', name:'反向 Z', say:'反向 Z', kind:'shape' },
   { key:'rn',     icon:'<span class="mir">N</span>', name:'反向 N', say:'反向 N', kind:'shape' },
-  { key:'ralpha', icon:'<span class="mir">α</span>', name:'反向阿法', say:'反向阿法', kind:'shape' }
+  { key:'ralpha', icon:'<span class="mir">α</span>', name:'反向阿法', say:'反向阿法', kind:'shape' },
+  // 第一批新題（實測中）：still＝轉角可以停多久才算收筆（預設 0.3 秒），win＝這一揮最多等多久
+  { key:'caret',  icon:'∧',  name:'人字',   say:'人字',   kind:'shape', nw:true },
+  { key:'inf',    icon:'∞',  name:'無極',   say:'無極',   kind:'shape', nw:true },
+  { key:'gamma',  icon:'γ',  name:'伽瑪',   say:'伽瑪',   kind:'shape', nw:true },
+  { key:'delta',  icon:'δ',  name:'德爾塔', say:'德爾塔', kind:'shape', nw:true },
+  { key:'rho',    icon:'ρ',  name:'柔',     say:'柔',     kind:'shape', nw:true },
+  { key:'sq',     icon:'□',  name:'方',     say:'方',     kind:'shape', nw:true, still:450 },
+  { key:'star',   icon:'★',  name:'五芒星', say:'五芒星', kind:'shape', nw:true, still:450, win:3500 },
+  { key:'spiral', icon:'🌀', name:'漩渦',   say:'漩渦',   kind:'shape', nw:true, win:3500 }
 ];
 const SYM = Object.fromEntries(SYMBOLS.map(s => [s.key, s]));
 // 「Z 字」這類名稱本身就有符號，不要再重複一次圖示
@@ -286,7 +310,16 @@ const TEMPLATE_DEFS = {
   // 左右相反的版本
   rs:     { name:'反向 S', v:[sCurve().map(q => [-q[0], q[1]])] },
   rz:     { name:'反向 Z', v:[[[1,1],[-1,1],[1,-1],[-1,-1]]] },
-  rn:     { name:'反向 N', v:[[[1,-1],[1,1],[-1,-1],[-1,1]]] }
+  rn:     { name:'反向 N', v:[[[1,-1],[1,1],[-1,-1],[-1,1]]] },
+  // 第一批新題
+  caret:  { name:'∧ 人字', v:[[[-1,-1],[0,1],[1,-1]]] },
+  inf:    { name:'∞ 無極', v:[infPath()] },
+  gamma:  { name:'γ 伽瑪', v:gammaVariants() },
+  delta:  { name:'δ 德爾塔', v:[deltaPath()] },
+  rho:    { name:'ρ 柔',   v:[rhoPath()] },
+  sq:     { name:'□ 方',   v:[[[-1,1],[-1,-1],[1,-1],[1,1],[-1,1]]] },
+  star:   { name:'★ 五芒星', v:[starPath()] },
+  spiral: { name:'🌀 漩渦', v:[spiralPath()] }
 };
 const NPTS = 64;
 function pathLen(p){ let L=0; for(let i=1;i<p.length;i++) L += Math.hypot(p[i][0]-p[i-1][0], p[i][1]-p[i-1][1]); return L; }
@@ -571,6 +604,8 @@ function arrowHead(pts, color, s){
   ctx.save(); ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(a[0], a[1]);
   ctx.lineTo(a[0] - L*Math.cos(ang - 0.45), a[1] - L*Math.sin(ang - 0.45)); ctx.lineTo(a[0] - L*Math.cos(ang + 0.45), a[1] - L*Math.sin(ang + 0.45)); ctx.closePath(); ctx.fill(); ctx.restore();
 }
+// 路徑中段的小箭頭：∞ 的中心、ρ 回到豎線這種會重疊的地方，看得出來往哪裡走
+function midArrows(p, s){ for(const f of [0.25, 0.5, 0.75]){ const n = Math.max(6, Math.round(p.length*f)); arrowHead(p.slice(0, n), 'rgba(160,200,255,.55)', s); } }
 function startDot(p, s){ const c = toC(p, s); ctx.save(); ctx.fillStyle = '#7fe0a6'; ctx.shadowColor = '#7fe0a6'; ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(c[0], c[1], 6, 0, Math.PI*2); ctx.fill(); ctx.restore(); }
 // 「拂絲」光帶：主線＋幾條細絲錯開，有一點拂塵的感覺
 function fuchenTrail(pts, s, alpha=1){
@@ -586,7 +621,7 @@ function redrawLast(){ if(lastDraw) lastDraw(); else drawIdle(); }
 function drawIdle(){
   lastDraw = drawIdle; bg();
   const key = currentKeyForIdle();
-  if(key && key !== 'cross'){ const p = tplPts(key); strokePath(p, { color:'rgba(160,200,255,.45)', width:5, dash:[6,10] }); startDot(p[0], 0.72); arrowHead(p, 'rgba(160,200,255,.7)', 0.72); }
+  if(key && key !== 'cross'){ const p = tplPts(key); strokePath(p, { color:'rgba(160,200,255,.45)', width:5, dash:[6,10] }); startDot(p[0], 0.72); arrowHead(p, 'rgba(160,200,255,.7)', 0.72); if(SYM[key].kind === 'shape') midArrows(p, 0.72); }
   if(key === 'cross'){ strokePath(tplPts('dr'), { color:'rgba(160,200,255,.45)', width:5, dash:[6,10] }); strokePath(tplPts('dl'), { color:'rgba(160,200,255,.45)', width:5, dash:[6,10] }); }
   setOverlay(key ? `<div class="mid">${symLabel(SYM[key])}</div><div class="sub">按「開始這一揮」</div>` : `<div class="mid">${mode === 'random' ? '🎲 隨機測驗' : '🌀 自由揮'}</div><div class="sub">${mode === 'random' ? '每次隨機出一個符號' : '倒數後隨意揮一個符號，看系統認成什麼'}</div>`);
 }
@@ -595,7 +630,7 @@ function setOverlay(html){ $('#overlay').innerHTML = html; }
 /* ---------------- 介面：模式與符號 ---------------- */
 let mode = 'pick', selected = 'left', running = false, cancelFlag = false;
 const grid = $('#symGrid');
-SYMBOLS.forEach(s => { const b = document.createElement('button'); b.dataset.key = s.key; b.innerHTML = `<span class="ic">${s.icon}</span>${s.name}`; grid.appendChild(b); });
+SYMBOLS.forEach(s => { const b = document.createElement('button'); b.dataset.key = s.key; b.innerHTML = `<span class="ic">${s.icon}</span>${s.name}${s.nw ? '<span class="nw">新</span>' : ''}`; grid.appendChild(b); });
 function syncGrid(){ grid.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.key === selected))); grid.classList.toggle('dim', mode !== 'pick'); }
 grid.addEventListener('click', e => { const b = e.target.closest('button'); if(!b || running) return; selected = b.dataset.key; syncGrid(); drawIdle(); });
 document.querySelector('.tabs').addEventListener('click', e => {
@@ -608,7 +643,8 @@ syncGrid();
 /* ---------------- 一次揮拂的流程：看 → 倒數 → 揮 → 叮 → 看結果 ---------------- */
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function wait(ms){ const t0 = performance.now(); while(performance.now() - t0 < ms){ if(cancelFlag) throw 'cancel'; await sleep(Math.min(40, ms)); } if(cancelFlag) throw 'cancel'; }
-function windowMs(key){ const k = key ? SYM[key].kind : 'shape'; return k === 'dir' ? 1600 : k === 'cross' ? 1500 : 2800; }
+function windowMs(key){ if(key && SYM[key].win) return SYM[key].win; const k = key ? SYM[key].kind : 'shape'; return k === 'dir' ? 1600 : k === 'cross' ? 1500 : 2800; }
+function stillMs(key){ return (key && SYM[key].still) || 300; }
 
 async function demo(key){
   const s = SYM[key]; say(s.say);
@@ -663,7 +699,7 @@ function record(ms, opts){
           const p = integ.step(s), now = performance.now();
           if(p.act > T0.start){ if(!this.started){ this.started = true; } this.lastActive = now; if(!this.swooshed){ this.swooshed = true; swoosh(Math.min(1, p.act/800)); } }
           else if(p.act > T0.end && this.started) this.lastActive = now;
-          if(this.started && now - this.lastActive > 300) finish('still');
+          if(this.started && now - this.lastActive > ((opts && opts.still) || 300)) finish('still');
         } };
       timer = setTimeout(() => finish('timeout'), ms);
     } else {
@@ -1136,7 +1172,7 @@ async function runTrial(){
     for(let i=0;i<n;i++){
       if(i === 0) early = await countdown(3, key ? symLabel(SYM[key]) : '');
       else { await wait(250); say('二刀'); early = (await countdown(1, '第二刀')) || early; }
-      strokes.push(await record(windowMs(key)));
+      strokes.push(await record(windowMs(key), { still: stillMs(key) }));
     }
     sfx.ding(); vib(50); setOverlay('<div class="mid">叮～看結果</div>'); await wait(350);
     const res = judge(key, strokes, early, 'auto');
