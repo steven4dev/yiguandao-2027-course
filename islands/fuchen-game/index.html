@@ -23,10 +23,10 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .hud .mid{font-size:.9rem;color:var(--gold);text-align:center}
 .hud .score{font-size:1rem;text-align:right}
 .hud .score small{display:block;font-size:.72rem;color:var(--muted);font-weight:600}
-.center{position:fixed;left:16px;right:16px;top:64%;transform:translateY(-50%);text-align:center;pointer-events:none;text-shadow:0 0 18px rgba(0,0,0,.8)}
+.center{position:fixed;left:16px;right:16px;top:79%;transform:translateY(-50%);text-align:center;pointer-events:none;text-shadow:0 0 18px rgba(0,0,0,.8)}
 .center .big{font-size:clamp(4rem,26vw,9rem);font-weight:900;line-height:1;color:#fff;text-shadow:0 0 30px rgba(255,214,120,.9)}
-.center .mid{font-size:clamp(1.4rem,7vw,2.2rem);font-weight:900}
-.center .sub{font-size:.95rem;color:var(--muted);margin-top:6px}
+.center .mid{font-size:clamp(1.4rem,7vw,2.2rem);font-weight:900;display:inline-block;background:rgba(8,10,14,.62);border:1px solid var(--line);border-radius:999px;padding:4px 18px}
+.center .sub{font-size:.95rem;color:var(--ink);margin:8px auto 0;display:table;background:rgba(8,10,14,.62);border-radius:999px;padding:3px 14px}
 .bottom{position:fixed;left:0;right:0;bottom:0;padding:8px 16px calc(env(safe-area-inset-bottom) + 12px);display:flex;justify-content:space-between;align-items:center;pointer-events:none}
 .bottom button{pointer-events:auto}
 .tag{font-size:.8rem;color:var(--muted);text-shadow:0 1px 4px #000}
@@ -114,7 +114,7 @@ button.big{width:100%;font-size:1.1rem;padding:14px}
 
 <script>
 'use strict';
-const VERSION = 'v261109.03';
+const VERSION = 'v261109.04';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -404,17 +404,17 @@ const SYMS = {
   down:   { name:'劈',       icon:'⬇', kind:'dir', dir:270, say:'劈' },
   up:     { name:'挑',       icon:'⬆', kind:'dir', dir:90,  say:'挑' },
   v:      { name:'V 字',     icon:'V', kind:'shape', say:'V 字' },
-  circle: { name:'圓',       icon:'○', kind:'shape', say:'畫圓' },
+  circle: { name:'圓',       icon:'○', kind:'shape', say:'畫圓', both:true, note:'繞一圈回到起點' },
   z:      { name:'Z 字',     icon:'Z', kind:'shape', say:'Z 字' },
   n:      { name:'N 字',     icon:'N', kind:'shape', say:'N 字' },
-  alpha:  { name:'阿法',     icon:'α', kind:'shape', say:'阿法' },
+  alpha:  { name:'阿法',     icon:'α', kind:'shape', say:'阿法', both:true },
   s:      { name:'S 字',     icon:'S', kind:'shape', say:'S 字' },
   rs:     { name:'反向 S',   icon:'S', mir:true, kind:'shape', say:'反向 S' },
   rz:     { name:'反向 Z',   icon:'Z', mir:true, kind:'shape', say:'反向 Z' },
   rn:     { name:'反向 N',   icon:'N', mir:true, kind:'shape', say:'反向 N' },
-  ralpha: { name:'反向阿法', icon:'α', mir:true, kind:'shape', say:'反向阿法' }
+  ralpha: { name:'反向阿法', icon:'α', mir:true, kind:'shape', say:'反向阿法', both:true }
 };
-const symHTML = k => { const s = SYMS[k]; return (s.mir ? MIR(s.icon) : s.icon) + ' ' + s.name; };
+const symHTML = k => { const s = SYMS[k]; if(!s.mir && s.name.startsWith(s.icon)) return s.name; return (s.mir ? MIR(s.icon) : s.icon) + ' ' + s.name; };
 
 /* 六塵精：色、聲、香、味、觸、法 */
 const DUSTS = [
@@ -715,13 +715,54 @@ function drawMonster(t){
 }
 function shade(hex, k){ const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255; r = Math.round(r*(1+k)); g = Math.round(g*(1+k)); b = Math.round(b*(1+k)); return `rgb(${Math.max(0,Math.min(255,r))},${Math.max(0,Math.min(255,g))},${Math.max(0,Math.min(255,b))})`; }
 function tplFor(key){ const t = TEMPLATES.find(t => t.key === key); return t ? t.variants[0] : null; }
-let showGhost = true;
+let showGhost = false;
 
 /* ---------------- 主迴圈 ---------------- */
 let replayAnim = null;   // { pts:[[x,y]], t0, dur }
+/* ---------------- 全畫面揮動提示：粗金線＋沿途箭頭＋起點「起」、終點大箭頭「終」＋一顆會跑的光點 ---------------- */
+let hint = null;          // { key, pts, a, target }
+const hintBox = () => ({ cx: W/2, cy: H*0.40, size: Math.min(W*0.86, H*0.50) });
+function makeHint(key){
+  const tp = tplFor(key); if(!tp) return null;
+  const b = hintBox(), pts = resample(tp, 90).map(p => [b.cx + p[0]*b.size, b.cy - p[1]*b.size]);
+  const cum = [0]; for(let i=1;i<pts.length;i++) cum.push(cum[i-1] + Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]));
+  return { key, pts, cum, a:0, target:1 };
+}
+function atLen(h, d){ const c = h.cum, p = h.pts; let i = 1; while(i < c.length-1 && c[i] < d) i++; const k = (d - c[i-1])/((c[i] - c[i-1]) || 1); const x = p[i-1][0] + (p[i][0]-p[i-1][0])*k, y = p[i-1][1] + (p[i][1]-p[i-1][1])*k; return { x, y, ang: Math.atan2(p[i][1]-p[i-1][1], p[i][0]-p[i-1][0]) }; }
+function arrowAt(x, y, ang, size, fill){ ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.fillStyle = fill; ctx.beginPath(); ctx.moveTo(size*0.6, 0); ctx.lineTo(-size*0.5, -size*0.55); ctx.lineTo(-size*0.2, 0); ctx.lineTo(-size*0.5, size*0.55); ctx.closePath(); ctx.fill(); ctx.restore(); }
+function drawHint(t){
+  const h = hint; if(!h) return;
+  h.a += (h.target - h.a)*0.12; if(h.a < 0.01 && h.target === 0) return;
+  const u = U(), a = h.a, p = h.pts, total = h.cum[h.cum.length-1];
+  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  // 深色外框讓金線在任何背景都看得清楚
+  ctx.strokeStyle = `rgba(0,0,0,${0.45*a})`; ctx.lineWidth = u*0.05; ctx.beginPath(); p.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.stroke();
+  ctx.strokeStyle = `rgba(255,214,120,${0.9*a})`; ctx.lineWidth = u*0.026; ctx.shadowColor = 'rgba(255,200,90,.9)'; ctx.shadowBlur = 18; ctx.stroke();
+  ctx.shadowBlur = 0;
+  // 沿途的方向箭頭
+  const gap = Math.max(u*0.16, total/8);
+  for(let d=gap*0.75; d<total-gap*0.5; d+=gap){ const q = atLen(h, d); arrowAt(q.x, q.y, q.ang, u*0.055, `rgba(255,246,220,${0.95*a})`); }
+  // 會跑的光點（起點 → 終點，反覆）
+  const k = ((t % 1700)/1700), dd = k*total;
+  for(let j=8;j>=0;j--){ const q = atLen(h, Math.max(0, dd - j*u*0.02)); ctx.fillStyle = `rgba(255,255,255,${a*(1 - j/9)*0.9})`; ctx.beginPath(); ctx.arc(q.x, q.y, u*0.022*(1 - j/12), 0, Math.PI*2); ctx.fill(); }
+  // 終點大箭頭＋「終」
+  const closed = Math.hypot(p[0][0] - p[p.length-1][0], p[0][1] - p[p.length-1][1]) < u*0.12;
+  const e = atLen(h, closed ? total - u*0.16 : total - 0.5);
+  arrowAt(e.x, e.y, e.ang, u*0.11, `rgba(255,210,122,${a})`);
+  // 起點綠圈＋「起」
+  const s0 = p[0]; ctx.fillStyle = `rgba(127,224,166,${a})`; ctx.beginPath(); ctx.arc(s0[0], s0[1], u*0.05, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = `rgba(255,255,255,${0.9*a})`; ctx.lineWidth = 3; ctx.stroke();
+  ctx.font = `900 ${Math.round(u*0.05)}px "Noto Sans TC", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = `rgba(20,40,28,${a})`; ctx.fillText('起', s0[0], s0[1] + 1);
+  const bx0 = hintBox(); let ex = e.x + Math.cos(e.ang)*u*0.12, ey = e.y + Math.sin(e.ang)*u*0.12;
+  if(closed){ ex = e.x + (bx0.cx - e.x)*0.22; ey = e.y + (bx0.cy - e.y)*0.22; }   // 頭尾相接時把「終」放到內側，不跟「起」擠在一起
+  ctx.fillStyle = `rgba(255,236,190,${a})`; ctx.shadowColor = '#000'; ctx.shadowBlur = 6; ctx.fillText('終', Math.max(u*0.07, Math.min(W - u*0.07, ex)), Math.max(u*0.07, Math.min(H - u*0.07, ey)));
+  ctx.restore();
+}
 function frame(t){
   drawBackground(t);
   drawMonster(t);
+  drawHint(t);
   if(replayAnim){
     const k = Math.max(0, Math.min(1, (t - replayAnim.t0)/replayAnim.dur)), n = replayAnim.pts.length, idx = Math.min(n-1, Math.floor(k*(n-1)));
     const p = replayAnim.pts[idx]; fu.moveTo(p[0], p[1]); fu.trail.push({ x:p[0], y:p[1], life:1 }); fu.glow = 1;
@@ -798,8 +839,8 @@ function judgeSwing(key, st, th0){
 function pathOnScreen(a){
   const xy = a.xy; if(!xy || xy.length < 2) return null;
   let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity; for(const p of xy){ x0=Math.min(x0,p[0]); x1=Math.max(x1,p[0]); y0=Math.min(y0,p[1]); y1=Math.max(y1,p[1]); }
-  const s = Math.max(x1-x0, y1-y0) || 1, cx = (x0+x1)/2, cy = (y0+y1)/2, box = U()*0.62;
-  return resample(xy, 48).map(p => [MON.x + (p[0]-cx)/s*box, MON.y - (p[1]-cy)/s*box]);
+  const s = Math.max(x1-x0, y1-y0) || 1, cx = (x0+x1)/2, cy = (y0+y1)/2, b = hintBox();
+  return resample(xy, 48).map(p => [b.cx + (p[0]-cx)/s*b.size, b.cy - (p[1]-cy)/s*b.size]);
 }
 function playReplay(pts, dur){ return new Promise(res => { replayAnim = { pts, t0: performance.now(), dur, done: res }; }); }
 
@@ -811,19 +852,27 @@ async function encounter(opt){
     boss ? sfx.boss() : sfx.appear();
   } else { monster.sym = key; }
   hud(wave);
-  center(`<div class="mid">${symHTML(key)}</div>${tutorial ? `<div class="sub">${tutorial}</div>` : ''}`);
+  const sub = [SYMS[key].note || '', SYMS[key].both ? '順時針、逆時針都可以' : '', tutorial || ''].filter(Boolean).join('・');
+  center(`<div class="mid">${symHTML(key)}</div>${sub ? `<div class="sub">${sub}</div>` : ''}`);
   say(SYMS[key].say);
-  await wait(boss ? 1500 : 1200);
+  hint = makeHint(key);
+  await wait(boss ? 900 : 600);
+  // 拂塵沿著提示路線示範一次
+  if(hint){ fu.glow = 0.6; await playReplay(hint.pts.map(q => [q[0], q[1]]), SYMS[key].kind === 'dir' ? 700 : 1500); }
+  await wait(300);
   if(monster.state === 'enter') monster.state = 'idle';
   await countdown(3);
   center('');
+  if(hint) hint.target = 0;
   const th0 = tutorial ? SENS.light : null;
   const st = await record(SYMS[key].kind === 'dir' ? 1600 : 2800, th0); lastStroke = st;
   sfx.ding(); vib(50); center('<div class="mid">叮～</div>'); await wait(250); center('');
   const r = judgeSwing(key, st, th0); tries++;
   // 拂塵招式重播
   const scr = !r.none ? pathOnScreen(r.a) : null;
+  if(hint) hint.target = 0.3;   // 重播時把標準路線淡淡留著，對照自己揮得像不像
   if(scr){ swoosh(1); await playReplay(scr, 900); }
+  if(hint) hint.target = 0;
   if(r.ok){
     hits++; combo++; maxCombo = Math.max(maxCombo, combo); purified++;
     const pts = Math.round(r.score) + (combo > 1 ? combo*10 : 0); score += pts;
