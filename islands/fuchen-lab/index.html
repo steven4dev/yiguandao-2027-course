@@ -209,7 +209,7 @@ pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:
 
 <script>
 'use strict';
-const VERSION = 'v261109.10';
+const VERSION = 'v261109.11';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = VERSION;
@@ -277,7 +277,12 @@ function spiralVariants(){ const v=[]; for(const a0 of [45,0,90]) for(const n of
 const starPath = () => [90,234,18,162,306,90].map(a => [Math.cos(a*D2R), Math.sin(a*D2R)]);
 // ---- 第二批新題（v261109.08，實測中）：正三角、倒三角。三個角都可以起筆、兩個方向都算（共 6 種寫法） ----
 function polyVariants(angs){ const v = []; for(let s=0;s<angs.length;s++) for(const d of [1, -1]){ const p = []; for(let k=0;k<=angs.length;k++){ const a = angs[((s + d*k) % angs.length + angs.length) % angs.length]; p.push([Math.cos(a*D2R), Math.sin(a*D2R)]); } v.push(p); } return v; }
-const triVariants = () => polyVariants([90, 210, 330]), itriVariants = () => polyVariants([270, 30, 150]);
+// 依第四批實測補的寫法：正三角最後常「超過頂點」繼續往上；倒三角常揮成又細又高、最後一筆越過起點往下
+const P2 = (a) => [Math.cos(a*D2R), Math.sin(a*D2R)];
+const triVariants = () => [...polyVariants([90, 210, 330]),
+  [P2(90), P2(210), P2(330), [P2(90)[0] - 0.08, 1.3]], [P2(90), P2(330), P2(210), [P2(90)[0] + 0.08, 1.3]]];
+const itriVariants = () => [...polyVariants([270, 30, 150]),
+  ...[1, -1].map(d => [[0, -1], [0.45*d, 1], [-0.45*d, 1], [0.12*d, -1.25]])];   // 細長版會搶走 N、反向 N、方，不加
 
 const SYMBOLS = [
   { key:'left',   icon:'⬅',  name:'左揮',   say:'左揮',   kind:'dir', dir:180 },
