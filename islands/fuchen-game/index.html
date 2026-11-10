@@ -152,6 +152,12 @@ body{line-break:strict}
 .dcard canvas{width:100%;aspect-ratio:1/1;display:block}
 .dcard .nm{font-weight:800;font-size:.86rem}
 .dcard .lv{font-size:.7rem;color:var(--muted)}
+.dfam-t{font-size:.72rem;color:var(--muted);padding:0 4px 6px;line-height:1.5}
+.dsrc{font-size:.76rem;line-height:1.6;margin-top:4px}
+.teach{margin:8px 0 4px;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.04);font-size:.86rem;line-height:1.6}
+.teach div{margin:2px 0}
+.teach b{color:var(--gold);margin-right:6px;white-space:nowrap}
+.teach small{display:block;font-size:.68rem;color:var(--muted);margin-top:4px}
 .dx-h{font-size:.75rem;color:#e8bd5a;padding:8px 4px 4px}
 .dcard.xv{background:linear-gradient(160deg,rgba(232,189,90,.12),rgba(255,255,255,.03));box-shadow:inset 0 0 0 1px rgba(232,189,90,.28)}
 .dcard.lock{opacity:.7}
@@ -237,18 +243,19 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
   <div class="panel dexp">
     <h2>📖 淨心錄 <small id="dexN"></small></h2>
     <p class="note">收服過的塵靈會收在這裡；還沒遇到的只看得到剪影和出沒等級。收齊一系可以解鎖群島徽章（之後開放）。</p>
+    <p class="note dsrc">📜 <span class="cl">六塵：色、聲、香、味、觸、法，</span><span class="cl">語出《心經》「無色聲香味觸法」；</span><span class="cl">拂塵之意取自《六祖壇經》神秀偈</span><span class="cl">「身是菩提樹，心如明鏡臺，</span><span class="cl">時時勤拂拭，勿使惹塵埃」。</span></p>
     <p class="note" id="dexPrev" hidden style="color:var(--gold)">👁️ 全部預覽模式：所有塵靈全部顯示，給設計、審稿檢視用；不會改到這支手機的收服紀錄。</p>
     <div id="dexList"></div>
     <div class="row"><button class="primary big" id="btnDexClose">關閉</button></div>
   </div>
 </section>
-<div class="screen" id="dexModal" hidden><div class="panel"><canvas id="dmCv" style="width:56%;aspect-ratio:1/1;display:block;margin:0 auto"></canvas><h2 id="dmName" style="text-align:center"></h2><p class="note" id="dmTag" style="text-align:center;margin-top:0"></p><div class="stats" id="dmDl"></div><div class="quote" id="dmQuote"></div><div class="row"><button class="primary big" id="dmClose">關閉</button></div></div></div>
+<div class="screen" id="dexModal" hidden><div class="panel"><canvas id="dmCv" style="width:56%;aspect-ratio:1/1;display:block;margin:0 auto"></canvas><h2 id="dmName" style="text-align:center"></h2><p class="note" id="dmTag" style="text-align:center;margin-top:0"></p><div class="stats" id="dmDl"></div><div class="quote" id="dmQuote"></div><div class="teach" id="dmTeach"></div><div class="row"><button class="primary big" id="dmClose">關閉</button></div></div></div>
 <button id="btnBook" hidden aria-label="淨心錄"><b>淨</b><b>心</b><span id="bookN">0</span></button>
 <div class="ver" id="ver"></div>
 
 <script>
 'use strict';
-const VERSION = 'v261109.25';
+const VERSION = 'v261109.26';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -627,6 +634,15 @@ const MONS = [
   ['fa',1,'念念','念頭來了，看著它，不跟著它。'],['fa',2,'妄想妖','想得越多，做得越少。'],['fa',3,'執念魔','放下不是失去，是騰出雙手。']
 ].map(([f,st,name,quote]) => ({ fam: FAMS.find(x => x.key === f), stage: st, name, quote, lv: st === 1 ? 'Lv 1–9' : st === 2 ? 'Lv 10–19' : 'Lv 20+', hits: st === 1 ? 1 : 2 }));
 const STAGE_NAME = ['', '塵精', '塵妖', '塵魔'];
+/* 六系的典故與修為（v261109.26）：典故只引原文查得到的經典；解讀與練習是示範，正式版請道場審定 */
+const FAM_TEACH = {
+  se:    { src: '非禮勿視',               from: '《論語・顏淵》',     how: '不和別人比較，看見自己本來的圓滿',   daily: '看到別人好，先在心裡隨喜讚歎' },
+  sheng: { src: '非禮勿聽，非禮勿言',     from: '《論語・顏淵》',     how: '守口德：不說是非、不傳閒話',         daily: '話到嘴邊先停三秒，只說好話' },
+  xiang: { src: '不見可欲，使民心不亂',   from: '《道德經・第三章》', how: '看清誘惑，當下斬斷',                 daily: '想要的時候先問：真的需要嗎？' },
+  wei:   { src: '一粥一飯，當思來處不易', from: '朱柏廬《治家格言》', how: '知足感恩，飲食有度',                 daily: '飯前說聲感謝，吃到八分飽就好' },
+  chu:   { src: '生於憂患，而死於安樂也', from: '《孟子・告子下》',   how: '勤而不懈，從安逸中振作',             daily: '今日事今日畢，先做最想拖的那一件' },
+  fa:    { src: '應無所住而生其心',       from: '《金剛經》',         how: '收攝念頭，回到初心',                 daily: '每天靜坐三分鐘，看著念頭來去、不跟著跑' }
+};
 /* 異相塵靈（v261109.20）：跟著新題庫出現的特別塵靈，歸在原本的系別，但各自怕一個新符號（心性小語為示範） */
 const XMONS = [
   // 系, 階段, 名字, 心性小語, 怕的符號, 顯示, 為什麼怕, 配件, 身體顏色
@@ -1847,7 +1863,7 @@ function openDex(){
   $('#dexList').innerHTML = ''; dexCards = [];
   FAMS.forEach(f => {
     const ms = MONS.filter(m => m.fam === f).sort((a, b) => (!!a.xv - !!b.xv) || (a.stage - b.stage)), base = ms.filter(m => !m.xv), xs = ms.filter(m => m.xv), got = ms.filter(m => dex.m[m.name]).length, gotBase = DEX_ALL ? 1 : base.filter(m => dex.m[m.name]).length, box = document.createElement('div'); box.className = 'dfam';
-    box.innerHTML = `<div class="dfam-h"><b style="color:${f.color}">${f.name}系・${f.mood}</b><span>${got === ms.length ? '🏅 已收齊' : `${got}/${ms.length}`}${gotBase ? `　怕 ${f.weakName}` : ''}</span></div><div class="drow"></div>${xs.length ? '<div class="dx-h">✨ 異相塵靈（修行、精進才會出現）</div><div class="drow dx"></div>' : ''}`;
+    box.innerHTML = `<div class="dfam-h"><b style="color:${f.color}">${f.name}系・${f.mood}</b><span>${got === ms.length ? '🏅 已收齊' : `${got}/${ms.length}`}${gotBase ? `　怕 ${f.weakName}` : ''}</span></div><div class="dfam-t">📜 <span class="cl">「${FAM_TEACH[f.key].src}」</span><span class="cl">${FAM_TEACH[f.key].from}</span>　<span class="cl">🧘 ${FAM_TEACH[f.key].how}</span></div><div class="drow"></div>${xs.length ? '<div class="dx-h">✨ 異相塵靈（修行、精進才會出現）</div><div class="drow dx"></div>' : ''}`;
     ms.forEach(m => { const e = dexE(m), el = document.createElement('div'); el.className = 'dcard' + (e ? '' : ' lock') + (m.xv ? ' xv' : '');
       el.innerHTML = `<canvas></canvas><div class="nm">${e ? (e.gold ? '✨' : '') + m.name : '？？？'}</div><div class="lv">${e ? (m.xv ? `怕 ${m.weakName}` : e.preview ? `${STAGE_NAME[m.stage]}・${m.lv}` : `收服 ${e.n} 次`) : m.lv + ' 出沒'}</div>`;
       el.onclick = () => openDexCard(m); box.querySelector(m.xv ? '.drow.dx' : '.drow').appendChild(el); dexCards.push({ cv: el.querySelector('canvas'), m, e }); });
@@ -1861,6 +1877,7 @@ function openDexCard(m){
   $('#dmName').textContent = e ? m.name : '？？？'; $('#dmTag').textContent = `${m.xv ? '✨ 異相・' : ''}${m.fam.name}系・${STAGE_NAME[m.stage]}・${m.lv}`;
   $('#dmDl').innerHTML = e ? `<span>代表 <b>${m.fam.mood}</b></span><span>要揮 <b class="nb">${m.stage === 1 ? '1 下' : m.stage === 2 ? '2 連擊' : '2～3 連擊'}</b></span><span>怕 <b class="nb">${weakNameOf(m)}</b></span><span>${e.preview ? '出沒 <b class="nb">' + m.lv + '</b>' : '收服 <b>' + e.n + ' 次</b>'}</span>${m.xv ? `<span style="grid-column:1/-1">為什麼怕：<b>${clauses(weakWhyOf(m))}</b></span>` : ''}${e.preview ? '<span style="grid-column:1/-1;color:var(--muted)">👁️ 預覽模式：還沒收服，先看內容</span>' : ''}<span style="grid-column:1/-1${e.preview ? ';display:none' : ''}"><span class="cl">第一次收服 <b>${e.first}</b></span>${e.gold ? '<span class="cl">・✨ 收過金色</span>' : ''}${e.hard ? '<span class="cl">・🔥 精進收服</span>' : ''}</span>`
     : `<span style="grid-column:1/-1">在 <b>${m.lv}</b> 的試煉中出沒（${m.fam.name}系的${m.xv ? '異相' : ''}${STAGE_NAME[m.stage]}${m.xv ? '，修行、精進才會出現' : ''}）</span>`;
+  { const T = FAM_TEACH[m.fam.key]; $('#dmTeach').innerHTML = `<div><b>📜 典故</b><span class="cl">「${T.src}」</span><span class="cl">—— ${T.from}</span></div><div><b>🧘 ${m.fam.name}系修為</b>${clauses(T.how)}</div><div><b>🌱 每日練習</b>${clauses(T.daily)}</div><small>典故為經典原文；修為與練習為示範解讀，正式版請道場審定</small>`; }
   $('#dmQuote').innerHTML = e ? `${clauses(m.quote)}<small>心性小語（示範，正式版請道場審定）</small>` : '收服之後才會解鎖心性小語。';
   $('#dexModal').hidden = false;
 }

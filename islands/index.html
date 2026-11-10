@@ -649,7 +649,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261110.08</span>
+  <span class="ver">v261110.09</span>
   </div></div>
 </div>
 
@@ -5203,7 +5203,7 @@ if (document.fonts) document.fonts.ready.then(() => PT3.redrawStele());
 /* =========================================================
    拂塵淨心島：全真島右後方的外海（135°、離中心 108），跟法會島、輔導島、清淨菩提島都留一大片海。
    島中央一座兩層白玉台，木架上斜架著一支巨大的拂塵（照實物：黑色握把、竹節木柄、金屬套環、網罩圓頭、紅色綁繩、白色馬尾），
-   馬尾從圓頭順著柄的方向出來、拱一下再垂到台邊。外圈一圈踏石步道，十二尊塵靈石雕面向拂塵：六系各一尊原版——色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），旁邊各站一尊小一號的「異相」代表，台座石牌寫著名字和心性。
+   馬尾從圓頭順著柄的方向出來、拱一下再垂到台邊。外圈一圈踏石步道，十二尊塵靈石雕面向拂塵：六系各一尊原版——色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），旁邊各站一尊「異相」代表，台座石牌寫著名字和心性。
    互動是體感小遊戲「拂塵試煉」（islands/fuchen-game/），從資訊卡進去。
    ========================================================= */
 // 跟清淨菩提島、濟世靈山島一樣先封起來：一般人看到施工圍籬和「施工中」。
@@ -5361,12 +5361,12 @@ const fcIsl = makeIsland('fuchen', FC_R, Math.sin(FC_ANG) * 108, Math.cos(FC_ANG
     addObst(mark, { x, z, r: 1.45 });
   });
 
-  /* —— 六尊異相塵靈石雕（v261110.08）：每系一尊代表，放在同系原版的旁邊，小一號；石牌金框標「異相」 ——
+  /* —— 六尊異相塵靈石雕（v261110.09 改成跟原版一樣大）：每系一尊代表，放在同系原版的旁邊；石牌金框標「異相」 ——
      色＝虛名魔（頭頂一顆星）、聲＝硬嘴妖（石盔）、香＝誘餌妖（釣竿吊著糖）、味＝無度魔（頭上疊碗）、觸＝守舊魔（背著蝸牛殼）、法＝漩心魔（漩渦環繞） */
   const XV6 = [['虛名魔', 'se', 3], ['硬嘴妖', 'sheng', 2], ['誘餌妖', 'xiang', 2], ['無度魔', 'wei', 3], ['守舊魔', 'chu', 3], ['漩心魔', 'fa', 3]];
   XV6.forEach(([nm, key, st], i) => {
     const [fnm, , col] = FAMS6[i], a = Math.PI / 12 + Math.PI / 6 + i * Math.PI / 3, x = Math.sin(a) * SR, z = Math.cos(a) * SR - 0.6;
-    const S = new THREE.Group(); S.position.set(x, 0, z); S.rotation.y = Math.atan2(-x, -(z + 0.6)); S.scale.setScalar(0.85); mark.add(S);
+    const S = new THREE.Group(); S.position.set(x, 0, z); S.rotation.y = Math.atan2(-x, -(z + 0.6)); mark.add(S);
     mesh(new THREE.CylinderGeometry(1.25, 1.4, 0.45, 8), stoneD, 0, 0.22, 0, S);
     mesh(new THREE.CylinderGeometry(1.02, 1.1, 0.5, 8), stoneM, 0, 0.7, 0, S);
     mesh(new THREE.CylinderGeometry(1.06, 1.06, 0.07, 8), lam('#e8bd5a'), 0, 0.93, 0, S);
@@ -5408,7 +5408,7 @@ const fcIsl = makeIsland('fuchen', FC_R, Math.sin(FC_ANG) * 108, Math.cos(FC_ANG
       const pts = []; for (let k = 0; k <= 60; k++) { const t = k / 60, aa = t * Math.PI * 4; pts.push(new THREE.Vector3(Math.cos(aa) * 1.25, 0.15 + t * 1.6, Math.sin(aa) * 1.25)); }
       mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 90, 0.05, 6, false), stoneL, 0, 0, 0, T);
     }
-    addObst(mark, { x, z, r: 1.25 });
+    addObst(mark, { x, z, r: 1.45 });
   });
   // 環島踏石步道：一圈圓石把十二尊石雕串起來（中間通往白玉台的小徑那一段讓開）
   for (let k = 0; k < 40; k++) { const a = (k / 40) * Math.PI * 2; if (Array.from({ length: 12 }, (_, i) => Math.PI / 12 + i * Math.PI / 6).some((b) => Math.abs(((a - b + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < 0.14)) continue;
@@ -6668,7 +6668,7 @@ function renderPanel() {
     title = '拂塵淨心島'; info = '拂塵試煉・體感打怪';
     html = `<header><span class="eyebrow">外海・${FC_LIVE ? '拂塵試煉' : '測試中'}</span><h2>🪶 拂塵淨心島</h2><p class="sub">時時勤拂拭，勿使惹塵埃——手機就是拂塵柄，大揮一拂，把六塵精淨化收進淨心錄</p></header>
       <div class="cta"><p>${fcTester && !FC_LIVE ? '🔧 測試中：只有這支手機看得到入口，其他人看到的是施工圍籬。<br>' : ''}看清符印、等倒數、聽到「揮！」就整隻手臂揮出去；塵精一揮、塵妖要兩連擊，最後收服無明塵王。收服的塵靈會收進「淨心錄」。</p><a href="fuchen-game/">🎮 進入拂塵試煉</a></div>
-      <p class="note">島中央是一座兩層白玉台，木架上斜架著一支巨大的拂塵：黑色握把、竹節木柄、網罩圓頭、紅色綁繩，白色馬尾垂到台邊。外圈一圈踏石步道，十二尊塵靈石雕面向拂塵：六系各一尊原版——色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），旁邊各站一尊小一號的「異相」代表，台座石牌寫著名字和心性。</p>
+      <p class="note">島中央是一座兩層白玉台，木架上斜架著一支巨大的拂塵：黑色握把、竹節木柄、網罩圓頭、紅色綁繩，白色馬尾垂到台邊。外圈一圈踏石步道，十二尊塵靈石雕面向拂塵：六系各一尊原版——色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），旁邊各站一尊「異相」代表，台座石牌寫著名字和心性。</p>
       ${fcTester && !FC_LIVE ? '<p class="note"><a class="cta-link" href="fuchen-lab/">🧪 揮符實驗室（測感測器）</a>　<a class="cta-link" href="?fuchen=off#fuchen">結束測試</a></p>' : ''}
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongshu') {
