@@ -209,7 +209,7 @@ pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:
 
 <script>
 'use strict';
-const VERSION = 'v261109.09';
+const VERSION = 'v261109.10';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = VERSION;
@@ -242,7 +242,8 @@ function circleVariants(){
     arc(0,0,1,180,-180,48),  // 從左邊、順時針
     arc(0,0,1,0,360,48),     // 從右邊、逆時針
     arc(0,0,1,0,-360,48),    // 從右邊、順時針（v261109.27 補上：原本少了這兩種起筆）
-    arc(0,0,1,180,540,48)    // 從左邊、逆時針
+    arc(0,0,1,180,540,48),   // 從左邊、逆時針
+    ...[[90, -1], [90, 1], [270, -1], [270, 1]].map(([a0, d]) => arc(0,0,1,a0,a0 + d*360,48).map(([x, y]) => [x*0.45, y]))   // 直立窄橢圓（v261109.29：實測有人把圓揮成細長的一圈）
   ];   // 偶數＝順時針、奇數＝逆時針（精進的正圓／反圓靠這個分方向）
 }
 function alphaVariants(){
@@ -334,7 +335,7 @@ const TEMPLATE_DEFS = {
   gamma:  { name:'γ 伽瑪', v:gammaVariants() },
   delta:  { name:'δ 德爾塔', v:deltaVariants() },
   rho:    { name:'ρ 柔',   v:[rhoPath(), rhoSlant()] },
-  sq:     { name:'□ 方',   v:[[[-1,1],[-1,-1],[1,-1],[1,1],[-1,1]]] },
+  sq:     { name:'□ 方',   v:polyVariants([135, 225, 315, 45]) },   // 四個角都可以起筆、兩個方向都算
   star:   { name:'★ 五芒星', v:[starPath()] },
   spiral: { name:'🌀 漩渦', v:spiralVariants() },
   tri:    { name:'△ 正三角', v:triVariants() },
@@ -838,8 +839,9 @@ function analyzeStroke(st, model = 'auto', thOverride = null){
     let i0 = sm.findIndex(v => v > vmax*0.5), i1 = sm.length - 1 - [...sm].reverse().findIndex(v => v > vmax*0.5);
     pauses = 0; let inValley = false;
     for(let i=i0;i<=i1;i++){ if(!inValley && sm[i] < vmax*0.5){ inValley = true; } else if(inValley && sm[i] > vmax*0.65){ inValley = false; pauses++; } }
-    const ANG = ['z','rz','n','rn','tri','itri'], CUR = ['s','rs','circle'];
+    const ANG = ['z','rz','n','rn','tri','itri','sq'], CUR = ['s','rs','circle'];
     rg.ranking.forEach(r => {
+      if((r.key === 'tri' || r.key === 'itri') && pauses >= 3) r.d += 0.08;   // 三角形只有兩個轉角，頓三次以上比較像方
       if(ANG.includes(r.key)) r.d += pauses >= 2 ? -0.05 : pauses === 0 ? 0.075 : 0;
       if(CUR.includes(r.key) && pauses >= 2) r.d += 0.075;   // S 系列只在明顯有頓點時扣分，不加分（避免搶走圓）
       r.d = Math.max(0, r.d); r.score = distToScore(r.d);
@@ -955,8 +957,8 @@ function saveAttempt(res, strokes, alts){
     }),
     raw: strokes.map(s => s.raw) };
   log.push(entry);
-  // 原始資料只留最近 40 筆，避免塞爆瀏覽器空間
-  log.forEach((e, i) => { if(i < log.length - 40) delete e.raw; });
+  // 原始資料只留最近 80 筆（每筆約 6 KB），避免塞爆瀏覽器空間；空間不夠時下面會再縮到 10 筆
+  log.forEach((e, i) => { if(i < log.length - 80) delete e.raw; });
   if(log.length > 400) log = log.slice(-400);
   if(!store.set('fuchenLab.log', log)){ log.forEach((e, i) => { if(i < log.length - 10) delete e.raw; }); store.set('fuchenLab.log', log); }
   renderStats();

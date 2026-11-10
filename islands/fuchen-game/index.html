@@ -255,7 +255,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.28';
+const VERSION = 'v261109.29';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -288,7 +288,8 @@ function circleVariants(){
     arc(0,0,1,180,-180,48),  // 從左邊、順時針
     arc(0,0,1,0,360,48),     // 從右邊、逆時針
     arc(0,0,1,0,-360,48),    // 從右邊、順時針（v261109.27 補上：原本少了這兩種起筆）
-    arc(0,0,1,180,540,48)    // 從左邊、逆時針
+    arc(0,0,1,180,540,48),   // 從左邊、逆時針
+    ...[[90, -1], [90, 1], [270, -1], [270, 1]].map(([a0, d]) => arc(0,0,1,a0,a0 + d*360,48).map(([x, y]) => [x*0.45, y]))   // 直立窄橢圓（v261109.29：實測有人把圓揮成細長的一圈）
   ];   // 偶數＝順時針、奇數＝逆時針（精進的正圓／反圓靠這個分方向）
 }
 function alphaVariants(){
@@ -319,6 +320,7 @@ function rhoSlant(){ return [[-1.05,-1.4],[-0.6,0.3]].concat(arc(0,0.3,0.6,180,-
 function spiralPath(a0, turns, sx){ const p=[]; for(let i=0;i<=90;i++){ const t=i/90, a=a0*D2R + t*turns*2*Math.PI, r=1-t*0.8; p.push([sx*r*Math.cos(a), r*Math.sin(a)]); } return p; }
 function spiralVariants(){ const v=[]; for(const a0 of [45,0,90]) for(const n of [1.5,2]) for(const sx of [1,0.6]) v.push(spiralPath(a0,n,sx)); return v; }
 // ★ 五芒星：頂點起筆 → 左下 → 右 → 左 → 右下 → 回頂點
+function polyVariants(angs){ const v = []; for(let s=0;s<angs.length;s++) for(const d of [1, -1]){ const p = []; for(let k=0;k<=angs.length;k++){ const a = angs[((s + d*k) % angs.length + angs.length) % angs.length]; p.push([Math.cos(a*D2R), Math.sin(a*D2R)]); } v.push(p); } return v; }
 const starPath = () => [90,234,18,162,306,90].map(a => [Math.cos(a*D2R), Math.sin(a*D2R)]);
 
 
@@ -346,7 +348,7 @@ const TEMPLATE_DEFS = {
   gamma:  { name:'γ 伽瑪', v:gammaVariants() },
   delta:  { name:'δ 德爾塔', v:deltaVariants() },
   rho:    { name:'ρ 柔',   v:[rhoPath(), rhoSlant()] },
-  sq:     { name:'□ 方',   v:[[[-1,1],[-1,-1],[1,-1],[1,1],[-1,1]]] },
+  sq:     { name:'□ 方',   v:polyVariants([135, 225, 315, 45]) },   // 四個角都可以起筆、兩個方向都算
   star:   { name:'★ 五芒星', v:[starPath()] },
   spiral: { name:'🌀 漩渦', v:spiralVariants() }
 };
@@ -556,7 +558,7 @@ function analyzeStroke(st, model = 'auto', thOverride = null){
     let i0 = sm.findIndex(v => v > vmax*0.5), i1 = sm.length - 1 - [...sm].reverse().findIndex(v => v > vmax*0.5);
     pauses = 0; let inValley = false;
     for(let i=i0;i<=i1;i++){ if(!inValley && sm[i] < vmax*0.5){ inValley = true; } else if(inValley && sm[i] > vmax*0.65){ inValley = false; pauses++; } }
-    const ANG = ['z','rz','n','rn'], CUR = ['s','rs'];
+    const ANG = ['z','rz','n','rn','sq'], CUR = ['s','rs','circle'];   // 圓：三批實測真的圓都只頓 0～1 次，頓兩次以上（像方）就扣分
     rg.ranking.forEach(r => {
       if(ANG.includes(r.key)) r.d += pauses >= 2 ? -0.05 : pauses === 0 ? 0.075 : 0;
       if(CUR.includes(r.key) && pauses >= 2) r.d += 0.075;   // S 系列只在明顯有頓點時扣分，不加分（避免搶走圓）
@@ -597,7 +599,7 @@ const SYMS = {
   gamma:  { name:'伽瑪',   icon:'γ', kind:'shape', say:'伽瑪', both:true, note:'左上往下交叉繞小圈，收在右上' },
   delta:  { name:'德爾塔', icon:'δ', kind:'shape', say:'德爾塔', ease:7, note:'頂上往左勾，再往下順時針繞一圈' },
   rho:    { name:'柔',     icon:'ρ', kind:'shape', say:'柔', ease:10, note:'由下往上一豎，再順時針繞一圈' },
-  sq:     { name:'方',     icon:'□', kind:'shape', say:'方', still:450, note:'四個角各停一下' },
+  sq:     { name:'方',     icon:'□', kind:'shape', say:'方', still:450, ease:8, note:'四個角各停一下' },
   star:   { name:'五芒星', icon:'★', kind:'shape', say:'五芒星', still:450, win:3500, ease:13, note:'頂點出發，一筆畫完回到頂點' },
   spiral: { name:'漩渦',   icon:'🌀', kind:'shape', say:'漩渦', win:3500, note:'從右上外圈，逆時針往內繞' }
 };
