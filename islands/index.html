@@ -649,7 +649,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261110.09</span>
+  <span class="ver">v261110.10</span>
   </div></div>
 </div>
 
@@ -5202,7 +5202,7 @@ if (document.fonts) document.fonts.ready.then(() => PT3.redrawStele());
 
 /* =========================================================
    拂塵淨心島：全真島右後方的外海（135°、離中心 108），跟法會島、輔導島、清淨菩提島都留一大片海。
-   島中央一座兩層白玉台，木架上斜架著一支巨大的拂塵（照實物：黑色握把、竹節木柄、金屬套環、網罩圓頭、紅色綁繩、白色馬尾），
+   島中央一座岩石堆成的石丘（v261110.10 起；原本是兩層白玉台＋木架），一支巨大的拂塵像石中劍一樣插在頂上的岩縫裡（照實物：黑色握把、竹節木柄、金屬套環、網罩圓頭、紅色綁繩、白色馬尾），
    馬尾從圓頭順著柄的方向出來、拱一下再垂到台邊。外圈一圈踏石步道，十二尊塵靈石雕面向拂塵：六系各一尊原版——色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），旁邊各站一尊「異相」代表，台座石牌寫著名字和心性。
    互動是體感小遊戲「拂塵試煉」（islands/fuchen-game/），從資訊卡進去。
    ========================================================= */
@@ -5232,14 +5232,9 @@ const fcIsl = makeIsland('fuchen', FC_R, Math.sin(FC_ANG) * 108, Math.cos(FC_ANG
     const d = b.clone().sub(a), m = mesh(new THREE.CylinderGeometry(r, r, d.length(), seg), mat, 0, 0, 0, parent);
     m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); return m;
   };
-  /* —— 白玉台＋小徑 —— */
-  const jadeM = lam('#e3ebe6'), jadeM2 = lam('#f3f7f4'), woodM = lam('#7a5130'), woodDark = lam('#5a3a20');
-  // 打樣：網址加 fcrock（例如 ?fuchen=測試碼&fcrock#fuchen）時，白玉台換成岩石堆、拂塵像石中劍一樣插在岩縫裡；確認後再正式換上
-  const FC_ROCK = /[?&]fcrock\b/.test(location.search);
-  if (!FC_ROCK) {
-    mesh(new THREE.CylinderGeometry(4.6, 5.0, 0.6, 28), jadeM, 0, 0.3, -0.6, mark);
-    mesh(new THREE.CylinderGeometry(3.9, 4.2, 0.4, 28), jadeM2, 0, 0.8, -0.6, mark);
-  } else {
+  /* —— 岩石堆＋小徑（v261110.10 打樣確認後正式換上，取代原本的白玉台與木架） —— */
+  const woodDark = lam('#5a3a20');
+  {
     /* —— 岩石堆：大小不一的多面岩塊疊成小丘，中間留一道岩縫插拂塵；縫裡透出金光，周圍散著碎石和青苔 —— */
     let sd = 11; const rr = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
     const ROCK_C = ['#8f8b84', '#a39f97', '#7d7972', '#b3aea4', '#958f86'];
@@ -5257,10 +5252,10 @@ const fcIsl = makeIsland('fuchen', FC_R, Math.sin(FC_ANG) * 108, Math.cos(FC_ANG
     const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowT, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); glow.position.set(0.12, 2.95, -0.45); glow.scale.set(3.4, 2.4, 1); glow.userData.noMerge = true; mark.add(glow);
   }
   addObst(mark, { x: 0, z: -0.6, r: 5.0 });
-  for (let i = 0; i < 5; i++) { const st = mesh(new THREE.CylinderGeometry(0.75, 0.8, 0.14, 8), lam('#c9ccc2'), (i % 2 ? 0.35 : -0.35), 0.07, 5.2 + i * 1.5, mark); st.rotation.y = i; }
-  /* —— 巨型拂塵：握把在台上，往左上斜，木架托住柄的中段 —— */
+  for (let i = 0; i < 4; i++) { const st = mesh(new THREE.CylinderGeometry(0.75, 0.8, 0.14, 8), lam('#c9ccc2'), (i % 2 ? 0.35 : -0.35), 0.07, 5.2 + i * 1.5, mark); st.rotation.y = i; }   // 只鋪到半徑 10 以內，不會超出島邊
+  /* —— 巨型拂塵：像石中劍一樣插在岩石堆頂上的岩縫裡 —— */
   const FU = new THREE.Group(); FU.position.set(0, 1.0, -0.6); mark.add(FU);
-  if (FC_ROCK) {   // 石中劍：握柄末端插進岩縫，整支拂塵幾乎直立，白色馬尾從頂上垂下來
+  {   // 石中劍：握柄末端插進岩縫，整支拂塵幾乎直立，白色馬尾從頂上垂下來
     const PV = new THREE.Group(); PV.position.set(0.12, 2.05, -0.6); PV.rotation.z = -0.42; mark.add(PV); PV.add(FU); FU.position.set(-2.6, -0.15, -0.4);
   }
   const grip = new THREE.Vector3(2.6, 0.15, 0.4), head = new THREE.Vector3(-1.5, 7.4, -0.5), dir = head.clone().sub(grip).normalize();
@@ -5281,7 +5276,7 @@ const fcIsl = makeIsland('fuchen', FC_R, Math.sin(FC_ANG) * 108, Math.cos(FC_ANG
   const hairM = lam('#f6f2ea', { emissive: '#2b2720' }), hairM2 = lam('#e8e1d2');
   const side = new THREE.Vector3(0, 0, 1);
   const base = [tip, tip.clone().add(dir.clone().multiplyScalar(1.1)).add(new THREE.Vector3(-0.5, 0.3, 0)), new THREE.Vector3(-3.6, 8.2, -0.5), new THREE.Vector3(-4.6, 6.4, -0.4), new THREE.Vector3(-4.9, 3.9, -0.3), new THREE.Vector3(-4.7, 2.0, -0.2)];
-  if (FC_ROCK) {   // 直立版：馬尾從頂端往上拱一下，再順著柄的左側垂下來（點位先在「直立」的座標裡定，再轉回拂塵本身的座標）
+  {   // 直立版：馬尾從頂端往上拱一下，再順著柄的左側垂下來（點位先在「直立」的座標裡定，再轉回拂塵本身的座標）
     const c = Math.cos(0.42), sn = Math.sin(0.42), off = [[0, 0], [-0.2, 0.75], [-1.05, 0.85], [-1.75, -0.25], [-2.0, -2.3], [-1.95, -4.4]];
     base.splice(0, base.length, ...off.map(([x, y]) => new THREE.Vector3(tip.x + x * c - y * sn, tip.y + x * sn + y * c, tip.z)));
   }
@@ -5295,13 +5290,6 @@ const fcIsl = makeIsland('fuchen', FC_R, Math.sin(FC_ANG) * 108, Math.cos(FC_ANG
       curve.getPointAt(Math.min(1, t), c); v.fromBufferAttribute(pos, i).sub(c).multiplyScalar(k).add(c); pos.setXYZ(i, v.x, v.y, v.z);
     }
     geo.computeVertexNormals(); mesh(geo, m, 0, 0, 0, FU);
-  }
-  // 木架：一根立柱，頂端的托架托住柄
-  if (!FC_ROCK) {   // 岩石堆打樣不需要木架
-    const cradle = along(L * 0.45);
-    rod(new THREE.Vector3(cradle.x + 0.15, 0, cradle.z), new THREE.Vector3(cradle.x, cradle.y - 0.3, cradle.z), 0.16, woodM, FU);
-    rod(cradle.clone().add(new THREE.Vector3(-0.45, -0.15, 0)), cradle.clone().add(new THREE.Vector3(0.45, -0.35, 0)), 0.1, woodDark, FU);
-    mesh(new THREE.CylinderGeometry(0.6, 0.7, 0.18, 10), woodDark, cradle.x + 0.15, 0.09, cradle.z, FU);
   }
   /* —— 六尊塵靈石雕（v261110.07）：沿著島的外圈排一圈，全部面向中間的拂塵；一圈踏石步道把它們串起來 ——
      造型取自拂塵試煉裡的六系塵靈：色＝蛋形＋手鏡、聲＝鐘形＋喇叭、香＝雲朵＋一炷香、味＝三顆糰子串、觸＝枕頭＋「z」、法＝腦袋雲＋念環。
@@ -6662,13 +6650,13 @@ function renderPanel() {
   } else if (isl && isl.kind === 'fuchen' && !fcOpen) {
     title = '拂塵淨心島'; info = '施工中・敬請期待';
     html = `<header><span class="eyebrow">外海・施工中</span><h2>🚧 拂塵淨心島</h2><p class="sub">新島正在整地施工，整座島用施工圍籬圍起來，完工後開放</p></header>
-      <p class="note">圍籬裡面隱約看得到一座白玉台，木架上斜架著一支巨大的拂塵，白色的馬尾垂到台邊；四周站著六尊圓滾滾的小石像。聽說完工後要拿起手機當拂塵，敬請期待。</p>
+      <p class="note">圍籬裡面隱約看得到一座岩石堆，一支巨大的拂塵像石中劍一樣插在頂上，白色的馬尾垂下來；四周站著一圈石雕。聽說完工後要拿起手機當拂塵，敬請期待。</p>
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'fuchen') {
     title = '拂塵淨心島'; info = '拂塵試煉・體感打怪';
     html = `<header><span class="eyebrow">外海・${FC_LIVE ? '拂塵試煉' : '測試中'}</span><h2>🪶 拂塵淨心島</h2><p class="sub">時時勤拂拭，勿使惹塵埃——手機就是拂塵柄，大揮一拂，把六塵精淨化收進淨心錄</p></header>
       <div class="cta"><p>${fcTester && !FC_LIVE ? '🔧 測試中：只有這支手機看得到入口，其他人看到的是施工圍籬。<br>' : ''}看清符印、等倒數、聽到「揮！」就整隻手臂揮出去；塵精一揮、塵妖要兩連擊，最後收服無明塵王。收服的塵靈會收進「淨心錄」。</p><a href="fuchen-game/">🎮 進入拂塵試煉</a></div>
-      <p class="note">島中央是一座兩層白玉台，木架上斜架著一支巨大的拂塵：黑色握把、竹節木柄、網罩圓頭、紅色綁繩，白色馬尾垂到台邊。外圈一圈踏石步道，十二尊塵靈石雕面向拂塵：六系各一尊原版——色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），旁邊各站一尊「異相」代表，台座石牌寫著名字和心性。</p>
+      <p class="note">島中央是一座岩石堆成的石丘，一支巨大的拂塵像石中劍一樣插在頂上的岩縫裡，岩縫透出金光：黑色握把、竹節木柄、網罩圓頭、紅色綁繩，白色馬尾從頂上垂下來。外圈一圈踏石步道，十二尊塵靈石雕面向拂塵：六系各一尊原版——色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），旁邊各站一尊「異相」代表，台座石牌寫著名字和心性。</p>
       ${fcTester && !FC_LIVE ? '<p class="note"><a class="cta-link" href="fuchen-lab/">🧪 揮符實驗室（測感測器）</a>　<a class="cta-link" href="?fuchen=off#fuchen">結束測試</a></p>' : ''}
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongshu') {
