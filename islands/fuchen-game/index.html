@@ -211,6 +211,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
   <div class="panel dexp">
     <h2>📖 淨心錄 <small id="dexN"></small></h2>
     <p class="note">收服過的塵靈會收在這裡；還沒遇到的只看得到剪影和出沒等級。收齊一系可以解鎖群島徽章（之後開放）。</p>
+    <p class="note" id="dexPrev" hidden style="color:var(--gold)">👁️ 全部預覽模式：26 隻全部顯示，給設計、審稿檢視用；不會改到這支手機的收服紀錄。</p>
     <div id="dexList"></div>
     <div class="row"><button class="primary big" id="btnDexClose">關閉</button></div>
   </div>
@@ -221,7 +222,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.22';
+const VERSION = 'v261109.23';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -760,6 +761,9 @@ const DEX_KEY = 'fuchenGame.dex';
 const dex = Object.assign({ v:1, m:{} }, store.get(DEX_KEY, {}));
 function dexAdd(def, gold){ const isNew = !dex.m[def.name]; const e = dex.m[def.name] || { n:0, first: new Date().toLocaleDateString('zh-TW') }; e.n++; if(gold) e.gold = true; if(diffKey === 'hard') e.hard = true; dex.m[def.name] = e; store.set(DEX_KEY, dex); return isNew; }
 const dexCount = () => MONS.filter(m => dex.m[m.name]).length;
+// 網址加 ?dex 直接打開淨心錄；?dex=all 是「全部預覽」：26 隻全部顯示（給設計、審稿看），不會改到這支手機的收服紀錄
+const DEX_ALL = /[?&]dex=all\b/.test(location.search), DEX_OPEN = /[?&]dex\b/.test(location.search);
+const dexE = m => dex.m[m.name] || (DEX_ALL ? { n: 0, first: '—', preview: true } : null);
 
 /* ---------------- 聲音：史詩風格，全部即時合成（不用音檔） ----------------
    配方：太鼓＋銅鑼＋合唱般的長音＋大殿殘響，旋律用 D 小調五聲音階（D F G A C）。
@@ -1805,28 +1809,30 @@ function openDex(){
   const n = dexCount(); $('#dexN').textContent = `${n} / ${MONS.length}`;
   $('#dexList').innerHTML = ''; dexCards = [];
   FAMS.forEach(f => {
-    const ms = MONS.filter(m => m.fam === f), base = ms.filter(m => !m.xv), xs = ms.filter(m => m.xv), got = ms.filter(m => dex.m[m.name]).length, gotBase = base.filter(m => dex.m[m.name]).length, box = document.createElement('div'); box.className = 'dfam';
+    const ms = MONS.filter(m => m.fam === f), base = ms.filter(m => !m.xv), xs = ms.filter(m => m.xv), got = ms.filter(m => dex.m[m.name]).length, gotBase = DEX_ALL ? 1 : base.filter(m => dex.m[m.name]).length, box = document.createElement('div'); box.className = 'dfam';
     box.innerHTML = `<div class="dfam-h"><b style="color:${f.color}">${f.name}系・${f.mood}</b><span>${got === ms.length ? '🏅 已收齊' : `${got}/${ms.length}`}${gotBase ? `　怕 ${f.weakName}` : ''}</span></div><div class="drow"></div>${xs.length ? '<div class="dx-h">✨ 異相塵靈（修行、精進才會出現）</div><div class="drow dx"></div>' : ''}`;
-    ms.forEach(m => { const e = dex.m[m.name], el = document.createElement('div'); el.className = 'dcard' + (e ? '' : ' lock') + (m.xv ? ' xv' : '');
-      el.innerHTML = `<canvas></canvas><div class="nm">${e ? (e.gold ? '✨' : '') + m.name : '？？？'}</div><div class="lv">${e ? (m.xv ? `怕 ${m.weakName}` : `收服 ${e.n} 次`) : m.lv + ' 出沒'}</div>`;
+    ms.forEach(m => { const e = dexE(m), el = document.createElement('div'); el.className = 'dcard' + (e ? '' : ' lock') + (m.xv ? ' xv' : '');
+      el.innerHTML = `<canvas></canvas><div class="nm">${e ? (e.gold ? '✨' : '') + m.name : '？？？'}</div><div class="lv">${e ? (m.xv ? `怕 ${m.weakName}` : e.preview ? `${STAGE_NAME[m.stage]}・${m.lv}` : `收服 ${e.n} 次`) : m.lv + ' 出沒'}</div>`;
       el.onclick = () => openDexCard(m); box.querySelector(m.xv ? '.drow.dx' : '.drow').appendChild(el); dexCards.push({ cv: el.querySelector('canvas'), m, e }); });
     $('#dexList').appendChild(box);
   });
+  $('#dexPrev').hidden = !DEX_ALL;
   $('#scrDex').hidden = false;
 }
 function openDexCard(m){
-  const e = dex.m[m.name]; dexModalM = m;
+  const e = dexE(m); dexModalM = m;
   $('#dmName').textContent = e ? m.name : '？？？'; $('#dmTag').textContent = `${m.xv ? '✨ 異相・' : ''}${m.fam.name}系・${STAGE_NAME[m.stage]}・${m.lv}`;
-  $('#dmDl').innerHTML = e ? `<span>代表 <b>${m.fam.mood}</b></span><span>要揮 <b class="nb">${m.stage === 1 ? '1 下' : m.stage === 2 ? '2 連擊' : '2～3 連擊'}</b></span><span>怕 <b class="nb">${weakNameOf(m)}</b></span><span>收服 <b>${e.n} 次</b></span>${m.xv ? `<span style="grid-column:1/-1">為什麼怕：<b>${clauses(weakWhyOf(m))}</b></span>` : ''}<span style="grid-column:1/-1"><span class="cl">第一次收服 <b>${e.first}</b></span>${e.gold ? '<span class="cl">・✨ 收過金色</span>' : ''}${e.hard ? '<span class="cl">・🔥 精進收服</span>' : ''}</span>`
+  $('#dmDl').innerHTML = e ? `<span>代表 <b>${m.fam.mood}</b></span><span>要揮 <b class="nb">${m.stage === 1 ? '1 下' : m.stage === 2 ? '2 連擊' : '2～3 連擊'}</b></span><span>怕 <b class="nb">${weakNameOf(m)}</b></span><span>${e.preview ? '出沒 <b class="nb">' + m.lv + '</b>' : '收服 <b>' + e.n + ' 次</b>'}</span>${m.xv ? `<span style="grid-column:1/-1">為什麼怕：<b>${clauses(weakWhyOf(m))}</b></span>` : ''}${e.preview ? '<span style="grid-column:1/-1;color:var(--muted)">👁️ 預覽模式：還沒收服，先看內容</span>' : ''}<span style="grid-column:1/-1${e.preview ? ';display:none' : ''}"><span class="cl">第一次收服 <b>${e.first}</b></span>${e.gold ? '<span class="cl">・✨ 收過金色</span>' : ''}${e.hard ? '<span class="cl">・🔥 精進收服</span>' : ''}</span>`
     : `<span style="grid-column:1/-1">在 <b>${m.lv}</b> 的試煉中出沒（${m.fam.name}系的${m.xv ? '異相' : ''}${STAGE_NAME[m.stage]}${m.xv ? '，修行、精進才會出現' : ''}）</span>`;
   $('#dmQuote').innerHTML = e ? `${clauses(m.quote)}<small>心性小語（示範，正式版請道場審定）</small>` : '收服之後才會解鎖心性小語。';
   $('#dexModal').hidden = false;
 }
-function drawDex(t){ const s = t/1000; dexCards.forEach(({ cv, m, e }, i) => drawCardCv(cv, m, s, { seed:i, sil: !e, snap:true, gold: e && e.gold && Math.sin(s*0.5 + i) > 0.6 })); if(!$('#dexModal').hidden && dexModalM) drawCardCv($('#dmCv'), dexModalM, s, { sil: !dex.m[dexModalM.name] }); }
+function drawDex(t){ const s = t/1000; dexCards.forEach(({ cv, m, e }, i) => drawCardCv(cv, m, s, { seed:i, sil: !e, snap:true, gold: e && e.gold && Math.sin(s*0.5 + i) > 0.6 })); if(!$('#dexModal').hidden && dexModalM) drawCardCv($('#dmCv'), dexModalM, s, { sil: !dexE(dexModalM) }); }
 $('#btnDexT').addEventListener('click', openDex);
 $('#btnDexR').addEventListener('click', openDex);
 $('#btnDexClose').addEventListener('click', () => { $('#scrDex').hidden = true; });
 $('#dmClose').addEventListener('click', () => { $('#dexModal').hidden = true; dexModalM = null; });
+if(DEX_OPEN) setTimeout(openDex, 300);
 $('#btnDexT').textContent = `📖 淨心錄（${dexCount()} / ${MONS.length}）`;
 
 /* ---------------- 按鈕 ---------------- */
