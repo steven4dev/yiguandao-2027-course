@@ -36,28 +36,44 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .banner{position:fixed;left:0;right:0;top:40%;transform:translateY(-50%);pointer-events:none;z-index:25;text-align:center;overflow:hidden;padding:14px 0}
 .banner .band{position:absolute;left:0;right:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(8,10,14,0),rgba(8,10,14,.72) 15%,rgba(8,10,14,.72) 85%,rgba(8,10,14,0));border-top:2px solid rgba(232,189,90,.75);border-bottom:2px solid rgba(232,189,90,.75);animation:bandIO var(--dur) ease-in-out both}
 .banner.red .band{border-color:rgba(255,110,100,.85);background:linear-gradient(90deg,rgba(40,6,10,0),rgba(40,6,10,.78) 15%,rgba(40,6,10,.78) 85%,rgba(40,6,10,0))}
-.banner .bt{position:relative;display:inline-block;white-space:nowrap;font-size:clamp(2.3rem,12vw,4.4rem);font-weight:900;letter-spacing:.04em;color:#ffe7a8;text-shadow:0 0 24px rgba(255,200,90,.85),0 3px 0 #6b4a12;animation:fly var(--dur) linear both}
+.banner .bt{position:relative;display:inline-block;white-space:nowrap;font-size:var(--fs,clamp(2.3rem,12vw,4.4rem));font-weight:900;letter-spacing:.04em;color:#ffe7a8;text-shadow:0 0 24px rgba(255,200,90,.85),0 3px 0 #6b4a12;animation:fly var(--dur) linear both}
 .banner.red .bt{color:#ffb0a6;text-shadow:0 0 24px rgba(255,80,70,.9),0 3px 0 #5a1010}
-.banner .bs{position:relative;display:block;white-space:nowrap;font-size:clamp(.95rem,4.2vw,1.25rem);font-weight:800;color:var(--ink);margin-top:6px;animation:fly var(--dur) linear .08s both}
+.banner .bs{position:relative;display:table;margin-left:auto;margin-right:auto;white-space:nowrap;font-size:var(--fss,clamp(.95rem,4.2vw,1.25rem));font-weight:800;color:var(--ink);margin-top:6px;animation:fly var(--dur) linear .08s both}
 @keyframes fly{0%{transform:translateX(115vw);animation-timing-function:cubic-bezier(.15,.8,.3,1)}22%{transform:translateX(3vw);animation-timing-function:linear}78%{transform:translateX(-3vw);animation-timing-function:cubic-bezier(.7,0,.85,.2)}100%{transform:translateX(-115vw)}}
 @keyframes bandIO{0%{opacity:0;transform:scaleY(.2)}12%{opacity:1;transform:scaleY(1)}88%{opacity:1;transform:scaleY(1)}100%{opacity:0;transform:scaleY(.2)}}
 .center{position:fixed;left:16px;right:16px;top:79%;transform:translateY(-50%);text-align:center;pointer-events:none;text-shadow:0 0 18px rgba(0,0,0,.8)}
 .center .big{font-size:clamp(4rem,26vw,9rem);font-weight:900;line-height:1;color:#fff;text-shadow:0 0 30px rgba(255,214,120,.9)}
 .center .mid{font-size:clamp(1.4rem,7vw,2.2rem);font-weight:900;display:inline-block;background:rgba(8,10,14,.62);border:1px solid var(--line);border-radius:999px;padding:4px 18px}
-.center .sub{font-size:.95rem;color:var(--ink);margin:8px auto 0;display:table;background:rgba(8,10,14,.62);border-radius:999px;padding:3px 14px}
+.center .sub{font-size:.95rem;line-height:1.55;color:var(--ink);margin:8px auto 0;display:table;background:rgba(8,10,14,.62);border-radius:14px;padding:4px 14px;max-width:100%}
+.center .sub span{display:block;white-space:nowrap}
+/* 符咒提示：每個符咒自己一顆膠囊，連擊用 → 表示順序；放不下時整顆換行，不會從中間斷開 */
+.syms{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 4px}
+.syms .chip{white-space:nowrap;font-size:clamp(1.3rem,6.6vw,2.1rem);font-weight:900;background:rgba(8,10,14,.66);border:1px solid var(--line);border-radius:999px;padding:3px 14px}
+.syms .grp{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.syms .to{font-size:1.1rem;color:var(--gold);font-weight:900;text-shadow:0 0 8px rgba(0,0,0,.9)}
+.syms.k2 .chip{font-size:clamp(1rem,5.4vw,1.8rem);padding:3px 11px}
+.syms.k3 .chip{font-size:clamp(.82rem,4.2vw,1.5rem);padding:3px 8px}
+.syms.k3 .to{font-size:.95rem}
 .bottom{position:fixed;left:0;right:0;bottom:0;padding:8px 16px calc(env(safe-area-inset-bottom) + 12px);display:flex;justify-content:space-between;align-items:center;pointer-events:none}
 .bottom button{pointer-events:auto;font-size:.85rem;padding-left:10px;padding-right:10px}
 .tag{font-size:.8rem;color:var(--muted);text-shadow:0 1px 4px #000}
 button{font:inherit;cursor:pointer;border-radius:14px;border:1px solid var(--line);background:rgba(30,24,18,.75);color:var(--ink);padding:10px 16px}
 button.primary{background:var(--btn);color:var(--btn-ink);border-color:transparent;font-weight:900}
 button.big{width:100%;font-size:1.1rem;padding:14px}
+/* 中文排版：標點不放行首、詞組不拆開（.nb）、短標題與按鈕平均分行、段落避免最後一行只剩一兩個字 */
+body{line-break:strict}
+.nb{white-space:nowrap}
+.cl{display:inline-block}   /* 子句：盡量整句一起換行，太長才在句子裡面斷 */
+.panel p,.panel li{text-wrap:pretty}
+.panel h1,.panel h2,button,.sub,.mid{text-wrap:balance}
 /* 設了 hidden 的元素一律不顯示（.bottom 的 display:flex 原本會蓋掉 hidden，遊戲中的按鈕列在標題畫面透出來） */
 [hidden]{display:none !important}
 /* 開始試煉、用手指畫左右並排：不方便揮手機的人一眼就看到可以用手指 */
 .startRow{display:grid;grid-template-columns:1.25fr 1fr;gap:8px}
 .startRow button{padding:12px 6px;line-height:1.25}
-.startRow button small{display:block;font-size:.72rem;font-weight:600;opacity:.75;margin-top:3px}
-.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(6,9,13,.55);overflow-y:auto}
+.startRow button small{display:block;font-size:.72rem;font-weight:600;opacity:.75;margin-top:3px;white-space:nowrap}
+.startRow button{white-space:nowrap}
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px 16px 34px;background:rgba(6,9,13,.55);overflow-y:auto}
 .screen[hidden]{display:none}
 .panel{width:100%;max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px 18px;box-shadow:0 10px 40px rgba(0,0,0,.5);margin:auto}
 .panel h1{margin:0 0 2px;font-size:1.6rem;color:var(--gold);letter-spacing:2px}
@@ -75,8 +91,8 @@ button.big{width:100%;font-size:1.1rem;padding:14px}
 .ver{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom) + 4px);font-size:.65rem;color:rgba(255,255,255,.35);pointer-events:none}
 .mir{display:inline-block;transform:scaleX(-1)}
 .diff{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.diff button{padding:8px 4px;font-size:.92rem;line-height:1.35;display:flex;flex-direction:column;align-items:center}
-.diff button small{font-size:.66rem;color:var(--muted);font-weight:500}
+.diff button{padding:9px 4px 8px;font-size:.95rem;line-height:1.3;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px}
+.diff button small{font-size:.68rem;line-height:1.45;color:var(--muted);font-weight:500;white-space:nowrap}
 .diff button[aria-pressed="true"]{background:var(--gold-soft);border-color:var(--gold);color:var(--gold);font-weight:900}
 /* 淨心錄 */
 #btnBook{position:fixed;right:14px;top:calc(env(safe-area-inset-top) + 50px);width:48px;height:38px;padding:0;border-radius:6px;border:3px solid #7a2e22;background:#f3e6c4;color:#7a2e22;font-weight:900;display:flex;align-items:center;justify-content:center;gap:2px;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.5)}
@@ -127,18 +143,18 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
   <div class="panel">
     <h1>🪶 拂塵試煉</h1>
     <p class="note" style="margin-top:0">拂塵淨心島・體感小遊戲（測試版）</p>
-    <p>「時時勤拂拭，勿使惹塵埃。」六塵的塵靈從霧裡飄出來了！手機就是您的拂塵柄：<b>看清符印</b>、等倒數、聽到「<b>揮</b>」就大揮一拂，把它們淨化、<b>收進淨心錄</b>。塵妖要<b>兩連擊</b>才收得服。</p>
+    <p><span class="nb">「時時勤拂拭，勿使惹塵埃。」</span>六塵的塵靈從霧裡飄出來了！手機就是您的拂塵柄：<b class="nb">看清符印</b>、<span class="nb">等倒數</span>、<span class="nb">聽到「<b>揮</b>」</span>就大揮一拂，把它們淨化、<b class="nb">收進淨心錄</b>。<span class="nb">塵妖要<b>兩連擊</b></span>才收得服。</p>
     <ul>
-      <li>🤚 手機直立握著，螢幕大致朝向自己；<b>整隻手臂揮出去</b>（大約一個手臂長），手腕怎麼翻都沒關係。<b>只擺手腕會被判「動作太小」</b>。</li>
-      <li>👀 揮的時候不用看螢幕，聽到「叮」再回來看拂塵的招式。</li>
-      <li>🔊 請打開聲音（iPhone 關掉靜音鍵）。</li>
+      <li>🤚 手機<span class="nb">直立握著</span>，<span class="nb">螢幕大致朝向自己</span>；<b class="nb">整隻手臂揮出去</b><span class="nb">（大約一個手臂長）</span>，<span class="nb">手腕怎麼翻都沒關係</span>。<b>只擺手腕會被判<span class="nb">「動作太小」</span></b>。</li>
+      <li>👀 揮的時候<span class="nb">不用看螢幕</span>，<span class="nb">聽到「叮」</span>再回來<span class="nb">看拂塵的招式</span>。</li>
+      <li>🔊 請打開聲音<span class="nb">（iPhone 關掉靜音鍵）</span>。</li>
     </ul>
-    <p><b>⚠️ 安全第一</b>：握緊手機、最好戴掛繩，周圍 1.5 公尺內不要有人和易碎物品。</p>
+    <p><b class="nb">⚠️ 安全第一</b>：<span class="nb">握緊手機</span>、<span class="nb">最好戴掛繩</span>，<span class="nb">周圍 1.5 公尺內</span>不要有人和<span class="nb">易碎物品</span>。</p>
     <div class="row">
       <div class="diff" id="diffSel" role="group" aria-label="難度">
-        <button data-d="easy">🌱 入門<small>從上下左右開始</small></button>
-        <button data-d="normal">🪶 修行<small>開場塵魔突襲、動作要夠大</small></button>
-        <button data-d="hard">🔥 精進<small>兩盞心燈、倒數兩拍</small></button>
+        <button data-d="easy">🌱 入門<small>新手友善<br>從上下左右開始</small></button>
+        <button data-d="normal">🪶 修行<small>開場塵魔突襲<br>動作要夠大</small></button>
+        <button data-d="hard">🔥 精進<small>只有兩盞心燈<br>倒數只有兩拍</small></button>
       </div>
       <div class="startRow">
         <button class="primary big" id="btnStart">🪶 開始試煉<small>手機當拂塵大揮</small></button>
@@ -191,7 +207,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.21';
+const VERSION = 'v261109.22';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -530,6 +546,13 @@ const SYMS = {
   star:   { name:'五芒星', icon:'★', kind:'shape', say:'五芒星', still:450, win:3500, ease:13, note:'頂點出發，一筆畫完回到頂點' },
   spiral: { name:'漩渦',   icon:'🌀', kind:'shape', say:'漩渦', win:3500, note:'從右上外圈，逆時針往內繞' }
 };
+// 符咒提示卡：上面一排符咒膠囊，下面每句說明自己一行
+function symCard(keys, lines = []){ const L = lines.filter(Boolean);
+  return `<div class="syms k${keys.length}">${keys.map((k, i) => `<span class="grp">${i ? '<span class="to">→</span>' : ''}<span class="chip">${symHTML(k)}</span></span>`).join('')}</div>${L.length ? `<div class="sub">${L.map(x => `<span>${x}</span>`).join('')}</div>` : ''}`; }
+// 多行說明（教學卡、提示）：每句一行
+const subLines = (...L) => `<div class="sub">${L.filter(Boolean).map(x => `<span>${x}</span>`).join('')}</div>`;
+// 把一段話按標點切成子句，換行只發生在子句之間（例如「改變不用一次到位，／先走一小步就好。」）
+const clauses = t => String(t).split(/(?<=[，。！？；：、])/).filter(Boolean).map(c => `<span class="cl">${c}</span>`).join('');
 const symHTML = k => { const s = SYMS[k]; if(!s.mir && s.name.startsWith(s.icon)) return s.name; return (s.mir ? MIR(s.icon) : s.icon) + ' ' + s.name; };
 
 // 示範金句（正式上線前換成道場審定的文字）
@@ -1212,7 +1235,9 @@ function drawMonster(t){
       ctx.fillStyle = m.gold ? '#ffe08a' : '#f6ecd8'; ctx.fillText(`${m.gold ? '✨ 金色・' : ''}${m.def.name}  Lv ${m.lv}`, x, y + bob + m.r*1.4);
       const knows = m.def.xv ? !!dex.m[m.def.name] : MONS.some(o => o.fam === m.def.fam && !o.xv && dex.m[o.name]);
       ctx.font = `700 ${Math.round(u*0.034)}px "Noto Sans TC", sans-serif`; ctx.fillStyle = 'rgba(246,236,216,.75)';
-      ctx.fillText(`${m.def.xv ? '✨異相・' : ''}${m.def.fam.name}系${STAGE_NAME[m.def.stage]}・${m.def.fam.mood}${knows ? `・怕 ${weakNameOf(m.def)}` : ''}${!dex.m[m.def.name] ? '・未收服' : ''}`, x, y + bob + m.r*1.4 + u*0.05);
+      // 名牌第二行：一行放不下（窄手機、異相塵靈字比較多）就在「怕…」前面換行，不從詞中間斷開
+      const t1 = `${m.def.xv ? '✨異相・' : ''}${m.def.fam.name}系${STAGE_NAME[m.def.stage]}・${m.def.fam.mood}`, t2 = [knows ? `怕 ${weakNameOf(m.def)}` : '', !dex.m[m.def.name] ? '未收服' : ''].filter(Boolean).join('・'), one = t1 + (t2 ? '・' + t2 : ''), ly = y + bob + m.r*1.4 + u*0.05;
+      if(ctx.measureText(one).width <= W*0.9) ctx.fillText(one, x, ly); else { ctx.fillText(t1, x, ly); if(t2) ctx.fillText(t2, x, ly + u*0.042); }
     }
     ctx.restore();
   }
@@ -1489,7 +1514,7 @@ function judgeSwing(key, st, th0, lenient){
   return { a, ...sz, ok: top.key === key && sc >= need && !fail, score: sc, close: top.key === key && sc < need };
 }
 // 動作太小時的教學卡：講清楚怎麼揮才對
-async function coachBig(r){ say('動作再大一點'); center(`<div class="mid">🤏 手腕擺一擺不算喔</div><div class="sub">剛剛只揮了大約 ${r.big} 公分。像拿拂塵掃大殿：從肩膀出力、整隻手臂揮出去，大約一個手臂長</div>`); await wait(2400); center(''); }
+async function coachBig(r){ say('動作再大一點'); center(`<div class="mid">🤏 手腕擺一擺不算喔</div>${subLines(`剛剛只揮了大約 ${r.big} 公分`, '像拿拂塵掃大殿：', '從肩膀出力、整隻手臂揮出去', '大約一個手臂長')}`); await wait(2400); center(''); }
 // 把這一揮的路線（正規化座標）換成畫面上繞著怪物的位置
 function pathOnScreen(a){
   const xy = a.xy; if(!xy || xy.length < 2) return null;
@@ -1508,8 +1533,7 @@ async function encounter(opt){
   } else { monster.sym = keys[0]; }
   hud(wave);
   const multi = keys.length > 1;
-  const sub = [multi ? `連擊：依序揮 ${keys.length} 下` : '', !multi && SYMS[keys[0]].note || '', !multi && SYMS[keys[0]].both ? '順時針、逆時針都可以' : '', tutorial || ''].filter(Boolean).join('・');
-  center(`<div class="mid">${keys.map(symHTML).join('　＋　')}</div>${sub ? `<div class="sub">${sub}</div>` : ''}`);
+  center(symCard(keys, [multi ? `連擊：照順序揮 ${keys.length} 下` : '', !multi && SYMS[keys[0]].note || '', !multi && SYMS[keys[0]].both ? '順時針、逆時針都可以' : '', tutorial || '']));
   say((multi ? '連擊，' : '') + keys.map(k => SYMS[k].say).join('，'));
   await wait(boss ? 900 : 600);
   // 拂塵沿著提示路線示範（連擊就依序示範）
@@ -1572,7 +1596,7 @@ async function encounter(opt){
     if(!tutorial && !opt.ambush){ lives--; }
     sfx.miss(boss ? null : def); if(boss && actx) bossVoice(now0() + 0.45, 0.6); vib([40,60,40]); hud(); await wait(1300);
     if(!boss){ monster.state = 'hit'; monster.tHit = performance.now(); await wait(450); }   // 沒收服：塵靈逃走
-    if(opt.ambush){ center('<div class="mid">塵魔大笑著逃走了…</div><div class="sub">下馬威沒擋下，不扣心燈。定下心，從頭收服！</div>'); await wait(2000); center(''); }
+    if(opt.ambush){ center(`<div class="mid">塵魔大笑著逃走了…</div>${subLines('下馬威沒擋下，不扣心燈', '定下心，從頭收服！')}`); await wait(2000); center(''); }
   }
   // 熱身或打中時也揮得太小：補一張教學卡（揮空時本來就有提示，這裡只在太小時加強說明）
   if(rs.some(r => r.small) && !boss) await coachBig(rs.find(r => r.small));
@@ -1623,6 +1647,8 @@ let encN = 0;   // 這一局第幾隻（熱身不算），用來決定提示退�
 let caught = [];
 // 彈幕標題：大字從右邊飛進來、在正中間慢慢漂約 2 秒、再往左飛出去（約 4 秒），背後一條光帶
 function banner(title, sub = '', opt = {}){ const dur = Math.round((opt.dur || 2600)*1.55), el = document.createElement('div'); el.className = 'banner' + (opt.red ? ' red' : ''); el.style.setProperty('--dur', dur + 'ms');
+  const vw = Math.min(innerWidth, 900)/100, glyphs = s => [...s.replace(/[\uFE0F\u200D]/g, '')].reduce((n, ch) => n + (/[\x20-\x7e]/.test(ch) ? 0.55 : 1), 0);   // 依字數算字級，留左右各 5% 空白
+  el.style.setProperty('--fs', Math.min(12*vw, 70, 88*vw/Math.max(1, glyphs(title))) + 'px'); if(sub) el.style.setProperty('--fss', Math.min(4.2*vw, 20, 92*vw/Math.max(1, glyphs(sub))) + 'px');
   el.innerHTML = `<div class="band"></div><span class="bt">${title}</span>${sub ? `<span class="bs">${sub}</span>` : ''}`; document.body.appendChild(el);
   if(ok()){ I.whoosh(now0(), 0.55); I.taiko(now0() + dur/1000*0.2, opt.red ? 48 : 62, 0.7); }
   return new Promise(res => setTimeout(() => { el.remove(); res(); }, dur)); }
@@ -1720,10 +1746,10 @@ function showResult(kind){
   const rating = kind === 'over' ? '🌫️ 塵埃未盡' : acc >= 90 ? '✨ 明鏡無塵' : acc >= 70 ? '🪶 時時勤拂' : '🌱 勿使惹塵';
   $('#resTitle').textContent = kind === 'over' ? '🪔 心燈用完了' : '✨ 試煉圓滿';
   $('#resTitle').textContent += `・${D().name}`;
-  $('#resLine').innerHTML = kind === 'over' ? '別灰心，塵埃本來就要天天拂。定下心再來一次！' : `無明塵王收服了！評價：<b>${rating}</b>`;
+  $('#resLine').innerHTML = kind === 'over' ? clauses('別灰心，塵埃本來就要天天拂。定下心再來一次！') : `<span class="cl">無明塵王收服了！</span><span class="cl">評價：<b class="nb">${rating}</b></span>`;
   $('#resStats').innerHTML = `<span>淨化 <b>${hits}</b> 隻</span><span>命中率 <b>${acc}%</b></span><span>最高連擊 <b>${maxCombo}</b></span><span>得分 <b>${score}</b></span>`;
   $('#resCaught').innerHTML = caught.length ? `<b>本局收入淨心錄</b><div class="caught">${caught.map(c => `<span>${c.gold ? '✨' : ''}${c.def.name}<small>Lv ${c.lv}</small>${c.isNew ? '<i>NEW</i>' : ''}</span>`).join('')}</div>` : '<span class="note">這一局沒有收服塵靈，下次加油！</span>';
-  $('#resQuote').innerHTML = `${pick(QUOTES)}${QUOTES_DEMO ? '<small>（示範慈語，正式版會換成審定的文字）</small>' : ''}`;
+  $('#resQuote').innerHTML = `${clauses(pick(QUOTES))}${QUOTES_DEMO ? '<small>（示範慈語，正式版會換成審定的文字）</small>' : ''}`;
   $('#scrResult').hidden = false;
   kind === 'over' ? sfx.defeat() : sfx.victory();
   const best = store.get('fuchenGame.best', 0); if(score > best) store.set('fuchenGame.best', score);
@@ -1777,9 +1803,9 @@ function openDex(){
 function openDexCard(m){
   const e = dex.m[m.name]; dexModalM = m;
   $('#dmName').textContent = e ? m.name : '？？？'; $('#dmTag').textContent = `${m.xv ? '✨ 異相・' : ''}${m.fam.name}系・${STAGE_NAME[m.stage]}・${m.lv}`;
-  $('#dmDl').innerHTML = e ? `<span>代表 <b>${m.fam.mood}</b></span><span>要揮 <b>${m.hits === 1 ? '1 下' : '2 連擊'}</b></span><span>怕 <b>${weakNameOf(m)}</b></span><span>收服 <b>${e.n} 次</b></span>${m.xv ? `<span style="grid-column:1/-1">為什麼怕：<b>${weakWhyOf(m)}</b></span>` : ''}<span style="grid-column:1/-1">第一次收服 <b>${e.first}</b>${e.gold ? '・✨ 收過金色' : ''}${e.hard ? '・🔥 精進收服' : ''}</span>`
+  $('#dmDl').innerHTML = e ? `<span>代表 <b>${m.fam.mood}</b></span><span>要揮 <b class="nb">${m.stage === 1 ? '1 下' : m.stage === 2 ? '2 連擊' : '2～3 連擊'}</b></span><span>怕 <b class="nb">${weakNameOf(m)}</b></span><span>收服 <b>${e.n} 次</b></span>${m.xv ? `<span style="grid-column:1/-1">為什麼怕：<b>${clauses(weakWhyOf(m))}</b></span>` : ''}<span style="grid-column:1/-1"><span class="cl">第一次收服 <b>${e.first}</b></span>${e.gold ? '<span class="cl">・✨ 收過金色</span>' : ''}${e.hard ? '<span class="cl">・🔥 精進收服</span>' : ''}</span>`
     : `<span style="grid-column:1/-1">在 <b>${m.lv}</b> 的試煉中出沒（${m.fam.name}系的${m.xv ? '異相' : ''}${STAGE_NAME[m.stage]}${m.xv ? '，修行、精進才會出現' : ''}）</span>`;
-  $('#dmQuote').innerHTML = e ? `${m.quote}<small>心性小語（示範，正式版請道場審定）</small>` : '收服之後才會解鎖心性小語。';
+  $('#dmQuote').innerHTML = e ? `${clauses(m.quote)}<small>心性小語（示範，正式版請道場審定）</small>` : '收服之後才會解鎖心性小語。';
   $('#dexModal').hidden = false;
 }
 function drawDex(t){ const s = t/1000; dexCards.forEach(({ cv, m, e }, i) => drawCardCv(cv, m, s, { seed:i, sil: !e, snap:true, gold: e && e.gold && Math.sin(s*0.5 + i) > 0.6 })); if(!$('#dexModal').hidden && dexModalM) drawCardCv($('#dmCv'), dexModalM, s, { sil: !dex.m[dexModalM.name] }); }
