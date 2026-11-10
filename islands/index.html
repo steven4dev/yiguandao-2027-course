@@ -669,7 +669,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261110.12</span>
+  <span class="ver">v261110.13</span>
   </div></div>
 </div>
 
@@ -3914,7 +3914,7 @@ syncBottleChip();
 // 品牌卡的祈福卡：跟瓶中信同一種寫法，數字蘋果紅，點了飛到希望島
 function syncWishChip(fresh) {
   const n = wishes.length, el = document.getElementById('wishChipText'), chip = document.getElementById('wishChip');
-  el.innerHTML = n ? `🍎 <b>${n}</b> 張祈福卡掛上希望島・<span class="go">去許願 ›</span>` : `🍎 希望島可以匿名許願・<span class="go">寫第一張 ›</span>`;
+  el.innerHTML = n ? `<b>${n}</b> 張 🍎 祈福卡掛上希望島・<span class="go">去許願 ›</span>` : `🍎 希望島可以匿名許願・<span class="go">寫第一張 ›</span>`;
   if (fresh) { chip.classList.remove('new'); void chip.offsetWidth; chip.classList.add('new'); }
 }
 syncWishChip();
