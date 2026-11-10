@@ -255,7 +255,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.29';
+const VERSION = 'v261109.30';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -322,6 +322,14 @@ function spiralVariants(){ const v=[]; for(const a0 of [45,0,90]) for(const n of
 // ★ 五芒星：頂點起筆 → 左下 → 右 → 左 → 右下 → 回頂點
 function polyVariants(angs){ const v = []; for(let s=0;s<angs.length;s++) for(const d of [1, -1]){ const p = []; for(let k=0;k<=angs.length;k++){ const a = angs[((s + d*k) % angs.length + angs.length) % angs.length]; p.push([Math.cos(a*D2R), Math.sin(a*D2R)]); } v.push(p); } return v; }
 const starPath = () => [90,234,18,162,306,90].map(a => [Math.cos(a*D2R), Math.sin(a*D2R)]);
+// ---- 第二批新題（揮符實驗室四批實測後，v261109.30 排進遊戲）：正三角、倒三角。三個角都可以起筆、兩個方向都算（共 6 種寫法） ----
+// 依第四批實測補的寫法：正三角最後常「超過頂點」繼續往上；倒三角常揮成又細又高、最後一筆越過起點往下
+const P2 = (a) => [Math.cos(a*D2R), Math.sin(a*D2R)];
+const triVariants = () => [...polyVariants([90, 210, 330]),
+  [P2(90), P2(210), P2(330), [P2(90)[0] - 0.08, 1.3]], [P2(90), P2(330), P2(210), [P2(90)[0] + 0.08, 1.3]]];
+const itriVariants = () => [...polyVariants([270, 30, 150]),
+  ...[1, -1].map(d => [[0, -1], [0.45*d, 1], [-0.45*d, 1], [0.12*d, -1.25]])];   // 細長版會搶走 N、反向 N、方，不加
+
 
 
 const TEMPLATE_DEFS = {
@@ -350,7 +358,9 @@ const TEMPLATE_DEFS = {
   rho:    { name:'ρ 柔',   v:[rhoPath(), rhoSlant()] },
   sq:     { name:'□ 方',   v:polyVariants([135, 225, 315, 45]) },   // 四個角都可以起筆、兩個方向都算
   star:   { name:'★ 五芒星', v:[starPath()] },
-  spiral: { name:'🌀 漩渦', v:spiralVariants() }
+  spiral: { name:'🌀 漩渦', v:spiralVariants() },
+  tri:    { name:'△ 正三角', v:triVariants() },
+  itri:   { name:'▽ 倒三角', v:itriVariants() }
 };
 const NPTS = 64;
 function pathLen(p){ let L=0; for(let i=1;i<p.length;i++) L += Math.hypot(p[i][0]-p[i-1][0], p[i][1]-p[i-1][1]); return L; }
@@ -558,8 +568,9 @@ function analyzeStroke(st, model = 'auto', thOverride = null){
     let i0 = sm.findIndex(v => v > vmax*0.5), i1 = sm.length - 1 - [...sm].reverse().findIndex(v => v > vmax*0.5);
     pauses = 0; let inValley = false;
     for(let i=i0;i<=i1;i++){ if(!inValley && sm[i] < vmax*0.5){ inValley = true; } else if(inValley && sm[i] > vmax*0.65){ inValley = false; pauses++; } }
-    const ANG = ['z','rz','n','rn','sq'], CUR = ['s','rs','circle'];   // 圓：三批實測真的圓都只頓 0～1 次，頓兩次以上（像方）就扣分
+    const ANG = ['z','rz','n','rn','sq','tri','itri'], CUR = ['s','rs','circle'];   // 圓：三批實測真的圓都只頓 0～1 次，頓兩次以上（像方）就扣分
     rg.ranking.forEach(r => {
+      if((r.key === 'tri' || r.key === 'itri') && pauses >= 3) r.d += 0.08;   // 三角形只有兩個轉角，頓三次以上比較像方
       if(ANG.includes(r.key)) r.d += pauses >= 2 ? -0.05 : pauses === 0 ? 0.075 : 0;
       if(CUR.includes(r.key) && pauses >= 2) r.d += 0.075;   // S 系列只在明顯有頓點時扣分，不加分（避免搶走圓）
       r.d = Math.max(0, r.d); r.score = distToScore(r.d);
@@ -601,7 +612,9 @@ const SYMS = {
   rho:    { name:'柔',     icon:'ρ', kind:'shape', say:'柔', ease:10, note:'由下往上一豎，再順時針繞一圈' },
   sq:     { name:'方',     icon:'□', kind:'shape', say:'方', still:450, ease:8, note:'四個角各停一下' },
   star:   { name:'五芒星', icon:'★', kind:'shape', say:'五芒星', still:450, win:3500, ease:13, note:'頂點出發，一筆畫完回到頂點' },
-  spiral: { name:'漩渦',   icon:'🌀', kind:'shape', say:'漩渦', win:3500, note:'從右上外圈，逆時針往內繞' }
+  spiral: { name:'漩渦',   icon:'🌀', kind:'shape', say:'漩渦', win:3500, note:'從右上外圈，逆時針往內繞' },
+  tri:    { name:'正三角', icon:'△', kind:'shape', say:'正三角', still:450, note:'頂點往左下、沿底邊、再回頂點' },
+  itri:   { name:'倒三角', icon:'▽', kind:'shape', say:'倒三角', still:450, note:'下方尖角往右上、橫過上邊、再回下方' }
 };
 // 符咒提示卡：上面一排符咒膠囊，下面每句說明自己一行
 function symCard(keys, lines = []){ const L = lines.filter(Boolean);
@@ -1612,7 +1625,8 @@ function playReplay(pts, dur){ return new Promise(res => { replayAnim = { pts, t
 /* ---------------- 一隻怪物的回合（塵精一揮、塵妖與塵魔兩連擊） ---------------- */
 async function encounter(opt){
   const { def, lv, gold, boss, wave, tutorial } = opt;
-  const keys = diffKey === 'hard' && !boss ? opt.keys.map(k => k === 'circle' ? pick(['cw', 'ccw']) : k) : opt.keys;
+  let keys = diffKey === 'hard' && !boss ? opt.keys.map(k => k === 'circle' ? pick(['cw', 'ccw']) : k) : opt.keys;
+  if(diffKey !== 'hard') keys = keys.map(k => k === 'itri' ? 'tri' : k);   // 倒三角比較不順手，只放在精進
   if(!monster || monster.state === 'gone' || (!boss && !(opt.ambush && monster.def === def))){
     monster = { type: opt.type, def, lv, gold, sym:keys[0], x:MON.x, y:MON.y, r:U()*(boss ? 0.2 : 0.14), t0:performance.now(), state:'enter', boss:!!boss, hp: boss ? opt.hp : 1, maxHp: boss ? opt.hp : 1, seed:Math.random()*10 };
     boss ? (sfx.boss(), actx && bossVoice(now0() + 0.6, 0.8)) : sfx.appear(def);
@@ -1701,11 +1715,13 @@ function spawnDef(stage){
 }
 // 出題：塵精一個符印（偶爾剛好是它怕的）；塵妖、塵魔兩連擊（多半是有名字的組合技）
 const EASY = ['left','right','down','up','v','circle'], BASIC = ['v','circle','z','n','alpha','s','caret','inf'],
-  MID = ['v','circle','z','n','alpha','s','caret','inf','gamma','rho'], HARD = ['rs','rz','rn','ralpha','z','n','s','alpha','delta','sq'];
+  MID = ['v','circle','z','n','alpha','s','caret','inf','gamma','rho','tri'], HARD = ['rs','rz','rn','ralpha','z','n','s','alpha','delta','sq','tri','itri'];
 const NAMED_ALL = [['left','right'], ['up','down'], ['s','circle'], ['alpha','ralpha'], ['caret','v'], ['inf','circle']];
 // 上下左右只留給「入門」；修行、精進一開始就是形狀符號
 const STAGE1 = () => diffKey === 'easy' ? EASY : BASIC;
-const NAMEDP = () => diffKey === 'easy' ? NAMED_ALL : NAMED_ALL.filter(c => !c.some(k => SYMS[k].kind === 'dir'));
+const NAMEDP = () => diffKey === 'easy' ? NAMED_ALL.slice(0, 4) :   // 入門只用原本四組組合技（不含人字、無極）
+  NAMED_ALL.filter(c => !c.some(k => SYMS[k].kind === 'dir'));
+const MID0 = ['v','circle','z','n','alpha','s'], HARD0 = ['rs','rz','rn','ralpha','z','n','s','alpha'];   // 入門用的原本題庫
 function keysFor(stage, def){ const NAMED = NAMEDP(), fam = def.fam;
   if(def.xv && diffKey !== 'easy'){ const w = def.weak; if(stage === 1) return [w];
     const a = pick((stage === 2 ? MID : HARD).filter(x => x !== w)); if(stage === 2) return Math.random() < 0.5 ? [a, w] : [w, a];
@@ -1717,7 +1733,8 @@ function keysFor(stage, def){ const NAMED = NAMEDP(), fam = def.fam;
   if(stage === 2 && diffKey !== 'easy' && Math.random() < 0.6){ const a = pick(MID); return [a, pick(MID.filter(x => x !== a))]; }   // 塵妖偏向 Z、N、S、阿法
   if(stage === 1){ const P = STAGE1(); return [Math.random() < 0.35 && P.includes(fam.weak) ? fam.weak : pick(P)]; }
   if(Math.random() < 0.6) return pick(NAMED).slice();
-  const pool = stage === 2 ? MID : HARD, a = pick(pool); let b = pick(pool.filter(x => x !== a));
+  // 入門只用原本的符號（新題庫留給修行、精進）
+  const pool = diffKey === 'easy' ? (stage === 2 ? MID0 : HARD0) : (stage === 2 ? MID : HARD), a = pick(pool); let b = pick(pool.filter(x => x !== a));
   if(Math.random() < 0.4 && fam.weak !== a && SYMS[fam.weak] && (diffKey === 'easy' || SYMS[fam.weak].kind !== 'dir')) b = fam.weak;
   return [a, b];
 }
@@ -1790,7 +1807,7 @@ async function runGame(){
     }
     // 魔王：無明塵王（三擊，最後一擊一定是「圓明一拂」）
     bgmSet('boss');
-    const BP = ['v','z','n','alpha','s','rs','rz','rn','ralpha','caret','inf','gamma','delta','rho','sq'];
+    const BP = ['v','z','n','alpha','s','rs','rz','rn','ralpha','caret','inf','gamma','delta','rho','sq','tri','itri'];
     const BP0 = ['v','z','n','alpha','s','rs','rz','rn','ralpha'];   // 入門只用原本的符號，新題留給修行、精進
     const bossKeys = diffKey === 'easy' ? [...shuffle(BP0).slice(0, 2).map(k => [k]), ['circle']]
       : [...Array.from({ length:2 }, () => { const a = pick(BP); return [a, pick(BP.filter(x => x !== a))]; }), [pick(['star','spiral'])], ['circle']];   // 修行、精進：兩次兩連擊 → 大招（★ 或 🌀）→ 最後「圓明一拂」
