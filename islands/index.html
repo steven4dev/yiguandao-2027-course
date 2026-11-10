@@ -649,7 +649,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261110.05</span>
+  <span class="ver">v261110.06</span>
   </div></div>
 </div>
 
@@ -4378,14 +4378,17 @@ const jsTodayFortune = () => (JSS.day === todayISO ? JS_FORTUNES.find((f) => f.i
 const JT = {
   tau: 120,              // 角度的低通濾波（毫秒）：越大越不怕手抖
   bowDown: 55, bowUp: 75, bowHold: 180, bowGap: 600,   // 叩首：≤55° 算拜下、≥75° 算回正，各要維持 0.18 秒，兩叩至少隔 0.6 秒
-  shakeMin: 4, shakeMax: 25, hit: 9,                    // 搖晃：線性加速度（m/s²，已扣重力）
-  hitSlow: 160, hitFast: 55, gain: 3,                   // 竹籤碰撞間隔：慢搖 0.16 秒、快搖 0.055 秒；進度增益
+  // 搖晃：線性加速度（m/s²，已扣重力）。普通力道（幅度 3 公分、每秒 3 次）約 4 秒搖滿，用力搖約 1.5 秒，輕輕搖約 13 秒
+  // （v261110.06 前門檻 4、增益 3：普通力道要 10 秒、輕輕搖搖不滿，大家反映難搖）
+  shakeMin: 2, shakeMax: 20, hit: 6,
+  hitSlow: 160, hitFast: 55, gain: 5,                   // 竹籤碰撞間隔：慢搖 0.16 秒、快搖 0.055 秒；進度增益
+  upPitchLo: 40, upPitchHi: 140, upRoll: 50, slowHintMs: 1500,   // 「直立」的容許角度（搖的時候手腕會歪）；搖了這麼久沒進度就提示要再用力
   pourBelow: 45, pourHold: 300,                         // 出籤：前傾到 45° 以下維持 0.3 秒
   rubMs: 2000,                                          // 淨手：搓 2 秒
 };
 // phase：idle（還沒開始）→ purify → permission → bow → ready → shake → pour → drawn（竹籤掉落）→ 卷軸展開後回到 idle
 const JS = { phase: 'idle', mode: 'touch', purify: 0, bows: 0, progress: 0, upright: true, fortune: null, hint: '' };
-const JL = { has: false, pitch: 90, roll: 0, energy: 0, hitAt: -1e9, hitK: 0, bowLean: 0, pourLean: 0 };   // 給 3D 每一幀讀的即時數值
+const JL = { has: false, pitch: 90, roll: 0, energy: 0, shakeAt: 0, hitAt: -1e9, hitK: 0, bowLean: 0, pourLean: 0 };   // 給 3D 每一幀讀的即時數值
 const jsCanSense = () => matchMedia('(pointer: coarse)').matches && 'DeviceOrientationEvent' in window && 'DeviceMotionEvent' in window && window.isSecureContext;
 const jsActive = () => !['idle'].includes(JS.phase);
 const jsVibrate = (() => { let last = 0; return (p, force) => { const n = performance.now(); if (!navigator.vibrate || (!force && n - last < 90)) return; last = n; try { navigator.vibrate(p); } catch (e) {} }; })();
@@ -4487,7 +4490,7 @@ function jsSensorsOn() {
     JL.has = true; JL.pitch = pitch; JL.roll = roll;
     if (JS.phase !== curPhase) { curPhase = JS.phase; resetGest(); }
     // 直立提示：狀態改變維持 0.3 秒才換，提示文字不會一直閃
-    const up = pitch >= 60 && pitch <= 120 && Math.abs(roll) <= 35;
+    const up = pitch >= JT.upPitchLo && pitch <= JT.upPitchHi && Math.abs(roll) <= JT.upRoll;
     if (up === JS.upright) upCand = null;
     else { if (upCand === null) upCand = now; if (now - upCand > 300) { JS.upright = up; upCand = null; jsUpdate(); } }
     if (JS.phase === 'bow') {
@@ -4517,6 +4520,7 @@ function jsSensorsOn() {
     }
     JL.energy = eLP.push(THREE.MathUtils.clamp((mag - JT.shakeMin) / (JT.shakeMax - JT.shakeMin), 0, 1), dt);
     if (JS.phase !== 'shake') return;
+    if (mag > JT.shakeMin) JL.shakeAt = now;   // 最近一次有在搖
     if (JS.upright && mag > JT.shakeMin) pending += (mag - JT.shakeMin) * JT.gain * (dt / 1000);   // 只在直立時累積：籤筒倒著搖，籤會掉出來
     const gap = JT.hitSlow + (JT.hitFast - JT.hitSlow) * JL.energy;   // 搖越快，竹籤聲越密
     if (mag > JT.hit && !above && now - JL.hitAt >= gap) {
@@ -4526,7 +4530,7 @@ function jsSensorsOn() {
     } else if (mag < JT.hit * 0.7) above = false;
   };
   // 進度每 0.1 秒更新一次畫面就好
-  const flush = setInterval(() => { if (pending > 0 && JS.phase === 'shake') { jsAddProgress(pending); pending = 0; } }, 100);
+  const flush = setInterval(() => { if (pending > 0 && JS.phase === 'shake') { jsAddProgress(pending); pending = 0; } else if (JS.phase === 'shake') jsUpdate(); }, 100);   // 沒進度時也更新，「再用力一點」的提示才會出現
   addEventListener('deviceorientation', onOri);
   addEventListener('devicemotion', onMot);
   jsSensorsOff = () => { removeEventListener('deviceorientation', onOri); removeEventListener('devicemotion', onMot); clearInterval(flush); jsSensorsOff = null; };
@@ -4574,7 +4578,7 @@ function jsBow() {
   jsBowSound(); jsVibrate(60, true);
   if (JS.bows >= 3) { jsSet('ready'); jsVibrate([60, 60, 60], true); } else jsUpdate();
 }
-function jsStartShake() { audioInit(); if (JS.phase === 'ready') { JS.progress = 0; jsSet('shake'); } }
+function jsStartShake() { audioInit(); if (JS.phase === 'ready') { JS.progress = 0; JL.shakeAt = performance.now(); jsSet('shake'); } }
 function jsAddProgress(n) {
   if (JS.phase !== 'shake') return;
   JS.progress = Math.min(100, JS.progress + n);
@@ -4718,7 +4722,7 @@ function jsUpdate() {
   if (hint) hint.textContent = JS.hint;
   if (live) {
     const land = JS.mode === 'sensor' && jsScreenAngle() % 180 !== 0;
-    live.textContent = land ? '📱 請把手機直拿（直向）' : p === 'shake' && JS.mode === 'sensor' && !JS.upright ? '📱 籤筒要保持直立，倒著搖籤會掉出來喔' : p === 'bow' && JS.mode === 'sensor' && !JL.has ? '讀取手機角度中⋯' : '';
+    live.textContent = land ? '📱 請把手機直拿（直向）' : p === 'shake' && JS.mode === 'sensor' && !JS.upright ? '📱 籤筒要保持直立，倒著搖籤會掉出來喔' : p === 'shake' && JS.mode === 'sensor' && performance.now() - JL.shakeAt > JT.slowHintMs ? '🎋 再用力搖一搖，搖越快籤越鬆動' : p === 'bow' && JS.mode === 'sensor' && !JL.has ? '讀取手機角度中⋯' : '';
   }
 }
 jsUI.addEventListener('click', (e) => {
@@ -4765,7 +4769,7 @@ jsUI.addEventListener('pointermove', (e) => {
       const k = THREE.MathUtils.clamp(speed / 3, 0.15, 1);
       PAD.lastHit = e.timeStamp; JL.hitAt = performance.now(); JL.hitK = k;
       jsClack(k); jsVibrate(Math.round(8 + 25 * k));
-      jsAddProgress(3 + k * 5);
+      jsAddProgress(4 + k * 6);
     }
     if (dir) PAD.dir = dir;
   } else if (kind === 'pour' && JS.phase === 'pour') {
