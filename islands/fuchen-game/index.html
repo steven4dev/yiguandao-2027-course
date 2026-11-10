@@ -51,6 +51,12 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 button{font:inherit;cursor:pointer;border-radius:14px;border:1px solid var(--line);background:rgba(30,24,18,.75);color:var(--ink);padding:10px 16px}
 button.primary{background:var(--btn);color:var(--btn-ink);border-color:transparent;font-weight:900}
 button.big{width:100%;font-size:1.1rem;padding:14px}
+/* 設了 hidden 的元素一律不顯示（.bottom 的 display:flex 原本會蓋掉 hidden，遊戲中的按鈕列在標題畫面透出來） */
+[hidden]{display:none !important}
+/* 開始試煉、用手指畫左右並排：不方便揮手機的人一眼就看到可以用手指 */
+.startRow{display:grid;grid-template-columns:1.25fr 1fr;gap:8px}
+.startRow button{padding:12px 6px;line-height:1.25}
+.startRow button small{display:block;font-size:.72rem;font-weight:600;opacity:.75;margin-top:3px}
 .screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(6,9,13,.55);overflow-y:auto}
 .screen[hidden]{display:none}
 .panel{width:100%;max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px 18px;box-shadow:0 10px 40px rgba(0,0,0,.5);margin:auto}
@@ -134,8 +140,10 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
         <button data-d="normal">🪶 修行<small>開場塵魔突襲、動作要夠大</small></button>
         <button data-d="hard">🔥 精進<small>兩盞心燈、倒數兩拍</small></button>
       </div>
-      <button class="primary big" id="btnStart">開始試煉</button>
-      <button id="btnTouch">沒有動作感測？用手指畫</button>
+      <div class="startRow">
+        <button class="primary big" id="btnStart">🪶 開始試煉<small>手機當拂塵大揮</small></button>
+        <button class="big" id="btnTouch">👆 用手指畫<small>不方便揮的時候</small></button>
+      </div>
       <button id="btnDexT">📖 淨心錄</button>
     </div>
     <p class="note" id="titleMsg"></p>
@@ -183,7 +191,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.20';
+const VERSION = 'v261109.21';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1671,7 +1679,8 @@ async function runGame(){
     // 魔王：無明塵王（三擊，最後一擊一定是「圓明一拂」）
     bgmSet('boss');
     const BP = ['v','z','n','alpha','s','rs','rz','rn','ralpha','caret','inf','gamma','delta','rho','sq'];
-    const bossKeys = diffKey === 'easy' ? [...shuffle(BP).slice(0, 2).map(k => [k]), ['circle']]
+    const BP0 = ['v','z','n','alpha','s','rs','rz','rn','ralpha'];   // 入門只用原本的符號，新題留給修行、精進
+    const bossKeys = diffKey === 'easy' ? [...shuffle(BP0).slice(0, 2).map(k => [k]), ['circle']]
       : [...Array.from({ length:2 }, () => { const a = pick(BP); return [a, pick(BP.filter(x => x !== a))]; }), [pick(['star','spiral'])], ['circle']];   // 修行、精進：兩次兩連擊 → 大招（★ 或 🌀）→ 最後「圓明一拂」
     say('無明塵王'); await banner('⚠️ 魔王・無明塵王', `六塵合體！連拂 ${bossKeys.length} 次，最後用「圓」收服`, { red: true, dur: 3000 });
     const bossType = { name:'無明塵王', acc:'🌑', body:'#8d84a6', mood:'' };
@@ -1680,7 +1689,7 @@ async function runGame(){
       let r, ks = bossKeys[bi];
       // 失誤後換一組新題目（最後的「圓明一拂」不變），不會一直卡在同一個不擅長的符號
       while(true){ r = await encounter({ keys:ks, type:bossType, boss:true, hp:bossKeys.length, wave:'魔王・無明塵王' }); if(lives <= 0) throw 'over'; if(r.ok) break;
-        if(bi < bossKeys.length - 1 && !['star','spiral'].includes(ks[0])){ const a = pick(BP); ks = ks.length > 1 ? [a, pick(BP.filter(x => x !== a))] : [a]; } }   // 大招揮錯就再揮一次同一招
+        if(bi < bossKeys.length - 1 && !['star','spiral'].includes(ks[0])){ const P = diffKey === 'easy' ? BP0 : BP, a = pick(P); ks = ks.length > 1 ? [a, pick(P.filter(x => x !== a))] : [a]; } }   // 大招揮錯就再揮一次同一招
     }
     banner('🌕 圓明一拂！', '無明塵王淨化了', { dur: 2400 }); for(let i=0;i<5;i++){ setTimeout(() => { spawnSpark(W*Math.random(), H*0.2 + H*0.4*Math.random(), 30); spawnLotus(W*(0.2 + 0.6*Math.random()), H*0.6); }, i*250); }
     purified = Math.max(purified, 16); sfx.purify(); await wait(2200);   // 滿月
