@@ -506,7 +506,7 @@ function hornGeo(){ const g = new THREE.ConeGeometry(0.15, 0.62, 28, 18); g.tran
 function stick(a, b, r, mat){ const d = b.clone().sub(a), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 14), mat); m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(V(0, 1, 0), d.normalize()); return m; }
 
 function build(def, o = {}){
-  const fam = def.fam.key, st = o.pure ? 1 : def.stage, F = def.fam, bodyCol = o.pure ? '#fbfaf6' : o.gold ? '#f3cf63' : F.color;
+  const fam = def.fam.key, st = o.pure ? 1 : def.stage, F = def.fam, bodyCol = o.pure ? '#fbfaf6' : o.gold ? '#f3cf63' : (def.color || F.color);
   const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
   const M = { root, body, mats: [], eyes: [], upd: [], def };
   // 身體
@@ -547,8 +547,8 @@ function build(def, o = {}){
     if(st === 3) for(const s of [-1, 1]){ const f = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.085, 10), new THREE.MeshPhysicalMaterial({ color: '#fffaf0', roughness: 0.2, clearcoat: 1 })); f.rotation.x = Math.PI; f.position.set(s*0.065, -r + 0.005, 0.01); m.add(f); } }
   // 第三階段：彎角（根部深紫、尖端骨白）
   if(st === 3 && fam !== 'sheng') for(const s of [-1, 1]){ const h = new THREE.Mesh(hornGeo(), new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.35, clearcoat: 0.8 }));
-    h.userData = { pass: 1, nm: '彎角' }; placeOn(front, V(s*(fam === 'chu' ? 0.8 : 0.42), fam === 'chu' ? 0.78 : 0.9, 0.1), h, -0.06); h.rotation.set(0, 0, -s*(fam === 'chu' ? 0.7 : 0.38)); h.scale.x = s; body.add(h); }
-  if(!o.pure) accessories(M, fam, st, front);
+    const wide = fam === 'chu' || def.xv === 'bowls'; h.userData = { pass: 1, nm: '彎角' }; placeOn(front, V(s*(wide ? 0.8 : 0.42), wide ? 0.78 : 0.9, 0.1), h, -0.06); h.rotation.set(0, 0, -s*(wide ? 0.7 : 0.38)); h.scale.x = s; body.add(h); }
+  if(!o.pure){ if(def.xv) xAccessories(M, def.xv, st, front); else accessories(M, fam, st, front); }
   if(o.pure){ const l = sprite(textTex('🪷', '#fff', '96px sans-serif')); l.scale.setScalar(0.62); l.position.set(0, 1.42, 0.1); l.userData.nm = '蓮花'; body.add(l); }
   if(o.gold){ const a = sprite(SOFT, 0xffd27a, true, 0.5); a.scale.setScalar(3.8); a.position.z = -0.8; a.userData.fx = 1; root.add(a); M.upd.push(t => { a.material.opacity = 0.4 + 0.12*Math.sin(t*2.5); }); }
   // 氣場、地上的影子、飄浮的塵點
@@ -629,6 +629,61 @@ function accessories(M, fam, st, front){
 }
 
 
+
+
+// ---------- 異相塵靈的配件（v261109.20）----------
+function topY(front, x = 0, z = 0){ rc.set(V(x, 4, z), V(0, -1, 0)); const h = rc.intersectObjects(front, false)[0]; return h ? h.point.y : 1.0; }
+function xAccessories(M, xv, st, front){
+  const B = M.body, U = M.upd;
+  if(xv === 'ruler'){   // 比比：一把量身高的尺，浮在身旁輕輕晃
+    const tex = canvasTex(256, (c, s) => { c.fillStyle = '#f2d27a'; c.fillRect(0, 0, s, s); c.strokeStyle = '#6b4a12'; for(let i=0;i<=20;i++){ const y = 8 + i*(s - 16)/20; c.lineWidth = i % 5 ? 2 : 4; c.beginPath(); c.moveTo(0, y); c.lineTo(i % 5 ? s*0.3 : s*0.55, y); c.stroke(); } });
+    const r = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.15, 0.04), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6 })); r.userData.nm = '尺'; B.add(r);
+    U.push(t => { r.position.set(1.32, 0.05 + Math.sin(t*1.6)*0.05, 0.25); r.rotation.set(0, -0.4 + Math.sin(t*1.2)*0.2, -0.18 + Math.sin(t*1.9)*0.06); });
+  }
+  if(xv === 'knot'){   // 繞繞：頭上一個一直轉、解不開的繩結
+    const k = new THREE.Mesh(new THREE.TorusKnotGeometry(0.2, 0.05, 120, 14, 2, 3), new THREE.MeshPhysicalMaterial({ color: '#3fb79a', roughness: 0.3, clearcoat: 0.8 })); k.userData.nm = '繩結'; B.add(k);
+    const y0 = topY(front); U.push(t => { k.position.set(0, y0 + 0.42 + Math.sin(t*1.8)*0.05, 0); k.rotation.set(t*0.6, t*1.1, 0); });
+  }
+  if(xv === 'rod'){   // 誘餌妖：插在頭上的釣竿，線尾吊著一顆晃來晃去的糖
+    const y0 = topY(front, 0.25, 0.1), base = V(0.25, y0 - 0.12, 0.1), tip = V(1.25, y0 + 0.75, 0.25);
+    const rod = stick(base, tip, 0.03, new THREE.MeshStandardMaterial({ color: '#8a5a2a', roughness: 0.5 })); rod.userData = { pass: 1, nm: '釣竿' }; B.add(rod);
+    const line = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 1, 6), new THREE.MeshBasicMaterial({ color: '#e8e8f0' })); line.userData.fx = 1; B.add(line);
+    const candy = sprite(textTex('🍬', '#fff', '92px sans-serif')); candy.scale.setScalar(0.42); candy.userData.nm = '糖'; B.add(candy);
+    U.push(t => { const sw = Math.sin(t*1.7)*0.18, end = V(tip.x + sw, tip.y - 0.95, tip.z + Math.cos(t*1.3)*0.08), mid = tip.clone().add(end).multiplyScalar(0.5), d = end.clone().sub(tip);
+      line.position.copy(mid); line.scale.y = d.length(); line.quaternion.setFromUnitVectors(V(0, 1, 0), d.normalize()); candy.position.copy(end).add(V(0, -0.12, 0)); });
+  }
+  if(xv === 'stone'){   // 硬嘴妖：頭上戴一頂石頭頭盔，身邊繞著幾塊碎石
+    const g = new THREE.SphereGeometry(0.84, 48, 24, 0, Math.PI*2, 0, Math.PI*0.5), p = g.attributes.position; for(let i=0;i<p.count;i++){ const v = V(p.getX(i), p.getY(i), p.getZ(i)); v.multiplyScalar(1 + 0.04*Math.sin(v.x*9)*Math.sin(v.z*7)); p.setXYZ(i, v.x, v.y, v.z); } g.computeVertexNormals();
+    const helm = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: '#8d877e', roughness: 0.95, bumpMap: BUMP, bumpScale: 4, side: THREE.DoubleSide })); helm.scale.y = 0.78; helm.position.y = 0.42; helm.userData.nm = '石盔'; B.add(helm);
+    const rocks = [0, 1, 2].map(k => { const r = new THREE.Mesh(new THREE.DodecahedronGeometry(0.1 + 0.03*k, 0), new THREE.MeshStandardMaterial({ color: '#7d776e', roughness: 1, flatShading: true })); r.userData.nm = '碎石'; B.add(r); return r; });
+    U.push(t => rocks.forEach((r, k) => { const a = t*0.9 + k*2.1; r.position.set(Math.cos(a)*1.4, -0.2 + Math.sin(a*1.5)*0.3, Math.sin(a)*1.2); r.rotation.set(t + k, t*0.7, 0); }));
+  }
+  if(xv === 'shell'){   // 守舊魔：背著一個沉重的蝸牛殼（躲在殼裡不想變）
+    const tex = canvasTex(256, (c, s) => { c.fillStyle = '#b07a4a'; c.fillRect(0, 0, s, s); c.strokeStyle = '#6b4424'; c.lineWidth = 9; c.beginPath(); for(let i=0;i<=200;i++){ const a = i/200*Math.PI*6, r = 4 + i*0.6; const x = s/2 + Math.cos(a)*r, y = s/2 + Math.sin(a)*r; i ? c.lineTo(x, y) : c.moveTo(x, y); } c.stroke(); });
+    const sh = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshPhysicalMaterial({ map: tex, roughness: 0.4, clearcoat: 0.6 })); sh.scale.set(0.82, 0.84, 0.4); sh.position.set(0, 0.32, -1.02); sh.userData = { pass: 1, nm: '蝸牛殼' }; B.add(sh);
+  }
+  if(xv === 'bowls'){   // 無度魔：頭上疊了三個碗還不夠，身邊還繞著食物
+    const y0 = topY(front), bowl = (r) => { const P = [[0.001, 0], [r*0.45, 0.005], [r*0.8, r*0.25], [r, r*0.6], [r*0.96, r*0.62], [r*0.76, r*0.3], [0.001, r*0.08]].map(q => new THREE.Vector2(q[0], q[1]));
+      return new THREE.Mesh(new THREE.LatheGeometry(P, 40), new THREE.MeshPhysicalMaterial({ color: '#f4f1ea', roughness: 0.25, clearcoat: 0.8 })); };
+    const stack = new THREE.Group(); stack.position.set(0.05, y0 - 0.05, 0.05); stack.rotation.z = -0.1; stack.userData = { pass: 1, nm: '碗' }; B.add(stack);
+    [0.26, 0.23, 0.2].forEach((r, i) => { const b = bowl(r); b.position.y = i*0.13; b.rotation.z = (i - 1)*0.06; stack.add(b); const rim = new THREE.Mesh(new THREE.TorusGeometry(r*0.98, 0.012, 6, 40), new THREE.MeshStandardMaterial({ color: '#3a6fb0' })); rim.rotation.x = Math.PI/2; rim.position.y = r*0.6; b.add(rim); });
+    const fs = ['🍜', '🍗', '🍰', '🍚'].map(ch => { const f = sprite(textTex(ch, '#fff', '92px sans-serif')); f.scale.setScalar(0.45); f.userData.nm = '食物'; B.add(f); return f; });
+    U.push(t => fs.forEach((f, k) => { const a = t*1.1 + k*Math.PI/2; f.position.set(Math.cos(a)*1.58, 0.82 + Math.sin(a*2)*0.08, Math.sin(a)*1.3); }));
+  }
+  if(xv === 'stars'){   // 虛名魔：頭頂一束聚光燈，身邊繞著金色星星獎座
+    const shp = new THREE.Shape(); for(let i=0;i<10;i++){ const a = Math.PI/2 + i*Math.PI/5, r = i % 2 ? 0.09 : 0.2; i ? shp.lineTo(Math.cos(a)*r, Math.sin(a)*r) : shp.moveTo(Math.cos(a)*r, Math.sin(a)*r); }
+    const sg = new THREE.ExtrudeGeometry(shp, { depth: 0.06, bevelEnabled: true, bevelSize: 0.015, bevelThickness: 0.015, bevelSegments: 2 }); sg.center();
+    const stars = [0, 1, 2, 3].map(() => { const m = new THREE.Mesh(sg, gold()); m.userData.nm = '金星'; M.root.add(m); return m; });
+    U.push(t => stars.forEach((m, k) => { const a = t*0.8 + k*Math.PI/2; m.position.set(Math.cos(a)*1.42, 0.25 + Math.sin(a*2)*0.15, Math.sin(a)*1.22); m.rotation.set(0, t*2 + k, 0); }));
+    const spot = new THREE.Mesh(new THREE.ConeGeometry(0.85, 2.4, 40, 1, true), new THREE.MeshBasicMaterial({ color: '#fff3c8', transparent: true, opacity: 0.06, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+    spot.position.y = 1.1; spot.userData.fx = 1; M.root.add(spot); U.push(t => { spot.material.opacity = 0.05 + 0.025*Math.sin(t*2.2); });
+  }
+  if(xv === 'vortex'){   // 漩心魔：一條漩渦帶從腳下繞著身體往上盤，一直轉
+    const pts = []; for(let i=0;i<=140;i++){ const k = i/140, a = k*Math.PI*2*2.5; pts.push(V(Math.cos(a)*1.56, -1.0 + k*1.9, Math.sin(a)*1.56)); }
+    const vx = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 280, 0.035, 8, false), new THREE.MeshPhysicalMaterial({ color: '#5a3d8f', emissive: '#3a2070', emissiveIntensity: 0.4, roughness: 0.3, clearcoat: 1, transparent: true, opacity: 0.85 }));
+    vx.userData.nm = '漩渦帶'; M.root.add(vx); U.push(t => { vx.rotation.y = -t*0.9; });
+  }
+}
 
 // ---------- 魔王：無明塵王（六塵合體）----------
 // 灰紫色、會一直晃動的果凍身體，蒙著一層塵；頭戴黑曜石王冠，正中一顆「無明」暗月寶石；

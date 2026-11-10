@@ -90,6 +90,8 @@ button.big{width:100%;font-size:1.1rem;padding:14px}
 .dcard canvas{width:100%;aspect-ratio:1/1;display:block}
 .dcard .nm{font-weight:800;font-size:.86rem}
 .dcard .lv{font-size:.7rem;color:var(--muted)}
+.dx-h{font-size:.75rem;color:#e8bd5a;padding:8px 4px 4px}
+.dcard.xv{background:linear-gradient(160deg,rgba(232,189,90,.12),rgba(255,255,255,.03));box-shadow:inset 0 0 0 1px rgba(232,189,90,.28)}
 .dcard.lock{opacity:.7}
 .caught{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .caught span{background:rgba(255,255,255,.07);border-radius:10px;padding:4px 8px;font-size:.88rem}
@@ -181,7 +183,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.19';
+const VERSION = 'v261109.20';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -553,6 +555,22 @@ const MONS = [
   ['fa',1,'念念','念頭來了，看著它，不跟著它。'],['fa',2,'妄想妖','想得越多，做得越少。'],['fa',3,'執念魔','放下不是失去，是騰出雙手。']
 ].map(([f,st,name,quote]) => ({ fam: FAMS.find(x => x.key === f), stage: st, name, quote, lv: st === 1 ? 'Lv 1–9' : st === 2 ? 'Lv 10–19' : 'Lv 20+', hits: st === 1 ? 1 : 2 }));
 const STAGE_NAME = ['', '塵精', '塵妖', '塵魔'];
+/* 異相塵靈（v261109.20）：跟著新題庫出現的特別塵靈，歸在原本的系別，但各自怕一個新符號（心性小語為示範） */
+const XMONS = [
+  // 系, 階段, 名字, 心性小語, 怕的符號, 顯示, 為什麼怕, 配件, 身體顏色
+  ['se',    1, '比比',   '人字兩筆互相撐，比來比去，不如扶對方一把。', 'caret',  '∧ 人字',   '人字兩筆互相扶持，不必比高低', 'ruler',  '#f0b6d6'],
+  ['fa',    1, '繞繞',   '想不通就先放下，繞一圈回來，路就寬了。',     'inf',    '∞ 無極',   '無極自在，不鑽牛角尖',         'knot',   '#a8e6d8'],
+  ['xiang', 2, '誘餌妖', '好處後面常藏著鉤子，看清楚再伸手。',         'gamma',  'γ 伽瑪',   '看穿鉤子上的餌',               'rod',    '#c9b8f0'],
+  ['sheng', 2, '硬嘴妖', '話說軟一點，心就近一點。',                   'rho',    'ρ 柔',     '以柔克剛',                     'stone',  '#c8b9a8'],
+  ['chu',   3, '守舊魔', '改變不用一次到位，先走一小步就好。',         'delta',  'δ 德爾塔', 'δ 代表改變，一步一步來',       'shell',  '#9fc2d8'],
+  ['wei',   3, '無度魔', '飲食有方、取之有度，身心都輕鬆。',           'sq',     '□ 方',     '有方有度，知所節制',           'bowls',  '#d8e08a'],
+  ['se',    3, '虛名魔', '掌聲會散，德行的光才長久。',                 'star',   '★ 五芒星', '真正的光芒來自德行',           'stars',  '#e6b8e8'],
+  ['fa',    3, '漩心魔', '越轉越亂的時候，往內收、回到中心。',         'spiral', '🌀 漩渦',  '把心往內收，回到中心',         'vortex', '#8fcfc0']
+];
+XMONS.forEach(([f, st, name, quote, weak, weakName, weakWhy, xv, color]) => MONS.push({ fam: FAMS.find(x => x.key === f), stage: st, name, quote, weak, weakName, weakWhy, xv, color,
+  lv: st === 1 ? 'Lv 1–9' : st === 2 ? 'Lv 10–19' : 'Lv 20+', hits: st === 1 ? 1 : 2 }));
+// 這隻塵靈怕什麼：異相塵靈有自己的弱點，其他照系別
+const weakOf = d => d.weak || d.fam.weak, weakNameOf = d => d.weakName || d.fam.weakName, weakWhyOf = d => d.weakWhy || d.fam.weakWhy;
 
 /* ================= 塵靈繪製 ================= */
 // 各系的身形（以 r 為單位、原點在中心）
@@ -648,7 +666,7 @@ function drawAcc(c, fam, st, r, t, opt, pass = 'back'){
 function drawHorns(c, r){ c.fillStyle = '#3a2e3e'; for(const s of [-1,1]){ c.beginPath(); c.moveTo(s*r*0.35, -r*0.8); c.quadraticCurveTo(s*r*0.6, -r*1.25, s*r*0.75, -r*1.35); c.quadraticCurveTo(s*r*0.55, -r*1.0, s*r*0.55, -r*0.7); c.closePath(); c.fill(); } }
 function drawDust(c, m, x, y, R, t, opt = {}){
   const fam = m.fam.key, st = m.stage, r = R*(st === 1 ? 0.62 : st === 2 ? 0.76 : 0.9), gold = opt.gold, pure = opt.pure;
-  const body = pure ? '#fbfaf6' : gold ? '#f3cf63' : m.fam.color, dark = pure ? '#d9d4c8' : gold ? '#a8781c' : m.fam.dark;
+  const body = pure ? '#fbfaf6' : gold ? '#f3cf63' : (m.color || m.fam.color), dark = pure ? '#d9d4c8' : gold ? '#a8781c' : m.fam.dark;
   c.save(); c.translate(x, y + Math.sin(t*2 + (opt.seed||0))*r*0.05);
   if(opt.scaleY) c.scale(1/opt.scaleY, opt.scaleY);
   if(opt.rot) c.rotate(opt.rot);
@@ -1184,9 +1202,9 @@ function drawMonster(t){
     if(m.boss) ctx.fillText(`無明塵王　${'●'.repeat(m.hp)}${'○'.repeat(m.maxHp - m.hp)}`, x, y + bob + m.r*1.25);
     else {
       ctx.fillStyle = m.gold ? '#ffe08a' : '#f6ecd8'; ctx.fillText(`${m.gold ? '✨ 金色・' : ''}${m.def.name}  Lv ${m.lv}`, x, y + bob + m.r*1.4);
-      const knows = MONS.some(o => o.fam === m.def.fam && dex.m[o.name]);
+      const knows = m.def.xv ? !!dex.m[m.def.name] : MONS.some(o => o.fam === m.def.fam && !o.xv && dex.m[o.name]);
       ctx.font = `700 ${Math.round(u*0.034)}px "Noto Sans TC", sans-serif`; ctx.fillStyle = 'rgba(246,236,216,.75)';
-      ctx.fillText(`${m.def.fam.name}系${STAGE_NAME[m.def.stage]}・${m.def.fam.mood}${knows ? `・怕 ${m.def.fam.weakName}` : ''}${!dex.m[m.def.name] ? '・未收服' : ''}`, x, y + bob + m.r*1.4 + u*0.05);
+      ctx.fillText(`${m.def.xv ? '✨異相・' : ''}${m.def.fam.name}系${STAGE_NAME[m.def.stage]}・${m.def.fam.mood}${knows ? `・怕 ${weakNameOf(m.def)}` : ''}${!dex.m[m.def.name] ? '・未收服' : ''}`, x, y + bob + m.r*1.4 + u*0.05);
     }
     ctx.restore();
   }
@@ -1517,7 +1535,7 @@ async function encounter(opt){
   const ok = rs.every(r => r.ok), r0 = rs.find(r => !r.ok) || rs[0];
   if(ok){
     hits++; combo++; maxCombo = Math.max(maxCombo, combo); purified++;
-    const weak = !boss && def && keys.includes(def.fam.weak);
+    const weak = !boss && def && keys.includes(weakOf(def));
     const base = Math.round(rs.reduce((a, r) => a + r.score, 0)/rs.length);
     const perfect = rs.every(r => r.score >= 85);
     const pts = (base + (combo > 1 ? combo*10 : 0) + (multi ? 50*(keys.length - 1) : 0) + (perfect ? 60 : 0))*(weak ? 2 : 1); score += pts;
@@ -1558,7 +1576,8 @@ const pick = arr => arr[Math.floor(Math.random()*arr.length)];
 function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
 // 出怪：隨機一系，等級照階段；約 3% 機率是金色塵靈
 function spawnDef(stage){
-  const fam = pick(FAMS), def = MONS.find(m => m.fam === fam && m.stage === stage);
+  const xs = diffKey !== 'easy' ? MONS.filter(m => m.xv && m.stage === stage) : [];
+  const fam = pick(FAMS), def = xs.length && Math.random() < 0.3 ? pick(xs) : MONS.find(m => m.fam === fam && m.stage === stage && !m.xv);
   const lv = stage === 1 ? 1 + Math.floor(Math.random()*9) : stage === 2 ? 10 + Math.floor(Math.random()*10) : 20 + Math.floor(Math.random()*10);
   return { def, lv, gold: Math.random() < 0.03 };
 }
@@ -1569,7 +1588,10 @@ const NAMED_ALL = [['left','right'], ['up','down'], ['s','circle'], ['alpha','ra
 // 上下左右只留給「入門」；修行、精進一開始就是形狀符號
 const STAGE1 = () => diffKey === 'easy' ? EASY : BASIC;
 const NAMEDP = () => diffKey === 'easy' ? NAMED_ALL : NAMED_ALL.filter(c => !c.some(k => SYMS[k].kind === 'dir'));
-function keysFor(stage, fam){ const NAMED = NAMEDP();
+function keysFor(stage, def){ const NAMED = NAMEDP(), fam = def.fam;
+  if(def.xv && diffKey !== 'easy'){ const w = def.weak; if(stage === 1) return [w];
+    const a = pick((stage === 2 ? MID : HARD).filter(x => x !== w)); if(stage === 2) return Math.random() < 0.5 ? [a, w] : [w, a];
+    return [a, pick(MID.filter(x => x !== w && x !== a)), w]; }
   if(stage === 3 && diffKey !== 'easy'){   // 塵魔：三連擊，多半是組合技再接一個難的符號
     const base = Math.random() < 0.5 ? pick(NAMED).slice() : [pick(HARD), pick(MID)];
     return [...base, pick(HARD.filter(x => !base.includes(x)))];
@@ -1644,7 +1666,7 @@ async function runGame(){
     for(const w of plan){
       const tip = w.stages.every(s => s === 3) && diffKey !== 'easy' ? '塵魔要三連擊，倒數只有兩拍，提示只標起點和終點！' : w.stages.some(s => s > 1) ? '塵妖要兩連擊才收得服！' : '';
       say(w.wave.split('・')[1]); await banner(w.wave, tip, { red: w.stages.every(s => s === 3) });
-      for(const st of w.stages){ const sp = spawnDef(st); await encounter({ keys: keysFor(st, sp.def.fam), ...sp, beats: st === 3 && diffKey !== 'easy' ? 2 : undefined, wave: st === 3 ? '⚠️ 塵魔出沒' : w.wave }); if(lives <= 0) throw 'over'; }
+      for(const st of w.stages){ const sp = spawnDef(st); await encounter({ keys: keysFor(st, sp.def), ...sp, beats: st === 3 && diffKey !== 'easy' ? 2 : undefined, wave: st === 3 ? '⚠️ 塵魔出沒' : w.wave }); if(lives <= 0) throw 'over'; }
     }
     // 魔王：無明塵王（三擊，最後一擊一定是「圓明一拂」）
     bgmSet('boss');
@@ -1734,20 +1756,20 @@ function openDex(){
   const n = dexCount(); $('#dexN').textContent = `${n} / ${MONS.length}`;
   $('#dexList').innerHTML = ''; dexCards = [];
   FAMS.forEach(f => {
-    const ms = MONS.filter(m => m.fam === f), got = ms.filter(m => dex.m[m.name]).length, box = document.createElement('div'); box.className = 'dfam';
-    box.innerHTML = `<div class="dfam-h"><b style="color:${f.color}">${f.name}系・${f.mood}</b><span>${got === 3 ? '🏅 已收齊' : `${got}/3`}${got ? `　怕 ${f.weakName}` : ''}</span></div><div class="drow"></div>`;
-    ms.forEach(m => { const e = dex.m[m.name], el = document.createElement('div'); el.className = 'dcard' + (e ? '' : ' lock');
-      el.innerHTML = `<canvas></canvas><div class="nm">${e ? (e.gold ? '✨' : '') + m.name : '？？？'}</div><div class="lv">${e ? `收服 ${e.n} 次` : m.lv + ' 出沒'}</div>`;
-      el.onclick = () => openDexCard(m); box.querySelector('.drow').appendChild(el); dexCards.push({ cv: el.querySelector('canvas'), m, e }); });
+    const ms = MONS.filter(m => m.fam === f), base = ms.filter(m => !m.xv), xs = ms.filter(m => m.xv), got = ms.filter(m => dex.m[m.name]).length, gotBase = base.filter(m => dex.m[m.name]).length, box = document.createElement('div'); box.className = 'dfam';
+    box.innerHTML = `<div class="dfam-h"><b style="color:${f.color}">${f.name}系・${f.mood}</b><span>${got === ms.length ? '🏅 已收齊' : `${got}/${ms.length}`}${gotBase ? `　怕 ${f.weakName}` : ''}</span></div><div class="drow"></div>${xs.length ? '<div class="dx-h">✨ 異相塵靈（修行、精進才會出現）</div><div class="drow dx"></div>' : ''}`;
+    ms.forEach(m => { const e = dex.m[m.name], el = document.createElement('div'); el.className = 'dcard' + (e ? '' : ' lock') + (m.xv ? ' xv' : '');
+      el.innerHTML = `<canvas></canvas><div class="nm">${e ? (e.gold ? '✨' : '') + m.name : '？？？'}</div><div class="lv">${e ? (m.xv ? `怕 ${m.weakName}` : `收服 ${e.n} 次`) : m.lv + ' 出沒'}</div>`;
+      el.onclick = () => openDexCard(m); box.querySelector(m.xv ? '.drow.dx' : '.drow').appendChild(el); dexCards.push({ cv: el.querySelector('canvas'), m, e }); });
     $('#dexList').appendChild(box);
   });
   $('#scrDex').hidden = false;
 }
 function openDexCard(m){
   const e = dex.m[m.name]; dexModalM = m;
-  $('#dmName').textContent = e ? m.name : '？？？'; $('#dmTag').textContent = `${m.fam.name}系・${STAGE_NAME[m.stage]}・${m.lv}`;
-  $('#dmDl').innerHTML = e ? `<span>代表 <b>${m.fam.mood}</b></span><span>要揮 <b>${m.hits === 1 ? '1 下' : '2 連擊'}</b></span><span>怕 <b>${m.fam.weakName}</b></span><span>收服 <b>${e.n} 次</b></span><span style="grid-column:1/-1">第一次收服 <b>${e.first}</b>${e.gold ? '・✨ 收過金色' : ''}${e.hard ? '・🔥 精進收服' : ''}</span>`
-    : `<span style="grid-column:1/-1">在 <b>${m.lv}</b> 的試煉中出沒（${m.fam.name}系的${STAGE_NAME[m.stage]}）</span>`;
+  $('#dmName').textContent = e ? m.name : '？？？'; $('#dmTag').textContent = `${m.xv ? '✨ 異相・' : ''}${m.fam.name}系・${STAGE_NAME[m.stage]}・${m.lv}`;
+  $('#dmDl').innerHTML = e ? `<span>代表 <b>${m.fam.mood}</b></span><span>要揮 <b>${m.hits === 1 ? '1 下' : '2 連擊'}</b></span><span>怕 <b>${weakNameOf(m)}</b></span><span>收服 <b>${e.n} 次</b></span>${m.xv ? `<span style="grid-column:1/-1">為什麼怕：<b>${weakWhyOf(m)}</b></span>` : ''}<span style="grid-column:1/-1">第一次收服 <b>${e.first}</b>${e.gold ? '・✨ 收過金色' : ''}${e.hard ? '・🔥 精進收服' : ''}</span>`
+    : `<span style="grid-column:1/-1">在 <b>${m.lv}</b> 的試煉中出沒（${m.fam.name}系的${m.xv ? '異相' : ''}${STAGE_NAME[m.stage]}${m.xv ? '，修行、精進才會出現' : ''}）</span>`;
   $('#dmQuote').innerHTML = e ? `${m.quote}<small>心性小語（示範，正式版請道場審定）</small>` : '收服之後才會解鎖心性小語。';
   $('#dexModal').hidden = false;
 }
@@ -1860,7 +1882,7 @@ function hornGeo(){ const g = new THREE.ConeGeometry(0.15, 0.62, 28, 18); g.tran
 function stick(a, b, r, mat){ const d = b.clone().sub(a), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 14), mat); m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(V(0, 1, 0), d.normalize()); return m; }
 
 function build(def, o = {}){
-  const fam = def.fam.key, st = o.pure ? 1 : def.stage, F = def.fam, bodyCol = o.pure ? '#fbfaf6' : o.gold ? '#f3cf63' : F.color;
+  const fam = def.fam.key, st = o.pure ? 1 : def.stage, F = def.fam, bodyCol = o.pure ? '#fbfaf6' : o.gold ? '#f3cf63' : (def.color || F.color);
   const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
   const M = { root, body, mats: [], eyes: [], upd: [], def };
   // 身體
@@ -1901,8 +1923,8 @@ function build(def, o = {}){
     if(st === 3) for(const s of [-1, 1]){ const f = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.085, 10), new THREE.MeshPhysicalMaterial({ color: '#fffaf0', roughness: 0.2, clearcoat: 1 })); f.rotation.x = Math.PI; f.position.set(s*0.065, -r + 0.005, 0.01); m.add(f); } }
   // 第三階段：彎角（根部深紫、尖端骨白）
   if(st === 3 && fam !== 'sheng') for(const s of [-1, 1]){ const h = new THREE.Mesh(hornGeo(), new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.35, clearcoat: 0.8 }));
-    h.userData = { pass: 1, nm: '彎角' }; placeOn(front, V(s*(fam === 'chu' ? 0.8 : 0.42), fam === 'chu' ? 0.78 : 0.9, 0.1), h, -0.06); h.rotation.set(0, 0, -s*(fam === 'chu' ? 0.7 : 0.38)); h.scale.x = s; body.add(h); }
-  if(!o.pure) accessories(M, fam, st, front);
+    const wide = fam === 'chu' || def.xv === 'bowls'; h.userData = { pass: 1, nm: '彎角' }; placeOn(front, V(s*(wide ? 0.8 : 0.42), wide ? 0.78 : 0.9, 0.1), h, -0.06); h.rotation.set(0, 0, -s*(wide ? 0.7 : 0.38)); h.scale.x = s; body.add(h); }
+  if(!o.pure){ if(def.xv) xAccessories(M, def.xv, st, front); else accessories(M, fam, st, front); }
   if(o.pure){ const l = sprite(textTex('🪷', '#fff', '96px sans-serif')); l.scale.setScalar(0.62); l.position.set(0, 1.42, 0.1); l.userData.nm = '蓮花'; body.add(l); }
   if(o.gold){ const a = sprite(SOFT, 0xffd27a, true, 0.5); a.scale.setScalar(3.8); a.position.z = -0.8; a.userData.fx = 1; root.add(a); M.upd.push(t => { a.material.opacity = 0.4 + 0.12*Math.sin(t*2.5); }); }
   // 氣場、地上的影子、飄浮的塵點
@@ -1983,6 +2005,61 @@ function accessories(M, fam, st, front){
 }
 
 
+
+
+// ---------- 異相塵靈的配件（v261109.20）----------
+function topY(front, x = 0, z = 0){ rc.set(V(x, 4, z), V(0, -1, 0)); const h = rc.intersectObjects(front, false)[0]; return h ? h.point.y : 1.0; }
+function xAccessories(M, xv, st, front){
+  const B = M.body, U = M.upd;
+  if(xv === 'ruler'){   // 比比：一把量身高的尺，浮在身旁輕輕晃
+    const tex = canvasTex(256, (c, s) => { c.fillStyle = '#f2d27a'; c.fillRect(0, 0, s, s); c.strokeStyle = '#6b4a12'; for(let i=0;i<=20;i++){ const y = 8 + i*(s - 16)/20; c.lineWidth = i % 5 ? 2 : 4; c.beginPath(); c.moveTo(0, y); c.lineTo(i % 5 ? s*0.3 : s*0.55, y); c.stroke(); } });
+    const r = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.15, 0.04), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6 })); r.userData.nm = '尺'; B.add(r);
+    U.push(t => { r.position.set(1.32, 0.05 + Math.sin(t*1.6)*0.05, 0.25); r.rotation.set(0, -0.4 + Math.sin(t*1.2)*0.2, -0.18 + Math.sin(t*1.9)*0.06); });
+  }
+  if(xv === 'knot'){   // 繞繞：頭上一個一直轉、解不開的繩結
+    const k = new THREE.Mesh(new THREE.TorusKnotGeometry(0.2, 0.05, 120, 14, 2, 3), new THREE.MeshPhysicalMaterial({ color: '#3fb79a', roughness: 0.3, clearcoat: 0.8 })); k.userData.nm = '繩結'; B.add(k);
+    const y0 = topY(front); U.push(t => { k.position.set(0, y0 + 0.42 + Math.sin(t*1.8)*0.05, 0); k.rotation.set(t*0.6, t*1.1, 0); });
+  }
+  if(xv === 'rod'){   // 誘餌妖：插在頭上的釣竿，線尾吊著一顆晃來晃去的糖
+    const y0 = topY(front, 0.25, 0.1), base = V(0.25, y0 - 0.12, 0.1), tip = V(1.25, y0 + 0.75, 0.25);
+    const rod = stick(base, tip, 0.03, new THREE.MeshStandardMaterial({ color: '#8a5a2a', roughness: 0.5 })); rod.userData = { pass: 1, nm: '釣竿' }; B.add(rod);
+    const line = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 1, 6), new THREE.MeshBasicMaterial({ color: '#e8e8f0' })); line.userData.fx = 1; B.add(line);
+    const candy = sprite(textTex('🍬', '#fff', '92px sans-serif')); candy.scale.setScalar(0.42); candy.userData.nm = '糖'; B.add(candy);
+    U.push(t => { const sw = Math.sin(t*1.7)*0.18, end = V(tip.x + sw, tip.y - 0.95, tip.z + Math.cos(t*1.3)*0.08), mid = tip.clone().add(end).multiplyScalar(0.5), d = end.clone().sub(tip);
+      line.position.copy(mid); line.scale.y = d.length(); line.quaternion.setFromUnitVectors(V(0, 1, 0), d.normalize()); candy.position.copy(end).add(V(0, -0.12, 0)); });
+  }
+  if(xv === 'stone'){   // 硬嘴妖：頭上戴一頂石頭頭盔，身邊繞著幾塊碎石
+    const g = new THREE.SphereGeometry(0.84, 48, 24, 0, Math.PI*2, 0, Math.PI*0.5), p = g.attributes.position; for(let i=0;i<p.count;i++){ const v = V(p.getX(i), p.getY(i), p.getZ(i)); v.multiplyScalar(1 + 0.04*Math.sin(v.x*9)*Math.sin(v.z*7)); p.setXYZ(i, v.x, v.y, v.z); } g.computeVertexNormals();
+    const helm = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: '#8d877e', roughness: 0.95, bumpMap: BUMP, bumpScale: 4, side: THREE.DoubleSide })); helm.scale.y = 0.78; helm.position.y = 0.42; helm.userData.nm = '石盔'; B.add(helm);
+    const rocks = [0, 1, 2].map(k => { const r = new THREE.Mesh(new THREE.DodecahedronGeometry(0.1 + 0.03*k, 0), new THREE.MeshStandardMaterial({ color: '#7d776e', roughness: 1, flatShading: true })); r.userData.nm = '碎石'; B.add(r); return r; });
+    U.push(t => rocks.forEach((r, k) => { const a = t*0.9 + k*2.1; r.position.set(Math.cos(a)*1.4, -0.2 + Math.sin(a*1.5)*0.3, Math.sin(a)*1.2); r.rotation.set(t + k, t*0.7, 0); }));
+  }
+  if(xv === 'shell'){   // 守舊魔：背著一個沉重的蝸牛殼（躲在殼裡不想變）
+    const tex = canvasTex(256, (c, s) => { c.fillStyle = '#b07a4a'; c.fillRect(0, 0, s, s); c.strokeStyle = '#6b4424'; c.lineWidth = 9; c.beginPath(); for(let i=0;i<=200;i++){ const a = i/200*Math.PI*6, r = 4 + i*0.6; const x = s/2 + Math.cos(a)*r, y = s/2 + Math.sin(a)*r; i ? c.lineTo(x, y) : c.moveTo(x, y); } c.stroke(); });
+    const sh = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshPhysicalMaterial({ map: tex, roughness: 0.4, clearcoat: 0.6 })); sh.scale.set(0.82, 0.84, 0.4); sh.position.set(0, 0.32, -1.02); sh.userData = { pass: 1, nm: '蝸牛殼' }; B.add(sh);
+  }
+  if(xv === 'bowls'){   // 無度魔：頭上疊了三個碗還不夠，身邊還繞著食物
+    const y0 = topY(front), bowl = (r) => { const P = [[0.001, 0], [r*0.45, 0.005], [r*0.8, r*0.25], [r, r*0.6], [r*0.96, r*0.62], [r*0.76, r*0.3], [0.001, r*0.08]].map(q => new THREE.Vector2(q[0], q[1]));
+      return new THREE.Mesh(new THREE.LatheGeometry(P, 40), new THREE.MeshPhysicalMaterial({ color: '#f4f1ea', roughness: 0.25, clearcoat: 0.8 })); };
+    const stack = new THREE.Group(); stack.position.set(0.05, y0 - 0.05, 0.05); stack.rotation.z = -0.1; stack.userData = { pass: 1, nm: '碗' }; B.add(stack);
+    [0.26, 0.23, 0.2].forEach((r, i) => { const b = bowl(r); b.position.y = i*0.13; b.rotation.z = (i - 1)*0.06; stack.add(b); const rim = new THREE.Mesh(new THREE.TorusGeometry(r*0.98, 0.012, 6, 40), new THREE.MeshStandardMaterial({ color: '#3a6fb0' })); rim.rotation.x = Math.PI/2; rim.position.y = r*0.6; b.add(rim); });
+    const fs = ['🍜', '🍗', '🍰', '🍚'].map(ch => { const f = sprite(textTex(ch, '#fff', '92px sans-serif')); f.scale.setScalar(0.45); f.userData.nm = '食物'; B.add(f); return f; });
+    U.push(t => fs.forEach((f, k) => { const a = t*1.1 + k*Math.PI/2; f.position.set(Math.cos(a)*1.58, 0.82 + Math.sin(a*2)*0.08, Math.sin(a)*1.3); }));
+  }
+  if(xv === 'stars'){   // 虛名魔：頭頂一束聚光燈，身邊繞著金色星星獎座
+    const shp = new THREE.Shape(); for(let i=0;i<10;i++){ const a = Math.PI/2 + i*Math.PI/5, r = i % 2 ? 0.09 : 0.2; i ? shp.lineTo(Math.cos(a)*r, Math.sin(a)*r) : shp.moveTo(Math.cos(a)*r, Math.sin(a)*r); }
+    const sg = new THREE.ExtrudeGeometry(shp, { depth: 0.06, bevelEnabled: true, bevelSize: 0.015, bevelThickness: 0.015, bevelSegments: 2 }); sg.center();
+    const stars = [0, 1, 2, 3].map(() => { const m = new THREE.Mesh(sg, gold()); m.userData.nm = '金星'; M.root.add(m); return m; });
+    U.push(t => stars.forEach((m, k) => { const a = t*0.8 + k*Math.PI/2; m.position.set(Math.cos(a)*1.42, 0.25 + Math.sin(a*2)*0.15, Math.sin(a)*1.22); m.rotation.set(0, t*2 + k, 0); }));
+    const spot = new THREE.Mesh(new THREE.ConeGeometry(0.85, 2.4, 40, 1, true), new THREE.MeshBasicMaterial({ color: '#fff3c8', transparent: true, opacity: 0.06, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+    spot.position.y = 1.1; spot.userData.fx = 1; M.root.add(spot); U.push(t => { spot.material.opacity = 0.05 + 0.025*Math.sin(t*2.2); });
+  }
+  if(xv === 'vortex'){   // 漩心魔：一條漩渦帶從腳下繞著身體往上盤，一直轉
+    const pts = []; for(let i=0;i<=140;i++){ const k = i/140, a = k*Math.PI*2*2.5; pts.push(V(Math.cos(a)*1.56, -1.0 + k*1.9, Math.sin(a)*1.56)); }
+    const vx = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 280, 0.035, 8, false), new THREE.MeshPhysicalMaterial({ color: '#5a3d8f', emissive: '#3a2070', emissiveIntensity: 0.4, roughness: 0.3, clearcoat: 1, transparent: true, opacity: 0.85 }));
+    vx.userData.nm = '漩渦帶'; M.root.add(vx); U.push(t => { vx.rotation.y = -t*0.9; });
+  }
+}
 
 // ---------- 魔王：無明塵王（六塵合體）----------
 // 灰紫色、會一直晃動的果凍身體，蒙著一層塵；頭戴黑曜石王冠，正中一顆「無明」暗月寶石；
