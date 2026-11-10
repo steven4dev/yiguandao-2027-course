@@ -181,7 +181,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.18';
+const VERSION = 'v261109.19';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -221,6 +221,27 @@ function alphaVariants(){
   return [f, f.slice().reverse()];
 }
 function sCurve(){ return arc(0,0.5,0.5,20,270,24).concat(arc(0,-0.5,0.5,90,-160,24).slice(1)); }
+// ---- 第一批新題（揮符實驗室實測後，v261109.19 排進遊戲）：全部一筆到底 ----
+const rot90 = p => p.map(([x,y]) => [-y, x]);   // 逆時針轉 90°
+// ∞ 無極：從中心往右上出發，先繞右圈、回中心、再繞左圈、回中心
+function infPath(){ const p=[]; for(let i=0;i<=72;i++){ const t=i/72*2*Math.PI; p.push([Math.sin(t), Math.sin(t)*Math.cos(t)]); } return p; }
+// γ 伽瑪：阿法轉 90°，圈在下面、兩條尾巴朝上；左上起筆 → 往下交叉繞圈 → 右上收筆（也接受反過來）
+function gammaVariants(){ return alphaVariants().map(rot90); }
+// δ 德爾塔（v261109.07 依實測改）：頂上起筆往左勾一下，S 形往右下滑，順時針繞一圈收在左側
+// 另外保留「往左下、逆時針」的寫法當第二種
+function deltaVariants(){
+  const a = [[0.05,1.0],[-0.25,0.95],[-0.35,0.78],[-0.2,0.55],[0.15,0.3],[0.38,0.05]].concat(arc(0,-0.45,0.45,25,-250,36));
+  const b = [[0.45,0.95],[0.05,1.0],[-0.28,0.78],[-0.45,0.35]].concat(arc(0,-0.4,0.6,150,510,36));
+  return [a, b];
+}
+// ρ 柔：下方起筆往上一豎，到頂後順時針繞一圈回到豎線
+function rhoPath(){ return [[-0.6,-1.5],[-0.6,0.3]].concat(arc(0,0.3,0.6,180,-180,36)); }
+// 🌀 漩渦（v261109.07 依實測改）：從外圈右上起筆，逆時針往內繞 1.5～2 圈。
+// 大揮時常揮成直立的橢圓、起筆位置也不一定，所以多放幾種：起筆角度 × 圈數 × 圓／直立橢圓
+function spiralPath(a0, turns, sx){ const p=[]; for(let i=0;i<=90;i++){ const t=i/90, a=a0*D2R + t*turns*2*Math.PI, r=1-t*0.8; p.push([sx*r*Math.cos(a), r*Math.sin(a)]); } return p; }
+function spiralVariants(){ const v=[]; for(const a0 of [45,0,90]) for(const n of [1.5,2]) for(const sx of [1,0.6]) v.push(spiralPath(a0,n,sx)); return v; }
+// ★ 五芒星：頂點起筆 → 左下 → 右 → 左 → 右下 → 回頂點
+const starPath = () => [90,234,18,162,306,90].map(a => [Math.cos(a*D2R), Math.sin(a*D2R)]);
 
 
 const TEMPLATE_DEFS = {
@@ -240,7 +261,16 @@ const TEMPLATE_DEFS = {
   // 左右相反的版本
   rs:     { name:'反向 S', v:[sCurve().map(q => [-q[0], q[1]])] },
   rz:     { name:'反向 Z', v:[[[1,1],[-1,1],[1,-1],[-1,-1]]] },
-  rn:     { name:'反向 N', v:[[[1,-1],[1,1],[-1,-1],[-1,1]]] }
+  rn:     { name:'反向 N', v:[[[1,-1],[1,1],[-1,-1],[-1,1]]] },
+  // 新題庫（揮符實驗室實測過）
+  caret:  { name:'∧ 人字', v:[[[-1,-1],[0,1],[1,-1]]] },
+  inf:    { name:'∞ 無極', v:[infPath()] },
+  gamma:  { name:'γ 伽瑪', v:gammaVariants() },
+  delta:  { name:'δ 德爾塔', v:deltaVariants() },
+  rho:    { name:'ρ 柔',   v:[rhoPath()] },
+  sq:     { name:'□ 方',   v:[[[-1,1],[-1,-1],[1,-1],[1,1],[-1,1]]] },
+  star:   { name:'★ 五芒星', v:[starPath()] },
+  spiral: { name:'🌀 漩渦', v:spiralVariants() }
 };
 const NPTS = 64;
 function pathLen(p){ let L=0; for(let i=1;i<p.length;i++) L += Math.hypot(p[i][0]-p[i-1][0], p[i][1]-p[i-1][1]); return L; }
@@ -474,12 +504,21 @@ const SYMS = {
   circle: { name:'圓',       icon:'○', kind:'shape', say:'畫圓', both:true, note:'繞一圈回到起點' },
   z:      { name:'Z 字',     icon:'Z', kind:'shape', say:'Z 字' },
   n:      { name:'N 字',     icon:'N', kind:'shape', say:'N 字' },
-  alpha:  { name:'阿法',     icon:'α', kind:'shape', say:'阿法', both:true },
+  alpha:  { name:'阿法',     icon:'α', kind:'shape', say:'阿法', both:true, ease:15 },
   s:      { name:'S 字',     icon:'S', kind:'shape', say:'S 字' },
   rs:     { name:'反向 S',   icon:'S', mir:true, kind:'shape', say:'反向 S' },
   rz:     { name:'反向 Z',   icon:'Z', mir:true, kind:'shape', say:'反向 Z' },
   rn:     { name:'反向 N',   icon:'N', mir:true, kind:'shape', say:'反向 N' },
-  ralpha: { name:'反向阿法', icon:'α', mir:true, kind:'shape', say:'反向阿法', both:true }
+  ralpha: { name:'反向阿法', icon:'α', mir:true, kind:'shape', say:'反向阿法', both:true, ease:15 },
+  // 新題庫：still＝轉角可以停多久才算收筆（預設 0.3 秒）、win＝這一揮最多等多久、ease＝形狀門檻放寬幾分（依實測分數）
+  caret:  { name:'人字',   icon:'∧', kind:'shape', say:'人字', note:'左下往上、再往右下' },
+  inf:    { name:'無極',   icon:'∞', kind:'shape', say:'無極', note:'從中間出發，先繞右圈再繞左圈' },
+  gamma:  { name:'伽瑪',   icon:'γ', kind:'shape', say:'伽瑪', both:true, note:'左上往下交叉繞小圈，收在右上' },
+  delta:  { name:'德爾塔', icon:'δ', kind:'shape', say:'德爾塔', ease:7, note:'頂上往左勾，再往下順時針繞一圈' },
+  rho:    { name:'柔',     icon:'ρ', kind:'shape', say:'柔', ease:10, note:'由下往上一豎，再順時針繞一圈' },
+  sq:     { name:'方',     icon:'□', kind:'shape', say:'方', still:450, note:'四個角各停一下' },
+  star:   { name:'五芒星', icon:'★', kind:'shape', say:'五芒星', still:450, win:3500, ease:13, note:'頂點出發，一筆畫完回到頂點' },
+  spiral: { name:'漩渦',   icon:'🌀', kind:'shape', say:'漩渦', win:3500, note:'從右上外圈，逆時針往內繞' }
 };
 const symHTML = k => { const s = SYMS[k]; if(!s.mir && s.name.startsWith(s.icon)) return s.name; return (s.mir ? MIR(s.icon) : s.icon) + ' ' + s.name; };
 
@@ -651,8 +690,8 @@ function dust(c, m, x, y, R, t, opt = {}){
 
 
 // 組合技：兩揮剛好是這幾組時，會打出有名字的招式
-const COMBO_NAME = { 'left+right':'十方淨', 'up+down':'劈山拂', 's+circle':'太極迴拂', 'alpha+ralpha':'阿法雙蓮' };
-const COMBO_FX = { '十方淨':'cross', '劈山拂':'pillar', '太極迴拂':'taiji', '阿法雙蓮':'lotus', '三才連拂':'taiji' };
+const COMBO_NAME = { 'left+right':'十方淨', 'up+down':'劈山拂', 's+circle':'太極迴拂', 'alpha+ralpha':'阿法雙蓮', 'caret+v':'天地一拂', 'inf+circle':'無極圓明' };
+const COMBO_FX = { '十方淨':'cross', '劈山拂':'pillar', '太極迴拂':'taiji', '阿法雙蓮':'lotus', '三才連拂':'taiji', '天地一拂':'pillar', '無極圓明':'taiji' };
 /* 淨心錄：收服過的塵靈記在這支手機上（心燈用完也照樣保留） */
 const DEX_KEY = 'fuchenGame.dex';
 const dex = Object.assign({ v:1, m:{} }, store.get(DEX_KEY, {}));
@@ -1367,7 +1406,7 @@ async function countdown(beats){
   center(''); dimTarget = 0.65; document.body.dataset.phase = 'count'; bgmHold(true);
   for(let i=beats;i>=1;i--){ cd = { text:String(i), t0:performance.now(), dur:0.9, burst:false }; sfx.beat(); vib(30); await wait(900); }
 }
-function record(ms, th0, word = '揮'){
+function record(ms, th0, word = '揮', still = 300){
   return new Promise((resolve, reject) => {
     const T0 = th0 || th(); sfx.go(); vib(140);
     dimTarget = 0; cd = { text:word, t0:performance.now(), dur:0.8, burst:false }; document.body.dataset.phase = 'swing';
@@ -1382,7 +1421,7 @@ function record(ms, th0, word = '揮'){
           const p = integ.step(s), now = performance.now();
           if(p.act > T0.start){ this.started = true; this.lastActive = now; if(!this.swooshed){ this.swooshed = true; swoosh(Math.min(1, p.act/800)); } }
           else if(p.act > T0.end && this.started) this.lastActive = now;
-          if(this.started && now - this.lastActive > 300) finish();
+          if(this.started && now - this.lastActive > still) finish();
         } };
       timer = setTimeout(finish, ms);
     } else {
@@ -1420,7 +1459,7 @@ function judgeSwing(key, st, th0, lenient){
   const top = a.rg.ranking[0], mine = a.rg.ranking.find(r => r.key === key);
   const sc = mine ? mine.score : 0;
   // 門檻依實測調整：阿法類形狀複雜、真人揮對時分數本來就偏低（46～55%），門檻低 15 分
-  const need = dd.shapeMin - (key === 'alpha' || key === 'ralpha' ? 15 : 0);
+  const need = dd.shapeMin - (sym.ease || 0);
   return { a, ...sz, ok: top.key === key && sc >= need && !fail, score: sc, close: top.key === key && sc < need };
 }
 // 動作太小時的教學卡：講清楚怎麼揮才對
@@ -1468,7 +1507,7 @@ async function encounter(opt){
   for(let i=0;i<keys.length;i++){
     document.body.dataset.key = keys[i];   // 這一揮要畫的符號（自動測試用）
     if(i > 0){ sfx.ding(); await wait(350); }
-    const st = await record(SYMS[keys[i]].kind === 'dir' ? 1600 : 2800, th0, i > 0 ? '再揮' : '揮'); strokes.push(st); lastStroke = st; if(i < keys.length - 1){ document.body.dataset.key = keys[i + 1]; document.body.dataset.phase = 'gap'; }
+    const sy = SYMS[keys[i]], st = await record(sy.win || (sy.kind === 'dir' ? 1600 : 2800), th0, i > 0 ? '再揮' : '揮', sy.still || 300); strokes.push(st); lastStroke = st; if(i < keys.length - 1){ document.body.dataset.key = keys[i + 1]; document.body.dataset.phase = 'gap'; }
   }
   document.body.dataset.phase = ''; bgmHold(false); sfx.ding(); vib(50); center('<div class="mid">叮～</div>'); await wait(250); center('');
   const rs = keys.map((k, i) => judgeSwing(k, strokes[i], th0, !!tutorial)); tries++;
@@ -1524,10 +1563,11 @@ function spawnDef(stage){
   return { def, lv, gold: Math.random() < 0.03 };
 }
 // 出題：塵精一個符印（偶爾剛好是它怕的）；塵妖、塵魔兩連擊（多半是有名字的組合技）
-const EASY = ['left','right','down','up','v','circle'], MID = ['v','circle','z','n','alpha','s'], HARD = ['rs','rz','rn','ralpha','z','n','s','alpha'];
-const NAMED_ALL = [['left','right'], ['up','down'], ['s','circle'], ['alpha','ralpha']];
+const EASY = ['left','right','down','up','v','circle'], BASIC = ['v','circle','z','n','alpha','s','caret','inf'],
+  MID = ['v','circle','z','n','alpha','s','caret','inf','gamma','rho'], HARD = ['rs','rz','rn','ralpha','z','n','s','alpha','delta','sq'];
+const NAMED_ALL = [['left','right'], ['up','down'], ['s','circle'], ['alpha','ralpha'], ['caret','v'], ['inf','circle']];
 // 上下左右只留給「入門」；修行、精進一開始就是形狀符號
-const STAGE1 = () => diffKey === 'easy' ? EASY : MID;
+const STAGE1 = () => diffKey === 'easy' ? EASY : BASIC;
 const NAMEDP = () => diffKey === 'easy' ? NAMED_ALL : NAMED_ALL.filter(c => !c.some(k => SYMS[k].kind === 'dir'));
 function keysFor(stage, fam){ const NAMED = NAMEDP();
   if(stage === 3 && diffKey !== 'easy'){   // 塵魔：三連擊，多半是組合技再接一個難的符號
@@ -1608,9 +1648,9 @@ async function runGame(){
     }
     // 魔王：無明塵王（三擊，最後一擊一定是「圓明一拂」）
     bgmSet('boss');
-    const BP = ['v','z','n','alpha','s','rs','rz','rn','ralpha'];
+    const BP = ['v','z','n','alpha','s','rs','rz','rn','ralpha','caret','inf','gamma','delta','rho','sq'];
     const bossKeys = diffKey === 'easy' ? [...shuffle(BP).slice(0, 2).map(k => [k]), ['circle']]
-      : [...Array.from({ length:3 }, () => { const a = pick(BP); return [a, pick(BP.filter(x => x !== a))]; }), ['circle']];   // 修行、精進：前三擊兩連擊，最後「圓明一拂」
+      : [...Array.from({ length:2 }, () => { const a = pick(BP); return [a, pick(BP.filter(x => x !== a))]; }), [pick(['star','spiral'])], ['circle']];   // 修行、精進：兩次兩連擊 → 大招（★ 或 🌀）→ 最後「圓明一拂」
     say('無明塵王'); await banner('⚠️ 魔王・無明塵王', `六塵合體！連拂 ${bossKeys.length} 次，最後用「圓」收服`, { red: true, dur: 3000 });
     const bossType = { name:'無明塵王', acc:'🌑', body:'#8d84a6', mood:'' };
     monster = null;
@@ -1618,7 +1658,7 @@ async function runGame(){
       let r, ks = bossKeys[bi];
       // 失誤後換一組新題目（最後的「圓明一拂」不變），不會一直卡在同一個不擅長的符號
       while(true){ r = await encounter({ keys:ks, type:bossType, boss:true, hp:bossKeys.length, wave:'魔王・無明塵王' }); if(lives <= 0) throw 'over'; if(r.ok) break;
-        if(bi < bossKeys.length - 1){ const a = pick(BP); ks = ks.length > 1 ? [a, pick(BP.filter(x => x !== a))] : [a]; } }
+        if(bi < bossKeys.length - 1 && !['star','spiral'].includes(ks[0])){ const a = pick(BP); ks = ks.length > 1 ? [a, pick(BP.filter(x => x !== a))] : [a]; } }   // 大招揮錯就再揮一次同一招
     }
     banner('🌕 圓明一拂！', '無明塵王淨化了', { dur: 2400 }); for(let i=0;i<5;i++){ setTimeout(() => { spawnSpark(W*Math.random(), H*0.2 + H*0.4*Math.random(), 30); spawnLotus(W*(0.2 + 0.6*Math.random()), H*0.6); }, i*250); }
     purified = Math.max(purified, 16); sfx.purify(); await wait(2200);   // 滿月
