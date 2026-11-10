@@ -495,9 +495,10 @@
     .panel { top: auto; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); width: auto;
       bottom: calc(14px + env(safe-area-inset-bottom, 0px)); max-height: 46%; }
     .panel.folded { bottom: calc(var(--dock-h, 52px) + 24px + env(safe-area-inset-bottom, 0px)); }
-    /* 右邊那一排快捷按鈕有 9 顆（約 424px 高），比資訊卡的上緣還長，會蓋住右上角的收合、關閉鈕：
-       資訊卡展開時往左讓出那一排的寬度（跟品牌卡一樣留 52px）；收合成一行時在按鈕列下方，才用滿寬 */
-    .panel:not(.folded) { right: calc(max(16px, env(safe-area-inset-right, 0px)) + 52px); }
+    /* 右邊那一排快捷按鈕有 9 顆（約 424px 高），比資訊卡的上緣還長：資訊卡的圖層放在按鈕列上面（資訊卡本來就能收合、關閉），
+       展開時蓋住最下面的 🏅、🏠，右上角的收合、關閉鈕才按得到；目錄、搜尋、聲音設定仍然在資訊卡上面 */
+    .panel { z-index: 4; }
+    .soundpop { z-index: 5; }
     .chip .hint { display: none; }
     .tag.small:not(.dock-tag):not(.look-tag) { display: none; }
     .tag.small.hit { display: inline-flex; }
@@ -648,7 +649,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261110.04</span>
+  <span class="ver">v261110.05</span>
   </div></div>
 </div>
 
