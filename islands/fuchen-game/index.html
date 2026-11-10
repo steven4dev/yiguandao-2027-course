@@ -96,6 +96,32 @@ body{line-break:strict}
 .panel .note{font-size:.85rem;color:var(--muted)}
 .panel ul{margin:8px 0;padding-left:1.2em;line-height:1.7}
 .panel .row{display:grid;gap:8px;margin-top:14px}
+/* 標題畫面壓縮：手機一頁就看完，不用往下捲 */
+#scrTitle .panel{padding:16px 16px 14px}
+#scrTitle h1{font-size:1.5rem}
+#scrTitle .tsub{margin:0 0 4px;font-size:.78rem}
+#scrTitle .tintro{margin:6px 0;line-height:1.6;font-size:1rem}
+#scrTitle .ttips{margin:6px 0;line-height:1.55;font-size:.9rem}
+#scrTitle .ttips li{margin:2px 0}
+#scrTitle .tsafe{margin:6px 0 0;font-size:.88rem;line-height:1.5}
+#scrTitle .row{margin-top:10px;gap:7px}
+#scrTitle .diff button{padding:7px 4px 6px}
+#scrTitle .startRow button{padding:10px 6px}
+#scrTitle #btnDexT{padding:9px}
+/* 特別矮的螢幕（iPhone SE、開著網址列的小手機）：再壓一層 */
+@media (max-height: 620px){
+  #scrTitle .panel{padding:12px 14px 10px}
+  #scrTitle h1{font-size:1.35rem}
+  #scrTitle .tsub{display:none}
+  #scrTitle .tintro{font-size:.88rem;margin:4px 0}
+  #scrTitle .ttips{font-size:.8rem;margin:4px 0}
+  #scrTitle .tsafe{font-size:.78rem}
+  #scrTitle .row{margin-top:8px;gap:6px}
+  #scrTitle .diff button{font-size:.88rem;padding:6px 3px 5px}
+  #scrTitle .startRow button{padding:8px 6px;font-size:1rem}
+  #scrTitle #btnDexT{padding:7px}
+  .screen{padding-top:10px;padding-bottom:26px}
+}
 .prog{height:12px;border-radius:8px;background:rgba(255,255,255,.12);overflow:hidden;margin:12px 0}
 .prog i{display:block;height:100%;width:0;background:var(--gold);transition:width .1s linear}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin:10px 0;font-size:.95rem}
@@ -156,14 +182,14 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 <section class="screen" id="scrTitle">
   <div class="panel">
     <h1>🪶 拂塵試煉</h1>
-    <p class="note" style="margin-top:0">拂塵淨心島・體感小遊戲（測試版）</p>
-    <p><span class="nb">「時時勤拂拭，勿使惹塵埃。」</span>六塵的塵靈從霧裡飄出來了！手機就是您的拂塵柄：<b class="nb">看清符印</b>、<span class="nb">等倒數</span>、<span class="nb">聽到「<b>揮</b>」</span>就大揮一拂，把它們淨化、<b class="nb">收進淨心錄</b>。<span class="nb">塵妖要<b>兩連擊</b></span>才收得服。</p>
-    <ul>
-      <li>🤚 手機<span class="nb">直立握著</span>，<span class="nb">螢幕大致朝向自己</span>；<b class="nb">整隻手臂揮出去</b><span class="nb">（大約一個手臂長）</span>，<span class="nb">手腕怎麼翻都沒關係</span>。<b>只擺手腕會被判<span class="nb">「動作太小」</span></b>。</li>
-      <li>👀 揮的時候<span class="nb">不用看螢幕</span>，<span class="nb">聽到「叮」</span>再回來<span class="nb">看拂塵的招式</span>。</li>
-      <li>🔊 請打開聲音<span class="nb">（iPhone 關掉靜音鍵）</span>。</li>
+    <p class="note tsub">拂塵淨心島・體感小遊戲（測試版）</p>
+    <p class="tintro"><span class="nb">「時時勤拂拭，勿使惹塵埃。」</span>手機就是您的拂塵柄：<b class="nb">看清符印</b>、<span class="nb">聽到「<b>揮</b>」</span>就大揮一拂，把塵靈淨化、<b class="nb">收進淨心錄</b>。</p>
+    <ul class="ttips">
+      <li>🤚 <span class="nb">直立握著</span>、<b class="nb">整隻手臂揮</b><span class="nb">（約一個手臂長）</span>，<span class="nb">只擺手腕會判<b>「動作太小」</b></span></li>
+      <li>👀 <span class="nb">揮的時候不用看螢幕</span>，<span class="nb">聽到「叮」再看招式</span></li>
+      <li>🔊 <span class="nb">請開聲音</span><span class="nb">（iPhone 關掉靜音鍵）</span></li>
     </ul>
-    <p><b class="nb">⚠️ 安全第一</b>：<span class="nb">握緊手機</span>、<span class="nb">最好戴掛繩</span>，<span class="nb">周圍 1.5 公尺內</span>不要有人和<span class="nb">易碎物品</span>。</p>
+    <p class="tsafe"><b class="nb">⚠️ 安全第一</b>：<span class="nb">握緊手機、戴掛繩</span>，<span class="nb">周圍 1.5 公尺淨空</span></p>
     <div class="row">
       <div class="diff" id="diffSel" role="group" aria-label="難度">
         <button data-d="easy">🌱 入門<small>新手友善<br>從上下左右開始</small></button>
@@ -222,7 +248,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.24';
+const VERSION = 'v261109.25';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;

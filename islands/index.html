@@ -649,7 +649,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261110.07</span>
+  <span class="ver">v261110.08</span>
   </div></div>
 </div>
 
@@ -5203,7 +5203,7 @@ if (document.fonts) document.fonts.ready.then(() => PT3.redrawStele());
 /* =========================================================
    拂塵淨心島：全真島右後方的外海（135°、離中心 108），跟法會島、輔導島、清淨菩提島都留一大片海。
    島中央一座兩層白玉台，木架上斜架著一支巨大的拂塵（照實物：黑色握把、竹節木柄、金屬套環、網罩圓頭、紅色綁繩、白色馬尾），
-   馬尾從圓頭順著柄的方向出來、拱一下再垂到台邊。外圈一圈踏石步道，六尊塵靈石雕面向拂塵：色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），台座石牌寫著各系的心性。
+   馬尾從圓頭順著柄的方向出來、拱一下再垂到台邊。外圈一圈踏石步道，十二尊塵靈石雕面向拂塵：六系各一尊原版——色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），旁邊各站一尊小一號的「異相」代表，台座石牌寫著名字和心性。
    互動是體感小遊戲「拂塵試煉」（islands/fuchen-game/），從資訊卡進去。
    ========================================================= */
 // 跟清淨菩提島、濟世靈山島一樣先封起來：一般人看到施工圍籬和「施工中」。
@@ -5284,7 +5284,7 @@ const fcIsl = makeIsland('fuchen', FC_R, Math.sin(FC_ANG) * 108, Math.cos(FC_ANG
   const blob = (fn, seg = 22) => { const geo = new THREE.SphereGeometry(1, seg, Math.round(seg * 0.75)), p = geo.attributes.position, v = new THREE.Vector3();
     for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).normalize(); fn(v); p.setXYZ(i, v.x, v.y, v.z); } geo.computeVertexNormals(); return geo; };
   FAMS6.forEach(([nm, mood, col, key], i) => {
-    const a = Math.PI / 6 + i * Math.PI / 3, x = Math.sin(a) * SR, z = Math.cos(a) * SR - 0.6;
+    const a = Math.PI / 12 + i * Math.PI / 3, x = Math.sin(a) * SR, z = Math.cos(a) * SR - 0.6;
     const S = new THREE.Group(); S.position.set(x, 0, z); S.rotation.y = Math.atan2(-x, -(z + 0.6)); mark.add(S);
     // 台座：兩層八角石座＋一圈系別顏色的鑲邊＋正面石牌
     mesh(new THREE.CylinderGeometry(1.25, 1.4, 0.45, 8), stoneD, 0, 0.22, 0, S);
@@ -5331,8 +5331,58 @@ const fcIsl = makeIsland('fuchen', FC_R, Math.sin(FC_ANG) * 108, Math.cos(FC_ANG
     }
     addObst(mark, { x, z, r: 1.45 });
   });
-  // 環島踏石步道：一圈圓石把六尊石雕串起來（中間通往白玉台的小徑那一段讓開）
-  for (let k = 0; k < 40; k++) { const a = (k / 40) * Math.PI * 2; if (FAMS6.some((_, i) => Math.abs(((a - (Math.PI / 6 + i * Math.PI / 3) + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < 0.14)) continue;
+
+  /* —— 六尊異相塵靈石雕（v261110.08）：每系一尊代表，放在同系原版的旁邊，小一號；石牌金框標「異相」 ——
+     色＝虛名魔（頭頂一顆星）、聲＝硬嘴妖（石盔）、香＝誘餌妖（釣竿吊著糖）、味＝無度魔（頭上疊碗）、觸＝守舊魔（背著蝸牛殼）、法＝漩心魔（漩渦環繞） */
+  const XV6 = [['虛名魔', 'se', 3], ['硬嘴妖', 'sheng', 2], ['誘餌妖', 'xiang', 2], ['無度魔', 'wei', 3], ['守舊魔', 'chu', 3], ['漩心魔', 'fa', 3]];
+  XV6.forEach(([nm, key, st], i) => {
+    const [fnm, , col] = FAMS6[i], a = Math.PI / 12 + Math.PI / 6 + i * Math.PI / 3, x = Math.sin(a) * SR, z = Math.cos(a) * SR - 0.6;
+    const S = new THREE.Group(); S.position.set(x, 0, z); S.rotation.y = Math.atan2(-x, -(z + 0.6)); S.scale.setScalar(0.85); mark.add(S);
+    mesh(new THREE.CylinderGeometry(1.25, 1.4, 0.45, 8), stoneD, 0, 0.22, 0, S);
+    mesh(new THREE.CylinderGeometry(1.02, 1.1, 0.5, 8), stoneM, 0, 0.7, 0, S);
+    mesh(new THREE.CylinderGeometry(1.06, 1.06, 0.07, 8), lam('#e8bd5a'), 0, 0.93, 0, S);
+    const pTex = canvasTex(256, 128, (c) => { c.fillStyle = '#d6d2c8'; c.fillRect(0, 0, 256, 128); c.strokeStyle = '#c9a24e'; c.lineWidth = 12; c.strokeRect(6, 6, 244, 116); c.strokeStyle = col; c.lineWidth = 4; c.strokeRect(16, 16, 224, 96);
+      c.fillStyle = '#4a453c'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = 'bold 50px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText(nm, 128, 52); c.font = 'bold 28px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText(fnm + '系・異相', 128, 98); });
+    const plaque = mesh(new THREE.PlaneGeometry(0.95, 0.48), new THREE.MeshLambertMaterial({ map: pTex }), 0, 0.68, 1.06, S, false); plaque.rotation.x = -0.05;
+    const T = new THREE.Group(); T.position.y = 0.96; S.add(T);
+    const eyes = (y, zf, sp = 0.26, r = 0.08) => { for (const ex of [-sp, sp]) mesh(new THREE.SphereGeometry(r, 8, 6), carveM, ex, y, zf, T); };
+    const brows = (y, zf, sp = 0.26) => { for (const s of [-1, 1]) { const b = mesh(new THREE.CapsuleGeometry(0.03, 0.18, 3, 6), carveM, s * sp, y, zf, T); b.rotation.z = Math.PI / 2 + s * 0.35; } };
+    const horns = (y, sp) => { for (const s of [-1, 1]) { const h = mesh(new THREE.ConeGeometry(0.12, 0.5, 8), stoneD, s * sp, y, 0, T); h.rotation.z = -s * 0.45; } };
+    if (key === 'se') {           // 虛名魔：蛋形、頭頂一顆星
+      mesh(blob((v) => { const k = 1 - 0.13 * v.y; v.x *= 0.82 * k; v.z *= 0.78 * k; }), stoneM, 0, 1.0, 0, T); eyes(1.12, 0.74); brows(1.32, 0.68);
+      horns(1.85, 0.32); const sh = new THREE.Shape(); for (let k = 0; k < 10; k++) { const aa = Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 0.13 : 0.3; k ? sh.lineTo(Math.cos(aa) * r, Math.sin(aa) * r) : sh.moveTo(Math.cos(aa) * r, Math.sin(aa) * r); }
+      const star = mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.1, bevelEnabled: false }), stoneL, 0, 2.45, -0.05, T); star.rotation.z = 0.1;
+      rod(new THREE.Vector3(0, 1.95, 0), new THREE.Vector3(0, 2.2, 0), 0.03, stoneD, T, 6);
+    } else if (key === 'sheng') { // 硬嘴妖：鐘形、戴一頂石盔
+      const P = [[0, -0.95], [0.85, -0.95], [0.96, -0.82], [0.86, -0.5], [0.78, 0], [0.72, 0.5], [0.55, 0.85], [0.28, 1.0], [0, 1.02]].map((q) => new THREE.Vector2(q[0], q[1]));
+      mesh(new THREE.LatheGeometry(P, 20), stoneM, 0, 0.95, 0, T); eyes(1.15, 0.72); brows(1.33, 0.7); const mo = mesh(new THREE.SphereGeometry(0.17, 10, 8), carveM, 0, 0.82, 0.74, T); mo.scale.set(1, 0.75, 0.4);
+      const helm = mesh(new THREE.SphereGeometry(0.84, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), stoneD, 0, 1.38, 0, T); helm.scale.y = 0.78;
+    } else if (key === 'xiang') { // 誘餌妖：雲朵、頂上插一根釣竿，線尾吊一顆糖
+      for (const [bx, by, bz, br] of [[0, 1.3, 0, 0.58], [-0.52, 1.0, 0, 0.48], [0.52, 1.0, 0, 0.48], [-0.28, 0.62, 0.08, 0.5], [0.28, 0.62, 0.08, 0.5], [0, 0.95, 0.2, 0.56], [0, 1.0, -0.22, 0.52]]) mesh(new THREE.SphereGeometry(br, 14, 10), stoneM, bx, by, bz, T);
+      eyes(1.05, 0.74, 0.24); brows(1.24, 0.7, 0.24);
+      const tip = new THREE.Vector3(1.25, 2.55, 0.15); rod(new THREE.Vector3(0.2, 1.7, 0.05), tip, 0.04, stoneD, T, 6); rod(tip, new THREE.Vector3(1.25, 1.75, 0.15), 0.012, stoneL, T, 4);
+      mesh(new THREE.SphereGeometry(0.13, 10, 8), stoneL, 1.25, 1.65, 0.15, T);
+    } else if (key === 'wei') {   // 無度魔：麻糬身體、張大嘴，頭上疊三個碗
+      const b = mesh(new THREE.SphereGeometry(0.95, 20, 14), stoneM, 0, 0.9, 0, T); b.scale.y = 0.86; eyes(1.12, 0.84); brows(1.32, 0.8);
+      const mo = mesh(new THREE.SphereGeometry(0.34, 12, 8), carveM, 0, 0.72, 0.8, T); mo.scale.set(1, 0.6, 0.35); horns(1.55, 0.62);
+      [0.3, 0.27, 0.24].forEach((r, k) => { const P = [[0.001, 0], [r * 0.45, 0.005], [r * 0.8, r * 0.25], [r, r * 0.6], [r * 0.96, r * 0.62], [r * 0.76, r * 0.3], [0.001, r * 0.08]].map((q) => new THREE.Vector2(q[0], q[1]));
+        mesh(new THREE.LatheGeometry(P, 16), stoneL, 0, 1.68 + k * 0.15, 0, T); });
+    } else if (key === 'chu') {   // 守舊魔：枕頭身體、背上一個蝸牛殼
+      mesh(blob((v) => { const r = Math.pow(v.x ** 4 + v.y ** 4 + (v.z / 0.62) ** 4, -0.25); v.multiplyScalar(r); const q = Math.min(1, (v.x * v.x + v.y * v.y) / 1.7); v.z *= 1 - 0.5 * q; v.x *= 0.9; v.y *= 0.82; }), stoneM, 0, 0.88, 0, T);
+      eyes(0.98, 0.5); brows(1.16, 0.48); horns(1.72, 0.68);
+      const shell = mesh(new THREE.SphereGeometry(0.62, 16, 12), stoneD, 0, 1.15, -0.72, T); shell.scale.set(1, 1.05, 0.55);
+      const sp = mesh(new THREE.TorusGeometry(0.34, 0.05, 6, 20), stoneL, 0, 1.15, -1.05, T); sp.scale.set(1, 1.05, 1);
+      mesh(new THREE.TorusGeometry(0.16, 0.045, 6, 16), stoneL, 0, 1.15, -1.07, T);
+    } else {                       // 漩心魔：腦袋雲、身邊一條漩渦帶往上盤
+      mesh(blob((v) => { const ang = Math.atan2(v.y, v.x), r = 0.9 + 0.1 * Math.abs(Math.sin(ang * 3)) * (1 - 0.6 * Math.abs(v.z)); v.multiplyScalar(r); v.y *= 0.93; }, 26), stoneM, 0, 1.0, 0, T);
+      eyes(1.1, 0.8); brows(1.3, 0.76); horns(1.85, 0.4);
+      const pts = []; for (let k = 0; k <= 60; k++) { const t = k / 60, aa = t * Math.PI * 4; pts.push(new THREE.Vector3(Math.cos(aa) * 1.25, 0.15 + t * 1.6, Math.sin(aa) * 1.25)); }
+      mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 90, 0.05, 6, false), stoneL, 0, 0, 0, T);
+    }
+    addObst(mark, { x, z, r: 1.25 });
+  });
+  // 環島踏石步道：一圈圓石把十二尊石雕串起來（中間通往白玉台的小徑那一段讓開）
+  for (let k = 0; k < 40; k++) { const a = (k / 40) * Math.PI * 2; if (Array.from({ length: 12 }, (_, i) => Math.PI / 12 + i * Math.PI / 6).some((b) => Math.abs(((a - b + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < 0.14)) continue;
     const st = mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.1, 7), lam('#cdd0c6'), Math.sin(a) * SR, 0.05, Math.cos(a) * SR - 0.6, mark); st.rotation.y = k; }
   /* —— 松樹、花叢：移到石雕之間，不擋步道 —— */
   for (const [deg, r, h] of [[120, 11.0, 2.4], [240, 11.0, 2.6], [180, 11.4, 2.2]]) pine(Math.sin(deg * Math.PI / 180) * r, Math.cos(deg * Math.PI / 180) * r - 0.6, h, mark);
@@ -6589,7 +6639,7 @@ function renderPanel() {
     title = '拂塵淨心島'; info = '拂塵試煉・體感打怪';
     html = `<header><span class="eyebrow">外海・${FC_LIVE ? '拂塵試煉' : '測試中'}</span><h2>🪶 拂塵淨心島</h2><p class="sub">時時勤拂拭，勿使惹塵埃——手機就是拂塵柄，大揮一拂，把六塵精淨化收進淨心錄</p></header>
       <div class="cta"><p>${fcTester && !FC_LIVE ? '🔧 測試中：只有這支手機看得到入口，其他人看到的是施工圍籬。<br>' : ''}看清符印、等倒數、聽到「揮！」就整隻手臂揮出去；塵精一揮、塵妖要兩連擊，最後收服無明塵王。收服的塵靈會收進「淨心錄」。</p><a href="fuchen-game/">🎮 進入拂塵試煉</a></div>
-      <p class="note">島中央是一座兩層白玉台，木架上斜架著一支巨大的拂塵：黑色握把、竹節木柄、網罩圓頭、紅色綁繩，白色馬尾垂到台邊。外圈一圈踏石步道，六尊塵靈石雕面向拂塵：色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），台座石牌寫著各系的心性。</p>
+      <p class="note">島中央是一座兩層白玉台，木架上斜架著一支巨大的拂塵：黑色握把、竹節木柄、網罩圓頭、紅色綁繩，白色馬尾垂到台邊。外圈一圈踏石步道，十二尊塵靈石雕面向拂塵：六系各一尊原版——色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），旁邊各站一尊小一號的「異相」代表，台座石牌寫著名字和心性。</p>
       ${fcTester && !FC_LIVE ? '<p class="note"><a class="cta-link" href="fuchen-lab/">🧪 揮符實驗室（測感測器）</a>　<a class="cta-link" href="?fuchen=off#fuchen">結束測試</a></p>' : ''}
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'zhongshu') {
