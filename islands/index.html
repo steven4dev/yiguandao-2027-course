@@ -644,7 +644,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261109.05</span>
+  <span class="ver">v261110.01</span>
   </div></div>
 </div>
 
@@ -3945,7 +3945,7 @@ const tags = [];
 // 濟世靈山島還沒正式開放：一般人看到的是施工圍籬和「施工中」，不能抽籤。
 // 測試的人在網址加上 ?jishi=測試碼（例如 islands/?jishi=jsq-7f3k#jishi）打開測試模式，記在那支手機上；?jishi=off 關掉。
 // 正式開放時把 JS_LIVE 改成 true，圍籬就拆掉、大家都能抽。
-const JS_LIVE = false;
+const JS_LIVE = true;   // 2026/11/10 正式開放；改回 false 就會重新圍起施工圍籬
 const JS_TEST_TOKEN = 'jsq-7f3k', JS_TEST_KEY = 'islands-jishi-test';
 const jsTester = (() => {
   try {
@@ -4337,11 +4337,11 @@ const JS3 = {};   // 抽籤會動到的 3D 物件
    → 搖晃籤筒（手機保持直立用力搖，搖越快竹籤聲越密、震動越頻繁）→ 傾斜出籤（手機往前倒，前傾超過 45° 一下下）。
    手機用陀螺儀、加速度計；電腦或手機不給權限時，改用滑鼠／手指拖動代替，流程一樣四步。
    每支手機每天抽一支（記在這支手機上），抽過的籤收進籤冊，碑廊的石碑和許願樹的木牌會跟著亮起來。
-   ⚠️ 籤詩目前是「仿濟公老師口吻」的示範文案，不是活佛師尊原文；正式上線前請以道場審定的慈語替換，並註明出處。 */
+   ⚠️ 籤詩是由 AI 仿濟公老師口吻臨摹的，不是活佛師尊原文；卷軸上都標註「由 AI 臨摹，非出自濟公老師慈語」。 */
 // 108 支籤詩（JS_FORTUNES）和 6 個分類（JS_TYPES）在 islands/jishi/fortunes.js
-const JS_DEMO = true;
-const JS_DAILY = false;   // 每天只能抽一支：測試期間先關掉，可以一直重抽；正式開放前改回 true
-const jsGc = (path) => { if (JS_LIVE) gc(path); };   // 測試期間的抽籤不算進造訪統計   // 換成道場審定的正式籤詩後改成 false，卷軸上的「示範籤詩」字樣就會拿掉
+const JS_DEMO = true;    // 卷軸上標註「由 AI 臨摹，非出自濟公老師慈語」；之後若換成道場審定的正式慈語，改成 false 就拿掉這行字
+const JS_DAILY = true;   // 每天只能抽一支（測試模式改成 false 就能一直重抽）
+const jsGc = (path) => { if (JS_LIVE) gc(path); };   // 測試期間的抽籤不算進造訪統計
 const JS_NUM = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
 // 籤號寫成國字：1 → 一、15 → 十五、42 → 四十二、105 → 一百零五、108 → 一百零八
 function jsCn(n) {
@@ -4919,7 +4919,7 @@ function jsOpenScroll(f, again) {
     <div class="jsc-poem" aria-label="詩云：${esc(f.poem.join('，'))}">${f.poem.map((l) => `<span>${[...l].map((ch) => `<i>${esc(ch)}</i>`).join('')}</span>`).join('')}</div>
     <h3>濟公老師慈語</h3><p>${esc(f.explanation)}</p>
     <div class="jsc-act"><b>修心妙方</b><p>${esc(f.action)}</p></div>
-    ${JS_DEMO ? '<p class="jsc-demo">示範籤詩・正式慈語由道場審定後更換</p>' : ''}
+    ${JS_DEMO ? '<p class="jsc-demo">由 AI 臨摹，非出自濟公老師慈語</p>' : ''}
     <div class="jsc-btns"><a class="jsc-line" href="${lineUrl}" target="_blank" rel="noopener">分享到 LINE</a><button type="button" class="jsc-ok">🙏 ${again ? '收起來' : '收下這支籤'}</button></div>`;
   el.hidden = false;
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('on')));
