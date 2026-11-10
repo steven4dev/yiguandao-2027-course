@@ -209,7 +209,7 @@ pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:
 
 <script>
 'use strict';
-const VERSION = 'v261109.08';
+const VERSION = 'v261109.09';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = VERSION;
@@ -266,6 +266,8 @@ function deltaVariants(){
 }
 // ρ 柔：下方起筆往上一豎，到頂後順時針繞一圈回到豎線
 function rhoPath(){ return [[-0.6,-1.5],[-0.6,0.3]].concat(arc(0,0.3,0.6,180,-180,36)); }
+// 斜豎的寫法（實測：大揮時那一豎常從左下斜上去）
+function rhoSlant(){ return [[-1.05,-1.4],[-0.6,0.3]].concat(arc(0,0.3,0.6,180,-180,36)); }
 // 🌀 漩渦（v261109.07 依實測改）：從外圈右上起筆，逆時針往內繞 1.5～2 圈。
 // 大揮時常揮成直立的橢圓、起筆位置也不一定，所以多放幾種：起筆角度 × 圈數 × 圓／直立橢圓
 function spiralPath(a0, turns, sx){ const p=[]; for(let i=0;i<=90;i++){ const t=i/90, a=a0*D2R + t*turns*2*Math.PI, r=1-t*0.8; p.push([sx*r*Math.cos(a), r*Math.sin(a)]); } return p; }
@@ -331,7 +333,7 @@ const TEMPLATE_DEFS = {
   inf:    { name:'∞ 無極', v:[infPath()] },
   gamma:  { name:'γ 伽瑪', v:gammaVariants() },
   delta:  { name:'δ 德爾塔', v:deltaVariants() },
-  rho:    { name:'ρ 柔',   v:[rhoPath()] },
+  rho:    { name:'ρ 柔',   v:[rhoPath(), rhoSlant()] },
   sq:     { name:'□ 方',   v:[[[-1,1],[-1,-1],[1,-1],[1,1],[-1,1]]] },
   star:   { name:'★ 五芒星', v:[starPath()] },
   spiral: { name:'🌀 漩渦', v:spiralVariants() },
