@@ -36,11 +36,11 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .banner{position:fixed;left:0;right:0;top:40%;transform:translateY(-50%);pointer-events:none;z-index:25;text-align:center;overflow:hidden;padding:14px 0}
 .banner .band{position:absolute;left:0;right:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(8,10,14,0),rgba(8,10,14,.72) 15%,rgba(8,10,14,.72) 85%,rgba(8,10,14,0));border-top:2px solid rgba(232,189,90,.75);border-bottom:2px solid rgba(232,189,90,.75);animation:bandIO var(--dur) ease-in-out both}
 .banner.red .band{border-color:rgba(255,110,100,.85);background:linear-gradient(90deg,rgba(40,6,10,0),rgba(40,6,10,.78) 15%,rgba(40,6,10,.78) 85%,rgba(40,6,10,0))}
-.banner .bt{position:relative;display:inline-block;white-space:nowrap;font-size:clamp(2.3rem,12vw,4.4rem);font-weight:900;letter-spacing:.04em;color:#ffe7a8;text-shadow:0 0 24px rgba(255,200,90,.85),0 3px 0 #6b4a12;animation:fly var(--dur) cubic-bezier(.2,.75,.8,.25) both}
+.banner .bt{position:relative;display:inline-block;white-space:nowrap;font-size:clamp(2.3rem,12vw,4.4rem);font-weight:900;letter-spacing:.04em;color:#ffe7a8;text-shadow:0 0 24px rgba(255,200,90,.85),0 3px 0 #6b4a12;animation:fly var(--dur) linear both}
 .banner.red .bt{color:#ffb0a6;text-shadow:0 0 24px rgba(255,80,70,.9),0 3px 0 #5a1010}
-.banner .bs{position:relative;display:block;white-space:nowrap;font-size:clamp(.95rem,4.2vw,1.25rem);font-weight:800;color:var(--ink);margin-top:6px;animation:fly var(--dur) cubic-bezier(.2,.75,.8,.25) .08s both}
-@keyframes fly{0%{transform:translateX(-110vw)}35%{transform:translateX(-3vw)}68%{transform:translateX(3vw)}100%{transform:translateX(115vw)}}
-@keyframes bandIO{0%{opacity:0;transform:scaleY(.2)}15%{opacity:1;transform:scaleY(1)}85%{opacity:1;transform:scaleY(1)}100%{opacity:0;transform:scaleY(.2)}}
+.banner .bs{position:relative;display:block;white-space:nowrap;font-size:clamp(.95rem,4.2vw,1.25rem);font-weight:800;color:var(--ink);margin-top:6px;animation:fly var(--dur) linear .08s both}
+@keyframes fly{0%{transform:translateX(115vw);animation-timing-function:cubic-bezier(.15,.8,.3,1)}22%{transform:translateX(3vw);animation-timing-function:linear}78%{transform:translateX(-3vw);animation-timing-function:cubic-bezier(.7,0,.85,.2)}100%{transform:translateX(-115vw)}}
+@keyframes bandIO{0%{opacity:0;transform:scaleY(.2)}12%{opacity:1;transform:scaleY(1)}88%{opacity:1;transform:scaleY(1)}100%{opacity:0;transform:scaleY(.2)}}
 .center{position:fixed;left:16px;right:16px;top:79%;transform:translateY(-50%);text-align:center;pointer-events:none;text-shadow:0 0 18px rgba(0,0,0,.8)}
 .center .big{font-size:clamp(4rem,26vw,9rem);font-weight:900;line-height:1;color:#fff;text-shadow:0 0 30px rgba(255,214,120,.9)}
 .center .mid{font-size:clamp(1.4rem,7vw,2.2rem);font-weight:900;display:inline-block;background:rgba(8,10,14,.62);border:1px solid var(--line);border-radius:999px;padding:4px 18px}
@@ -181,7 +181,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.17';
+const VERSION = 'v261109.18';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1551,10 +1551,10 @@ let diffKey = store.get('fuchenGame.diff', 'normal'); if(!DIFFS[diffKey]) diffKe
 const D = () => DIFFS[diffKey];
 let encN = 0;   // 這一局第幾隻（熱身不算），用來決定提示退場
 let caught = [];
-// 彈幕標題：大字從左邊飛進來、在正中間放慢停一下、再往右飛出去（約 2.6 秒），背後一條光帶
-function banner(title, sub = '', opt = {}){ const dur = opt.dur || 2600, el = document.createElement('div'); el.className = 'banner' + (opt.red ? ' red' : ''); el.style.setProperty('--dur', dur + 'ms');
+// 彈幕標題：大字從右邊飛進來、在正中間慢慢漂約 2 秒、再往左飛出去（約 4 秒），背後一條光帶
+function banner(title, sub = '', opt = {}){ const dur = Math.round((opt.dur || 2600)*1.55), el = document.createElement('div'); el.className = 'banner' + (opt.red ? ' red' : ''); el.style.setProperty('--dur', dur + 'ms');
   el.innerHTML = `<div class="band"></div><span class="bt">${title}</span>${sub ? `<span class="bs">${sub}</span>` : ''}`; document.body.appendChild(el);
-  if(ok()){ I.whoosh(now0(), 0.55); I.taiko(now0() + dur/1000*0.3, opt.red ? 48 : 62, 0.7); }
+  if(ok()){ I.whoosh(now0(), 0.55); I.taiko(now0() + dur/1000*0.2, opt.red ? 48 : 62, 0.7); }
   return new Promise(res => setTimeout(() => { el.remove(); res(); }, dur)); }
 // 下馬威的開場：畫面一暗、紅光一閃、大震動，塵魔的聲音＋低吼，接著塵魔從上面砸下來
 async function ambushIntro(sp){
