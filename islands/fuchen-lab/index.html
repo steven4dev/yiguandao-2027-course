@@ -209,7 +209,7 @@ pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:
 
 <script>
 'use strict';
-const VERSION = 'v261109.07';
+const VERSION = 'v261109.08';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = VERSION;
@@ -240,8 +240,10 @@ function circleVariants(){
     arc(0,0,1,-90,-450,48),  // 從下方、順時針
     arc(0,0,1,-90,270,48),   // 從下方、逆時針
     arc(0,0,1,180,-180,48),  // 從左邊、順時針
-    arc(0,0,1,0,360,48)      // 從右邊、逆時針
-  ];
+    arc(0,0,1,0,360,48),     // 從右邊、逆時針
+    arc(0,0,1,0,-360,48),    // 從右邊、順時針（v261109.27 補上：原本少了這兩種起筆）
+    arc(0,0,1,180,540,48)    // 從左邊、逆時針
+  ];   // 偶數＝順時針、奇數＝逆時針（精進的正圓／反圓靠這個分方向）
 }
 function alphaVariants(){
   // 節點三次曲線 x=t²-1, y=t(t²-1)：左邊一個圈、右邊兩條尾巴交叉，像手寫的 α
@@ -270,6 +272,9 @@ function spiralPath(a0, turns, sx){ const p=[]; for(let i=0;i<=90;i++){ const t=
 function spiralVariants(){ const v=[]; for(const a0 of [45,0,90]) for(const n of [1.5,2]) for(const sx of [1,0.6]) v.push(spiralPath(a0,n,sx)); return v; }
 // ★ 五芒星：頂點起筆 → 左下 → 右 → 左 → 右下 → 回頂點
 const starPath = () => [90,234,18,162,306,90].map(a => [Math.cos(a*D2R), Math.sin(a*D2R)]);
+// ---- 第二批新題（v261109.08，實測中）：正三角、倒三角。三個角都可以起筆、兩個方向都算（共 6 種寫法） ----
+function polyVariants(angs){ const v = []; for(let s=0;s<angs.length;s++) for(const d of [1, -1]){ const p = []; for(let k=0;k<=angs.length;k++){ const a = angs[((s + d*k) % angs.length + angs.length) % angs.length]; p.push([Math.cos(a*D2R), Math.sin(a*D2R)]); } v.push(p); } return v; }
+const triVariants = () => polyVariants([90, 210, 330]), itriVariants = () => polyVariants([270, 30, 150]);
 
 const SYMBOLS = [
   { key:'left',   icon:'⬅',  name:'左揮',   say:'左揮',   kind:'dir', dir:180 },
@@ -293,7 +298,10 @@ const SYMBOLS = [
   { key:'rho',    icon:'ρ',  name:'柔',     say:'柔',     kind:'shape', nw:true },
   { key:'sq',     icon:'□',  name:'方',     say:'方',     kind:'shape', nw:true, still:450 },
   { key:'star',   icon:'★',  name:'五芒星', say:'五芒星', kind:'shape', nw:true, still:450, win:3500 },
-  { key:'spiral', icon:'🌀', name:'漩渦',   say:'漩渦',   kind:'shape', nw:true, win:3500 }
+  { key:'spiral', icon:'🌀', name:'漩渦',   say:'漩渦',   kind:'shape', nw:true, win:3500 },
+  // 第二批新題（實測中）
+  { key:'tri',    icon:'△',  name:'正三角', say:'正三角', kind:'shape', nw:true, still:450 },
+  { key:'itri',   icon:'▽',  name:'倒三角', say:'倒三角', kind:'shape', nw:true, still:450 }
 ];
 const SYM = Object.fromEntries(SYMBOLS.map(s => [s.key, s]));
 // 「Z 字」這類名稱本身就有符號，不要再重複一次圖示
@@ -326,7 +334,9 @@ const TEMPLATE_DEFS = {
   rho:    { name:'ρ 柔',   v:[rhoPath()] },
   sq:     { name:'□ 方',   v:[[[-1,1],[-1,-1],[1,-1],[1,1],[-1,1]]] },
   star:   { name:'★ 五芒星', v:[starPath()] },
-  spiral: { name:'🌀 漩渦', v:spiralVariants() }
+  spiral: { name:'🌀 漩渦', v:spiralVariants() },
+  tri:    { name:'△ 正三角', v:triVariants() },
+  itri:   { name:'▽ 倒三角', v:itriVariants() }
 };
 const NPTS = 64;
 function pathLen(p){ let L=0; for(let i=1;i<p.length;i++) L += Math.hypot(p[i][0]-p[i-1][0], p[i][1]-p[i-1][1]); return L; }
@@ -826,7 +836,7 @@ function analyzeStroke(st, model = 'auto', thOverride = null){
     let i0 = sm.findIndex(v => v > vmax*0.5), i1 = sm.length - 1 - [...sm].reverse().findIndex(v => v > vmax*0.5);
     pauses = 0; let inValley = false;
     for(let i=i0;i<=i1;i++){ if(!inValley && sm[i] < vmax*0.5){ inValley = true; } else if(inValley && sm[i] > vmax*0.65){ inValley = false; pauses++; } }
-    const ANG = ['z','rz','n','rn'], CUR = ['s','rs'];
+    const ANG = ['z','rz','n','rn','tri','itri'], CUR = ['s','rs','circle'];
     rg.ranking.forEach(r => {
       if(ANG.includes(r.key)) r.d += pauses >= 2 ? -0.05 : pauses === 0 ? 0.075 : 0;
       if(CUR.includes(r.key) && pauses >= 2) r.d += 0.075;   // S 系列只在明顯有頓點時扣分，不加分（避免搶走圓）

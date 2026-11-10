@@ -200,7 +200,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
       <div class="diff" id="diffSel" role="group" aria-label="難度">
         <button data-d="easy">🌱 入門<small>新手友善<br>從上下左右開始</small></button>
         <button data-d="normal">🪶 修行<small>開場塵魔突襲<br>動作要夠大</small></button>
-        <button data-d="hard">🔥 精進<small>只有兩盞心燈<br>倒數只有兩拍</small></button>
+        <button data-d="hard">🔥 精進<small>兩盞心燈・兩拍<br>圓分正反方向</small></button>
       </div>
       <div class="startRow">
         <button class="primary big" id="btnStart">🪶 開始試煉<small>手機當拂塵大揮</small></button>
@@ -255,7 +255,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.26';
+const VERSION = 'v261109.27';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -286,8 +286,10 @@ function circleVariants(){
     arc(0,0,1,-90,-450,48),  // 從下方、順時針
     arc(0,0,1,-90,270,48),   // 從下方、逆時針
     arc(0,0,1,180,-180,48),  // 從左邊、順時針
-    arc(0,0,1,0,360,48)      // 從右邊、逆時針
-  ];
+    arc(0,0,1,0,360,48),     // 從右邊、逆時針
+    arc(0,0,1,0,-360,48),    // 從右邊、順時針（v261109.27 補上：原本少了這兩種起筆）
+    arc(0,0,1,180,540,48)    // 從左邊、逆時針
+  ];   // 偶數＝順時針、奇數＝逆時針（精進的正圓／反圓靠這個分方向）
 }
 function alphaVariants(){
   // 節點三次曲線 x=t²-1, y=t(t²-1)：左邊一個圈、右邊兩條尾巴交叉，像手寫的 α
@@ -584,6 +586,9 @@ const SYMS = {
   rz:     { name:'反向 Z',   icon:'Z', mir:true, kind:'shape', say:'反向 Z' },
   rn:     { name:'反向 N',   icon:'N', mir:true, kind:'shape', say:'反向 N' },
   ralpha: { name:'反向阿法', icon:'α', mir:true, kind:'shape', say:'反向阿法', both:true, ease:15 },
+  // 精進才有：圓分成正圓（順時針）、反圓（逆時針）
+  cw:     { name:'正圓',   icon:'↻', kind:'shape', say:'正圓，順時針', note:'順時針繞一圈回到起點', circleDir: 1 },
+  ccw:    { name:'反圓',   icon:'↺', kind:'shape', say:'反圓，逆時針', note:'逆時針繞一圈回到起點', circleDir: -1 },
   // 新題庫：still＝轉角可以停多久才算收筆（預設 0.3 秒）、win＝這一揮最多等多久、ease＝形狀門檻放寬幾分（依實測分數）
   caret:  { name:'人字',   icon:'∧', kind:'shape', say:'人字', note:'左下往上、再往右下' },
   inf:    { name:'無極',   icon:'∞', kind:'shape', say:'無極', note:'從中間出發，先繞右圈再繞左圈' },
@@ -1322,7 +1327,7 @@ function drawMonster(t){
   }
 }
 function shade(hex, k){ const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255; r = Math.round(r*(1+k)); g = Math.round(g*(1+k)); b = Math.round(b*(1+k)); return `rgb(${Math.max(0,Math.min(255,r))},${Math.max(0,Math.min(255,g))},${Math.max(0,Math.min(255,b))})`; }
-function tplFor(key){ const t = TEMPLATES.find(t => t.key === key); return t ? t.variants[0] : null; }
+function tplFor(key){ if(key === 'cw' || key === 'ccw'){ const c = TEMPLATES.find(t => t.key === 'circle'); return c.variants[key === 'cw' ? 0 : 1]; } const t = TEMPLATES.find(t => t.key === key); return t ? t.variants[0] : null; }
 let showGhost = false;
 
 /* ---------------- 倒數：畫面中央的大數字、周圍暗下來，數字最後散成蒲公英 ---------------- */
@@ -1578,7 +1583,12 @@ function judgeSwing(key, st, th0, lenient){
   if(a.none) return { none:true, a };
   const sym = SYMS[key], sz = sizeCheck(sym, a, st), fail = sz.small && !soft;
   if(sym.kind === 'dir'){ const err = angDiff(a.mainDir, sym.dir); return { a, ...sz, ok: err <= dd.dirErr && !fail, score: Math.max(0, Math.round((1 - err/70)*100)) }; }
-  const top = a.rg.ranking[0], mine = a.rg.ranking.find(r => r.key === key);
+  const top = a.rg.ranking[0];
+  if(sym.circleDir){   // 正圓／反圓：先要認得是圓，再看是順時針還是逆時針
+    const c = a.rg.ranking.find(r => r.key === 'circle'), cwGot = c.variant % 2 === 0, dirOk = cwGot === (sym.circleDir === 1), need = dd.shapeMin;
+    return { a, ...sz, ok: top.key === 'circle' && dirOk && c.score >= need && !fail, score: c.score, wrongDir: top.key === 'circle' && !dirOk, close: top.key === 'circle' && dirOk && c.score < need };
+  }
+  const mine = a.rg.ranking.find(r => r.key === key);
   const sc = mine ? mine.score : 0;
   // 門檻依實測調整：阿法類形狀複雜、真人揮對時分數本來就偏低（46～55%），門檻低 15 分
   const need = dd.shapeMin - (sym.ease || 0);
@@ -1597,7 +1607,8 @@ function playReplay(pts, dur){ return new Promise(res => { replayAnim = { pts, t
 
 /* ---------------- 一隻怪物的回合（塵精一揮、塵妖與塵魔兩連擊） ---------------- */
 async function encounter(opt){
-  const { keys, def, lv, gold, boss, wave, tutorial } = opt;
+  const { def, lv, gold, boss, wave, tutorial } = opt;
+  const keys = diffKey === 'hard' && !boss ? opt.keys.map(k => k === 'circle' ? pick(['cw', 'ccw']) : k) : opt.keys;
   if(!monster || monster.state === 'gone' || (!boss && !(opt.ambush && monster.def === def))){
     monster = { type: opt.type, def, lv, gold, sym:keys[0], x:MON.x, y:MON.y, r:U()*(boss ? 0.2 : 0.14), t0:performance.now(), state:'enter', boss:!!boss, hp: boss ? opt.hp : 1, maxHp: boss ? opt.hp : 1, seed:Math.random()*10 };
     boss ? (sfx.boss(), actx && bossVoice(now0() + 0.6, 0.8)) : sfx.appear(def);
@@ -1638,7 +1649,7 @@ async function encounter(opt){
   const ok = rs.every(r => r.ok), r0 = rs.find(r => !r.ok) || rs[0];
   if(ok){
     hits++; combo++; maxCombo = Math.max(maxCombo, combo); purified++;
-    const weak = !boss && def && keys.includes(weakOf(def));
+    const weak = !boss && def && keys.some(k => k === weakOf(def) || (weakOf(def) === 'circle' && (k === 'cw' || k === 'ccw')));
     const base = Math.round(rs.reduce((a, r) => a + r.score, 0)/rs.length);
     const perfect = rs.every(r => r.score >= 85);
     const pts = (base + (combo > 1 ? combo*10 : 0) + (multi ? 50*(keys.length - 1) : 0) + (perfect ? 60 : 0))*(weak ? 2 : 1); score += pts;
@@ -1651,7 +1662,7 @@ async function encounter(opt){
       monster.hp--; monster.state = 'hit'; monster.tHit = performance.now(); monster.hitDir = Math.random() < 0.5 ? -1 : 1; if(monster.hp <= 0) setTimeout(() => spawnLotus(MON.x, MON.y), 300);
       sfx.bossHit(perfect); vib(perfect ? [60,40,120] : 90); shakeAmp = perfect ? 16 : 12; hud(); await wait(1300);
     } else {
-      const cname = keys.length === 3 ? '三才連拂' : multi ? COMBO_NAME[keys.join('+')] : null;
+      const cname = keys.length === 3 ? '三才連拂' : multi ? COMBO_NAME[keys.map(k => k === 'cw' || k === 'ccw' ? 'circle' : k).join('+')] : null;
       if(cname) await startCombo(cname);
       spawnText(MON.x, MON.y + monster.r*2.2, `+${pts}`, '#7fe0a6');
       const isNew = dexAdd(def, gold); caught.push({ def, lv, gold, isNew }); capPerfect = perfect;
@@ -1660,9 +1671,9 @@ async function encounter(opt){
     }
   } else {
     combo = 0;
-    const idx = rs.indexOf(r0), why = r0.none ? '💤 沒揮到' : r0.small ? '🤏 動作太小' : r0.close ? `💨 不夠像（${r0.score}%）` : '💨 符散了';
-    spawnDust(monster.x, monster.y, 18, 'rgba(150,140,130,.8)', 0.8); spawnText(monster.x, monster.y - monster.r*1.6, multi ? `第 ${idx + 1} 揮${r0.none ? '沒揮到' : r0.small ? '動作太小' : r0.close ? `不夠像（${r0.score}%）` : '散了'}` : why, '#ff8a7a');
-    if(r0.a && !r0.none && !r0.close && !r0.small && SYMS[keys[idx]].kind === 'shape'){ const top = r0.a.rg.ranking[0]; if(SYMS[top.key]) spawnText(monster.x, monster.y - monster.r*1.1, `像是「${SYMS[top.key].name}」`, '#f6ecd8'); }
+    const idx = rs.indexOf(r0), why = r0.none ? '💤 沒揮到' : r0.small ? '🤏 動作太小' : r0.wrongDir ? '🔄 方向反了' : r0.close ? `💨 不夠像（${r0.score}%）` : '💨 符散了';
+    spawnDust(monster.x, monster.y, 18, 'rgba(150,140,130,.8)', 0.8); spawnText(monster.x, monster.y - monster.r*1.6, multi ? `第 ${idx + 1} 揮${r0.none ? '沒揮到' : r0.small ? '動作太小' : r0.wrongDir ? '方向反了' : r0.close ? `不夠像（${r0.score}%）` : '散了'}` : why, '#ff8a7a');
+    if(r0.a && !r0.none && !r0.close && !r0.small && !r0.wrongDir && SYMS[keys[idx]].kind === 'shape'){ const top = r0.a.rg.ranking[0]; if(SYMS[top.key]) spawnText(monster.x, monster.y - monster.r*1.1, `像是「${SYMS[top.key].name}」`, '#f6ecd8'); }
     monster.state = 'laugh'; monster.tHit = performance.now();
     if(!tutorial && !opt.ambush){ lives--; }
     sfx.miss(boss ? null : def); if(boss && actx) bossVoice(now0() + 0.45, 0.6); vib([40,60,40]); hud(); await wait(1300);
