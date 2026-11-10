@@ -583,6 +583,26 @@
   .jsc-line { background: #06c755; color: #fff; }
   .jsc-ok { background: #a9473b; color: #fff; }
   .jsc-btns a:focus-visible, .jsc-btns button:focus-visible { outline: 2px solid #3f8a6a; outline-offset: 2px; }
+  /* 彈幕標題（參考拂塵試煉，預覽版 ?jsbn=1）：每個階段一開始，大字從右邊飛進來、在畫面正中間停一下、再往左飛出去，背後一條光帶；不擋操作 */
+  .jbn { position: fixed; left: 0; right: 0; top: 33%; transform: translateY(-50%); z-index: 22; pointer-events: none; text-align: center; overflow: hidden; padding: 12px 0; }
+  .jbn .band { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(8, 10, 14, 0), rgba(8, 10, 14, 0.74) 15%, rgba(8, 10, 14, 0.74) 85%, rgba(8, 10, 14, 0));
+    border-top: 2px solid rgba(232, 189, 90, 0.75); border-bottom: 2px solid rgba(232, 189, 90, 0.75); animation: jbandIO var(--dur) ease-in-out both; }
+  .jbn.red .band { background: linear-gradient(90deg, rgba(40, 6, 10, 0), rgba(40, 6, 10, 0.8) 15%, rgba(40, 6, 10, 0.8) 85%, rgba(40, 6, 10, 0)); border-color: rgba(255, 110, 100, 0.85); }
+  .jbn .bt { position: relative; display: inline-block; white-space: nowrap; font-family: var(--font-display); font-size: var(--fs, 44px); font-weight: 700; letter-spacing: 0.06em; color: #ffe7a8;
+    text-shadow: 0 0 22px rgba(255, 200, 90, 0.85), 0 3px 0 #6b4a12; animation: jfly var(--dur) linear both; }
+  .jbn.red .bt { color: #ffb0a6; text-shadow: 0 0 22px rgba(255, 80, 70, 0.9), 0 3px 0 #5a1010; }
+  .jbn .bs { position: relative; display: table; margin: 6px auto 0; white-space: nowrap; font-size: var(--fss, 16px); font-weight: 700; color: #fff3d6; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6); animation: jfly var(--dur) linear 0.08s both; }
+  @keyframes jfly { 0% { transform: translateX(115vw); animation-timing-function: cubic-bezier(0.15, 0.8, 0.3, 1); } 22% { transform: translateX(3vw); animation-timing-function: linear; }
+    78% { transform: translateX(-3vw); animation-timing-function: cubic-bezier(0.7, 0, 0.85, 0.2); } 100% { transform: translateX(-115vw); } }
+  @keyframes jbandIO { 0% { opacity: 0; transform: scaleY(0.2); } 12% { opacity: 1; transform: scaleY(1); } 88% { opacity: 1; transform: scaleY(1); } 100% { opacity: 0; transform: scaleY(0.2); } }
+  @keyframes jfade { 0% { opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .jbn .bt, .jbn .bs { animation: jfade var(--dur) ease both; } }
+  /* 彈幕版的資訊卡：開頭那一大段說明改成四個圖示的流程 */
+  .js-flow { display: flex; align-items: center; justify-content: space-between; margin: 0 0 8px; }
+  .js-flow span { display: grid; justify-items: center; gap: 3px; font-size: 24px; line-height: 1; }
+  .js-flow small { font-size: 11.5px; color: var(--muted); font-weight: 700; }
+  .js-flow b { color: var(--muted); font-weight: 400; }
+  #panelBody.js-busy > header .sub, #panelBody.js-busy > .note, #panelBody.js-busy > .back { display: none; }
   @media (prefers-reduced-motion: reduce) { .jsc-body, .jscroll, .js-meter i { transition: none; } .js-rub.on::after { animation: none; } }
   /* 搭筋斗雲：畫面下方的路過提示＋下雲按鈕 */
   /* 放在畫面上方：搭乘時大聖和雲、熱氣球都在畫面下半部，提示不要擋到它們；左上角的品牌卡搭乘時會淡出，上方是空的 */
@@ -649,7 +669,7 @@
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261110.10</span>
+  <span class="ver">v261110.11</span>
   </div></div>
 </div>
 
@@ -3962,6 +3982,11 @@ const jsTester = (() => {
   } catch (e) { return false; }
 })();
 const jsOpen = JS_LIVE || jsTester;
+// 彈幕版（打樣中，預設關閉）：網址加 ?jsbn=1 打開（記在那支手機上），?jsbn=0 關掉。
+// 打開後四個階段各飛過一句彈幕，資訊卡上的說明縮成一句短話
+const JS_BN = (() => {
+  try { const v = new URLSearchParams(location.search).get('jsbn'); if (v === '1') localStorage.setItem('islands-jishi-bn', '1'); else if (v === '0') localStorage.removeItem('islands-jishi-bn'); return localStorage.getItem('islands-jishi-bn') === '1'; } catch (e) { return false; }
+})();
 const JS_ANG = (() => {
   // 好愛島和法會島的中間方向，再往法會島偏 5°，跟忠恕島（好愛島方向）多留一點海面
   const a = Math.atan2(islands.c4.x, islands.c4.z), b = Math.atan2(islands.c5.x, islands.c5.z);
@@ -4537,7 +4562,39 @@ function jsSensorsOn() {
 }
 
 /* —— 流程 —— */
-function jsSet(phase) { JS.phase = phase; jsRender(); }
+function jsSet(phase) { JS.phase = phase; jsRender(); jsBnForPhase(phase); }
+/* —— 彈幕標題：一次只留一則，新的來了舊的馬上收掉；不擋操作（pointer-events: none） —— */
+let jsBnEl = null, jsBnTm = 0;
+function jsBnClear() { clearTimeout(jsBnTm); if (jsBnEl) { jsBnEl.remove(); jsBnEl = null; } }
+function jsBn(title, sub = '', opt = {}) {
+  if (!JS_BN) return;
+  jsBnClear();
+  const dur = opt.mini ? 1900 : 3400, el = document.createElement('div');   // 一般 3.4 秒（正中間停約 1.9 秒）、小的 1.9 秒（停約 1 秒）
+  el.className = 'jbn' + (opt.red ? ' red' : ''); el.setAttribute('role', 'status'); el.style.setProperty('--dur', dur + 'ms');
+  const vw = Math.min(innerWidth, 900) / 100, glyphs = (t) => [...t.replace(/[\uFE0F\u200D]/g, '')].reduce((n, ch) => n + (/[\x20-\x7e]/.test(ch) ? 0.55 : 1), 0);   // 依字數算字級，左右各留 5% 空白
+  el.style.setProperty('--fs', Math.min((opt.mini ? 9.5 : 12) * vw, opt.mini ? 44 : 58, 88 * vw / Math.max(1, glyphs(title))) + 'px');
+  if (sub) el.style.setProperty('--fss', Math.min(4.2 * vw, 20, 92 * vw / Math.max(1, glyphs(sub))) + 'px');
+  el.innerHTML = `<div class="band"></div><span class="bt">${esc(title)}</span>${sub ? `<span class="bs">${esc(sub)}</span>` : ''}`;
+  document.body.appendChild(el); jsBnEl = el;
+  if (jsSndOk()) {   // 破風聲＋字停在正中間時敲一下木魚（出籤那句換成磬）
+    const t = SND.ctx.currentTime + 0.02, o = SND.sfxBus, f = noiseHit(t, o, { type: 'bandpass', f: 500, q: 0.9, peak: opt.mini ? 0.05 : 0.09, attack: 0.18, dur: 0.55 }), at = t + dur / 1000 * 0.2;
+    f.frequency.setValueAtTime(500, t); f.frequency.exponentialRampToValueAtTime(3200, t + 0.5);
+    if (opt.red) bell(at, o, 1568, 0.07, 2.4); else { ping(at, o, 820, 0.11, 0.14); ping(at, o, 1690, 0.03, 0.06); }
+  }
+  jsBnTm = setTimeout(() => { if (jsBnEl === el) jsBnClear(); }, dur + 50);
+}
+// 每個階段一開始飛過的那一句（標題 6 字以內、副標 12 字以內）
+function jsBnForPhase(p) {
+  if (!JS_BN) return;
+  const sense = JS.mode === 'sensor';
+  if (p === 'purify') jsBn('🫧 淨手洗心', '在泉水上來回搓');
+  else if (p === 'permission') jsBn('✨ 洗淨了', '', { mini: true });
+  else if (p === 'bow') jsBn('🙏 誠心參拜', sense ? '手機貼胸，鞠躬三次' : '按三下叩首');
+  else if (p === 'ready') jsBn('🙏 三拜圓滿', '', { mini: true });
+  else if (p === 'shake') jsBn('🎋 搖晃籤筒', sense ? '手機直立，用力搖' : '左右拖動搖籤');
+  else if (p === 'pour') jsBn('📜 傾倒出籤', sense ? '手機往前倒' : '往下拖倒出籤');
+  else if (p === 'drawn') jsBn('🎉 籤出來了！', '', { mini: true, red: true });
+}
 function jsStart() {
   audioInit();
   if (JS_DAILY && jsTodayFortune()) { jsOpenScroll(jsTodayFortune(), true); return; }
@@ -4576,7 +4633,7 @@ function jsBow() {
   JS.bows++;
   JS3.bowFlash = performance.now();
   jsBowSound(); jsVibrate(60, true);
-  if (JS.bows >= 3) { jsSet('ready'); jsVibrate([60, 60, 60], true); } else jsUpdate();
+  if (JS.bows >= 3) { jsSet('ready'); jsVibrate([60, 60, 60], true); } else { jsUpdate(); jsBn(`🙇 第${jsCn(JS.bows)}拜`, '', { mini: true }); }
 }
 function jsStartShake() { audioInit(); if (JS.phase === 'ready') { JS.progress = 0; JL.shakeAt = performance.now(); jsSet('shake'); } }
 function jsAddProgress(n) {
@@ -4610,6 +4667,7 @@ function jsLanded() {
   if (JS_FORTUNES.every((x) => JSS.got[x.id])) award('jishi_all');
 }
 function jsFinish() {
+  jsBnClear();
   if (jsSensorsOff) jsSensorsOff();
   JS3.rubbing = false; jsWater(false);
   JS.phase = 'idle';
@@ -4619,6 +4677,7 @@ function jsFinish() {
 // 中途點到別座島、關掉資訊卡：取消這次抽籤，鏡頭恢復一般的距離限制
 function jsAbort() {
   if (JS.phase === 'idle') return;
+  jsBnClear();
   clearTimeout(jsDraw.tm);
   if (jsSensorsOff) jsSensorsOff();
   JS3.rubbing = false; jsWater(false);
@@ -4672,36 +4731,40 @@ function jsRender() {
     const last = !JS_DAILY && tf ? `<div class="bars"><p class="note" style="margin:0">剛剛抽到：<b>${jsNo(tf.id)}・${esc(tf.title)}</b>（${esc(tf.type)}）</p><button class="js-mini js-reopen" type="button">📜 再看一次籤詩</button></div>` : '';
     h = test + last + (JS_DAILY && tf ? `<div class="cta js-today"><p>今天已經抽過了：<b>${jsNo(tf.id)}・${esc(tf.title)}</b>（${esc(tf.type)}）<br>修心妙方：${esc(tf.action)}</p>
         <button class="js-btn js-reopen" type="button">📜 再看一次籤詩</button><p class="note" style="margin:0">每天一支，明天再來抽一支新的籤。</p></div>`
+      : JS_BN ? `<div class="cta"><div class="js-flow"><span>🫧<small>淨手</small></span><b>›</b><span>🙇<small>參拜</small></span><b>›</b><span>🎋<small>搖籤</small></span><b>›</b><span>📜<small>出籤</small></span></div>
+        <p>${jsCanSense() ? '用手機動作感應，開音效更有感' : '電腦用滑鼠拖動代替手機動作'}</p><button class="js-btn js-start" type="button">🎋 開始抽籤</button></div>
+      <p class="note" style="margin:0">🧪 彈幕版預覽中・<a href="?jsbn=0#jishi">改回文字版</a></p>`
       : `<div class="cta"><p>${!JS_DAILY && jsTester && !JS_LIVE ? '🔧 測試中：不限每天一支，可以一直重抽。<br>' : ''}跟著濟公老師抽一支修心籤：先到葫蘆靈泉淨手洗心，再誠心叩首三拜，搖一搖籤筒，往前一傾，籤就出來了。${jsCanSense() ? '要用到手機的動作感應，記得打開音效更有感覺。' : '電腦上用滑鼠拖動代替手機的動作。'}</p>
         <button class="js-btn js-start" type="button">🎋 開始抽籤</button></div>`);
     if (!matchMedia('(pointer: coarse)').matches) h += `<div class="bars js-qr"><canvas id="jsQR" width="116" height="116" aria-label="濟世靈山島的 QR code"></canvas><p class="note" style="margin:0">用手機掃這個 QR code，搖手機、往前傾倒出籤，體感抽籤更有感覺。</p></div>`;
     h += jsCollectionHTML();
   } else if (p === 'purify') {
-    h = `${stepper}<p class="js-say">第一步・淨手洗心：在下面的靈泉水面上，用${matchMedia('(pointer: coarse)').matches ? '手指' : '滑鼠按住'}來回搓一搓，洗滿 2 秒。</p>
+    h = `${stepper}<p class="js-say">${JS_BN ? '來回搓洗泉水' : `第一步・淨手洗心：在下面的靈泉水面上，用${matchMedia('(pointer: coarse)').matches ? '手指' : '滑鼠按住'}來回搓一搓，洗滿 2 秒。`}</p>
       <div class="js-pad js-rub" data-pad="rub"><span class="js-pad-ico">🫧</span><span>在這裡來回搓洗</span></div>
       <div class="js-meter"><i style="width:0%"></i></div>${cancel}`;
   } else if (p === 'permission') {
-    h = `${stepper}<p class="js-say">淨手完成，心也洗乾淨了 ✨<br>${jsCanSense() ? '接下來用手機的動作感應來參拜、搖籤。按下按鈕後，iPhone 會問要不要允許取用「動作與方向」，請按「允許」。' : '接下來到濟公草堂，誠心參拜。'}</p>
+    h = `${stepper}<p class="js-say">${JS_BN ? `洗淨了 ✨${jsCanSense() ? '<br>手機若問「動作與方向」，請按允許' : ''}` : `淨手完成，心也洗乾淨了 ✨<br>${jsCanSense() ? '接下來用手機的動作感應來參拜、搖籤。按下按鈕後，iPhone 會問要不要允許取用「動作與方向」，請按「允許」。' : '接下來到濟公草堂，誠心參拜。'}`}</p>
       <button class="js-btn js-go-bow" type="button">🙏 開始參拜</button><p class="js-hint" aria-live="polite"></p>${cancel}`;
   } else if (p === 'bow') {
     h = `${stepper}${JS.hint ? `<p class="js-hint">${esc(JS.hint)}</p>` : ''}
-      <p class="js-say">${sense ? '把手機直立貼近胸前，像鞠躬一樣向前傾、再回正，叩首三次。' : '誠心叩首三次：按三下「叩首」。'}</p>
+      <p class="js-say">${JS_BN ? (sense ? '手機貼胸，鞠躬 3 次' : '按 3 下叩首') : (sense ? '把手機直立貼近胸前，像鞠躬一樣向前傾、再回正，叩首三次。' : '誠心叩首三次：按三下「叩首」。')}</p>
       <div class="js-bows">${[0, 1, 2].map((i) => `<i class="${i < JS.bows ? 'on' : ''}">🙇</i>`).join('')}</div>
       ${sense ? '<div class="js-meter lean"><i style="width:0%"></i><em>前傾</em></div><p class="js-hint js-live" aria-live="polite"></p>' : '<button class="js-btn js-bow" type="button">🙇 叩首</button>'}${cancel}`;
   } else if (p === 'ready') {
-    h = `${stepper}<p class="js-say">三叩完成，可以抽籤了。${sense ? '等一下手機要保持直立，用力搖。' : ''}</p><button class="js-btn js-shake" type="button">🎋 開始搖籤</button>${cancel}`;
+    h = `${stepper}<p class="js-say">${JS_BN ? '三拜圓滿 🙏' : `三叩完成，可以抽籤了。${sense ? '等一下手機要保持直立，用力搖。' : ''}`}</p><button class="js-btn js-shake" type="button">🎋 開始搖籤</button>${cancel}`;
   } else if (p === 'shake') {
-    h = `${stepper}<p class="js-say">${sense ? '手機保持直立，用力搖晃籤筒！搖越快，竹籤撞得越響。' : '按住下面的籤筒，左右快速來回拖動，把籤搖鬆。'}</p>
+    h = `${stepper}<p class="js-say">${JS_BN ? (sense ? '用力搖！' : '左右拖動搖籤') : (sense ? '手機保持直立，用力搖晃籤筒！搖越快，竹籤撞得越響。' : '按住下面的籤筒，左右快速來回拖動，把籤搖鬆。')}</p>
       ${sense ? '' : '<div class="js-pad js-shake-pad" data-pad="shake"><span class="js-pad-ico">🎋</span><span>按住左右快速拖動</span></div>'}
       <div class="js-meter"><i style="width:0%"></i></div><p class="js-hint js-live" aria-live="polite"></p>${cancel}`;
   } else if (p === 'pour') {
-    h = `${stepper}<p class="js-say">籤搖鬆了！${sense ? '把手機向前傾倒，讓籤掉出來。' : '按住籤筒往下拖，把籤筒往前倒。'}</p>
+    h = `${stepper}<p class="js-say">${JS_BN ? (sense ? '手機往前倒' : '往下拖倒出籤') : `籤搖鬆了！${sense ? '把手機向前傾倒，讓籤掉出來。' : '按住籤筒往下拖，把籤筒往前倒。'}`}</p>
       ${sense ? '' : '<div class="js-pad js-pour-pad" data-pad="pour"><span class="js-pad-ico">⬇️</span><span>按住往下拖</span></div>'}
       <div class="js-meter lean"><i style="width:0%"></i><em>前傾</em></div>${cancel}`;
   } else if (p === 'drawn') {
-    h = `${stepper}<p class="js-say">喀啦⋯⋯一支籤掉出來了，看看是第幾籤。</p>`;
+    h = `${stepper}<p class="js-say">${JS_BN ? '籤出來了！' : '喀啦⋯⋯一支籤掉出來了，看看是第幾籤。'}</p>`;
   }
   jsUI.innerHTML = h;
+  document.getElementById('panelBody').classList.toggle('js-busy', JS_BN && p !== 'idle');   // 彈幕版：抽籤進行中，把島的介紹和副標收起來，只留短短一句
   const qr = jsUI.querySelector('#jsQR');
   if (qr && typeof window.qrcode === 'function') {
     const q = window.qrcode(0, 'M'); q.addData(JS_URL); q.make();
@@ -4722,7 +4785,7 @@ function jsUpdate() {
   if (hint) hint.textContent = JS.hint;
   if (live) {
     const land = JS.mode === 'sensor' && jsScreenAngle() % 180 !== 0;
-    live.textContent = land ? '📱 請把手機直拿（直向）' : p === 'shake' && JS.mode === 'sensor' && !JS.upright ? '📱 籤筒要保持直立，倒著搖籤會掉出來喔' : p === 'shake' && JS.mode === 'sensor' && performance.now() - JL.shakeAt > JT.slowHintMs ? '🎋 再用力搖一搖，搖越快籤越鬆動' : p === 'bow' && JS.mode === 'sensor' && !JL.has ? '讀取手機角度中⋯' : '';
+    live.textContent = land ? '📱 請把手機直拿（直向）' : p === 'shake' && JS.mode === 'sensor' && !JS.upright ? '📱 籤筒要保持直立，倒著搖籤會掉出來喔' : p === 'shake' && JS.mode === 'sensor' && performance.now() - JL.shakeAt > JT.slowHintMs ? (JS_BN && performance.now() - (JS.bnStall || 0) > 5000 && ((JS.bnStall = performance.now()), jsBn('🎋 再用力搖！', '', { mini: true })), '🎋 再用力搖一搖，搖越快籤越鬆動') : p === 'bow' && JS.mode === 'sensor' && !JL.has ? '讀取手機角度中⋯' : '';
   }
 }
 jsUI.addEventListener('click', (e) => {
@@ -5202,7 +5265,7 @@ if (document.fonts) document.fonts.ready.then(() => PT3.redrawStele());
 
 /* =========================================================
    拂塵淨心島：全真島右後方的外海（135°、離中心 108），跟法會島、輔導島、清淨菩提島都留一大片海。
-   島中央一座岩石堆成的石丘（v261110.10 起；原本是兩層白玉台＋木架），一支巨大的拂塵像石中劍一樣插在頂上的岩縫裡（照實物：黑色握把、竹節木柄、金屬套環、網罩圓頭、紅色綁繩、白色馬尾），
+   島中央一座岩石堆成的石丘（v261110.11 起；原本是兩層白玉台＋木架），一支巨大的拂塵像石中劍一樣插在頂上的岩縫裡（照實物：黑色握把、竹節木柄、金屬套環、網罩圓頭、紅色綁繩、白色馬尾），
    馬尾從圓頭順著柄的方向出來、拱一下再垂到台邊。外圈一圈踏石步道，十二尊塵靈石雕面向拂塵：六系各一尊原版——色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），旁邊各站一尊「異相」代表，台座石牌寫著名字和心性。
    互動是體感小遊戲「拂塵試煉」（islands/fuchen-game/），從資訊卡進去。
    ========================================================= */
@@ -5232,7 +5295,7 @@ const fcIsl = makeIsland('fuchen', FC_R, Math.sin(FC_ANG) * 108, Math.cos(FC_ANG
     const d = b.clone().sub(a), m = mesh(new THREE.CylinderGeometry(r, r, d.length(), seg), mat, 0, 0, 0, parent);
     m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); return m;
   };
-  /* —— 岩石堆＋小徑（v261110.10 打樣確認後正式換上，取代原本的白玉台與木架） —— */
+  /* —— 岩石堆＋小徑（v261110.11 打樣確認後正式換上，取代原本的白玉台與木架） —— */
   const woodDark = lam('#5a3a20');
   {
     /* —— 岩石堆：大小不一的多面岩塊疊成小丘，中間留一道岩縫插拂塵；縫裡透出金光，周圍散著碎石和青苔 —— */
