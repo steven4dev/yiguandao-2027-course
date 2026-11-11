@@ -682,7 +682,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261110.14</span>
+  <span class="ver">v261110.15</span>
   </div></div>
 </div>
 
@@ -5322,7 +5322,7 @@ const fcIsl = makeIsland('fuchen', FC_R, Math.sin(FC_ANG) * 108, Math.cos(FC_ANG
   /* —— 巨型拂塵：像石中劍一樣插在岩石堆頂上的岩縫裡 —— */
   const FU = new THREE.Group(); FU.position.set(0, 1.0, -0.6); mark.add(FU);
   {   // 石中劍：握柄末端插進岩縫，整支拂塵幾乎直立，白色馬尾從頂上垂下來
-    const PV = new THREE.Group(); PV.position.set(0.12, 2.05, -0.6); PV.rotation.z = -0.42; mark.add(PV); PV.add(FU); FU.position.set(-2.6, -0.15, -0.4); fcIsl.sword = PV;   // 轉場動畫要操作這支拂塵
+    const PV = new THREE.Group(); PV.position.set(0.12, 2.05, -0.6); PV.rotation.z = -0.42; mark.add(PV); PV.add(FU); FU.position.set(-2.6, -0.15, -0.4); fcIsl.sword = PV; PV.userData.noMerge = true;   // 轉場動畫要操作這支拂塵：不能被「靜態合併」併進島的大塊，否則只剩有貼圖的網罩頭會跟著動
   }
   const grip = new THREE.Vector3(2.6, 0.15, 0.4), head = new THREE.Vector3(-1.5, 7.4, -0.5), dir = head.clone().sub(grip).normalize();
   const along = (k) => grip.clone().add(dir.clone().multiplyScalar(k));
@@ -8897,6 +8897,7 @@ function fcCleanup(abort) {
   fcT.busy = false;
 }
 window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.fuchen === 'leave') fcLeave(); });
+window.__fcSwordInfo = () => { let meshes = 0, mergedAway = 0; fcIsl.sword.traverse((o) => { if (o.isMesh) meshes++; }); return { 拂塵底下還剩的零件: meshes, 高度: +fcIsl.sword.position.y.toFixed(2) }; };
 window.__fcDebug = () => ({ night: nightTarget, duck: PT.duck, swY: +fcIsl.sword.position.y.toFixed(2), glow: fcIsl.glow ? +fcIsl.glow.scale.x.toFixed(2) : 0, hasEnter: typeof fcEnter });   // 測試用，唯讀
 if (FC_TRANS) document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('#fcGo'); if (!a) return; e.preventDefault(); fcEnter(a.href); }, true);
 </script>
