@@ -255,7 +255,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.31';
+const VERSION = 'v261109.32';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -852,9 +852,13 @@ const dexE = m => dex.m[m.name] || (DEX_ALL ? { n: 0, first: '—', preview: tru
    配方：太鼓＋銅鑼＋合唱般的長音＋大殿殘響，旋律用 D 小調五聲音階（D F G A C）。
    音訊路線：各樂器 → 音效匯流排／音樂匯流排 → 主音量 → 壓縮器 → 喇叭；另外送一份到殘響（大殿的空間感）。 */
 let actx = null, AU = null, noiseBuf = null, zhVoice = null;
-function audioInit(){
-  try{ if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if(actx.state === 'suspended' && actx.resume && !(window.OfflineAudioContext && actx instanceof OfflineAudioContext)) actx.resume().catch(() => {}); }catch(e){ actx = null; return; }
-  if(AU) return;
+const BGM = { on:false, base:'battle', mode:'battle', next:0, step:0, timer:0 };
+/* 回到瀏覽器後的聲音救援（參考法會小天使、褪下仙衣）：
+   iPhone 切到別的 App 再回來，網頁的聲音會被系統「中斷」，只有玩家點畫面才能重新開啟；
+   有時看起來恢復了、其實沒有聲音。所以：切走就暫停並標記「聲音過期」，回來後的第一次點擊，直接關掉舊的音訊引擎、換新的，再接回背景音樂。 */
+const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let audioStale = false, revivedAt = 0;
+function buildAudio(){
   const c = actx, master = c.createGain(); master.gain.value = 0.9;
   const comp = c.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.25;
   const lim = c.createDynamicsCompressor(); lim.threshold.value = -3; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.1;   // 最後一道限幅，避免破音
@@ -868,6 +872,41 @@ function audioInit(){
   noiseBuf = c.createBuffer(1, c.sampleRate*2, c.sampleRate); const nd = noiseBuf.getChannelData(0); for(let i=0;i<nd.length;i++) nd[i] = Math.random()*2 - 1;
   AU = { c, master, rev, sfxBus, musicBus };
 }
+// 在點擊當下播一段無聲的音訊，iOS 才會真正解鎖
+function unlockAudio(){ try{ const src = actx.createBufferSource(); src.buffer = actx.createBuffer(1, 1, 22050); src.connect(actx.destination); src.start(0); }catch(e){} }
+function audioInit(){
+  try{ if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if(actx.state === 'suspended' && actx.resume && !(window.OfflineAudioContext && actx instanceof OfflineAudioContext)) actx.resume().catch(() => {}); }catch(e){ actx = null; return; }
+  if(AU) return;
+  buildAudio();
+}
+// 換一個全新的音訊引擎（舊的關掉）；背景音樂接著原本的模式繼續
+function rebuildAudio(){
+  if(!actx || (window.OfflineAudioContext && actx instanceof OfflineAudioContext)) return;
+  const wasOn = BGM.on, base = BGM.base, mode = BGM.mode;
+  clearInterval(BGM.timer); BGM.on = false;
+  const old = actx; actx = null; AU = null; try{ old.close(); }catch(e){}
+  audioInit(); if(!actx) return;
+  try{ actx.resume().catch(() => {}); }catch(e){}
+  unlockAudio();
+  if(wasOn){ BGM.base = base; BGM.mode = mode; BGM.on = true; BGM.step = 0; BGM.next = actx.currentTime + 0.1; BGM.timer = setInterval(bgmTick, 50); }
+}
+document.addEventListener('visibilitychange', () => {
+  if(!actx) return;
+  if(document.hidden){ audioStale = true; try{ actx.suspend().catch(() => {}); }catch(e){} try{ speechSynthesis.cancel(); }catch(e){} }
+  else{ try{ actx.resume().then(() => { if(!IOS && actx && actx.state === 'running') audioStale = false; }, () => {}); }catch(e){} }
+});
+window.addEventListener('pageshow', e => { if(e.persisted) audioStale = true; });
+// 回到遊戲後的第一次點擊／按鍵：把聲音救回來（點擊才算玩家允許播放）
+function reviveAudio(){
+  if(!actx || document.hidden || (!audioStale && actx.state === 'running')) return;
+  if(Date.now() - revivedAt < 1500) return;   // 一次點擊會連續觸發 touchend、click，只處理一次
+  revivedAt = Date.now(); audioStale = false;
+  if(IOS || actx.state !== 'suspended') return rebuildAudio();
+  const cur = actx;   // 其他手機先試著恢復；恢復不了就換新的
+  cur.resume().then(() => { if(actx === cur && cur.state !== 'running') rebuildAudio(); }, () => { if(actx === cur) rebuildAudio(); });
+  unlockAudio();
+}
+for(const ev of ['touchend', 'keydown', 'click']) document.addEventListener(ev, reviveAudio, { capture:true, passive:true });
 const now0 = () => actx.currentTime + 0.01;
 function route(node, bus, wet = 0.3){ node.connect(bus); if(wet > 0){ const w = actx.createGain(); w.gain.value = wet; node.connect(w).connect(AU.rev); } }
 function env(g, t, a, peak, dec){ g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + dec); }
@@ -1017,7 +1056,6 @@ const sfx = {
 };
 /* 背景音樂：84 拍、每小節 16 格。太鼓節奏＋每兩小節換一次和弦的長音＋偶爾一句笛聲；
    battle＝一般、boss＝加低音持續音與密集鼓點、hold＝倒數時只剩低音（營造緊張）。 */
-const BGM = { on:false, base:'battle', mode:'battle', next:0, step:0, timer:0 };
 const CHORDS = [[N.D3, N.A3, N.D4, N.F4], [N.Bb2, N.F3, N.Bb3, N.D4], [N.C3, N.G3, N.C4, N.E4], [N.A2, N.E4/2, N.A3, N.C4]];
 function bgmStart(mode = 'battle'){ if(!ok()) return; BGM.base = BGM.mode = mode; if(BGM.on) return; BGM.on = true; BGM.step = 0; BGM.next = actx.currentTime + 0.1; BGM.timer = setInterval(bgmTick, 50); }
 function bgmStop(){ BGM.on = false; clearInterval(BGM.timer); }
@@ -1040,8 +1078,16 @@ if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = 
 // 語音報讀（唸題目、唸波次）：預設關閉，玩家自己按「🗣️ 語音」打開
 // iPhone 規定語音要由玩家按一下才能啟動，所以開的那一下順便唸一句，之後每一輪都一致
 const voiceOn = () => store.get('fuchenGame.voice', false);
-function setVoice(on){ store.set('fuchenGame.voice', on); const b = $('#btnVoice'); if(b) b.textContent = on ? '🗣️ 語音 開' : '🗣️ 語音 關'; if(!('speechSynthesis' in window)) return; try{ speechSynthesis.cancel(); if(on){ const u = new SpeechSynthesisUtterance('語音開啟'); u.lang = 'zh-TW'; if(zhVoice) u.voice = zhVoice; speechSynthesis.speak(u); } }catch(e){} }
-function say(text){ if(!('speechSynthesis' in window) || !voiceOn()) return; try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-TW'; if(zhVoice) u.voice = zhVoice; u.rate = 1.1; speechSynthesis.speak(u); }catch(e){} }
+// iPhone 的語音朗讀和網頁音效共用同一條聲音通道：語音一開始唸，系統可能把音效壓低、甚至把音訊引擎「中斷」。
+// 所以：不在每次出題前無條件 cancel（那個動作本身就會打斷音訊）、語音唸完後檢查音訊有沒有被中斷，被中斷就換新的
+function speakNow(text, rate = 1.1){
+  const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-TW'; if(zhVoice) u.voice = zhVoice; u.rate = rate;
+  const after = () => { setTimeout(() => { if(actx && !document.hidden && actx.state !== 'running'){ if(IOS) rebuildAudio(); else actx.resume().catch(() => {}); } }, 120); };
+  u.onend = after; u.onerror = after;
+  speechSynthesis.speak(u);
+}
+function setVoice(on){ store.set('fuchenGame.voice', on); const b = $('#btnVoice'); if(b) b.textContent = on ? '🗣️ 語音 開' : '🗣️ 語音 關'; if(!('speechSynthesis' in window)) return; try{ if(speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); if(on) speakNow('語音開啟'); }catch(e){} }
+function say(text){ if(!('speechSynthesis' in window) || !voiceOn()) return; try{ if(speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); speakNow(text); }catch(e){} }
 function vib(ms){ if(navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){} }
 let wakeLock = null;
 async function keepAwake(){ try{ if('wakeLock' in navigator && !wakeLock){ wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => wakeLock = null); } }catch(e){} }
@@ -1945,7 +1991,7 @@ $('#btnTouch').addEventListener('click', () => { audioInit(); inputMode = 'touch
 $('#btnCalib').addEventListener('click', runCalib);
 $('#btnCalibReuse').addEventListener('click', () => { $('#scrCalib').hidden = true; runGame(); });
 $('#btnAgain').addEventListener('click', () => { $('#scrResult').hidden = true; audioInit(); runGame(); });
-$('#btnQuit').addEventListener('click', () => { cancelFlag = true; try{ speechSynthesis.cancel(); }catch(e){} });
+$('#btnQuit').addEventListener('click', () => { cancelFlag = true; try{ if(speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); }catch(e){} });
 fu = new Fuchen(); resize(); requestAnimationFrame(frame);
 // 電腦測試用：?touch 直接進觸控模式
 if(/[?&]touch\b/.test(location.search)){ inputMode = 'touch'; $('#scrTitle').hidden = true; runGame(); }
