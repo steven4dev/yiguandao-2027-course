@@ -155,6 +155,7 @@ body{line-break:strict}
 .signupBtn{display:block;padding:12px;border-radius:12px;background:var(--btn);color:var(--btn-ink);font-weight:800;font-size:1.05rem;text-decoration:none}
 .quote{margin:12px 0;padding:12px 14px;border-left:3px solid var(--gold);background:var(--gold-soft);border-radius:8px;line-height:1.7}
 .quote small{display:block;color:var(--muted);font-size:.75rem;margin-top:4px}
+.teach .cite{margin:4px 0 0;line-height:1.55}
 .ver{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom) + 4px);font-size:.65rem;color:rgba(255,255,255,.35);pointer-events:none}
 .mir{display:inline-block;transform:scaleX(-1)}
 .diff{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
@@ -288,7 +289,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261111.20';
+const VERSION = 'v261111.21';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -665,12 +666,18 @@ const QUOTES = [
   ['知止而後有定，定而後能靜，靜而後能安。', '《大學》'],
   ['吾日三省吾身。', '《論語・學而》'],
   ['前念迷即凡夫，後念悟即佛。', '《六祖壇經》'],
-  ['學問之道無他，求其放心而已矣。', '《孟子・告子上》']
+  ['學問之道無他，求其放心而已矣。', '《孟子・告子上》'],
+  ['天行健，君子以自強不息。', '《易經・乾卦》'],
+  ['苟日新，日日新，又日新。', '《大學》'],
+  ['思無邪。', '《論語・為政》'],
+  ['知足者富。', '《道德經・第三十三章》'],
+  ['見賢思齊焉，見不賢而內自省也。', '《論語・里仁》'],
+  ['欲正其心者，先誠其意。', '《大學》']
 ];
 
 /* ================= 塵靈：六系 × 三階段（和 2.0 打樣頁 proof.html 同一份造型與資料） ================= */
 const TAU = Math.PI*2;
-/* ================= 資料：六系 × 三階段（名字、心性小語皆示範） ================= */
+/* ================= 資料：六系 × 三階段 ================= */
 const FAMS = [
   { key:'se',   name:'色', mood:'愛比較',   color:'#d3a6e3', dark:'#7e5a92', weak:'circle', weakName:'○ 圓',  weakWhy:'本自圓滿，不必比較' },
   { key:'sheng',name:'聲', mood:'愛批評',   color:'#f2b47c', dark:'#9a5b2a', weak:'s',      weakName:'S 字', weakWhy:'迴轉語氣，以柔化剛' },
@@ -683,47 +690,47 @@ const FAMS = [
   { key:'fa',   name:'法', mood:'胡思亂想', color:'#93dccb', dark:'#2f8a76', weak:'alpha',  weakName:'α 阿法',weakWhy:'回到初心' }
 ];
 const MONS = [
-  ['se',1,'鏡鏡','照鏡子是看自己，不是比別人。'],['se',2,'照妝妖','妝再美，不如心裡乾淨。'],['se',3,'千面魔','換了千張臉，最累的是自己。'],
-  ['sheng',1,'嘰嘰','話到嘴邊，先停三秒。'],['sheng',2,'流言妖','聽到閒話不轉傳，就是拂塵。'],['sheng',3,'謗聲魔','說人是非，塵先落在自己心上。'],
-  ['xiang',1,'薰薰','香氣來了，先問自己真的需要嗎？'],['xiang',2,'迷香妖','越迷人的，越要看清楚。'],['xiang',3,'醉夢魔','醒來才發現，夢裡什麼也沒帶走。'],
-  ['wei',1,'饞饞','吃八分飽，心更輕鬆。'],['wei',2,'饕餮妖','知足的人，一碗也是滿漢全席。'],['wei',3,'吞天魔','填不滿的不是胃，是心。'],
-  ['chu',1,'懶懶','先站起來，事情就做了一半。'],['chu',2,'軟骨妖','舒服的地方，最容易停下腳步。'],['chu',3,'沉眠魔','該醒的時候，不要再按貪睡。'],
-  ['fa',1,'念念','念頭來了，看著它，不跟著它。'],['fa',2,'妄想妖','想得越多，做得越少。'],['fa',3,'執念魔','放下不是失去，是騰出雙手。']
-].map(([f,st,name,quote]) => ({ fam: FAMS.find(x => x.key === f), stage: st, name, quote, lv: st === 1 ? 'Lv 1–9' : st === 2 ? 'Lv 10–19' : 'Lv 20+', hits: st === 1 ? 1 : 2 }));
+  ['se',1,'鏡鏡'],['se',2,'照妝妖'],['se',3,'千面魔'],
+  ['sheng',1,'嘰嘰'],['sheng',2,'流言妖'],['sheng',3,'謗聲魔'],
+  ['xiang',1,'薰薰'],['xiang',2,'迷香妖'],['xiang',3,'醉夢魔'],
+  ['wei',1,'饞饞'],['wei',2,'饕餮妖'],['wei',3,'吞天魔'],
+  ['chu',1,'懶懶'],['chu',2,'軟骨妖'],['chu',3,'沉眠魔'],
+  ['fa',1,'念念'],['fa',2,'妄想妖'],['fa',3,'執念魔']
+].map(([f,st,name]) => ({ fam: FAMS.find(x => x.key === f), stage: st, name, lv: st === 1 ? 'Lv 1–9' : st === 2 ? 'Lv 10–19' : 'Lv 20+', hits: st === 1 ? 1 : 2 }));
 const STAGE_NAME = ['', '塵精', '塵妖', '塵魔'];
 /* 六系的典故（v261109.26）：只引原文查得到的經典；自己寫的修為／練習解讀已於 v261111.20 拿掉（how、daily 兩欄保留在資料裡，等道場審定後再放回） */
-const FAM_TEACH = {
-  se:    { src: '非禮勿視',               from: '《論語・顏淵》',     how: '不和別人比較，看見自己本來的圓滿',   daily: '看到別人好，先在心裡隨喜讚歎' },
-  sheng: { src: '非禮勿聽，非禮勿言',     from: '《論語・顏淵》',     how: '守口德：不說是非、不傳閒話',         daily: '話到嘴邊先停三秒，只說好話' },
-  xiang: { src: '不見可欲，使民心不亂',   from: '《道德經・第三章》', how: '看清誘惑，當下斬斷',                 daily: '想要的時候先問：真的需要嗎？' },
-  wei:   { src: '一粥一飯，當思來處不易', from: '朱柏廬《治家格言》', how: '知足感恩，飲食有度',                 daily: '飯前說聲感謝，吃到八分飽就好' },
-  chu:   { src: '生於憂患，而死於安樂也', from: '《孟子・告子下》',   how: '勤而不懈，從安逸中振作',             daily: '今日事今日畢，先做最想拖的那一件' },
-  fa:    { src: '應無所住而生其心',       from: '《金剛經》',         how: '收攝念頭，回到初心',                 daily: '每天靜坐三分鐘，看著念頭來去、不跟著跑' }
+const FAM_TEACH = {   // src／from＝清單標題用的第一則；cites＝塵靈詳情卡裡列出的全部典故（只引經典原文）
+  se:    { src: '非禮勿視',               from: '《論語・顏淵》',     cites: [['非禮勿視', '《論語・顏淵》'], ['五色令人目盲', '《道德經・第十二章》'], ['見賢思齊焉，見不賢而內自省也', '《論語・里仁》']] },
+  sheng: { src: '非禮勿聽，非禮勿言',     from: '《論語・顏淵》',     cites: [['非禮勿聽，非禮勿言', '《論語・顏淵》'], ['巧言令色，鮮矣仁', '《論語・學而》'], ['君子欲訥於言而敏於行', '《論語・里仁》']] },
+  xiang: { src: '不見可欲，使民心不亂',   from: '《道德經・第三章》', cites: [['不見可欲，使民心不亂', '《道德經・第三章》'], ['咎莫大於欲得', '《道德經・第四十六章》'], ['見得思義', '《論語・子張》']] },
+  wei:   { src: '一粥一飯，當思來處不易', from: '朱柏廬《治家格言》', cites: [['一粥一飯，當思來處不易', '朱柏廬《治家格言》'], ['君子食無求飽，居無求安', '《論語・學而》'], ['知足者富', '《道德經・第三十三章》']] },
+  chu:   { src: '生於憂患，而死於安樂也', from: '《孟子・告子下》',   cites: [['生於憂患，而死於安樂也', '《孟子・告子下》'], ['天行健，君子以自強不息', '《易經・乾卦》'], ['苟日新，日日新，又日新', '《大學》']] },
+  fa:    { src: '應無所住而生其心',       from: '《金剛經》',         cites: [['應無所住而生其心', '《金剛經》'], ['思無邪', '《論語・為政》'], ['心不在焉，視而不見，聽而不聞，食而不知其味', '《大學》']] }
 };
-/* 異相塵靈（v261109.20）：跟著新題庫出現的特別塵靈，歸在原本的系別，但各自怕一個新符號（心性小語為示範） */
+/* 異相塵靈（v261109.20）：跟著新題庫出現的特別塵靈，歸在原本的系別，但各自怕一個新符號 */
 const XMONS = [
-  // 系, 階段, 名字, 心性小語, 怕的符號, 顯示, 為什麼怕, 配件, 身體顏色
-  ['se',    1, '比比',   '人字兩筆互相撐，比來比去，不如扶對方一把。', 'caret',  '∧ 人字',   '人字兩筆互相扶持，不必比高低', 'ruler',  '#f0b6d6'],
-  ['fa',    1, '繞繞',   '想不通就先放下，繞一圈回來，路就寬了。',     'inf',    '∞ 無極',   '無極自在，不鑽牛角尖',         'knot',   '#a8e6d8'],
-  ['xiang', 2, '誘餌妖', '好處後面常藏著鉤子，看清楚再伸手。',         'gamma',  'γ 伽瑪',   '看穿鉤子上的餌',               'rod',    '#c9b8f0'],
-  ['sheng', 2, '硬嘴妖', '話說軟一點，心就近一點。',                   'rho',    'ρ 柔',     '以柔克剛',                     'stone',  '#c8b9a8'],
-  ['chu',   3, '守舊魔', '改變不用一次到位，先走一小步就好。',         'delta',  'δ 德爾塔', 'δ 代表改變，一步一步來',       'shell',  '#9fc2d8'],
-  ['wei',   3, '無度魔', '飲食有方、取之有度，身心都輕鬆。',           'sq',     '□ 方',     '有方有度，知所節制',           'bowls',  '#d8e08a'],
-  ['se',    3, '虛名魔', '掌聲會散，德行的光才長久。',                 'star',   '★ 五芒星', '真正的光芒來自德行',           'stars',  '#e6b8e8'],
-  ['fa',    3, '漩心魔', '越轉越亂的時候，往內收、回到中心。',         'spiral', '🌀 漩渦',  '把心往內收，回到中心',         'vortex', '#8fcfc0'],
+  // 系, 階段, 名字, 怕的符號, 顯示, 為什麼怕, 配件, 身體顏色
+  ['se',    1, '比比', 'caret',  '∧ 人字',   '人字兩筆互相扶持，不必比高低', 'ruler',  '#f0b6d6'],
+  ['fa',    1, '繞繞',     'inf',    '∞ 無極',   '無極自在，不鑽牛角尖',         'knot',   '#a8e6d8'],
+  ['xiang', 2, '誘餌妖',         'gamma',  'γ 伽瑪',   '看穿鉤子上的餌',               'rod',    '#c9b8f0'],
+  ['sheng', 2, '硬嘴妖',                   'rho',    'ρ 柔',     '以柔克剛',                     'stone',  '#c8b9a8'],
+  ['chu',   3, '守舊魔',         'delta',  'δ 德爾塔', 'δ 代表改變，一步一步來',       'shell',  '#9fc2d8'],
+  ['wei',   3, '無度魔',           'sq',     '□ 方',     '有方有度，知所節制',           'bowls',  '#d8e08a'],
+  ['se',    3, '虛名魔',                 'star',   '★ 五芒星', '真正的光芒來自德行',           'stars',  '#e6b8e8'],
+  ['fa',    3, '漩心魔',         'spiral', '🌀 漩渦',  '把心往內收，回到中心',         'vortex', '#8fcfc0'],
   // v261109.24：每系湊滿三隻異相（塵精、塵妖、塵魔各一），淨心錄每一列剛好排滿
-  ['se',    2, '濾鏡妖', '修得再美，也比不上真實的笑容。',             'z',      'Z 字',     '一刀劃開濾鏡，看見真實',       'filter', '#f3c1dc'],
-  ['sheng', 1, '嘀咕',   '抱怨說出口之前，先想想好的那一面。',         'rs',     '反向 S',   '把話繞回好的一面',             'mutter', '#f0c9a0'],
-  ['sheng', 3, '咆哮魔', '大聲不代表有理，柔和的話才進得了人心。',     'caret',  '∧ 人字',   '設身處地，想想對方',           'roar',   '#e8a07e'],
-  ['xiang', 1, '聞聞',   '想要的很多，需要的很少。',                   'n',      'N 字',     'N 就是 No，學會說不',          'sniff',  '#d9c8f5'],
-  ['xiang', 3, '迷途魔', '走偏了不要緊，轉個彎就回來了。',             'rz',     '反向 Z',   '轉個彎，回頭是岸',             'sign',   '#a59ad8'],
-  ['wei',   1, '挑挑',   '每一口飯都得來不易，吃之前說聲謝謝。',       'alpha',  'α 阿法',   '回到初心，感恩每一口',         'fork',   '#e7f0b0'],
-  ['wei',   2, '囤積妖', '分享出去的，才是真正擁有的。',               'rn',     '反向 N',   '分出去，心更輕',               'boxes',  '#d8e6a0'],
-  ['chu',   1, '滑滑',   '放下手機，抬頭看看身邊的人。',               'ralpha', '反向阿法', '放下手機，回到自己',           'phone',  '#b8d8f0'],
-  ['chu',   2, '拖延妖', '明日復明日，現在就是最好的時候。',           'v',      'V 字',     '現在就做，打勾完成',           'calendar','#a8c6e6'],
-  ['fa',    2, '懷疑妖', '多一分相信，事情就多一分圓滿。',             'circle', '○ 圓',     '相信事情會圓滿',               'lens',   '#b5e3d6']
+  ['se',    2, '濾鏡妖',             'z',      'Z 字',     '一刀劃開濾鏡，看見真實',       'filter', '#f3c1dc'],
+  ['sheng', 1, '嘀咕',         'rs',     '反向 S',   '把話繞回好的一面',             'mutter', '#f0c9a0'],
+  ['sheng', 3, '咆哮魔',     'caret',  '∧ 人字',   '設身處地，想想對方',           'roar',   '#e8a07e'],
+  ['xiang', 1, '聞聞',                   'n',      'N 字',     'N 就是 No，學會說不',          'sniff',  '#d9c8f5'],
+  ['xiang', 3, '迷途魔',             'rz',     '反向 Z',   '轉個彎，回頭是岸',             'sign',   '#a59ad8'],
+  ['wei',   1, '挑挑',       'alpha',  'α 阿法',   '回到初心，感恩每一口',         'fork',   '#e7f0b0'],
+  ['wei',   2, '囤積妖',               'rn',     '反向 N',   '分出去，心更輕',               'boxes',  '#d8e6a0'],
+  ['chu',   1, '滑滑',               'ralpha', '反向阿法', '放下手機，回到自己',           'phone',  '#b8d8f0'],
+  ['chu',   2, '拖延妖',           'v',      'V 字',     '現在就做，打勾完成',           'calendar','#a8c6e6'],
+  ['fa',    2, '懷疑妖',             'circle', '○ 圓',     '相信事情會圓滿',               'lens',   '#b5e3d6']
 ];
-XMONS.forEach(([f, st, name, quote, weak, weakName, weakWhy, xv, color]) => MONS.push({ fam: FAMS.find(x => x.key === f), stage: st, name, quote, weak, weakName, weakWhy, xv, color,
+XMONS.forEach(([f, st, name, weak, weakName, weakWhy, xv, color]) => MONS.push({ fam: FAMS.find(x => x.key === f), stage: st, name, weak, weakName, weakWhy, xv, color,
   lv: st === 1 ? 'Lv 1–9' : st === 2 ? 'Lv 10–19' : 'Lv 20+', hits: st === 1 ? 1 : 2 }));
 // 這隻塵靈怕什麼：異相塵靈有自己的弱點，其他照系別
 // 這隻塵靈怕什麼：入門維持原本的樣子；修行、精進一條線的題目不出現，香、觸系的弱點改成三角形
@@ -1988,7 +1995,7 @@ function openDexCard(m){
   $('#dmName').textContent = e ? m.name : '？？？'; $('#dmTag').textContent = `${m.xv ? '✨ 異相・' : ''}${m.fam.name}系・${STAGE_NAME[m.stage]}・${m.lv}`;
   $('#dmDl').innerHTML = e ? `<span>代表 <b>${m.fam.mood}</b></span><span>要揮 <b class="nb">${m.stage === 1 ? '1 下' : m.stage === 2 ? '2 連擊' : '2～3 連擊'}</b></span><span>怕 <b class="nb">${weakNameOf(m)}</b></span><span>${e.preview ? '出沒 <b class="nb">' + m.lv + '</b>' : '收服 <b>' + e.n + ' 次</b>'}</span>${m.xv ? `<span style="grid-column:1/-1">為什麼怕：<b>${clauses(weakWhyOf(m))}</b></span>` : ''}${e.preview ? '<span style="grid-column:1/-1;color:var(--muted)">👁️ 預覽模式：還沒收服，先看內容</span>' : ''}<span style="grid-column:1/-1${e.preview ? ';display:none' : ''}"><span class="cl">第一次收服 <b>${e.first}</b></span>${e.gold ? '<span class="cl">・✨ 收過金色</span>' : ''}${e.hard ? '<span class="cl">・🔥 精進收服</span>' : ''}</span>`
     : `<span style="grid-column:1/-1">在 <b>${m.lv}</b> 的試煉中出沒（${m.fam.name}系的${m.xv ? '異相' : ''}${STAGE_NAME[m.stage]}${m.xv ? '，修行、精進才會出現' : ''}）</span>`;
-  { const T = FAM_TEACH[m.fam.key]; $('#dmTeach').innerHTML = `<div><b>📜 典故</b><span class="cl">「${T.src}」</span><span class="cl">—— ${T.from}</span></div>`; }
+  { const T = FAM_TEACH[m.fam.key]; $('#dmTeach').innerHTML = `<div><b>📜 典故</b>${T.cites.map(([t, f]) => `<div class="cite"><span class="cl">「${t}」</span><span class="cl">—— ${f}</span></div>`).join('')}</div>`; }
   $('#dexModal').hidden = false;
 }
 function drawDex(t){ const s = t/1000; dexCards.forEach(({ cv, m, e }, i) => drawCardCv(cv, m, s, { seed:i, sil: !e, snap:true, gold: e && e.gold && Math.sin(s*0.5 + i) > 0.6 })); if(!$('#dexModal').hidden && dexModalM) drawCardCv($('#dmCv'), dexModalM, s, { sil: !dexE(dexModalM) }); }
