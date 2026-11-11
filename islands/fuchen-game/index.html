@@ -127,6 +127,10 @@ body{line-break:strict}
 .prog i{display:block;height:100%;width:0;background:var(--gold);transition:width .1s linear}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin:10px 0;font-size:.95rem}
 .stats b{color:var(--gold)}
+.signup{margin:12px 0 4px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(232,189,90,.10);text-align:center}
+.signup b{color:var(--gold);font-size:1.02rem}
+.signup p{margin:6px 0 10px;font-size:.92rem;line-height:1.7}
+.signupBtn{display:block;padding:12px;border-radius:12px;background:var(--btn);color:var(--btn-ink);font-weight:800;font-size:1.05rem;text-decoration:none}
 .quote{margin:12px 0;padding:12px 14px;border-left:3px solid var(--gold);background:var(--gold-soft);border-radius:8px;line-height:1.7}
 .quote small{display:block;color:var(--muted);font-size:.75rem;margin-top:4px}
 .ver{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom) + 4px);font-size:.65rem;color:rgba(255,255,255,.35);pointer-events:none}
@@ -232,6 +236,11 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     <div class="stats" id="resStats"></div>
     <div id="resCaught" style="margin:10px 0"></div>
     <div class="quote" id="resQuote"></div>
+    <div class="signup">
+      <b>🌿 試煉之後，還有真功夫</b>
+      <p><span class="cl">遊戲裡淨化的是塵靈，</span><span class="cl">生活裡要修的是自己。</span><span class="cl">想練就不被六塵操弄的真人，</span><span class="cl">邀你攜手一起來。</span></p>
+      <a class="signupBtn" id="btnSignup" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島報名</a>
+    </div>
     <div class="row">
       <button class="primary big" id="btnAgain">再試煉一次</button>
       <button id="btnDexR">📖 看淨心錄</button>
@@ -256,7 +265,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261111.12';
+const VERSION = 'v261111.13';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
