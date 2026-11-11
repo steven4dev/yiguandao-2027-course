@@ -696,7 +696,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261111.17</span>
+  <span class="ver">v261111.18</span>
   </div></div>
 </div>
 
@@ -8832,6 +8832,7 @@ const TEACHER_SLUG = { 鄭名翔: 'zheng-mingxiang', 鄔明清: 'wu-mingqing', �
   朱宸慧: 'zhu-chenhui', 何珈貞: 'he-jiazhen', 林信宏: 'lin-xinhong', 何思諺: 'he-siyan', 蘇毓婷: 'su-yuting' };
 function openFromHash() {
   const key = decodeURIComponent(location.hash.slice(1));
+  if (key === 'join') { setTimeout(() => openJoin(), 700); history.replaceState(null, '', location.pathname + location.search); return; }   // #join：直接開島內的登島船票卡（從遊戲結算頁、宣傳連結過來）
   if (islands[key]) { select(key); return; }
   if (key.startsWith('t-')) {
     const name = Object.keys(TEACHER_SLUG).find((n) => TEACHER_SLUG[n] === key.slice(2));
@@ -9174,7 +9175,12 @@ function fcCleanup(abort) {
   if (fcIsl.glow) { fcIsl.glow.scale.set(3.4, 2.4, 1); }
   fcT.busy = false;
 }
-window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.fuchen === 'leave') fcLeave(); });
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin || !e.data) return;
+  if (e.data.fuchen === 'leave') fcLeave();
+  // 遊戲結算的「我要登島報名」：先收起遊戲、轉場回島，再打開島內的登島船票卡（不跳去 Google 表單）
+  else if (e.data.fuchen === 'join') Promise.resolve(fcLeave()).then(() => setTimeout(() => openJoin(), 400));
+});
 window.__fcSwordInfo = () => { let meshes = 0, mergedAway = 0; fcIsl.sword.traverse((o) => { if (o.isMesh) meshes++; }); return { 拂塵底下還剩的零件: meshes, 高度: +fcIsl.sword.position.y.toFixed(2) }; };
 window.__fcStorm = () => ({ intensity: fcFx.intensity, snd: !!fcFx.snd, ctx: SND.ctx, soundOn: !!(SND.sfx || SND.music), litBoost: +fcFx.litBoost.toFixed(2) });   // 測試用，唯讀
 window.__fcDebug = () => ({ night: nightTarget, duck: PT.duck, swY: +fcIsl.sword.position.y.toFixed(2), glow: fcIsl.glow ? +fcIsl.glow.scale.x.toFixed(2) : 0, hasEnter: typeof fcEnter });   // 測試用，唯讀
