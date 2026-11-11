@@ -655,6 +655,15 @@
 .fcT.dim .veil{opacity:1}
 .fcT.focus .vig{opacity:1}
 .fcT.say .txt{opacity:1}
+.fcT canvas.rain{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity 1.4s ease}
+.fcT.storm canvas.rain{opacity:1}
+.fcT .flash{position:absolute;inset:0;background:#eaf2ff;opacity:0;mix-blend-mode:screen}
+.fcT .cloud{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,12,26,.78) 0%,rgba(10,16,34,.45) 45%,rgba(0,0,0,0) 80%);opacity:0;transition:opacity 1.6s ease}
+.fcT.storm .cloud{opacity:1}
+.fcT.heavy .cloud{background:linear-gradient(180deg,rgba(4,6,14,.9) 0%,rgba(8,12,26,.6) 50%,rgba(0,0,0,.1) 85%)}
+@keyframes fcShake{0%{transform:translate(0,0)}10%{transform:translate(-9px,5px)}20%{transform:translate(8px,-6px)}30%{transform:translate(-6px,-4px)}45%{transform:translate(5px,5px)}60%{transform:translate(-3px,2px)}100%{transform:translate(0,0)}}
+body.fcShake #cv,body.fcShake canvas:not(.rain):not(.bolt){animation:fcShake .55s ease-out}
+.fcT canvas.bolt{position:absolute;inset:0;width:100%;height:100%}
 body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag,body.fcT-hide .topbtns{transition:opacity .6s ease;opacity:0!important;pointer-events:none!important}
 </style>
 <style>
@@ -682,7 +691,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261110.15</span>
+  <span class="ver">v261110.16</span>
   </div></div>
 </div>
 
@@ -8743,7 +8752,7 @@ function tick() {
   scene.background.copy(DAY_BG).lerp(NIGHT_BG, nightT).lerp(warmC, warmT * 0.8);
   scene.fog.color.copy(scene.background);
   water.material.color.copy(WATER_DAY).lerp(WATER_NIGHT, nightT).lerp(seaC, warmT * 0.65);
-  hemi.intensity = 1.6 - 0.95 * nightT - 0.2 * warmT;
+  hemi.intensity = 1.6 - 0.95 * nightT - 0.2 * warmT + ((typeof fcFx !== 'undefined' && fcFx.litBoost) || 0);   // 拂塵轉場的閃電會把整座島瞬間照亮
   hemi.color.copy(HEMI_DAY).lerp(warmC, warmT * 0.55);
   sun.intensity = 2.4 - 1.75 * nightT;
   sun.color.copy(SUN_DAY).lerp(SUN_NIGHT, nightT).lerp(SUN_WARM, warmT * 0.9);
@@ -8837,30 +8846,105 @@ const FC_TRANS = /[?&]fctrans\b/.test(location.search);
 var fcT = { busy: false, el: null, frame: null, savedTarget: null, rafStop: false, paused: false, lockSky: false, savedCam: null };   // var：tick 一開始就會讀到
 function fcTWait(ms) { return new Promise((r) => setTimeout(r, ms)); }
 function fcTEase(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+/* —— 風雨雷電（轉場的高潮）—— 畫面：2D 畫布上的雨絲、閃電、全螢幕白光；聲音：用群島的聲音引擎即時合成風、雨、悶雷、炸雷 —— */
+var fcFx = { rain: null, raf: 0, drops: [], on: false, intensity: 0, snd: null, litBoost: 0 };   // var：tick 一開始就會讀到
+function fcRainStart(cv) {
+  const ctx = cv.getContext('2d'); const dpr = Math.min(devicePixelRatio || 1, 2);
+  const fit = () => { cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; }; fit(); fcFx.drops = []; fcFx.on = true;
+  for (let i = 0; i < 160; i++) fcFx.drops.push({ x: Math.random(), y: Math.random(), l: 0.04 + Math.random() * 0.07, v: 1.1 + Math.random() * 1.0, a: 0.25 + Math.random() * 0.45 });
+  let last = performance.now();
+  (function loop(now) {
+    if (!fcFx.on) { ctx.clearRect(0, 0, cv.width, cv.height); return; }
+    const dt = Math.min(0.05, (now - last) / 1000); last = now; ctx.clearRect(0, 0, cv.width, cv.height);
+    const W = cv.width, H = cv.height, k = fcFx.intensity, n = Math.floor(fcFx.drops.length * k), slant = 0.22;
+    ctx.lineWidth = 1.4 * dpr; ctx.lineCap = 'round';
+    for (let i = 0; i < n; i++) {
+      const d = fcFx.drops[i]; d.y += d.v * dt * (0.9 + k); d.x -= d.v * dt * slant * 0.55 * (0.9 + k);
+      if (d.y > 1.05) { d.y = -0.1; d.x = Math.random() * 1.2; } if (d.x < -0.1) d.x = 1.1;
+      ctx.strokeStyle = `rgba(190,215,255,${d.a * (0.4 + 0.6 * k)})`; ctx.beginPath();
+      ctx.moveTo(d.x * W, d.y * H); ctx.lineTo((d.x + d.l * slant) * W, (d.y - d.l) * H); ctx.stroke();
+    }
+    fcFx.raf = requestAnimationFrame(loop);
+  })(last);
+}
+function fcRainStop() { fcFx.on = false; cancelAnimationFrame(fcFx.raf); document.querySelectorAll('.fcT canvas.rain').forEach((cv) => { const x = cv.getContext('2d'); x.clearRect(0, 0, cv.width, cv.height); }); }
+// 一道閃電：從畫面上方、經過幾個折點，劈到 (tx, ty)；畫幾格後淡掉，同時全螢幕白光閃兩下
+function fcBolt(cv, flashEl, tx, ty, big) {
+  const ctx = cv.getContext('2d'), dpr = Math.min(devicePixelRatio || 1, 2); cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
+  const W = cv.width, H = cv.height, X = tx * dpr, Y = ty * dpr;
+  const path = (x0, y0, x1, y1, off, out) => { if (off < 3 * dpr) { out.push([x1, y1]); return; } const mx = (x0 + x1) / 2 + (Math.random() - 0.5) * off, my = (y0 + y1) / 2 + (Math.random() - 0.5) * off * 0.3; path(x0, y0, mx, my, off / 2, out); path(mx, my, x1, y1, off / 2, out); };
+  const pts = [[X + (Math.random() - 0.5) * W * 0.3, -10]]; path(pts[0][0], pts[0][1], X, Y, W * (big ? 0.22 : 0.15), pts);
+  const branches = []; for (let b = 0; b < (big ? 3 : 1); b++) { const i = 4 + Math.floor(Math.random() * (pts.length - 8)), o = pts[i], br = [o]; path(o[0], o[1], o[0] + (Math.random() - 0.5) * W * 0.5, o[1] + H * (0.12 + Math.random() * 0.2), W * 0.08, br); branches.push(br); }
+  const draw = (alpha) => { ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    for (const [w, a, col] of [[16, 0.18, '120,160,255'], [7, 0.45, '190,215,255'], [2.5, 1, '255,255,255']]) { ctx.strokeStyle = `rgba(${col},${a * alpha})`; ctx.lineWidth = w * dpr * (big ? 1.2 : 0.8); ctx.shadowColor = '#9cc4ff'; ctx.shadowBlur = 24 * dpr;
+      ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
+      ctx.lineWidth *= 0.5; for (const br of branches) { ctx.beginPath(); br.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); } } };
+  const seq = big ? [1, 0.08, 0.7, 0.04, 0.35, 0.1, 0] : [1, 0.3, 0.6, 0.15, 0];
+  let i = 0; (function step() { draw(seq[i]); flashEl.style.transition = 'none'; flashEl.style.opacity = String(seq[i] * (big ? 0.5 : 0.3)); if (++i < seq.length) setTimeout(step, 55 + Math.random() * 45); else { ctx.clearRect(0, 0, W, H); flashEl.style.transition = 'opacity .5s ease-out'; flashEl.style.opacity = '0'; } })();
+}
+// 天空瞬間被閃電照亮：把群島的燈光打亮一下再恢復
+function fcLightScene(power) { const t0 = performance.now(); (function fade() { const k = Math.min(1, (performance.now() - t0) / 420); fcFx.litBoost = (1 - k) * 2.4 * power; if (k < 1) requestAnimationFrame(fade); else fcFx.litBoost = 0; })(); }
+// —— 聲音：風、雨、悶雷、炸雷（用群島的聲音引擎合成，玩家關掉音效就不會有）——
+function fcSoundOk() { try { if (!SND.sfx && !SND.music) return false; if (!SND.ctx) audioInit(); return !!SND.ctx && SND.ctx.state !== 'closed'; } catch (e) { return false; } }
+function fcSndStart() {
+  if (!fcSoundOk()) return; const c = SND.ctx; if (c.state === 'suspended') c.resume().catch(() => {});
+  const out = c.createGain(); out.gain.value = 0.0001; const lim = c.createDynamicsCompressor(); lim.threshold.value = -8; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.12; out.connect(lim); lim.connect(c.destination);   // 限幅：炸雷不爆音
+  const nz = (f, q, type) => { const n = noiseSrc(), b = c.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; n.connect(b); n.start(); return { n, b }; };   // 一條帶通／高通的雜訊（風、雨） const nz = (f, q, type) => { const n = noiseSrc(), b = c.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; n.connect(b); n.start(); return { n, b }; };
+  const wind = nz(380, 0.7, 'bandpass'), windG = c.createGain(); windG.gain.value = 0; wind.b.connect(windG).connect(out);
+  const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 0.35; lg.gain.value = 160; lfo.connect(lg).connect(wind.b.frequency); lfo.start();
+  const rain = nz(5200, 0.5, 'highpass'), rainG = c.createGain(); rainG.gain.value = 0; rain.b.connect(rainG).connect(out);
+  fcFx.snd = { c, out, windG, rainG, wind, rain, lfo }; out.gain.setTargetAtTime(0.9, c.currentTime, 0.4); windG.gain.setTargetAtTime(0.16, c.currentTime, 1.2);
+}
+function fcSndRain(v) { const s = fcFx.snd; if (s) s.rainG.gain.setTargetAtTime(v, s.c.currentTime, 0.6); }
+function fcSndWind(v) { const s = fcFx.snd; if (s) s.windG.gain.setTargetAtTime(v, s.c.currentTime, 0.8); }
+// 雷聲：big＝炸雷（先「啪」一聲裂開、再接長長的低頻隆隆）；否則是遠方的悶雷
+function fcThunder(big, delay = 0) {
+  const s = fcFx.snd; if (!s) return; const c = s.c, t = c.currentTime + delay, g = c.createGain(); g.connect(s.out);
+  const dur = big ? 4.2 : 2.6, lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(big ? 900 : 260, t); lp.frequency.exponentialRampToValueAtTime(70, t + dur);
+  const n = noiseSrc(); n.connect(lp).connect(g); n.start(t); n.stop(t + dur + 0.1);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(big ? 1.0 : 0.6, t + (big ? 0.012 : 0.25)); g.gain.setTargetAtTime(0.0001, t + (big ? 0.15 : 0.6), big ? 0.9 : 0.7);
+  // 低頻轟（身體會感覺到的那種）
+  const o = c.createOscillator(), og = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(big ? 78 : 52, t); o.frequency.exponentialRampToValueAtTime(28, t + dur * 0.8);
+  og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(big ? 0.8 : 0.45, t + 0.03); og.gain.setTargetAtTime(0.0001, t + 0.2, big ? 1.1 : 0.7); o.connect(og).connect(s.out); o.start(t); o.stop(t + dur + 0.2);
+  if (big) { // 炸裂的那一下：很短的高頻爆
+    const cr = noiseSrc(), hp = c.createBiquadFilter(), cg = c.createGain(); hp.type = 'highpass'; hp.frequency.value = 1800; cr.connect(hp).connect(cg).connect(s.out); cg.gain.setValueAtTime(0.8, t); cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.18); cr.start(t); cr.stop(t + 0.25);
+    // 太鼓一記，跟遊戲的聲音呼應
+    const d = c.createOscillator(), dg = c.createGain(); d.type = 'sine'; d.frequency.setValueAtTime(150, t + 0.02); d.frequency.exponentialRampToValueAtTime(48, t + 0.5); dg.gain.setValueAtTime(0.9, t + 0.02); dg.gain.exponentialRampToValueAtTime(0.0001, t + 0.9); d.connect(dg).connect(s.out); d.start(t + 0.02); d.stop(t + 1); }
+}
+function fcSndStop() { const s = fcFx.snd; if (!s) return; fcFx.snd = null; const t = s.c.currentTime; s.out.gain.setTargetAtTime(0.0001, t, 0.5); setTimeout(() => { try { s.wind.n.stop(); s.rain.n.stop(); s.lfo.stop(); s.out.disconnect(); } catch (e) {} }, 2200); }
 async function fcEnter(href) {
   if (fcT.busy) return; fcT.busy = true;
   const go = () => { location.href = href; };   // 降級：直接換頁
   if (reduceMotion || !fcIsl.sword) return go();
   try {
-    const el = document.createElement('div'); el.className = 'fcT'; el.innerHTML = '<div class="veil"></div><div class="vig"></div><div class="txt">時時勤拂拭<small>勿使惹塵埃</small></div>'; document.body.appendChild(el); fcT.el = el;
+    const el = document.createElement('div'); el.className = 'fcT'; el.innerHTML = '<div class="veil"></div><div class="cloud"></div><canvas class="rain"></canvas><div class="vig"></div><canvas class="bolt"></canvas><div class="flash"></div><div class="txt">時時勤拂拭<small>勿使惹塵埃</small></div>'; document.body.appendChild(el); fcT.el = el;
     document.body.classList.add('fcT-hide');
     // 第一拍：靜下來。介面淡出，群島入夜，群島的聲音淡出，讓出給遊戲
     fcT.savedTarget = { night: nightTarget, warm: warmTarget, am: skyAM }; fcT.savedCam = { pos: camera.position.clone(), tgt: controls.target.clone() };
     fcT.lockSky = true; nightTarget = 1; warmTarget = 0; skyAM = false; PT.duck = true; el.classList.add('focus');
+    fcSndStart(); fcFx.intensity = 0.25; fcRainStart(el.querySelector('canvas.rain'));   // 風聲淡入、雨畫布準備好
     await fcTWait(900);
     // 第二拍：鏡頭飛向石中劍
     const sw = fcIsl.sword, wp = new THREE.Vector3(); sw.getWorldPosition(wp);
     const dirV = camera.position.clone().sub(wp).setY(0).normalize(); if (dirV.lengthSq() < 0.01) dirV.set(0.6, 0, 0.8);
     const wide = innerWidth < innerHeight ? 1.7 : 1.15;   // 直式手機視野窄，退遠一點才拍得到整支（含上面垂下來的馬尾）
     const closeP = wp.clone().add(dirV.multiplyScalar(17 * wide)).setY(wp.y + 2.5), look = wp.clone().add(new THREE.Vector3(0, 7.2, 0));
-    controls.autoRotate = false; flyTo(look, closeP, 2.2, null, 0, true);
-    el.classList.add('say');
+    controls.autoRotate = false; flyTo(look, closeP, 2.8, null, 0, true);
+    el.classList.add('say', 'storm'); fcSndWind(0.3); fcSndRain(0.12); fcThunder(false, 0.5);
+    const ramp0 = performance.now(); (function ramp() { const k = Math.min(1, (performance.now() - ramp0) / 2200); fcFx.intensity = 0.25 + 0.55 * k; if (k < 1) requestAnimationFrame(ramp); })();
+    setTimeout(() => { fcBolt(el.querySelector('canvas.bolt'), el.querySelector('.flash'), innerWidth * (0.2 + Math.random() * 0.25), innerHeight * 0.5, false); fcLightScene(0.45); fcThunder(false, 0.8); }, 1100);   // 遠方先閃一下、悶雷隨後
+    setTimeout(() => { fcBolt(el.querySelector('canvas.bolt'), el.querySelector('.flash'), innerWidth * (0.6 + Math.random() * 0.25), innerHeight * 0.45, false); fcLightScene(0.55); fcThunder(false, 0.5); }, 2200);   // 再閃一下，間隔拉近、逼近   // 遠方先閃一下、悶雷隨後
     if (fcIsl.glow) { const g0 = fcIsl.glow.scale.clone(); const t0 = performance.now(); (function glowUp() { const k = Math.min(1, (performance.now() - t0) / 2200); fcIsl.glow.scale.set(g0.x * (1 + 1.3 * k), g0.y * (1 + 1.3 * k), 1); fcIsl.glow.material.opacity = 1; if (k < 1) requestAnimationFrame(glowUp); })(); }
-    await fcTWait(2300);
+    await fcTWait(3000);
     // 第三拍：拔起拂塵，往上一揮，留下金色光痕
     const y0 = sw.position.y, r0 = sw.rotation.z, trail = [], lineGeo = new THREE.BufferGeometry(), lineM = new THREE.LineBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false });
     const line = new THREE.Line(lineGeo, lineM); line.frustumCulled = false; fcIsl.mark.add(line);
     const head = new THREE.Vector3(), t1 = performance.now(), DUR = 1100;
+    // 雷霆一擊：閃電劈在拂塵頭上，全螢幕白光、鏡頭震動、整座島被照亮、炸雷＋太鼓，雨一下子變大
+    { const hp = new THREE.Vector3(); sw.getWorldPosition(hp); hp.y += 7.5; hp.project(camera); const sx = (hp.x * 0.5 + 0.5) * innerWidth, sy = (-hp.y * 0.5 + 0.5) * innerHeight;
+      el.classList.add('heavy'); fcBolt(el.querySelector('canvas.bolt'), el.querySelector('.flash'), sx, Math.max(60, Math.min(innerHeight * 0.5, sy)), true); fcLightScene(1); fcThunder(true, 0.02); fcSndRain(0.42); fcSndWind(0.5); fcFx.intensity = 1;
+      document.body.classList.add('fcShake'); setTimeout(() => document.body.classList.remove('fcShake'), 600); try { navigator.vibrate && navigator.vibrate([40, 30, 90]); } catch (e) {} }
     await new Promise((done) => { (function pull() {
       const k = Math.min(1, (performance.now() - t1) / DUR), e = fcTEase(k);
       sw.position.y = y0 + e * 6.5; sw.rotation.z = r0 + e * 0.9 * Math.sin(k * Math.PI);
@@ -8869,12 +8953,13 @@ async function fcEnter(href) {
       lineM.opacity = 0.95 * (1 - k * 0.3);
       if (k < 1) requestAnimationFrame(pull); else done(); })(); });
     // 第四拍：夜空色的幕蓋上來，遊戲在同一頁載入、淡入
-    el.classList.add('dim'); el.classList.remove('say');
+    el.classList.add('dim'); el.classList.remove('say'); fcFx.intensity = 0.4; fcSndRain(0.14); fcSndWind(0.18); fcThunder(false, 1.2);
     const frame = document.createElement('iframe'); frame.allow = 'accelerometer; gyroscope; autoplay; fullscreen'; frame.setAttribute('title', '拂塵試煉');
     const loaded = new Promise((res, rej) => { frame.onload = res; frame.onerror = rej; setTimeout(() => rej(new Error('timeout')), 9000); });
     frame.src = href + (href.includes('?') ? '&' : '?') + 'embed=1'; el.appendChild(frame); fcT.frame = frame;
     await fcTWait(1000); await loaded;
     el.classList.add('show'); el.style.pointerEvents = 'auto';
+    setTimeout(() => { fcRainStop(); fcSndStop(); }, 1800);   // 遊戲淡入後，雨和風慢慢停
     // 群島的 3D 畫面先降到最低負擔（遊戲要用手機的感測器和 3D）
     fcT.paused = true; setTimeout(() => { if (fcT.paused) fcT.rafStop = true; }, 1300);   // 幕完全蓋住之後才停畫
   } catch (e) { console.warn('轉場失敗，改用換頁', e); fcCleanup(true); go(); }
@@ -8887,6 +8972,7 @@ async function fcLeave() {
   await fcTWait(900); fcCleanup(false);
 }
 function fcCleanup(abort) {
+  fcRainStop(); fcSndStop(); fcFx.litBoost = 0; document.body.classList.remove('fcShake');
   if (fcT.savedTarget) { nightTarget = fcT.savedTarget.night; warmTarget = fcT.savedTarget.warm; skyAM = fcT.savedTarget.am; fcT.savedTarget = null; }
   fcT.lockSky = false; if (typeof updateSky === 'function') updateSky();
   if (fcT.savedCam) { flyTo(fcT.savedCam.tgt, fcT.savedCam.pos, 1.6, null, 0, false); fcT.savedCam = null; }
@@ -8898,6 +8984,7 @@ function fcCleanup(abort) {
 }
 window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.fuchen === 'leave') fcLeave(); });
 window.__fcSwordInfo = () => { let meshes = 0, mergedAway = 0; fcIsl.sword.traverse((o) => { if (o.isMesh) meshes++; }); return { 拂塵底下還剩的零件: meshes, 高度: +fcIsl.sword.position.y.toFixed(2) }; };
+window.__fcStorm = () => ({ intensity: fcFx.intensity, snd: !!fcFx.snd, ctx: SND.ctx, soundOn: !!(SND.sfx || SND.music), litBoost: +fcFx.litBoost.toFixed(2) });   // 測試用，唯讀
 window.__fcDebug = () => ({ night: nightTarget, duck: PT.duck, swY: +fcIsl.sword.position.y.toFixed(2), glow: fcIsl.glow ? +fcIsl.glow.scale.x.toFixed(2) : 0, hasEnter: typeof fcEnter });   // 測試用，唯讀
 if (FC_TRANS) document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('#fcGo'); if (!a) return; e.preventDefault(); fcEnter(a.href); }, true);
 </script>
