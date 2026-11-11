@@ -661,8 +661,13 @@
 .fcT .cloud{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,12,26,.78) 0%,rgba(10,16,34,.45) 45%,rgba(0,0,0,0) 80%);opacity:0;transition:opacity 1.6s ease}
 .fcT.storm .cloud{opacity:1}
 .fcT.heavy .cloud{background:linear-gradient(180deg,rgba(4,6,14,.9) 0%,rgba(8,12,26,.6) 50%,rgba(0,0,0,.1) 85%)}
-@keyframes fcShake{0%{transform:translate(0,0)}10%{transform:translate(-9px,5px)}20%{transform:translate(8px,-6px)}30%{transform:translate(-6px,-4px)}45%{transform:translate(5px,5px)}60%{transform:translate(-3px,2px)}100%{transform:translate(0,0)}}
-body.fcShake #cv,body.fcShake canvas:not(.rain):not(.bolt){animation:fcShake .55s ease-out}
+@keyframes fcShake{0%{transform:translate(0,0)}6%{transform:translate(-22px,12px)}12%{transform:translate(20px,-14px)}18%{transform:translate(-16px,-10px)}26%{transform:translate(13px,11px)}36%{transform:translate(-9px,6px)}48%{transform:translate(6px,-5px)}62%{transform:translate(-3px,3px)}80%{transform:translate(2px,-1px)}100%{transform:translate(0,0)}}
+@keyframes fcTremble{0%{transform:translate(0,0)}25%{transform:translate(-1.5px,1px)}50%{transform:translate(1.5px,-1px)}75%{transform:translate(-1px,-1.5px)}100%{transform:translate(0,0)}}
+body.fcTremble canvas:not(.rain):not(.bolt){animation:fcTremble .09s linear infinite}
+.fcT.hold .cloud{opacity:1;background:linear-gradient(180deg,rgba(0,0,0,.95),rgba(2,4,10,.7) 60%,rgba(0,0,0,.35));transition:none}
+.fcT.hold canvas.rain{opacity:.15;transition:none}
+.fcT.hold .vig{opacity:1;transition:none}
+body.fcShake #cv,body.fcShake canvas:not(.rain):not(.bolt){animation:fcShake 1s cubic-bezier(.2,.7,.3,1)}
 .fcT canvas.bolt{position:absolute;inset:0;width:100%;height:100%}
 body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag,body.fcT-hide .topbtns{transition:opacity .6s ease;opacity:0!important;pointer-events:none!important}
 </style>
@@ -691,7 +696,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261110.16</span>
+  <span class="ver">v261110.17</span>
   </div></div>
 </div>
 
@@ -8843,7 +8848,7 @@ addEventListener('hashchange', openFromHash);
    群島的畫面和聲音一直活著，所以沒有白屏、聲音不會斷成兩截；回島時反過來：幕淡掉、天色回到白天、拂塵放回岩縫。
    打樣：網址加 fctrans 才啟用；減少動態效果、載入失敗都直接走原本的換頁。 */
 const FC_TRANS = /[?&]fctrans\b/.test(location.search);
-var fcT = { busy: false, el: null, frame: null, savedTarget: null, rafStop: false, paused: false, lockSky: false, savedCam: null };   // var：tick 一開始就會讀到
+var fcT = { busy: false, el: null, frame: null, savedTarget: null, rafStop: false, paused: false, lockSky: false, savedCam: null, fov0: 0, freeze: false };   // var：tick 一開始就會讀到
 function fcTWait(ms) { return new Promise((r) => setTimeout(r, ms)); }
 function fcTEase(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
 
@@ -8885,34 +8890,193 @@ function fcBolt(cv, flashEl, tx, ty, big) {
 }
 // 天空瞬間被閃電照亮：把群島的燈光打亮一下再恢復
 function fcLightScene(power) { const t0 = performance.now(); (function fade() { const k = Math.min(1, (performance.now() - t0) / 420); fcFx.litBoost = (1 - k) * 2.4 * power; if (k < 1) requestAnimationFrame(fade); else fcFx.litBoost = 0; })(); }
-// —— 聲音：風、雨、悶雷、炸雷（用群島的聲音引擎合成，玩家關掉音效就不會有）——
+// —— 聲音：電影級風暴（風、雨、遠雷、預兆、斷音、雷霆一擊、滾雷回音、餘波）——
+// 做成「給一個聲音引擎 c 就能建」：遊戲裡用群島的引擎即時播，測試時用離線引擎算出音檔來檢查（量對比、給人聽）
 function fcSoundOk() { try { if (!SND.sfx && !SND.music) return false; if (!SND.ctx) audioInit(); return !!SND.ctx && SND.ctx.state !== 'closed'; } catch (e) { return false; } }
-function fcSndStart() {
-  if (!fcSoundOk()) return; const c = SND.ctx; if (c.state === 'suspended') c.resume().catch(() => {});
-  const out = c.createGain(); out.gain.value = 0.0001; const lim = c.createDynamicsCompressor(); lim.threshold.value = -8; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.12; out.connect(lim); lim.connect(c.destination);   // 限幅：炸雷不爆音
-  const nz = (f, q, type) => { const n = noiseSrc(), b = c.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; n.connect(b); n.start(); return { n, b }; };   // 一條帶通／高通的雜訊（風、雨） const nz = (f, q, type) => { const n = noiseSrc(), b = c.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; n.connect(b); n.start(); return { n, b }; };
-  const wind = nz(380, 0.7, 'bandpass'), windG = c.createGain(); windG.gain.value = 0; wind.b.connect(windG).connect(out);
-  const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 0.35; lg.gain.value = 160; lfo.connect(lg).connect(wind.b.frequency); lfo.start();
-  const rain = nz(5200, 0.5, 'highpass'), rainG = c.createGain(); rainG.gain.value = 0; rain.b.connect(rainG).connect(out);
-  fcFx.snd = { c, out, windG, rainG, wind, rain, lfo }; out.gain.setTargetAtTime(0.9, c.currentTime, 0.4); windG.gain.setTargetAtTime(0.16, c.currentTime, 1.2);
+function fcKit(c) {
+  const out = c.createGain(); out.gain.value = 0.78;
+  const comp = c.createDynamicsCompressor(); comp.threshold.value = -4; comp.knee.value = 8; comp.ratio.value = 3; comp.attack.value = 0.003; comp.release.value = 0.25;   // 讓大聲的更密實、小聲的拉得起來
+  const lim = c.createDynamicsCompressor(); lim.threshold.value = -2; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.1;   // 最後一道限幅，不爆音
+  out.connect(comp); comp.connect(lim); lim.connect(c.destination);
+  const nb = c.createBuffer(2, c.sampleRate * 3, c.sampleRate); for (let ch = 0; ch < 2; ch++) { const d = nb.getChannelData(ch); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const noise = () => { const n = c.createBufferSource(); n.buffer = nb; n.loop = true; return n; };
+  // 大殿殘響：3.6 秒，越後面越悶（高頻先消失），像在山谷裡炸開
+  const ir = c.createBuffer(2, Math.floor(c.sampleRate * 3.6), c.sampleRate);
+  for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); let lp = 0; for (let i = 0; i < d.length; i++) { const k = i / d.length, a = 0.55 * (1 - k * 0.92); lp += ((Math.random() * 2 - 1) - lp) * a; d[i] = lp * Math.pow(1 - k, 2.2) * (i < c.sampleRate * 0.02 ? i / (c.sampleRate * 0.02) : 1); } }
+  const rev = c.createConvolver(); rev.buffer = ir; const revG = c.createGain(); revG.gain.value = 0.75; rev.connect(revG); revG.connect(out);
+  const bus = (wet) => { const g = c.createGain(); g.connect(out); if (wet > 0) { const w = c.createGain(); w.gain.value = wet; g.connect(w); w.connect(rev); } return g; };
+  const pan = (p) => { if (!c.createStereoPanner) return c.createGain(); const n = c.createStereoPanner(); n.pan.value = p; return n; };
+  const sat = (k) => { const w = c.createWaveShaper(), n = 1024, cv = new Float32Array(n); for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; cv[i] = (1 + k) * x / (1 + k * Math.abs(x)); } w.curve = cv; return w; };
+  // 風和雨：一直在，其他聲音進來時被「抽掉」（duck），爆完再回來
+  const bed = c.createGain(); bed.gain.value = 1; bed.connect(out);
+  const wind = noise(), wb = c.createBiquadFilter(); wb.type = 'bandpass'; wb.frequency.value = 380; wb.Q.value = 0.7; const windG = c.createGain(); windG.gain.value = 0; wind.connect(wb); wb.connect(windG); windG.connect(bed);
+  const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 0.35; lg.gain.value = 180; lfo.connect(lg); lg.connect(wb.frequency);
+  const rain = noise(), rh = c.createBiquadFilter(); rh.type = 'highpass'; rh.frequency.value = 5200; const rainG = c.createGain(); rainG.gain.value = 0; rain.connect(rh); rh.connect(rainG); rainG.connect(bed);
+  wind.start(); rain.start(); lfo.start();
+  const K = { c, out, nb, bed, windG, rainG };
+  K.set = (g, v, t, tc) => g.gain.setTargetAtTime(v, t == null ? c.currentTime : t, tc || 0.5);
+  K.duck = (t, to, tc) => { bed.gain.cancelScheduledValues(t); bed.gain.setTargetAtTime(to, t, tc); };
+  // 遠方的悶雷：低、慢、被殘響吃掉一半
+  K.far = (t, vol = 0.6) => { const dur = 2.8, n = noise(), lp = c.createBiquadFilter(), g = c.createGain(), pn = pan(Math.random() * 1.2 - 0.6), b = bus(0.5); lp.type = 'lowpass'; lp.frequency.setValueAtTime(260, t); lp.frequency.exponentialRampToValueAtTime(55, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.4); g.gain.setTargetAtTime(0.0001, t + 0.7, 0.75); n.connect(lp); lp.connect(g); g.connect(pn); pn.connect(b); n.start(t); n.stop(t + dur + 0.1);
+    const o = c.createOscillator(), og = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(58, t); o.frequency.exponentialRampToValueAtTime(30, t + dur); og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(vol * 0.7, t + 0.3); og.gain.setTargetAtTime(0.0001, t + 0.6, 0.8); o.connect(og); og.connect(b); o.start(t); o.stop(t + dur + 0.1); };
+  // ① 預兆：愈升愈高的嘶聲＋升調嗡鳴＋愈來愈快的顫音＋次低頻嗡響，dur 秒內推到最高
+  K.risG = c.createGain(); K.risG.gain.value = 1; K.risG.connect(out);
+  K.riser = (t, dur) => { const b = bus(0.2), e = t + dur; b.disconnect(); b.connect(K.risG); K.risG.gain.cancelScheduledValues(t); K.risG.gain.setValueAtTime(0.5, t);
+    const n = noise(), bp = c.createBiquadFilter(), ng = c.createGain(); bp.type = 'bandpass'; bp.Q.value = 1.1; bp.frequency.setValueAtTime(300, t); bp.frequency.exponentialRampToValueAtTime(9000, e); ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(0.6, e); n.connect(bp); bp.connect(ng); ng.connect(b); n.start(t); n.stop(e + 0.05);
+    const trem = c.createGain(); trem.gain.value = 0.55; const tl = c.createOscillator(), tg = c.createGain(); tl.frequency.setValueAtTime(5, t); tl.frequency.exponentialRampToValueAtTime(26, e); tg.gain.value = 0.45; tl.connect(tg); tg.connect(trem.gain); tl.start(t); tl.stop(e + 0.05);
+    const o = c.createOscillator(), lp = c.createBiquadFilter(), og = c.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(55, t); o.frequency.exponentialRampToValueAtTime(420, e); lp.type = 'lowpass'; lp.frequency.setValueAtTime(200, t); lp.frequency.exponentialRampToValueAtTime(3800, e); og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.2, e); o.connect(lp); lp.connect(trem); trem.connect(og); og.connect(b); o.start(t); o.stop(e + 0.05);
+    const o2 = c.createOscillator(), g2 = c.createGain(); o2.type = 'sine'; o2.frequency.setValueAtTime(110, t); o2.frequency.exponentialRampToValueAtTime(880, e); g2.gain.setValueAtTime(0.0001, t); g2.gain.exponentialRampToValueAtTime(0.16, e); o2.connect(g2); g2.connect(b); o2.start(t); o2.stop(e + 0.05);
+    const d = c.createOscillator(), dg = c.createGain(); d.type = 'sine'; d.frequency.setValueAtTime(38, t); d.frequency.linearRampToValueAtTime(52, e); dg.gain.setValueAtTime(0.0001, t); dg.gain.exponentialRampToValueAtTime(0.5, e); d.connect(dg); dg.connect(K.risG); d.start(t); d.stop(e + 0.05);
+    // 心跳般的低音脈衝，愈跳愈密
+    let pt = t + 0.15, gap = 0.34; while (pt < e - 0.05) { const h = c.createOscillator(), hg = c.createGain(); h.type = 'sine'; h.frequency.setValueAtTime(90, pt); h.frequency.exponentialRampToValueAtTime(42, pt + 0.12); hg.gain.setValueAtTime(0.0001, pt); hg.gain.exponentialRampToValueAtTime(0.35 + 0.25 * (pt - t) / dur, pt + 0.01); hg.gain.exponentialRampToValueAtTime(0.0001, pt + 0.16); h.connect(hg); hg.connect(K.risG); h.start(pt); h.stop(pt + 0.2); pt += gap; gap *= 0.86; } };
+  // ② 斷音＋③④⑤⑥ 雷霆一擊。t 是「啪」的那一刻；斷音從 t-0.16 開始
+  K.strike = (t) => {
+    K.duck(t - 0.16, 0.0001, 0.015);                   // 風雨瞬間抽掉：一片空白的蓄力
+    K.risG.gain.cancelScheduledValues(t - 0.2); K.risG.gain.setTargetAtTime(0.0001, t - 0.14, 0.012);   // 預兆也在爆擊前一刻切掉
+    revG.gain.cancelScheduledValues(t - 0.3); revG.gain.setTargetAtTime(0.04, t - 0.17, 0.02); revG.gain.setTargetAtTime(0.9, t - 0.005, 0.01);   // 殘響先收乾淨，爆擊那一刻才打開
+    K.duck(t + 1.6, 0.8, 1.6);                         // 爆完之後風雨很慢、很輕地回來：炸完是空曠
+    const wet = bus(0.7), dry = bus(0.18);
+    // 爆裂：極短的「啪」＋咔嚓的高頻
+    const cr = noise(), hp = c.createBiquadFilter(), cg = c.createGain(); hp.type = 'highpass'; hp.frequency.value = 1400; cg.gain.setValueAtTime(0.0001, t); cg.gain.exponentialRampToValueAtTime(1.8, t + 0.003); cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.28); cr.connect(hp); hp.connect(cg); cg.connect(wet); cg.connect(dry); cr.start(t); cr.stop(t + 0.32);
+    const ck = c.createOscillator(), kg = c.createGain(); ck.type = 'square'; ck.frequency.setValueAtTime(2400, t); ck.frequency.exponentialRampToValueAtTime(180, t + 0.04); kg.gain.setValueAtTime(0.6, t); kg.gain.exponentialRampToValueAtTime(0.0001, t + 0.05); ck.connect(kg); kg.connect(dry); ck.start(t); ck.stop(t + 0.06);
+    // 厚實的撞擊體：中低頻的噪音團，由亮漸悶
+    const bn = noise(), bl = c.createBiquadFilter(), bg = c.createGain(); bl.type = 'lowpass'; bl.frequency.setValueAtTime(1100, t); bl.frequency.exponentialRampToValueAtTime(110, t + 1.1); bg.gain.setValueAtTime(0.0001, t); bg.gain.exponentialRampToValueAtTime(1.7, t + 0.01); bg.gain.setTargetAtTime(0.0001, t + 0.12, 0.34); bn.connect(bl); bl.connect(bg); bg.connect(wet); bg.connect(dry); bn.start(t); bn.stop(t + 1.8);
+    // 次低頻轟：音高快速下沉，過一道軟削波加厚（會震胸口）
+    for (const [f0, f1, v, type] of [[150, 26, 1.5, 'sine'], [86, 34, 1.0, 'triangle']]) { const o = c.createOscillator(), og = c.createGain(), sh = sat(4); o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + 1.5); og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(v, t + 0.012); og.gain.setTargetAtTime(0.0001, t + 0.3, 0.55); o.connect(sh); sh.connect(og); og.connect(out); o.start(t); o.stop(t + 2.2); }
+    // 低沉的銅管群（braam）：電影預告片的那一聲「轟——」
+    { const sum = c.createGain(), sh = sat(7), lp = c.createBiquadFilter(), g = c.createGain(); lp.type = 'lowpass'; lp.Q.value = 2.5; lp.frequency.setValueAtTime(180, t); lp.frequency.exponentialRampToValueAtTime(2600, t + 0.14); lp.frequency.exponentialRampToValueAtTime(240, t + 2.4);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.42, t + 0.03); g.gain.setTargetAtTime(0.0001, t + 0.9, 0.55);
+      for (const f of [36.7, 36.8 * 1.004, 73.4, 73.4 * 0.997, 110, 146.8, 220]) { const o = c.createOscillator(), og = c.createGain(); o.type = 'sawtooth'; o.frequency.value = f; og.gain.value = f < 50 ? 0.55 : 0.32; o.connect(og); og.connect(sum); o.start(t); o.stop(t + 3.2); }
+      sum.connect(sh); sh.connect(lp); lp.connect(g); g.connect(wet); g.connect(dry); }
+    // 太鼓兩記：一記重、一記輕，跟遊戲裡的太鼓呼應
+    for (const [dt, v] of [[0.02, 0.95], [0.46, 0.5]]) { const d = c.createOscillator(), dg = c.createGain(); d.type = 'sine'; d.frequency.setValueAtTime(155, t + dt); d.frequency.exponentialRampToValueAtTime(46, t + dt + 0.55); dg.gain.setValueAtTime(0.0001, t + dt); dg.gain.exponentialRampToValueAtTime(v, t + dt + 0.006); dg.gain.exponentialRampToValueAtTime(0.0001, t + dt + 0.95); d.connect(dg); dg.connect(wet); dg.connect(dry); d.start(t + dt); d.stop(t + dt + 1); }
+    // 滾雷：長長的隆隆，一路在左右聲道之間滾過，音量一浪一浪起伏
+    { const n = noise(), lp = c.createBiquadFilter(), g = c.createGain(), pn = pan(-0.8), am = c.createGain(), al = c.createOscillator(), ag = c.createGain(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(320, t + 0.15); lp.frequency.exponentialRampToValueAtTime(48, t + 5.6); g.gain.setValueAtTime(0.0001, t + 0.15); g.gain.exponentialRampToValueAtTime(0.95, t + 0.55); g.gain.setTargetAtTime(0.0001, t + 2.2, 1.2);
+      am.gain.value = 0.62; al.frequency.setValueAtTime(7, t); al.frequency.linearRampToValueAtTime(2.2, t + 5); ag.gain.value = 0.38; al.connect(ag); ag.connect(am.gain); al.start(t); al.stop(t + 6);
+      n.connect(lp); lp.connect(am); am.connect(g); g.connect(pn); pn.connect(wet); n.start(t); n.stop(t + 6);
+      if (pn.pan) { pn.pan.setValueAtTime(-0.85, t + 0.1); pn.pan.linearRampToValueAtTime(0.85, t + 4.6); } }
+    // 三次越來越遠、越來越低的回音
+    [[0.95, 0.5, 170], [1.95, 0.34, 120], [3.15, 0.22, 85]].forEach(([dt, v, f], i) => { const n = noise(), lp = c.createBiquadFilter(), g = c.createGain(), pn = pan(i % 2 ? 0.7 : -0.7); lp.type = 'lowpass'; lp.frequency.value = f; g.gain.setValueAtTime(0.0001, t + dt); g.gain.exponentialRampToValueAtTime(v, t + dt + 0.18); g.gain.setTargetAtTime(0.0001, t + dt + 0.5, 0.65); n.connect(lp); lp.connect(g); g.connect(pn); pn.connect(wet); n.start(t + dt); n.stop(t + dt + 2.6); });
+    // 餘波：高頻耳鳴般的嗡聲，慢慢消失
+    { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = 3150; g.gain.setValueAtTime(0.0001, t + 0.06); g.gain.exponentialRampToValueAtTime(0.045, t + 0.12); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.4); o.connect(g); g.connect(out); o.start(t + 0.06); o.stop(t + 2.5); }
+  };
+  // 碎石撞到地面或石頭的「喀」：寬頻的短促雜訊＋一個很短的下滑音；v 是力道（0~1）、p 是左右位置
+  K.clack = (t, v, p) => { const b = bus(0.3), pn = pan(p), n = noise(), bp = c.createBiquadFilter(), g = c.createGain(); bp.type = 'bandpass'; bp.frequency.value = 650 + Math.random() * 2100; bp.Q.value = 2.2;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5 * v + 0.04, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05 + 0.07 * v); n.connect(bp); bp.connect(g); g.connect(pn); pn.connect(b); n.start(t, Math.random()); n.stop(t + 0.2);
+    const o = c.createOscillator(), og = c.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(260 + Math.random() * 260, t); o.frequency.exponentialRampToValueAtTime(90, t + 0.06); og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.22 * v + 0.02, t + 0.003); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.09); o.connect(og); og.connect(pn); o.start(t); o.stop(t + 0.12); };
+  K.stop = () => { const t = c.currentTime; out.gain.setTargetAtTime(0.0001, t, 0.5); setTimeout(() => { try { wind.stop(); rain.stop(); lfo.stop(); out.disconnect(); } catch (e) {} }, 2600); };
+  return K;
 }
-function fcSndRain(v) { const s = fcFx.snd; if (s) s.rainG.gain.setTargetAtTime(v, s.c.currentTime, 0.6); }
-function fcSndWind(v) { const s = fcFx.snd; if (s) s.windG.gain.setTargetAtTime(v, s.c.currentTime, 0.8); }
-// 雷聲：big＝炸雷（先「啪」一聲裂開、再接長長的低頻隆隆）；否則是遠方的悶雷
-function fcThunder(big, delay = 0) {
-  const s = fcFx.snd; if (!s) return; const c = s.c, t = c.currentTime + delay, g = c.createGain(); g.connect(s.out);
-  const dur = big ? 4.2 : 2.6, lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(big ? 900 : 260, t); lp.frequency.exponentialRampToValueAtTime(70, t + dur);
-  const n = noiseSrc(); n.connect(lp).connect(g); n.start(t); n.stop(t + dur + 0.1);
-  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(big ? 1.0 : 0.6, t + (big ? 0.012 : 0.25)); g.gain.setTargetAtTime(0.0001, t + (big ? 0.15 : 0.6), big ? 0.9 : 0.7);
-  // 低頻轟（身體會感覺到的那種）
-  const o = c.createOscillator(), og = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(big ? 78 : 52, t); o.frequency.exponentialRampToValueAtTime(28, t + dur * 0.8);
-  og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(big ? 0.8 : 0.45, t + 0.03); og.gain.setTargetAtTime(0.0001, t + 0.2, big ? 1.1 : 0.7); o.connect(og).connect(s.out); o.start(t); o.stop(t + dur + 0.2);
-  if (big) { // 炸裂的那一下：很短的高頻爆
-    const cr = noiseSrc(), hp = c.createBiquadFilter(), cg = c.createGain(); hp.type = 'highpass'; hp.frequency.value = 1800; cr.connect(hp).connect(cg).connect(s.out); cg.gain.setValueAtTime(0.8, t); cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.18); cr.start(t); cr.stop(t + 0.25);
-    // 太鼓一記，跟遊戲的聲音呼應
-    const d = c.createOscillator(), dg = c.createGain(); d.type = 'sine'; d.frequency.setValueAtTime(150, t + 0.02); d.frequency.exponentialRampToValueAtTime(48, t + 0.5); dg.gain.setValueAtTime(0.9, t + 0.02); dg.gain.exponentialRampToValueAtTime(0.0001, t + 0.9); d.connect(dg).connect(s.out); d.start(t + 0.02); d.stop(t + 1); }
+function fcSndStart() { if (!fcSoundOk()) return; const c = SND.ctx; if (c.state === 'suspended') c.resume().catch(() => {}); const k = fcKit(c); fcFx.snd = k; k.set(k.windG, 0.16, null, 1.2); }
+function fcSndRain(v) { const k = fcFx.snd; if (k) k.set(k.rainG, v, null, 0.6); }
+function fcSndWind(v) { const k = fcFx.snd; if (k) k.set(k.windG, v, null, 0.8); }
+function fcThunder(big, delay = 0) { const k = fcFx.snd; if (k) k.far(k.c.currentTime + delay, big ? 0.9 : 0.6); }   // 遠方悶雷（真正的雷霆一擊用 fcSndStrike）
+function fcSndRiser(dur) { const k = fcFx.snd; if (k) k.riser(k.c.currentTime + 0.02, dur); }
+function fcSndStrike(inMs) { const k = fcFx.snd; if (k) k.strike(k.c.currentTime + inMs / 1000); }
+let fcLastClack = 0;
+function fcSndClack(v, p) { const k = fcFx.snd; if (!k) return; const now = performance.now(); if (now - fcLastClack < 22) return; fcLastClack = now; k.clack(k.c.currentTime + 0.005, Math.min(1, v), p); }
+function fcSndStop() { const k = fcFx.snd; if (!k) return; fcFx.snd = null; k.stop(); }
+// 離線算出整段風暴的音檔（測試與試聽用，不影響遊戲）：回傳 WAV 的 base64
+window.__fcRenderStorm = async (opt = {}) => { const SR = 44100, LEN = 14, off = new OfflineAudioContext(2, SR * LEN, SR), k = fcKit(off);
+  k.windG.gain.setValueAtTime(0.16, 0); k.rainG.gain.setValueAtTime(0.0001, 0); k.rainG.gain.linearRampToValueAtTime(0.14, 2); k.rainG.gain.linearRampToValueAtTime(0.42, 5.6);
+  k.far(1.4, 0.6); k.far(2.9, 0.75); k.riser(4.0, 1.5); k.strike(5.65); const buf = await off.startRendering();
+  const L = buf.getChannelData(0), R = buf.getChannelData(1), n = L.length; let pk = 0; for (let i = 0; i < n; i++) pk = Math.max(pk, Math.abs(L[i]), Math.abs(R[i]));
+  const rms = (a, b) => { let e = 0; const i0 = Math.floor(a * SR), i1 = Math.floor(b * SR); for (let i = i0; i < i1; i++) e += L[i] * L[i] + R[i] * R[i]; return Math.sqrt(e / (2 * (i1 - i0))); };
+  const dv = new DataView(new ArrayBuffer(44 + n * 4)), w = (o, t) => { for (let i = 0; i < t.length; i++) dv.setUint8(o + i, t.charCodeAt(i)); }; w(0, 'RIFF'); dv.setUint32(4, 36 + n * 4, true); w(8, 'WAVEfmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 2, true); dv.setUint32(24, SR, true); dv.setUint32(28, SR * 4, true); dv.setUint16(32, 4, true); dv.setUint16(34, 16, true); w(36, 'data'); dv.setUint32(40, n * 4, true);
+  const g = pk > 0.98 ? 0.98 / pk : 1; for (let i = 0; i < n; i++) { dv.setInt16(44 + i * 4, Math.max(-1, Math.min(1, L[i] * g)) * 32767, true); dv.setInt16(46 + i * 4, Math.max(-1, Math.min(1, R[i] * g)) * 32767, true); }
+  let str = ''; const u8 = new Uint8Array(dv.buffer); for (let i = 0; i < u8.length; i += 32768) str += String.fromCharCode.apply(null, u8.subarray(i, i + 32768));
+  return { b64: btoa(str), peak: pk, 風雨: rms(0.3, 1.2), 預兆: rms(5.0, 5.45), 斷音: rms(5.5, 5.64), 爆擊: rms(5.65, 5.95), 滾雷: rms(6.6, 7.6), 餘波: rms(10, 11) }; };
+
+// 雷擊的餘波特效：衝擊波環、四散的火花、拂塵上爬行的電弧；畫在閃電那張畫布上，約 1.4 秒
+function fcImpactFx(cv, sx, sy) {
+  const ctx = cv.getContext('2d'), dpr = Math.min(devicePixelRatio || 1, 2); cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
+  const W = cv.width, H = cv.height, X = sx * dpr, Y = sy * dpr, t0 = performance.now(), sparks = [];
+  for (let i = 0; i < 70; i++) { const a = Math.random() * Math.PI * 2, v = (180 + Math.random() * 620) * dpr; sparks.push({ x: X, y: Y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 80 * dpr, life: 0.5 + Math.random() * 0.9, c: Math.random() < 0.55 ? '255,214,120' : '190,220,255', r: (1 + Math.random() * 2.4) * dpr }); }
+  (function frame() {
+    const dt = (performance.now() - t0) / 1000; ctx.clearRect(0, 0, W, H); if (dt > 1.6) return;
+    // 衝擊波：兩圈，往外擴散、越來越淡
+    for (const [d0, spd, w0] of [[0, 1500, 10], [0.12, 1100, 6]]) { const t = dt - d0; if (t < 0) continue; const r = t * spd * dpr, a = Math.max(0, 1 - t / 0.75); if (a <= 0) continue; ctx.strokeStyle = `rgba(210,230,255,${a * 0.85})`; ctx.lineWidth = w0 * dpr * (1 - t / 1.2); ctx.shadowColor = '#9cc4ff'; ctx.shadowBlur = 20 * dpr; ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.stroke(); }
+    // 火花：受重力往下掉，亮度隨壽命淡掉
+    ctx.shadowBlur = 8 * dpr; for (const p of sparks) { const l = dt / p.life; if (l >= 1) continue; p.vy += 900 * dpr * 0.016; p.x += p.vx * 0.016; p.y += p.vy * 0.016; p.vx *= 0.985; ctx.fillStyle = `rgba(${p.c},${1 - l})`; ctx.shadowColor = `rgba(${p.c},1)`; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (1 - l * 0.5), 0, Math.PI * 2); ctx.fill(); }
+    // 電弧：在雷擊點周圍閃動的小閃電，前 0.9 秒
+    if (dt < 0.9) { ctx.strokeStyle = `rgba(200,225,255,${0.9 * (1 - dt / 0.9)})`; ctx.lineWidth = 1.6 * dpr; ctx.shadowColor = '#9cc4ff'; ctx.shadowBlur = 12 * dpr;
+      for (let k = 0; k < 4; k++) { let x = X + (Math.random() - 0.5) * 30 * dpr, y = Y + (Math.random() - 0.5) * 30 * dpr; ctx.beginPath(); ctx.moveTo(x, y); const a0 = Math.random() * Math.PI * 2; for (let j = 0; j < 7; j++) { x += Math.cos(a0 + (Math.random() - 0.5) * 1.6) * 16 * dpr; y += Math.sin(a0 + (Math.random() - 0.5) * 1.6) * 16 * dpr; ctx.lineTo(x, y); } ctx.stroke(); } }
+    requestAnimationFrame(frame);
+  })();
 }
-function fcSndStop() { const s = fcFx.snd; if (!s) return; fcFx.snd = null; const t = s.c.currentTime; s.out.gain.setTargetAtTime(0.0001, t, 0.5); setTimeout(() => { try { s.wind.n.stop(); s.rain.n.stop(); s.lfo.stop(); s.out.disconnect(); } catch (e) {} }, 2200); }
+// 鏡頭的視角：預兆時慢慢推近（視角縮小）、雷擊那一下向外彈開再回來；結束一定要還原
+function fcFov(to, ms) { const f0 = camera.fov, t0 = performance.now(); (function go() { const k = Math.min(1, (performance.now() - t0) / ms), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; camera.fov = f0 + (to - f0) * e; camera.updateProjectionMatrix(); if (k < 1) requestAnimationFrame(go); })(); }
+
+/* —— 雷擊炸出的碎石：有重力、空氣阻力、彈跳（撞得重彈得高、每次衰減）、沿岩堆斜面滾下去、摩擦力慢慢停下；
+   會撞到周圍的石雕彈開、不會飛出島外；剛被雷劈到的碎石燒得發紅，約 1.5 秒冷卻成石頭色。座標都在島的區域座標（mark）裡。 —— */
+const FC_G = 15, FC_STATUES = Array.from({ length: 12 }, (_, i) => { const a = Math.PI / 12 + i * Math.PI / 6; return { x: Math.sin(a) * 9.6, z: Math.cos(a) * 9.6 - 0.6 }; });
+// 岩堆的高度（中心在 (0, -0.6)）：頂上約 3、一路緩降到島面
+function fcPileH(x, z) { const r = Math.hypot(x, z + 0.6), sm = (a, b, v) => { const k = Math.min(1, Math.max(0, (v - a) / (b - a))); return k * k * (3 - 2 * k); };
+  if (r <= 0.9) return 3.0; if (r <= 1.85) return 3.0 - 0.7 * sm(0.9, 1.85, r); if (r <= 3.0) return 2.3 - 1.3 * sm(1.85, 3.0, r); if (r <= 4.4) return 1.0 - 0.9 * sm(3.0, 4.4, r); return 0.1 * (1 - sm(4.4, 5.0, r)); }
+// 一步物理：list 裡每一塊 {x,y,z,vx,vy,vz,wx,wy,wz,r,sleep,...}；onImpact(f, 撞擊速度) 讓外面放灰塵和聲音
+function fcDebrisStep(list, dt, onImpact) {
+  for (const f of list) {
+    if (f.sleep >= 12) continue;
+    f.vy -= FC_G * dt; const drag = Math.exp(-0.18 * dt); f.vx *= drag; f.vz *= drag;
+    f.x += f.vx * dt; f.y += f.vy * dt; f.z += f.vz * dt;
+    // 撞石雕：把它推出石雕的圓柱，水平速度朝外反彈（衰減）
+    for (const st of FC_STATUES) { const dx = f.x - st.x, dz = f.z - st.z, d = Math.hypot(dx, dz), R = 1.35 + f.r * 0.8; if (d < R && f.y < 2.8 + f.r) { const nx = dx / (d || 1), nz = dz / (d || 1); f.x = st.x + nx * R; f.z = st.z + nz * R; const vn = f.vx * nx + f.vz * nz; if (vn < 0) { f.vx -= 1.4 * vn * nx; f.vz -= 1.4 * vn * nz; f.vx *= 0.8; f.vz *= 0.8; onImpact && onImpact(f, -vn * 0.8); } } }
+    // 島的邊緣（六角形島半徑約 13）：到邊上就彈回來，不飛出島外
+    { const rr = Math.hypot(f.x, f.z); if (rr > 12) { const nx = f.x / rr, nz = f.z / rr; f.x = nx * 12; f.z = nz * 12; const vn = f.vx * nx + f.vz * nz; if (vn > 0) { f.vx -= 1.5 * vn * nx; f.vz -= 1.5 * vn * nz; } } }
+    // 地面／岩堆：沿斜面法線反彈，撞得越重彈得越高，輕輕碰到就貼著滾；摩擦讓切向速度慢慢消耗
+    const h = fcPileH(f.x, f.z);
+    if (f.y - f.r * 0.75 < h) {
+      f.y = h + f.r * 0.75; const e = 0.25, gx = (fcPileH(f.x + e, f.z) - fcPileH(f.x - e, f.z)) / (2 * e), gz = (fcPileH(f.x, f.z + e) - fcPileH(f.x, f.z - e)) / (2 * e), nl = Math.hypot(gx, 1, gz), nx = -gx / nl, ny = 1 / nl, nz = -gz / nl;
+      const vn = f.vx * nx + f.vy * ny + f.vz * nz;
+      if (vn < 0) { const rest = -vn > 1.3 ? f.e * Math.min(1, -vn / 6 + 0.55) : 0; f.vx -= (1 + rest) * vn * nx; f.vy -= (1 + rest) * vn * ny; f.vz -= (1 + rest) * vn * nz; if (-vn > 1.3 && onImpact) onImpact(f, -vn); }
+      const fr = Math.exp(-(f.rough) * dt); f.vx *= fr; f.vz *= fr; if (ny > 0.9) f.vy *= fr;   // 切向摩擦（貼著地面時才吃到）
+      // 貼著地面滾：角速度跟著速度走（v = ω·r）
+      const k = Math.min(1, 7 * dt); f.wx += (f.vz / f.r - f.wx) * k; f.wz += (-f.vx / f.r - f.wz) * k; f.wy *= Math.exp(-2.5 * dt);
+      const sp = Math.hypot(f.vx, f.vy, f.vz); if (sp < 0.5 && ny > 0.55) f.sleep++; else f.sleep = 0;
+      if (f.sleep >= 12) { f.vx = f.vy = f.vz = 0; f.wx = f.wy = f.wz = 0; }
+    } else f.sleep = 0;
+    f.rx += f.wx * dt; f.ry += f.wy * dt; f.rz += f.wz * dt;
+  }
+}
+// 產生一批碎石的資料（不含畫面）；大塊、中塊、小碎石，大的重、慢、彈得低，小的輕、飛得遠、彈得多
+function fcDebrisMake() {
+  const list = [], mk = (n, rMin, rMax, vh, vv, e, rough) => { for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, r = rMin + Math.random() * (rMax - rMin), sp = vh[0] + Math.random() * (vh[1] - vh[0]), up = vv[0] + Math.random() * (vv[1] - vv[0]), off = 0.15 + Math.random() * 0.5;
+    list.push({ x: Math.cos(a) * off, y: 3.1 + Math.random() * 0.4, z: -0.6 + Math.sin(a) * off, vx: Math.cos(a) * sp, vy: up, vz: Math.sin(a) * sp, wx: (Math.random() - 0.5) * 14 / (r * 3 + 0.4), wy: (Math.random() - 0.5) * 8, wz: (Math.random() - 0.5) * 14 / (r * 3 + 0.4), rx: Math.random() * 6, ry: Math.random() * 6, rz: Math.random() * 6, r, e, rough: rough, sleep: 0, age: 0 }); } };
+  mk(5, 0.30, 0.46, [1.6, 3.6], [5.5, 8.5], 0.28, 3.4);    // 大塊
+  mk(14, 0.14, 0.26, [2.4, 5.2], [6, 10.5], 0.36, 2.6);    // 中塊
+  mk(26, 0.05, 0.12, [3, 6.4], [5, 11.5], 0.46, 1.8);      // 小碎石
+  return list;
+}
+const fcDeb = { list: [], meshes: [], puffs: [], raf: 0, on: false, tex: null };
+function fcDebrisClear() { fcDeb.on = false; cancelAnimationFrame(fcDeb.raf); for (const m of fcDeb.meshes) { fcIsl.mark.remove(m); m.geometry.dispose(); m.material.dispose(); } for (const q of fcDeb.puffs) { fcIsl.mark.remove(q.s); q.s.material.dispose(); } fcDeb.meshes = []; fcDeb.puffs = []; fcDeb.list = []; }
+function fcPuff(x, y, z, size, life) { if (!fcDeb.tex) fcDeb.tex = canvasTex(64, 64, (c) => { const g = c.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(150,140,128,.85)'); g.addColorStop(0.55, 'rgba(120,112,102,.4)'); g.addColorStop(1, 'rgba(110,104,96,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); });
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: fcDeb.tex, transparent: true, depthWrite: false, opacity: 0.7 })); sp.position.set(x, y, z); sp.scale.setScalar(size * 0.5); sp.userData.noMerge = true; fcIsl.mark.add(sp); fcDeb.puffs.push({ s: sp, t: 0, life, size, vy: 0.5 + Math.random() * 0.6 }); }
+function fcDebrisBurst() {
+  fcDebrisClear(); const list = fcDebrisMake(); fcDeb.list = list;
+  const ROCK_C = ['#8f8b84', '#a39f97', '#7d7972', '#b3aea4', '#958f86'];
+  for (const f of list) { const g = new THREE.DodecahedronGeometry(f.r, 0), p = g.attributes.position, v = new THREE.Vector3(); for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); v.multiplyScalar(0.8 + 0.35 * Math.abs(Math.sin(v.x * 9 + v.y * 7 + v.z * 5 + f.r * 30))); p.setXYZ(i, v.x, v.y, v.z); } g.computeVertexNormals();
+    const col = new THREE.Color(ROCK_C[Math.floor(Math.random() * ROCK_C.length)]), m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: col, flatShading: true, emissive: new THREE.Color('#ff7a1a'), emissiveIntensity: 1.3 })); m.userData.noMerge = true; m.castShadow = true; f.mesh = m; m.position.set(f.x, f.y, f.z); fcIsl.mark.add(m); fcDeb.meshes.push(m); }
+  for (let i = 0; i < 7; i++) fcPuff((Math.random() - 0.5) * 1.4, 3.1 + Math.random() * 0.4, -0.6 + (Math.random() - 0.5) * 1.4, 2.4 + Math.random() * 1.6, 1.2 + Math.random() * 0.6);
+  fcDeb.on = true; let last = performance.now(), age = 0;
+  (function loop(now) {
+    if (!fcDeb.on) return; let dt = Math.min(0.033, (now - last) / 1000); last = now;
+    if (fcT.freeze) { fcDeb.raf = requestAnimationFrame(loop); return; }   // 雷擊那一瞬間的定格：碎石也凍在半空
+    age += dt; fcDebrisStep(list, dt, (f, vn) => { const k = Math.min(1, vn / 9), px = Math.max(-0.9, Math.min(0.9, f.x / 9)); fcSndClack(k * (f.r > 0.2 ? 1 : 0.6), px); if (f.r > 0.2 && vn > 3.2) fcPuff(f.x, f.y - f.r * 0.5, f.z, 1.0 + f.r * 4, 0.9); });
+    for (const f of list) { f.mesh.position.set(f.x, f.y, f.z); f.mesh.rotation.set(f.rx, f.ry, f.rz); f.age += dt; const heat = Math.max(0, 1 - f.age / 1.6); f.mesh.material.emissiveIntensity = 1.3 * heat * heat; }
+    for (let i = fcDeb.puffs.length - 1; i >= 0; i--) { const q = fcDeb.puffs[i]; q.t += dt; const k = q.t / q.life; if (k >= 1) { fcIsl.mark.remove(q.s); q.s.material.dispose(); fcDeb.puffs.splice(i, 1); continue; } q.s.scale.setScalar(q.size * (0.5 + 1.0 * Math.sqrt(k))); q.s.position.y += q.vy * dt * (1 - k); q.s.material.opacity = 0.7 * (1 - k) * (1 - k); }
+    if (fcT.paused) return;   // 遊戲蓋上來之後不必再算
+    fcDeb.raf = requestAnimationFrame(loop);
+  })(last);
+}
+// 測試用（唯讀）：不畫畫面，直接用物理模擬 sec 秒，回報有沒有穿地、穿石雕、飛出島外，彈跳是不是越來越低、最後有沒有停下
+window.__fcDebrisSim = (sec = 6, seed = 1) => { const list = fcDebrisMake(), dt = 1 / 60; let under = 0, inStatue = 0, outside = 0, maxR = 0; const peaks = new Map(), lastVy = new Map(); let impacts = 0, sleepAt = null; const heights = list.map(() => []);
+  for (let t = 0; t < sec; t += dt) { fcDebrisStep(list, dt, () => { impacts++; });
+    list.forEach((f, i) => { const h = fcPileH(f.x, f.z); if (f.y - f.r * 0.75 < h - 0.02) under++; for (const st of FC_STATUES) if (Math.hypot(f.x - st.x, f.z - st.z) < 1.35 + f.r * 0.8 - 0.05 && f.y < 2.8) inStatue++; const rr = Math.hypot(f.x, f.z); maxR = Math.max(maxR, rr); if (rr > 12.05) outside++; heights[i].push(+(f.y - h).toFixed(2)); });
+    if (sleepAt == null && list.every((f) => f.sleep >= 12)) sleepAt = +t.toFixed(2); }
+  // 每一塊的反彈高峰：取「向下→向上」之後的局部最高點，檢查是否一次比一次低
+  let monotone = 0, checked = 0; heights.forEach((hs) => { const pk = []; for (let i = 2; i < hs.length - 2; i++) if (hs[i] > hs[i - 1] && hs[i] >= hs[i + 1] && hs[i] > 0.12) pk.push(hs[i]); if (pk.length >= 3) { checked++; if (pk.every((v, j) => j === 0 || v <= pk[j - 1] + 0.05)) monotone++; } });
+  return { 碎石數: list.length, 穿進地面: under, 穿進石雕: inStatue, 飛出島外: outside, 最遠離中心: +maxR.toFixed(2), 全部停下的時間: sleepAt, 撞擊次數: impacts, 有多次彈跳的: checked, 彈跳一次比一次低: monotone }; };
 async function fcEnter(href) {
   if (fcT.busy) return; fcT.busy = true;
   const go = () => { location.href = href; };   // 降級：直接換頁
@@ -8930,21 +9094,32 @@ async function fcEnter(href) {
     const dirV = camera.position.clone().sub(wp).setY(0).normalize(); if (dirV.lengthSq() < 0.01) dirV.set(0.6, 0, 0.8);
     const wide = innerWidth < innerHeight ? 1.7 : 1.15;   // 直式手機視野窄，退遠一點才拍得到整支（含上面垂下來的馬尾）
     const closeP = wp.clone().add(dirV.multiplyScalar(17 * wide)).setY(wp.y + 2.5), look = wp.clone().add(new THREE.Vector3(0, 7.2, 0));
-    controls.autoRotate = false; flyTo(look, closeP, 2.8, null, 0, true);
+    controls.autoRotate = false; flyTo(look, closeP, 2.0, null, 0, true);   // 預兆開始前就飛到位（預兆自己會再慢慢推近）
     el.classList.add('say', 'storm'); fcSndWind(0.3); fcSndRain(0.12); fcThunder(false, 0.5);
     const ramp0 = performance.now(); (function ramp() { const k = Math.min(1, (performance.now() - ramp0) / 2200); fcFx.intensity = 0.25 + 0.55 * k; if (k < 1) requestAnimationFrame(ramp); })();
-    setTimeout(() => { fcBolt(el.querySelector('canvas.bolt'), el.querySelector('.flash'), innerWidth * (0.2 + Math.random() * 0.25), innerHeight * 0.5, false); fcLightScene(0.45); fcThunder(false, 0.8); }, 1100);   // 遠方先閃一下、悶雷隨後
-    setTimeout(() => { fcBolt(el.querySelector('canvas.bolt'), el.querySelector('.flash'), innerWidth * (0.6 + Math.random() * 0.25), innerHeight * 0.45, false); fcLightScene(0.55); fcThunder(false, 0.5); }, 2200);   // 再閃一下，間隔拉近、逼近   // 遠方先閃一下、悶雷隨後
+    setTimeout(() => { fcBolt(el.querySelector('canvas.bolt'), el.querySelector('.flash'), innerWidth * (0.2 + Math.random() * 0.25), innerHeight * 0.5, false); fcLightScene(0.45); fcThunder(false, 0.8); }, 800);   // 遠方先閃一下、悶雷隨後
+    setTimeout(() => { fcBolt(el.querySelector('canvas.bolt'), el.querySelector('.flash'), innerWidth * (0.6 + Math.random() * 0.25), innerHeight * 0.45, false); fcLightScene(0.55); fcThunder(false, 0.5); }, 1700);   // 再閃一下，間隔拉近、逼近   // 遠方先閃一下、悶雷隨後
     if (fcIsl.glow) { const g0 = fcIsl.glow.scale.clone(); const t0 = performance.now(); (function glowUp() { const k = Math.min(1, (performance.now() - t0) / 2200); fcIsl.glow.scale.set(g0.x * (1 + 1.3 * k), g0.y * (1 + 1.3 * k), 1); fcIsl.glow.material.opacity = 1; if (k < 1) requestAnimationFrame(glowUp); })(); }
-    await fcTWait(3000);
+    await fcTWait(2050);
+    // 預兆（1.5 秒）：聲音推到最高、鏡頭慢慢推近並微微發抖、雨更大、天色再暗一層
+    fcT.fov0 = camera.fov; fcFov(camera.fov * 0.86, 1600); fcSndRiser(1.5); fcFx.intensity = 1; fcSndRain(0.3); el.classList.add('heavy');
+    el.classList.add('tremble'); document.body.classList.add('fcTremble'); await fcTWait(1500); document.body.classList.remove('fcTremble');
+    // 斷音（0.17 秒）：風雨全抽掉、畫面屏息——這一拍是整個衝擊的蓄力
+    el.classList.remove('tremble'); el.classList.add('hold'); await fcTWait(170);
+    el.classList.remove('hold');
     // 第三拍：拔起拂塵，往上一揮，留下金色光痕
     const y0 = sw.position.y, r0 = sw.rotation.z, trail = [], lineGeo = new THREE.BufferGeometry(), lineM = new THREE.LineBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false });
     const line = new THREE.Line(lineGeo, lineM); line.frustumCulled = false; fcIsl.mark.add(line);
-    const head = new THREE.Vector3(), t1 = performance.now(), DUR = 1100;
-    // 雷霆一擊：閃電劈在拂塵頭上，全螢幕白光、鏡頭震動、整座島被照亮、炸雷＋太鼓，雨一下子變大
-    { const hp = new THREE.Vector3(); sw.getWorldPosition(hp); hp.y += 7.5; hp.project(camera); const sx = (hp.x * 0.5 + 0.5) * innerWidth, sy = (-hp.y * 0.5 + 0.5) * innerHeight;
-      el.classList.add('heavy'); fcBolt(el.querySelector('canvas.bolt'), el.querySelector('.flash'), sx, Math.max(60, Math.min(innerHeight * 0.5, sy)), true); fcLightScene(1); fcThunder(true, 0.02); fcSndRain(0.42); fcSndWind(0.5); fcFx.intensity = 1;
-      document.body.classList.add('fcShake'); setTimeout(() => document.body.classList.remove('fcShake'), 600); try { navigator.vibrate && navigator.vibrate([40, 30, 90]); } catch (e) {} }
+    const head = new THREE.Vector3(), DUR = 1100; let t1 = performance.now();
+    // 雷霆一擊
+    { const hp = new THREE.Vector3(); sw.getWorldPosition(hp); hp.y += 7.5; hp.project(camera); const sx = (hp.x * 0.5 + 0.5) * innerWidth, sy = Math.max(60, Math.min(innerHeight * 0.5, (-hp.y * 0.5 + 0.5) * innerHeight));
+      fcSndStrike(0);   // 聲音：預兆已在斷音那 0.17 秒收掉，這一刻立刻炸
+      fcBolt(el.querySelector('canvas.bolt'), el.querySelector('.flash'), sx, sy, true); fcLightScene(1.25); fcFov(fcT.fov0 * 1.14, 90); setTimeout(() => fcFov(fcT.fov0, 900), 130);   // 向外彈一下再慢慢回來
+      document.body.classList.add('fcShake'); setTimeout(() => document.body.classList.remove('fcShake'), 1000); try { navigator.vibrate && navigator.vibrate([60, 30, 140, 40, 60]); } catch (e) {}
+      // 定格：爆亮那一瞬間，群島的畫面凍住約 0.11 秒（hit-stop），閃電與衝擊波照常閃，然後才開始拔起
+      fcDebrisBurst(); fcT.freeze = true; fcT.rafStop = true; setTimeout(() => { fcT.rafStop = false; fcT.freeze = false; }, 110); setTimeout(() => fcImpactFx(el.querySelector('canvas.bolt'), sx, sy), 60);
+      fcSndRain(0.1); fcSndWind(0.1); setTimeout(() => { fcSndRain(0.3); fcSndWind(0.3); }, 1600); }
+    await fcTWait(110); t1 = performance.now();
     await new Promise((done) => { (function pull() {
       const k = Math.min(1, (performance.now() - t1) / DUR), e = fcTEase(k);
       sw.position.y = y0 + e * 6.5; sw.rotation.z = r0 + e * 0.9 * Math.sin(k * Math.PI);
@@ -8952,6 +9127,7 @@ async function fcEnter(href) {
       lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(trail, 3)); lineGeo.setDrawRange(0, trail.length / 3);
       lineM.opacity = 0.95 * (1 - k * 0.3);
       if (k < 1) requestAnimationFrame(pull); else done(); })(); });
+    await fcTWait(600);   // 讓碎石落地、滾動
     // 第四拍：夜空色的幕蓋上來，遊戲在同一頁載入、淡入
     el.classList.add('dim'); el.classList.remove('say'); fcFx.intensity = 0.4; fcSndRain(0.14); fcSndWind(0.18); fcThunder(false, 1.2);
     const frame = document.createElement('iframe'); frame.allow = 'accelerometer; gyroscope; autoplay; fullscreen'; frame.setAttribute('title', '拂塵試煉');
@@ -8972,7 +9148,9 @@ async function fcLeave() {
   await fcTWait(900); fcCleanup(false);
 }
 function fcCleanup(abort) {
-  fcRainStop(); fcSndStop(); fcFx.litBoost = 0; document.body.classList.remove('fcShake');
+  fcDebrisClear(); fcT.freeze = false;
+  fcRainStop(); fcSndStop(); fcFx.litBoost = 0; document.body.classList.remove('fcShake', 'fcTremble');
+  if (fcT.fov0) { camera.fov = fcT.fov0; camera.updateProjectionMatrix(); fcT.fov0 = 0; }
   if (fcT.savedTarget) { nightTarget = fcT.savedTarget.night; warmTarget = fcT.savedTarget.warm; skyAM = fcT.savedTarget.am; fcT.savedTarget = null; }
   fcT.lockSky = false; if (typeof updateSky === 'function') updateSky();
   if (fcT.savedCam) { flyTo(fcT.savedCam.tgt, fcT.savedCam.pos, 1.6, null, 0, false); fcT.savedCam = null; }
