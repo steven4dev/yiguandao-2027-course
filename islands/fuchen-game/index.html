@@ -127,19 +127,25 @@ body{line-break:strict}
 .prog i{display:block;height:100%;width:0;background:var(--gold);transition:width .1s linear}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin:10px 0;font-size:.95rem}
 /* 結算畫面壓緊：塵靈收得多的時候也盡量一個畫面看完（淨心錄、回島兩顆並排） */
-#scrResult .panel{padding:14px 14px 12px}
+#scrResult .panel{padding:12px 14px 10px}
 #scrResult h2{margin:0 0 4px;font-size:1.1rem}
 #scrResult .panel p{margin:4px 0}
-#scrResult .stats{margin:6px 0;grid-template-columns:repeat(4,auto);justify-content:space-between;gap:0 6px;font-size:.84rem;white-space:nowrap}
+/* 成績數字放大：每項一格，大數字在上、小標籤在下 */
+#scrResult .stats{margin:6px 0 4px;grid-template-columns:repeat(4,1fr);gap:6px;font-size:.78rem;text-align:center}
+#scrResult .stats span{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 2px 4px;border-radius:10px;background:rgba(255,255,255,.06);color:var(--muted);line-height:1.15;min-width:0}
+#scrResult .stats b{font-size:1.6rem;font-weight:900;color:var(--gold);letter-spacing:-.5px;line-height:1.1}
+#scrResult .stats small{font-size:.74rem;margin-top:2px}
 #scrResult #resCaught{margin:6px 0!important}
 #scrResult .caught{gap:4px}
 #scrResult .caught span{padding:1px 7px;font-size:.78rem}
-#scrResult .quote{margin:6px 0;padding:7px 12px;font-size:.9rem;line-height:1.5}
-#scrResult .signup{margin:6px 0 0;padding:7px 12px}
-#scrResult .signup p{margin:3px 0 0;font-size:.86rem;line-height:1.5}
-#scrResult .row{margin-top:8px;gap:6px;grid-template-columns:1fr}
+#scrResult .caught small{font-size:.9rem;font-weight:800;color:var(--gold)}
+#scrResult .quote{margin:5px 0;padding:6px 12px;font-size:.88rem;line-height:1.45}
+#scrResult .quote small{font-size:.72rem}
+#scrResult .signup{margin:5px 0 0;padding:6px 12px}
+#scrResult .signup p{margin:2px 0 0;font-size:.82rem;line-height:1.45}
+#scrResult .row{margin-top:7px;gap:5px;grid-template-columns:1fr}
 /* 四顆按鈕一樣寬、一樣高：報名（實心金）＞再試煉（金框）＞淨心錄、返回島嶼（一般框） */
-#scrResult .row > *{box-sizing:border-box;width:100%;min-height:42px;padding:8px 8px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:1rem;font-weight:800;text-align:center;text-decoration:none}
+#scrResult .row > *{box-sizing:border-box;width:100%;min-height:40px;padding:6px 8px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:1rem;font-weight:800;text-align:center;text-decoration:none}
 #scrResult #btnShare{background:#06c755;color:#fff;border:0}
 #scrResult #btnAgain{border:1.5px solid var(--gold);color:var(--gold);background:rgba(232,189,90,.10)}
 .stats b{color:var(--gold)}
@@ -282,7 +288,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261111.18';
+const VERSION = 'v261111.19';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1920,7 +1926,7 @@ function showResult(kind){
   $('#resTitle').textContent = kind === 'over' ? '🪔 心燈用完了' : '✨ 試煉圓滿';
   $('#resTitle').textContent += `・${D().name}`;
   $('#resLine').innerHTML = kind === 'over' ? clauses('別灰心，塵埃本來就要天天拂。定下心再來一次！') : `<span class="cl">無明塵王收服了！</span><span class="cl">評價：<b class="nb">${rating}</b></span>`;
-  $('#resStats').innerHTML = `<span>淨化 <b>${hits}</b> 隻</span><span>命中率 <b>${acc}%</b></span><span>最高連擊 <b>${maxCombo}</b></span><span>得分 <b>${score}</b></span>`;
+  $('#resStats').innerHTML = `<span><b>${hits}</b><small>淨化（隻）</small></span><span><b>${acc}%</b><small>命中率</small></span><span><b>${maxCombo}</b><small>最高連擊</small></span><span><b>${score}</b><small>得分</small></span>`;
   $('#resCaught').innerHTML = caught.length ? `<b>本局收入淨心錄</b><div class="caught">${caught.map(c => `<span>${c.gold ? '✨' : ''}${c.def.name}<small>Lv ${c.lv}</small>${c.isNew ? '<i>NEW</i>' : ''}</span>`).join('')}</div>` : '<span class="note">這一局沒有收服塵靈，下次加油！</span>';
   $('#resQuote').innerHTML = `${clauses(pick(QUOTES))}${QUOTES_DEMO ? '<small>（示範慈語，正式版會換成審定的文字）</small>' : ''}`;
   // 分享到 LINE：訊息短、單行不超過 12 字；連到專屬入口頁（LINE 預覽圖才會是雷擊拂塵那張）
