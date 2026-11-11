@@ -130,16 +130,16 @@ body{line-break:strict}
 #scrResult .panel{padding:14px 14px 12px}
 #scrResult h2{margin:0 0 4px;font-size:1.1rem}
 #scrResult .panel p{margin:4px 0}
-#scrResult .stats{margin:6px 0;gap:3px 12px;font-size:.9rem}
+#scrResult .stats{margin:6px 0;grid-template-columns:repeat(4,auto);justify-content:space-between;gap:0 6px;font-size:.84rem;white-space:nowrap}
 #scrResult #resCaught{margin:6px 0!important}
 #scrResult .caught{gap:4px}
-#scrResult .caught span{padding:2px 7px;font-size:.8rem}
-#scrResult .quote{margin:8px 0;padding:8px 12px;font-size:.92rem;line-height:1.55}
-#scrResult .signup{margin:8px 0 2px;padding:9px 12px}
-#scrResult .signup p{margin:4px 0 8px;font-size:.88rem;line-height:1.55}
-#scrResult .row{margin-top:10px;gap:8px;grid-template-columns:1fr}
+#scrResult .caught span{padding:1px 7px;font-size:.78rem}
+#scrResult .quote{margin:6px 0;padding:7px 12px;font-size:.9rem;line-height:1.5}
+#scrResult .signup{margin:6px 0 0;padding:7px 12px}
+#scrResult .signup p{margin:3px 0 0;font-size:.86rem;line-height:1.5}
+#scrResult .row{margin-top:8px;gap:6px;grid-template-columns:1fr}
 /* 四顆按鈕一樣寬、一樣高：報名（實心金）＞再試煉（金框）＞淨心錄、返回島嶼（一般框） */
-#scrResult .row > *{box-sizing:border-box;width:100%;min-height:46px;padding:10px 8px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:1rem;font-weight:800;text-align:center;text-decoration:none}
+#scrResult .row > *{box-sizing:border-box;width:100%;min-height:42px;padding:8px 8px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:1rem;font-weight:800;text-align:center;text-decoration:none}
 #scrResult #btnAgain{border:1.5px solid var(--gold);color:var(--gold);background:rgba(232,189,90,.10)}
 .stats b{color:var(--gold)}
 .signup{margin:12px 0 4px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(232,189,90,.10);text-align:center}
@@ -280,7 +280,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261111.16';
+const VERSION = 'v261111.17';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
