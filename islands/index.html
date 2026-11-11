@@ -696,7 +696,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261110.18</span>
+  <span class="ver">v261110.19</span>
   </div></div>
 </div>
 
@@ -9077,6 +9077,16 @@ window.__fcDebrisSim = (sec = 6, seed = 1) => { const list = fcDebrisMake(), dt 
   // 每一塊的反彈高峰：取「向下→向上」之後的局部最高點，檢查是否一次比一次低
   let monotone = 0, checked = 0; heights.forEach((hs) => { const pk = []; for (let i = 2; i < hs.length - 2; i++) if (hs[i] > hs[i - 1] && hs[i] >= hs[i + 1] && hs[i] > 0.12) pk.push(hs[i]); if (pk.length >= 3) { checked++; if (pk.every((v, j) => j === 0 || v <= pk[j - 1] + 0.05)) monotone++; } });
   return { 碎石數: list.length, 穿進地面: under, 穿進石雕: inStatue, 飛出島外: outside, 最遠離中心: +maxR.toFixed(2), 全部停下的時間: sleepAt, 撞擊次數: impacts, 有多次彈跳的: checked, 彈跳一次比一次低: monotone }; };
+/* —— 轉場時拂塵太暗：夜裡的島光線少，劍身又是深色。這裡讓拂塵「自己有一點暖金色的光」：
+   材質加自發光（只改複製品，結束時換回原材質）＋ 跟著劍移動的一盞暖色點光源，雷擊瞬間閃到最亮再緩緩降到常亮。 —— */
+const fcSG = { mats: [], light: null, level: 0, raf: 0 };
+function fcSwordGlowInit(sw) { if (fcSG.light) return;
+  sw.traverse((m) => { if (!m.isMesh || !m.material) return; const arr = Array.isArray(m.material) ? m.material : [m.material], nw = arr.map((x) => { const c = x.clone(); if (c.emissive) { c.userData.e0 = c.emissive.clone(); c.userData.ei0 = c.emissiveIntensity; } return c; }); fcSG.mats.push({ m, old: m.material }); m.material = Array.isArray(m.material) ? nw : nw[0]; });
+  const L = new THREE.PointLight(0xffd79a, 0, 14, 1.6); L.position.set(0, 3.2, 0.9); sw.add(L); fcSG.light = L; }
+function fcSwordGlowSet(v) { fcSG.level = v; if (fcSG.light) fcSG.light.intensity = v * 26;
+  for (const { m } of fcSG.mats) for (const x of (Array.isArray(m.material) ? m.material : [m.material])) if (x.emissive) { x.emissive.set(0xffc66e); x.emissiveIntensity = v * 0.55; } }
+function fcSwordGlowTo(v, ms) { cancelAnimationFrame(fcSG.raf); const a = fcSG.level, t0 = performance.now(); (function go() { const k = Math.min(1, (performance.now() - t0) / Math.max(1, ms)); fcSwordGlowSet(a + (v - a) * k); if (k < 1) fcSG.raf = requestAnimationFrame(go); })(); }
+function fcSwordGlowOff(sw) { cancelAnimationFrame(fcSG.raf); for (const { m, old } of fcSG.mats) { for (const x of (Array.isArray(m.material) ? m.material : [m.material])) x.dispose(); m.material = old; } fcSG.mats = []; if (fcSG.light && fcSG.light.parent) fcSG.light.parent.remove(fcSG.light); fcSG.light = null; fcSG.level = 0; }
 async function fcEnter(href) {
   if (fcT.busy) return; fcT.busy = true;
   const go = () => { location.href = href; };   // 降級：直接換頁
@@ -9091,6 +9101,7 @@ async function fcEnter(href) {
     await fcTWait(900);
     // 第二拍：鏡頭飛向石中劍
     const sw = fcIsl.sword, wp = new THREE.Vector3(); sw.getWorldPosition(wp);
+    fcSwordGlowInit(sw); fcSwordGlowTo(0.7, 1800);   // 風雲聚集時拂塵就先亮起暖金色的光
     const dirV = camera.position.clone().sub(wp).setY(0).normalize(); if (dirV.lengthSq() < 0.01) dirV.set(0.6, 0, 0.8);
     const wide = innerWidth < innerHeight ? 1.7 : 1.15;   // 直式手機視野窄，退遠一點才拍得到整支（含上面垂下來的馬尾）
     const closeP = wp.clone().add(dirV.multiplyScalar(17 * wide)).setY(wp.y + 2.5), look = wp.clone().add(new THREE.Vector3(0, 7.2, 0));
@@ -9114,6 +9125,7 @@ async function fcEnter(href) {
     // 雷霆一擊
     { const hp = new THREE.Vector3(); sw.getWorldPosition(hp); hp.y += 7.5; hp.project(camera); const sx = (hp.x * 0.5 + 0.5) * innerWidth, sy = Math.max(60, Math.min(innerHeight * 0.5, (-hp.y * 0.5 + 0.5) * innerHeight));
       const bp = new THREE.Vector3(0.12, 2.9, -0.6); fcIsl.mark.localToWorld(bp); bp.project(camera); const bx = (bp.x * 0.5 + 0.5) * innerWidth, by = (-bp.y * 0.5 + 0.5) * innerHeight;   // 劍插進岩石的那一點（螢幕座標）
+      fcSwordGlowTo(2.4, 60); setTimeout(() => fcSwordGlowTo(1.0, 1400), 120);   // 被雷劈中：瞬間最亮，再降到常亮
       fcSndStrike(0);   // 聲音：預兆已在斷音那 0.17 秒收掉，這一刻立刻炸
       fcBolt(el.querySelector('canvas.bolt'), el.querySelector('.flash'), sx, sy, true); fcLightScene(1.25); fcFov(fcT.fov0 * 1.14, 90); setTimeout(() => fcFov(fcT.fov0, 900), 130);   // 向外彈一下再慢慢回來
       document.body.classList.add('fcShake'); setTimeout(() => document.body.classList.remove('fcShake'), 1000); try { navigator.vibrate && navigator.vibrate([60, 30, 140, 40, 60]); } catch (e) {}
@@ -9149,6 +9161,7 @@ async function fcLeave() {
   await fcTWait(900); fcCleanup(false);
 }
 function fcCleanup(abort) {
+  fcSwordGlowOff();
   fcDebrisClear(); fcT.freeze = false;
   fcRainStop(); fcSndStop(); fcFx.litBoost = 0; document.body.classList.remove('fcShake', 'fcTremble');
   if (fcT.fov0) { camera.fov = fcT.fov0; camera.updateProjectionMatrix(); fcT.fov0 = 0; }
