@@ -107,7 +107,8 @@ body{line-break:strict}
 #scrTitle .row{margin-top:10px;gap:7px}
 #scrTitle .diff button{padding:7px 4px 6px}
 #scrTitle .startRow button{padding:10px 6px}
-#scrTitle #btnDexT{padding:9px}
+#scrTitle #btnDexT,#scrTitle #btnIsleT{padding:9px}
+#scrTitle .twoRow{display:grid;grid-template-columns:1.5fr 1fr;gap:7px}
 /* 特別矮的螢幕（iPhone SE、開著網址列的小手機）：再壓一層 */
 @media (max-height: 620px){
   #scrTitle .panel{padding:12px 14px 10px}
@@ -119,7 +120,7 @@ body{line-break:strict}
   #scrTitle .row{margin-top:8px;gap:6px}
   #scrTitle .diff button{font-size:.88rem;padding:6px 3px 5px}
   #scrTitle .startRow button{padding:8px 6px;font-size:1rem}
-  #scrTitle #btnDexT{padding:7px}
+  #scrTitle #btnDexT,#scrTitle #btnIsleT{padding:7px}
   .screen{padding-top:10px;padding-bottom:26px}
 }
 .prog{height:12px;border-radius:8px;background:rgba(255,255,255,.12);overflow:hidden;margin:12px 0}
@@ -206,7 +207,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
         <button class="primary big" id="btnStart">🪶 開始試煉<small>手機當拂塵大揮</small></button>
         <button class="big" id="btnTouch">👆 用手指畫<small>不方便揮的時候</small></button>
       </div>
-      <button id="btnDexT">📖 淨心錄</button>
+      <div class="twoRow"><button id="btnDexT">📖 淨心錄</button><button id="btnIsleT">🏝️ 返回島嶼</button></div>
     </div>
     <p class="note" id="titleMsg"></p>
   </div>
@@ -255,7 +256,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261111.10';
+const VERSION = 'v261111.11';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1979,7 +1980,7 @@ $('#btnAgain').addEventListener('click', () => { $('#scrResult').hidden = true; 
 $('#btnQuit').addEventListener('click', () => { cancelFlag = true; });
 // 嵌在群島頁面裡（?embed=1）：回島＝通知上層頁面收起遊戲、反向播放轉場；單獨打開就照原本換頁
 const EMBED = /[?&]embed=1\b/.test(location.search) && window.parent !== window;
-$('#btnIsle').addEventListener('click', () => { if(EMBED){ try{ window.parent.postMessage({ fuchen:'leave' }, location.origin); return; }catch(e){} } location.href = '../#fuchen'; });
+['#btnIsle', '#btnIsleT'].forEach((q) => $(q).addEventListener('click', () => { if(EMBED){ try{ window.parent.postMessage({ fuchen:'leave' }, location.origin); return; }catch(e){} } location.href = '../#fuchen'; }));
 if(EMBED){ document.documentElement.classList.add('embed'); }
 fu = new Fuchen(); resize(); requestAnimationFrame(frame);
 // 電腦測試用：?touch 直接進觸控模式
