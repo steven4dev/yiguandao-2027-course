@@ -234,7 +234,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     <div class="row">
       <button class="primary big" id="btnAgain">再試煉一次</button>
       <button id="btnDexR">📖 看淨心錄</button>
-      <button id="btnIsle" onclick="location.href='../#fuchen'">🏝️ 回到拂塵淨心島</button>
+      <button id="btnIsle">🏝️ 回到拂塵淨心島</button>
     </div>
   </div>
 </section>
@@ -255,7 +255,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.33';
+const VERSION = 'v261109.34';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1977,6 +1977,10 @@ $('#btnCalib').addEventListener('click', runCalib);
 $('#btnCalibReuse').addEventListener('click', () => { $('#scrCalib').hidden = true; runGame(); });
 $('#btnAgain').addEventListener('click', () => { $('#scrResult').hidden = true; audioInit(); runGame(); });
 $('#btnQuit').addEventListener('click', () => { cancelFlag = true; });
+// 嵌在群島頁面裡（?embed=1）：回島＝通知上層頁面收起遊戲、反向播放轉場；單獨打開就照原本換頁
+const EMBED = /[?&]embed=1\b/.test(location.search) && window.parent !== window;
+$('#btnIsle').addEventListener('click', () => { if(EMBED){ try{ window.parent.postMessage({ fuchen:'leave' }, location.origin); return; }catch(e){} } location.href = '../#fuchen'; });
+if(EMBED){ document.documentElement.classList.add('embed'); }
 fu = new Fuchen(); resize(); requestAnimationFrame(frame);
 // 電腦測試用：?touch 直接進觸控模式
 if(/[?&]touch\b/.test(location.search)){ inputMode = 'touch'; $('#scrTitle').hidden = true; runGame(); }
