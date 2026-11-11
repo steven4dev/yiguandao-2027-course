@@ -643,6 +643,19 @@
   .ptcard .ptc-demo { font-size: 11px; color: #8a7060; text-align: center; margin-bottom: 8px; }
   .ptc-ok { background: #3f8a6a; color: #fff; }
   @media (prefers-reduced-motion: reduce) { .ptcard, .pt-level i { transition: none; } }
+
+/* —— 拂塵試煉轉場（打樣：網址加 fctrans 才啟用）—— */
+.fcT{position:fixed;inset:0;z-index:60;pointer-events:none}
+.fcT .veil{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 40%,#1a2744 0%,#0b1220 55%,#05080f 100%);opacity:0;transition:opacity 1s ease}
+.fcT .vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 40%,rgba(3,6,12,.72) 100%);opacity:0;transition:opacity 1.2s ease}
+.fcT .txt{position:absolute;left:0;right:0;top:44%;text-align:center;color:#f3e3b6;font-size:clamp(1.1rem,5vw,1.5rem);font-weight:800;letter-spacing:.35em;opacity:0;transition:opacity .9s ease;text-shadow:0 0 18px rgba(255,205,110,.7)}
+.fcT .txt small{display:block;margin-top:10px;font-size:.62em;letter-spacing:.2em;font-weight:600;color:rgba(243,227,182,.7)}
+.fcT iframe{position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity 1.1s ease;pointer-events:auto;background:#0b1220}
+.fcT.show iframe{opacity:1}
+.fcT.dim .veil{opacity:1}
+.fcT.focus .vig{opacity:1}
+.fcT.say .txt{opacity:1}
+body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag,body.fcT-hide .topbtns{transition:opacity .6s ease;opacity:0!important;pointer-events:none!important}
 </style>
 <style>
   body { margin: 0; }
@@ -5302,14 +5315,14 @@ const fcIsl = makeIsland('fuchen', FC_R, Math.sin(FC_ANG) * 108, Math.cos(FC_ANG
     const mossM = new THREE.MeshLambertMaterial({ color: '#6f8f4e', flatShading: true });
     for (let i = 0; i < 8; i++) { const a = rr() * Math.PI * 2, d = 1.4 + rr() * 2.2; const m = mesh(new THREE.SphereGeometry(0.32 + rr() * 0.2, 6, 4), mossM, Math.sin(a) * d, 1.55 - d * 0.32, Math.cos(a) * d - 0.6, mark); m.scale.y = 0.35; }
     const glowT = canvasTex(128, 128, (c) => { const g = c.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,236,170,1)'); g.addColorStop(0.35, 'rgba(255,205,110,.55)'); g.addColorStop(1, 'rgba(255,190,90,0)'); c.fillStyle = g; c.fillRect(0, 0, 128, 128); });
-    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowT, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); glow.position.set(0.12, 2.95, -0.45); glow.scale.set(3.4, 2.4, 1); glow.userData.noMerge = true; mark.add(glow);
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowT, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); fcIsl.glow = glow; glow.position.set(0.12, 2.95, -0.45); glow.scale.set(3.4, 2.4, 1); glow.userData.noMerge = true; mark.add(glow);
   }
   addObst(mark, { x: 0, z: -0.6, r: 5.0 });
   for (let i = 0; i < 4; i++) { const st = mesh(new THREE.CylinderGeometry(0.75, 0.8, 0.14, 8), lam('#c9ccc2'), (i % 2 ? 0.35 : -0.35), 0.07, 5.2 + i * 1.5, mark); st.rotation.y = i; }   // 只鋪到半徑 10 以內，不會超出島邊
   /* —— 巨型拂塵：像石中劍一樣插在岩石堆頂上的岩縫裡 —— */
   const FU = new THREE.Group(); FU.position.set(0, 1.0, -0.6); mark.add(FU);
   {   // 石中劍：握柄末端插進岩縫，整支拂塵幾乎直立，白色馬尾從頂上垂下來
-    const PV = new THREE.Group(); PV.position.set(0.12, 2.05, -0.6); PV.rotation.z = -0.42; mark.add(PV); PV.add(FU); FU.position.set(-2.6, -0.15, -0.4);
+    const PV = new THREE.Group(); PV.position.set(0.12, 2.05, -0.6); PV.rotation.z = -0.42; mark.add(PV); PV.add(FU); FU.position.set(-2.6, -0.15, -0.4); fcIsl.sword = PV;   // 轉場動畫要操作這支拂塵
   }
   const grip = new THREE.Vector3(2.6, 0.15, 0.4), head = new THREE.Vector3(-1.5, 7.4, -0.5), dir = head.clone().sub(grip).normalize();
   const along = (k) => grip.clone().add(dir.clone().multiplyScalar(k));
@@ -6708,7 +6721,7 @@ function renderPanel() {
   } else if (isl && isl.kind === 'fuchen') {
     title = '拂塵淨心島'; info = '拂塵試煉・體感打怪';
     html = `<header><span class="eyebrow">外海・${FC_LIVE ? '拂塵試煉' : '測試中'}</span><h2>🪶 拂塵淨心島</h2><p class="sub">時時勤拂拭，勿使惹塵埃——手機就是拂塵柄，大揮一拂，把六塵精淨化收進淨心錄</p></header>
-      <div class="cta"><p>${fcTester && !FC_LIVE ? '🔧 測試中：只有這支手機看得到入口，其他人看到的是施工圍籬。<br>' : ''}看清符印、等倒數、聽到「揮！」就整隻手臂揮出去；塵精一揮、塵妖要兩連擊，最後收服無明塵王。收服的塵靈會收進「淨心錄」。</p><a href="fuchen-game/">🎮 進入拂塵試煉</a></div>
+      <div class="cta"><p>${fcTester && !FC_LIVE ? '🔧 測試中：只有這支手機看得到入口，其他人看到的是施工圍籬。<br>' : ''}看清符印、等倒數、聽到「揮！」就整隻手臂揮出去；塵精一揮、塵妖要兩連擊，最後收服無明塵王。收服的塵靈會收進「淨心錄」。</p><a href="fuchen-game/" id="fcGo">🎮 進入拂塵試煉</a></div>
       <p class="note">島中央是一座岩石堆成的石丘，一支巨大的拂塵像石中劍一樣插在頂上的岩縫裡，岩縫透出金光：黑色握把、竹節木柄、網罩圓頭、紅色綁繩，白色馬尾從頂上垂下來。外圈一圈踏石步道，十二尊塵靈石雕面向拂塵：六系各一尊原版——色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），旁邊各站一尊「異相」代表，台座石牌寫著名字和心性。</p>
       ${fcTester && !FC_LIVE ? '<p class="note"><a class="cta-link" href="fuchen-lab/">🧪 揮符實驗室（測感測器）</a>　<a class="cta-link" href="?fuchen=off#fuchen">結束測試</a></p>' : ''}
       <button class="back" data-go="temple">← 回到全真島</button>`;
@@ -7320,6 +7333,7 @@ function skyAt(m) {
 }
 let nightTarget = 0, warmTarget = 0, skyAM = false;
 function updateSky() {
+  if (typeof fcT !== 'undefined' && fcT.lockSky) return;   // 拂塵轉場期間天色由轉場控制
   const m = taipeiMinutes();
   const sky = skyMode === 'auto' ? skyAt(m) : { n: skyMode === 'night' ? 1 : 0, w: 0, am: false };
   nightTarget = sky.n; warmTarget = sky.w; skyAM = sky.am;
@@ -8717,6 +8731,8 @@ let frameN = 0;
 // 平移的範圍：最外圍那座島再往外留一點海
 const PAN_LIMIT = Math.max(...Object.values(islands).map((i) => Math.hypot(i.x, i.z))) + 30;
 function tick() {
+  // 遊戲開在上面時，群島先不畫（遊戲要用 3D 和感測器，兩個 WebGL 同時跑手機會吃力）；時鐘照走，回島時不會跳
+  if (typeof fcT !== 'undefined' && fcT.rafStop) { clock.getDelta(); requestAnimationFrame(tick); return; }
   const rawDt = clock.getDelta(), dt = Math.min(rawDt, 0.05), t = clock.elapsedTime;
 
   // 晝夜 0.6 秒線性切換，和網站主題一致
@@ -8812,6 +8828,77 @@ function openFromHash() {
 }
 openFromHash();
 addEventListener('hashchange', openFromHash);
+
+/* ================= 拂塵試煉轉場（打樣）=================
+   從拂塵淨心島進到遊戲，不換頁：群島入夜 → 鏡頭飛向石中劍 → 拂塵被拔起揮出金色光痕 → 夜空色的幕蓋上來 → 遊戲在同一頁淡入。
+   群島的畫面和聲音一直活著，所以沒有白屏、聲音不會斷成兩截；回島時反過來：幕淡掉、天色回到白天、拂塵放回岩縫。
+   打樣：網址加 fctrans 才啟用；減少動態效果、載入失敗都直接走原本的換頁。 */
+const FC_TRANS = /[?&]fctrans\b/.test(location.search);
+var fcT = { busy: false, el: null, frame: null, savedTarget: null, rafStop: false, paused: false, lockSky: false, savedCam: null };   // var：tick 一開始就會讀到
+function fcTWait(ms) { return new Promise((r) => setTimeout(r, ms)); }
+function fcTEase(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+async function fcEnter(href) {
+  if (fcT.busy) return; fcT.busy = true;
+  const go = () => { location.href = href; };   // 降級：直接換頁
+  if (reduceMotion || !fcIsl.sword) return go();
+  try {
+    const el = document.createElement('div'); el.className = 'fcT'; el.innerHTML = '<div class="veil"></div><div class="vig"></div><div class="txt">時時勤拂拭<small>勿使惹塵埃</small></div>'; document.body.appendChild(el); fcT.el = el;
+    document.body.classList.add('fcT-hide');
+    // 第一拍：靜下來。介面淡出，群島入夜，群島的聲音淡出，讓出給遊戲
+    fcT.savedTarget = { night: nightTarget, warm: warmTarget, am: skyAM }; fcT.savedCam = { pos: camera.position.clone(), tgt: controls.target.clone() };
+    fcT.lockSky = true; nightTarget = 1; warmTarget = 0; skyAM = false; PT.duck = true; el.classList.add('focus');
+    await fcTWait(900);
+    // 第二拍：鏡頭飛向石中劍
+    const sw = fcIsl.sword, wp = new THREE.Vector3(); sw.getWorldPosition(wp);
+    const dirV = camera.position.clone().sub(wp).setY(0).normalize(); if (dirV.lengthSq() < 0.01) dirV.set(0.6, 0, 0.8);
+    const wide = innerWidth < innerHeight ? 1.7 : 1.15;   // 直式手機視野窄，退遠一點才拍得到整支（含上面垂下來的馬尾）
+    const closeP = wp.clone().add(dirV.multiplyScalar(17 * wide)).setY(wp.y + 2.5), look = wp.clone().add(new THREE.Vector3(0, 7.2, 0));
+    controls.autoRotate = false; flyTo(look, closeP, 2.2, null, 0, true);
+    el.classList.add('say');
+    if (fcIsl.glow) { const g0 = fcIsl.glow.scale.clone(); const t0 = performance.now(); (function glowUp() { const k = Math.min(1, (performance.now() - t0) / 2200); fcIsl.glow.scale.set(g0.x * (1 + 1.3 * k), g0.y * (1 + 1.3 * k), 1); fcIsl.glow.material.opacity = 1; if (k < 1) requestAnimationFrame(glowUp); })(); }
+    await fcTWait(2300);
+    // 第三拍：拔起拂塵，往上一揮，留下金色光痕
+    const y0 = sw.position.y, r0 = sw.rotation.z, trail = [], lineGeo = new THREE.BufferGeometry(), lineM = new THREE.LineBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false });
+    const line = new THREE.Line(lineGeo, lineM); line.frustumCulled = false; fcIsl.mark.add(line);
+    const head = new THREE.Vector3(), t1 = performance.now(), DUR = 1100;
+    await new Promise((done) => { (function pull() {
+      const k = Math.min(1, (performance.now() - t1) / DUR), e = fcTEase(k);
+      sw.position.y = y0 + e * 6.5; sw.rotation.z = r0 + e * 0.9 * Math.sin(k * Math.PI);
+      sw.getWorldPosition(head); fcIsl.mark.worldToLocal(head); head.y += 4.2; trail.push(head.x, head.y, head.z);
+      lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(trail, 3)); lineGeo.setDrawRange(0, trail.length / 3);
+      lineM.opacity = 0.95 * (1 - k * 0.3);
+      if (k < 1) requestAnimationFrame(pull); else done(); })(); });
+    // 第四拍：夜空色的幕蓋上來，遊戲在同一頁載入、淡入
+    el.classList.add('dim'); el.classList.remove('say');
+    const frame = document.createElement('iframe'); frame.allow = 'accelerometer; gyroscope; autoplay; fullscreen'; frame.setAttribute('title', '拂塵試煉');
+    const loaded = new Promise((res, rej) => { frame.onload = res; frame.onerror = rej; setTimeout(() => rej(new Error('timeout')), 9000); });
+    frame.src = href + (href.includes('?') ? '&' : '?') + 'embed=1'; el.appendChild(frame); fcT.frame = frame;
+    await fcTWait(1000); await loaded;
+    el.classList.add('show'); el.style.pointerEvents = 'auto';
+    // 群島的 3D 畫面先降到最低負擔（遊戲要用手機的感測器和 3D）
+    fcT.paused = true; setTimeout(() => { if (fcT.paused) fcT.rafStop = true; }, 1300);   // 幕完全蓋住之後才停畫
+  } catch (e) { console.warn('轉場失敗，改用換頁', e); fcCleanup(true); go(); }
+}
+// 回島：反向——幕淡掉，天色回到原本，拂塵放回岩縫
+async function fcLeave() {
+  const el = fcT.el; if (!el) return;
+  el.classList.remove('show'); fcT.rafStop = false; fcT.paused = false;
+  const sw = fcIsl.sword; if (sw) { const k0 = performance.now(); const y1 = sw.position.y, z1 = sw.rotation.z; (function back() { const k = Math.min(1, (performance.now() - k0) / 1400), e2 = fcTEase(k); sw.position.y = y1 + (2.05 - y1) * e2; sw.rotation.z = z1 + (-0.42 - z1) * e2; if (k < 1) requestAnimationFrame(back); })(); }
+  await fcTWait(900); fcCleanup(false);
+}
+function fcCleanup(abort) {
+  if (fcT.savedTarget) { nightTarget = fcT.savedTarget.night; warmTarget = fcT.savedTarget.warm; skyAM = fcT.savedTarget.am; fcT.savedTarget = null; }
+  fcT.lockSky = false; if (typeof updateSky === 'function') updateSky();
+  if (fcT.savedCam) { flyTo(fcT.savedCam.tgt, fcT.savedCam.pos, 1.6, null, 0, false); fcT.savedCam = null; }
+  PT.duck = false; document.body.classList.remove('fcT-hide');
+  if (fcT.el) { fcT.el.classList.remove('dim', 'focus', 'say', 'show'); const e = fcT.el; setTimeout(() => e.remove(), 1200); fcT.el = null; fcT.frame = null; }
+  const sw = fcIsl.sword; if (sw) { sw.position.y = 2.05; sw.rotation.z = -0.42; }
+  if (fcIsl.glow) { fcIsl.glow.scale.set(3.4, 2.4, 1); }
+  fcT.busy = false;
+}
+window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.fuchen === 'leave') fcLeave(); });
+window.__fcDebug = () => ({ night: nightTarget, duck: PT.duck, swY: +fcIsl.sword.position.y.toFixed(2), glow: fcIsl.glow ? +fcIsl.glow.scale.x.toFixed(2) : 0, hasEnter: typeof fcEnter });   // 測試用，唯讀
+if (FC_TRANS) document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('#fcGo'); if (!a) return; e.preventDefault(); fcEnter(a.href); }, true);
 </script>
 </body>
 </html>
