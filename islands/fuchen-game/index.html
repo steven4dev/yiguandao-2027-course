@@ -83,7 +83,7 @@ body{line-break:strict}
 /* 設了 hidden 的元素一律不顯示（.bottom 的 display:flex 原本會蓋掉 hidden，遊戲中的按鈕列在標題畫面透出來） */
 [hidden]{display:none !important}
 /* 開始試煉、用手指畫左右並排：不方便揮手機的人一眼就看到可以用手指 */
-.startRow{display:grid;grid-template-columns:1.25fr 1fr;gap:8px}
+.startRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .startRow button{padding:12px 6px;line-height:1.25}
 .startRow button small{display:block;font-size:.72rem;font-weight:600;opacity:.75;margin-top:3px;white-space:nowrap}
 .startRow button{white-space:nowrap}
@@ -108,7 +108,7 @@ body{line-break:strict}
 #scrTitle .diff button{padding:7px 4px 6px}
 #scrTitle .startRow button{padding:10px 6px}
 #scrTitle #btnDexT,#scrTitle #btnIsleT{padding:9px}
-#scrTitle .twoRow{display:grid;grid-template-columns:1.5fr 1fr;gap:7px}
+#scrTitle .twoRow{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 /* 特別矮的螢幕（iPhone SE、開著網址列的小手機）：再壓一層 */
 @media (max-height: 620px){
   #scrTitle .panel{padding:12px 14px 10px}
@@ -137,10 +137,10 @@ body{line-break:strict}
 #scrResult .quote{margin:8px 0;padding:8px 12px;font-size:.92rem;line-height:1.55}
 #scrResult .signup{margin:8px 0 2px;padding:9px 12px}
 #scrResult .signup p{margin:4px 0 8px;font-size:.88rem;line-height:1.55}
-#scrResult .signupBtn{padding:10px}
-#scrResult .row{margin-top:8px;gap:6px;grid-template-columns:1fr 1fr}
-#scrResult #btnAgain{grid-column:1/-1;padding:11px}
-#scrResult .row button:not(.big){padding:9px 6px}
+#scrResult .row{margin-top:10px;gap:8px;grid-template-columns:1fr}
+/* 四顆按鈕一樣寬、一樣高：報名（實心金）＞再試煉（金框）＞淨心錄、返回島嶼（一般框） */
+#scrResult .row > *{box-sizing:border-box;width:100%;min-height:46px;padding:10px 8px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:1rem;font-weight:800;text-align:center;text-decoration:none}
+#scrResult #btnAgain{border:1.5px solid var(--gold);color:var(--gold);background:rgba(232,189,90,.10)}
 .stats b{color:var(--gold)}
 .signup{margin:12px 0 4px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(232,189,90,.10);text-align:center}
 .signup b{color:var(--gold);font-size:1.02rem}
@@ -254,10 +254,10 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     <div class="signup">
       <b>🌿 試煉之後，還有真功夫</b>
       <p><span class="cl">遊戲裡淨化的是塵靈，</span><span class="cl">生活裡要修的是自己。</span><span class="cl">想練就不被六塵操弄的真人，</span><span class="cl">邀你攜手一起來。</span></p>
-      <a class="signupBtn" id="btnSignup" href="../#join">🛶 我要登島報名</a>
     </div>
     <div class="row">
-      <button class="primary big" id="btnAgain">再試煉一次</button>
+      <a class="signupBtn" id="btnSignup" href="../#join">🛶 我要登島報名</a>
+      <button id="btnAgain">🪶 再試煉一次</button>
       <button id="btnDexR">📖 看淨心錄</button>
       <button id="btnIsle">🏝️ 返回島嶼</button>
     </div>
@@ -280,7 +280,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261111.15';
+const VERSION = 'v261111.16';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
