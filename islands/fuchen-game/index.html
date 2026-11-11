@@ -282,13 +282,13 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     <div class="row"><button class="primary big" id="btnDexClose">關閉</button></div>
   </div>
 </section>
-<div class="screen" id="dexModal" hidden><div class="panel"><canvas id="dmCv" style="width:56%;aspect-ratio:1/1;display:block;margin:0 auto"></canvas><h2 id="dmName" style="text-align:center"></h2><p class="note" id="dmTag" style="text-align:center;margin-top:0"></p><div class="stats" id="dmDl"></div><div class="quote" id="dmQuote"></div><div class="teach" id="dmTeach"></div><div class="row"><button class="primary big" id="dmClose">關閉</button></div></div></div>
+<div class="screen" id="dexModal" hidden><div class="panel"><canvas id="dmCv" style="width:56%;aspect-ratio:1/1;display:block;margin:0 auto"></canvas><h2 id="dmName" style="text-align:center"></h2><p class="note" id="dmTag" style="text-align:center;margin-top:0"></p><div class="stats" id="dmDl"></div><div class="teach" id="dmTeach"></div><div class="row"><button class="primary big" id="dmClose">關閉</button></div></div></div>
 <button id="btnBook" hidden aria-label="淨心錄"><b>淨</b><b>心</b><span id="bookN">0</span></button>
 <div class="ver" id="ver"></div>
 
 <script>
 'use strict';
-const VERSION = 'v261111.19';
+const VERSION = 'v261111.20';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -658,16 +658,15 @@ const subLines = (...L) => `<div class="sub">${L.filter(Boolean).map(x => `<span
 const clauses = t => String(t).split(/(?<=[，。！？；：、])/).filter(Boolean).map(c => `<span class="cl">${c}</span>`).join('');
 const symHTML = k => { const s = SYMS[k]; if(!s.mir && s.name.startsWith(s.icon)) return s.name; return (s.mir ? MIR(s.icon) : s.icon) + ' ' + s.name; };
 
-// 示範金句（正式上線前換成道場審定的文字）
+// 結算畫面的金句：只用經典原文並標出處（不放自己寫的示範句）
 const QUOTES = [
-  '心如明鏡台，時時勤拂拭。今天拂去一點塵，明天就多一分光。',
-  '塵埃不是敵人，是提醒我們回頭照照心鏡的老朋友。',
-  '一拂一淨，一念一清；不急不躁，自然光明。',
-  '煩惱來了先別急著揮，定下心、看清楚，再一拂到底。',
-  '拂塵不在力氣大，在每天都記得拂。',
-  '六塵外境紛紛擾擾，守住本心，便是最好的拂塵。'
+  ['時時勤拂拭，勿使惹塵埃。', '《六祖壇經》神秀偈'],
+  ['知人者智，自知者明；勝人者有力，自勝者強。', '《道德經・第三十三章》'],
+  ['知止而後有定，定而後能靜，靜而後能安。', '《大學》'],
+  ['吾日三省吾身。', '《論語・學而》'],
+  ['前念迷即凡夫，後念悟即佛。', '《六祖壇經》'],
+  ['學問之道無他，求其放心而已矣。', '《孟子・告子上》']
 ];
-const QUOTES_DEMO = true;
 
 /* ================= 塵靈：六系 × 三階段（和 2.0 打樣頁 proof.html 同一份造型與資料） ================= */
 const TAU = Math.PI*2;
@@ -692,7 +691,7 @@ const MONS = [
   ['fa',1,'念念','念頭來了，看著它，不跟著它。'],['fa',2,'妄想妖','想得越多，做得越少。'],['fa',3,'執念魔','放下不是失去，是騰出雙手。']
 ].map(([f,st,name,quote]) => ({ fam: FAMS.find(x => x.key === f), stage: st, name, quote, lv: st === 1 ? 'Lv 1–9' : st === 2 ? 'Lv 10–19' : 'Lv 20+', hits: st === 1 ? 1 : 2 }));
 const STAGE_NAME = ['', '塵精', '塵妖', '塵魔'];
-/* 六系的典故與修為（v261109.26）：典故只引原文查得到的經典；解讀與練習是示範，正式版請道場審定 */
+/* 六系的典故（v261109.26）：只引原文查得到的經典；自己寫的修為／練習解讀已於 v261111.20 拿掉（how、daily 兩欄保留在資料裡，等道場審定後再放回） */
 const FAM_TEACH = {
   se:    { src: '非禮勿視',               from: '《論語・顏淵》',     how: '不和別人比較，看見自己本來的圓滿',   daily: '看到別人好，先在心裡隨喜讚歎' },
   sheng: { src: '非禮勿聽，非禮勿言',     from: '《論語・顏淵》',     how: '守口德：不說是非、不傳閒話',         daily: '話到嘴邊先停三秒，只說好話' },
@@ -1928,7 +1927,7 @@ function showResult(kind){
   $('#resLine').innerHTML = kind === 'over' ? clauses('別灰心，塵埃本來就要天天拂。定下心再來一次！') : `<span class="cl">無明塵王收服了！</span><span class="cl">評價：<b class="nb">${rating}</b></span>`;
   $('#resStats').innerHTML = `<span><b>${hits}</b><small>淨化（隻）</small></span><span><b>${acc}%</b><small>命中率</small></span><span><b>${maxCombo}</b><small>最高連擊</small></span><span><b>${score}</b><small>得分</small></span>`;
   $('#resCaught').innerHTML = caught.length ? `<b>本局收入淨心錄</b><div class="caught">${caught.map(c => `<span>${c.gold ? '✨' : ''}${c.def.name}<small>Lv ${c.lv}</small>${c.isNew ? '<i>NEW</i>' : ''}</span>`).join('')}</div>` : '<span class="note">這一局沒有收服塵靈，下次加油！</span>';
-  $('#resQuote').innerHTML = `${clauses(pick(QUOTES))}${QUOTES_DEMO ? '<small>（示範慈語，正式版會換成審定的文字）</small>' : ''}`;
+  { const [qt, qf] = pick(QUOTES); $('#resQuote').innerHTML = `${clauses(qt)}<small>—— ${qf}</small>`; }
   // 分享到 LINE：訊息短、單行不超過 12 字；連到專屬入口頁（LINE 預覽圖才會是雷擊拂塵那張）
   { const lines = ['🪶 拂塵淨心島・體感遊戲', kind === 'over' ? `我淨化了 ${hits} 隻塵靈！` : '我收服了無明塵王！', `難度${D().name.replace(/^[^\u4e00-\u9fff]+/, '')}・連擊 ${maxCombo}`, `命中率 ${acc}%・收 ${caught.length} 隻`, '你也來揮一揮 👇', 'https://steven4dev.github.io/yiguandao-2027-course/islands/fuchen/'];
     $('#btnShare').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(lines.join('\n')); }
@@ -1975,7 +1974,7 @@ function openDex(){
   $('#dexList').innerHTML = ''; dexCards = [];
   FAMS.forEach(f => {
     const ms = MONS.filter(m => m.fam === f).sort((a, b) => (!!a.xv - !!b.xv) || (a.stage - b.stage)), base = ms.filter(m => !m.xv), xs = ms.filter(m => m.xv), got = ms.filter(m => dex.m[m.name]).length, gotBase = DEX_ALL ? 1 : base.filter(m => dex.m[m.name]).length, box = document.createElement('div'); box.className = 'dfam';
-    box.innerHTML = `<div class="dfam-h"><b style="color:${f.color}">${f.name}系・${f.mood}</b><span>${got === ms.length ? '🏅 已收齊' : `${got}/${ms.length}`}${gotBase ? `　怕 ${f.weakNameN && f.weakNameN !== f.weakNameX ? f.weakNameN + '／' + f.weakNameX : (f.weakNameX || f.weakName)}` : ''}</span></div><div class="dfam-t">📜 <span class="cl">「${FAM_TEACH[f.key].src}」</span><span class="cl">${FAM_TEACH[f.key].from}</span>　<span class="cl">🧘 ${FAM_TEACH[f.key].how}</span></div><div class="drow"></div>${xs.length ? '<div class="dx-h">✨ 異相塵靈（修行、精進才會出現）</div><div class="drow dx"></div>' : ''}`;
+    box.innerHTML = `<div class="dfam-h"><b style="color:${f.color}">${f.name}系・${f.mood}</b><span>${got === ms.length ? '🏅 已收齊' : `${got}/${ms.length}`}${gotBase ? `　怕 ${f.weakNameN && f.weakNameN !== f.weakNameX ? f.weakNameN + '／' + f.weakNameX : (f.weakNameX || f.weakName)}` : ''}</span></div><div class="dfam-t">📜 <span class="cl">「${FAM_TEACH[f.key].src}」</span><span class="cl">${FAM_TEACH[f.key].from}</span></div><div class="drow"></div>${xs.length ? '<div class="dx-h">✨ 異相塵靈（修行、精進才會出現）</div><div class="drow dx"></div>' : ''}`;
     ms.forEach(m => { const e = dexE(m), el = document.createElement('div'); el.className = 'dcard' + (e ? '' : ' lock') + (m.xv ? ' xv' : '');
       el.innerHTML = `<canvas></canvas><div class="nm">${e ? (e.gold ? '✨' : '') + m.name : '？？？'}</div><div class="lv">${e ? (m.xv ? `怕 ${m.weakName}` : e.preview ? `${STAGE_NAME[m.stage]}・${m.lv}` : `收服 ${e.n} 次`) : m.lv + ' 出沒'}</div>`;
       el.onclick = () => openDexCard(m); box.querySelector(m.xv ? '.drow.dx' : '.drow').appendChild(el); dexCards.push({ cv: el.querySelector('canvas'), m, e }); });
@@ -1989,8 +1988,7 @@ function openDexCard(m){
   $('#dmName').textContent = e ? m.name : '？？？'; $('#dmTag').textContent = `${m.xv ? '✨ 異相・' : ''}${m.fam.name}系・${STAGE_NAME[m.stage]}・${m.lv}`;
   $('#dmDl').innerHTML = e ? `<span>代表 <b>${m.fam.mood}</b></span><span>要揮 <b class="nb">${m.stage === 1 ? '1 下' : m.stage === 2 ? '2 連擊' : '2～3 連擊'}</b></span><span>怕 <b class="nb">${weakNameOf(m)}</b></span><span>${e.preview ? '出沒 <b class="nb">' + m.lv + '</b>' : '收服 <b>' + e.n + ' 次</b>'}</span>${m.xv ? `<span style="grid-column:1/-1">為什麼怕：<b>${clauses(weakWhyOf(m))}</b></span>` : ''}${e.preview ? '<span style="grid-column:1/-1;color:var(--muted)">👁️ 預覽模式：還沒收服，先看內容</span>' : ''}<span style="grid-column:1/-1${e.preview ? ';display:none' : ''}"><span class="cl">第一次收服 <b>${e.first}</b></span>${e.gold ? '<span class="cl">・✨ 收過金色</span>' : ''}${e.hard ? '<span class="cl">・🔥 精進收服</span>' : ''}</span>`
     : `<span style="grid-column:1/-1">在 <b>${m.lv}</b> 的試煉中出沒（${m.fam.name}系的${m.xv ? '異相' : ''}${STAGE_NAME[m.stage]}${m.xv ? '，修行、精進才會出現' : ''}）</span>`;
-  { const T = FAM_TEACH[m.fam.key]; $('#dmTeach').innerHTML = `<div><b>📜 典故</b><span class="cl">「${T.src}」</span><span class="cl">—— ${T.from}</span></div><div><b>🧘 ${m.fam.name}系修為</b>${clauses(T.how)}</div><div><b>🌱 每日練習</b>${clauses(T.daily)}</div><small>典故為經典原文；修為與練習為示範解讀，正式版請道場審定</small>`; }
-  $('#dmQuote').innerHTML = e ? `${clauses(m.quote)}<small>心性小語（示範，正式版請道場審定）</small>` : '收服之後才會解鎖心性小語。';
+  { const T = FAM_TEACH[m.fam.key]; $('#dmTeach').innerHTML = `<div><b>📜 典故</b><span class="cl">「${T.src}」</span><span class="cl">—— ${T.from}</span></div>`; }
   $('#dexModal').hidden = false;
 }
 function drawDex(t){ const s = t/1000; dexCards.forEach(({ cv, m, e }, i) => drawCardCv(cv, m, s, { seed:i, sil: !e, snap:true, gold: e && e.gold && Math.sin(s*0.5 + i) > 0.6 })); if(!$('#dexModal').hidden && dexModalM) drawCardCv($('#dmCv'), dexModalM, s, { sil: !dexE(dexModalM) }); }
