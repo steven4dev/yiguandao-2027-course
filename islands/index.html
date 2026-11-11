@@ -644,7 +644,7 @@
   .ptc-ok { background: #3f8a6a; color: #fff; }
   @media (prefers-reduced-motion: reduce) { .ptcard, .pt-level i { transition: none; } }
 
-/* —— 拂塵試煉轉場（打樣：網址加 fctrans 才啟用）—— */
+/* —— 拂塵試煉轉場（預設啟用，網址加 notrans 可關）—— */
 .fcT{position:fixed;inset:0;z-index:60;pointer-events:none}
 .fcT .veil{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 40%,#1a2744 0%,#0b1220 55%,#05080f 100%);opacity:0;transition:opacity 1s ease}
 .fcT .vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 40%,rgba(3,6,12,.72) 100%);opacity:0;transition:opacity 1.2s ease}
@@ -696,7 +696,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261110.19</span>
+  <span class="ver">v261110.20</span>
   </div></div>
 </div>
 
@@ -8846,8 +8846,8 @@ addEventListener('hashchange', openFromHash);
 /* ================= 拂塵試煉轉場（打樣）=================
    從拂塵淨心島進到遊戲，不換頁：群島入夜 → 鏡頭飛向石中劍 → 拂塵被拔起揮出金色光痕 → 夜空色的幕蓋上來 → 遊戲在同一頁淡入。
    群島的畫面和聲音一直活著，所以沒有白屏、聲音不會斷成兩截；回島時反過來：幕淡掉、天色回到白天、拂塵放回岩縫。
-   打樣：網址加 fctrans 才啟用；減少動態效果、載入失敗都直接走原本的換頁。 */
-const FC_TRANS = /[?&]fctrans\b/.test(location.search);
+   正式版：預設啟用（網址加 notrans 可關）；減少動態效果、載入失敗都直接走原本的換頁。 */
+const FC_TRANS = !/[?&]notrans\b/.test(location.search);   // 正式上架：預設就有轉場；網址加 &notrans 可關掉（直接換頁）
 var fcT = { busy: false, el: null, frame: null, savedTarget: null, rafStop: false, paused: false, lockSky: false, savedCam: null, fov0: 0, freeze: false };   // var：tick 一開始就會讀到
 function fcTWait(ms) { return new Promise((r) => setTimeout(r, ms)); }
 function fcTEase(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
