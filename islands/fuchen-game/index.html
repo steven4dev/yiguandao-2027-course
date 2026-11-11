@@ -140,6 +140,7 @@ body{line-break:strict}
 #scrResult .row{margin-top:8px;gap:6px;grid-template-columns:1fr}
 /* 四顆按鈕一樣寬、一樣高：報名（實心金）＞再試煉（金框）＞淨心錄、返回島嶼（一般框） */
 #scrResult .row > *{box-sizing:border-box;width:100%;min-height:42px;padding:8px 8px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:1rem;font-weight:800;text-align:center;text-decoration:none}
+#scrResult #btnShare{background:#06c755;color:#fff;border:0}
 #scrResult #btnAgain{border:1.5px solid var(--gold);color:var(--gold);background:rgba(232,189,90,.10)}
 .stats b{color:var(--gold)}
 .signup{margin:12px 0 4px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(232,189,90,.10);text-align:center}
@@ -257,6 +258,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     </div>
     <div class="row">
       <a class="signupBtn" id="btnSignup" href="../#join">🛶 我要登島報名</a>
+      <a id="btnShare" href="https://line.me/R/msg/text/" target="_blank" rel="noopener">💬 分享到 LINE</a>
       <button id="btnAgain">🪶 再試煉一次</button>
       <button id="btnDexR">📖 看淨心錄</button>
       <button id="btnIsle">🏝️ 返回島嶼</button>
@@ -280,7 +282,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261111.17';
+const VERSION = 'v261111.18';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1921,6 +1923,9 @@ function showResult(kind){
   $('#resStats').innerHTML = `<span>淨化 <b>${hits}</b> 隻</span><span>命中率 <b>${acc}%</b></span><span>最高連擊 <b>${maxCombo}</b></span><span>得分 <b>${score}</b></span>`;
   $('#resCaught').innerHTML = caught.length ? `<b>本局收入淨心錄</b><div class="caught">${caught.map(c => `<span>${c.gold ? '✨' : ''}${c.def.name}<small>Lv ${c.lv}</small>${c.isNew ? '<i>NEW</i>' : ''}</span>`).join('')}</div>` : '<span class="note">這一局沒有收服塵靈，下次加油！</span>';
   $('#resQuote').innerHTML = `${clauses(pick(QUOTES))}${QUOTES_DEMO ? '<small>（示範慈語，正式版會換成審定的文字）</small>' : ''}`;
+  // 分享到 LINE：訊息短、單行不超過 12 字；連到專屬入口頁（LINE 預覽圖才會是雷擊拂塵那張）
+  { const lines = ['🪶 拂塵淨心島・體感遊戲', kind === 'over' ? `我淨化了 ${hits} 隻塵靈！` : '我收服了無明塵王！', `難度${D().name.replace(/^[^\u4e00-\u9fff]+/, '')}・連擊 ${maxCombo}`, `命中率 ${acc}%・收 ${caught.length} 隻`, '你也來揮一揮 👇', 'https://steven4dev.github.io/yiguandao-2027-course/islands/fuchen/'];
+    $('#btnShare').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(lines.join('\n')); }
   $('#scrResult').hidden = false;
   kind === 'over' ? sfx.defeat() : sfx.victory();
   const best = store.get('fuchenGame.best', 0); if(score > best) store.set('fuchenGame.best', score);
