@@ -239,7 +239,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     <div class="signup">
       <b>🌿 試煉之後，還有真功夫</b>
       <p><span class="cl">遊戲裡淨化的是塵靈，</span><span class="cl">生活裡要修的是自己。</span><span class="cl">想練就不被六塵操弄的真人，</span><span class="cl">邀你攜手一起來。</span></p>
-      <a class="signupBtn" id="btnSignup" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島報名</a>
+      <a class="signupBtn" id="btnSignup" href="../#join">🛶 我要登島報名</a>
     </div>
     <div class="row">
       <button class="primary big" id="btnAgain">再試煉一次</button>
@@ -265,7 +265,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261111.13';
+const VERSION = 'v261111.14';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1989,6 +1989,8 @@ $('#btnAgain').addEventListener('click', () => { $('#scrResult').hidden = true; 
 $('#btnQuit').addEventListener('click', () => { cancelFlag = true; });
 // 嵌在群島頁面裡（?embed=1）：回島＝通知上層頁面收起遊戲、反向播放轉場；單獨打開就照原本換頁
 const EMBED = /[?&]embed=1\b/.test(location.search) && window.parent !== window;
+// 「我要登島報名」：不跳去 Google 表單，回到群島、打開島內的登島船票卡（嵌入時通知島上收起遊戲再開；單獨開啟就換頁到 ../#join）
+$('#btnSignup').addEventListener('click', (e) => { if(EMBED){ try{ window.parent.postMessage({ fuchen:'join' }, location.origin); e.preventDefault(); }catch(err){} } });
 ['#btnIsle', '#btnIsleT', '#btnIsleC'].forEach((q) => $(q).addEventListener('click', () => { if(EMBED){ try{ window.parent.postMessage({ fuchen:'leave' }, location.origin); return; }catch(e){} } location.href = '../#fuchen'; }));
 if(EMBED){ document.documentElement.classList.add('embed'); }
 fu = new Fuchen(); resize(); requestAnimationFrame(frame);
