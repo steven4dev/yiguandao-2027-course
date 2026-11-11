@@ -51,10 +51,7 @@ button.big{width:100%;font-size:1.1rem;padding:14px}
 .tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
 .tabs button{padding:8px 6px;font-size:.92rem}
 .tabs button[aria-pressed="true"]{background:var(--gold-soft);border-color:var(--gold);font-weight:800}
-.grid{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
-.grid button{flex:0 0 calc((100% - 24px)/5)}
-.grid .gh{flex:0 0 100%;font-size:.74rem;color:var(--muted);padding:6px 2px 0;letter-spacing:1px;text-align:left}
-.grid .gh:first-child{padding-top:0}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 .grid button{padding:8px 2px;display:flex;flex-direction:column;align-items:center;gap:0;font-size:.72rem;line-height:1.3}
 .grid button .ic{font-size:1.35rem;font-weight:800;line-height:1.4;font-family:"Georgia","Times New Roman",serif}
 .grid button[aria-pressed="true"]{background:var(--gold-soft);border-color:var(--gold);font-weight:700}
@@ -212,7 +209,7 @@ pre.debug{white-space:pre-wrap;word-break:break-all;font-size:.75rem;background:
 
 <script>
 'use strict';
-const VERSION = 'v261109.14';
+const VERSION = 'v261109.15';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = VERSION;
@@ -288,23 +285,28 @@ const itriVariants = () => [...polyVariants([270, 30, 150]),
   ...[1, -1].map(d => [[0, -1], [0.45*d, 1], [-0.45*d, 1], [0.12*d, -1.25]])];   // 細長版會搶走 N、反向 N、方，不加
 
 const SYMBOLS = [
-  { key:'left',   icon:'⬅',  name:'左揮',   say:'左揮',   kind:'dir', dir:180, group:'方向' },
+  // 一整塊 5 欄 × 6 列：方向 → 斜向 → 圓 → Z、N、S、阿法（正反成對）→ 三角方星 → 曲線
+  { key:'left',   icon:'⬅',  name:'左揮',   say:'左揮',   kind:'dir', dir:180 },
   { key:'right',  icon:'➡',  name:'右揮',   say:'右揮',   kind:'dir', dir:0 },
   { key:'up',     icon:'⬆',  name:'上挑',   say:'上挑',   kind:'dir', dir:90 },
   { key:'down',   icon:'⬇',  name:'劈',     say:'劈',     kind:'dir', dir:270 },
-  { key:'v',      icon:'V',  name:'V 字',   say:'V 字',   kind:'shape', group:'基本形狀' },
+  { key:'v',      icon:'V',  name:'V 字',   say:'V 字',   kind:'shape' },
+  { key:'ur',     icon:'⬈',  name:'右上挑', say:'右上挑', kind:'dir', dir:45 },
+  { key:'ul',     icon:'⬉',  name:'左上挑', say:'左上挑', kind:'dir', dir:135 },
+  { key:'dr',     icon:'⬊',  name:'右下劈', say:'右下劈', kind:'dir', dir:315 },
+  { key:'dl',     icon:'⬋',  name:'左下劈', say:'左下劈', kind:'dir', dir:225 },
   { key:'circle', icon:'○',  name:'圓',     say:'畫圓',   kind:'shape' },
-  { key:'z',      icon:'Z',  name:'Z 字',   say:'Z 字',   kind:'shape' },
-  { key:'n',      icon:'N',  name:'N 字',   say:'N 字',   kind:'shape' },
-  { key:'s',      icon:'S',  name:'S 字',   say:'S 字',   kind:'shape' },
-  { key:'rz',     icon:'<span class="mir">Z</span>', name:'反向 Z', say:'反向 Z', kind:'shape', group:'反向（正圓、反圓只在精進分方向）' },
-  { key:'rn',     icon:'<span class="mir">N</span>', name:'反向 N', say:'反向 N', kind:'shape' },
-  { key:'rs',     icon:'<span class="mir">S</span>', name:'反向 S', say:'反向 S', kind:'shape' },
   { key:'cw',     icon:'↻',  name:'正圓',   say:'正圓，順時針', kind:'shape', circleDir:1 },
   { key:'ccw',    icon:'↺',  name:'反圓',   say:'反圓，逆時針', kind:'shape', circleDir:-1 },
-  { key:'alpha',  icon:'α',  name:'阿法',   say:'阿法',   kind:'shape', group:'阿法系列' },
+  { key:'z',      icon:'Z',  name:'Z 字',   say:'Z 字',   kind:'shape' },
+  { key:'rz',     icon:'<span class="mir">Z</span>', name:'反向 Z', say:'反向 Z', kind:'shape' },
+  { key:'n',      icon:'N',  name:'N 字',   say:'N 字',   kind:'shape' },
+  { key:'rn',     icon:'<span class="mir">N</span>', name:'反向 N', say:'反向 N', kind:'shape' },
+  { key:'s',      icon:'S',  name:'S 字',   say:'S 字',   kind:'shape' },
+  { key:'rs',     icon:'<span class="mir">S</span>', name:'反向 S', say:'反向 S', kind:'shape' },
+  { key:'alpha',  icon:'α',  name:'阿法',   say:'阿法',   kind:'shape' },
   { key:'ralpha', icon:'<span class="mir">α</span>', name:'反向阿法', say:'反向阿法', kind:'shape' },
-  { key:'caret',  icon:'∧',  name:'人字',   say:'人字',   kind:'shape', nw:true, group:'新題' },
+  { key:'caret',  icon:'∧',  name:'人字',   say:'人字',   kind:'shape', nw:true },
   { key:'tri',    icon:'△',  name:'正三角', say:'正三角', kind:'shape', nw:true, still:450 },
   { key:'itri',   icon:'▽',  name:'倒三角', say:'倒三角', kind:'shape', nw:true, still:450 },
   { key:'sq',     icon:'□',  name:'方',     say:'方',     kind:'shape', nw:true, still:450 },
@@ -327,6 +329,8 @@ const TEMPLATE_DEFS = {
   up:     { name:'上挑', v:[[[0,0],[0,1]]] },
   dr:     { name:'↘ 斜', v:[[[-1,1],[1,-1]]] },
   dl:     { name:'↙ 斜', v:[[[1,1],[-1,-1]]] },
+  ur:     { name:'↗ 斜', v:[[[-1,-1],[1,1]]] },
+  ul:     { name:'↖ 斜', v:[[[1,-1],[-1,1]]] },
   v:      { name:'V 字', v:[[[-1,1],[0,-1],[1,1]]] },
   circle: { name:'圓',   v:circleVariants() },
   z:      { name:'Z 字', v:[[[-1,1],[1,1],[-1,-1],[1,-1]]] },
@@ -659,7 +663,7 @@ function setOverlay(html){ $('#overlay').innerHTML = html; }
 /* ---------------- 介面：模式與符號 ---------------- */
 let mode = 'pick', selected = 'left', running = false, cancelFlag = false;
 const grid = $('#symGrid');
-SYMBOLS.forEach(s => { if(s.group){ const h = document.createElement('div'); h.className = 'gh'; h.textContent = s.group; grid.appendChild(h); } const b = document.createElement('button'); b.dataset.key = s.key; b.innerHTML = `<span class="ic">${s.icon}</span>${s.name}${s.nw ? '<span class="nw">新</span>' : ''}`; grid.appendChild(b); });
+SYMBOLS.forEach(s => { const b = document.createElement('button'); b.dataset.key = s.key; b.innerHTML = `<span class="ic">${s.icon}</span>${s.name}${s.nw ? '<span class="nw">新</span>' : ''}`; grid.appendChild(b); });
 function syncGrid(){ grid.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.key === selected))); grid.classList.toggle('dim', mode !== 'pick'); }
 grid.addEventListener('click', e => { const b = e.target.closest('button'); if(!b || running) return; selected = b.dataset.key; syncGrid(); drawIdle(); });
 document.querySelector('.tabs').addEventListener('click', e => {
