@@ -189,7 +189,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 <section class="screen" id="scrTitle">
   <div class="panel">
     <h1>🪶 拂塵試煉</h1>
-    <p class="note tsub">拂塵淨心島・體感小遊戲（測試版）</p>
+    <p class="note tsub">拂塵淨心島・體感小遊戲</p>
     <p class="tintro"><span class="nb">「時時勤拂拭，勿使惹塵埃。」</span>手機就是您的拂塵柄：<b class="nb">看清符印</b>、<span class="nb">聽到「<b>揮</b>」</span>就大揮一拂，把塵靈淨化、<b class="nb">收進淨心錄</b>。</p>
     <ul class="ttips">
       <li>🤚 <span class="nb">直立握著</span>、<b class="nb">整隻手臂揮</b><span class="nb">（約一個手臂長）</span>，<span class="nb">只擺手腕會判<b>「動作太小」</b></span></li>
@@ -220,7 +220,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     <p>把手機<b>直立</b>拿在胸前，<b>螢幕朝著自己</b>，靜止不動約 2 秒。</p>
     <div class="prog"><i id="calibBar"></i></div>
     <p class="note" id="calibMsg">準備好就按「開始」。</p>
-    <div class="row"><button class="primary big" id="btnCalib">開始</button><button id="btnCalibReuse" hidden>沿用上次的校正</button></div>
+    <div class="row"><button class="primary big" id="btnCalib">開始</button><button id="btnCalibReuse" hidden>沿用上次的校正</button><button id="btnIsleC">🏝️ 返回島嶼</button></div>
   </div>
 </section>
 
@@ -256,7 +256,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261111.11';
+const VERSION = 'v261111.12';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1980,7 +1980,7 @@ $('#btnAgain').addEventListener('click', () => { $('#scrResult').hidden = true; 
 $('#btnQuit').addEventListener('click', () => { cancelFlag = true; });
 // 嵌在群島頁面裡（?embed=1）：回島＝通知上層頁面收起遊戲、反向播放轉場；單獨打開就照原本換頁
 const EMBED = /[?&]embed=1\b/.test(location.search) && window.parent !== window;
-['#btnIsle', '#btnIsleT'].forEach((q) => $(q).addEventListener('click', () => { if(EMBED){ try{ window.parent.postMessage({ fuchen:'leave' }, location.origin); return; }catch(e){} } location.href = '../#fuchen'; }));
+['#btnIsle', '#btnIsleT', '#btnIsleC'].forEach((q) => $(q).addEventListener('click', () => { if(EMBED){ try{ window.parent.postMessage({ fuchen:'leave' }, location.origin); return; }catch(e){} } location.href = '../#fuchen'; }));
 if(EMBED){ document.documentElement.classList.add('embed'); }
 fu = new Fuchen(); resize(); requestAnimationFrame(frame);
 // 電腦測試用：?touch 直接進觸控模式
