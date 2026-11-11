@@ -696,7 +696,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261110.17</span>
+  <span class="ver">v261110.18</span>
   </div></div>
 </div>
 
@@ -8989,14 +8989,14 @@ window.__fcRenderStorm = async (opt = {}) => { const SR = 44100, LEN = 14, off =
   return { b64: btoa(str), peak: pk, 風雨: rms(0.3, 1.2), 預兆: rms(5.0, 5.45), 斷音: rms(5.5, 5.64), 爆擊: rms(5.65, 5.95), 滾雷: rms(6.6, 7.6), 餘波: rms(10, 11) }; };
 
 // 雷擊的餘波特效：衝擊波環、四散的火花、拂塵上爬行的電弧；畫在閃電那張畫布上，約 1.4 秒
-function fcImpactFx(cv, sx, sy) {
+function fcImpactFx(cv, sx, sy, bx, by) {
   const ctx = cv.getContext('2d'), dpr = Math.min(devicePixelRatio || 1, 2); cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
-  const W = cv.width, H = cv.height, X = sx * dpr, Y = sy * dpr, t0 = performance.now(), sparks = [];
+  const W = cv.width, H = cv.height, X = sx * dpr, Y = sy * dpr, BX = bx * dpr, BY = by * dpr, t0 = performance.now(), sparks = [];
   for (let i = 0; i < 70; i++) { const a = Math.random() * Math.PI * 2, v = (180 + Math.random() * 620) * dpr; sparks.push({ x: X, y: Y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 80 * dpr, life: 0.5 + Math.random() * 0.9, c: Math.random() < 0.55 ? '255,214,120' : '190,220,255', r: (1 + Math.random() * 2.4) * dpr }); }
   (function frame() {
     const dt = (performance.now() - t0) / 1000; ctx.clearRect(0, 0, W, H); if (dt > 1.6) return;
-    // 衝擊波：兩圈，往外擴散、越來越淡
-    for (const [d0, spd, w0] of [[0, 1500, 10], [0.12, 1100, 6]]) { const t = dt - d0; if (t < 0) continue; const r = t * spd * dpr, a = Math.max(0, 1 - t / 0.75); if (a <= 0) continue; ctx.strokeStyle = `rgba(210,230,255,${a * 0.85})`; ctx.lineWidth = w0 * dpr * (1 - t / 1.2); ctx.shadowColor = '#9cc4ff'; ctx.shadowBlur = 20 * dpr; ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.stroke(); }
+    // 地面漣漪：以劍插進岩石的點為圓心（碎石就是從那裡炸出），貼著地面往外擴，所以畫成扁橢圓（透視）；三圈，後面的更慢更淡
+    for (const [d0, spd, w0] of [[0, 1500, 10], [0.12, 1100, 6], [0.26, 800, 4]]) { const t = dt - d0; if (t < 0) continue; const r = t * spd * dpr, a = Math.max(0, 1 - t / 0.75); if (a <= 0) continue; ctx.strokeStyle = `rgba(210,230,255,${a * 0.85})`; ctx.lineWidth = w0 * dpr * (1 - t / 1.2); ctx.shadowColor = '#9cc4ff'; ctx.shadowBlur = 20 * dpr; ctx.beginPath(); ctx.ellipse(BX, BY, r, r * 0.34, 0, 0, Math.PI * 2); ctx.stroke(); }
     // 火花：受重力往下掉，亮度隨壽命淡掉
     ctx.shadowBlur = 8 * dpr; for (const p of sparks) { const l = dt / p.life; if (l >= 1) continue; p.vy += 900 * dpr * 0.016; p.x += p.vx * 0.016; p.y += p.vy * 0.016; p.vx *= 0.985; ctx.fillStyle = `rgba(${p.c},${1 - l})`; ctx.shadowColor = `rgba(${p.c},1)`; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (1 - l * 0.5), 0, Math.PI * 2); ctx.fill(); }
     // 電弧：在雷擊點周圍閃動的小閃電，前 0.9 秒
@@ -9113,11 +9113,12 @@ async function fcEnter(href) {
     const head = new THREE.Vector3(), DUR = 1100; let t1 = performance.now();
     // 雷霆一擊
     { const hp = new THREE.Vector3(); sw.getWorldPosition(hp); hp.y += 7.5; hp.project(camera); const sx = (hp.x * 0.5 + 0.5) * innerWidth, sy = Math.max(60, Math.min(innerHeight * 0.5, (-hp.y * 0.5 + 0.5) * innerHeight));
+      const bp = new THREE.Vector3(0.12, 2.9, -0.6); fcIsl.mark.localToWorld(bp); bp.project(camera); const bx = (bp.x * 0.5 + 0.5) * innerWidth, by = (-bp.y * 0.5 + 0.5) * innerHeight;   // 劍插進岩石的那一點（螢幕座標）
       fcSndStrike(0);   // 聲音：預兆已在斷音那 0.17 秒收掉，這一刻立刻炸
       fcBolt(el.querySelector('canvas.bolt'), el.querySelector('.flash'), sx, sy, true); fcLightScene(1.25); fcFov(fcT.fov0 * 1.14, 90); setTimeout(() => fcFov(fcT.fov0, 900), 130);   // 向外彈一下再慢慢回來
       document.body.classList.add('fcShake'); setTimeout(() => document.body.classList.remove('fcShake'), 1000); try { navigator.vibrate && navigator.vibrate([60, 30, 140, 40, 60]); } catch (e) {}
       // 定格：爆亮那一瞬間，群島的畫面凍住約 0.11 秒（hit-stop），閃電與衝擊波照常閃，然後才開始拔起
-      fcDebrisBurst(); fcT.freeze = true; fcT.rafStop = true; setTimeout(() => { fcT.rafStop = false; fcT.freeze = false; }, 110); setTimeout(() => fcImpactFx(el.querySelector('canvas.bolt'), sx, sy), 60);
+      fcDebrisBurst(); fcT.freeze = true; fcT.rafStop = true; setTimeout(() => { fcT.rafStop = false; fcT.freeze = false; }, 110); setTimeout(() => fcImpactFx(el.querySelector('canvas.bolt'), sx, sy, bx, by), 60);
       fcSndRain(0.1); fcSndWind(0.1); setTimeout(() => { fcSndRain(0.3); fcSndWind(0.3); }, 1600); }
     await fcTWait(110); t1 = performance.now();
     await new Promise((done) => { (function pull() {
