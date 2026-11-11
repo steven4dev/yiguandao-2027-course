@@ -255,7 +255,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261109.30';
+const VERSION = 'v261109.31';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -642,9 +642,12 @@ const TAU = Math.PI*2;
 const FAMS = [
   { key:'se',   name:'色', mood:'愛比較',   color:'#d3a6e3', dark:'#7e5a92', weak:'circle', weakName:'○ 圓',  weakWhy:'本自圓滿，不必比較' },
   { key:'sheng',name:'聲', mood:'愛批評',   color:'#f2b47c', dark:'#9a5b2a', weak:'s',      weakName:'S 字', weakWhy:'迴轉語氣，以柔化剛' },
-  { key:'xiang',name:'香', mood:'被誘惑',   color:'#b9bdf0', dark:'#5e64a8', weak:'down',   weakName:'⬇ 劈', weakWhy:'當下斬斷誘惑' },
+  { key:'xiang',name:'香', mood:'被誘惑',   color:'#b9bdf0', dark:'#5e64a8', weak:'down',   weakName:'⬇ 劈', weakWhy:'當下斬斷誘惑',
+    weakX:'itri', weakNameX:'▽ 倒三角', weakWhyX:'看清誘惑的陷阱，往下收心',
+    weakN:'tri', weakNameN:'△ 正三角', weakWhyN:'看清誘惑，把心穩住' },
   { key:'wei',  name:'味', mood:'貪口腹',   color:'#cfe28c', dark:'#6f8a2a', weak:'v',      weakName:'V 字', weakWhy:'知足打勾：夠了' },
-  { key:'chu',  name:'觸', mood:'貪安逸',   color:'#a2cdea', dark:'#3f78a0', weak:'up',     weakName:'⬆ 挑', weakWhy:'振作起身' },
+  { key:'chu',  name:'觸', mood:'貪安逸',   color:'#a2cdea', dark:'#3f78a0', weak:'up',     weakName:'⬆ 挑', weakWhy:'振作起身',
+    weakX:'tri', weakNameX:'△ 正三角', weakWhyX:'振作向上，站穩腳步' },
   { key:'fa',   name:'法', mood:'胡思亂想', color:'#93dccb', dark:'#2f8a76', weak:'alpha',  weakName:'α 阿法',weakWhy:'回到初心' }
 ];
 const MONS = [
@@ -691,7 +694,12 @@ const XMONS = [
 XMONS.forEach(([f, st, name, quote, weak, weakName, weakWhy, xv, color]) => MONS.push({ fam: FAMS.find(x => x.key === f), stage: st, name, quote, weak, weakName, weakWhy, xv, color,
   lv: st === 1 ? 'Lv 1–9' : st === 2 ? 'Lv 10–19' : 'Lv 20+', hits: st === 1 ? 1 : 2 }));
 // 這隻塵靈怕什麼：異相塵靈有自己的弱點，其他照系別
-const weakOf = d => d.weak || d.fam.weak, weakNameOf = d => d.weakName || d.fam.weakName, weakWhyOf = d => d.weakWhy || d.fam.weakWhy;
+// 這隻塵靈怕什麼：入門維持原本的樣子；修行、精進一條線的題目不出現，香、觸系的弱點改成三角形
+// 淨心錄（不在遊戲中）看的是修行、精進的版本，因為玩家最終要靠它們收齊
+const useX = () => !(typeof diffKey !== 'undefined' && diffKey === 'easy' && !DEX_VIEW);
+const modeW = d => typeof diffKey !== 'undefined' && diffKey === 'normal' && d.fam.weakN ? 'N' : (useX() ? 'X' : '');   // 修行：香系怕正三角；精進：怕倒三角；入門：原本的線
+const weakOf = d => d.weak || d.fam['weak' + modeW(d)] || d.fam.weak, weakNameOf = d => d.weakName || d.fam['weakName' + modeW(d)] || d.fam.weakName, weakWhyOf = d => d.weakWhy || d.fam['weakWhy' + modeW(d)] || d.fam.weakWhy;
+let DEX_VIEW = false;
 
 /* ================= 塵靈繪製 ================= */
 // 各系的身形（以 r 為單位、原點在中心）
@@ -1627,7 +1635,8 @@ async function encounter(opt){
   const { def, lv, gold, boss, wave, tutorial } = opt;
   let keys = diffKey === 'hard' && !boss ? opt.keys.map(k => k === 'circle' ? pick(['cw', 'ccw']) : k) : opt.keys;
   if(diffKey !== 'hard') keys = keys.map(k => k === 'itri' ? 'tri' : k);   // 倒三角比較不順手，只放在精進
-  if(!monster || monster.state === 'gone' || (!boss && !(opt.ambush && monster.def === def))){
+  if(opt.calibOnly) monster = null;   // 校準：畫面上不放塵靈
+  else if(!monster || monster.state === 'gone' || (!boss && !(opt.ambush && monster.def === def))){
     monster = { type: opt.type, def, lv, gold, sym:keys[0], x:MON.x, y:MON.y, r:U()*(boss ? 0.2 : 0.14), t0:performance.now(), state:'enter', boss:!!boss, hp: boss ? opt.hp : 1, maxHp: boss ? opt.hp : 1, seed:Math.random()*10 };
     boss ? (sfx.boss(), actx && bossVoice(now0() + 0.6, 0.8)) : sfx.appear(def);
   } else { monster.sym = keys[0]; }
@@ -1648,7 +1657,7 @@ async function encounter(opt){
     await wait(multi ? 250 : 0);
   }
   await wait(300);
-  if(monster.state === 'enter') monster.state = 'idle';
+  if(monster && monster.state === 'enter') monster.state = 'idle';
   document.body.dataset.key = keys[0];
   await countdown(opt.beats || D().beats);
   center('');
@@ -1660,6 +1669,7 @@ async function encounter(opt){
     const sy = SYMS[keys[i]], st = await record(sy.win || (sy.kind === 'dir' ? 1600 : 2800), th0, i > 0 ? '再揮' : '揮', sy.still || 300); strokes.push(st); lastStroke = st; if(i < keys.length - 1){ document.body.dataset.key = keys[i + 1]; document.body.dataset.phase = 'gap'; }
   }
   document.body.dataset.phase = ''; bgmHold(false); sfx.ding(); vib(50); center('<div class="mid">叮～</div>'); await wait(250); center('');
+  if(opt.calibOnly){ const scr = strokes[0] && strokes[0].input === 'gyro' ? (() => { const a = analyzeStroke(strokes[0], modelFor(strokes[0]), th0 || null); return a.none ? null : pathOnScreen(a); })() : null; if(scr){ swoosh(1); await playReplay(scr, 700); } return { ok: true, calib: true }; }
   const rs = keys.map((k, i) => judgeSwing(k, strokes[i], th0, !!tutorial)); tries++;
   // 拂塵招式重播：每一揮依序重播，標準路線淡淡留著對照
   for(let i=0;i<keys.length;i++){ const r = rs[i], scr = !r.none ? pathOnScreen(r.a) : null; hint = makeHint(keys[i]); if(hint){ hint.a = 0; hint.target = 0.3; } if(scr){ swoosh(1); await playReplay(scr, multi ? 650 : 900); } }
@@ -1723,7 +1733,7 @@ const NAMEDP = () => diffKey === 'easy' ? NAMED_ALL.slice(0, 4) :   // 入門只
   NAMED_ALL.filter(c => !c.some(k => SYMS[k].kind === 'dir'));
 const MID0 = ['v','circle','z','n','alpha','s'], HARD0 = ['rs','rz','rn','ralpha','z','n','s','alpha'];   // 入門用的原本題庫
 function keysFor(stage, def){ const NAMED = NAMEDP(), fam = def.fam;
-  if(def.xv && diffKey !== 'easy'){ const w = def.weak; if(stage === 1) return [w];
+  if(def.xv && diffKey !== 'easy'){ const w = weakOf(def); if(stage === 1) return [w];
     const a = pick((stage === 2 ? MID : HARD).filter(x => x !== w)); if(stage === 2) return Math.random() < 0.5 ? [a, w] : [w, a];
     return [a, pick(MID.filter(x => x !== w && x !== a)), w]; }
   if(stage === 3 && diffKey !== 'easy'){   // 塵魔：三連擊，多半是組合技再接一個難的符號
@@ -1731,11 +1741,11 @@ function keysFor(stage, def){ const NAMED = NAMEDP(), fam = def.fam;
     return [...base, pick(HARD.filter(x => !base.includes(x)))];
   }
   if(stage === 2 && diffKey !== 'easy' && Math.random() < 0.6){ const a = pick(MID); return [a, pick(MID.filter(x => x !== a))]; }   // 塵妖偏向 Z、N、S、阿法
-  if(stage === 1){ const P = STAGE1(); return [Math.random() < 0.35 && P.includes(fam.weak) ? fam.weak : pick(P)]; }
+  if(stage === 1){ const P = STAGE1(); return [Math.random() < 0.4 && (P.includes(weakOf(def)) || diffKey !== 'easy') ? weakOf(def) : pick(P)]; }
   if(Math.random() < 0.6) return pick(NAMED).slice();
   // 入門只用原本的符號（新題庫留給修行、精進）
   const pool = diffKey === 'easy' ? (stage === 2 ? MID0 : HARD0) : (stage === 2 ? MID : HARD), a = pick(pool); let b = pick(pool.filter(x => x !== a));
-  if(Math.random() < 0.4 && fam.weak !== a && SYMS[fam.weak] && (diffKey === 'easy' || SYMS[fam.weak].kind !== 'dir')) b = fam.weak;
+  const wk = weakOf(def); if(Math.random() < 0.4 && wk !== a && SYMS[wk] && (diffKey === 'easy' || SYMS[wk].kind !== 'dir')) b = wk;
   return [a, b];
 }
 /* 難度：入門＝原本的難度；修行（預設）＝判定變嚴、關卡變長、提示逐步退場；精進＝再少一盞心燈、倒數全部兩拍、塵魔更多 */
@@ -1778,17 +1788,18 @@ async function runGame(){
   try{
     // 下馬威（修行、精進）：一開場塵魔就殺出來，先震一下，再要求兩連擊
     const amb = diffKey !== 'easy' ? spawnDef(3) : null;
-    if(amb) await ambushIntro(amb);
     // 教學：四方拂塵（第一次玩、或還沒有四方校正時）——順便學這位玩家的揮法和力氣
     if(inputMode === 'gyro' && (!calib.MT || !calib.autoTh)){
-      say('四方拂塵'); await banner(amb ? '🧭 先穩住陣腳' : '🧭 熱身・四方拂塵', amb ? '塵魔召來四隻小塵精！整隻手臂照方向大揮' : '照方向整隻手臂大揮，系統會記住您的揮法');
+      say('四方拂塵'); await banner('🧭 定心校準', diffKey === 'easy' ? '照方向整隻手臂大揮，系統會記住您的揮法' : '只做這一次：校準完塵魔就來了！照方向整隻手臂大揮，不算分、不扣心燈');
       const got = {}, peaks = [];
       for(const [k, d] of [['left','L'],['right','R'],['up','U'],['down','D']]){
-        const r = await encounter({ keys:[k], ...spawnDef(1), wave:'熱身・四方拂塵', tutorial:'熱身：照著方向大揮一次' });
+        // 修行、精進：校準只在第一次、沒有怪物（不是關卡題目）；入門維持原本跟小塵精熱身
+        const r = await encounter({ keys:[k], ...(diffKey === 'easy' ? spawnDef(1) : { def: MONS[0], lv: 1, gold: false }), wave: diffKey === 'easy' ? '熱身・四方拂塵' : '🧭 定心校準（只做一次）', tutorial:'照著方向大揮一次', calibOnly: diffKey !== 'easy' });
         if(lastStroke && lastStroke.input === 'gyro'){ const t = analyzeStroke(lastStroke, 'trajRaw', SENS.light); if(!t.none && !t.unavailable){ got[d] = { v: applyCal(t.mainVec[0], t.mainVec[1]), amp: Math.hypot(t.mainVec[0], t.mainVec[1]) }; peaks.push(t.peak); } }
       }
       learnFromWarmup(got, peaks);
     }
+    if(amb) await ambushIntro(amb);   // 校準完（或本來就校準過）才開始突襲
     if(amb){ const a = pick(MID), b = diffKey === 'hard' ? pick(HARD.filter(x => x !== a)) : pick(MID.filter(x => x !== a));
       await banner('⚔️ 接招！', `${amb.def.name}要你一開場就兩連擊`, { red: true, dur: 2200 });
       await encounter({ keys:[a, b], ...amb, ambush:true, hm:'full', wave:'⚠️ 開場突襲・塵魔' }); monster = null; }
@@ -1891,11 +1902,12 @@ function fitCv(cv){ const r = cv.getBoundingClientRect(), d = Math.min(2, device
 function silhouette(cv){ const c = cv.getContext('2d'); c.save(); c.setTransform(1,0,0,1,0,0); c.globalCompositeOperation = 'source-in'; c.fillStyle = '#4a5d72'; c.fillRect(0, 0, cv.width, cv.height); c.globalCompositeOperation = 'destination-over'; c.shadowColor = 'rgba(160,190,220,.55)'; c.shadowBlur = 14; c.drawImage(cv, 0, 0); c.restore(); }
 function drawCardCv(cv, m, t, opt){ const { w, h, d } = fitCv(cv), c = cv.getContext('2d'); c.setTransform(d,0,0,d,0,0); c.clearRect(0, 0, w, h); dust(c, m, w/2, h*0.6, w*0.3, t, opt); if(opt.sil) silhouette(cv); }
 function openDex(){
+  DEX_VIEW = true;
   const n = dexCount(); $('#dexN').textContent = `${n} / ${MONS.length}`;
   $('#dexList').innerHTML = ''; dexCards = [];
   FAMS.forEach(f => {
     const ms = MONS.filter(m => m.fam === f).sort((a, b) => (!!a.xv - !!b.xv) || (a.stage - b.stage)), base = ms.filter(m => !m.xv), xs = ms.filter(m => m.xv), got = ms.filter(m => dex.m[m.name]).length, gotBase = DEX_ALL ? 1 : base.filter(m => dex.m[m.name]).length, box = document.createElement('div'); box.className = 'dfam';
-    box.innerHTML = `<div class="dfam-h"><b style="color:${f.color}">${f.name}系・${f.mood}</b><span>${got === ms.length ? '🏅 已收齊' : `${got}/${ms.length}`}${gotBase ? `　怕 ${f.weakName}` : ''}</span></div><div class="dfam-t">📜 <span class="cl">「${FAM_TEACH[f.key].src}」</span><span class="cl">${FAM_TEACH[f.key].from}</span>　<span class="cl">🧘 ${FAM_TEACH[f.key].how}</span></div><div class="drow"></div>${xs.length ? '<div class="dx-h">✨ 異相塵靈（修行、精進才會出現）</div><div class="drow dx"></div>' : ''}`;
+    box.innerHTML = `<div class="dfam-h"><b style="color:${f.color}">${f.name}系・${f.mood}</b><span>${got === ms.length ? '🏅 已收齊' : `${got}/${ms.length}`}${gotBase ? `　怕 ${f.weakNameN && f.weakNameN !== f.weakNameX ? f.weakNameN + '／' + f.weakNameX : (f.weakNameX || f.weakName)}` : ''}</span></div><div class="dfam-t">📜 <span class="cl">「${FAM_TEACH[f.key].src}」</span><span class="cl">${FAM_TEACH[f.key].from}</span>　<span class="cl">🧘 ${FAM_TEACH[f.key].how}</span></div><div class="drow"></div>${xs.length ? '<div class="dx-h">✨ 異相塵靈（修行、精進才會出現）</div><div class="drow dx"></div>' : ''}`;
     ms.forEach(m => { const e = dexE(m), el = document.createElement('div'); el.className = 'dcard' + (e ? '' : ' lock') + (m.xv ? ' xv' : '');
       el.innerHTML = `<canvas></canvas><div class="nm">${e ? (e.gold ? '✨' : '') + m.name : '？？？'}</div><div class="lv">${e ? (m.xv ? `怕 ${m.weakName}` : e.preview ? `${STAGE_NAME[m.stage]}・${m.lv}` : `收服 ${e.n} 次`) : m.lv + ' 出沒'}</div>`;
       el.onclick = () => openDexCard(m); box.querySelector(m.xv ? '.drow.dx' : '.drow').appendChild(el); dexCards.push({ cv: el.querySelector('canvas'), m, e }); });
@@ -1916,7 +1928,7 @@ function openDexCard(m){
 function drawDex(t){ const s = t/1000; dexCards.forEach(({ cv, m, e }, i) => drawCardCv(cv, m, s, { seed:i, sil: !e, snap:true, gold: e && e.gold && Math.sin(s*0.5 + i) > 0.6 })); if(!$('#dexModal').hidden && dexModalM) drawCardCv($('#dmCv'), dexModalM, s, { sil: !dexE(dexModalM) }); }
 $('#btnDexT').addEventListener('click', openDex);
 $('#btnDexR').addEventListener('click', openDex);
-$('#btnDexClose').addEventListener('click', () => { $('#scrDex').hidden = true; });
+$('#btnDexClose').addEventListener('click', () => { $('#scrDex').hidden = true; DEX_VIEW = false; });
 $('#dmClose').addEventListener('click', () => { $('#dexModal').hidden = true; dexModalM = null; });
 if(DEX_OPEN) setTimeout(openDex, 300);
 $('#btnDexT').textContent = `📖 淨心錄（${dexCount()} / ${MONS.length}）`;
