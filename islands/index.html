@@ -696,7 +696,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261114.10</span>
+  <span class="ver">v261114.11</span>
   </div></div>
 </div>
 
@@ -8298,7 +8298,7 @@ function audioInit() {
   if (!AC) return;
   const ctx = (SND.ctx = new AC());
   unlockAudio(ctx);
-  ctx.addEventListener('statechange', syncSoundHint);
+  ctx.addEventListener('statechange', () => { syncSoundHint(); if (ctx.state !== 'running' && !document.hidden && (SND.sfx || SND.music)) armWake(); });   // 被來電、Siri、別的 App 打斷：等下一次點畫面再恢復
   const comp = ctx.createDynamicsCompressor();
   comp.connect(ctx.destination);
   const bus = () => { const g = ctx.createGain(); g.gain.value = 0; g.connect(comp); return g; };
@@ -8735,33 +8735,39 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape' && !soundPop.hidden)
   SND.music = pref ? !!pref.music : true;
   soundBtn.setAttribute('aria-pressed', String(SND.sfx || SND.music));
   $('sfxOn').checked = SND.sfx; $('musicOn').checked = SND.music;
-  if (SND.sfx || SND.music) {
-    // 手機要在手指「放開」時才算真的點了（按下時解鎖不了），所以觸控只聽 pointerup／touchend／click；
-    // 滑鼠和鍵盤按下就算。真的開始播放才拆掉
-    const EVS = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'];
-    const wake = (e) => {
-      if (!SND.sfx && !SND.music) return;
-      if (e && e.type === 'pointerdown' && e.pointerType !== 'mouse') return;
-      audioInit();
-      if (SND.ctx && SND.ctx.state === 'running') EVS.forEach((ev) => removeEventListener(ev, wake, true));
-      else if (SND.ctx) SND.ctx.resume().then(() => { if (SND.ctx.state === 'running') EVS.forEach((ev) => removeEventListener(ev, wake, true)); });
-    };
-    EVS.forEach((ev) => addEventListener(ev, wake, true));
-  }
+  if (SND.sfx || SND.music) armWake();
   syncSoundHint();
 }
+// 「點一下畫面就有聲音」：手機要在手指「放開」時才算真的點了（按下時解鎖不了），所以觸控只聽 pointerup／touchend／click；
+// 滑鼠和鍵盤按下就算。真的開始播放才拆掉；切回分頁、被打斷之後會再裝一次
+var wakeArmed = false;   // 函式宣告會提前，載入時就可能被呼叫：事件清單寫在函式裡，不靠外面的變數
+function wakeEvs() { return ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']; }
+function wake(e) {
+  if (!SND.sfx && !SND.music) return;
+  if (e && e.type === 'pointerdown' && e.pointerType !== 'mouse') return;
+  audioInit();
+  const done = () => { if (SND.ctx && SND.ctx.state === 'running') { wakeEvs().forEach((ev) => removeEventListener(ev, wake, true)); wakeArmed = false; syncSoundHint(); } };
+  if (SND.ctx && SND.ctx.state === 'running') done(); else if (SND.ctx) SND.ctx.resume().then(done, () => {});
+}
+function armWake() { if (wakeArmed) return; wakeArmed = true; wakeEvs().forEach((ev) => addEventListener(ev, wake, true)); }
 // 還沒出聲之前，畫面下方提示「點一下畫面就有聲音」；開始播放、或兩種聲音都關掉時就收起來
 function syncSoundHint() {
   const on = (SND.sfx || SND.music) && !(SND.ctx && SND.ctx.state === 'running') && !document.hidden;
   $('soundHint').classList.toggle('on', on);
 }
 $('soundHint').addEventListener('click', () => { audioInit(); });
-// 切到別的分頁就暫停聲音
+// 切到別的分頁就暫停聲音；切回來先試著自動恢復，iPhone 不讓自動恢復時，點一下畫面就會恢復（畫面下方會出現提示）
+function resumeAudio() {
+  if (!SND.ctx || !(SND.sfx || SND.music) || document.hidden) return;
+  if (SND.ctx.state !== 'running') { armWake(); SND.ctx.resume().then(syncSoundHint, () => {}); }
+  syncSoundHint();
+}
 document.addEventListener('visibilitychange', () => {
   if (!SND.ctx) return;
-  if (document.hidden) SND.ctx.suspend();
-  else if (SND.sfx || SND.music) SND.ctx.resume();
+  if (document.hidden) SND.ctx.suspend(); else resumeAudio();
 });
+addEventListener('pageshow', resumeAudio);   // 從上一頁返回（瀏覽器快取的頁面）
+addEventListener('focus', resumeAudio);
 
 
 addEventListener('resize', () => {
