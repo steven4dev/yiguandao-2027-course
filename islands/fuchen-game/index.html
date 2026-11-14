@@ -147,6 +147,16 @@ body{line-break:strict}
 /* 四顆按鈕一樣寬、一樣高：報名（實心金）＞再試煉（金框）＞淨心錄、返回島嶼（一般框） */
 #scrResult .row > *{box-sizing:border-box;width:100%;min-height:40px;padding:6px 8px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:1rem;font-weight:800;text-align:center;text-decoration:none}
 #scrResult #btnShare{background:#06c755;color:#fff;border:0}
+/* 「看淨心錄」做醒目：兩顆金色光點順時針沿著邊框繞圈（像流水燈），外加柔光呼吸；不支援 @property 的舊瀏覽器只會看到金邊 */
+@keyframes flDash{from{stroke-dashoffset:var(--o0)}to{stroke-dashoffset:var(--o1)}}
+@keyframes flGlow{0%,100%{box-shadow:0 0 10px rgba(232,189,90,.22),inset 0 0 10px rgba(232,189,90,.08)}50%{box-shadow:0 0 22px rgba(232,189,90,.5),inset 0 0 16px rgba(232,189,90,.16)}}
+#scrResult #btnDexR{position:relative;border:1.5px solid rgba(232,189,90,.45);color:#ffeeb8;background:rgba(36,28,12,.92);animation:flGlow 2.4s ease-in-out infinite}
+#scrResult #btnDexR svg.fl{position:absolute;left:-1.5px;top:-1.5px;pointer-events:none;overflow:visible}
+#scrResult #btnDexR svg.fl path{fill:none;stroke-linecap:round;animation:flDash 1.5s linear infinite;filter:drop-shadow(0 0 4px rgba(255,214,110,.9))}
+#scrResult #btnDexR .newN{font-style:normal;margin-left:8px;padding:1px 8px;border-radius:9px;background:#e8453c;color:#fff;font-size:.8rem;font-weight:900}
+@media (prefers-reduced-motion:reduce){#scrResult #btnDexR,#scrResult #btnDexR svg.fl path{animation:none}}
+#scrShare .shareText{display:flex;align-items:center;justify-content:center;min-height:42px;border-radius:12px;background:#06c755;color:#fff;font-weight:800;text-decoration:none}
+#shareImg{display:block;width:100%;max-height:56vh;object-fit:contain;border-radius:12px;background:#0b1220}
 #scrResult #btnAgain{border:1.5px solid var(--gold);color:var(--gold);background:rgba(232,189,90,.10)}
 .stats b{color:var(--gold)}
 .signup{margin:12px 0 4px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(232,189,90,.10);text-align:center}
@@ -272,6 +282,18 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     </div>
   </div>
 </section>
+<!-- 分享成績：不能直接分享圖片的瀏覽器（例如部分 LINE 內建瀏覽器）改在這裡看圖卡、長按儲存 -->
+<section class="screen" id="scrShare" hidden>
+  <div class="panel">
+    <h2>💬 分享成績</h2>
+    <img id="shareImg" alt="我的拂塵試煉成績">
+    <p class="note">長按圖片 →「儲存」，再到 LINE 傳給朋友；也可以直接傳文字連結。</p>
+    <div class="row">
+      <a class="shareText" id="btnShareText" href="https://line.me/R/msg/text/" target="_blank" rel="noopener">💬 傳送文字連結到 LINE</a>
+      <button id="btnShareClose">關閉</button>
+    </div>
+  </div>
+</section>
 <!-- 淨心錄 -->
 <section class="screen" id="scrDex" hidden>
   <div class="panel dexp">
@@ -289,7 +311,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261111.22';
+const VERSION = 'v261114.01';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1925,6 +1947,79 @@ function learnFromWarmup(got, peaks){
   store.set('fuchenLab.calib', calib);
 }
 
+/* ---------------- 分享成績（LINE） ---------------- */
+// 訊息：單行不超過 12 字；連到專屬入口頁（朋友打開會到島上的拂塵淨心島，按「進入拂塵試煉」才看得到轉場動畫）
+const SHARE_URL = 'https://steven4dev.github.io/yiguandao-2027-course/islands/fuchen/';
+function shareLines(s){
+  return ['🪶 拂塵淨心島・體感遊戲', s.kind === 'over' ? `我淨化了 ${s.hits} 隻塵靈！` : '我收服了無明塵王！', `難度${s.diff}・得分 ${s.score}`, `淨化 ${s.hits} 隻・命中 ${s.acc}%`, `連擊 ${s.maxCombo}・收 ${s.caught.length} 隻`, '你也來揮一揮 👇', SHARE_URL];
+}
+// 成績圖卡 1080×1350：大數字、本局收服的塵靈、一句邀請
+async function buildShareCard(s){
+  const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
+  const F = '"PingFang TC","Noto Sans TC","Noto Sans CJK TC","Microsoft JhengHei",sans-serif', GOLD = '#e8bd5a', INK = '#f6ecd8', MUTED = '#b9ab95';
+  let g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#080d18'); g.addColorStop(0.55, '#16203a'); g.addColorStop(1, '#0d151d'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+  let sd = 9; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+  for(let i = 0; i < 130; i++){ c.globalAlpha = 0.25 + rnd() * 0.6; c.fillStyle = '#fff6dc'; c.beginPath(); c.arc(rnd() * W, rnd() * H * 0.8, rnd() * 2 + 0.5, 0, 6.29); c.fill(); } c.globalAlpha = 1;
+  g = c.createRadialGradient(900, 150, 10, 900, 150, 200); g.addColorStop(0, 'rgba(255,230,170,.35)'); g.addColorStop(1, 'rgba(255,230,170,0)'); c.fillStyle = g; c.fillRect(700, 0, 380, 360);
+  { const mc = document.createElement('canvas'); mc.width = mc.height = 200; const m = mc.getContext('2d'); m.fillStyle = '#f6e7bf'; m.beginPath(); m.arc(100, 100, 56, 0, 6.29); m.fill(); m.globalCompositeOperation = 'destination-out'; m.beginPath(); m.arc(124, 88, 50, 0, 6.29); m.fill(); c.drawImage(mc, 800, 50); }
+  c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+  c.save(); c.shadowColor = 'rgba(255,200,90,.8)'; c.shadowBlur = 28; c.fillStyle = '#ffe7a8'; c.font = `900 104px ${F}`; c.fillText('🪶 拂塵試煉', W / 2, 150); c.restore();
+  c.fillStyle = MUTED; c.font = `600 36px ${F}`; c.fillText('全真群島・拂塵淨心島・體感遊戲', W / 2, 212);
+  c.fillStyle = INK; c.font = `800 56px ${F}`; c.fillText(`${s.kind === 'over' ? '🪔 心燈用完了' : '✨ 試煉圓滿'}・${s.diff}`, W / 2, 304);
+  const items = [[s.hits, '淨化（隻）'], [s.acc + '%', '命中率'], [s.maxCombo, '最高連擊'], [s.score, '得分']];
+  items.forEach(([v, lb], i) => {
+    const x = 60 + (i % 2) * 490, y = 346 + Math.floor(i / 2) * 270, w = 470, h = 250;
+    c.fillStyle = 'rgba(255,255,255,.07)'; c.strokeStyle = 'rgba(232,189,90,.5)'; c.lineWidth = 3; c.beginPath(); c.roundRect(x, y, w, h, 28); c.fill(); c.stroke();
+    let fs = 150; c.font = `900 ${fs}px ${F}`; while(c.measureText(String(v)).width > w - 50 && fs > 60){ fs -= 6; c.font = `900 ${fs}px ${F}`; }
+    c.save(); c.shadowColor = 'rgba(232,189,90,.45)'; c.shadowBlur = 22; c.fillStyle = GOLD; c.fillText(String(v), x + w / 2, y + 150); c.restore();
+    c.fillStyle = MUTED; c.font = `700 40px ${F}`; c.fillText(lb, x + w / 2, y + 212);
+  });
+  c.fillStyle = INK; c.font = `800 44px ${F}`; c.fillText('本局收入淨心錄', W / 2, 950);
+  const list = s.caught.slice(0, 6), n = list.length;
+  if(n){
+    list.forEach((m, i) => {
+      const x = W / 2 + (i - (n - 1) / 2) * 165, y = 1062;
+      try{ dust(c, m.def, x, y, 62, 1.2 + i * 0.7, { noMeasure: true }); }catch(e){}
+      c.fillStyle = INK; c.font = `800 32px ${F}`; c.fillText(m.name, x, 1160);
+      c.fillStyle = GOLD; c.font = `800 30px ${F}`; c.fillText('Lv ' + m.lv, x, 1198);
+    });
+    if(s.caught.length > 6){ c.fillStyle = MUTED; c.font = `700 30px ${F}`; c.fillText(`…還有 ${s.caught.length - 6} 隻`, W / 2, 1236); }
+  } else { c.fillStyle = MUTED; c.font = `600 38px ${F}`; c.fillText('這一局沒有收服塵靈，下次加油！', W / 2, 1090); }
+  c.fillStyle = '#ffe7a8'; c.font = `800 42px ${F}`; c.fillText('手機當拂塵柄，大揮一拂，淨化六塵', W / 2, 1290);
+  c.fillStyle = MUTED; c.font = `600 26px ${F}`; c.fillText('steven4dev.github.io/yiguandao-2027-course/islands/fuchen', W / 2, 1330);
+  return new Promise(res => cv.toBlob(res, 'image/png'));
+}
+let shareState = null;
+function prepareShare(s){
+  const st = shareState = { s, text: shareLines(s).join('\n'), blob: null, file: null };
+  window.__lastResult = s;   // 測試用：看得到這一局的成績快照
+  $('#btnShare').href = $('#btnShareText').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(st.text);
+  setTimeout(() => buildShareCard(s).then(b => { if(shareState === st && b){ st.blob = b; try{ st.file = new File([b], 'fuchen-result.png', { type: 'image/png' }); }catch(e){} } }).catch(console.warn), 350);   // 先在背景做好，按下去就能立刻分享（iPhone 要求分享要在點擊後馬上呼叫）
+}
+$('#btnShare').addEventListener('click', async e => {
+  const st = shareState; if(!st) return; e.preventDefault();
+  if(!st.file){ st.blob = st.blob || await buildShareCard(st.s); try{ st.file = new File([st.blob], 'fuchen-result.png', { type: 'image/png' }); }catch(err){} }
+  try{ if(st.file && navigator.canShare && navigator.canShare({ files: [st.file] })){ await navigator.share({ files: [st.file], text: st.text }); return; } }catch(err){ if(err && err.name === 'AbortError') return; }
+  // 這個瀏覽器不能直接分享圖片：顯示圖卡讓玩家長按儲存，或改傳文字連結
+  if(st.blob){ if(st.url) URL.revokeObjectURL(st.url); st.url = URL.createObjectURL(st.blob); $('#shareImg').src = st.url; $('#scrResult').hidden = true; $('#scrShare').hidden = false; }
+  else window.open($('#btnShare').href, '_blank', 'noopener');
+});
+// 流水燈：沿著按鈕邊框的圓角矩形路徑（順時針、等速）跑兩組光點；每組是「亮頭＋金身＋淡尾」三層疊起來
+function setupFlow(){
+  const btn = $('#btnDexR'); if(!btn || btn.offsetWidth < 20) return; const old = btn.querySelector('svg.fl'); if(old) old.remove();
+  const w = btn.offsetWidth + 3, h = btn.offsetHeight + 3, r = 13, NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('class', 'fl'); svg.setAttribute('width', w); svg.setAttribute('height', h);
+  const d = `M${r + 1.5},1.5 H${w - r - 1.5} A${r},${r} 0 0 1 ${w - 1.5},${r + 1.5} V${h - r - 1.5} A${r},${r} 0 0 1 ${w - r - 1.5},${h - 1.5} H${r + 1.5} A${r},${r} 0 0 1 1.5,${h - r - 1.5} V${r + 1.5} A${r},${r} 0 0 1 ${r + 1.5},1.5 Z`;
+  const probe = document.createElementNS(NS, 'path'); probe.setAttribute('d', d); svg.appendChild(probe); const L = probe.getTotalLength(); svg.removeChild(probe);
+  const P = L / 2, H = 0.26 * L;   // 兩組光點，每組間隔半圈；H＝光頭的位置
+  [[0.26, 'rgba(232,189,90,.35)', 5], [0.14, '#e8bd5a', 3.5], [0.05, '#fff6c8', 3]].forEach(([k, col, wd]) => {
+    const len = k * L, path = document.createElementNS(NS, 'path'); path.setAttribute('d', d); path.setAttribute('stroke', col); path.setAttribute('stroke-width', wd);
+    path.setAttribute('stroke-dasharray', `${len} ${P - len}`); path.style.setProperty('--o0', (len - H) + 'px'); path.style.setProperty('--o1', (len - H - P) + 'px'); path.style.animationDuration = (P / 190).toFixed(2) + 's'; svg.appendChild(path);
+  });
+  btn.appendChild(svg);
+}
+$('#btnShareClose').addEventListener('click', () => { $('#scrShare').hidden = true; $('#scrResult').hidden = false; });
+
 /* ---------------- 結算 ---------------- */
 function showResult(kind){
   const acc = tries ? Math.round(hits/tries*100) : 0;
@@ -1937,10 +2032,10 @@ function showResult(kind){
   { const mq = caught.filter(c => c.def.quote);
     if (mq.length) { const c = pick(mq); $('#resQuote').innerHTML = `${clauses(c.def.quote)}<small>—— ${c.def.name}的心性小語</small>`; }
     else { const [qt, qf] = pick(QUOTES); $('#resQuote').innerHTML = `${clauses(qt)}<small>—— ${qf}</small>`; } }   // 這局有收服塵靈：顯示牠的心性小語；沒有才用經典原文
-  // 分享到 LINE：訊息短、單行不超過 12 字；連到專屬入口頁（LINE 預覽圖才會是雷擊拂塵那張）
-  { const lines = ['🪶 拂塵淨心島・體感遊戲', kind === 'over' ? `我淨化了 ${hits} 隻塵靈！` : '我收服了無明塵王！', `難度${D().name.replace(/^[^\u4e00-\u9fff]+/, '')}・連擊 ${maxCombo}`, `命中率 ${acc}%・收 ${caught.length} 隻`, '你也來揮一揮 👇', 'https://steven4dev.github.io/yiguandao-2027-course/islands/fuchen/'];
-    $('#btnShare').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(lines.join('\n')); }
-  $('#scrResult').hidden = false;
+  // 分享：成績只拍一次快照，結算畫面、圖卡、分享文字都讀同一份，不會有落差
+  prepareShare({ kind, diff: D().name.replace(/^[^\u4e00-\u9fff]+/, ''), hits, acc, maxCombo, score, caught: caught.map(c => ({ def: c.def, name: c.def.name, lv: c.lv, isNew: !!c.isNew, gold: !!c.gold })) });
+  { const nn = caught.filter(c => c.isNew).length; $('#btnDexR').innerHTML = '📖 看淨心錄' + (nn ? `<i class="newN">新收 ${nn} 隻</i>` : ''); }
+  $('#scrResult').hidden = false; requestAnimationFrame(setupFlow);
   kind === 'over' ? sfx.defeat() : sfx.victory();
   const best = store.get('fuchenGame.best', 0); if(score > best) store.set('fuchenGame.best', score);
 }
