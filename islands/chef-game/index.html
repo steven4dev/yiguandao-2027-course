@@ -298,7 +298,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-const VER = 'v261114.03';
+const VER = 'v261114.04';
 const $ = (q) => document.querySelector(q);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -339,14 +339,32 @@ const STEP_N = STEPS.length;
 const SND = { ctx: null, master: null, on: true, boil: null, blender: null };
 try { SND.on = localStorage.getItem('islands-chef-mute') !== '1'; } catch (e) {}
 $('#btnSound').textContent = SND.on ? '🔊' : '🔇';
+// iPhone 的靜音鍵會把網頁聲音整個關掉；宣告成「播放音樂」，靜音模式下也聽得到
+try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+// iPhone 要在手勢裡真的播出一個聲音才算解鎖：播一段聽不到的極短靜音
+function unlockAudio(ctx) { try { const src = ctx.createBufferSource(); src.buffer = ctx.createBuffer(1, 1, 22050); src.connect(ctx.destination); src.start(0); } catch (e) {} }
 function audioInit() {
-  if (SND.ctx) { if (SND.ctx.state !== 'running') SND.ctx.resume().catch(() => {}); return; }
+  if (SND.ctx) { if (SND.ctx.state !== 'running') { unlockAudio(SND.ctx); SND.ctx.resume().catch(() => {}); } return; }
   const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-  SND.ctx = new AC(); SND.master = SND.ctx.createGain(); SND.master.gain.value = SND.on ? 0.9 : 0; SND.master.connect(SND.ctx.destination);
+  SND.ctx = new AC(); unlockAudio(SND.ctx); SND.master = SND.ctx.createGain(); SND.master.gain.value = SND.on ? 0.9 : 0; SND.master.connect(SND.ctx.destination);
   const len = SND.ctx.sampleRate * 1.5, b = SND.ctx.createBuffer(1, len, SND.ctx.sampleRate), d = b.getChannelData(0);
   for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
   SND.noise = b;
 }
+// 切到別的 App、鎖屏、來電之後回來：先試著自動恢復；iPhone 不讓的話，下一次點畫面任何地方就恢復（手機要在手指放開時才算點擊）
+['pointerup', 'touchend', 'click', 'keydown'].forEach((ev) => addEventListener(ev, () => { if (SND.ctx && SND.ctx.state !== 'running' && !document.hidden) audioInit(); }, true));
+function resumeAudio() { if (SND.ctx && !document.hidden && SND.ctx.state !== 'running') SND.ctx.resume().catch(() => {}); }
+let hiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  // 做菜時切出去：計時暫停（回來把離開的時間補回去）；吹涼時麥克風會被系統切斷，回來改成按住吹氣
+  if (document.hidden) hiddenAt = performance.now();
+  else if (hiddenAt && G.phase === 'play') { G.stepT0 += performance.now() - hiddenAt; hiddenAt = 0; }
+  if (document.hidden && G.phase === 'play' && STEPS[G.step] && STEPS[G.step].id === 'cool' && G.mode === 'mic') coolTouch('切換畫面時麥克風中斷了，改成按住吹氣');
+  if (!SND.ctx) return;
+  if (document.hidden) { ['fire', 'blender', 'blow', 'boil'].forEach((n) => loopVol(n, 0)); SND.ctx.suspend().catch(() => {}); }
+  else resumeAudio();
+});
+addEventListener('pageshow', resumeAudio); addEventListener('focus', resumeAudio);
 $('#btnSound').addEventListener('click', () => {
   SND.on = !SND.on; $('#btnSound').textContent = SND.on ? '🔊' : '🔇';
   try { localStorage.setItem('islands-chef-mute', SND.on ? '0' : '1'); } catch (e) {}
@@ -1389,7 +1407,6 @@ const leave = () => { if (EMBED) { try { window.parent.postMessage({ chef: 'leav
 ['#btnIsle', '#btnIsle2'].forEach((q) => $(q).addEventListener('click', leave));
 $('#btnHome').addEventListener('click', () => { if (G.phase === 'title') leave(); else if (confirm('要離開這道菜，回到選單嗎？')) goTitle(); });
 $('#btnSignup').addEventListener('click', (e) => { if (EMBED) { try { window.parent.postMessage({ chef: 'join' }, location.origin); e.preventDefault(); } catch (err) {} } });
-document.addEventListener('visibilitychange', () => { if (document.hidden) { ['fire', 'blender', 'blow', 'boil'].forEach((n) => loopVol(n, 0)); } });
 
 /* =========================================================
    每一幀
@@ -1479,7 +1496,7 @@ function timeUp(sid) {
 }
 
 // 測試用（唯讀）
-window.__chef = () => ({ phase: G.phase, step: G.step, scores: G.scores.slice(), prog: +G.prog.toFixed(2), heat: +heat.toFixed(2), mash: +mash.toFixed(2), temp: Math.round(temp), cutStage: CUT.stage, segs: CUT.segs.length, cubes: CUT.cubes.length, motionOK });
+window.__chef = () => ({ phase: G.phase, step: G.step, scores: G.scores.slice(), prog: +G.prog.toFixed(2), heat: +heat.toFixed(2), mash: +mash.toFixed(2), temp: Math.round(temp), cutStage: CUT.stage, segs: CUT.segs.length, cubes: CUT.cubes.length, motionOK, audio: SND.ctx ? SND.ctx.state : 'none', left: Math.round(G.limit - elapsed()) });
 window.__chefCut = () => { if (G.phase !== 'play' || STEPS[G.step].id !== 'cut' || !STAGES[CUT.stage]) return; STAGES[CUT.stage].kind === 'scoop' ? finishScoop() : doCut(100); };   // 測試用：直接完成目前這一刀
 window.__chefGuide = () => { const g = curGuide(); return g ? g.map((v) => toScreen(v)) : CUT.halves.map((h) => toScreen(h.position)); };   // 測試用：目前虛線（挖籽時是兩個半顆）的螢幕座標
 window.__chefDemo = (arr) => { G.scores = arr.slice(0, STEP_N); };   // 測試用：做宣傳圖時指定四步的分數
