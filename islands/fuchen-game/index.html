@@ -35,7 +35,7 @@
 .hurt.strong::before{background:radial-gradient(ellipse at center,rgba(0,0,0,.18) 22%,rgba(150,12,28,.8) 100%);animation-duration:1.9s}
 @keyframes hvig{0%{opacity:0}16%{opacity:1}100%{opacity:0}}
 .hurt .clw{position:absolute;transform-origin:0 50%;filter:drop-shadow(0 0 7px rgba(255,64,64,.95)) drop-shadow(0 0 2px #fff);animation:hfade 1.3s ease-in both}
-.hurt .cl2{display:block;width:100%;height:100%;transform-origin:0 50%;background:linear-gradient(90deg,rgba(255,255,255,.95),#ffb0a8 16%,#ff4a4a 58%,rgba(180,18,30,.92));clip-path:polygon(0 50%,10% 30%,42% 16%,100% 45%,100% 55%,42% 84%,10% 70%);animation:hclaw .17s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d)}
+.hurt .cl2{display:block;width:100%;height:100%;transform-origin:0 50%;background:linear-gradient(90deg,rgba(255,255,255,.95),#ffb0a8 16%,#ff4a4a 58%,rgba(180,18,30,.92));animation:hclaw .17s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d)}
 @keyframes hclaw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes hfade{0%,60%{opacity:1}100%{opacity:0}}
 .hurt .st{position:absolute;border-radius:50%;background:radial-gradient(circle at 40% 40%,rgba(52,38,42,.9) 0,rgba(52,38,42,.7) 45%,rgba(52,38,42,0) 72%);animation:hstain 1.5s ease-out both;animation-delay:var(--d)}
@@ -355,7 +355,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261114.05';
+const VERSION = 'v261114.06';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1407,12 +1407,19 @@ function spawnSpark(x, y, n){ for(let i=0;i<n;i++){ const a = Math.random()*Math
 function hurtFx(strong){
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches, W = innerWidth, H = innerHeight, el = document.createElement('div'), r = Math.random;
   el.className = 'hurt' + (strong ? ' strong' : '') + (reduce ? ' calm' : '');
-  const n = strong ? 5 : 3, flip = r() < 0.5 ? 1 : -1, th = (26 + r() * 12) * Math.PI / 180, gap = Math.min(W, H) * (strong ? 0.075 : 0.085), th2 = th * 180 / Math.PI;
-  const dx = Math.cos(th) * flip, dy = Math.sin(th), px = -dy * flip, py = Math.cos(th) * 1, sx = flip > 0 ? W * (0.1 + r() * 0.18) : W * (0.9 - r() * 0.18), sy = H * (0.06 + r() * 0.12), L = Math.hypot(W, H) * (0.62 + r() * 0.1);
+  // 爪痕：整組比較陡，起筆寬、尾端尖，邊緣鋸齒粗糙（有缺口），三道長短不一、角度略微散開（strong 時五道）
+  const n = strong ? 5 : 3, flip = r() < 0.5 ? 1 : -1, base = 64 + r() * 12, gap = Math.min(W, H) * (strong ? 0.092 : 0.1);
+  const cx = strong ? W * (0.42 + r() * 0.16) : W * (0.3 + r() * 0.4), sy = H * (0.04 + r() * 0.08), L0 = H * (0.62 + r() * 0.12);
+  const lenK = strong ? [0.8, 0.93, 1, 0.88, 0.76] : [0.84, 1, 0.9], jag = side => {   // 沿著長度取樣，半寬先長後縮，加上隨機起伏與缺口
+    const pts = []; for(let k = 0; k <= 15; k++){ const x = k / 15, w0 = x < 0.12 ? 0.4 + 0.6 * (x / 0.12) : Math.pow((1 - x) / 0.88, 0.9);
+      let w = Math.max(0.03, w0 * (1 + (r() - 0.5) * 0.55)); if(k > 2 && k < 14 && r() < 0.22) w *= 0.45;   // 缺口
+      pts.push([x * 100, side * w * 50]); } return pts; };
   let h = '';
   for(let i = 0; i < n; i++){
-    const o = (i - (n - 1) / 2) * gap + (r() - 0.5) * gap * 0.3, x = sx + px * o, y = sy + py * o, th3 = (strong ? 20 : 15) + r() * 10, len = L * (0.82 + r() * 0.3);
-    h += `<div class="clw" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;width:${len.toFixed(0)}px;height:${th3.toFixed(0)}px;transform:translateY(-50%) rotate(${(flip > 0 ? th2 : 180 - th2).toFixed(1)}deg)"><i class="cl2" style="--d:${(i * 0.05).toFixed(2)}s"></i></div>`;
+    const ang = base + (r() - 0.5) * 5 + (i - (n - 1) / 2) * 1.2, rad = ang * Math.PI / 180, dx = Math.cos(rad) * flip, dy = Math.sin(rad), px = -dy, py = dx;
+    const o = (i - (n - 1) / 2) * gap + (r() - 0.5) * gap * 0.25, x = cx + px * o, y = sy + py * o + (r() - 0.5) * H * 0.03, th3 = (strong ? 30 : 24) + r() * 10, len = L0 * lenK[i % lenK.length];
+    const up = jag(-1), dn = jag(1).reverse(), poly = [...up, ...dn].map(([px2, py2]) => `${px2.toFixed(1)}% ${(50 + py2).toFixed(1)}%`).join(',');
+    h += `<div class="clw" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;width:${len.toFixed(0)}px;height:${th3.toFixed(0)}px;transform:translateY(-50%) rotate(${(flip > 0 ? ang : 180 - ang).toFixed(1)}deg)"><i class="cl2" style="--d:${(i * 0.045).toFixed(2)}s;clip-path:polygon(${poly})"></i></div>`;
   }
   const ns = strong ? 12 : 7;
   for(let i = 0; i < ns; i++){ const sz = (strong ? 70 : 52) + r() * (strong ? 110 : 80); h += `<i class="st" style="left:${(r() * (W - sz)).toFixed(0)}px;top:${(r() * (H - sz)).toFixed(0)}px;width:${sz.toFixed(0)}px;height:${sz.toFixed(0)}px;--d:${(0.08 + r() * 0.3).toFixed(2)}s"></i>`; }
