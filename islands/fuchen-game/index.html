@@ -128,7 +128,8 @@ body{line-break:strict}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin:10px 0;font-size:.95rem}
 /* 結算畫面壓緊：塵靈收得多的時候也盡量一個畫面看完（淨心錄、回島兩顆並排） */
 #scrResult .panel{padding:12px 14px 10px}
-#scrResult h2{margin:0 0 4px;font-size:1.1rem}
+#scrResult h2{margin:0 0 4px;font-size:1.1rem;display:flex;justify-content:space-between;align-items:center;gap:8px}
+#scrResult .dtag{flex:none;font-size:.74rem;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:1px 9px}
 #scrResult .panel p{margin:4px 0}
 /* 成績數字放大：每項一格，大數字在上、小標籤在下 */
 #scrResult .stats{margin:6px 0 4px;grid-template-columns:repeat(4,1fr);gap:6px;font-size:.78rem;text-align:center}
@@ -311,7 +312,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261114.01';
+const VERSION = 'v261114.02';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1965,7 +1966,7 @@ async function buildShareCard(s){
   c.textAlign = 'center'; c.textBaseline = 'alphabetic';
   c.save(); c.shadowColor = 'rgba(255,200,90,.8)'; c.shadowBlur = 28; c.fillStyle = '#ffe7a8'; c.font = `900 104px ${F}`; c.fillText('🪶 拂塵試煉', W / 2, 150); c.restore();
   c.fillStyle = MUTED; c.font = `600 36px ${F}`; c.fillText('全真群島・拂塵淨心島・體感遊戲', W / 2, 212);
-  c.fillStyle = INK; c.font = `800 56px ${F}`; c.fillText(`${s.kind === 'over' ? '🪔 心燈用完了' : '✨ 試煉圓滿'}・${s.diff}`, W / 2, 304);
+  c.fillStyle = INK; c.font = `800 56px ${F}`; c.fillText(`${s.kind === 'over' ? '🪔 心燈已盡' : '✨ 試煉圓滿'}・難度${s.diff}`, W / 2, 304);
   const items = [[s.hits, '淨化（隻）'], [s.acc + '%', '命中率'], [s.maxCombo, '最高連擊'], [s.score, '得分']];
   items.forEach(([v, lb], i) => {
     const x = 60 + (i % 2) * 490, y = 346 + Math.floor(i / 2) * 270, w = 470, h = 250;
@@ -2024,8 +2025,8 @@ $('#btnShareClose').addEventListener('click', () => { $('#scrShare').hidden = tr
 function showResult(kind){
   const acc = tries ? Math.round(hits/tries*100) : 0;
   const rating = kind === 'over' ? '🌫️ 塵埃未盡' : acc >= 90 ? '✨ 明鏡無塵' : acc >= 70 ? '🪶 時時勤拂' : '🌱 勿使惹塵';
-  $('#resTitle').textContent = kind === 'over' ? '🪔 心燈用完了' : '✨ 試煉圓滿';
-  $('#resTitle').textContent += `・${D().name}`;
+  // 標題只講這一局的結果；難度另外做成小標籤，不再黏在標題後面（以前會讀成「心燈用完了・修行」）
+  $('#resTitle').innerHTML = `<span>${kind === 'over' ? '🪔 心燈已盡' : '✨ 試煉圓滿'}</span><small class="dtag">難度・${D().name}</small>`;
   $('#resLine').innerHTML = kind === 'over' ? clauses('別灰心，塵埃本來就要天天拂。定下心再來一次！') : `<span class="cl">無明塵王收服了！</span><span class="cl">評價：<b class="nb">${rating}</b></span>`;
   $('#resStats').innerHTML = `<span><b>${hits}</b><small>淨化（隻）</small></span><span><b>${acc}%</b><small>命中率</small></span><span><b>${maxCombo}</b><small>最高連擊</small></span><span><b>${score}</b><small>得分</small></span>`;
   $('#resCaught').innerHTML = caught.length ? `<b>本局收入淨心錄</b><div class="caught">${caught.map(c => `<span>${c.gold ? '✨' : ''}${c.def.name}<small>Lv ${c.lv}</small>${c.isNew ? '<i>NEW</i>' : ''}</span>`).join('')}</div>` : '<span class="note">這一局沒有收服塵靈，下次加油！</span>';
