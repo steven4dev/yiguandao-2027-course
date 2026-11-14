@@ -295,8 +295,10 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 
 <script type="module">
 import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-const VER = 'v261114.02';
+const VER = 'v261114.03';
 const $ = (q) => document.querySelector(q);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -324,7 +326,7 @@ const DISHES = [
 ];
 // 南瓜濃湯的四個步驟（說明卡＋HUD 用）
 const STEPS = [
-  { id: 'cut', icon: '🔪', title: '切南瓜', how: '手指在南瓜上<b>快速劃過</b>，一刀切一塊。15 秒內切 8 刀！', alt: '電腦：用滑鼠拖過南瓜', tip: '快速劃過南瓜！' },
+  { id: 'cut', icon: '🔪', title: '切南瓜', how: '手指<b>沿著南瓜上的虛線</b>劃過去：先對半切、挖籽，再切瓣、切段、切丁。越貼近虛線，刀工分數越高！', alt: '電腦：用滑鼠沿著虛線拖過去', tip: '沿著虛線切！' },
   { id: 'boil', icon: '🔥', title: '煮軟南瓜', how: '<b>按住</b>加大火、放開就轉小火，讓右邊的指針停在<b>綠色區</b>裡，把南瓜煮軟。', alt: '綠色區會慢慢移動，跟著它調火', tip: '按住加火、放開轉小，停在綠區！' },
   { id: 'blend', icon: '🌀', title: '打成南瓜泥', how: '手機就是攪拌棒！拿穩手機，<b>整隻手畫大圓圈</b>，把南瓜打成綿密的泥。', alt: '也可以用手指在畫面上畫圈', tip: '整隻手畫大圓圈！' },
   { id: 'cool', icon: '🌬️', title: '吹涼上桌', how: '對著手機下方的麥克風<b>長長吹一口氣</b>，把濃湯從 92° 吹到 60°。', alt: '不能用麥克風時，改成按住「吹氣」按鈕', tip: '對麥克風長長吹氣～' },
@@ -371,6 +373,8 @@ const sfx = {
   click() { tone(1200, 0.05, 'square', 0.04); },
   shutter() { noise(0.04, 4000, 1, 0.4, 'highpass'); noise(0.08, 1800, 2, 0.3, 'bandpass', 0.07); tone(90, 0.06, 'square', 0.08, 0.07); },
   bubble() { tone(300 + Math.random() * 500, 0.08, 'sine', 0.06, 0, 1.8); },
+  crack() { noise(0.12, 900, 0.8, 0.45, 'lowpass'); tone(90, 0.25, 'sine', 0.4, 0, 0.6); noise(0.05, 3000, 2, 0.25, 'bandpass', 0.02); },
+  scoop() { noise(0.18, 1200, 1.5, 0.2, 'bandpass'); [0, 0.08, 0.15].forEach((d) => tone(700 + Math.random() * 300, 0.06, 'triangle', 0.06, 0.25 + d)); },
 };
 // 持續音：滾水咕嘟、攪拌棒嗡嗡、吹氣呼呼
 function loopStart(name) {
@@ -398,31 +402,50 @@ const canvas = $('#gl');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: false });
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.localClippingEnabled = true;   // 切段用的裁切平面
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene(); scene.background = new THREE.Color('#f3e2c9');
 const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 200);
-const hemi = new THREE.HemisphereLight('#fff6e8', '#b98c62', 1.5); scene.add(hemi);
-const sun = new THREE.DirectionalLight('#fff1dc', 2.3); sun.position.set(-4, 9, 6); sun.castShadow = true;
-sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8, near: 1, far: 30 }); sun.shadow.bias = -0.0008; sun.shadow.radius = 4;
+/* —— 美術方向「秋日暖光・手作溫度」的光：一盞午後的暖色主燈從左後方逆光照過來（湯面、碗緣會有亮邊），前面一點柔光補暗部，
+   再加一個虛擬攝影棚的環境反射（瓷碗的釉光、湯匙的金屬光）。亮部用柔和的曲線收住，不會過曝死白 */
+THREE.ShaderChunk.tonemapping_pars_fragment = THREE.ShaderChunk.tonemapping_pars_fragment.replace('vec3 CustomToneMapping( vec3 color ) { return color; }',
+  'vec3 CustomToneMapping( vec3 color ) { color *= toneMappingExposure; color = color * ( 1.0 + color / 6.25 ) / ( 1.0 + color ); vec3 s = pow( max( color, 0.0 ), vec3( 1.0 / 2.2 ) ); s = mix( s, s * s * ( 3.0 - 2.0 * s ), 0.4 ); return pow( s, vec3( 2.2 ) ); }');   // 亮部柔和收住＋輕微 S 曲線拉出對比
+renderer.toneMapping = THREE.CustomToneMapping; renderer.toneMappingExposure = 1.22;
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+const hemi = new THREE.HemisphereLight('#fff4e4', '#a87a52', 0.45); scene.add(hemi);
+const sun = new THREE.DirectionalLight('#ffd49c', 2.6); sun.position.set(-5, 8, -6); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8, near: 1, far: 30 }); sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.02;
 scene.add(sun);
-const fill = new THREE.DirectionalLight('#ffd9b0', 0.6); fill.position.set(6, 4, -3); scene.add(fill);
+const fill = new THREE.DirectionalLight('#fff1df', 0.55); fill.position.set(3, 5, 8); scene.add(fill);
 
-const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0, ...o });
+// 非金屬的環境反射壓低（斜角看桌面、碗時才不會像蒙了一層白霧）；金屬保留完整反光
+const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0, envMapIntensity: (o.metalness || 0) > 0.5 ? 1 : 0.4, ...o });
 function M(geo, mat, x = 0, y = 0, z = 0, parent = scene, shadow = true) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = shadow; m.receiveShadow = true; parent.add(m); return m; }
 function tex(w, h, draw, rep) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); } return t; }
 let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
-// 木紋
-const woodTex = (base, dark) => tex(512, 512, (c, w, h) => {
-  c.fillStyle = base; c.fillRect(0, 0, w, h);
-  for (let i = 0; i < 70; i++) { const y = rnd() * h; c.strokeStyle = `rgba(${dark},${0.05 + rnd() * 0.12})`; c.lineWidth = 1 + rnd() * 4; c.beginPath(); c.moveTo(0, y); for (let x = 0; x <= w; x += 32) c.lineTo(x, y + Math.sin(x / 70 + i) * 6); c.stroke(); }
-  c.strokeStyle = `rgba(${dark},.35)`; c.lineWidth = 2; for (let k = 1; k < 4; k++) { c.beginPath(); c.moveTo(0, k * h / 4); c.lineTo(w, k * h / 4); c.stroke(); }
-}, [2, 2]);
+// 木紋：四片木板、每片顏色略有差異，細密的年輪紋、偶爾一個樹節、板縫一條細暗線（同一組參數只畫一次）
+const WOOD = new Map();
+const woodTex = (base, dark, rep = [2, 2]) => { const key = base + dark + rep; if (WOOD.has(key)) return WOOD.get(key); const sd0 = seed; seed = 4242;
+  const t = tex(1024, 1024, (c, w, h) => {
+    const P = 4, ph = h / P, bc = new THREE.Color(base);
+    for (let k = 0; k < P; k++) {
+      const col = bc.clone().offsetHSL((rnd() - 0.5) * 0.012, (rnd() - 0.5) * 0.06, (rnd() - 0.5) * 0.07); c.fillStyle = '#' + col.getHexString(); c.fillRect(0, k * ph, w, ph);
+      for (let i = 0; i < 110; i++) { const y = k * ph + rnd() * ph, amp = 1.5 + rnd() * 6, f = 50 + rnd() * 140, p0 = rnd() * 6; c.strokeStyle = `rgba(${dark},${0.03 + rnd() * 0.11})`; c.lineWidth = 0.5 + rnd() * 2.2; c.beginPath(); c.moveTo(0, y); for (let x = 0; x <= w; x += 16) c.lineTo(x, y + Math.sin(x / f + p0) * amp); c.stroke(); }
+      if (rnd() < 0.75) { const kx = rnd() * w, ky = k * ph + ph * (0.3 + rnd() * 0.4); for (let r = 3; r < 30; r += 3) { c.strokeStyle = `rgba(${dark},${0.2 - r * 0.005})`; c.lineWidth = 1.2; c.beginPath(); c.ellipse(kx, ky, r * 2.6, r * 0.75, 0, 0, 7); c.stroke(); } c.fillStyle = `rgba(${dark},.35)`; c.beginPath(); c.ellipse(kx, ky, 7, 2.6, 0, 0, 7); c.fill(); }
+      c.fillStyle = `rgba(${dark},.5)`; c.fillRect(0, k * ph, w, 2.5); c.fillStyle = 'rgba(255,240,220,.1)'; c.fillRect(0, k * ph + 3, w, 2);
+    }
+    for (let i = 0; i < 5000; i++) { c.fillStyle = `rgba(${dark},${rnd() * 0.05})`; c.fillRect(rnd() * w, rnd() * h, 1 + rnd() * 2, 1); }
+  }, rep); seed = sd0; WOOD.set(key, t); return t; };
+// 接觸陰影：東西底下一圈柔和的暖棕色陰影，看起來才是「放」在桌上
+const blobTex = tex(128, 128, (c) => { const g = c.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(70,38,14,.5)'); g.addColorStop(0.5, 'rgba(70,38,14,.2)'); g.addColorStop(1, 'rgba(70,38,14,0)'); c.fillStyle = g; c.fillRect(0, 0, 128, 128); });
+const blobGeo = new THREE.PlaneGeometry(1, 1);
+function blob(parent, x, z, rx, rz = rx, y = 0.006, op = 1) { const m = new THREE.Mesh(blobGeo, new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false, opacity: op })); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.scale.set(rx * 2, rz * 2, 1); m.renderOrder = 1; parent.add(m); return m; }
 
 /* —— 廚房：料理台、磁磚牆、爐子 —— */
 const kitchen = new THREE.Group(); scene.add(kitchen);
 M(new THREE.BoxGeometry(16, 1, 7), [std('#a8774a'), std('#a8774a'), std('#fff', { map: woodTex('#c99566', '92,56,28') }), std('#a8774a'), std('#b9875a'), std('#b9875a')], 0, -0.5, 0, kitchen);
-const tileTex = tex(512, 512, (c, w, h) => { c.fillStyle = '#d9cfc2'; c.fillRect(0, 0, w, h); for (let r = 0; r < 8; r++) for (let k = -1; k < 5; k++) { const x = k * 128 + (r % 2) * 64; c.fillStyle = r % 3 === 0 && k % 2 ? '#f3ede4' : '#fbf7f0'; c.fillRect(x + 3, r * 64 + 3, 122, 58); } }, [6, 3]);
+const tileTex = tex(512, 512, (c, w, h) => { c.fillStyle = '#e2cfb4'; c.fillRect(0, 0, w, h); for (let r = 0; r < 8; r++) for (let k = -1; k < 5; k++) { const x = k * 128 + (r % 2) * 64; c.fillStyle = ['#f8eedf', '#f4e6d2', '#f9f0e3'][(r * 3 + k + 9) % 3]; c.fillRect(x + 3, r * 64 + 3, 122, 58); const g = c.createLinearGradient(0, r * 64, 0, r * 64 + 64); g.addColorStop(0, 'rgba(255,255,255,.25)'); g.addColorStop(1, 'rgba(160,120,80,.06)'); c.fillStyle = g; c.fillRect(x + 3, r * 64 + 3, 122, 58); } }, [6, 3]);
 M(new THREE.PlaneGeometry(16, 9), std('#fff', { map: tileTex }), 0, 4, -3.5, kitchen, false);
 // 牆上的層架＋小盆栽、調味罐（只是佈景）
 M(new THREE.BoxGeometry(5, 0.15, 0.8), std('#9a6a40'), -3.2, 3.6, -3.1, kitchen);
@@ -438,38 +461,106 @@ const flameMat = new THREE.MeshBasicMaterial({ color: '#5aa8ff', transparent: tr
 const flameMat2 = new THREE.MeshBasicMaterial({ color: '#ffb347', transparent: true, opacity: 0.7, depthWrite: false, blending: THREE.AdditiveBlending });
 for (let k = 0; k < 14; k++) { const a = k / 14 * Math.PI * 2; const f = M(new THREE.ConeGeometry(0.09, 0.5, 6), k % 3 ? flameMat : flameMat2, Math.sin(a) * 0.72, 0.2, Math.cos(a) * 0.72, flames, false); f.userData.a = a; f.userData.ph = rnd() * 6; }
 
-/* —— 南瓜：球體壓出一瓣一瓣的溝，頂上一根蒂 —— */
-function pumpkinGeo(r = 1, ribs = 10) {
-  const g = new THREE.SphereGeometry(r, 48, 32), p = g.attributes.position, v = new THREE.Vector3();
-  for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const n = v.clone().normalize(); const ang = Math.atan2(n.z, n.x); const rib = 1 - 0.07 * Math.pow(Math.abs(Math.cos(ang * ribs / 2)), 0.6) * (1 - Math.abs(n.y));
-    v.multiplyScalar(rib); v.y *= 0.72; if (n.y > 0.8) v.y -= (n.y - 0.8) * r * 0.9; if (n.y < -0.85) v.y += (-n.y - 0.85) * r * 0.5; p.setXYZ(i, v.x, v.y, v.z); }
-  g.computeVertexNormals(); return g;
+/* —— 南瓜：同一套「殼」做出整顆、半顆、四分之一瓣與切段 ——
+   殼：球體壓出十道溝、上下壓扁；溝底顏色深、瓣中間亮，表面有細小斑點（頂點顏色）。
+   切開：殼的內側（背面）一律畫成果肉色，切面另外鋪一片照外框做的果肉貼圖；橫切的切段用「裁切平面」，斷面露出的就是果肉色的內側 */
+const PK = { ribs: 10, squash: 0.72 };
+const ribAt = (ang) => Math.pow(Math.abs(Math.cos(ang * PK.ribs / 2)), 0.6);
+function pkDeform(v, n, r, groove) {   // 把球面上的點壓成南瓜形；groove＝溝的深度（0～1）
+  v.multiplyScalar(1 - 0.075 * groove); v.y *= PK.squash;
+  if (n.y > 0.8) v.y -= (n.y - 0.8) * r * 0.9; if (n.y < -0.85) v.y += (-n.y - 0.85) * r * 0.5; return v;
 }
-const pumpkinMat = std('#e8802a', { roughness: 0.55 });
-const fleshMat = std('#f6a943', { roughness: 0.8 });
-const skinMat = std('#d46f1f', { roughness: 0.6 });
-function makePumpkin(r = 1) {
-  const g = new THREE.Group(); M(pumpkinGeo(r), pumpkinMat, 0, 0, 0, g);
-  const stem = M(new THREE.CylinderGeometry(r * 0.08, r * 0.13, r * 0.42, 7), std('#6b5a2c'), 0, r * 0.66, 0, g); stem.rotation.z = 0.25;
-  const leaf = M(new THREE.SphereGeometry(r * 0.22, 10, 6), std('#5f9e4f'), r * 0.2, r * 0.62, r * 0.05, g); leaf.scale.set(1.2, 0.18, 0.7); leaf.rotation.z = -0.3;
+function shellGeo(r = 1, phiStart = 0, phiLen = Math.PI * 2) {
+  const ws = Math.max(12, Math.round(60 * phiLen / (Math.PI * 2)));
+  const g = new THREE.SphereGeometry(r, ws, 36, phiStart, phiLen), p = g.attributes.position, v = new THREE.Vector3(), n = new THREE.Vector3(), cols = [];
+  const cA = new THREE.Color('#ef8d2e'), cB = new THREE.Color('#b9561a'), cTop = new THREE.Color('#c89a4c'), c = new THREE.Color();
+  for (let i = 0; i < p.count; i++) {
+    v.fromBufferAttribute(p, i); n.copy(v).normalize(); const rb = ribAt(Math.atan2(n.z, n.x)) * (1 - Math.abs(n.y));
+    pkDeform(v, n, r, rb); p.setXYZ(i, v.x, v.y, v.z);
+    const sp = Math.sin(n.x * 61 + n.y * 37) * Math.sin(n.z * 53 - n.y * 71);
+    c.copy(cA).lerp(cB, Math.min(1, rb * 0.8 + Math.max(0, Math.abs(n.y) - 0.7) * 0.7)).lerp(cTop, Math.max(0, n.y - 0.84) * 2.4); c.offsetHSL(0, 0, sp * 0.03);
+    cols.push(c.r, c.g, c.b);
+  }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3)); g.computeVertexNormals(); return g;
+}
+// 南瓜皮：正面用頂點顏色，背面（看到殼的內側）一律是果肉色
+function skinMat(planes = null) {
+  const m = new THREE.MeshStandardMaterial({ envMapIntensity: 0.4, vertexColors: true, roughness: 0.46, side: THREE.DoubleSide, clippingPlanes: planes, clipShadows: !!planes });
+  m.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n  if (!gl_FrontFacing) diffuseColor.rgb = vec3(0.86, 0.34, 0.045);'); };
+  m.customProgramCacheKey = () => 'pumpkinSkin'; return m;
+}
+// 切面：沿著殼的外框做一片平面（t0～t0+len 的弧，groove＝這個切面經過溝還是瓣中間）
+function faceGeo(r, t0, len, groove) {
+  const sh = new THREE.Shape(), N = 48, v = new THREE.Vector3(), n = new THREE.Vector3();
+  for (let i = 0; i <= N; i++) { const t = t0 + len * i / N; n.set(Math.cos(t), Math.sin(t), 0); v.copy(n).multiplyScalar(r); pkDeform(v, n, r, groove * (1 - Math.abs(n.y))); i ? sh.lineTo(v.x, v.y) : sh.moveTo(v.x, v.y); }
+  const g = new THREE.ShapeGeometry(sh, 2), p = g.attributes.position, uv = g.attributes.uv;
+  for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) / (2 * r) + 0.5, p.getY(i) / (2 * r * PK.squash) + 0.5);
   return g;
 }
-
-/* —— 第 1 步：砧板＋整顆南瓜 —— */
-const cutSet = new THREE.Group(); scene.add(cutSet);
-const board = M(new THREE.BoxGeometry(5.2, 0.28, 3.6), std('#fff', { map: woodTex('#e2b47e', '120,78,38') }), 0, 0.14, 0, cutSet);
-M(new THREE.CylinderGeometry(0.22, 0.22, 0.3, 16), std('#c9965f'), 2.25, 0.15, -1.35, cutSet);
-const bigPumpkin = makePumpkin(1.15); bigPumpkin.position.set(-0.5, 1.12, 0); cutSet.add(bigPumpkin);
-const chunks = []; const chunkGeo = new THREE.BoxGeometry(0.42, 0.36, 0.42);
-function addChunk(parent, x, y, z, vx = 0, vy = 0, vz = 0) {
-  const c = new THREE.Group(); M(chunkGeo, fleshMat, 0, 0, 0, c); M(new THREE.BoxGeometry(0.43, 0.08, 0.43), skinMat, 0, 0.19, 0, c);
-  c.position.set(x, y, z); c.rotation.set(rnd() * 3, rnd() * 3, rnd() * 3); c.userData.v = new THREE.Vector3(vx, vy, vz); c.userData.spin = new THREE.Vector3(rnd() * 6 - 3, rnd() * 6 - 3, rnd() * 6 - 3);
-  parent.add(c); chunks.push(c); return c;
+// 果肉切面貼圖：外圈一條薄皮、果肉由外往內漸亮、中間籽腔的絲；有籽的版本多畫一窩籽（上面還會擺立體的籽）
+function faceTexture(seeds) { return tex(512, 512, (c) => {
+  const C = 256; c.fillStyle = '#b9561a'; c.fillRect(0, 0, 512, 512);
+  let g = c.createRadialGradient(C, C, 110, C, C, 250); g.addColorStop(0, '#f9bb52'); g.addColorStop(0.7, '#f39a32'); g.addColorStop(0.96, '#e9862a'); g.addColorStop(1, '#c86a1e');
+  c.fillStyle = g; c.beginPath(); c.ellipse(C, C, 249, 249, 0, 0, 7); c.fill();
+  for (let i = 0; i < 900; i++) { const a = Math.random() * 6.28, rr = 120 + Math.random() * 125; c.fillStyle = `rgba(255,${200 + Math.random() * 40 | 0},120,${Math.random() * 0.14})`; c.fillRect(C + Math.cos(a) * rr, C + Math.sin(a) * rr, 2, 2); }
+  g = c.createRadialGradient(C, C, 8, C, C, 150); g.addColorStop(0, seeds ? '#f5c46c' : '#f8d690'); g.addColorStop(0.8, '#f3b452'); g.addColorStop(1, 'rgba(243,170,70,0)');
+  c.fillStyle = g; c.beginPath(); c.arc(C, C, 155, 0, 7); c.fill();
+  c.strokeStyle = 'rgba(226,132,38,.5)'; c.lineCap = 'round';
+  const nS = seeds ? 50 : 22; for (let i = 0; i < nS; i++) { const a = i / nS * 6.28 + Math.random() * 0.2, r0 = seeds ? 18 : 64; c.lineWidth = 1.5 + Math.random() * 2.5; c.beginPath(); c.moveTo(C + Math.cos(a) * r0, C + Math.sin(a) * r0); c.quadraticCurveTo(C + Math.cos(a + 0.45) * 92, C + Math.sin(a + 0.45) * 92, C + Math.cos(a) * 140, C + Math.sin(a) * 140); c.stroke(); }
+  if (seeds) for (let i = 0; i < 34; i++) { const a = i * 2.39996, rr = 16 + (i % 9) * 12.5; c.save(); c.translate(C + Math.cos(a) * rr, C + Math.sin(a) * rr); c.rotate(a); c.fillStyle = '#f3e7c8'; c.beginPath(); c.ellipse(0, 0, 18, 9, 0, 0, 7); c.fill(); c.strokeStyle = '#d4bf92'; c.lineWidth = 2; c.stroke(); c.restore(); }
+}); }
+const FACE_SEEDS = faceTexture(true), FACE_CLEAN = faceTexture(false);
+// 立體的南瓜籽：扁扁的橢圓，一窩擺在籽腔上
+const pSeedGeo = new THREE.SphereGeometry(0.1, 10, 6), pSeedMat = std('#f2e6c6', { roughness: 0.5 });
+function seedCluster(r) { const g = new THREE.Group(); for (let i = 0; i < 18; i++) { const a = i * 2.39996, d = (0.05 + (i % 6) * 0.045) * r; const sd = M(pSeedGeo, pSeedMat, Math.cos(a) * d, Math.sin(a) * d * PK.squash, 0.035 + (i % 3) * 0.018, g); sd.scale.set(1.25 * r, 0.62 * r, 0.36 * r); sd.rotation.z = a; } return g; }
+// 蒂：六角、微彎、往上變細
+const stemMat = std('#7a6532', { roughness: 0.85, flatShading: true });
+function stemMesh(r, parent) {
+  const geo = new THREE.CylinderGeometry(r * 0.07, r * 0.12, r * 0.42, 6, 4), p = geo.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const t = v.y / (r * 0.42) + 0.5; v.x += t * t * r * 0.12; p.setXYZ(i, v.x, v.y, v.z); } geo.computeVertexNormals();
+  return M(geo, stemMat, 0, r * 0.68, 0, parent);
 }
-// 刀：一把小菜刀，跟著手指劃過的方向揮一下
+function makePumpkin(r = 1) {
+  const g = new THREE.Group(); M(shellGeo(r), skinMat(), 0, 0, 0, g); stemMesh(r, g);
+  const tendril = M(new THREE.TorusGeometry(r * 0.13, r * 0.014, 6, 24, 4.6), std('#6f8f4a', { roughness: 0.6 }), r * 0.16, r * 0.72, r * 0.05, g); tendril.rotation.set(0.3, 0.6, 0);
+  g.userData.y = r * 0.645; return g;
+}
+// 半顆（區域座標：切面在 z=0 朝 +z、殼在後面、蒂朝 +y）
+const faceMatSeeds = std('#fff', { map: FACE_SEEDS, roughness: 0.6, side: THREE.DoubleSide }), faceMatClean = std('#fff', { map: FACE_CLEAN, roughness: 0.6, side: THREE.DoubleSide });
+const HGEO = new Map();
+function geoCache(key, make) { if (!HGEO.has(key)) HGEO.set(key, make()); return HGEO.get(key); }
+function makeHalf(r, seeds = true) {
+  const g = new THREE.Group(); M(geoCache('hs' + r, () => shellGeo(r, Math.PI, Math.PI)), skinMat(), 0, 0, 0, g);
+  g.userData.face = M(geoCache('hf' + r, () => faceGeo(r, 0, Math.PI * 2, 1)), seeds ? faceMatSeeds.clone() : faceMatClean, 0, 0, 0.003, g, false);
+  const st = stemMesh(r, g); st.position.z = -r * 0.08;
+  if (seeds) { const sc = seedCluster(r); g.add(sc); g.userData.seeds = sc; }
+  return g;
+}
+// 四分之一瓣（半顆再沿著蒂對切；s=+1 是 x>0 那一塊）。planes＝裁切平面（切段用）
+function makeQuarter(r, s, planes = null) {
+  const g = new THREE.Group(), fm = std('#fff', { map: FACE_CLEAN, roughness: 0.6, side: THREE.DoubleSide, clippingPlanes: planes, clipShadows: !!planes });
+  M(geoCache(`qs${r}${s}`, () => shellGeo(r, s > 0 ? Math.PI : Math.PI * 1.5, Math.PI / 2)), skinMat(planes), 0, 0, 0, g);
+  M(geoCache(`qt${r}${s}`, () => faceGeo(r, s > 0 ? -Math.PI / 2 : Math.PI / 2, Math.PI, 1)), fm, 0, 0, 0.003, g, false);
+  const side = M(geoCache(`qd${r}`, () => faceGeo(r, -Math.PI / 2, Math.PI, 0)), fm, s * 0.003, 0, 0, g, false); side.rotation.y = Math.PI / 2;
+  return g;
+}
+// 南瓜丁：圓角果肉塊，一面帶皮
+const fleshTex = tex(128, 128, (c) => { const g = c.createLinearGradient(0, 0, 0, 128); g.addColorStop(0, '#f6a83c'); g.addColorStop(1, '#f9c25e'); c.fillStyle = g; c.fillRect(0, 0, 128, 128); for (let i = 0; i < 140; i++) { c.fillStyle = `rgba(255,${210 + Math.random() * 40 | 0},140,${Math.random() * 0.25})`; c.fillRect(Math.random() * 128, Math.random() * 128, 2, 5); } });
+const cubeGeo = new RoundedBoxGeometry(0.4, 0.32, 0.4, 3, 0.07), cubeSkinGeo = new RoundedBoxGeometry(0.07, 0.325, 0.405, 2, 0.03);
+const cubeMat = std('#fff', { map: fleshTex, roughness: 0.55 }), cubeSkinMat = std('#d0681e', { roughness: 0.45 });
+function makeCube() { const c = new THREE.Group(); M(cubeGeo, cubeMat, 0, 0, 0, c); M(cubeSkinGeo, cubeSkinMat, 0.175, 0, 0, c); return c; }
+
+/* —— 第 1 步：砧板、裝籽的小碟、菜刀 —— */
+const cutSet = new THREE.Group(); scene.add(cutSet);
+const board = M(new THREE.BoxGeometry(5.6, 0.28, 3.8), std('#fff', { map: woodTex('#e2b47e', '120,78,38') }), 0, 0.14, 0, cutSet);
+const BT = 0.28, PR = 1.05;   // 砧板表面高度、南瓜半徑
+const seedDish = new THREE.Group(); seedDish.position.set(2.25, BT, -1.45); cutSet.add(seedDish);
+M(new THREE.LatheGeometry([[0.001, 0], [0.22, 0], [0.26, 0.03], [0.4, 0.16], [0.43, 0.2], [0.39, 0.2], [0.24, 0.07], [0.001, 0.06]].map(([x, y]) => new THREE.Vector2(x, y)), 28), std('#f2e9db', { roughness: 0.35 }), 0, 0, 0, seedDish);
 const knife = new THREE.Group(); cutSet.add(knife); knife.visible = false;
-M(new THREE.BoxGeometry(1.5, 0.75, 0.04), std('#d8dde2', { metalness: 0.8, roughness: 0.25 }), 0.75, 0, 0, knife);
-M(new THREE.BoxGeometry(0.8, 0.2, 0.16), std('#4a3426'), -0.4, 0.22, 0, knife);
+{ const bs = new THREE.Shape(); bs.moveTo(0, 0); bs.lineTo(2.0, 0); bs.quadraticCurveTo(2.3, 0.04, 2.45, 0.42); bs.lineTo(0, 0.62); bs.closePath();
+  M(new THREE.ExtrudeGeometry(bs, { depth: 0.024, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.008, bevelSegments: 1 }), std('#dfe3e6', { metalness: 0.9, roughness: 0.22 }), 0, 0, -0.012, knife);
+  M(new RoundedBoxGeometry(1.15, 0.3, 0.17, 2, 0.07), std('#6b4428', { roughness: 0.6 }), -0.58, 0.44, 0, knife);
+  for (const x of [-0.9, -0.58, -0.26]) M(new THREE.CylinderGeometry(0.032, 0.032, 0.19, 10), std('#d6dadd', { metalness: 0.9, roughness: 0.3 }), x, 0.44, 0, knife).rotation.x = Math.PI / 2; }
 
 /* —— 第 2、3 步：湯鍋 —— */
 const potSet = new THREE.Group(); scene.add(potSet); potSet.visible = false;
@@ -518,32 +609,58 @@ const potSteam = makeSteam(potSet, 14, 2.2, 1.4);
 
 /* —— 第 4 步＋擺盤＋拍照：餐桌上的一碗湯 —— */
 const tableSet = new THREE.Group(); scene.add(tableSet); tableSet.visible = false;
+// 桌面：原木、燕麥色亞麻格紋、暖色大理石（都從主角的暖色延伸，不用純白和高飽和的紅）
 const TABLES = {
-  wood: { name: '原木桌', e: '🪵', make: () => woodTex('#b98352', '80,46,20') },
-  check: { name: '紅格桌巾', e: '🟥', make: () => tex(512, 512, (c, w, h) => { c.fillStyle = '#fbf3ea'; c.fillRect(0, 0, w, h); c.fillStyle = 'rgba(200,52,46,.55)'; for (let i = 0; i < 8; i += 2) { c.fillRect(i * 64, 0, 64, h); c.fillRect(0, i * 64, w, 64); } c.fillStyle = 'rgba(160,30,30,.25)'; for (let i = 0; i < 8; i += 2) for (let j = 0; j < 8; j += 2) c.fillRect(i * 64, j * 64, 64, 64); }, [3, 3]) },
-  marble: { name: '大理石', e: '🤍', make: () => tex(512, 512, (c, w, h) => { c.fillStyle = '#f1efec'; c.fillRect(0, 0, w, h); for (let i = 0; i < 26; i++) { c.strokeStyle = `rgba(120,120,128,${0.05 + Math.random() * 0.18})`; c.lineWidth = 0.6 + Math.random() * 2.2; c.beginPath(); let x = Math.random() * w, y = 0; c.moveTo(x, y); while (y < h) { x += (Math.random() - 0.5) * 50; y += 20 + Math.random() * 30; c.lineTo(x, y); } c.stroke(); } }, [1.5, 1.5]) },
+  wood: { name: '原木桌', e: '🪵', wall: '#e9d9c2', make: () => woodTex('#b98352', '80,46,20', [1.6, 1.6]) },
+  oat: { name: '亞麻格紋', e: '🟫', wall: '#efe3d0', make: () => tex(1024, 1024, (c, w, h) => {
+    c.fillStyle = '#ece0cc'; c.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 3) { c.fillStyle = `rgba(150,120,85,${0.04 + Math.random() * 0.05})`; c.fillRect(0, y, w, 1); }   // 亞麻的編織紋
+    for (let x = 0; x < w; x += 3) { c.fillStyle = `rgba(255,250,240,${0.03 + Math.random() * 0.05})`; c.fillRect(x, 0, 1, h); }
+    c.fillStyle = 'rgba(160,128,92,.22)'; for (let i = 0; i < 8; i += 2) { c.fillRect(i * 128 + 20, 0, 88, h); c.fillRect(0, i * 128 + 20, w, 88); }
+    c.fillStyle = 'rgba(120,92,60,.18)'; for (let i = 0; i < 8; i++) { c.fillRect(i * 128 + 60, 0, 6, h); c.fillRect(0, i * 128 + 60, w, 6); }
+  }, [3, 3]) },
+  marble: { name: '大理石', e: '🤍', wall: '#ece4d8', make: () => tex(1024, 1024, (c, w, h) => {
+    const g = c.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#f3eee6'); g.addColorStop(1, '#ebe3d6'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+    for (let i = 0; i < 34; i++) { c.strokeStyle = `rgba(${150 + Math.random() * 30},${130 + Math.random() * 20},${110},${0.04 + Math.random() * 0.16})`; c.lineWidth = 0.6 + Math.random() * 2.6; c.beginPath(); let x = Math.random() * w, y = 0; c.moveTo(x, y); while (y < h) { x += (Math.random() - 0.5) * 60; y += 18 + Math.random() * 34; c.lineTo(x, y); } c.stroke(); }
+    for (let i = 0; i < 3000; i++) { c.fillStyle = `rgba(140,120,100,${Math.random() * 0.06})`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+  }, [1.5, 1.5]) },
 };
 const tableMat = std('#fff', { roughness: 0.6 });
 M(new THREE.PlaneGeometry(30, 30), tableMat, 0, 0, 0, tableSet, false).rotation.x = -Math.PI / 2;
-const backWall = M(new THREE.PlaneGeometry(40, 16), std('#efe2cf'), 0, 7, -9, tableSet, false);
+const backWall = M(new THREE.PlaneGeometry(40, 16), std('#e9d9c2'), 0, 7, -9, tableSet, false);
+// 碗：手工陶瓷的細小斑點、半霧釉面；粗陶碗口一圈沒上釉的陶土色
+const bowlPts = [[0.001, 0], [0.72, 0], [0.78, 0.04], [0.8, 0.12], [1.15, 0.28], [1.55, 0.7], [1.8, 1.14], [1.9, 1.27], [1.9, 1.33], [1.84, 1.37], [1.76, 1.33], [1.68, 1.2], [1.45, 0.8], [1.04, 0.42], [0.001, 0.34]].map(([x, y]) => new THREE.Vector2(x, y));
+function ceramicTex(base, speck, dens, rim) { return tex(512, 512, (c, w, h) => {
+  c.fillStyle = base; c.fillRect(0, 0, w, h);
+  for (let i = 0; i < dens; i++) { c.fillStyle = speck.replace('A', (0.2 + Math.random() * 0.6).toFixed(2)); const r = Math.random() < 0.9 ? 0.7 + Math.random() * 1.3 : 1.8 + Math.random() * 2; c.beginPath(); c.arc(Math.random() * w, Math.random() * h, r, 0, 7); c.fill(); }
+  if (rim) { c.fillStyle = rim; c.fillRect(0, (1 - 0.655) * h, w, (0.655 - 0.555) * h); }   // 碗口（車床的 v 大約 0.56～0.65）
+}); }
 const BOWLS = {
-  white: { name: '白瓷碗', e: '⚪', col: '#fbfaf6', rim: '#fbfaf6' },
-  wood: { name: '木碗', e: '🟤', col: '#9a6438', rim: '#7d4e2a' },
-  blue: { name: '青花碗', e: '🔵', col: '#f5f7fb', rim: '#2f5aa8' },
+  cream: { name: '奶白瓷碗', e: '🥛', make: () => ({ map: ceramicTex('#f2e9dc', 'rgba(130,100,70,A)', 260), rough: 0.3 }) },
+  wood: { name: '木碗', e: '🪵', make: () => ({ map: tex(512, 256, (c, w, h) => { c.fillStyle = '#9a6438'; c.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { const y = Math.random() * h; c.strokeStyle = `rgba(60,32,14,${0.05 + Math.random() * 0.15})`; c.lineWidth = 0.6 + Math.random() * 2; c.beginPath(); c.moveTo(0, y); for (let x = 0; x <= w; x += 16) c.lineTo(x, y + Math.sin(x / 40 + i) * 2); c.stroke(); } }), rough: 0.5 }) },
+  stone: { name: '斑點粗陶碗', e: '🏺', make: () => ({ map: ceramicTex('#d9c7ab', 'rgba(88,58,32,A)', 1700, '#b88a5c'), rough: 0.5 }) },
 };
 const TOPS = { coconut: { name: '椰奶拉花', e: '🤍' }, seeds: { name: '烤南瓜籽', e: '🌰' }, mint: { name: '薄荷葉', e: '🌿' } };
 const bowlGrp = new THREE.Group(); tableSet.add(bowlGrp);
-const bowlPts = [[0.001, 0], [0.75, 0], [0.8, 0.06], [0.82, 0.12], [1.2, 0.3], [1.6, 0.75], [1.82, 1.2], [1.86, 1.28], [1.78, 1.28], [1.7, 1.18], [1.48, 0.78], [1.06, 0.4], [0.001, 0.32]].map(([x, y]) => new THREE.Vector2(x, y));
-const blueTex = tex(512, 128, (c, w, h) => { c.fillStyle = '#f5f7fb'; c.fillRect(0, 0, w, h); c.strokeStyle = '#2f5aa8'; c.lineWidth = 6; c.beginPath(); c.moveTo(0, 22); c.lineTo(w, 22); c.stroke(); c.lineWidth = 3;
-  for (let x = 16; x < w; x += 64) { c.beginPath(); c.arc(x + 16, 70, 18, 0, Math.PI * 2); c.stroke(); c.beginPath(); c.moveTo(x, 70); c.bezierCurveTo(x + 10, 50, x + 22, 90, x + 32, 70); c.stroke(); for (let k = 0; k < 4; k++) { c.beginPath(); c.ellipse(x + 48, 60 + k * 9, 6, 3, 0.6, 0, 7); c.stroke(); } } c.beginPath(); c.moveTo(0, 112); c.lineTo(w, 112); c.stroke(); });
-blueTex.wrapS = THREE.RepeatWrapping; blueTex.repeat.set(3, 1);
-const bowlMat = std('#fbfaf6', { roughness: 0.25, side: THREE.DoubleSide });
-const bowl = M(new THREE.LatheGeometry(bowlPts, 64), bowlMat, 0, 0, 0, bowlGrp);
-const saucer = M(new THREE.CylinderGeometry(2.6, 2.3, 0.12, 48), std('#f7f3ec', { roughness: 0.3 }), 0, 0.06, 0, tableSet);
-bowlGrp.position.y = 0.12;
+const bowlMat = new THREE.MeshPhysicalMaterial({ color: '#fff', roughness: 0.3, clearcoat: 0.35, clearcoatRoughness: 0.35, envMapIntensity: 0.45, side: THREE.DoubleSide });
+const bowl = M(new THREE.LatheGeometry(bowlPts, 72), bowlMat, 0, 0, 0, bowlGrp);
+// 底盤：中間平、邊緣微微翹起
+const saucerPts = [[0.001, 0], [1.9, 0], [2.45, 0.07], [2.68, 0.2], [2.64, 0.24], [2.42, 0.15], [1.9, 0.11], [0.001, 0.11]].map(([x, y]) => new THREE.Vector2(x, y));
+const saucer = M(new THREE.LatheGeometry(saucerPts, 72), new THREE.MeshPhysicalMaterial({ map: ceramicTex('#efe5d6', 'rgba(130,100,70,A)', 200), roughness: 0.32, clearcoat: 0.3, envMapIntensity: 0.45, side: THREE.DoubleSide }), 0, 0, 0, tableSet);
+blob(tableSet, 0, 0.25, 3.0, 2.9, 0.004, 0.9);
+bowlGrp.position.y = 0.11;
+// 湯面：濃稠的細微起伏（法線貼圖）＋濕潤的光澤；碗緣一圈薄薄的掛壁
+function normalTex(size, hfn) { const cv = document.createElement('canvas'); cv.width = cv.height = size; const c = cv.getContext('2d'), img = c.createImageData(size, size), H = new Float32Array(size * size);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) H[y * size + x] = hfn(x / size, y / size);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) { const i = y * size + x, dx = H[y * size + (x + 1) % size] - H[y * size + (x - 1 + size) % size], dy = H[((y + 1) % size) * size + x] - H[((y - 1 + size) % size) * size + x], n = new THREE.Vector3(-dx * 6, -dy * 6, 1).normalize();
+    img.data.set([(n.x * 0.5 + 0.5) * 255, (n.y * 0.5 + 0.5) * 255, (n.z * 0.5 + 0.5) * 255, 255], i * 4); }
+  c.putImageData(img, 0, 0); const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; }
+const soupNormal = normalTex(256, (u, v) => { const x = u * 6.2832, y = v * 6.2832; return 0.5 * Math.sin(x * 3 + Math.sin(y * 2) * 1.5) * Math.cos(y * 2 + Math.sin(x * 3)) + 0.25 * Math.sin(x * 7 + y * 5) + 0.12 * Math.sin(x * 13 - y * 11); });
 const bowlSoupCv = document.createElement('canvas'); bowlSoupCv.width = bowlSoupCv.height = 512;
 const bowlSoupTex = new THREE.CanvasTexture(bowlSoupCv); bowlSoupTex.colorSpace = THREE.SRGBColorSpace;
-const bowlSoup = M(new THREE.CircleGeometry(1.66, 48), std('#fff', { map: bowlSoupTex, roughness: 0.3 }), 0, 1.1, 0, bowlGrp, false); bowlSoup.rotation.x = -Math.PI / 2;
+const soupMatBowl = new THREE.MeshPhysicalMaterial({ map: bowlSoupTex, normalMap: soupNormal, normalScale: new THREE.Vector2(0.07, 0.07), roughness: 0.4, specularIntensity: 0.45, envMapIntensity: 0.25 });   // 濃湯是霧面的光澤，不要像鏡子一樣反射整片燈光
+const bowlSoup = M(new THREE.CircleGeometry(1.62, 64), soupMatBowl, 0, 1.1, 0, bowlGrp, false); bowlSoup.rotation.x = -Math.PI / 2;
+const meniscus = M(new THREE.TorusGeometry(1.6, 0.05, 8, 72), new THREE.MeshPhysicalMaterial({ color: '#f4a23c', roughness: 0.4, clearcoat: 0.5, envMapIntensity: 0.45 }), 0, 1.105, 0, bowlGrp, false); meniscus.rotation.x = Math.PI / 2; meniscus.scale.z = 0.6;
 const topGrp = new THREE.Group(); bowlGrp.add(topGrp);
 const bowlSteam = makeSteam(bowlGrp, 12, 1.8, 1.25);
 // 桌上的小道具：湯匙＋餐巾固定在右前方；背景的原型食材由「背景食材」套組決定（見下面 STYLES）
@@ -556,32 +673,18 @@ const props = new THREE.Group(); tableSet.add(props);
 /* —— 背景的原型食材：美食雜誌常用的「食材呼應」，讓人一眼看出這道菜用了什麼 ——
    每樣都用程式畫：切半的南瓜、迷你南瓜、剖半的椰子、椰奶瓶、大綠葉、一小碟南瓜籽、散落的南瓜籽、迷迭香、老薑、小砧板、烤吐司、亞麻餐巾 */
 const ING = {};
-// 切半的南瓜：殼在後、切面朝前（看得到果肉和一窩籽），微微往上仰讓鏡頭看得到切面
-const halfFaceTex = tex(256, 256, (c) => {
-  c.fillStyle = '#d46f1f'; c.beginPath(); c.arc(128, 128, 127, 0, 7); c.fill();
-  c.fillStyle = '#f39a32'; c.beginPath(); c.arc(128, 128, 118, 0, 7); c.fill();
-  let g = c.createRadialGradient(128, 128, 10, 128, 128, 80); g.addColorStop(0, '#f7c46a'); g.addColorStop(1, '#f2a943'); c.fillStyle = g; c.beginPath(); c.arc(128, 128, 78, 0, 7); c.fill();
-  c.strokeStyle = 'rgba(236,150,50,.8)'; c.lineWidth = 3; for (let i = 0; i < 26; i++) { const a = i / 26 * 6.28; c.beginPath(); c.moveTo(128 + Math.cos(a) * 20, 128 + Math.sin(a) * 20); c.quadraticCurveTo(128 + Math.cos(a + 0.4) * 50, 128 + Math.sin(a + 0.4) * 50, 128 + Math.cos(a) * 76, 128 + Math.sin(a) * 76); c.stroke(); }
-  for (let i = 0; i < 22; i++) { const a = i * 2.39996, r = 16 + (i % 7) * 8; c.save(); c.translate(128 + Math.cos(a) * r, 128 + Math.sin(a) * r); c.rotate(a); c.fillStyle = '#f4e7c4'; c.beginPath(); c.ellipse(0, 0, 11, 6, 0, 0, 7); c.fill(); c.strokeStyle = '#d9c597'; c.lineWidth = 1.5; c.stroke(); c.restore(); }
-});
-ING.halfPumpkin = (r = 1) => {
-  const g = new THREE.Group(), geo = new THREE.SphereGeometry(r, 40, 28, Math.PI, Math.PI), p = geo.attributes.position, v = new THREE.Vector3();
-  for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const n = v.clone().normalize(), ang = Math.atan2(n.z, n.x); v.multiplyScalar(1 - 0.07 * Math.pow(Math.abs(Math.cos(ang * 5)), 0.6) * (1 - Math.abs(n.y))); v.y *= 0.72; p.setXYZ(i, v.x, v.y, v.z); }
-  geo.computeVertexNormals();
-  const T = new THREE.Group(); T.rotation.x = -0.75; g.add(T);   // 往上仰，切面朝向鏡頭
-  M(geo, new THREE.MeshStandardMaterial({ color: '#e8802a', roughness: 0.55, side: THREE.DoubleSide }), 0, 0, 0, T);
-  const face = M(new THREE.CircleGeometry(r * 0.985, 40), std('#fff', { map: halfFaceTex, roughness: 0.7 }), 0, 0, 0.001, T, false); face.scale.y = 0.72;
-  M(new THREE.CylinderGeometry(r * 0.07, r * 0.1, r * 0.35, 7), std('#6b5a2c'), 0, r * 0.78, -r * 0.06, T);
-  g.userData.y = r * 0.5; return g;
-};
-ING.pumpkin = (r = 0.5) => { const g = makePumpkin(r); g.userData.y = r * 0.72; return g; };
+// 切半的南瓜：跟切南瓜那一步同一個模型（有一窩籽），往上仰讓鏡頭看得到切面
+ING.halfPumpkin = (r = 1) => { const g = new THREE.Group(), h = makeHalf(r, true); h.rotation.x = -0.75; g.add(h); g.userData.y = r * 0.5; return g; };
+ING.pumpkin = (r = 0.5) => makePumpkin(r);
 // 剖半的椰子：毛毛的咖啡色外殼、白色椰肉，開口朝上、微微朝向鏡頭
-const coirTex = tex(256, 256, (c) => { c.fillStyle = '#6b4626'; c.fillRect(0, 0, 256, 256); for (let i = 0; i < 900; i++) { c.strokeStyle = `rgba(${150 + Math.random() * 60},${100 + Math.random() * 40},${50 + Math.random() * 30},${0.3 + Math.random() * 0.4})`; c.lineWidth = 1; const x = Math.random() * 256, y = Math.random() * 256; c.beginPath(); c.moveTo(x, y); c.lineTo(x + (Math.random() - 0.5) * 16, y + 4 + Math.random() * 10); c.stroke(); } });
+const coirTex = tex(256, 256, (c) => { c.fillStyle = '#5e3d22'; c.fillRect(0, 0, 256, 256); for (let i = 0; i < 900; i++) { c.strokeStyle = `rgba(${150 + Math.random() * 60},${100 + Math.random() * 40},${50 + Math.random() * 30},${0.3 + Math.random() * 0.4})`; c.lineWidth = 1; const x = Math.random() * 256, y = Math.random() * 256; c.beginPath(); c.moveTo(x, y); c.lineTo(x + (Math.random() - 0.5) * 16, y + 4 + Math.random() * 10); c.stroke(); } });
 ING.coconut = (r = 0.75) => {
   const g = new THREE.Group(), T = new THREE.Group(); T.rotation.x = 0.22; g.add(T);
-  M(new THREE.SphereGeometry(r, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), new THREE.MeshStandardMaterial({ map: coirTex, roughness: 1, side: THREE.DoubleSide }), 0, 0, 0, T);
-  M(new THREE.SphereGeometry(r * 0.9, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#efe9dc', roughness: 0.8, side: THREE.BackSide }), 0, 0, 0, T, false);
-  const rim = M(new THREE.RingGeometry(r * 0.9, r, 40), std('#f4efe4', { roughness: 0.7, side: THREE.DoubleSide }), 0, 0.001, 0, T, false); rim.rotation.x = -Math.PI / 2;
+  const sg = new THREE.SphereGeometry(r, 40, 20, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), sp = sg.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < sp.count; i++) { v.fromBufferAttribute(sp, i); const k = 1 + 0.035 * Math.sin(v.x * 23 + v.z * 7) * Math.sin(v.z * 19 - v.y * 11); v.x *= k; v.z *= k; sp.setXYZ(i, v.x, v.y, v.z); } sg.computeVertexNormals();
+  M(sg, new THREE.MeshStandardMaterial({ envMapIntensity: 0.4, map: coirTex, roughness: 1 }), 0, 0, 0, T);
+  M(new THREE.SphereGeometry(r * 0.8, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), new THREE.MeshStandardMaterial({ envMapIntensity: 0.4, color: '#f4efe5', roughness: 0.75, side: THREE.BackSide }), 0, 0, 0, T, false);
+  for (const [a, b2, col] of [[0.97, 1.0, '#4e3220'], [0.93, 0.97, '#7a5638'], [0.8, 0.93, '#f7f2e8']]) { const ring = M(new THREE.RingGeometry(r * a, r * b2, 48), std(col, { roughness: 0.7, side: THREE.DoubleSide }), 0, 0.002, 0, T, false); ring.rotation.x = -Math.PI / 2; }
   g.userData.y = r * 0.95; return g;
 };
 // 椰奶瓶：牛皮紙標籤、軟木塞
@@ -611,30 +714,35 @@ ING.seedDish = (s = 1) => {
   g.userData.y = 0; return g;
 };
 ING.seeds = (n = 5) => { const g = new THREE.Group(); for (let k = 0; k < n; k++) { const a = k * 2.1, r = 0.15 + k * 0.12; seedMesh(g, Math.cos(a) * r, 0.04, Math.sin(a) * r, k + 1); } g.userData.y = 0; return g; };
-// 迷迭香：一根細莖，兩側長滿細細的葉子
+// 迷迭香：一根細莖，細長的針葉斜斜朝著莖的末端長出去，正面深綠、背面帶銀白
 ING.rosemary = (len = 1.8) => {
-  const g = new THREE.Group(), stem = std('#5d4a2c'), nd = std('#47693a', { roughness: 0.7 }), ndL = std('#5f8a4c', { roughness: 0.7 });
-  const st = M(new THREE.CylinderGeometry(0.018, 0.028, len, 6), stem, 0, 0.05, 0, g); st.rotation.z = Math.PI / 2;
-  const ng = new THREE.CapsuleGeometry(0.022, 0.2, 2, 5);
-  for (let i = 0; i < 34; i++) { const t = i / 34, x = -len / 2 + 0.12 + t * (len - 0.1); for (const sd of [-1, 1]) { const n = M(ng, i % 2 ? nd : ndL, x, 0.07, sd * 0.09, g, false); n.rotation.set(Math.PI / 2, 0, sd * (0.6 - t * 0.3)); n.scale.setScalar(1 - t * 0.35); } }
+  const g = new THREE.Group(), stem = std('#6b5434', { roughness: 0.8 }), nd = std('#4b6a3c', { roughness: 0.55 }), ndL = std('#87a072', { roughness: 0.6 });
+  const st = M(new THREE.CylinderGeometry(0.016, 0.026, len, 6), stem, 0, 0.05, 0, g); st.rotation.z = Math.PI / 2;
+  const ng = new THREE.CapsuleGeometry(0.016, 0.19, 2, 5), Y = new THREE.Vector3(0, 1, 0), d = new THREE.Vector3();
+  for (let i = 0; i < 44; i++) { const t = i / 44, x = -len / 2 + 0.1 + t * (len - 0.12); for (const sd of [-1, 1]) { for (const up of [0, 1]) {
+    const tilt = 0.75 - t * 0.25; d.set(Math.cos(tilt), 0.12 + up * 0.18, sd * Math.sin(tilt)).normalize(); const n = M(ng, (i + up) % 3 ? nd : ndL, 0, 0, 0, g, false);
+    n.quaternion.setFromUnitVectors(Y, d); const L = 0.11 * (1 - t * 0.35); n.scale.setScalar(1 - t * 0.35); n.position.set(x + d.x * L, 0.06 + d.y * L, d.z * L); } } }
   g.userData.y = 0.02; return g;
 };
 // 老薑：幾顆圓塊連在一起
-ING.ginger = (s = 1) => { const g = new THREE.Group(), m = std('#d6ad74', { roughness: 0.95 });
+const gingerTex = tex(256, 128, (c) => { c.fillStyle = '#d2a56c'; c.fillRect(0, 0, 256, 128); for (let x = 6; x < 256; x += 14 + Math.random() * 12) { c.strokeStyle = `rgba(120,80,40,${0.25 + Math.random() * 0.25})`; c.lineWidth = 1.5; c.beginPath(); c.moveTo(x, 0); c.bezierCurveTo(x + 6, 40, x - 6, 90, x + 3, 128); c.stroke(); } for (let i = 0; i < 300; i++) { c.fillStyle = `rgba(140,96,50,${Math.random() * 0.2})`; c.fillRect(Math.random() * 256, Math.random() * 128, 2, 1); } });
+ING.ginger = (s = 1) => { const g = new THREE.Group(), m = std('#fff', { map: gingerTex, roughness: 0.9 });
   for (const [x, y, z, r, sx] of [[0, 0, 0, 0.26, 1.5], [0.38, 0.03, 0.12, 0.2, 1.2], [-0.36, 0.02, -0.1, 0.18, 1.3], [0.12, 0.06, -0.26, 0.15, 1.1]]) { const b = M(new THREE.SphereGeometry(r * s, 12, 8), m, x * s, 0.18 * s + y, z * s, g); b.scale.set(sx, 0.75, 1); }
   M(new THREE.CircleGeometry(0.17 * s, 12), std('#f1dfa8'), -0.75 * s, 0.18 * s, 0, g, false).rotation.y = -Math.PI / 2;
   g.userData.y = 0; return g; };
 ING.board = (s = 1) => { const g = new THREE.Group(); M(new THREE.BoxGeometry(2.0 * s, 0.12, 1.4 * s), std('#fff', { map: woodTex('#d9a96b', '120,78,38') }), 0, 0.06, 0, g); M(new THREE.CylinderGeometry(0.13, 0.13, 0.13, 12), std('#c9965f'), 0.85 * s, 0.065, -0.5 * s, g, false); g.userData.y = 0; return g; };
 // 烤吐司：外圈烤得較深的吐司邊，表面有烤痕
-const toastTex = tex(256, 256, (c) => { const g = c.createRadialGradient(128, 128, 30, 128, 128, 150); g.addColorStop(0, '#f0d39a'); g.addColorStop(0.7, '#e2b36a'); g.addColorStop(1, '#a8682c'); c.fillStyle = g; c.fillRect(0, 0, 256, 256); for (let i = 0; i < 260; i++) { c.fillStyle = `rgba(150,95,40,${Math.random() * 0.25})`; c.beginPath(); c.arc(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 3, 0, 7); c.fill(); } });
+const toastTex = tex(512, 512, (c) => { const g = c.createRadialGradient(256, 256, 60, 256, 256, 300); g.addColorStop(0, '#f2d49a'); g.addColorStop(0.65, '#e6b768'); g.addColorStop(0.92, '#c98a3e'); g.addColorStop(1, '#9c5e28'); c.fillStyle = g; c.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 1400; i++) { const x = Math.random() * 512, y = Math.random() * 512, rr = 1 + Math.random() * 4; c.fillStyle = `rgba(160,104,46,${0.12 + Math.random() * 0.2})`; c.beginPath(); c.ellipse(x, y, rr * 1.4, rr, Math.random() * 3, 0, 7); c.fill(); c.fillStyle = `rgba(255,236,190,${Math.random() * 0.25})`; c.beginPath(); c.ellipse(x + 1, y - 1, rr * 0.8, rr * 0.5, 0, 0, 7); c.fill(); } });
 ING.toast = (s = 1) => {
   const sh = new THREE.Shape(); sh.moveTo(-0.6, -0.65); sh.lineTo(0.6, -0.65); sh.lineTo(0.6, 0.35); sh.bezierCurveTo(0.75, 0.85, 0.25, 0.85, 0, 0.7); sh.bezierCurveTo(-0.25, 0.85, -0.75, 0.85, -0.6, 0.35); sh.closePath();
   const geo = new THREE.ExtrudeGeometry(sh, { depth: 0.16, bevelEnabled: true, bevelSize: 0.04, bevelThickness: 0.04, bevelSegments: 2 });
   const uv = geo.attributes.uv, ps = geo.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, ps.getX(i) / 1.5 + 0.5, ps.getY(i) / 1.6 + 0.45);
-  const m = new THREE.Mesh(geo, [std('#fff', { map: toastTex, roughness: 0.9 }), std('#a8682c', { roughness: 0.9 })]); m.castShadow = m.receiveShadow = true; m.rotation.x = -Math.PI / 2; m.scale.setScalar(s);
+  const m = new THREE.Mesh(geo, [std('#fff', { map: toastTex, roughness: 0.9 }), std('#94582a', { roughness: 0.85 })]); m.castShadow = m.receiveShadow = true; m.rotation.x = -Math.PI / 2; m.scale.setScalar(s);
   const g = new THREE.Group(); g.add(m); g.userData.y = 0.02; return g;
 };
-ING.linen = (w = 2.4, d = 1.8) => { const g = new THREE.Group(); const lt = tex(128, 128, (c) => { c.fillStyle = '#e6dbc6'; c.fillRect(0, 0, 128, 128); c.strokeStyle = 'rgba(150,130,100,.18)'; for (let i = 0; i < 128; i += 3) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i, 128); c.stroke(); c.beginPath(); c.moveTo(0, i); c.lineTo(128, i); c.stroke(); } c.fillStyle = '#b8a07a'; c.fillRect(0, 118, 128, 4); }, [2, 2]);
+const linenTex = tex(256, 256, (c) => { c.fillStyle = '#e3d6bf'; c.fillRect(0, 0, 256, 256); for (let i = 0; i < 256; i += 2) { c.fillStyle = `rgba(140,118,88,${0.05 + Math.random() * 0.08})`; c.fillRect(i, 0, 1, 256); c.fillStyle = `rgba(255,250,240,${0.04 + Math.random() * 0.07})`; c.fillRect(0, i, 256, 1); } c.fillStyle = 'rgba(150,120,80,.35)'; c.fillRect(0, 236, 256, 3); c.fillRect(0, 244, 256, 1); }, [2, 2]);
+ING.linen = (w = 2.4, d = 1.8) => { const g = new THREE.Group(), lt = linenTex;
   M(new THREE.BoxGeometry(w, 0.04, d), std('#fff', { map: lt, roughness: 1 }), 0, 0.02, 0, g); g.userData.y = 0; return g; };
 
 /* —— 套組：玩家只選「風格」，每樣東西放哪裡、轉幾度都事先排好（碗在中間，背景食材放在三分線兩側的後方，前景只留一小點呼應） ——
@@ -663,25 +771,40 @@ const STYLES = {
 const RECOMMEND = { coconut: 'coconut', seeds: 'harvest', mint: 'minimal' };
 const styleGrp = new THREE.Group(); tableSet.add(styleGrp);
 function setStyle(id, way = 0) {
-  styleGrp.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); } });
   while (styleGrp.children.length) styleGrp.remove(styleGrp.children[0]);
   const st = STYLES[id], list = st.ways[way % st.ways.length];
   for (const [kind, x, z, ry, sc, up = 0] of list) {
     const o = Array.isArray(sc) ? ING[kind](...sc) : ING[kind](sc); o.position.set(x, (o.userData.y || 0) + up, z); o.rotation.y = ry; styleGrp.add(o);
+    if (!['leaf', 'linen', 'seeds', 'rosemary'].includes(kind)) { const bx = new THREE.Box3().setFromObject(o), w = (bx.max.x - bx.min.x) / 2, d = (bx.max.z - bx.min.z) / 2; blob(styleGrp, (bx.max.x + bx.min.x) / 2, (bx.max.z + bx.min.z) / 2 + 0.08, w * 1.1, d * 1.1, 0.008 + up, 0.85); }
   }
 }
-// 點綴：南瓜籽（綠色小橢圓）、薄荷葉
+// 點綴：椰奶拉花是一條浮在湯上、有厚度的奶油螺旋＋一顆心；烤南瓜籽是綠色帶尖的籽；薄荷葉是一小簇葉片。都撒一點黑胡椒
+const creamMat = new THREE.MeshPhysicalMaterial({ color: '#fbf3e3', roughness: 0.35, clearcoat: 0.25, clearcoatRoughness: 0.4, envMapIntensity: 0.35 });
+const pepperMat = std('#3a2a1c', { roughness: 0.8 });
+function pepper(n, rMax, y) { for (let i = 0; i < n; i++) { const a = i * 2.39996 + 0.5, r = Math.sqrt((i + 0.5) / n) * rMax; M(new THREE.SphereGeometry(0.018 + (i % 3) * 0.006, 5, 4), pepperMat, Math.cos(a) * r, y, Math.sin(a) * r, topGrp, false); } }
 function setTopping(kind) {
   while (topGrp.children.length) topGrp.remove(topGrp.children[0]);
-  drawSoup(1, 0.4, kind === 'coconut' ? 'coconut' : null, bowlSoupCv.getContext('2d'), 512); bowlSoupTex.needsUpdate = true;
-  if (kind === 'seeds') { seed = 3; for (let i = 0; i < 16; i++) { const a = rnd() * 6.28, r = 0.15 + rnd() * 0.9; const s = M(new THREE.SphereGeometry(0.1, 10, 6), std(i % 4 ? '#7d9a3c' : '#e9dcb4', { roughness: 0.6 }), Math.cos(a) * r, 1.13, Math.sin(a) * r, topGrp); s.scale.set(1.5, 0.45, 0.85); s.rotation.y = rnd() * 6; } }
-  if (kind === 'mint') { for (let i = 0; i < 4; i++) { const l = M(new THREE.SphereGeometry(0.26, 12, 6), std('#4f9a4a', { roughness: 0.5 }), Math.cos(i * 1.6) * 0.22, 1.15 + i * 0.01, Math.sin(i * 1.6) * 0.22, topGrp); l.scale.set(1, 0.12, 0.55); l.rotation.y = i * 1.6; }
-    for (let i = 0; i < 6; i++) { const d = M(new THREE.SphereGeometry(0.035, 6, 4), std('#5b3a1a'), Math.cos(i) * (0.7 + i * 0.05), 1.12, Math.sin(i * 2.1) * 0.75, topGrp); } }
+  drawSoup(1, 0.4, null, bowlSoupCv.getContext('2d'), 512); bowlSoupTex.needsUpdate = true;
+  const Y = 1.112;
+  if (kind === 'coconut') {
+    const pts = []; for (let i = 0; i <= 160; i++) { const t = i / 160, a = t * Math.PI * 2 * 2.6, r = 0.16 + t * 1.12; pts.push(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r)); }
+    const tube = M(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 320, 0.055, 8, false), creamMat, 0, Y, 0, topGrp, false); tube.scale.y = 0.32;
+    const hs = new THREE.Shape(); hs.moveTo(0, -0.5); hs.bezierCurveTo(-0.9, 0.05, -0.45, 0.75, 0, 0.32); hs.bezierCurveTo(0.45, 0.75, 0.9, 0.05, 0, -0.5);
+    const heart = M(new THREE.ExtrudeGeometry(hs, { depth: 0.04, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.04, bevelSegments: 3 }), creamMat, 0, Y + 0.005, 0, topGrp, false); heart.rotation.x = -Math.PI / 2; heart.scale.set(0.3, 0.3, 0.4);
+    pepper(10, 1.2, Y + 0.012);
+  }
+  if (kind === 'seeds') { seed = 3; const sg = std('#6f8f3a', { roughness: 0.45 }), sg2 = std('#88a64c', { roughness: 0.45 });
+    for (let i = 0; i < 22; i++) { const a = rnd() * 6.28, r = 0.1 + Math.sqrt(rnd()) * 0.95; const sd = M(pSeedGeo, i % 3 ? sg : sg2, Math.cos(a) * r, Y + 0.02, Math.sin(a) * r, topGrp); sd.scale.set(1.3, 0.38, 0.72); sd.rotation.y = rnd() * 6; }
+    pepper(6, 1.1, Y + 0.012); }
+  if (kind === 'mint') { const lm = std('#4f8a45', { roughness: 0.45, side: THREE.DoubleSide }), lm2 = std('#6aa356', { roughness: 0.45, side: THREE.DoubleSide });
+    const ls = new THREE.Shape(); ls.moveTo(0, 0); ls.bezierCurveTo(0.18, 0.12, 0.18, 0.38, 0, 0.5); ls.bezierCurveTo(-0.18, 0.38, -0.18, 0.12, 0, 0); const lg = new THREE.ShapeGeometry(ls, 12);
+    for (let i = 0; i < 5; i++) { const l = M(lg, i % 2 ? lm : lm2, 0, Y + 0.04 + i * 0.008, 0, topGrp); l.rotation.set(-Math.PI / 2 + 0.25, 0, i * 1.26); }
+    pepper(8, 1.1, Y + 0.012); }
 }
 function setBowl(kind) {
-  const b = BOWLS[kind]; bowlMat.color.set(b.col); bowlMat.map = kind === 'blue' ? blueTex : null; bowlMat.roughness = kind === 'wood' ? 0.6 : 0.22; bowlMat.needsUpdate = true;
+  const b = BOWLS[kind], o = b.cache || (b.cache = b.make()); bowlMat.map = o.map; bowlMat.roughness = o.rough; bowlMat.clearcoat = kind === 'wood' ? 0 : 0.35; bowlMat.needsUpdate = true;
 }
-function setTable(kind) { tableMat.map = TABLES[kind].tex || (TABLES[kind].tex = TABLES[kind].make()); tableMat.needsUpdate = true; backWall.material.color.set(kind === 'marble' ? '#e7e9ec' : kind === 'check' ? '#f3e7d6' : '#efe2cf'); }
+function setTable(kind) { tableMat.map = TABLES[kind].tex || (TABLES[kind].tex = TABLES[kind].make()); tableMat.roughness = kind === 'marble' ? 0.4 : kind === 'oat' ? 0.95 : 0.78; tableMat.needsUpdate = true; backWall.material.color.set(TABLES[kind].wall); }
 
 /* =========================================================
    畫面大小、鏡頭
@@ -711,7 +834,7 @@ camera.position.set(0, 9, 12); cam.tgt.set(0, 1, 0);
 /* =========================================================
    流程
    ========================================================= */
-const G = { phase: 'title', step: -1, scores: [], timeLeft: 0, prog: 0, stepT0: 0, plate: { bowl: 'white', top: 'coconut', table: 'wood' }, filter: 'warm', photo: null, cover: null };
+const G = { phase: 'title', step: -1, scores: [], timeLeft: 0, prog: 0, stepT0: 0, plate: { bowl: 'cream', top: 'coconut', table: 'wood' }, filter: 'warm', photo: null, cover: null };
 const show = (id, on = true) => { const e = $(id); if (e) e.hidden = !on; };
 const screens = ['#scrTitle', '#scrIntro', '#scrPlate', '#scrShoot', '#scrCover', '#scrShelf', '#scrShare', '#scrBig'];
 function only(id) { screens.forEach((s) => show(s, s === id)); }
@@ -724,7 +847,7 @@ function renderDishes() {
 }
 function goTitle() {
   G.phase = 'title'; stopStep(); exitShoot(); only('#scrTitle'); show('#hud', false); show('#ctl', false);
-  setSets('cut'); resetCut(); camTo(new THREE.Vector3(0, 4.2, 8.2), new THREE.Vector3(-0.45, -1.5, 1.4), 1.2); renderDishes();
+  setSets('cut'); resetCut(); camTo(new THREE.Vector3(0, 4.2, 8.2), new THREE.Vector3(0, -1.5, 1.4), 1.2); renderDishes();
 }
 $('#dishList').addEventListener('click', async (e) => {
   const b = e.target.closest('.dish'); if (!b) return; audioInit(); sfx.click();
@@ -753,10 +876,10 @@ function nextStep() {
   if (s.id === 'blend' && !(motionOK && isTouch)) $('#inAlt').textContent = isTouch ? '沒有取得動作感應權限，改用手指在畫面上畫圈' : '電腦：用滑鼠在畫面上畫圈（手機玩更好玩）';
   $('#inBtns').innerHTML = btns; only('#scrIntro'); show('#hud', false); show('#ctl', false);
   // 先把場景準備好、鏡頭飛過去
-  if (s.id === 'cut') { setSets('cut'); camTo(new THREE.Vector3(0, 6.2, 5.2), new THREE.Vector3(0, 0.8, 0.2)); }
+  if (s.id === 'cut') { setSets('cut'); camTo(new THREE.Vector3(0, 9.2, 5.6), new THREE.Vector3(0, 0.5, 0.35)); }
   if (s.id === 'boil') { setSets('pot'); camTo(new THREE.Vector3(0, 6.8, 5.4), new THREE.Vector3(0, 1.1, 0)); }
   if (s.id === 'blend') { setSets('pot'); camTo(new THREE.Vector3(0, 7.4, 3.6), new THREE.Vector3(0, 1.2, 0)); }
-  if (s.id === 'cool') { temp = 92; blowing = false; setSets('table'); G.plate = Object.assign({ bowl: 'white', top: 'none', table: 'wood' }); setBowl('white'); setTopping('none'); setTable('wood'); props.visible = styleGrp.visible = false; camTo(new THREE.Vector3(0, 5.2, 5.6), new THREE.Vector3(0, 0.9, 0)); }
+  if (s.id === 'cool') { temp = 92; blowing = false; setSets('table'); G.plate = Object.assign({ bowl: 'cream', top: 'none', table: 'wood' }); setBowl('cream'); setTopping('none'); setTable('wood'); props.visible = styleGrp.visible = false; camTo(new THREE.Vector3(0, 5.2, 5.6), new THREE.Vector3(0, 0.9, 0)); }
 }
 $('#inBtns').addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (!b) return; audioInit(); sfx.click(); beginStep(b.dataset.go); });
 
@@ -765,7 +888,7 @@ function setProg(p) { G.prog = clamp(p, 0, 1); $('#hudBar').style.width = (G.pro
 let stepTimer = 0;
 function beginStep(mode) {
   const s = STEPS[G.step]; G.phase = 'play'; G.mode = mode; only(null); show('#hud'); hud(`${s.icon} ${s.title}`, s.tip); setProg(0);
-  G.limit = { cut: 15, boil: 16, blend: 15, cool: 15 }[s.id]; G.stepT0 = performance.now(); G.done = false;
+  G.limit = { cut: 35, boil: 16, blend: 15, cool: 15 }[s.id]; G.stepT0 = performance.now(); G.done = false;
   $('#ctl').innerHTML = ''; show('#ctl', false);
   ({ cut: startCut, boil: startBoil, blend: startBlend, cool: startCool })[s.id](mode);
 }
@@ -782,29 +905,159 @@ function finishStep(score, msg) {
 const elapsed = () => (performance.now() - G.stepT0) / 1000;
 function tickTimer() { const left = Math.max(0, G.limit - elapsed()); $('#hudTime').textContent = Math.ceil(left); $('#hudTime').classList.toggle('low', left < 4); return left; }
 
-/* —— 第 1 步：切南瓜（手指劃過） —— */
-const CUTS = 8; let cutN = 0, swipe = null; const trail = [];
-function resetCut() { cutN = 0; bigPumpkin.scale.setScalar(1); bigPumpkin.visible = true; bigPumpkin.position.set(-0.5, 1.12, 0); chunks.splice(0).forEach((c) => c.parent && c.parent.remove(c)); }
-function startCut() { resetCut(); }
-function pumpkinScreenRect() {
-  const b = new THREE.Box3().setFromObject(bigPumpkin), pts = []; for (const x of [b.min.x, b.max.x]) for (const y of [b.min.y, b.max.y]) for (const z of [b.min.z, b.max.z]) pts.push(new THREE.Vector3(x, y, z).project(camera));
-  const xs = pts.map((p) => (p.x * 0.5 + 0.5) * VW), ys = pts.map((p) => (-p.y * 0.5 + 0.5) * VH);
-  const pad = 30; return { x0: Math.min(...xs) - pad, x1: Math.max(...xs) + pad, y0: Math.min(...ys) - pad, y1: Math.max(...ys) + pad };
+/* —— 第 1 步：切南瓜 ——
+   形狀一路變：整顆 → 對半（露出一窩籽）→ 挖籽 → 四瓣 → 橫切成段 → 切丁。
+   每一刀在南瓜上有一條會流動的虛線，沿著虛線劃過去才切得下去；劃得越貼近、越平行，刀工分數越高（劃歪了只是分數低，不會卡關） */
+const STAGES = [
+  { kind: 'cut', tip: '第 1 刀：沿著虛線，把南瓜對半切開！', g: [[0, BT + PR * 1.32, -PR * 0.95], [0, BT + PR * 1.32, PR * 0.95]] },
+  { kind: 'scoop', tip: '挖籽：在南瓜上畫圈，把籽挖出來' },
+  { kind: 'cut', tip: '第 2 刀：左邊這半顆，再沿著虛線對切', g: [[-1.25, BT + PR, -0.95], [-1.25, BT + PR, 0.95]] },
+  { kind: 'cut', tip: '第 3 刀：右邊這半顆也對切', g: [[1.25, BT + PR, -0.95], [1.25, BT + PR, 0.95]] },
+  { kind: 'cut', tip: '第 4 刀：橫著切段', g: [[-2.55, BT + PR, -0.36], [2.55, BT + PR, -0.36]], c: -0.36 },
+  { kind: 'cut', tip: '第 5 刀：再切一段', g: [[-2.55, BT + PR, 0.02], [2.55, BT + PR, 0.02]], c: 0.02 },
+  { kind: 'cut', tip: '第 6 刀：最後一段', g: [[-2.55, BT + PR, 0.38], [2.55, BT + PR, 0.38]], c: 0.38 },
+  { kind: 'cut', tip: '第 7 刀：左邊切丁！', g: [[-1.25, BT + PR * 0.8, -1.05], [-1.25, BT + PR * 0.8, 1.05]], side: 0 },
+  { kind: 'cut', tip: '第 8 刀：右邊切丁，完成！', g: [[1.25, BT + PR * 0.8, -1.05], [1.25, BT + PR * 0.8, 1.05]], side: 1 },
+];
+const CUT = { stage: 0, acc: [], whole: null, halves: [], segs: [], cubes: [], seeds: [], scoop: 0, scoopAng: null };
+const Q_UP = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));   // 切面朝上、蒂朝後
+let swipe = null; const trail = [];
+// 小補間：fn(k) 每一幀被呼叫，k 從 0 跑到 1
+const TW = []; function tween(dur, fn, done) { TW.push({ t0: performance.now(), dur: reduceMotion ? 1 : dur * 1000, fn, done }); }
+function clearPieces() {
+  for (const o of [CUT.whole, ...CUT.halves, ...CUT.segs.map((q) => q.g), ...CUT.cubes, ...CUT.seeds]) if (o && o.parent) o.parent.remove(o);
+  CUT.halves = []; CUT.segs = []; CUT.cubes = []; CUT.seeds = []; TW.length = 0;
 }
-function doCut(dirX, dirY) {
-  cutN++; sfx.chop(); buzz(18); shake = 0.25;
-  const k = 1 - cutN / CUTS; bigPumpkin.scale.setScalar(Math.max(0.0001, 0.35 + 0.65 * k)); bigPumpkin.position.y = 0.4 + 0.72 * (0.35 + 0.65 * k);
-  if (cutN >= CUTS) bigPumpkin.visible = false;
-  for (let i = 0; i < (cutN >= CUTS ? 4 : 2); i++) addChunk(cutSet, -0.5 + (rnd() - 0.5) * 0.6, 1.2, (rnd() - 0.5) * 0.6, 1.2 + rnd() * 1.5, 2 + rnd() * 2, (rnd() - 0.5) * 2.2);
-  knife.visible = true; knife.userData.t = 0; knife.userData.dx = dirX; knife.userData.dy = dirY;
-  setProg(cutN / CUTS);
-  if (cutN >= CUTS) { const t = elapsed(); finishStep(100 - Math.max(0, t - 4.5) * 6, `${t.toFixed(1)} 秒切完 ${CUTS} 刀`); }
+function resetCut() {
+  clearPieces(); CUT.stage = 0; CUT.acc = []; CUT.scoop = 0;
+  CUT.whole = makePumpkin(PR); CUT.whole.position.set(0, BT + PR * 0.645, 0); cutSet.add(CUT.whole);
+}
+function startCut() { resetCut(); CUT.whole.rotation.y = 0; $('#hudTip').textContent = STAGES[0].tip; setProg(0); }
+const curGuide = () => { const st = STAGES[CUT.stage]; return st && st.g ? st.g.map((a) => new THREE.Vector3(...a)) : null; };
+const toScreen = (v) => { const q = v.clone().project(camera); return { x: (q.x * 0.5 + 0.5) * VW, y: (-q.y * 0.5 + 0.5) * VH }; };
+// 一筆劃跟虛線比：夾角、離虛線多遠、蓋住虛線多少
+function judgeSwipe(s0, s1) {
+  const g = curGuide(); if (!g) return null; const A = toScreen(g[0]), B = toScreen(g[1]);
+  const gx = B.x - A.x, gy = B.y - A.y, gl = Math.hypot(gx, gy), ux = gx / gl, uy = gy / gl, sx = s1.x - s0.x, sy = s1.y - s0.y, sl = Math.hypot(sx, sy);
+  if (sl < Math.max(50, gl * 0.35)) return null;
+  const ang = Math.acos(Math.min(1, Math.abs(sx * ux + sy * uy) / sl)) * 180 / Math.PI;
+  const off = (q) => Math.abs((q.x - A.x) * uy - (q.y - A.y) * ux), mid = { x: (s0.x + s1.x) / 2, y: (s0.y + s1.y) / 2 }, d = (off(s0) + off(s1) + off(mid) * 2) / 4;
+  const t0 = ((s0.x - A.x) * ux + (s0.y - A.y) * uy) / gl, t1 = ((s1.x - A.x) * ux + (s1.y - A.y) * uy) / gl, cover = Math.max(0, Math.min(1, Math.max(t0, t1)) - Math.max(0, Math.min(t0, t1)));
+  return { ok: ang < 32 && d < Math.max(48, gl * 0.2) && cover > 0.45, full: cover > 0.85, acc: clamp(100 - ang * 1.4 - d * 0.5, 40, 100) };
+}
+function trySwipe(final) {
+  if (!swipe || swipe.pts.length < 2 || STAGES[CUT.stage].kind !== 'cut') return;
+  const r = judgeSwipe(swipe.pts[0], swipe.pts[swipe.pts.length - 1]); if (!r) return;
+  if (r.ok && (final || r.full)) { doCut(r.acc); swipe = null; }
+  else if (final && !r.ok) { $('#hudTip').textContent = '沿著虛線劃過去喔！'; setTimeout(() => { if (STAGES[CUT.stage]) $('#hudTip').textContent = STAGES[CUT.stage].tip; }, 1200); }
+}
+// 菜刀：刀刃對齊虛線，從一頭劃到另一頭、往下切
+function knifeSwing(g) {
+  if (!g) return; const dir = g[1].clone().sub(g[0]); dir.y = 0; const len = dir.length(); dir.normalize();
+  knife.visible = true; knife.rotation.set(0, Math.atan2(-dir.z, dir.x), 0);
+  tween(0.32, (k) => { const e = ease(k), pnt = g[0].clone().lerp(g[1], e); knife.position.copy(pnt).addScaledVector(dir, -1.2); knife.position.y = lerp(pnt.y + 0.9, BT + 0.05, Math.min(1, e * 1.3)); }, () => { knife.visible = false; });
+}
+function doCut(acc = 100) {
+  const st = CUT.stage, g = curGuide(); CUT.acc.push(acc);
+  sfx.chop(); if (st === 0) sfx.crack(); buzz(st === 0 ? [35, 25, 50] : 20); shake = st === 0 ? 0.35 : 0.18; knifeSwing(g);
+  ({ 0: splitWhole, 2: () => splitHalf(0), 3: () => splitHalf(1), 4: () => crossCut(STAGES[4].c), 5: () => crossCut(STAGES[5].c), 6: () => crossCut(STAGES[6].c), 7: () => dice(0), 8: () => dice(1) })[st]();
+  nextCutStage();
+}
+function nextCutStage() {
+  CUT.stage++; setProg(CUT.stage / STAGES.length);
+  if (CUT.stage >= STAGES.length) { const t = elapsed(), a = CUT.acc.reduce((x, y) => x + y, 0) / Math.max(1, CUT.acc.length); setTimeout(() => finishStep(a * 0.7 + (100 - Math.max(0, t - 14) * 4) * 0.3, `刀工準度 ${Math.round(a)}%・${t.toFixed(1)} 秒`), 450); return; }
+  $('#hudTip').textContent = STAGES[CUT.stage].tip;
+}
+// 第 1 刀：整顆裂成兩半，各自往外倒、切面朝上，露出一窩籽
+function splitWhole() {
+  const w = CUT.whole; w.parent.remove(w); CUT.whole = null;
+  [-1, 1].forEach((side) => {
+    const h = makeHalf(PR, true); cutSet.add(h); CUT.halves.push(h); h.userData.side = side;
+    const q0 = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, side < 0 ? Math.PI / 2 : -Math.PI / 2, 0)), p0 = new THREE.Vector3(side * 0.02, BT + PR * 0.645, 0), p1 = new THREE.Vector3(side * 1.25, BT + PR, 0);
+    h.quaternion.copy(q0); h.position.copy(p0);
+    tween(0.55, (k) => { const e = ease(k); h.quaternion.slerpQuaternions(q0, Q_UP, e); h.position.lerpVectors(p0, p1, e); h.position.y += Math.sin(k * Math.PI) * 0.45; });
+  });
+  CUT.halves.sort((a, b) => a.userData.side - b.userData.side);
+}
+// 挖籽：在南瓜上畫圈；畫滿一圈多，兩窩籽飛進旁邊的小碟子
+function addScoop(d) {
+  if (STAGES[CUT.stage].kind !== 'scoop' || G.done) return; CUT.scoop += Math.abs(d); setProg((CUT.stage + Math.min(1, CUT.scoop / 8)) / STAGES.length);
+  if (CUT.scoop >= 8) finishScoop();
+}
+function finishScoop() {
+  sfx.scoop(); buzz(25);
+  CUT.halves.forEach((h, i) => {
+    const sc = h.userData.seeds; if (!sc) return; h.userData.face.material.map = FACE_CLEAN; h.userData.face.material.needsUpdate = true;
+    cutSet.attach(sc); CUT.seeds.push(sc); const p0 = sc.position.clone(), p1 = new THREE.Vector3(2.25 + (i ? 0.08 : -0.08), BT + 0.12 + i * 0.05, -1.45), q0 = sc.quaternion.clone(), s0 = sc.scale.x;
+    tween(0.6, (k) => { const e = ease(k); sc.position.lerpVectors(p0, p1, e); sc.position.y += Math.sin(k * Math.PI) * 1.2; sc.quaternion.slerpQuaternions(q0, Q_UP, e); sc.scale.setScalar(lerp(s0, 0.55, e)); });
+  });
+  nextCutStage();
+}
+// 半顆 → 兩瓣：沿著蒂對切，兩瓣往外分開一點、微微往外倒
+function splitHalf(i) {
+  const h = CUT.halves[i]; if (!h) return; const hx = h.position.x; h.parent.remove(h);
+  [-1, 1].forEach((sd) => {
+    const seg = newSeg(sd, i * 2 + (sd > 0 ? 1 : 0), -99, 99, hx);
+    tween(0.35, (k) => { const e = ease(k); seg.g.position.x = hx + sd * 0.17 * e; seg.g.rotation.z = -sd * 0.1 * e; });
+  });
+}
+// 一段（四分之一瓣被橫切後的其中一截）：用兩片裁切平面夾出 z 的範圍 [lo, hi]
+function newSeg(sd, qi, lo, hi, x) {
+  const planes = [new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), new THREE.Plane(new THREE.Vector3(0, 0, -1), 0)];
+  const g = new THREE.Group(), inner = makeQuarter(PR, sd, planes); inner.quaternion.copy(Q_UP); g.add(inner);
+  g.position.set(x, BT + PR, 0); cutSet.add(g); const seg = { g, sd, qi, lo, hi, planes }; CUT.segs.push(seg); return seg;
+}
+// 橫切：每一瓣在 c 這條線切開，同一瓣的各段之間拉開一點縫
+function crossCut(c) {
+  for (const seg of CUT.segs.slice()) {
+    if (!(seg.lo < c && seg.hi > c)) continue;
+    const a = newSeg(seg.sd, seg.qi, seg.lo, c, seg.g.position.x), b = newSeg(seg.sd, seg.qi, c, seg.hi, seg.g.position.x);
+    for (const n of [a, b]) { n.g.rotation.copy(seg.g.rotation); n.g.position.z = seg.g.position.z; }
+    seg.g.parent.remove(seg.g); CUT.segs.splice(CUT.segs.indexOf(seg), 1);
+  }
+  for (let qi = 0; qi < 4; qi++) {
+    const list = CUT.segs.filter((q) => q.qi === qi).sort((x, y) => x.lo - y.lo);
+    list.forEach((q, k) => { const z0 = q.g.position.z, z1 = (k - (list.length - 1) / 2) * 0.1; tween(0.25, (e) => { q.g.position.z = lerp(z0, z1, ease(e)); }); });
+  }
+}
+// 切丁：這一邊的每一段散成兩三顆帶皮的南瓜丁
+function dice(side) {
+  seed = 11 + side;
+  for (const seg of CUT.segs.filter((q) => Math.floor(q.qi / 2) === side)) {
+    const lo = Math.max(seg.lo, -0.66), hi = Math.min(seg.hi, 0.66), zc = (lo + hi) / 2 + seg.g.position.z, xc = seg.g.position.x + seg.sd * PR * 0.4, n = hi - lo > 0.3 ? 3 : 2;
+    for (let k = 0; k < n; k++) {
+      const c = makeCube(); cutSet.add(c); CUT.cubes.push(c);
+      const p1 = new THREE.Vector3(xc + (k - (n - 1) / 2) * 0.36 * seg.sd + (rnd() - 0.5) * 0.1, BT + 0.16, zc + (rnd() - 0.5) * 0.12), p0 = p1.clone().setY(BT + 0.7);
+      c.rotation.y = (rnd() - 0.5) * 0.6; c.position.copy(p0);
+      tween(0.4 + rnd() * 0.15, (e) => { c.position.lerpVectors(p0, p1, e * e); const s = lerp(0.6, 1, Math.min(1, e * 1.5)); c.scale.setScalar(s); });
+    }
+    seg.g.parent.remove(seg.g);
+  }
+  CUT.segs = CUT.segs.filter((q) => Math.floor(q.qi / 2) !== side);
+}
+// 畫虛線（會流動）或挖籽的圓圈
+function drawGuide(ctx, now) {
+  const st = STAGES[CUT.stage]; if (!st || G.phase !== 'play' || G.done || STEPS[G.step].id !== 'cut') return;
+  ctx.save(); ctx.lineCap = 'round';
+  if (st.kind === 'scoop') {
+    for (const h of CUT.halves) { const c = toScreen(h.position), e = toScreen(h.position.clone().add(new THREE.Vector3(0.38, 0, 0))), rr = Math.max(26, Math.hypot(e.x - c.x, e.y - c.y));
+      ctx.setLineDash([10, 8]); ctx.lineDashOffset = -now / 40; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(43,29,20,.35)'; ctx.beginPath(); ctx.arc(c.x, c.y + 2, rr, 0, 7); ctx.stroke();
+      ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(c.x, c.y, rr, 0, 7); ctx.stroke(); ctx.setLineDash([]); ctx.font = '22px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('🥄', c.x + rr * 0.8, c.y - rr * 0.8); }
+  } else {
+    const g = curGuide(), A = toScreen(g[0]), B = toScreen(g[1]);
+    ctx.setLineDash([16, 12]); ctx.lineDashOffset = -now / 30;
+    ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(43,29,20,.35)'; ctx.beginPath(); ctx.moveTo(A.x, A.y + 2); ctx.lineTo(B.x, B.y + 2); ctx.stroke();
+    ctx.lineWidth = 5; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#fff'; for (const P of [A, B]) { ctx.beginPath(); ctx.arc(P.x, P.y, 7, 0, 7); ctx.fill(); }
+    ctx.font = '26px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🔪', A.x + (A.x < B.x ? -22 : 22) * (Math.abs(B.x - A.x) > Math.abs(B.y - A.y) ? 1 : 0), A.y + (Math.abs(B.y - A.y) >= Math.abs(B.x - A.x) ? (A.y < B.y ? -22 : 22) : 0));
+  }
+  ctx.restore();
 }
 
 /* —— 第 2 步：顧火候（按住加火，指針停在綠區） —— */
 let heat = 0.2, heatV = 0, inZone = 0, outZone = 0, cooked = 0, holdOn = false;
 function resetPot() { cooked = 0; heat = 0.2; heatV = 0; potChunks.clear(); drawSoup(0); soupTex.needsUpdate = true; potSoup.position.y = 1.0; blender.visible = false; mash = 0; }
-function fillPotChunks() { potChunks.clear(); seed = 5; for (let i = 0; i < 14; i++) { const c = new THREE.Group(); M(chunkGeo, fleshMat, 0, 0, 0, c); M(new THREE.BoxGeometry(0.43, 0.08, 0.43), skinMat, 0, 0.19, 0, c); const a = rnd() * 6.28, r = rnd() * 1.1; c.position.set(Math.cos(a) * r, 1.05 + rnd() * 0.15, Math.sin(a) * r); c.rotation.set(rnd(), rnd() * 3, rnd()); c.userData.base = c.position.clone(); potChunks.add(c); } }
+function fillPotChunks() { potChunks.clear(); seed = 5; for (let i = 0; i < 14; i++) { const c = makeCube(); const a = rnd() * 6.28, r = rnd() * 1.1; c.position.set(Math.cos(a) * r, 1.05 + rnd() * 0.15, Math.sin(a) * r); c.rotation.set(rnd() * 0.6, rnd() * 3, rnd() * 0.6); c.userData.base = c.position.clone(); potChunks.add(c); } }
 function holdButton(label, onDown, onUp) {
   $('#ctl').innerHTML = `<button class="hold" id="holdBtn" type="button">${label}</button>`; show('#ctl');
   const b = $('#holdBtn'); const dn = (e) => { e.preventDefault(); holdOn = true; b.classList.add('on'); onDown && onDown(); }; const up = (e) => { holdOn = false; b.classList.remove('on'); onUp && onUp(); };
@@ -881,7 +1134,7 @@ const ptrs = new Map();
 canvas.addEventListener('pointerdown', onDown); addEventListener('pointermove', onMove); addEventListener('pointerup', onUp); addEventListener('pointercancel', onUp);
 function onDown(e) {
   ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (G.phase === 'play' && STEPS[G.step].id === 'cut') { swipe = { pts: [{ x: e.clientX, y: e.clientY, t: performance.now() }], cut: false }; }
+  if (G.phase === 'play' && STEPS[G.step].id === 'cut') { swipe = { pts: [{ x: e.clientX, y: e.clientY, t: performance.now() }] }; CUT.scoopAng = null; }
   if (G.phase === 'play' && STEPS[G.step].id === 'blend') lastFinger = null;
   if (G.phase === 'shoot') shootDrag = { x: e.clientX, y: e.clientY, d: pinchDist() };
 }
@@ -889,13 +1142,13 @@ function onDown(e) {
 document.addEventListener('pointerdown', (e) => { if (e.target === canvas || G.phase !== 'play') return; if (e.target.closest('button,a,input')) return; onDown(e); });
 function onMove(e) {
   if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (G.phase === 'play' && STEPS[G.step].id === 'cut' && swipe) {
-    const p = { x: e.clientX, y: e.clientY, t: performance.now() }; swipe.pts.push(p); trail.push({ x: p.x, y: p.y, t: p.t });
-    const a = swipe.pts.find((q) => p.t - q.t < 220) || swipe.pts[0]; const dx = p.x - a.x, dy = p.y - a.y, dist = Math.hypot(dx, dy);
-    if (!swipe.cut && dist > Math.min(VW, VH) * 0.22) {
-      const r = pumpkinScreenRect(); const crosses = segRect(a, p, r);
-      if (crosses) { swipe.cut = true; doCut(dx / dist, dy / dist); setTimeout(() => { if (swipe) { swipe.cut = false; swipe.pts = [p]; } }, 140); }
-    }
+  if (G.phase === 'play' && STEPS[G.step].id === 'cut' && !G.done) {
+    const p = { x: e.clientX, y: e.clientY, t: performance.now() };
+    if (STAGES[CUT.stage] && STAGES[CUT.stage].kind === 'scoop') {   // 挖籽：繞著最近的那半顆畫圈
+      const cs = CUT.halves.map((h) => toScreen(h.position)), c = cs.sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0], dd = c ? Math.hypot(c.x - p.x, c.y - p.y) : 0;
+      if (c && dd > 12 && dd < Math.min(VW, VH) * 0.4) { const ang = Math.atan2(p.y - c.y, p.x - c.x); if (CUT.scoopAng !== null) { let d = ang - CUT.scoopAng; d = Math.atan2(Math.sin(d), Math.cos(d)); if (Math.abs(d) < 1) addScoop(d); } CUT.scoopAng = ang; }
+      trail.push({ x: p.x, y: p.y, t: p.t, soft: true });
+    } else if (swipe) { swipe.pts.push(p); trail.push({ x: p.x, y: p.y, t: p.t }); trySwipe(false); }
   }
   if (G.phase === 'play' && STEPS[G.step].id === 'blend') {
     const r = $('#ring').getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2; const ang = Math.atan2(e.clientY - cy, e.clientX - cx);
@@ -908,10 +1161,8 @@ function onMove(e) {
     shootDrag.x = e.clientX; shootDrag.y = e.clientY;
   }
 }
-function onUp(e) { ptrs.delete(e.pointerId); if (!ptrs.size) { swipe = null; shootDrag = null; lastFinger = null; } else if (shootDrag) shootDrag.d = pinchDist(); }
+function onUp(e) { ptrs.delete(e.pointerId); if (G.phase === 'play' && STEPS[G.step] && STEPS[G.step].id === 'cut') trySwipe(true); if (!ptrs.size) { swipe = null; shootDrag = null; lastFinger = null; } else if (shootDrag) shootDrag.d = pinchDist(); }
 function pinchDist() { const a = [...ptrs.values()]; return a.length >= 2 ? Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) : 0; }
-function segRect(a, b, r) { // 線段有沒有穿過矩形（取樣 12 點就夠）
-  for (let i = 0; i <= 12; i++) { const x = lerp(a.x, b.x, i / 12), y = lerp(a.y, b.y, i / 12); if (x > r.x0 && x < r.x1 && y > r.y0 && y < r.y1) return true; } return false; }
 canvas.addEventListener('wheel', (e) => { if (G.phase === 'shoot') { e.preventDefault(); orbit.dist = clamp(orbit.dist * (1 + e.deltaY * 0.001), 5, 17); } }, { passive: false });
 
 /* =========================================================
@@ -920,7 +1171,7 @@ canvas.addEventListener('wheel', (e) => { if (G.phase === 'shoot') { e.preventDe
 function goPlate() {
   G.phase = 'plate'; only('#scrPlate'); show('#hud', false); setSets('table'); props.visible = styleGrp.visible = true;
   const top = G.plate.top && G.plate.top !== 'none' ? G.plate.top : 'coconut';
-  G.plate = { bowl: G.plate.bowl || 'white', top, table: G.plate.table || 'wood', style: G.plate.style || RECOMMEND[top], way: G.plate.way || 0 };   // 第一次進來直接套主廚推薦
+  G.plate = { bowl: G.plate.bowl || 'cream', top, table: G.plate.table || 'wood', style: G.plate.style || RECOMMEND[top], way: G.plate.way || 0 };   // 第一次進來直接套主廚推薦
   setBowl(G.plate.bowl); setTopping(G.plate.top); setTable(G.plate.table); setStyle(G.plate.style, G.plate.way); bowlSteam.forEach((s) => s.material.opacity = 0);
   G.tab = G.tab || 'bowl'; renderChips();
   camTo(new THREE.Vector3(0, 10, 8), new THREE.Vector3(0, 0, 2.6), 1.3);   // 整張桌子（碗＋背景食材）都放在卡片上方
@@ -975,12 +1226,13 @@ post.mat = new THREE.ShaderMaterial({
         float zs = viewDist(uv), cs = coc(zs); if (zs > z0) cs = min(cs, c0);
         float w = smoothstep(r - .002, r, cs); acc += texture2D(tDiffuse, uv).rgb * w; ws += w; }
       return acc / ws; }
-    void main(){ vec3 c = toSRGB(dof());
+    vec3 tm(vec3 c){ c *= 1.22; c = c * (1. + c / 6.25) / (1. + c); vec3 s = pow(max(c, 0.), vec3(1. / 2.2)); s = mix(s, s * s * (3. - 2. * s), .4); return pow(s, vec3(2.2)); }   // 跟直接畫到畫面時同一條色調曲線
+    void main(){ vec3 c = toSRGB(tm(dof()));
       c = (uM * vec4(c, 1.)).rgb + uOff;
       vec2 q = (vUv - .5) * vec2(uAspect, 1.); c *= 1. - uVig * smoothstep(.25, .85, length(q) * 1.25);
       c += (h(vUv * 1000.) - .5) * uGrain;
       gl_FragColor = vec4(clamp(c, 0., 1.), 1.); }`,
-  depthTest: false, depthWrite: false,
+  depthTest: false, depthWrite: false, toneMapped: false,
 });
 post.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), post.mat));
 function setFilter(k) { G.filter = k; const f = FILTERS[k].m; post.mat.uniforms.uM.value.set(f[0], f[1], f[2], 0, f[4], f[5], f[6], 0, f[8], f[9], f[10], 0, 0, 0, 0, 1); post.mat.uniforms.uOff.value.set(f[3], f[7], f[11]); post.mat.uniforms.uVig.value = FILTERS[k].vig; post.mat.uniforms.uGrain.value = FILTERS[k].grain; document.querySelectorAll('#segFilter button').forEach((b) => b.classList.toggle('on', b.dataset.f === k)); }
@@ -1143,7 +1395,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) { ['f
    每一幀
    ========================================================= */
 let last = performance.now(), shake = 0, tAll = 0;
-const fxc = $('#fx').getContext('2d');
+const fxc = $('#fx').getContext('2d'); const FX = { on: true };
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (now - last) / 1000); last = now; tAll += dt;
@@ -1158,12 +1410,10 @@ function frame(now) {
   camera.lookAt(cam.tgt);
   if (shake > 0) { shake = Math.max(0, shake - dt); const s = shake * 0.12; camera.position.x += (Math.random() - 0.5) * s; camera.position.y += (Math.random() - 0.5) * s; }
 
-  // 南瓜塊落下（簡單的重力＋落在砧板上）
-  for (const c of chunks) { const v = c.userData.v; if (!v) continue; v.y -= 14 * dt; c.position.addScaledVector(v, dt); c.rotation.x += c.userData.spin.x * dt; c.rotation.z += c.userData.spin.z * dt;
-    if (c.position.y < 0.46) { c.position.y = 0.46; v.multiplyScalar(0.35); v.y = Math.abs(v.y) > 0.6 ? -v.y * 0.4 : 0; c.userData.spin.multiplyScalar(0.3); if (v.length() < 0.2) { c.userData.v = null; c.rotation.x = Math.round(c.rotation.x / (Math.PI / 2)) * Math.PI / 2; c.rotation.z = Math.round(c.rotation.z / (Math.PI / 2)) * Math.PI / 2; } }
-    c.position.x = clamp(c.position.x, -2.4, 2.4); c.position.z = clamp(c.position.z, -1.6, 1.6); }
-  if (knife.visible) { const k = (knife.userData.t += dt * 5); knife.position.set(-0.5 + 0.2, lerp(2.6, 0.9, Math.min(1, k * 1.6)), 0.6); knife.rotation.set(0, -0.6, -0.15); if (k > 1) knife.visible = false; }
-  if (G.phase === 'title' && bigPumpkin.visible) bigPumpkin.rotation.y += dt * 0.35;
+  // 補間動畫；切段的裁切平面跟著那一段移動
+  for (let i = TW.length - 1; i >= 0; i--) { const w = TW[i], k = Math.min(1, (now - w.t0) / w.dur); w.fn(k); if (k >= 1) { TW.splice(i, 1); w.done && w.done(); } }
+  for (const q of CUT.segs) { q.planes[0].constant = -(q.lo + q.g.position.z); q.planes[1].constant = q.hi + q.g.position.z; }
+  if (G.phase === 'title' && CUT.whole) CUT.whole.rotation.y += dt * 0.35;
 
   const sid = G.step >= 0 && STEPS[G.step] ? STEPS[G.step].id : '';
   const playing = G.phase === 'play' && !G.done;
@@ -1202,7 +1452,7 @@ function frame(now) {
     if (temp <= 60) { const t = elapsed(); finishStep(100 - Math.max(0, t - 4.5) * 5, `${t.toFixed(1)} 秒吹到 60°`); }
   }
   if (tableSet.visible) {
-    const k = sid === 'cool' && G.phase !== 'plate' && G.phase !== 'shoot' && G.phase !== 'cover' ? clamp((temp - 58) / 34, 0, 1) : G.phase === 'shoot' || G.phase === 'plate' ? 0.18 : 0;
+    const k = sid === 'cool' && G.phase !== 'plate' && G.phase !== 'shoot' && G.phase !== 'cover' ? clamp((temp - 58) / 34, 0, 1) : G.phase === 'shoot' || G.phase === 'plate' ? 0.06 : 0;   // 擺盤、拍照時只留淡淡一縷蒸氣，不要像一層霧罩在湯上
     bowlSteam.forEach((s) => { const u = s.userData; u.push = lerp(u.push || 0, blowing && playing ? 1 : 0, dt * 4); u.t += dt * u.sp * 0.45 * (1 + u.push); if (u.t > 1) u.t = 0;
       s.position.set(u.x * (1 + u.t) - u.push * u.t * 2.5, u.y0 + u.t * 1.8, u.z * (1 + u.t) - u.push * u.t * 1.2); s.material.opacity = Math.sin(u.t * Math.PI) * k * 0.85; s.scale.setScalar(0.6 + u.t * 1.2); });
   }
@@ -1213,21 +1463,25 @@ function frame(now) {
   else renderer.render(scene, camera);
 
   // 刀光、畫圈的軌跡
+  // 這層 2D 畫布只在做菜的步驟用（虛線、刀光、畫圈）；其他畫面直接藏起來，避免瀏覽器還顯示上一步殘留的虛線
+  const fxOn = G.phase === 'play'; if (fxOn !== FX.on) { FX.on = fxOn; $('#fx').style.visibility = fxOn ? 'visible' : 'hidden'; }
   const dpr = $('#fx').width / VW; fxc.setTransform(dpr, 0, 0, dpr, 0, 0); fxc.clearRect(0, 0, VW, VH);
+  drawGuide(fxc, now);
   while (trail.length && now - trail[0].t > 220) trail.shift();
   if (trail.length > 1) { fxc.lineCap = 'round'; fxc.lineJoin = 'round';
     for (let i = 1; i < trail.length; i++) { const a = trail[i - 1], b = trail[i]; if (b.t - a.t > 80) continue; const k = 1 - (now - b.t) / 220; fxc.strokeStyle = b.soft ? `rgba(255,255,255,${k * 0.6})` : `rgba(255,255,255,${k * 0.95})`; fxc.lineWidth = (b.soft ? 6 : 10) * k + 1; fxc.beginPath(); fxc.moveTo(a.x, a.y); fxc.lineTo(b.x, b.y); fxc.stroke(); } }
 }
 function timeUp(sid) {
-  if (sid === 'cut') finishStep(cutN / CUTS * 70, `時間到！切了 ${cutN} 刀`);
+  if (sid === 'cut') { const a = CUT.acc.length ? CUT.acc.reduce((x, y) => x + y, 0) / CUT.acc.length : 50; finishStep(CUT.stage / STAGES.length * 60 + a * 0.1, `時間到！切到第 ${CUT.stage} 步`); }
   else if (sid === 'boil') { const r = inZone / Math.max(0.1, inZone + outZone); finishStep(Math.min(70, cooked * 50 + r * 30), '時間到，南瓜也差不多軟了'); }
   else if (sid === 'blend') finishStep(mash * 70, '時間到，留一點口感也不錯');
   else if (sid === 'cool') finishStep(30 + (92 - temp) / 32 * 40, '時間到，湯也溫了');
 }
 
 // 測試用（唯讀）
-window.__chef = () => ({ phase: G.phase, step: G.step, scores: G.scores.slice(), prog: +G.prog.toFixed(2), heat: +heat.toFixed(2), mash: +mash.toFixed(2), temp: Math.round(temp), cutN, motionOK });
-window.__chefCut = () => doCut(1, 0);   // 測試用：直接切一刀
+window.__chef = () => ({ phase: G.phase, step: G.step, scores: G.scores.slice(), prog: +G.prog.toFixed(2), heat: +heat.toFixed(2), mash: +mash.toFixed(2), temp: Math.round(temp), cutStage: CUT.stage, segs: CUT.segs.length, cubes: CUT.cubes.length, motionOK });
+window.__chefCut = () => { if (G.phase !== 'play' || STEPS[G.step].id !== 'cut' || !STAGES[CUT.stage]) return; STAGES[CUT.stage].kind === 'scoop' ? finishScoop() : doCut(100); };   // 測試用：直接完成目前這一刀
+window.__chefGuide = () => { const g = curGuide(); return g ? g.map((v) => toScreen(v)) : CUT.halves.map((h) => toScreen(h.position)); };   // 測試用：目前虛線（挖籽時是兩個半顆）的螢幕座標
 window.__chefDemo = (arr) => { G.scores = arr.slice(0, STEP_N); };   // 測試用：做宣傳圖時指定四步的分數
 
 resize(); goTitle(); requestAnimationFrame(frame);
