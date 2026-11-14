@@ -669,7 +669,27 @@ body.fcTremble canvas:not(.rain):not(.bolt){animation:fcTremble .09s linear infi
 .fcT.hold .vig{opacity:1;transition:none}
 body.fcShake #cv,body.fcShake canvas:not(.rain):not(.bolt){animation:fcShake 1s cubic-bezier(.2,.7,.3,1)}
 .fcT canvas.bolt{position:absolute;inset:0;width:100%;height:100%}
-body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag,body.fcT-hide .topbtns{transition:opacity .6s ease;opacity:0!important;pointer-events:none!important}
+/* 廚神養成島進場：一本《全真蔬食 VEGGIE》從下方飛上來、封面翻開，遊戲在後面淡入 */
+.ckT{position:fixed;inset:0;z-index:60;pointer-events:none;perspective:1400px}
+.ckT .warm{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 45%,rgba(255,214,150,0),rgba(110,62,24,.5));opacity:0;transition:opacity 1s ease}
+.ckT.focus .warm{opacity:1}
+.ckT iframe{position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity .9s ease .3s;pointer-events:auto;background:#f6ead8}
+.ckT.open iframe{opacity:1}
+.ckT .mag{position:absolute;left:50%;top:50%;width:min(70vw,330px);aspect-ratio:4/5;transform:translate(-50%,calc(-50% + 110vh)) rotate(-9deg);transition:transform .85s cubic-bezier(.2,.9,.25,1.06),opacity .45s ease;transform-style:preserve-3d}
+.ckT.up .mag{transform:translate(-50%,-50%) rotate(-2deg)}
+.ckT .mag,.ckT .warm{pointer-events:none}
+.ckT.open .mag{opacity:0;transition:transform .85s cubic-bezier(.2,.9,.25,1.06),opacity .45s ease .6s}
+.ckT .page{position:absolute;inset:0;border-radius:3px 8px 8px 3px;background:#fbf4e8;box-shadow:0 30px 60px rgba(40,20,5,.45);display:flex;align-items:center;justify-content:center;flex-direction:column;color:#6b4a2c;font-weight:800;letter-spacing:.12em;text-align:center}
+.ckT .page small{display:block;margin-top:8px;font-weight:600;letter-spacing:.06em;color:#a07c58;font-size:.82em}
+.ckT .cover{position:absolute;inset:0;transform-origin:left center;transition:transform 1s cubic-bezier(.55,0,.3,1);backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:3px 8px 8px 3px;overflow:hidden;background:radial-gradient(90% 70% at 50% 62%,#c98a4e,#7a4b28 70%,#5a361c);box-shadow:inset 6px 0 10px rgba(0,0,0,.25),0 30px 60px rgba(40,20,5,.45);color:#fff}
+.ckT.open .cover{transform:rotateY(-168deg)}
+.ckT .cover .k{position:absolute;left:8%;top:5%;font-size:clamp(11px,3.4vw,15px);font-weight:900;color:#ffd38a;letter-spacing:.15em}
+.ckT .cover .mast{position:absolute;left:0;right:0;top:8%;text-align:center;font:italic 900 clamp(44px,15vw,72px)/1 "Playfair Display",Georgia,"Times New Roman",serif;letter-spacing:.02em;text-shadow:0 3px 10px rgba(0,0,0,.3)}
+.ckT .cover .bowl{position:absolute;left:19%;right:19%;top:31%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#f4ead9 0 64%,#e5d5bd 65% 71%,rgba(0,0,0,0) 72%);box-shadow:0 14px 26px rgba(40,18,4,.45)}
+.ckT .cover .soup{position:absolute;inset:15%;border-radius:50%;background:repeating-radial-gradient(circle at 50% 50%,#f19a33 0 8%,#f7d39c 8% 10%,#f19a33 10% 17%);box-shadow:inset 0 4px 10px rgba(120,50,0,.35)}
+.ckT .cover .chef{position:absolute;left:0;right:0;bottom:5%;text-align:center;font-weight:900;font-size:clamp(15px,5vw,22px);letter-spacing:.1em;text-shadow:0 2px 8px rgba(0,0,0,.45)}
+.ckT .cover .chef small{display:block;font-size:.6em;color:#ffd38a;letter-spacing:.2em;margin-bottom:4px}
+body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag,body.fcT-hide .topbtns,body.fcT-hide .mapctl{transition:opacity .6s ease;opacity:0!important;pointer-events:none!important}
 </style>
 <style>
   body { margin: 0; }
@@ -696,7 +716,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261114.11</span>
+  <span class="ver">v261114.12</span>
   </div></div>
 </div>
 
@@ -5619,13 +5639,17 @@ const ckIsl = (() => {
   mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.02, 16), lam('#5a7aa8', { emissive: '#203048', emissiveIntensity: 0.4 }), 0, 0, 0.6, body, false).rotation.x = Math.PI / 2;
   mesh(new THREE.BoxGeometry(0.22, 0.12, 0.2), dark, -0.18, 0.3, 0, body);
   const flashM = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0 });
-  const camFlash = mesh(new THREE.SphereGeometry(0.22, 12, 8), flashM, -0.18, 0.42, 0.1, body, false);
+  const camFlash = mesh(new THREE.SphereGeometry(0.22, 12, 8), flashM, -0.18, 0.42, 0.1, body, false); ckIsl.flashM = flashM; ckIsl.steamBoost = 0;
   const LB = new THREE.Group(); LB.position.set(2.8, 0, 2.4); LB.rotation.y = Math.atan2(0.4 - 2.8, 0.2 - 2.4); mark.add(LB);
   mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 6), dark, 0, 1.3, 0, LB);
   for (let k = 0; k < 3; k++) { const a = k * Math.PI * 2 / 3; const leg = mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.8, 6), dark, Math.sin(a) * 0.25, 0.3, Math.cos(a) * 0.25, LB); leg.rotation.set(Math.cos(a) * 0.7, 0, -Math.sin(a) * 0.7); }
   const box = new THREE.Group(); box.position.y = 2.75; box.rotation.x = 0.3; LB.add(box);
   mesh(new THREE.ConeGeometry(0.75, 0.8, 4, 1, true), new THREE.MeshLambertMaterial({ color: '#2a2a30', side: THREE.DoubleSide }), 0, 0, 0.1, box).rotation.set(-Math.PI / 2, 0, Math.PI / 4);
   mesh(new THREE.PlaneGeometry(1.02, 1.02), glow('#fff4dc', 0.6, 1.4), 0, 0, 0.5, box, false);
+  {   // 轉場時「啪」一聲亮起來的燈箱光暈（平常看不到）
+    const gt = canvasTex(128, 128, (c) => { const g2 = c.createRadialGradient(64, 64, 0, 64, 64, 64); g2.addColorStop(0, 'rgba(255,244,214,1)'); g2.addColorStop(0.35, 'rgba(255,214,150,.55)'); g2.addColorStop(1, 'rgba(255,200,120,0)'); c.fillStyle = g2; c.fillRect(0, 0, 128, 128); });
+    const bg = new THREE.Sprite(new THREE.SpriteMaterial({ map: gt, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })); bg.position.set(0, 0, 0.9); bg.scale.set(3.6, 3.6, 1); bg.userData.noMerge = true; box.add(bg); ckIsl.boxGlow = bg;
+  }
   addObst(mark, { x: -1.4, z: 3.2, r: 0.6 }); addObst(mark, { x: 2.8, z: 2.4, r: 0.5 });
   /* —— 左邊：《全真蔬食 VEGGIE》雜誌封面看板（畫架） —— */
   const coverT = canvasTex(256, 320, (c) => {
@@ -5651,7 +5675,8 @@ const ckIsl = (() => {
   // 動起來：蒸氣往上飄、相機每隔幾秒閃一下（像在拍照）
   let nextFlash = 3;
   animators.push((t) => {
-    for (const m of steam) { const u = m.userData, k = (t * 0.5 + u.ph) % 1; m.position.set(u.x + Math.sin(t + u.ph * 6) * 0.08, u.y + k * 1.1 * u.s, u.z); m.material.opacity = 0.55 * Math.sin(k * Math.PI); m.scale.setScalar(0.8 + k); }
+    const bo = ckIsl.steamBoost || 0;   // 轉場時湯鍋冒出一大團蒸氣
+    for (const m of steam) { const u = m.userData, k = (t * 0.5 + u.ph) % 1; m.position.set(u.x + Math.sin(t + u.ph * 6) * 0.08, u.y + k * 1.1 * u.s * (1 + bo), u.z); m.material.opacity = Math.min(0.9, 0.55 * Math.sin(k * Math.PI) * (1 + bo)); m.scale.setScalar((0.8 + k) * (1 + bo * 1.6)); }
     if (t > nextFlash) { flashM.opacity = 1; nextFlash = t + 4 + Math.random() * 3; }
     flashM.opacity = Math.max(0, flashM.opacity - 0.08);
   });
@@ -9386,6 +9411,73 @@ window.__fcSwordInfo = () => { let meshes = 0, mergedAway = 0; fcIsl.sword.trave
 window.__fcStorm = () => ({ intensity: fcFx.intensity, snd: !!fcFx.snd, ctx: SND.ctx, soundOn: !!(SND.sfx || SND.music), litBoost: +fcFx.litBoost.toFixed(2) });   // 測試用，唯讀
 window.__fcDebug = () => ({ night: nightTarget, duck: PT.duck, swY: +fcIsl.sword.position.y.toFixed(2), glow: fcIsl.glow ? +fcIsl.glow.scale.x.toFixed(2) : 0, hasEnter: typeof fcEnter });   // 測試用，唯讀
 if (FC_TRANS) document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('#fcGo'); if (!a) return; e.preventDefault(); fcEnter(a.href); }, true);
+
+/* ================= 廚神養成島進場轉場「開店囉！」（約 4 秒）=================
+   不換頁：群島轉成午後的金黃暖光 → 鏡頭飛向攝影棚廚房 → 柔光燈箱「喀」一聲亮起、相機閃光、湯鍋冒出一大團蒸氣 →
+   一本《全真蔬食 VEGGIE》從下方飛上來、封面翻開，遊戲在後面淡入。回島時反過來：雜誌闔上落下、燈箱熄掉、天色和鏡頭回到原本。
+   跟拂塵試煉同一個開關：減少動態效果、載入失敗都直接換頁；網址加 notrans 關掉 */
+const ckT = { busy: false, el: null, saved: null, savedCam: null };
+function ckSnd(kind) {
+  if (!SND.ctx || !SND.sfx || SND.ctx.state !== 'running') return; const t = SND.ctx.currentTime + 0.02, o = panTo(0);
+  if (kind === 'switch') { noiseHit(t, o, { f: 2400, q: 3, peak: 0.12, dur: 0.04 }); ping(t, o, 180, 0.08, 0.06); }
+  if (kind === 'shutter') { noiseHit(t, o, { f: 3000, q: 2, peak: 0.12, dur: 0.03 }); noiseHit(t + 0.07, o, { f: 2200, q: 2, peak: 0.1, dur: 0.05 }); }
+  if (kind === 'whoosh') noiseHit(t, o, { type: 'lowpass', f: 900, peak: 0.08, attack: 0.25, dur: 0.6 });
+  if (kind === 'page') noiseHit(t, o, { type: 'highpass', f: 2500, peak: 0.08, attack: 0.08, dur: 0.4 });
+  if (kind === 'bell') [1568, 2093].forEach((f, i) => bell(t + i * 0.12, o, f, 0.06, 1.2));
+}
+function ckFade(fn, ms) { return new Promise((done) => { const t0 = performance.now(); (function go() { const k = Math.min(1, (performance.now() - t0) / ms); fn(k); if (k < 1) requestAnimationFrame(go); else done(); })(); }); }
+async function ckEnter(href) {
+  if (ckT.busy || fcT.busy) return; ckT.busy = true;
+  const go = () => { location.href = href; };
+  if (reduceMotion || !ckIsl.boxGlow) return go();
+  try {
+    const el = document.createElement('div'); el.className = 'ckT';
+    el.innerHTML = '<div class="warm"></div><div class="mag"><div class="page">今日菜單<small>🎃 南瓜濃湯</small></div><div class="cover"><div class="k">全真蔬食</div><div class="mast">VEGGIE</div><div class="bowl"><div class="soup"></div></div><div class="chef"><small>本期封面主廚</small>就是你！</div></div></div>';
+    document.body.appendChild(el); ckT.el = el;
+    // 遊戲一開始就在背景載入，翻開封面時剛好接上
+    const frame = document.createElement('iframe'); frame.allow = 'accelerometer; gyroscope; microphone; autoplay; fullscreen; web-share'; frame.setAttribute('title', '廚神養成島');
+    const loaded = new Promise((res, rej) => { frame.onload = res; frame.onerror = rej; setTimeout(() => rej(new Error('timeout')), 9000); });
+    frame.src = href + (href.includes('?') ? '&' : '?') + 'embed=1'; el.insertBefore(frame, el.firstChild);
+    // 第一拍：介面淡出、天色轉成午後的金黃暖光、群島聲音放小，鏡頭飛向攝影棚廚房
+    document.body.classList.add('fcT-hide'); el.classList.add('focus');
+    ckT.saved = { night: nightTarget, warm: warmTarget, am: skyAM }; ckT.savedCam = { pos: camera.position.clone(), tgt: controls.target.clone() };
+    fcT.lockSky = true; nightTarget = 0; warmTarget = 1; skyAM = false; PT.duck = true;
+    const look = new THREE.Vector3(ckIsl.x, 2.2, ckIsl.z), dirV = camera.position.clone().sub(look).setY(0).normalize(), wide = innerWidth < innerHeight ? 1.6 : 1.1;
+    controls.autoRotate = false; flyTo(look, look.clone().add(dirV.multiplyScalar(17 * wide)).setY(look.y + 8.5 * wide), 1.6, null, 0, true); ckSnd('whoosh');
+    await fcTWait(1700);
+    // 第二拍：燈箱「喀」一聲亮起，相機閃光、湯鍋冒出一大團蒸氣
+    ckSnd('switch'); await ckFade((k) => { ckIsl.boxGlow.material.opacity = k * 0.95; }, 220);
+    await fcTWait(260); ckIsl.flashM.opacity = 1; ckSnd('shutter');
+    ckFade((k) => { ckIsl.steamBoost = Math.sin(k * Math.PI) * 1.4; }, 1300);
+    await fcTWait(650);
+    // 第三拍：雜誌從下方飛上來，封面翻開，遊戲在後面淡入
+    el.classList.add('up'); await fcTWait(900); await loaded;
+    ckSnd('page'); el.classList.add('open');   // 整層不接點擊，只有遊戲的 iframe 接（翻開後透明的雜誌不會擋到遊戲）
+    await fcTWait(1000); ckSnd('bell');
+    fcT.paused = true; setTimeout(() => { if (fcT.paused && ckT.el) fcT.rafStop = true; }, 600);   // 遊戲蓋住之後，群島先停畫（遊戲要用手機的 3D 和感測器）
+  } catch (e) { console.warn('廚神轉場失敗，改用換頁', e); ckCleanup(); go(); }
+}
+async function ckLeave() {
+  const el = ckT.el; if (!el) return; fcT.rafStop = false; fcT.paused = false;
+  ckSnd('page'); el.classList.remove('open'); await fcTWait(900);
+  el.classList.remove('up'); ckSnd('whoosh'); ckFade((k) => { ckIsl.boxGlow.material.opacity = 0.95 * (1 - k); }, 600); await fcTWait(700);
+  ckCleanup();
+}
+function ckCleanup() {
+  if (ckT.saved) { nightTarget = ckT.saved.night; warmTarget = ckT.saved.warm; skyAM = ckT.saved.am; ckT.saved = null; }
+  fcT.lockSky = false; fcT.rafStop = false; fcT.paused = false; if (typeof updateSky === 'function') updateSky();
+  if (ckT.savedCam) { flyTo(ckT.savedCam.tgt, ckT.savedCam.pos, 1.4, null, 0, false); ckT.savedCam = null; }
+  PT.duck = false; document.body.classList.remove('fcT-hide'); if (ckIsl.boxGlow) ckIsl.boxGlow.material.opacity = 0; ckIsl.steamBoost = 0;
+  if (ckT.el) { const e = ckT.el; e.classList.remove('focus', 'open', 'up'); setTimeout(() => e.remove(), 900); ckT.el = null; }
+  ckT.busy = false;
+}
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin || !e.data || !e.data.chef) return;
+  if (e.data.chef === 'leave') ckLeave();
+  else if (e.data.chef === 'join') Promise.resolve(ckLeave()).then(() => setTimeout(() => openJoin(), 400));   // 遊戲裡的「我要登島報名」：先回島，再打開島內的登島船票卡
+});
+if (FC_TRANS) document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('#ckGo'); if (!a) return; e.preventDefault(); ckEnter(a.href); }, true);
+window.__ckTrans = () => ({ busy: ckT.busy, open: !!(ckT.el && ckT.el.classList.contains('open')), glow: ckIsl.boxGlow ? +ckIsl.boxGlow.material.opacity.toFixed(2) : -1, lockSky: fcT.lockSky, rafStop: fcT.rafStop });   // 測試用，唯讀
 </script>
 </body>
 </html>
