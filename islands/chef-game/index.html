@@ -115,7 +115,10 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 
 /* —— 擺盤 —— */
 #scrPlate{justify-content:flex-end;pointer-events:none}
-#scrPlate .card{pointer-events:auto;padding:14px 14px 16px}
+#scrPlate .card{pointer-events:auto;padding:12px 14px 14px}
+#scrPlate .opt{margin-top:6px}
+#scrPlate .chip{padding:5px 4px;font-size:13px}
+#scrPlate .chip .e{font-size:18px}
 #scrPlate h2{margin:0 0 6px;font:900 21px var(--serif);text-align:center}
 .opt{margin:8px 0 0}
 .opt h3{margin:0 0 5px;font-size:13px;color:var(--muted);letter-spacing:.1em}
@@ -123,6 +126,17 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 .chip{border-radius:12px;background:#fff;border:2px solid #ead9c2;padding:7px 4px;font-size:13.5px;font-weight:700;line-height:1.25}
 .chip .e{display:block;font-size:20px}
 .chip.on{border-color:var(--orange);background:#fff1de}
+.chips.c4{grid-template-columns:repeat(4,1fr)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:#f3e6d3;border-radius:12px;padding:4px}
+.tabs button{border-radius:9px;padding:6px 0;font-size:14px;font-weight:900;color:var(--muted)}
+.tabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.opt h3 .hint{font-weight:500;letter-spacing:0;font-size:12px}
+.way[hidden]{display:none}
+.chip{position:relative}
+.chip .star{position:absolute;top:-7px;right:-5px;font-size:15px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
+.opt h3{display:flex;align-items:center;gap:6px}
+.opt .rec{font-weight:500;font-size:11.5px;letter-spacing:0;color:var(--gold)}
+.way{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--ink);background:#fff;border:1.5px solid #ead9c2;border-radius:99px;padding:3px 10px;letter-spacing:0}
 
 /* —— 拍照 —— */
 #scrShoot{pointer-events:none;justify-content:flex-end}
@@ -222,9 +236,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 <section class="scr" id="scrPlate" hidden>
   <div class="card">
     <h2>🍽️ 擺盤時間</h2>
-    <div class="opt"><h3>碗</h3><div class="chips" data-k="bowl"></div></div>
-    <div class="opt"><h3>點綴</h3><div class="chips" data-k="top"></div></div>
-    <div class="opt"><h3>桌面</h3><div class="chips" data-k="table"></div></div>
+    <div class="tabs" id="plateTabs"><button data-t="bowl" type="button">碗</button><button data-t="top" type="button">點綴</button><button data-t="table" type="button">桌面</button><button data-t="style" type="button">背景食材</button></div>
+    <div class="opt"><h3><span id="optHint"></span><button class="way" id="btnWay" type="button">🔄 換個擺法</button></h3><div class="chips" id="plateChips"></div></div>
     <div style="margin-top:12px"><button class="btn" id="btnToShoot" type="button">📸 擺好了，去拍照</button></div>
   </div>
 </section>
@@ -283,7 +296,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 <script type="module">
 import * as THREE from 'three';
 
-const VER = 'v261114.01';
+const VER = 'v261114.02';
 const $ = (q) => document.querySelector(q);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -533,16 +546,130 @@ const bowlSoupTex = new THREE.CanvasTexture(bowlSoupCv); bowlSoupTex.colorSpace 
 const bowlSoup = M(new THREE.CircleGeometry(1.66, 48), std('#fff', { map: bowlSoupTex, roughness: 0.3 }), 0, 1.1, 0, bowlGrp, false); bowlSoup.rotation.x = -Math.PI / 2;
 const topGrp = new THREE.Group(); bowlGrp.add(topGrp);
 const bowlSteam = makeSteam(bowlGrp, 12, 1.8, 1.25);
-// 桌上的小道具：湯匙、餐巾、迷你南瓜、小花瓶
+// 桌上的小道具：湯匙＋餐巾固定在右前方；背景的原型食材由「背景食材」套組決定（見下面 STYLES）
 const props = new THREE.Group(); tableSet.add(props);
 { const sp = new THREE.Group(); sp.position.set(2.9, 0.06, 0.9); sp.rotation.y = -0.35; props.add(sp);
   const head = M(new THREE.SphereGeometry(0.34, 18, 10), std('#d9dde2', { metalness: 0.85, roughness: 0.2 }), 0, 0.05, -0.85, sp); head.scale.set(1, 0.22, 1.35);
   M(new THREE.BoxGeometry(0.13, 0.05, 1.7), std('#d9dde2', { metalness: 0.85, roughness: 0.2 }), 0, 0.05, 0.55, sp);
   const nap = M(new THREE.BoxGeometry(1.5, 0.06, 2.6), std('#e8dcc4', { roughness: 0.95 }), 0, 0, 0, sp); nap.position.set(0.05, -0.02, 0.1); }
-const miniP = makePumpkin(0.5); miniP.position.set(-2.8, 0.36, -1.4); props.add(miniP);
-const miniP2 = makePumpkin(0.34); miniP2.position.set(-3.5, 0.25, -0.45); miniP2.rotation.y = 1; props.add(miniP2);
-{ const v = M(new THREE.CylinderGeometry(0.28, 0.38, 1.1, 16), std('#7aa38a', { roughness: 0.3 }), 2.3, 0.55, -2.6, props);
-  for (let k = 0; k < 3; k++) { M(new THREE.CylinderGeometry(0.025, 0.025, 1.3, 5), std('#4f7a3f'), 2.3 + (k - 1) * 0.15, 1.6, -2.6, props); const fl = M(new THREE.SphereGeometry(0.2, 10, 8), std(['#f6d27a', '#f2b8cb', '#ffffff'][k]), 2.3 + (k - 1) * 0.28, 2.25 + (k % 2) * 0.2, -2.6, props); fl.scale.y = 0.7; } }
+
+/* —— 背景的原型食材：美食雜誌常用的「食材呼應」，讓人一眼看出這道菜用了什麼 ——
+   每樣都用程式畫：切半的南瓜、迷你南瓜、剖半的椰子、椰奶瓶、大綠葉、一小碟南瓜籽、散落的南瓜籽、迷迭香、老薑、小砧板、烤吐司、亞麻餐巾 */
+const ING = {};
+// 切半的南瓜：殼在後、切面朝前（看得到果肉和一窩籽），微微往上仰讓鏡頭看得到切面
+const halfFaceTex = tex(256, 256, (c) => {
+  c.fillStyle = '#d46f1f'; c.beginPath(); c.arc(128, 128, 127, 0, 7); c.fill();
+  c.fillStyle = '#f39a32'; c.beginPath(); c.arc(128, 128, 118, 0, 7); c.fill();
+  let g = c.createRadialGradient(128, 128, 10, 128, 128, 80); g.addColorStop(0, '#f7c46a'); g.addColorStop(1, '#f2a943'); c.fillStyle = g; c.beginPath(); c.arc(128, 128, 78, 0, 7); c.fill();
+  c.strokeStyle = 'rgba(236,150,50,.8)'; c.lineWidth = 3; for (let i = 0; i < 26; i++) { const a = i / 26 * 6.28; c.beginPath(); c.moveTo(128 + Math.cos(a) * 20, 128 + Math.sin(a) * 20); c.quadraticCurveTo(128 + Math.cos(a + 0.4) * 50, 128 + Math.sin(a + 0.4) * 50, 128 + Math.cos(a) * 76, 128 + Math.sin(a) * 76); c.stroke(); }
+  for (let i = 0; i < 22; i++) { const a = i * 2.39996, r = 16 + (i % 7) * 8; c.save(); c.translate(128 + Math.cos(a) * r, 128 + Math.sin(a) * r); c.rotate(a); c.fillStyle = '#f4e7c4'; c.beginPath(); c.ellipse(0, 0, 11, 6, 0, 0, 7); c.fill(); c.strokeStyle = '#d9c597'; c.lineWidth = 1.5; c.stroke(); c.restore(); }
+});
+ING.halfPumpkin = (r = 1) => {
+  const g = new THREE.Group(), geo = new THREE.SphereGeometry(r, 40, 28, Math.PI, Math.PI), p = geo.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const n = v.clone().normalize(), ang = Math.atan2(n.z, n.x); v.multiplyScalar(1 - 0.07 * Math.pow(Math.abs(Math.cos(ang * 5)), 0.6) * (1 - Math.abs(n.y))); v.y *= 0.72; p.setXYZ(i, v.x, v.y, v.z); }
+  geo.computeVertexNormals();
+  const T = new THREE.Group(); T.rotation.x = -0.75; g.add(T);   // 往上仰，切面朝向鏡頭
+  M(geo, new THREE.MeshStandardMaterial({ color: '#e8802a', roughness: 0.55, side: THREE.DoubleSide }), 0, 0, 0, T);
+  const face = M(new THREE.CircleGeometry(r * 0.985, 40), std('#fff', { map: halfFaceTex, roughness: 0.7 }), 0, 0, 0.001, T, false); face.scale.y = 0.72;
+  M(new THREE.CylinderGeometry(r * 0.07, r * 0.1, r * 0.35, 7), std('#6b5a2c'), 0, r * 0.78, -r * 0.06, T);
+  g.userData.y = r * 0.5; return g;
+};
+ING.pumpkin = (r = 0.5) => { const g = makePumpkin(r); g.userData.y = r * 0.72; return g; };
+// 剖半的椰子：毛毛的咖啡色外殼、白色椰肉，開口朝上、微微朝向鏡頭
+const coirTex = tex(256, 256, (c) => { c.fillStyle = '#6b4626'; c.fillRect(0, 0, 256, 256); for (let i = 0; i < 900; i++) { c.strokeStyle = `rgba(${150 + Math.random() * 60},${100 + Math.random() * 40},${50 + Math.random() * 30},${0.3 + Math.random() * 0.4})`; c.lineWidth = 1; const x = Math.random() * 256, y = Math.random() * 256; c.beginPath(); c.moveTo(x, y); c.lineTo(x + (Math.random() - 0.5) * 16, y + 4 + Math.random() * 10); c.stroke(); } });
+ING.coconut = (r = 0.75) => {
+  const g = new THREE.Group(), T = new THREE.Group(); T.rotation.x = 0.22; g.add(T);
+  M(new THREE.SphereGeometry(r, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), new THREE.MeshStandardMaterial({ map: coirTex, roughness: 1, side: THREE.DoubleSide }), 0, 0, 0, T);
+  M(new THREE.SphereGeometry(r * 0.9, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#efe9dc', roughness: 0.8, side: THREE.BackSide }), 0, 0, 0, T, false);
+  const rim = M(new THREE.RingGeometry(r * 0.9, r, 40), std('#f4efe4', { roughness: 0.7, side: THREE.DoubleSide }), 0, 0.001, 0, T, false); rim.rotation.x = -Math.PI / 2;
+  g.userData.y = r * 0.95; return g;
+};
+// 椰奶瓶：牛皮紙標籤、軟木塞
+const labelTex = tex(256, 96, (c) => { c.fillStyle = '#d8b98a'; c.fillRect(0, 0, 256, 96); c.fillStyle = '#5a3b1f'; c.font = 'bold 34px "Noto Sans TC", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('椰 奶', 128, 40); c.font = '600 16px "Playfair Display", serif'; c.fillText('COCONUT MILK', 128, 74); });
+labelTex.wrapS = THREE.RepeatWrapping; labelTex.repeat.set(2, 1);
+ING.milk = (s = 1) => {
+  const g = new THREE.Group(); const prof = [[0.001, 0], [0.4, 0], [0.42, 0.04], [0.42, 1.0], [0.36, 1.2], [0.2, 1.38], [0.18, 1.6], [0.001, 1.6]].map(([x, y]) => new THREE.Vector2(x * s, y * s));
+  M(new THREE.LatheGeometry(prof, 28), std('#fbfaf5', { roughness: 0.25 }), 0, 0, 0, g);
+  M(new THREE.CylinderGeometry(0.43 * s, 0.43 * s, 0.45 * s, 28, 1, true), std('#fff', { map: labelTex, roughness: 0.9 }), 0, 0.55 * s, 0, g, false);
+  M(new THREE.CylinderGeometry(0.17 * s, 0.16 * s, 0.22 * s, 14), std('#c19a6b', { roughness: 0.9 }), 0, 1.68 * s, 0, g);
+  g.userData.y = 0; return g;
+};
+// 大綠葉（襯在食材底下）
+ING.leaf = (s = 1) => {
+  const sh = new THREE.Shape(); sh.moveTo(0, -1.3); sh.bezierCurveTo(0.75, -0.7, 0.75, 0.7, 0, 1.4); sh.bezierCurveTo(-0.75, 0.7, -0.75, -0.7, 0, -1.3);
+  const lt = tex(128, 256, (c) => { c.fillStyle = '#4e8a3e'; c.fillRect(0, 0, 128, 256); c.strokeStyle = '#8fc276'; c.lineWidth = 3; c.beginPath(); c.moveTo(64, 0); c.lineTo(64, 256); c.stroke(); c.lineWidth = 1.5; for (let y = 20; y < 250; y += 18) { c.beginPath(); c.moveTo(64, y); c.lineTo(10, y - 14); c.moveTo(64, y); c.lineTo(118, y - 14); c.stroke(); } });
+  const geo = new THREE.ShapeGeometry(sh, 24); const uv = geo.attributes.uv, ps = geo.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, ps.getX(i) / 1.6 + 0.5, ps.getY(i) / 2.8 + 0.47);
+  const m = M(geo, std('#fff', { map: lt, roughness: 0.55, side: THREE.DoubleSide }), 0, 0, 0, undefined, false); m.removeFromParent(); m.rotation.x = -Math.PI / 2; m.scale.setScalar(s); m.castShadow = false;
+  const g = new THREE.Group(); g.add(m); g.userData.y = 0.012; return g;
+};
+// 南瓜籽：生的米白色、烤過的綠色
+const seedGeo = new THREE.SphereGeometry(0.1, 10, 6), seedW = std('#efe3c0', { roughness: 0.6 }), seedG = std('#7d9a3c', { roughness: 0.6 });
+const seedMesh = (parent, x, y, z, k) => { const m = M(seedGeo, k % 3 ? seedW : seedG, x, y, z, parent); m.scale.set(1.5, 0.45, 0.85); m.rotation.y = k * 1.7; return m; };
+ING.seedDish = (s = 1) => {
+  const g = new THREE.Group(); M(new THREE.CylinderGeometry(0.6 * s, 0.5 * s, 0.14 * s, 28), std('#efe7da', { roughness: 0.35 }), 0, 0.07 * s, 0, g);
+  for (let k = 0; k < 14; k++) { const a = k * 2.39996, r = 0.1 + (k % 5) * 0.09; seedMesh(g, Math.cos(a) * r * s, 0.17 * s + (k % 3) * 0.03, Math.sin(a) * r * s, k); }
+  g.userData.y = 0; return g;
+};
+ING.seeds = (n = 5) => { const g = new THREE.Group(); for (let k = 0; k < n; k++) { const a = k * 2.1, r = 0.15 + k * 0.12; seedMesh(g, Math.cos(a) * r, 0.04, Math.sin(a) * r, k + 1); } g.userData.y = 0; return g; };
+// 迷迭香：一根細莖，兩側長滿細細的葉子
+ING.rosemary = (len = 1.8) => {
+  const g = new THREE.Group(), stem = std('#5d4a2c'), nd = std('#47693a', { roughness: 0.7 }), ndL = std('#5f8a4c', { roughness: 0.7 });
+  const st = M(new THREE.CylinderGeometry(0.018, 0.028, len, 6), stem, 0, 0.05, 0, g); st.rotation.z = Math.PI / 2;
+  const ng = new THREE.CapsuleGeometry(0.022, 0.2, 2, 5);
+  for (let i = 0; i < 34; i++) { const t = i / 34, x = -len / 2 + 0.12 + t * (len - 0.1); for (const sd of [-1, 1]) { const n = M(ng, i % 2 ? nd : ndL, x, 0.07, sd * 0.09, g, false); n.rotation.set(Math.PI / 2, 0, sd * (0.6 - t * 0.3)); n.scale.setScalar(1 - t * 0.35); } }
+  g.userData.y = 0.02; return g;
+};
+// 老薑：幾顆圓塊連在一起
+ING.ginger = (s = 1) => { const g = new THREE.Group(), m = std('#d6ad74', { roughness: 0.95 });
+  for (const [x, y, z, r, sx] of [[0, 0, 0, 0.26, 1.5], [0.38, 0.03, 0.12, 0.2, 1.2], [-0.36, 0.02, -0.1, 0.18, 1.3], [0.12, 0.06, -0.26, 0.15, 1.1]]) { const b = M(new THREE.SphereGeometry(r * s, 12, 8), m, x * s, 0.18 * s + y, z * s, g); b.scale.set(sx, 0.75, 1); }
+  M(new THREE.CircleGeometry(0.17 * s, 12), std('#f1dfa8'), -0.75 * s, 0.18 * s, 0, g, false).rotation.y = -Math.PI / 2;
+  g.userData.y = 0; return g; };
+ING.board = (s = 1) => { const g = new THREE.Group(); M(new THREE.BoxGeometry(2.0 * s, 0.12, 1.4 * s), std('#fff', { map: woodTex('#d9a96b', '120,78,38') }), 0, 0.06, 0, g); M(new THREE.CylinderGeometry(0.13, 0.13, 0.13, 12), std('#c9965f'), 0.85 * s, 0.065, -0.5 * s, g, false); g.userData.y = 0; return g; };
+// 烤吐司：外圈烤得較深的吐司邊，表面有烤痕
+const toastTex = tex(256, 256, (c) => { const g = c.createRadialGradient(128, 128, 30, 128, 128, 150); g.addColorStop(0, '#f0d39a'); g.addColorStop(0.7, '#e2b36a'); g.addColorStop(1, '#a8682c'); c.fillStyle = g; c.fillRect(0, 0, 256, 256); for (let i = 0; i < 260; i++) { c.fillStyle = `rgba(150,95,40,${Math.random() * 0.25})`; c.beginPath(); c.arc(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 3, 0, 7); c.fill(); } });
+ING.toast = (s = 1) => {
+  const sh = new THREE.Shape(); sh.moveTo(-0.6, -0.65); sh.lineTo(0.6, -0.65); sh.lineTo(0.6, 0.35); sh.bezierCurveTo(0.75, 0.85, 0.25, 0.85, 0, 0.7); sh.bezierCurveTo(-0.25, 0.85, -0.75, 0.85, -0.6, 0.35); sh.closePath();
+  const geo = new THREE.ExtrudeGeometry(sh, { depth: 0.16, bevelEnabled: true, bevelSize: 0.04, bevelThickness: 0.04, bevelSegments: 2 });
+  const uv = geo.attributes.uv, ps = geo.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, ps.getX(i) / 1.5 + 0.5, ps.getY(i) / 1.6 + 0.45);
+  const m = new THREE.Mesh(geo, [std('#fff', { map: toastTex, roughness: 0.9 }), std('#a8682c', { roughness: 0.9 })]); m.castShadow = m.receiveShadow = true; m.rotation.x = -Math.PI / 2; m.scale.setScalar(s);
+  const g = new THREE.Group(); g.add(m); g.userData.y = 0.02; return g;
+};
+ING.linen = (w = 2.4, d = 1.8) => { const g = new THREE.Group(); const lt = tex(128, 128, (c) => { c.fillStyle = '#e6dbc6'; c.fillRect(0, 0, 128, 128); c.strokeStyle = 'rgba(150,130,100,.18)'; for (let i = 0; i < 128; i += 3) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i, 128); c.stroke(); c.beginPath(); c.moveTo(0, i); c.lineTo(128, i); c.stroke(); } c.fillStyle = '#b8a07a'; c.fillRect(0, 118, 128, 4); }, [2, 2]);
+  M(new THREE.BoxGeometry(w, 0.04, d), std('#fff', { map: lt, roughness: 1 }), 0, 0.02, 0, g); g.userData.y = 0; return g; };
+
+/* —— 套組：玩家只選「風格」，每樣東西放哪裡、轉幾度都事先排好（碗在中間，背景食材放在三分線兩側的後方，前景只留一小點呼應） ——
+   每一項：[食材, x, z, 轉向, 大小, 往上墊高]；鏡頭預設從右前方看過來（方位角 0.25），俯拍、45°、特寫三個鏡位都檢查過不會擋到湯 */
+const STYLES = {
+  harvest: { name: '秋日豐收', e: '🍂', ways: [
+    [['linen', -2.7, -2.5, 0.35, [2.6, 2.0]], ['halfPumpkin', -2.7, -2.5, 0.35, 1.05, 0.04], ['pumpkin', -1.0, -3.7, 0.6, 0.45], ['seedDish', 2.5, -2.2, 0, 1], ['seeds', 1.7, -1.4, 0, 4], ['rosemary', -2.4, 1.9, 0.7, 1.8]],
+    [['linen', 2.7, -2.6, -0.35, [2.6, 2.0]], ['halfPumpkin', 2.7, -2.6, -0.4, 1.05, 0.04], ['pumpkin', 1.0, -3.8, 0.2, 0.45], ['seedDish', -2.5, -2.0, 0, 1], ['seeds', -1.8, -1.2, 0, 4], ['rosemary', -2.5, 1.8, 0.5, 1.8]],
+    [['halfPumpkin', -2.4, -2.9, 0.15, 1.15], ['pumpkin', 2.6, -3.0, 0.9, 0.55], ['seeds', -1.9, 1.9, 0, 6], ['rosemary', 1.6, -2.2, -0.9, 1.6]],
+  ] },
+  coconut: { name: '椰香南洋', e: '🥥', ways: [
+    [['leaf', -2.6, -2.4, 0.9, 1.4], ['coconut', 2.5, -2.3, 0, 0.78], ['milk', 1.1, -3.6, 0.3, 1], ['seeds', -2.3, 1.9, 0, 5], ['seeds', -2.7, -2.0, 0, 3]],
+    [['leaf', 2.6, -2.5, -0.9, 1.4], ['coconut', -2.5, -2.3, 0, 0.78], ['milk', -1.1, -3.6, 0, 1], ['seeds', -2.4, 1.8, 0, 5]],
+    [['leaf', -0.3, -3.3, 1.5, 1.6], ['coconut', -2.6, -2.0, 0, 0.7], ['milk', 2.3, -2.7, 0, 1.05], ['seeds', -2.2, 2.0, 0, 5]],
+  ] },
+  brunch: { name: '週末早午餐', e: '🍞', ways: [
+    [['board', -2.7, -2.4, 0.3, 1], ['ginger', -2.9, -2.4, 0.5, 0.9, 0.12], ['toast', -1.9, 1.6, 0.5, 1], ['toast', -2.5, 1.2, 0.15, 1, 0.2], ['pumpkin', 2.5, -2.9, 0.4, 0.6]],
+    [['board', 2.6, -2.6, -0.3, 1], ['ginger', 2.5, -2.6, -0.6, 0.9, 0.12], ['toast', -2.1, 1.5, 0.4, 1], ['toast', -2.7, 1.0, 0.1, 1, 0.2], ['pumpkin', -2.4, -2.9, 0.4, 0.6]],
+  ] },
+  minimal: { name: '極簡留白', e: '🤍', ways: [
+    [['halfPumpkin', -2.8, -3.0, 0.3, 1.0], ['rosemary', -2.1, 2.0, 0.6, 1.7]],
+    [['halfPumpkin', 2.8, -3.1, -0.3, 1.0], ['rosemary', -2.2, 1.9, 0.4, 1.7]],
+  ] },
+};
+// 主廚推薦：選了哪種點綴，就推薦最搭的那一套
+const RECOMMEND = { coconut: 'coconut', seeds: 'harvest', mint: 'minimal' };
+const styleGrp = new THREE.Group(); tableSet.add(styleGrp);
+function setStyle(id, way = 0) {
+  styleGrp.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); } });
+  while (styleGrp.children.length) styleGrp.remove(styleGrp.children[0]);
+  const st = STYLES[id], list = st.ways[way % st.ways.length];
+  for (const [kind, x, z, ry, sc, up = 0] of list) {
+    const o = Array.isArray(sc) ? ING[kind](...sc) : ING[kind](sc); o.position.set(x, (o.userData.y || 0) + up, z); o.rotation.y = ry; styleGrp.add(o);
+  }
+}
 // 點綴：南瓜籽（綠色小橢圓）、薄荷葉
 function setTopping(kind) {
   while (topGrp.children.length) topGrp.remove(topGrp.children[0]);
@@ -629,7 +756,7 @@ function nextStep() {
   if (s.id === 'cut') { setSets('cut'); camTo(new THREE.Vector3(0, 6.2, 5.2), new THREE.Vector3(0, 0.8, 0.2)); }
   if (s.id === 'boil') { setSets('pot'); camTo(new THREE.Vector3(0, 6.8, 5.4), new THREE.Vector3(0, 1.1, 0)); }
   if (s.id === 'blend') { setSets('pot'); camTo(new THREE.Vector3(0, 7.4, 3.6), new THREE.Vector3(0, 1.2, 0)); }
-  if (s.id === 'cool') { temp = 92; blowing = false; setSets('table'); G.plate = Object.assign({ bowl: 'white', top: 'none', table: 'wood' }); setBowl('white'); setTopping('none'); setTable('wood'); props.visible = false; camTo(new THREE.Vector3(0, 5.2, 5.6), new THREE.Vector3(0, 0.9, 0)); }
+  if (s.id === 'cool') { temp = 92; blowing = false; setSets('table'); G.plate = Object.assign({ bowl: 'white', top: 'none', table: 'wood' }); setBowl('white'); setTopping('none'); setTable('wood'); props.visible = styleGrp.visible = false; camTo(new THREE.Vector3(0, 5.2, 5.6), new THREE.Vector3(0, 0.9, 0)); }
 }
 $('#inBtns').addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (!b) return; audioInit(); sfx.click(); beginStep(b.dataset.go); });
 
@@ -776,7 +903,7 @@ function onMove(e) {
     trail.push({ x: e.clientX, y: e.clientY, t: performance.now(), soft: true });
   }
   if (G.phase === 'shoot' && shootDrag) {
-    if (ptrs.size >= 2) { const d = pinchDist(); if (shootDrag.d) orbit.dist = clamp(orbit.dist * shootDrag.d / d, 3.2, 11); shootDrag.d = d; }
+    if (ptrs.size >= 2) { const d = pinchDist(); if (shootDrag.d) orbit.dist = clamp(orbit.dist * shootDrag.d / d, 5, 17); shootDrag.d = d; }
     else { orbit.az -= (e.clientX - shootDrag.x) * 0.0085; orbit.pol = clamp(orbit.pol - (e.clientY - shootDrag.y) * 0.006, 0.05, 1.32); handMode(false); }
     shootDrag.x = e.clientX; shootDrag.y = e.clientY;
   }
@@ -785,23 +912,36 @@ function onUp(e) { ptrs.delete(e.pointerId); if (!ptrs.size) { swipe = null; sho
 function pinchDist() { const a = [...ptrs.values()]; return a.length >= 2 ? Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) : 0; }
 function segRect(a, b, r) { // 線段有沒有穿過矩形（取樣 12 點就夠）
   for (let i = 0; i <= 12; i++) { const x = lerp(a.x, b.x, i / 12), y = lerp(a.y, b.y, i / 12); if (x > r.x0 && x < r.x1 && y > r.y0 && y < r.y1) return true; } return false; }
-canvas.addEventListener('wheel', (e) => { if (G.phase === 'shoot') { e.preventDefault(); orbit.dist = clamp(orbit.dist * (1 + e.deltaY * 0.001), 3.2, 11); } }, { passive: false });
+canvas.addEventListener('wheel', (e) => { if (G.phase === 'shoot') { e.preventDefault(); orbit.dist = clamp(orbit.dist * (1 + e.deltaY * 0.001), 5, 17); } }, { passive: false });
 
 /* =========================================================
    擺盤
    ========================================================= */
 function goPlate() {
-  G.phase = 'plate'; only('#scrPlate'); show('#hud', false); setSets('table'); props.visible = true;
-  G.plate = { bowl: G.plate.bowl || 'white', top: G.plate.top && G.plate.top !== 'none' ? G.plate.top : 'coconut', table: G.plate.table || 'wood' };
-  setBowl(G.plate.bowl); setTopping(G.plate.top); setTable(G.plate.table); bowlSteam.forEach((s) => s.material.opacity = 0);
-  const chips = { bowl: BOWLS, top: TOPS, table: TABLES };
-  document.querySelectorAll('#scrPlate .chips').forEach((el) => { const k = el.dataset.k; el.innerHTML = Object.entries(chips[k]).map(([id, o]) => `<button class="chip ${G.plate[k] === id ? 'on' : ''}" data-v="${id}" type="button"><span class="e">${o.e}</span>${o.name}</button>`).join(''); });
-  camTo(new THREE.Vector3(0, 7.5, 6.5), new THREE.Vector3(0, 0.2, 1.6), 1.3);
+  G.phase = 'plate'; only('#scrPlate'); show('#hud', false); setSets('table'); props.visible = styleGrp.visible = true;
+  const top = G.plate.top && G.plate.top !== 'none' ? G.plate.top : 'coconut';
+  G.plate = { bowl: G.plate.bowl || 'white', top, table: G.plate.table || 'wood', style: G.plate.style || RECOMMEND[top], way: G.plate.way || 0 };   // 第一次進來直接套主廚推薦
+  setBowl(G.plate.bowl); setTopping(G.plate.top); setTable(G.plate.table); setStyle(G.plate.style, G.plate.way); bowlSteam.forEach((s) => s.material.opacity = 0);
+  G.tab = G.tab || 'bowl'; renderChips();
+  camTo(new THREE.Vector3(0, 10, 8), new THREE.Vector3(0, 0, 2.6), 1.3);   // 整張桌子（碗＋背景食材）都放在卡片上方
 }
+// 擺盤用分頁：一次只顯示一排選項，卡片矮一點，3D 畫面才看得到整張桌子
+const TAB_HINT = { bowl: '選一個碗', top: '湯上的點綴', table: '桌面材質', style: '<span class="rec">⭐ 主廚推薦</span>' };
+function renderChips() {
+  const chips = { bowl: BOWLS, top: TOPS, table: TABLES, style: STYLES }, rec = RECOMMEND[G.plate.top], k = G.tab || 'bowl';
+  document.querySelectorAll('#plateTabs button').forEach((b) => b.classList.toggle('on', b.dataset.t === k));
+  $('#optHint').innerHTML = TAB_HINT[k]; $('#optHint').className = 'hint'; $('#btnWay').hidden = k !== 'style';
+  const el = $('#plateChips'); el.dataset.k = k; el.classList.toggle('c4', k === 'style');
+  el.innerHTML = Object.entries(chips[k]).map(([id, o]) => `<button class="chip ${G.plate[k] === id ? 'on' : ''}" data-v="${id}" type="button">${k === 'style' && id === rec ? '<span class="star">⭐</span>' : ''}<span class="e">${o.e}</span>${o.name}</button>`).join('');
+}
+$('#plateTabs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; sfx.click(); G.tab = b.dataset.t; renderChips(); });
+$('#btnWay').addEventListener('click', () => { sfx.click(); G.plate.way = (G.plate.way + 1) % STYLES[G.plate.style].ways.length; setStyle(G.plate.style, G.plate.way); });
 $('#scrPlate').addEventListener('click', (e) => {
   const c = e.target.closest('.chip'); if (!c) return; sfx.click(); const k = c.parentElement.dataset.k; G.plate[k] = c.dataset.v;
   c.parentElement.querySelectorAll('.chip').forEach((x) => x.classList.toggle('on', x === c));
-  if (k === 'bowl') setBowl(c.dataset.v); if (k === 'top') setTopping(c.dataset.v); if (k === 'table') setTable(c.dataset.v);
+  if (k === 'bowl') setBowl(c.dataset.v); if (k === 'table') setTable(c.dataset.v);
+  if (k === 'top') setTopping(c.dataset.v);
+  if (k === 'style') { G.plate.way = 0; setStyle(c.dataset.v, 0); }
 });
 $('#btnToShoot').addEventListener('click', () => { sfx.click(); goShoot(); });
 
@@ -817,12 +957,25 @@ const FILTERS = {
 $('#segFilter').innerHTML = Object.entries(FILTERS).map(([k, f]) => `<button data-f="${k}" type="button">${f.name}</button>`).join('');
 const post = { rt: null, scene: new THREE.Scene(), cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), mat: null };
 post.mat = new THREE.ShaderMaterial({
-  uniforms: { tDiffuse: { value: null }, uM: { value: new THREE.Matrix4() }, uOff: { value: new THREE.Vector3() }, uVig: { value: 0.3 }, uGrain: { value: 0 }, uSeed: { value: 0 }, uAspect: { value: 0.8 } },
+  uniforms: { tDiffuse: { value: null }, tDepth: { value: null }, uM: { value: new THREE.Matrix4() }, uOff: { value: new THREE.Vector3() }, uVig: { value: 0.3 }, uGrain: { value: 0 }, uSeed: { value: 0 }, uAspect: { value: 0.8 },
+    uNear: { value: 0.1 }, uFar: { value: 200 }, uFocus: { value: 7 }, uRange: { value: 2 }, uAper: { value: 2 }, uMaxR: { value: 0 }, uTaps: { value: 32 } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }',
-  fragmentShader: `uniform sampler2D tDiffuse; uniform mat4 uM; uniform vec3 uOff; uniform float uVig, uGrain, uSeed, uAspect; varying vec2 vUv;
+  fragmentShader: `#include <packing>
+    uniform sampler2D tDiffuse, tDepth; uniform mat4 uM; uniform vec3 uOff; uniform float uVig, uGrain, uSeed, uAspect, uNear, uFar, uFocus, uRange, uAper, uMaxR, uTaps; varying vec2 vUv;
     vec3 toSRGB(vec3 c){ c = clamp(c, 0., 1.); return mix(c * 12.92, 1.055 * pow(c, vec3(1. / 2.4)) - .055, step(.0031308, c)); }
     float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)) + uSeed) * 43758.5453); }
-    void main(){ vec3 c = toSRGB(texture2D(tDiffuse, vUv).rgb);
+    float viewDist(vec2 uv){ return -perspectiveDepthToViewZ(texture2D(tDepth, uv).x, uNear, uFar); }
+    float coc(float z){ return clamp(max(abs(z - uFocus) - uRange, 0.) / z * uAper, 0., 1.) * uMaxR; }   // 模糊半徑（以畫面高度為 1）；焦點前後 uRange 以內（整個碗和底盤）完全清楚
+    // 景深：在一個圓盤裡取樣。只收「自己的模糊圈蓋得到這裡」的樣本；在後面的樣本最多只能跟這一點一樣糊，清楚的碗邊就不會被背景暈開
+    vec3 dof(){ vec3 base = texture2D(tDiffuse, vUv).rgb; if (uMaxR < 0.0005) return base;
+      float z0 = viewDist(vUv), c0 = coc(z0); vec3 acc = base; float ws = 1.; float rot = h(floor(vUv * 4.) + .37) * 6.2832;
+      for (int i = 0; i < 64; i++) { if (float(i) >= uTaps) break;
+        float r = sqrt((float(i) + .5) / uTaps) * uMaxR, a = float(i) * 2.39996 + rot;
+        vec2 uv = vUv + vec2(cos(a) / uAspect, sin(a)) * r;
+        float zs = viewDist(uv), cs = coc(zs); if (zs > z0) cs = min(cs, c0);
+        float w = smoothstep(r - .002, r, cs); acc += texture2D(tDiffuse, uv).rgb * w; ws += w; }
+      return acc / ws; }
+    void main(){ vec3 c = toSRGB(dof());
       c = (uM * vec4(c, 1.)).rgb + uOff;
       vec2 q = (vUv - .5) * vec2(uAspect, 1.); c *= 1. - uVig * smoothstep(.25, .85, length(q) * 1.25);
       c += (h(vUv * 1000.) - .5) * uGrain;
@@ -831,10 +984,16 @@ post.mat = new THREE.ShaderMaterial({
 });
 post.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), post.mat));
 function setFilter(k) { G.filter = k; const f = FILTERS[k].m; post.mat.uniforms.uM.value.set(f[0], f[1], f[2], 0, f[4], f[5], f[6], 0, f[8], f[9], f[10], 0, 0, 0, 0, 1); post.mat.uniforms.uOff.value.set(f[3], f[7], f[11]); post.mat.uniforms.uVig.value = FILTERS[k].vig; post.mat.uniforms.uGrain.value = FILTERS[k].grain; document.querySelectorAll('#segFilter button').forEach((b) => b.classList.toggle('on', b.dataset.f === k)); }
-function makeRT(w, h, type = THREE.HalfFloatType) { return new THREE.WebGLRenderTarget(w, h, { type, samples: 4, colorSpace: THREE.LinearSRGBColorSpace }); }
+function makeRT(w, h, type = THREE.HalfFloatType) { const rt = new THREE.WebGLRenderTarget(w, h, { type, samples: 4, colorSpace: THREE.LinearSRGBColorSpace }); rt.depthTexture = new THREE.DepthTexture(w, h); rt.depthTexture.type = THREE.UnsignedIntType; return rt; }
+// 景深強度跟著鏡位：特寫最糊、45° 中等、俯拍幾乎不糊（俯拍時桌上每樣東西離鏡頭差不多遠）
+const DOF = { taps: 32, slow: 0 };
+function updateDof() { const u = post.mat.uniforms, o = orbit.cur || orbit, k = clamp((o.pol - 0.15) / 0.9, 0, 1);
+  u.uNear.value = camera.near; u.uFar.value = camera.far; u.uFocus.value = camera.position.distanceTo(DOF_FOCUS);
+  u.uMaxR.value = lerp(0.002, 0.02, k) * Math.sqrt(12 / o.dist); u.uAper.value = 4.5; u.uRange.value = 2.4; }
+const DOF_FOCUS = new THREE.Vector3(0, 1.1, 0.2);   // 對焦在湯碗前緣
 // 環繞鏡頭（拍照用）：方位角、仰角（0＝正上方）、距離
-const orbit = { az: 0.3, pol: 0.8, dist: 7.5, tgt: new THREE.Vector3(0, 0.75, 0), cur: null, hand: false, base: null };
-const ANGLES = { top: { pol: 0.06, dist: 7.6 }, 45: { pol: 0.8, dist: 7.5 }, close: { pol: 1.05, dist: 4.6 } };
+const orbit = { az: 0.25, pol: 0.82, dist: 12.5, tgt: new THREE.Vector3(0, 0.7, -0.9), cur: null, hand: false, base: null };
+const ANGLES = { top: { az: 0.25, pol: 0.06, dist: 13 }, 45: { az: 0.25, pol: 0.82, dist: 12.5 }, close: { az: 0.25, pol: 1.08, dist: 8.2 } };
 let shootDrag = null;
 function goShoot() {
   G.phase = 'shoot'; only('#scrShoot'); show('#vf'); shootRect = {}; resize(); setFilter(G.filter || 'warm');
@@ -858,16 +1017,16 @@ function handMode(on) {
 }
 function renderShoot(target, w, h) {
   if (!post.rt || post.rt.width !== w || post.rt.height !== h) { post.rt && post.rt.dispose(); post.rt = makeRT(w, h); }
-  renderer.setRenderTarget(post.rt); renderer.render(scene, camera);
-  post.mat.uniforms.tDiffuse.value = post.rt.texture; post.mat.uniforms.uSeed.value = Math.random() * 10;
+  renderer.setRenderTarget(post.rt); renderer.render(scene, camera); updateDof();
+  post.mat.uniforms.tDiffuse.value = post.rt.texture; post.mat.uniforms.tDepth.value = post.rt.depthTexture; post.mat.uniforms.uSeed.value = Math.random() * 10;
   renderer.setRenderTarget(target); renderer.render(post.scene, post.cam); renderer.setRenderTarget(null);
 }
 // 按快門：用 1080×1350 的畫布另外算一張（跟預覽同一個鏡頭、同一個濾鏡）
 $('#btnShutter').addEventListener('click', async () => {
   audioInit(); sfx.shutter(); buzz(25); const fl = $('#flash'); fl.classList.add('on'); setTimeout(() => fl.classList.remove('on'), 60);
   const W = 1080, H = 1350, out = new THREE.WebGLRenderTarget(W, H, { type: THREE.UnsignedByteType });
-  const saveRT = post.rt; post.rt = null;
-  renderShoot(out, W, H);
+  const saveRT = post.rt; post.rt = null; const tp = post.mat.uniforms.uTaps.value; post.mat.uniforms.uTaps.value = 64;   // 成品取樣加倍，模糊更滑順
+  renderShoot(out, W, H); post.mat.uniforms.uTaps.value = tp;
   const px = new Uint8Array(W * H * 4); renderer.readRenderTargetPixels(out, 0, 0, W, H, px); out.dispose(); post.rt && post.rt.dispose(); post.rt = saveRT;
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d'), img = c.createImageData(W, H);
   for (let y = 0; y < H; y++) img.data.set(px.subarray((H - 1 - y) * W * 4, (H - y) * W * 4), y * W * 4);   // WebGL 的列是由下往上
@@ -1049,7 +1208,8 @@ function frame(now) {
   }
 
   // 畫面：拍照模式走後製濾鏡，其他直接畫
-  if (G.phase === 'shoot' && shootRect) { const w = Math.round(shootRect.w * renderer.getPixelRatio()), h = Math.round(shootRect.h * renderer.getPixelRatio()); post.mat.uniforms.uAspect.value = 0.8; renderShoot(null, w, h); }
+  if (G.phase === 'shoot' && shootRect) { DOF.slow = dt > 0.045 ? DOF.slow + dt : Math.max(0, DOF.slow - dt * 0.5); if (DOF.slow > 1.2 && post.mat.uniforms.uTaps.value > 12) { post.mat.uniforms.uTaps.value = 12; DOF.slow = 0; }   // 舊手機跑太慢：預覽改輕一點的景深
+    const w = Math.round(shootRect.w * renderer.getPixelRatio()), h = Math.round(shootRect.h * renderer.getPixelRatio()); post.mat.uniforms.uAspect.value = 0.8; renderShoot(null, w, h); }
   else renderer.render(scene, camera);
 
   // 刀光、畫圈的軌跡
