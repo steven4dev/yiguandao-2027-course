@@ -29,6 +29,23 @@
 <meta name="twitter:card" content="summary_large_image">
 <style>
 .ambush{position:fixed;inset:0;pointer-events:none;z-index:30;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 35%,rgba(170,20,40,.6) 100%);animation:amb 2.4s ease-out forwards}
+/* 打失敗：塵靈撲向鏡頭，螢幕被抓花（三道帶紅光的抓痕＋邊緣紅暈＋灰黑塵斑）；最後一盞心燈熄掉時加重。不做快速閃爍，紅暈只漸亮漸退一次 */
+.hurt{position:fixed;inset:0;pointer-events:none;z-index:28;overflow:hidden}
+.hurt::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 38%,rgba(190,24,40,.62) 100%);animation:hvig .95s ease-out both}
+.hurt.strong::before{background:radial-gradient(ellipse at center,rgba(0,0,0,.18) 22%,rgba(150,12,28,.8) 100%);animation-duration:1.9s}
+@keyframes hvig{0%{opacity:0}16%{opacity:1}100%{opacity:0}}
+.hurt .clw{position:absolute;transform-origin:0 50%;filter:drop-shadow(0 0 7px rgba(255,64,64,.95)) drop-shadow(0 0 2px #fff);animation:hfade 1.3s ease-in both}
+.hurt .cl2{display:block;width:100%;height:100%;transform-origin:0 50%;background:linear-gradient(90deg,rgba(255,255,255,.95),#ffb0a8 16%,#ff4a4a 58%,rgba(180,18,30,.92));clip-path:polygon(0 50%,10% 30%,42% 16%,100% 45%,100% 55%,42% 84%,10% 70%);animation:hclaw .17s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d)}
+@keyframes hclaw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes hfade{0%,60%{opacity:1}100%{opacity:0}}
+.hurt .st{position:absolute;border-radius:50%;background:radial-gradient(circle at 40% 40%,rgba(52,38,42,.9) 0,rgba(52,38,42,.7) 45%,rgba(52,38,42,0) 72%);animation:hstain 1.5s ease-out both;animation-delay:var(--d)}
+@keyframes hstain{0%{opacity:0;transform:scale(.3)}9%{opacity:1;transform:scale(1)}60%{opacity:.8}100%{opacity:0;transform:scale(1.08)}}
+.hurt.calm .cl2{animation:none}.hurt.calm .st{display:none}
+/* 打中：邊緣一圈柔和的金光（跟失敗的紅暈對比） */
+.okglow{position:fixed;inset:0;pointer-events:none;z-index:27;background:radial-gradient(ellipse at center,rgba(255,214,110,0) 45%,rgba(255,214,110,.38) 100%);animation:hvig .85s ease-out both}
+/* 心燈熄掉：先亮一下、晃動，再暗下去 */
+.hud .lamps .lost{display:inline-block;animation:lampLost 1s ease-out both}
+@keyframes lampLost{0%{filter:none;opacity:1;transform:scale(1)}14%{filter:brightness(2.2) saturate(1.5);transform:scale(1.6) rotate(-10deg)}30%{transform:scale(1.25) rotate(9deg)}46%{transform:scale(1.15) rotate(-6deg)}70%{filter:brightness(1);opacity:.9;transform:scale(1)}100%{filter:grayscale(1);opacity:.35;transform:scale(1)}}
 @keyframes amb{0%{opacity:0}8%{opacity:1}30%{opacity:.55}45%{opacity:.9}100%{opacity:0}}
 .ambush-t{color:#ff8a7a;animation:ambT .5s cubic-bezier(.2,1.6,.4,1) both}
 @keyframes ambT{0%{transform:scale(2.2);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -338,7 +355,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261114.04';
+const VERSION = 'v261114.05';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1142,6 +1159,7 @@ const sfx = {
     I.brass(t + 0.9, [N.D4, N.A4, N.D5, N.F5], 1.4, 0.2); I.gong(t + 0.9, 82, 0.6, 5); I.choir(t + 0.9, [N.D4, N.F4, N.A4, N.D5], 3, 0.14); I.cymbal(t + 0.9, 0.3); },
   defeat(t){ if(!ok()) return; t = t ?? now0(); I.pad(t, [N.D3, N.F3, N.A3], 1.2, 0.12, AU.sfxBus, 700); I.pad(t + 1.2, [N.C3, N.F3, N.A3], 1.2, 0.1, AU.sfxBus, 600); I.pad(t + 2.4, [N.Bb2, N.D3, N.F3], 2, 0.1, AU.sfxBus, 500); I.taiko(t, 48, 0.6); I.taiko(t + 1.2, 45, 0.5); }
 };
+sfx.hurt = strong => { if(!ok()) return; const t = now0(); I.whoosh(t, 0.45); X.crack(t + 0.1, strong ? 0.9 : 0.55); if(strong) X.sub(t + 0.1, 0.8, 1.1); };   // 撕裂聲：先「咻」再「啪」，最後一盞再加低頻
 sfx.stat = i => { if(!ok()) return; I.bell(now0(), [N.D5, N.F5, N.A5, N.D5*2][i] || N.D5, 0.12); };   // 結算數字跑完一格的小鈴聲（音階往上）
 /* 背景音樂：84 拍、每小節 16 格。太鼓節奏＋每兩小節換一次和弦的長音＋偶爾一句笛聲；
    battle＝一般、boss＝加低音持續音與密集鼓點、hold＝倒數時只剩低音（營造緊張）。 */
@@ -1385,6 +1403,22 @@ let monster = null;   // { type, sym, x, y, r, t0, state, boss, hp, maxHp }
 const particles = [];
 function spawnDust(x, y, n, color, speed=1){ for(let i=0;i<n;i++){ const a = Math.random()*Math.PI*2, v = (1 + Math.random()*3)*speed; particles.push({ kind:'dust', x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v - 1, life:1, size:2 + Math.random()*5, color }); } }
 function spawnSpark(x, y, n){ for(let i=0;i<n;i++){ const a = Math.random()*Math.PI*2, v = 2 + Math.random()*5; particles.push({ kind:'spark', x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v, life:1, size:1.5 + Math.random()*2.5 }); } }
+// 打失敗的畫面損傷：抓痕（可帶多道）＋紅暈＋塵斑；strong＝最後一盞心燈熄掉。系統設定「減少動態效果」時只留紅暈
+function hurtFx(strong){
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches, W = innerWidth, H = innerHeight, el = document.createElement('div'), r = Math.random;
+  el.className = 'hurt' + (strong ? ' strong' : '') + (reduce ? ' calm' : '');
+  const n = strong ? 5 : 3, flip = r() < 0.5 ? 1 : -1, th = (26 + r() * 12) * Math.PI / 180, gap = Math.min(W, H) * (strong ? 0.075 : 0.085), th2 = th * 180 / Math.PI;
+  const dx = Math.cos(th) * flip, dy = Math.sin(th), px = -dy * flip, py = Math.cos(th) * 1, sx = flip > 0 ? W * (0.1 + r() * 0.18) : W * (0.9 - r() * 0.18), sy = H * (0.06 + r() * 0.12), L = Math.hypot(W, H) * (0.62 + r() * 0.1);
+  let h = '';
+  for(let i = 0; i < n; i++){
+    const o = (i - (n - 1) / 2) * gap + (r() - 0.5) * gap * 0.3, x = sx + px * o, y = sy + py * o, th3 = (strong ? 20 : 15) + r() * 10, len = L * (0.82 + r() * 0.3);
+    h += `<div class="clw" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;width:${len.toFixed(0)}px;height:${th3.toFixed(0)}px;transform:translateY(-50%) rotate(${(flip > 0 ? th2 : 180 - th2).toFixed(1)}deg)"><i class="cl2" style="--d:${(i * 0.05).toFixed(2)}s"></i></div>`;
+  }
+  const ns = strong ? 12 : 7;
+  for(let i = 0; i < ns; i++){ const sz = (strong ? 70 : 52) + r() * (strong ? 110 : 80); h += `<i class="st" style="left:${(r() * (W - sz)).toFixed(0)}px;top:${(r() * (H - sz)).toFixed(0)}px;width:${sz.toFixed(0)}px;height:${sz.toFixed(0)}px;--d:${(0.08 + r() * 0.3).toFixed(2)}s"></i>`; }
+  el.innerHTML = h; document.body.appendChild(el); setTimeout(() => el.remove(), strong ? 2300 : 1600);
+}
+function okFx(){ const el = document.createElement('div'); el.className = 'okglow'; document.body.appendChild(el); setTimeout(() => el.remove(), 900); }
 function spawnText(x, y, text, color){ particles.push({ kind:'text', x, y, vx:0, vy:-0.8, life:1.4, text, color }); }
 function spawnLotus(x, y){ particles.push({ kind:'lotus', x, y, vx:(Math.random()-.5)*0.6, vy:-1.2, life:2.2, size:U()*0.12 }); }
 function drawParticles(){
@@ -1409,6 +1443,7 @@ function drawMonster(t){
   if(m.state === 'gone') return;
   if(m.state === 'hit'){ const k = Math.min(1, (t - m.tHit)/500); sc = 1 + 0.25*k; alpha = 1 - k; x += Math.sin(t/20)*6*(1-k); if(k >= 1){ m.state = m.boss && m.hp > 0 ? 'idle' : 'gone'; if(m.state === 'idle'){ m.t0 = t - 2000; } } }
   if(m.state === 'laugh'){ const k = Math.min(1, (t - m.tHit)/700); sc = 1 + 0.12*Math.sin(k*Math.PI); y += Math.sin(t/60)*3; if(k >= 1) m.state = 'idle'; }
+  if(m.lunge){ const k = (t - m.lunge)/460; if(k >= 1) m.lunge = 0; else { const e = k < 0.4 ? Math.sin(k/0.4*Math.PI/2) : 1 - (k - 0.4)/0.6; sc *= 1 + 0.9*e; y += H*0.04*e; } }
   const bob = Math.sin(t/500)*u*0.015, r = m.r*sc;
   if(!m.boss){
     ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y + bob); ctx.scale(sc, sc);
@@ -1542,7 +1577,7 @@ function startCapture(m, sym, weak, isNew){
   const cracks = [], shards = [];
   for(let i=0;i<10;i++){ const a = i/10*TAU + Math.random()*0.3, pts = [[0,0]]; let rr = 0; for(let k=0;k<5;k++){ rr += 0.18 + Math.random()*0.08; pts.push([Math.cos(a + (Math.random()-.5)*0.4)*rr, Math.sin(a + (Math.random()-.5)*0.4)*rr]); } cracks.push(pts); }
   for(let i=0;i<26;i++){ const a = Math.random()*TAU, v = 2 + Math.random()*5; shards.push({ x:Math.cos(a)*0.3, y:Math.sin(a)*0.3, vx:Math.cos(a)*v, vy:Math.sin(a)*v - 3, rot:Math.random()*6, vr:(Math.random()-.5)*0.4, s:0.08 + Math.random()*0.12 }); }
-  m.state = 'gone';
+  m.state = 'gone'; okFx();
   return new Promise(res => { capFx = { t0: performance.now(), m, sym, weak, isNew, cracks, shards, sparks:[], dir: Math.random() < 0.5 ? -1 : 1, done: res }; shakeAmp = capPerfect ? 16 : 11; sfx.capture(capPerfect, m.def, m.gold); vib(capPerfect ? [60,40,140] : 120); });
 }
 function drawCapture(t){
@@ -1550,6 +1585,7 @@ function drawCapture(t){
   const e = performance.now() - A.t0, m = A.m, cx = m.x, cy = m.y, R = m.r*1.3, u = U(), bp = bookPos();
   if(e < 700){
     dust(ctx, m.def, cx, cy, R, e < 120 ? A.t0/1000 : t/1000, { seed:m.seed, gold:m.gold, hit: e/1000, dir: A.dir, whiten: Math.max(0, Math.min(1, (e - 380)/320)) });
+    if(e > 100 && e < 520){ const k = (e - 100)/420; ctx.save(); ctx.globalAlpha = 1 - k; ctx.strokeStyle = '#fff3c0'; ctx.shadowColor = '#ffd27a'; ctx.shadowBlur = 18; ctx.lineWidth = Math.max(1, 7*(1 - k)); ctx.beginPath(); ctx.arc(cx, cy, R*(0.35 + 1.5*k), 0, Math.PI*2); ctx.stroke(); ctx.restore(); }   // 命中的衝擊環
     const tp = tplFor(A.sym);
     if(tp && e > 120){ const k = Math.min(1, (e - 120)/380), n = Math.max(2, Math.ceil(k*(tp.length - 1)) + 1);
       for(const [col, w, blur] of [['#ffe08a', R*0.09, 30], ['#fffaf0', R*0.03, 8]]){ ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = col; ctx.lineWidth = w; ctx.shadowColor = '#ffcc55'; ctx.shadowBlur = blur;
@@ -1825,7 +1861,12 @@ async function encounter(opt){
     if(r0.a && !r0.none && !r0.close && !r0.small && !r0.wrongDir && SYMS[keys[idx]].kind === 'shape'){ const top = r0.a.rg.ranking[0]; if(SYMS[top.key]) spawnText(monster.x, monster.y - monster.r*1.1, `像是「${SYMS[top.key].name}」`, '#f6ecd8'); }
     monster.state = 'laugh'; monster.tHit = performance.now();
     if(!tutorial && !opt.ambush){ lives--; }
-    sfx.miss(boss ? null : def); if(boss && actx) bossVoice(now0() + 0.45, 0.6); vib([40,60,40]); hud(); await wait(1300);
+    const lastLamp = !tutorial && !opt.ambush && lives <= 0;   // 最後一盞心燈熄掉：演出加重
+    monster.lunge = performance.now();                           // 塵靈撲向鏡頭
+    sfx.miss(boss ? null : def); sfx.hurt(lastLamp); if(boss && actx) bossVoice(now0() + 0.45, 0.6); vib(lastLamp ? [60,40,60,40,180] : [40,60,40]);
+    if(!tutorial){ setTimeout(() => hurtFx(lastLamp), 170); shakeAmp = Math.max(shakeAmp, lastLamp ? 22 : 14); if(lastLamp) dimTarget = 0.6; }   // 撲到最近時抓痕出現
+    hud(); if(!tutorial && !opt.ambush){ const sp = $('#lamps').children[lives]; if(sp) sp.classList.add('lost'); }
+    await wait(lastLamp ? 1900 : 1300);
     if(!boss){ monster.state = 'hit'; monster.tHit = performance.now(); await wait(450); }   // 沒收服：塵靈逃走
     if(opt.ambush){ center(`<div class="mid">塵魔大笑著逃走了…</div>${subLines('下馬威沒擋下，不扣心燈', '定下心，從頭收服！')}`); await wait(2000); center(''); }
   }
