@@ -126,35 +126,47 @@ body{line-break:strict}
 .prog{height:12px;border-radius:8px;background:rgba(255,255,255,.12);overflow:hidden;margin:12px 0}
 .prog i{display:block;height:100%;width:0;background:var(--gold);transition:width .1s linear}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin:10px 0;font-size:.95rem}
-/* 結算畫面壓緊：塵靈收得多的時候也盡量一個畫面看完（淨心錄、回島兩顆並排） */
-#scrResult .panel{padding:12px 14px 10px}
-#scrResult h2{margin:0 0 4px;font-size:1.1rem;display:flex;justify-content:space-between;align-items:center;gap:8px}
-#scrResult .dtag{flex:none;font-size:.74rem;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:1px 9px}
-#scrResult .panel p{margin:4px 0}
-/* 成績數字放大：每項一格，大數字在上、小標籤在下 */
-#scrResult .stats{margin:6px 0 4px;grid-template-columns:repeat(4,1fr);gap:6px;font-size:.78rem;text-align:center}
-#scrResult .stats span{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 2px 4px;border-radius:10px;background:rgba(255,255,255,.06);color:var(--muted);line-height:1.15;min-width:0}
-#scrResult .stats b{font-size:1.6rem;font-weight:900;color:var(--gold);letter-spacing:-.5px;line-height:1.1}
-#scrResult .stats small{font-size:.74rem;margin-top:2px}
-#scrResult #resCaught{margin:6px 0!important}
-#scrResult .caught{gap:4px}
-#scrResult .caught span{padding:1px 7px;font-size:.78rem}
-#scrResult .caught small{font-size:.9rem;font-weight:800;color:var(--gold)}
-#scrResult .quote{margin:5px 0;padding:6px 12px;font-size:.88rem;line-height:1.45}
-#scrResult .quote small{font-size:.72rem}
-#scrResult .signup{margin:5px 0 0;padding:6px 12px}
-#scrResult .signup p{margin:2px 0 0;font-size:.82rem;line-height:1.45}
-#scrResult .row{margin-top:7px;gap:5px;grid-template-columns:1fr}
-/* 四顆按鈕一樣寬、一樣高：報名（實心金）＞再試煉（金框）＞淨心錄、返回島嶼（一般框） */
-#scrResult .row > *{box-sizing:border-box;width:100%;min-height:40px;padding:6px 8px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:1rem;font-weight:800;text-align:center;text-decoration:none}
+/* 結算畫面（和分享圖卡同一個版面；iPhone 17 Pro 的 LINE 內建瀏覽器一頁放得下） */
+#scrResult .panel{padding:12px 14px 12px}
+#scrResult .rc-brand{text-align:center;line-height:1.2}
+#scrResult .rc-brand b{display:block;font-size:1.3rem;color:#ffe7a8;text-shadow:0 0 14px rgba(255,200,90,.6);letter-spacing:2px}
+#scrResult .rc-brand small{display:block;font-size:.72rem;color:var(--muted);margin-top:2px}
+#scrResult h2{margin:8px 0 2px;font-size:1.05rem;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:8px}
+#scrResult .dtag{flex:none;font-size:.72rem;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:1px 9px}
+#scrResult #resLine{margin:0 0 6px;font-size:.88rem;line-height:1.4;color:var(--muted)}
+#scrResult .stats{margin:4px 0 8px;grid-template-columns:1fr 1fr;gap:8px;font-size:.78rem;text-align:center}
+#scrResult .stats span{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7px 4px 6px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(232,189,90,.38);color:var(--muted);line-height:1.1;min-width:0}
+#scrResult .stats b{font-size:2.3rem;font-weight:900;color:var(--gold);letter-spacing:-.5px;line-height:1.05;text-shadow:0 0 14px rgba(232,189,90,.4);font-variant-numeric:tabular-nums}
+#scrResult .stats small{font-size:.76rem;margin-top:2px}
+#scrResult .stats span.pop{animation:statPop .45s ease-out}
+@keyframes statPop{0%{transform:scale(1)}40%{transform:scale(1.07);box-shadow:0 0 22px rgba(255,214,110,.7)}100%{transform:scale(1)}}
+#scrResult #resCaught{margin:2px 0 6px}
+#scrResult .ch{font-size:.82rem;font-weight:800;color:var(--ink);text-align:center;margin-bottom:2px}
+#scrResult .cmrow{display:flex;justify-content:space-between;gap:2px;align-items:flex-start}
+#scrResult .cm{position:relative;flex:1 1 0;min-width:0;text-align:center;line-height:1.15;opacity:0}
+#scrResult #resCaught.reveal .cm{animation:cmIn .42s cubic-bezier(.2,1.5,.4,1) both;animation-delay:calc(var(--i) * 90ms)}
+@keyframes cmIn{0%{opacity:0;transform:translateY(8px) scale(.5)}100%{opacity:1;transform:none}}
+#scrResult .cm canvas{display:block;width:100%;aspect-ratio:1/1}
+#scrResult .cm b{display:block;font-size:.7rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:clip}
+#scrResult .cm small{display:block;font-size:.68rem;font-weight:800;color:var(--gold)}
+#scrResult .cm i{position:absolute;top:0;right:-2px;font-style:normal;background:#e8453c;color:#fff;border-radius:6px;font-size:.55rem;padding:0 4px;font-weight:900}
+#scrResult .cmore{text-align:center;font-size:.72rem;color:var(--muted);margin-top:3px}
+#scrResult .quote{margin:4px 0;padding:6px 12px;font-size:.84rem;line-height:1.45}
+#scrResult .quote small{display:inline;font-size:.72rem;margin-left:6px}
+#scrResult .signupLine{margin:4px 0 0;text-align:center;font-size:.8rem;color:var(--gold);line-height:1.4}
+#scrResult .row{margin-top:8px;gap:6px;grid-template-columns:1fr 1fr}
+#scrResult #btnIsle{grid-column:1/-1}
+/* 按鈕一樣高；兩欄等寬，返回島嶼橫跨兩欄 */
+#scrResult .row > *{box-sizing:border-box;width:100%;min-height:40px;padding:6px 6px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:.95rem;font-weight:800;text-align:center;text-decoration:none;white-space:nowrap}
 #scrResult #btnShare{background:#06c755;color:#fff;border:0}
-/* 「看淨心錄」做醒目：兩顆金色光點順時針沿著邊框繞圈（像流水燈），外加柔光呼吸；不支援 @property 的舊瀏覽器只會看到金邊 */
+#scrResult #btnAgain{border:1.5px solid var(--gold);color:var(--gold);background:rgba(232,189,90,.10)}
+#scrResult .signupBtn{background:var(--btn);color:var(--btn-ink)}
 @keyframes flDash{from{stroke-dashoffset:var(--o0)}to{stroke-dashoffset:var(--o1)}}
 @keyframes flGlow{0%,100%{box-shadow:0 0 10px rgba(232,189,90,.22),inset 0 0 10px rgba(232,189,90,.08)}50%{box-shadow:0 0 22px rgba(232,189,90,.5),inset 0 0 16px rgba(232,189,90,.16)}}
 #scrResult #btnDexR{position:relative;border:1.5px solid rgba(232,189,90,.45);color:#ffeeb8;background:rgba(36,28,12,.92);animation:flGlow 2.4s ease-in-out infinite}
 #scrResult #btnDexR svg.fl{position:absolute;left:-1.5px;top:-1.5px;pointer-events:none;overflow:visible}
 #scrResult #btnDexR svg.fl path{fill:none;stroke-linecap:round;animation:flDash 1.5s linear infinite;filter:drop-shadow(0 0 4px rgba(255,214,110,.9))}
-#scrResult #btnDexR .newN{font-style:normal;margin-left:8px;padding:1px 8px;border-radius:9px;background:#e8453c;color:#fff;font-size:.8rem;font-weight:900}
+#scrResult #btnDexR .newN{position:absolute;top:-9px;right:-5px;font-style:normal;padding:1px 7px;border-radius:9px;background:#e8453c;color:#fff;font-size:.68rem;font-weight:900;line-height:1.4;box-shadow:0 2px 6px rgba(0,0,0,.4)}
 @media (prefers-reduced-motion:reduce){#scrResult #btnDexR,#scrResult #btnDexR svg.fl path{animation:none}}
 #scrShare .shareText{display:flex;align-items:center;justify-content:center;min-height:42px;border-radius:12px;background:#06c755;color:#fff;font-weight:800;text-decoration:none}
 #shareImg{display:block;width:100%;max-height:56vh;object-fit:contain;border-radius:12px;background:#0b1220}
@@ -262,18 +274,16 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
   </div>
 </section>
 
-<!-- 結算 -->
+<!-- 結算：版面和分享圖卡一致（品牌 → 結果標題 → 四格大數字 → 收服的塵靈 → 心性小語 → 邀請 → 按鈕） -->
 <section class="screen" id="scrResult" hidden>
-  <div class="panel">
+  <div class="panel rcard">
+    <div class="rc-brand"><b>🪶 拂塵試煉</b><small>全真群島・拂塵淨心島・體感遊戲</small></div>
     <h2 id="resTitle">✨ 試煉圓滿</h2>
     <p id="resLine"></p>
     <div class="stats" id="resStats"></div>
-    <div id="resCaught" style="margin:10px 0"></div>
+    <div id="resCaught"></div>
     <div class="quote" id="resQuote"></div>
-    <div class="signup">
-      <b>🌿 試煉之後，還有真功夫</b>
-      <p><span class="cl">遊戲裡淨化的是塵靈，</span><span class="cl">生活裡要修的是自己。</span><span class="cl">想練就不被六塵操弄的真人，</span><span class="cl">邀你攜手一起來。</span></p>
-    </div>
+    <p class="signupLine">想練就不被六塵操弄的真人，邀你攜手一起來。</p>
     <div class="row">
       <a class="signupBtn" id="btnSignup" href="../#join">🛶 我要登島報名</a>
       <a id="btnShare" href="https://line.me/R/msg/text/" target="_blank" rel="noopener">💬 分享到 LINE</a>
@@ -312,7 +322,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261114.02';
+const VERSION = 'v261114.03';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1116,6 +1126,7 @@ const sfx = {
     I.brass(t + 0.9, [N.D4, N.A4, N.D5, N.F5], 1.4, 0.2); I.gong(t + 0.9, 82, 0.6, 5); I.choir(t + 0.9, [N.D4, N.F4, N.A4, N.D5], 3, 0.14); I.cymbal(t + 0.9, 0.3); },
   defeat(t){ if(!ok()) return; t = t ?? now0(); I.pad(t, [N.D3, N.F3, N.A3], 1.2, 0.12, AU.sfxBus, 700); I.pad(t + 1.2, [N.C3, N.F3, N.A3], 1.2, 0.1, AU.sfxBus, 600); I.pad(t + 2.4, [N.Bb2, N.D3, N.F3], 2, 0.1, AU.sfxBus, 500); I.taiko(t, 48, 0.6); I.taiko(t + 1.2, 45, 0.5); }
 };
+sfx.stat = i => { if(!ok()) return; I.bell(now0(), [N.D5, N.F5, N.A5, N.D5*2][i] || N.D5, 0.12); };   // 結算數字跑完一格的小鈴聲（音階往上）
 /* 背景音樂：84 拍、每小節 16 格。太鼓節奏＋每兩小節換一次和弦的長音＋偶爾一句笛聲；
    battle＝一般、boss＝加低音持續音與密集鼓點、hold＝倒數時只剩低音（營造緊張）。 */
 const CHORDS = [[N.D3, N.A3, N.D4, N.F4], [N.Bb2, N.F3, N.Bb3, N.D4], [N.C3, N.G3, N.C4, N.E4], [N.A2, N.E4/2, N.A3, N.C4]];
@@ -2022,23 +2033,51 @@ function setupFlow(){
 $('#btnShareClose').addEventListener('click', () => { $('#scrShare').hidden = true; $('#scrResult').hidden = false; });
 
 /* ---------------- 結算 ---------------- */
+let resRaf = 0;
 function showResult(kind){
   const acc = tries ? Math.round(hits/tries*100) : 0;
   const rating = kind === 'over' ? '🌫️ 塵埃未盡' : acc >= 90 ? '✨ 明鏡無塵' : acc >= 70 ? '🪶 時時勤拂' : '🌱 勿使惹塵';
-  // 標題只講這一局的結果；難度另外做成小標籤，不再黏在標題後面（以前會讀成「心燈用完了・修行」）
+  // 標題只講這一局的結果；難度另外做成小標籤
   $('#resTitle').innerHTML = `<span>${kind === 'over' ? '🪔 心燈已盡' : '✨ 試煉圓滿'}</span><small class="dtag">難度・${D().name}</small>`;
-  $('#resLine').innerHTML = kind === 'over' ? clauses('別灰心，塵埃本來就要天天拂。定下心再來一次！') : `<span class="cl">無明塵王收服了！</span><span class="cl">評價：<b class="nb">${rating}</b></span>`;
-  $('#resStats').innerHTML = `<span><b>${hits}</b><small>淨化（隻）</small></span><span><b>${acc}%</b><small>命中率</small></span><span><b>${maxCombo}</b><small>最高連擊</small></span><span><b>${score}</b><small>得分</small></span>`;
-  $('#resCaught').innerHTML = caught.length ? `<b>本局收入淨心錄</b><div class="caught">${caught.map(c => `<span>${c.gold ? '✨' : ''}${c.def.name}<small>Lv ${c.lv}</small>${c.isNew ? '<i>NEW</i>' : ''}</span>`).join('')}</div>` : '<span class="note">這一局沒有收服塵靈，下次加油！</span>';
+  $('#resLine').textContent = kind === 'over' ? '塵埃本來就要天天拂，定下心再來一次！' : `無明塵王已淨化・評價：${rating}`;
+  // 四格數字：先放 0，進場後由 runResultAnim 一格一格跑到最終值
+  const finals = [[hits, '淨化（隻）', v => v], [acc, '命中率', v => v + '%'], [maxCombo, '最高連擊', v => v], [score, '得分', v => v]];
+  $('#resStats').innerHTML = finals.map(([v, l, f]) => `<span><b>${f(0)}</b><small>${l}</small></span>`).join('');
+  // 本局收服：一排最多 6 隻（跟分享圖卡一樣），多的只寫「還有 N 隻」，完整名單在淨心錄
+  const shown = caught.slice(0, 6), more = caught.length - shown.length;
+  $('#resCaught').className = '';
+  $('#resCaught').innerHTML = caught.length
+    ? `<div class="ch">本局收入淨心錄</div><div class="cmrow">${shown.map((c, i) => `<div class="cm" style="--i:${i}"><canvas width="112" height="112"></canvas><b>${c.def.name}</b><small>Lv ${c.lv}</small>${c.isNew ? '<i>NEW</i>' : ''}</div>`).join('')}</div>${more > 0 ? `<div class="cmore">…還有 ${more} 隻，到淨心錄看</div>` : ''}`
+    : '<div class="cmore">這一局沒有收服塵靈，下次加油！</div>';
   { const mq = caught.filter(c => c.def.quote);
-    if (mq.length) { const c = pick(mq); $('#resQuote').innerHTML = `${clauses(c.def.quote)}<small>—— ${c.def.name}的心性小語</small>`; }
+    if(mq.length){ const c = pick(mq); $('#resQuote').innerHTML = `${clauses(c.def.quote)}<small>—— ${c.def.name}</small>`; }
     else { const [qt, qf] = pick(QUOTES); $('#resQuote').innerHTML = `${clauses(qt)}<small>—— ${qf}</small>`; } }   // 這局有收服塵靈：顯示牠的心性小語；沒有才用經典原文
-  // 分享：成績只拍一次快照，結算畫面、圖卡、分享文字都讀同一份，不會有落差
-  prepareShare({ kind, diff: D().name.replace(/^[^\u4e00-\u9fff]+/, ''), hits, acc, maxCombo, score, caught: caught.map(c => ({ def: c.def, name: c.def.name, lv: c.lv, isNew: !!c.isNew, gold: !!c.gold })) });
-  { const nn = caught.filter(c => c.isNew).length; $('#btnDexR').innerHTML = '📖 看淨心錄' + (nn ? `<i class="newN">新收 ${nn} 隻</i>` : ''); }
-  $('#scrResult').hidden = false; requestAnimationFrame(setupFlow);
+  // 分享：成績只拍一次快照，結算畫面、圖卡、分享文字都讀同一份，數字一定一致
+  prepareShare({ kind, diff: D().name.replace(/^[^一-鿿]+/, ''), hits, acc, maxCombo, score, caught: caught.map(c => ({ def: c.def, name: c.def.name, lv: c.lv, isNew: !!c.isNew, gold: !!c.gold })) });
+  { const nn = caught.filter(c => c.isNew).length; $('#btnDexR').innerHTML = '📖 看淨心錄' + (nn ? `<i class="newN">新 ${nn}</i>` : ''); }
+  $('#scrResult').hidden = false;
+  requestAnimationFrame(() => { setupFlow(); document.querySelectorAll('#resCaught canvas').forEach((cv, i) => { try{ dust(cv.getContext('2d'), shown[i].def, 56, 62, 36, 1.2 + i*0.7, { noMeasure: true }); }catch(e){} }); runResultAnim(finals); });
   kind === 'over' ? sfx.defeat() : sfx.victory();
   const best = store.get('fuchenGame.best', 0); if(score > best) store.set('fuchenGame.best', score);
+}
+// 數字跑分：四格依序從 0 跑到最終值（先快後慢），得分最後、最久；跑完那格放大閃一下並響一聲；點一下畫面就直接跳到最終值；手機設定「減少動態效果」就直接顯示
+function runResultAnim(finals){
+  cancelAnimationFrame(resRaf);
+  const cells = [...document.querySelectorAll('#resStats span')], bs = cells.map(c => c.querySelector('b')), box = $('#resCaught');
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){ finals.forEach(([v, , f], i) => { bs[i].textContent = f(v); }); box.classList.add('reveal'); return; }
+  const dur = [1000, 1100, 1000, 1700 + Math.max(0, String(finals[3][0]).length - 4) * 200], delay = [0, 140, 280, 420], done = [0, 0, 0, 0], t0 = performance.now(); let skipped = false;
+  $('#scrResult').addEventListener('pointerdown', () => { skipped = true; }, { once: true });
+  const step = now => {
+    let all = true;
+    cells.forEach((el, i) => {
+      const k = skipped ? 1 : Math.min(1, Math.max(0, (now - t0 - delay[i]) / dur[i])); if(k < 1) all = false;
+      bs[i].textContent = finals[i][2](Math.round(finals[i][0] * (1 - Math.pow(1 - k, 3))));
+      if(k >= 1 && !done[i]){ done[i] = 1; if(!skipped){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); sfx.stat(i); } }
+    });
+    if(all){ box.classList.add('reveal'); return; }
+    resRaf = requestAnimationFrame(step);
+  };
+  resRaf = requestAnimationFrame(step);
 }
 
 /* ---------------- 開場、權限、舉拂定心 ---------------- */
