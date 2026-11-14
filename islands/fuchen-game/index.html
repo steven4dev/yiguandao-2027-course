@@ -124,7 +124,9 @@ body{line-break:strict}
 #scrTitle .row{margin-top:10px;gap:7px}
 #scrTitle .diff button{padding:7px 4px 6px}
 #scrTitle .startRow button{padding:10px 6px}
-#scrTitle #btnDexT,#scrTitle #btnIsleT{padding:9px}
+#scrTitle #btnDexT,#scrTitle #btnMovesT{padding:9px}
+#scrTitle .panel{position:relative}
+#scrTitle .isleTop{position:absolute;top:12px;right:12px;padding:4px 10px;font-size:.74rem;font-weight:700;border-radius:999px;background:rgba(255,255,255,.06);color:var(--muted)}
 #scrTitle .twoRow{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 /* 特別矮的螢幕（iPhone SE、開著網址列的小手機）：再壓一層 */
 @media (max-height: 620px){
@@ -137,7 +139,7 @@ body{line-break:strict}
   #scrTitle .row{margin-top:8px;gap:6px}
   #scrTitle .diff button{font-size:.88rem;padding:6px 3px 5px}
   #scrTitle .startRow button{padding:8px 6px;font-size:1rem}
-  #scrTitle #btnDexT,#scrTitle #btnIsleT{padding:7px}
+  #scrTitle #btnDexT,#scrTitle #btnMovesT{padding:7px}
   .screen{padding-top:calc(env(safe-area-inset-top) + 8px);padding-bottom:calc(env(safe-area-inset-bottom) + 20px)}
 }
 .prog{height:12px;border-radius:8px;background:rgba(255,255,255,.12);overflow:hidden;margin:12px 0}
@@ -209,6 +211,17 @@ body{line-break:strict}
 .dsw-thumb{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px) / 3);border-radius:999px;background:var(--dc);box-shadow:0 0 14px var(--dg),inset 0 -3px 6px rgba(0,0,0,.18),inset 0 2px 4px rgba(255,255,255,.35);transform:translateX(calc(var(--i) * 100%));transition:transform .3s cubic-bezier(.3,1.5,.5,1),background .2s,box-shadow .2s;pointer-events:none}
 .dsw-track button{position:relative;z-index:1;background:none;border:0;border-radius:999px;padding:9px 0;font-weight:800;font-size:.95rem;color:var(--muted);transition:color .2s;white-space:nowrap}
 .dsw-track button[aria-checked=true]{color:#1b1409}
+.mvg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0}
+.mvc{text-align:center;background:rgba(255,255,255,.05);border:1px solid rgba(232,189,90,.18);border-radius:12px;padding:4px 2px 6px;min-width:0}
+.mvc canvas{display:block;width:100%;aspect-ratio:1/1}
+.mvc b{display:block;font-size:.8rem;color:var(--ink);line-height:1.2}
+.mvc small{display:block;font-size:.62rem;color:var(--muted);line-height:1.25;padding:0 2px;min-height:2.5em}
+.mvh{margin:12px 0 4px;font-size:.95rem;color:var(--gold)}
+.mvh.sub{font-size:.82rem;color:var(--muted);margin:10px 0 2px}
+.movp .dsw{margin:6px 0}
+#mvCombo .mvr{display:flex;align-items:center;justify-content:center;gap:6px;margin:5px 0;padding:6px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(232,189,90,.18);font-size:.9rem}
+#mvCombo .mvr .k{padding:2px 9px;border-radius:999px;background:rgba(0,0,0,.4);border:1px solid var(--line);font-weight:800}
+#mvCombo .mvr .go{color:var(--gold);font-weight:900}
 .dsw-desc{margin:6px 0 0;text-align:center;font-size:.8rem;color:var(--ink);line-height:1.35}
 .diff button{padding:9px 4px 8px;font-size:.95rem;line-height:1.3;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px}
 .diff button small{font-size:.68rem;line-height:1.45;color:var(--muted);font-weight:500;white-space:nowrap}
@@ -266,6 +279,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 <!-- 開場 -->
 <section class="screen" id="scrTitle">
   <div class="panel">
+    <button id="btnIsleT" class="isleTop" type="button">🏝️ 返回島嶼</button>
     <h1>🪶 拂塵試煉</h1>
     <p class="note tsub">拂塵淨心島・體感小遊戲</p>
     <p class="tintro"><span class="nb">「時時勤拂拭，勿使惹塵埃。」</span>手機就是您的拂塵柄：<b class="nb">看清符印</b>、<span class="nb">聽到「<b>揮</b>」</span>就大揮一拂，把塵靈淨化、<b class="nb">收進淨心錄</b>。</p>
@@ -290,7 +304,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
         <button class="primary big" id="btnStart">🪶 開始試煉<small>手機當拂塵大揮</small></button>
         <button class="big" id="btnTouch">👆 用手指畫<small>不方便揮的時候</small></button>
       </div>
-      <div class="twoRow"><button id="btnDexT">📖 淨心錄</button><button id="btnIsleT">🏝️ 返回島嶼</button></div>
+      <div class="twoRow"><button id="btnDexT">📖 淨心錄</button><button id="btnMovesT">📜 招式表</button></div>
     </div>
     <p class="note" id="titleMsg"></p>
   </div>
@@ -338,6 +352,32 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     </div>
   </div>
 </section>
+<!-- 招式表：跟著難度走（入門／修行／精進三個分頁，預設停在目前的難度），每個符印有「小圓點起筆、金光帶著畫一遍」的動畫；組合技只舉三例 -->
+<section class="screen" id="scrMoves" hidden>
+  <div class="panel movp">
+    <h2>📜 招式表</h2>
+    <p class="note">畫出符印就能淨化塵靈。<b>綠色小圓點是起筆</b>，金光會帶你畫一遍。</p>
+    <div class="dsw" id="mvTabs" data-d="easy" role="tablist" aria-label="難度">
+      <div class="dsw-track"><i class="dsw-thumb" id="mvThumb"></i>
+        <button type="button" role="tab" data-d="easy">🌱 入門</button><button type="button" role="tab" data-d="normal">🪶 修行</button><button type="button" role="tab" data-d="hard">🔥 精進</button></div>
+    </div>
+    <div id="mvList"></div>
+    <h3 class="mvh">⚡ 連擊會出招</h3>
+    <div id="mvCombo"></div>
+    <p class="note" style="text-align:center">還有更多組合，等你在試煉中發現。</p>
+    <div class="row"><button class="primary big" id="mvClose">關閉</button></div>
+  </div>
+</section>
+<!-- 第一次進遊戲：開始前先認識基本招式（只跳一次） -->
+<section class="screen" id="scrMoveIntro" hidden>
+  <div class="panel">
+    <h2>🪶 先認識基本招式</h2>
+    <p>手機當拂塵柄，照畫面上的符印揮一揮。<b>綠色小圓點是起筆</b>。</p>
+    <div class="mvg" id="miGrid"></div>
+    <p class="note" style="text-align:center">更多招式，隨時按「📜 招式表」查看。</p>
+    <div class="row"><button class="primary big" id="miGo">知道了，開始試煉</button><button id="miAll">📜 看完整招式表</button></div>
+  </div>
+</section>
 <!-- 淨心錄 -->
 <section class="screen" id="scrDex" hidden>
   <div class="panel dexp">
@@ -355,7 +395,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261114.06';
+const VERSION = 'v261114.07';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1409,21 +1449,25 @@ function hurtFx(strong){
   el.className = 'hurt' + (strong ? ' strong' : '') + (reduce ? ' calm' : '');
   // 爪痕：整組比較陡，起筆寬、尾端尖，邊緣鋸齒粗糙（有缺口），三道長短不一、角度略微散開（strong 時五道）
   const n = strong ? 5 : 3, flip = r() < 0.5 ? 1 : -1, base = 64 + r() * 12, gap = Math.min(W, H) * (strong ? 0.092 : 0.1);
-  const cx = strong ? W * (0.42 + r() * 0.16) : W * (0.3 + r() * 0.4), sy = H * (0.04 + r() * 0.08), L0 = H * (0.62 + r() * 0.12);
-  const lenK = strong ? [0.8, 0.93, 1, 0.88, 0.76] : [0.84, 1, 0.9], jag = side => {   // 沿著長度取樣，半寬先長後縮，加上隨機起伏與缺口
+  const cx = (strong ? W * (0.42 + r() * 0.16) : W * (0.3 + r() * 0.4)) - flip * W * (strong ? 0.1 : 0.12), sy = H * (0.04 + r() * 0.08), L0 = H * (0.62 + r() * 0.12);
+  // 起點照「一隻手的指頭高低」：中指最長、起點最高，食指與無名指次之，大拇指與小指最短、起點最低（五道時是大拇指→小指；三道是食指、中指、無名指）；大拇指離其他指頭較遠、角度也外撇一點
+  const fh = strong ? [0.6, 0.9, 1, 0.86, 0.62] : [0.9, 1, 0.86], pos = strong ? [-2.4, -1.1, 0, 1, 2] : [-1, 0, 1], jag = side => {   // 沿著長度取樣，半寬先長後縮，加上隨機起伏與缺口
     const pts = []; for(let k = 0; k <= 15; k++){ const x = k / 15, w0 = x < 0.12 ? 0.4 + 0.6 * (x / 0.12) : Math.pow((1 - x) / 0.88, 0.9);
       let w = Math.max(0.03, w0 * (1 + (r() - 0.5) * 0.55)); if(k > 2 && k < 14 && r() < 0.22) w *= 0.45;   // 缺口
       pts.push([x * 100, side * w * 50]); } return pts; };
   let h = '';
-  for(let i = 0; i < n; i++){
-    const ang = base + (r() - 0.5) * 5 + (i - (n - 1) / 2) * 1.2, rad = ang * Math.PI / 180, dx = Math.cos(rad) * flip, dy = Math.sin(rad), px = -dy, py = dx;
-    const o = (i - (n - 1) / 2) * gap + (r() - 0.5) * gap * 0.25, x = cx + px * o, y = sy + py * o + (r() - 0.5) * H * 0.03, th3 = (strong ? 30 : 24) + r() * 10, len = L0 * lenK[i % lenK.length];
+  for(let j = 0; j < n; j++){
+    const i = flip > 0 ? j : n - 1 - j, hF = fh[i], thumb = strong && i === 0;   // flip<0 時整手左右鏡射
+    const ang = base + (r() - 0.5) * 4 + (thumb ? 6 * -flip : 0), rad = ang * Math.PI / 180, dx = Math.cos(rad) * flip, dy = Math.sin(rad), px = -dy, py = dx;
+    const o = pos[i] * gap * flip + (r() - 0.5) * gap * 0.15, drop = (1 - hF) * H * 0.2;   // drop：矮的指頭起點往下挪
+    const x = cx + px * o + dx * drop, y = sy + py * o + dy * drop, th3 = (strong ? 30 : 24) + r() * 8, len = L0 * (0.8 + 0.2 * hF) * (0.95 + r() * 0.08);
     const up = jag(-1), dn = jag(1).reverse(), poly = [...up, ...dn].map(([px2, py2]) => `${px2.toFixed(1)}% ${(50 + py2).toFixed(1)}%`).join(',');
-    h += `<div class="clw" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;width:${len.toFixed(0)}px;height:${th3.toFixed(0)}px;transform:translateY(-50%) rotate(${(flip > 0 ? ang : 180 - ang).toFixed(1)}deg)"><i class="cl2" style="--d:${(i * 0.045).toFixed(2)}s;clip-path:polygon(${poly})"></i></div>`;
+    h += `<div class="clw" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;width:${len.toFixed(0)}px;height:${th3.toFixed(0)}px;transform:translateY(-50%) rotate(${(flip > 0 ? ang : 180 - ang).toFixed(1)}deg)"><i class="cl2" style="--d:${(j * 0.045).toFixed(2)}s;clip-path:polygon(${poly})"></i></div>`;
   }
   const ns = strong ? 12 : 7;
-  for(let i = 0; i < ns; i++){ const sz = (strong ? 70 : 52) + r() * (strong ? 110 : 80); h += `<i class="st" style="left:${(r() * (W - sz)).toFixed(0)}px;top:${(r() * (H - sz)).toFixed(0)}px;width:${sz.toFixed(0)}px;height:${sz.toFixed(0)}px;--d:${(0.08 + r() * 0.3).toFixed(2)}s"></i>`; }
-  el.innerHTML = h; document.body.appendChild(el); setTimeout(() => el.remove(), strong ? 2300 : 1600);
+  let stn = '';
+  for(let i = 0; i < ns; i++){ const sz = (strong ? 70 : 52) + r() * (strong ? 110 : 80); stn += `<i class="st" style="left:${(r() * (W - sz)).toFixed(0)}px;top:${(r() * (H - sz)).toFixed(0)}px;width:${sz.toFixed(0)}px;height:${sz.toFixed(0)}px;--d:${(0.08 + r() * 0.3).toFixed(2)}s"></i>`; }
+  el.innerHTML = stn + h; document.body.appendChild(el);   // 塵斑先放（在下面），爪痕疊在上面 setTimeout(() => el.remove(), strong ? 2300 : 1600);
 }
 function okFx(){ const el = document.createElement('div'); el.className = 'okglow'; document.body.appendChild(el); setTimeout(() => el.remove(), 900); }
 function spawnText(x, y, text, color){ particles.push({ kind:'text', x, y, vx:0, vy:-0.8, life:1.4, text, color }); }
@@ -2208,8 +2252,61 @@ $('#dmClose').addEventListener('click', () => { $('#dexModal').hidden = true; de
 if(DEX_OPEN) setTimeout(openDex, 300);
 $('#btnDexT').textContent = `📖 淨心錄（${dexCount()} / ${MONS.length}）`;
 
+/* ---------------- 招式表 ---------------- */
+// 入門：方向四招＋基本符印；修行：基本＋進階（沒有方向）；精進：同修行，但「圓」分成正圓、反圓
+const MV_SETS = {
+  easy:   [['方向', ['left', 'right', 'down', 'up']], ['符印', ['v', 'circle', 'z', 'n', 'alpha', 's', 'rs', 'rz', 'rn', 'ralpha']]],
+  normal: [['基本符印', ['v', 'circle', 'z', 'n', 'alpha', 's', 'rs', 'rz', 'rn', 'ralpha']], ['進階符印', ['caret', 'inf', 'gamma', 'rho', 'delta', 'sq', 'star', 'spiral', 'tri', 'itri']]],
+  hard:   [['基本符印', ['v', 'cw', 'ccw', 'z', 'n', 'alpha', 's', 'rs', 'rz', 'rn', 'ralpha']], ['進階符印', ['caret', 'inf', 'gamma', 'rho', 'delta', 'sq', 'star', 'spiral', 'tri', 'itri']]]
+};
+const MV_COMBOS = [['left', 'right', '十方淨'], ['up', 'down', '劈山拂'], ['s', 'circle', '太極迴拂']];
+const MV_PATH = {};
+function mvPath(key){
+  if(MV_PATH[key]) return MV_PATH[key]; const tp = tplFor(key); if(!tp) return null; const pts = resample(tp, 80);
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; pts.forEach(q => { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); });
+  const k = 0.74 / Math.max(x1 - x0, y1 - y0, 0.001), cx = (x0 + x1)/2, cy = (y0 + y1)/2, P = pts.map(q => [(q[0] - cx)*k, -(q[1] - cy)*k]);
+  const cum = [0]; for(let i = 1; i < P.length; i++) cum.push(cum[i-1] + Math.hypot(P[i][0] - P[i-1][0], P[i][1] - P[i-1][1]));
+  return MV_PATH[key] = { P, cum, L: cum[cum.length - 1] };
+}
+// 一格符印：淡淡的整條路徑、綠色起點、金光沿著路徑畫一遍（2.2 秒畫、1 秒停）；系統設定「減少動態效果」就只畫靜態整條路徑
+function drawMv(cv, key, t, still){
+  const m = mvPath(key); if(!m) return; const c = cv.getContext('2d'), S = cv.width; c.clearRect(0, 0, S, S);
+  const P = m.P.map(q => [S/2 + q[0]*S*0.92, S/2 + q[1]*S*0.92]), ph = still ? 1 : (t % 3.2)/2.2, k = Math.min(1, ph), d = m.L * k;
+  // 目前畫到的位置：累積長度超過 d 的那一段裡，用內插求出筆尖
+  let tip = P[0], upto = 0; for(let i = 1; i < P.length; i++){ if(m.cum[i] >= d){ const u = (d - m.cum[i-1])/((m.cum[i] - m.cum[i-1]) || 1); tip = [P[i-1][0] + (P[i][0] - P[i-1][0])*u, P[i-1][1] + (P[i][1] - P[i-1][1])*u]; upto = i - 1; break; } tip = P[i]; upto = i; }
+  c.lineCap = 'round'; c.lineJoin = 'round';
+  c.strokeStyle = 'rgba(255,255,255,.2)'; c.lineWidth = S*0.045; c.beginPath(); P.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke();
+  c.save(); c.strokeStyle = '#ffe08a'; c.lineWidth = S*0.05; c.shadowColor = '#ffd27a'; c.shadowBlur = S*0.08; c.beginPath(); c.moveTo(P[0][0], P[0][1]); for(let i = 1; i <= upto; i++) c.lineTo(P[i][0], P[i][1]); c.lineTo(tip[0], tip[1]); c.stroke(); c.restore();
+  if(k < 1 || still){ c.save(); c.fillStyle = '#fffaf0'; c.shadowColor = '#fff1b0'; c.shadowBlur = S*0.1; c.beginPath(); c.arc(tip[0], tip[1], S*0.045, 0, 6.29); c.fill(); c.restore(); }
+  c.save(); c.fillStyle = '#7fe0a6'; c.strokeStyle = 'rgba(0,0,0,.45)'; c.lineWidth = 2; c.beginPath(); c.arc(P[0][0], P[0][1], S*0.052, 0, 6.29); c.fill(); c.stroke(); c.restore();   // 起筆
+  if(ph >= 1 || still){ const n = P.length, a = P[Math.max(0, n - 6)], b2 = P[n - 1], ang = Math.atan2(b2[1] - a[1], b2[0] - a[0]); c.save(); c.translate(b2[0], b2[1]); c.rotate(ang); c.fillStyle = '#ffe08a'; c.beginPath(); c.moveTo(S*0.07, 0); c.lineTo(-S*0.03, -S*0.06); c.lineTo(-S*0.03, S*0.06); c.closePath(); c.fill(); c.restore(); }   // 收筆的箭頭
+}
+let mvRaf = 0, mvCanv = [];
+function mvCell(key){ const sy = SYMS[key]; return `<div class="mvc"><canvas width="132" height="132" data-k="${key}"></canvas><b>${sy.name}</b><small>${sy.note || ''}</small></div>`; }
+function mvStart(){
+  cancelAnimationFrame(mvRaf); mvCanv = [...document.querySelectorAll('#scrMoves canvas, #miGrid canvas')]; const still = matchMedia('(prefers-reduced-motion: reduce)').matches, t0 = performance.now();
+  const step = now => { if($('#scrMoves').hidden && $('#scrMoveIntro').hidden) return; const t = (now - t0)/1000; mvCanv.forEach((cv, i) => drawMv(cv, cv.dataset.k, t + (i % 4)*0.12, still)); if(!still) mvRaf = requestAnimationFrame(step); };
+  mvRaf = requestAnimationFrame(step);
+}
+function mvRender(dk){
+  $('#mvTabs').dataset.d = dk; $('#mvTabs').style.setProperty('--i', DIFF_ORDER.indexOf(dk)); $('#mvTabs').querySelectorAll('button').forEach(b => { const on = b.dataset.d === dk; b.setAttribute('aria-selected', String(on)); b.setAttribute('aria-checked', String(on)); });
+  $('#mvList').innerHTML = MV_SETS[dk].map(([t, ks]) => `<h3 class="mvh sub">${t}</h3><div class="mvg">${ks.map(mvCell).join('')}</div>`).join('');
+  $('#mvCombo').innerHTML = MV_COMBOS.map(([a, b, n]) => `<div class="mvr"><span class="k">${SYMS[a].icon} ${SYMS[a].name}</span>＋<span class="k">${SYMS[b].icon} ${SYMS[b].name}</span><span class="go">→ ${n}</span></div>`).join('');
+  mvStart();
+}
+function openMoves(){ $('#scrTitle').hidden = true; $('#scrMoveIntro').hidden = true; $('#scrMoves').hidden = false; mvRender(diffKey); $('#scrMoves').scrollTop = 0; }
+$('#btnMovesT').addEventListener('click', openMoves);
+$('#mvClose').addEventListener('click', () => { $('#scrMoves').hidden = true; $('#scrTitle').hidden = false; });
+$('#mvTabs').addEventListener('click', e => { const b = e.target.closest('button'); if(b) mvRender(b.dataset.d); });
+// 第一次按「開始試煉／用手指畫」：先跳出基本招式（只跳一次）；按「知道了」才真的開始（仍是使用者點擊，感測器授權照常）
+let miPending = null;
+function gateStart(fn){ if(store.get('fuchenGame.moveIntro', false)){ fn(); return; } miPending = fn; store.set('fuchenGame.moveIntro', true);
+  $('#miGrid').innerHTML = ['left', 'right', 'down', 'up'].map(mvCell).join(''); $('#scrTitle').hidden = true; $('#scrMoveIntro').hidden = false; mvStart(); }
+$('#miGo').addEventListener('click', () => { $('#scrMoveIntro').hidden = true; const f = miPending; miPending = null; if(f) f(); });
+$('#miAll').addEventListener('click', () => { miPending = null; openMoves(); });
+
 /* ---------------- 按鈕 ---------------- */
-$('#btnStart').addEventListener('click', startGyro);
+$('#btnStart').addEventListener('click', () => gateStart(startGyro));
 // 難度滑動開關：點刻度、左右拖滑塊都可以；一次只亮一檔，滑塊顏色跟著難度變
 const DIFF_ORDER = ['easy', 'normal', 'hard'];
 const DSW_DESC = { easy: '新手友善・有提示軌跡・從上下左右開始', normal: '開場塵魔突襲・有提示軌跡・動作要夠大', hard: '兩盞心燈・兩拍・提示軌跡漸隱・圓分正反' };
@@ -2231,7 +2328,7 @@ const setDiff = k => { if(k === diffKey) { syncDiff(); return; } diffKey = k; st
 syncDiff();
 $('#btnMusic').addEventListener('click', () => { audioInit(); setSound(!soundOn()); });
 setSound(soundOn());
-$('#btnTouch').addEventListener('click', () => { audioInit(); inputMode = 'touch'; keepAwake(); $('#scrTitle').hidden = true; runGame(); });
+$('#btnTouch').addEventListener('click', () => gateStart(() => { audioInit(); inputMode = 'touch'; keepAwake(); $('#scrTitle').hidden = true; runGame(); }));
 $('#btnCalib').addEventListener('click', runCalib);
 $('#btnCalibReuse').addEventListener('click', () => { $('#scrCalib').hidden = true; runGame(); });
 $('#btnAgain').addEventListener('click', () => { $('#scrResult').hidden = true; audioInit(); runGame(); });
