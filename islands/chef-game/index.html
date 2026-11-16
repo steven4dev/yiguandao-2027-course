@@ -186,6 +186,16 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 #scrShare{background:rgba(20,13,8,.94);justify-content:center;gap:12px;overflow-y:auto;touch-action:pan-y}
 #scrShare img{max-width:100%;max-height:68vh;border-radius:6px}
 #scrShare p{color:#f3e3cf;text-align:center;margin:0;font-size:14px}
+#scrShare .btn[hidden]{display:none}
+body.clean .iconbtn{display:none}
+.invite{position:fixed;inset:0;z-index:45;background:rgba(20,13,8,.6);display:flex;align-items:flex-end;justify-content:center;padding:16px 16px max(16px,env(safe-area-inset-bottom))}
+.invite[hidden]{display:none}
+.invite .card{max-width:420px}
+.invite h3{margin:0 0 4px;font:900 20px var(--serif)}
+.invite p{margin:0 0 10px;color:var(--muted);font-size:14px}
+.invite pre{margin:0 0 12px;white-space:pre-wrap;font:600 13px/1.6 var(--sans);background:#fff1de;border-radius:12px;padding:10px 12px;color:#5d4532;-webkit-user-select:text;user-select:text}
+.invite .btns{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.invite .btns .line{grid-column:1/-1}
 #scrBig{background:rgba(20,13,8,.94);justify-content:center;gap:12px}
 #scrBig img{max-width:100%;max-height:78vh;border-radius:6px}
 .toast{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:rgba(43,29,20,.92);color:#fff;padding:9px 16px;border-radius:99px;font-size:14px;z-index:50;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;text-align:center}
@@ -284,12 +294,20 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 <section class="scr" id="scrBig" hidden><img id="bigImg" alt="封面"><div style="width:100%;max-width:420px"><button class="btn ghost" id="btnBigBack" type="button">← 回到雜誌架</button></div></section>
 <section class="scr" id="scrShare" hidden>
   <img id="shareImg" alt="封面圖">
-  <p>長按圖片「儲存」或「分享」，再傳到 LINE 給朋友 👆</p>
+  <p id="shareHint">長按圖片「儲存」或「分享」，再傳到 LINE 給朋友 👆</p>
   <div style="width:100%;max-width:420px;display:flex;flex-direction:column;gap:9px">
-    <a class="btn line" id="btnShareText" target="_blank" rel="noopener">💬 只傳文字連結到 LINE</a>
+    <a class="btn line" id="btnShareText" target="_blank" rel="noopener">💬 傳邀請連結到 LINE</a>
+    <a class="btn ghost" id="btnOpenBrowser" hidden>🌐 用瀏覽器開啟（可以直接分享圖片）</a>
     <button class="btn ghost" id="btnShareBack" type="button">← 回到封面</button>
   </div>
 </section>
+<!-- 圖片分享完：LINE 收圖片時會把文字丟掉，所以再補一段邀請文字 -->
+<div class="invite" id="invite" hidden><div class="card">
+  <h3>✅ 封面傳好了！</h3>
+  <p>再補一段邀請給朋友，他點了就能直接來玩 👇</p>
+  <pre id="inviteText"></pre>
+  <div class="btns"><a class="btn line" id="btnInviteLine" target="_blank" rel="noopener">💬 傳邀請連結到 LINE</a><button class="btn ghost sm" id="btnInviteCopy" type="button">📋 複製邀請文字</button><button class="btn ghost sm" id="btnInviteDone" type="button">完成</button></div>
+</div></div>
 <div class="toast" id="toast"></div>
 <div class="ver" id="ver"></div>
 
@@ -298,14 +316,15 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-const VER = 'v261114.04';
+const VER = 'v261116.01';
 const $ = (q) => document.querySelector(q);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const EMBED = /[?&]embed=1\b/.test(location.search) && window.parent !== window;
-const SHARE_URL = 'https://steven4dev.github.io/yiguandao-2027-course/islands/chef/';
+const SHARE_URL = 'https://steven4dev.github.io/yiguandao-2027-course/islands/chef/?openExternalBrowser=1';   // openExternalBrowser＝LINE 的官方參數：在 LINE 裡點開，直接用手機的預設瀏覽器打開
+const IN_LINE = /\bLine\//i.test(navigator.userAgent);   // LINE 內建瀏覽器：不能把圖片交給分享面板、也不能用麥克風
 $('#ver').textContent = '遊戲版本 ' + VER;
 
 /* =========================================================
@@ -855,7 +874,7 @@ camera.position.set(0, 9, 12); cam.tgt.set(0, 1, 0);
 const G = { phase: 'title', step: -1, scores: [], timeLeft: 0, prog: 0, stepT0: 0, plate: { bowl: 'cream', top: 'coconut', table: 'wood' }, filter: 'warm', photo: null, cover: null };
 const show = (id, on = true) => { const e = $(id); if (e) e.hidden = !on; };
 const screens = ['#scrTitle', '#scrIntro', '#scrPlate', '#scrShoot', '#scrCover', '#scrShelf', '#scrShare', '#scrBig'];
-function only(id) { screens.forEach((s) => show(s, s === id)); }
+function only(id) { screens.forEach((s) => show(s, s === id)); document.body.classList.toggle('clean', id === '#scrShare' || id === '#scrBig'); }   // 分享、看大圖時拿掉疊在圖上的 🏝️、🔊
 function setSets(k) { cutSet.visible = k === 'cut'; potSet.visible = k === 'pot'; tableSet.visible = k === 'table'; stove.visible = k === 'pot'; kitchen.visible = k !== 'table'; }
 function toast(t, ms = 2200) { const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), ms); }
 
@@ -1366,7 +1385,7 @@ async function buildCover() {
     c.fillStyle = '#fff'; c.fillRect(qx - 8, qy - 8, S + 16, S + 16 + 30); c.fillStyle = '#2b1d14';
     for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (q.isDark(r, k)) c.fillRect(qx + k * m, qy + r * m, Math.ceil(m), Math.ceil(m));
     c.font = `900 18px ${SANS}`; c.fillText('掃我來挑戰', qx + S / 2, qy + S + 22); } catch (e) {}
-  c.textAlign = 'left'; c.font = `700 22px ${SANS}`; c.fillStyle = 'rgba(255,255,255,.75)'; c.fillText('全真群島・廚神養成島　2027 全真社青', 62, H - 40);
+  c.textAlign = 'left'; c.font = `700 22px ${SANS}`; c.fillStyle = 'rgba(255,255,255,.75)'; c.fillText('全真群島・廚神養成島｜掃 QR code，換你當封面主廚', 62, H - 40);
   G.cover = cv; const url = cv.toDataURL('image/jpeg', 0.9); $('#coverImg').src = url;
   G.coverBlob = null; cv.toBlob((b) => { G.coverBlob = b; }, 'image/jpeg', 0.92);
 }
@@ -1380,15 +1399,34 @@ function storeCover(replace) {
   SAVE.covers = SAVE.covers.slice(0, 12);
 }
 function shareText() { const sc = total(), rank = RANKS.find(([m]) => sc >= m)[1]; return `🍳 廚神養成島・全真蔬食 VEGGIE\n我做了一碗南瓜濃湯，拿到 ${sc} 分（${rank}）！\n登上雜誌封面了 📸\n你也來當封面主廚 👇\n${SHARE_URL}`; }
+const lineUrl = () => 'https://line.me/R/msg/text/?' + encodeURIComponent(shareText());
+function copyInvite(silent) {   // 複製邀請文字（不擋住後面的分享：iPhone 要求分享一定要在點擊當下馬上呼叫）
+  const t = shareText();
+  try { navigator.clipboard.writeText(t).then(() => { if (!silent) toast('📋 邀請文字已複製，可以直接貼上'); }, () => { if (!silent) toast('複製不了，請長按上面的文字複製'); }); } catch (e) { if (!silent) toast('複製不了，請長按上面的文字複製'); }
+}
+function showInvite() { $('#inviteText').textContent = shareText(); $('#btnInviteLine').href = lineUrl(); show('#invite'); }
 $('#btnShare').addEventListener('click', async () => {
-  sfx.click(); const blob = G.coverBlob || await new Promise((r) => G.cover.toBlob(r, 'image/jpeg', 0.92)); let file = null;
-  try { file = new File([blob], `veggie-cover-${G.issue}.jpg`, { type: 'image/jpeg' }); } catch (e) {}
-  try { if (file && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text: shareText() }); return; } } catch (err) { if (err && err.name === 'AbortError') return; }
-  // 不能直接分享圖片：顯示大圖讓玩家長按儲存，電腦就直接下載
-  $('#shareImg').src = $('#coverImg').src; $('#btnShareText').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(shareText());
+  sfx.click();
+  if (!IN_LINE) {
+    const blob = G.coverBlob; let file = null;
+    if (!blob && navigator.canShare) { toast('封面還在準備，請再按一次'); return; }   // 不等它：iPhone 要求分享一定要在點擊當下馬上呼叫
+    try { if (blob) file = new File([blob], `veggie-cover-${G.issue}.jpg`, { type: 'image/jpeg' }); } catch (e) {}
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      copyInvite(true);   // 先把邀請文字放進剪貼簿：LINE 收圖片時會把文字丟掉，傳完圖可以直接貼上
+      try { await navigator.share({ files: [file], text: shareText() }); showInvite(); return; } catch (err) { if (err && err.name === 'AbortError') return; }
+    }
+  }
+  // 不能直接分享圖片（LINE 內建瀏覽器、部分舊手機）：顯示大圖讓玩家長按儲存，電腦就直接下載
+  $('#shareImg').src = $('#coverImg').src; $('#btnShareText').href = lineUrl();
+  $('#shareHint').textContent = IN_LINE ? '長按圖片「儲存」，再到 LINE 傳給朋友 👆（LINE 裡沒辦法直接分享圖片）' : '長按圖片「儲存」或「分享」，再傳到 LINE 給朋友 👆';
+  const ob = $('#btnOpenBrowser'), u = new URL(location.href); u.searchParams.delete('embed'); u.searchParams.set('openExternalBrowser', '1'); ob.hidden = !IN_LINE; ob.href = u.toString(); ob.target = '_top';
   if (!isTouch) { const a = document.createElement('a'); a.href = $('#coverImg').src; a.download = `veggie-cover-${G.issue}.jpg`; a.click(); }
   only('#scrShare');
 });
+$('#btnInviteCopy').addEventListener('click', () => { sfx.click(); copyInvite(false); });
+$('#btnInviteDone').addEventListener('click', () => { sfx.click(); show('#invite', false); });
+$('#btnInviteLine').addEventListener('click', () => setTimeout(() => show('#invite', false), 400));
+if (IN_LINE) $('#btnShare').textContent = '💾 儲存封面';
 $('#btnShareBack').addEventListener('click', () => only('#scrCover'));
 $('#btnReshoot').addEventListener('click', () => { sfx.click(); goShoot(); });
 $('#btnAgain').addEventListener('click', () => { sfx.click(); goTitle(); });
