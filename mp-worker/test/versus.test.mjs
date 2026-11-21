@@ -1,11 +1,14 @@
 // 用 `npx wrangler dev --port 8787` 啟動後執行：node test/versus.test.mjs
 import WebSocket from 'ws';
+// 在有 HTTPS 代理的環境（例如雲端開發機）測線上版：WebSocket 也要走代理
+const PROXY = process.env.HTTPS_PROXY || process.env.https_proxy || '';
+const wsAgent = PROXY && !/localhost|127\.0\.0\.1/.test(process.env.BASE || 'localhost') ? new (await import('https-proxy-agent')).HttpsProxyAgent(PROXY) : undefined;
 const BASE = process.env.BASE || 'http://localhost:8787', WS = BASE.replace(/^http/, 'ws'), ORIGIN = 'http://localhost:8765';
 let fail = 0; const ok = (c, msg) => { console.log((c ? '  ✅ ' : '  ❌ ') + msg); if (!c) fail++; };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function client(code, name) {
   const c = { msgs: [], state: null, pid: null, fx: [], errors: [] };
-  c.ws = new WebSocket(`${WS}/api/room/${code}/ws`, { headers: { Origin: ORIGIN } });
+  c.ws = new WebSocket(`${WS}/api/room/${code}/ws`, { headers: { Origin: ORIGIN }, agent: wsAgent });
   c.ready = new Promise((res, rej) => { c.ws.on('open', res); c.ws.on('error', rej); });
   c.ws.on('message', d => { const m = JSON.parse(d); c.msgs.push(m); if (m.t === 'state') c.state = m; if (m.t === 'welcome') c.pid = m.pid; if (m.t === 'fx') c.fx.push(m); if (m.t === 'error') c.errors.push(m.code); });
   c.send = o => c.ws.send(JSON.stringify(o));
@@ -77,7 +80,7 @@ ok(A.state.phase === 'done' && A.state.result.reason === 'time' && A.state.resul
 E.ws.close(); await sleep(200);
 console.log('⑨ 防護');
 const D = client(code, 'D'); await D.ready; D.ws.send('x'.repeat(3000)); await sleep(300); ok(D.ws.readyState >= 2, '超大訊息會被斷線');
-const evil = new WebSocket(`${WS}/api/room/${code}/ws`, { headers: { Origin: 'https://evil.example' } }); const evilRes = await new Promise(r => { evil.on('unexpected-response', (q, res) => r(res.statusCode)); evil.on('open', () => r('open')); evil.on('error', () => r('err')); });
+const evil = new WebSocket(`${WS}/api/room/${code}/ws`, { headers: { Origin: 'https://evil.example' }, agent: wsAgent }); const evilRes = await new Promise(r => { evil.on('unexpected-response', (q, res) => r(res.statusCode)); evil.on('open', () => r('open')); evil.on('error', () => r('err')); });
 ok(evilRes === 403, `陌生來源不能連 WebSocket（${evilRes}）`);
 
 console.log(fail ? `\n❌ ${fail} 項失敗` : '\n🎉 全部通過'); for (const c of [A, B, B2, C, D, E]) { try { c.ws.close(); } catch (e) {} } process.exit(fail ? 1 : 0);
