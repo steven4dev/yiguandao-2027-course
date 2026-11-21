@@ -137,23 +137,24 @@ function figureBack(c, o){
   const s = o.s, X = o.x, Y = o.y, W = c.canvas.width, H = c.canvas.height;
   if(OC.width !== W || OC.height !== H){ OC.width = W; OC.height = H; }
   const g = OC.getContext('2d'); g.clearRect(0, 0, W, H); g.fillStyle = '#fff'; g.strokeStyle = '#fff'; g.lineCap = 'round'; g.lineJoin = 'round';
-  // 比例照公共標誌人形：頭直徑 36、身體寬 40 高 82、手腳等粗；身高約 210（單位再乘 s）
-  // 肩膀是一條跟手臂一樣粗的圓角橫條，手臂從肩膀圓心接出去：不論手怎麼擺，肩→肘→手都連續平滑，不會凹也不會突
-  const AW = 15 * s, LW = 17 * s, T = 40 * s, shY = Y - 158.5 * s, crY = Y - 84 * s, shX = T / 2 + 3 * s + AW / 2;
+  // 比例照公共標誌人形：頭直徑 36、身體寬 40 高 82、手腳等粗。
+  // 肩膀與身體同寬（手臂中心線放在身體邊緣內側，手臂外緣剛好貼齊身體外緣）；手臂是「一整條直線」，沒有手肘：
+  // 手靠近肩膀時就縮短（像透視），不會折起來；左手像飛機一樣往旁邊平伸，不留空隙
+  const AW = 15 * s, LW = 17 * s, T = 40 * s, shY = Y - 158.5 * s, crY = Y - 84 * s, shX = T / 2 - AW / 2 + 1.5 * s, LL = 100 * s;
   g.lineWidth = AW;
-  g.beginPath(); g.moveTo(X - shX, shY); g.lineTo(X + shX, shY); g.stroke();                       // 肩膀
-  g.fillRect(X - T / 2, shY, T, crY - shY + 6 * s);                                                   // 身體
+  g.fillRect(X - T / 2, shY - AW / 2, T, crY - shY + AW / 2 + 6 * s);                                 // 身體（上緣與肩膀齊平）
   for(const k of [-1, 1]){ const lx = X + k * (LW / 2 + 1.5 * s); g.beginPath(); g.moveTo(lx - LW / 2, crY); g.lineTo(lx - LW / 2, Y - LW / 2); g.arc(lx, Y - LW / 2, LW / 2, Math.PI, 0, true); g.lineTo(lx + LW / 2, crY); g.closePath(); g.fill(); }   // 腳（下端圓）
   g.beginPath(); g.arc(X, Y - 192 * s, 18 * s, 0, TAU); g.fill();                                    // 頭
-  g.beginPath(); g.moveTo(X - shX, shY); g.lineTo(X - shX - 1 * s, shY + 78 * s); g.stroke();       // 左手自然下垂
-  // 右手（畫面右邊＝玩家的右手）：肩膀圓心 → 手肘 → 手
-  const sx = X + shX, sy = shY, arm = ik(sx, sy, o.hand[0], o.hand[1], 44 * s, 42 * s, 1);
-  g.beginPath(); g.moveTo(sx, sy); g.lineTo(arm.ex, arm.ey); g.lineTo(arm.hx, arm.hy); g.stroke();
+  g.beginPath(); g.moveTo(X - shX, shY); g.lineTo(X - shX - LL, shY); g.stroke();                     // 左手：往左平伸（飛機）
+  const sx = X + shX, sy = shY;
+  let hx = o.hand[0], hy = o.hand[1], dx = hx - sx, dy = hy - sy, dd = Math.hypot(dx, dy) || 1; const dc = Math.max(0.3 * LL, Math.min(LL, dd)); hx = sx + dx / dd * dc; hy = sy + dy / dd * dc;
+  const arm = { ex: (sx + hx) / 2, ey: (sy + hy) / 2, hx, hy };
+  g.beginPath(); g.moveTo(sx, sy); g.lineTo(hx, hy); g.stroke();                                      // 右手：肩膀 → 手（一條直線）
   // 貼上：半透明＋外發光；揮錯時偏紅；強調時右手臂另外發金光
   const col = o.mood === 'oops' ? 'rgba(255,120,110,.95)' : 'rgba(170,210,255,.95)';
   c.save(); c.globalAlpha = o.mood === 'oops' ? 0.3 : 0.2; c.shadowColor = col; c.shadowBlur = 22 * s; c.drawImage(OC, 0, 0); c.drawImage(OC, 0, 0); c.restore();   // 很淡的身體＋外發光輪廓：後面的符文看得清楚
   // 外框線：同一張剪影往四周錯開一點描出邊（讓透明人形的輪廓清楚）
-  if(o.emph){ c.save(); c.strokeStyle = `rgba(255,214,110,${0.35 * o.emph})`; c.lineWidth = 9 * s; c.lineCap = 'round'; c.shadowColor = '#ffd27a'; c.shadowBlur = 20 * s; c.beginPath(); c.moveTo(sx, sy); c.lineTo(arm.ex, arm.ey); c.lineTo(arm.hx, arm.hy); c.stroke(); c.restore(); }
+  if(o.emph){ c.save(); c.strokeStyle = `rgba(255,214,110,${0.35 * o.emph})`; c.lineWidth = 9 * s; c.lineCap = 'round'; c.shadowColor = '#ffd27a'; c.shadowBlur = 20 * s; c.beginPath(); c.moveTo(sx, sy); c.lineTo(arm.hx, arm.hy); c.stroke(); c.restore(); }
   // 手機（從背後看是機背）＋拂塵毛；手機永遠直立
   c.save(); c.translate(arm.hx, arm.hy - 6 * s); c.rotate(o.tilt || 0); c.lineCap = 'round';
   const tf = o.tuft || [0, 0];
@@ -204,9 +205,9 @@ function drawA(now){
   let t = (now / 1000) % TOTAL, i = 0; while(t > STEPS[i].t){ t -= STEPS[i].t; i++; }
   const st = STEPS[i], k = t / st.t;
   if(i !== lastStep){ lastStep = i; A.cap.innerHTML = st.cap; [...document.querySelectorAll('#dots i')].forEach((d, j) => d.classList.toggle('on', j === i)); }
-  const FX = 330, FY = 440, cx = 390, cy = 145, R = 100;   // 人形腳底、符文中心與大小（符文在人形前方）
+  const FX = 300, FY = 440, cx = 400, cy = 135, R = 75;   // 人形腳底、符文中心與大小（符文在人形前方）
   let hand = [cx - 60, cy + 40], tilt = -0.15, mood = 'happy', glow = 0, strap = false, tuft = [0, 0], pts = [], alpha = 0, bad = false, label = '', emph = 0;
-  if(st.kind === 'hold'){ const b = Math.sin(k * Math.PI); hand = [cx + 30, cy + 70 - b * 6]; tilt = 0; glow = b; label = '頂端朝上'; tuft = [Math.sin(now / 300) * 4, 0]; }
+  if(st.kind === 'hold'){ const b = Math.sin(k * Math.PI); hand = [cx - 20, cy + 80 - b * 6]; tilt = 0; glow = b; label = '頂端朝上'; tuft = [Math.sin(now / 300) * 4, 0]; }
   if(st.kind === 'swing'){
     const pre = 0.18, kk = Math.max(0, Math.min(1, (k - pre) / 0.55)), e = ease(kk), f = PATHS[st.path];
     if(k < pre){ const p = f(0); hand = [cx + p[0] * R, cy + p[1] * R]; mood = 'focus'; label = '揮！'; }
@@ -215,10 +216,10 @@ function drawA(now){
     tilt = 0.1;
   }
   if(st.kind === 'wrist'){
-    const f = PATHS.wrist, kk = Math.min(1, k / 0.6); const p = f(kk); hand = [cx + 20 + p[0] * R, cy + 70 + p[1] * R]; tilt = Math.sin(kk * TAU * 2) * 0.6; mood = kk >= 1 ? 'oops' : 'focus';
-    for(let j = 0; j <= 30; j++){ const pp = f(kk * j / 30); pts.push([cx + 20 + pp[0] * R, cy + 70 + pp[1] * R]); } alpha = 1; bad = true; label = kk >= 1 ? '動作太小' : '';
+    const f = PATHS.wrist, kk = Math.min(1, k / 0.6); const p = f(kk); hand = [cx - 10 + p[0] * R, cy + 85 + p[1] * R]; tilt = Math.sin(kk * TAU * 2) * 0.6; mood = kk >= 1 ? 'oops' : 'focus';
+    for(let j = 0; j <= 30; j++){ const pp = f(kk * j / 30); pts.push([cx - 10 + pp[0] * R, cy + 85 + pp[1] * R]); } alpha = 1; bad = true; label = kk >= 1 ? '動作太小' : '';
   }
-  if(st.kind === 'safe'){ hand = [cx + 30, cy + 74]; tilt = 0; strap = true;
+  if(st.kind === 'safe'){ hand = [cx - 20, cy + 82]; tilt = 0; strap = true;
     c.save(); c.strokeStyle = 'rgba(127,224,166,.7)'; c.setLineDash([10, 10]); c.lineWidth = 3; c.lineDashOffset = -now / 40; c.beginPath(); c.ellipse(FX, FY - 4, 190, 40, 0, 0, TAU); c.stroke(); c.restore();
     c.fillStyle = 'rgba(127,224,166,.95)'; c.font = '800 26px "PingFang TC","Noto Sans TC",sans-serif'; c.textAlign = 'center'; c.fillText('周圍 1.5 公尺', FX + 170, FY + 6); label = '掛繩'; }
   trail(c, pts, alpha, s * 0.9, bad);
@@ -227,7 +228,7 @@ function drawA(now){
     const lx = label === '揮！' ? FX - 150 : label === '頂端朝上' ? arm.hx + 110 : label === '掛繩' ? arm.hx + 90 : bad ? cx + 160 : cx + 170, ly = label === '揮！' ? 110 : label === '頂端朝上' ? arm.hy - 60 : label === '掛繩' ? arm.hy + 30 : bad ? cy + 140 : cy + 20;
     if(label === '揮！'){ c.fillStyle = 'rgba(255,255,255,.12)'; roundRect(c, lx - 60, ly - 40, 120, 56, 28); c.fill(); c.fillStyle = '#fff'; }
     c.fillText(label, lx, ly); c.restore(); }
-  if(bad && label){ c.save(); c.strokeStyle = '#ff6a5a'; c.lineWidth = 8; c.lineCap = 'round'; const x0 = cx + 160, y0 = cy + 70; c.beginPath(); c.moveTo(x0 - 26, y0 - 26); c.lineTo(x0 + 26, y0 + 26); c.moveTo(x0 + 26, y0 - 26); c.lineTo(x0 - 26, y0 + 26); c.stroke(); c.restore(); }
+  if(bad && label){ c.save(); c.strokeStyle = '#ff6a5a'; c.lineWidth = 8; c.lineCap = 'round'; const x0 = cx + 150, y0 = cy + 80; c.beginPath(); c.moveTo(x0 - 26, y0 - 26); c.lineTo(x0 + 26, y0 + 26); c.moveTo(x0 + 26, y0 - 26); c.lineTo(x0 - 26, y0 + 26); c.stroke(); c.restore(); }
 }
 
 /* ===== B：熱身畫面（角落示範小人） ===== */
@@ -263,7 +264,7 @@ function drawB(now){
   c.save(); c.fillStyle = 'rgba(8,10,14,.72)'; c.strokeStyle = demoEmph ? '#ffd27a' : 'rgba(232,189,90,.45)'; c.lineWidth = 3; roundRect(c, bx, by, bw, bh, 26); c.fill(); c.stroke();
   c.fillStyle = 'rgba(246,236,216,.75)'; c.font = '700 24px "PingFang TC","Noto Sans TC",sans-serif'; c.textAlign = 'left'; c.fillText('跟著做', bx + 18, by + 36);
   c.beginPath(); roundRect(c, bx, by, bw, bh, 26); c.clip();
-  const s = 1.0, fx = bx + bw / 2 - 10, fy = by + bh - 10, mcx = fx + 20, mcy = fy - 170 * s, mR = 92;
+  const s = 1.0, fx = bx + 130, fy = by + bh - 10, mcx = fx + 14 + 62, mcy = fy - 158.5 * s - 8, mR = 46;
   const dpts = []; for(let j = 0; j <= 24; j++){ const p = f(demoK * j / 24); dpts.push([mcx + p[0] * mR, mcy + p[1] * mR]); }
   trail(c, dpts, demoK > 0 ? 0.9 : 0, 0.8, false);
   const p = f(demoK), q = f(Math.max(0, demoK - 0.05));
