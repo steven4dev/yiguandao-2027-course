@@ -118,8 +118,6 @@ function figure(c, o){
   c.strokeStyle = '#e9dcc0'; c.lineWidth = 12 * s; c.beginPath(); c.moveTo(sx, sy); c.lineTo(arm.ex, arm.ey); c.lineTo(arm.hx, arm.hy); c.stroke();
   // 手機（直立）＋拂塵毛
   c.save(); c.translate(arm.hx, arm.hy); c.rotate(o.tilt || 0);
-  const tf = o.tuft || [0, 0];
-  for(let i = 0; i < 7; i++){ const k = (i - 3) / 3; c.strokeStyle = `rgba(255,250,236,${0.7 + 0.3 * (1 - Math.abs(k))})`; c.lineWidth = 2.2 * s; c.shadowColor = 'rgba(255,230,170,.8)'; c.shadowBlur = 6 * s; c.beginPath(); c.moveTo(k * 3 * s, -22 * s); c.quadraticCurveTo(k * 7 * s + tf[0] * 0.4, -38 * s + tf[1] * 0.3, k * 9 * s + tf[0], -52 * s + tf[1]); c.stroke(); }
   c.shadowBlur = 0;
   if(o.glow){ c.shadowColor = '#7fe0a6'; c.shadowBlur = 16 * s * o.glow; }
   c.fillStyle = '#1b1f2a'; c.strokeStyle = o.glow ? '#7fe0a6' : '#8b93a6'; c.lineWidth = 2 * s; roundRect(c, -8 * s, -22 * s, 16 * s, 30 * s, 4 * s); c.fill(); c.stroke(); c.shadowBlur = 0;
@@ -165,8 +163,6 @@ function figureBack(c, o){
   if(o.emph){ c.save(); c.strokeStyle = `rgba(255,214,110,${0.35 * o.emph})`; c.lineWidth = 9 * s; c.lineCap = 'round'; c.shadowColor = '#ffd27a'; c.shadowBlur = 20 * s; c.beginPath(); c.moveTo(sx, sy); c.lineTo(arm.hx, arm.hy); c.stroke(); c.restore(); }
   // 手機（從背後看是機背）＋拂塵毛；手機永遠直立
   c.save(); c.translate(arm.hx, arm.hy - 6 * s); c.rotate(o.tilt || 0); c.lineCap = 'round';
-  const tf = o.tuft || [0, 0];
-  for(let i = 0; i < 7; i++){ const k = (i - 3) / 3; c.strokeStyle = `rgba(255,250,236,${0.7 + 0.3 * (1 - Math.abs(k))})`; c.lineWidth = 2.2 * s; c.shadowColor = 'rgba(255,230,170,.8)'; c.shadowBlur = 6 * s; c.beginPath(); c.moveTo(k * 3 * s, -20 * s); c.quadraticCurveTo(k * 7 * s + tf[0] * 0.4, -36 * s + tf[1] * 0.3, k * 9 * s + tf[0], -50 * s + tf[1]); c.stroke(); }
   c.shadowBlur = 0; if(o.glow){ c.shadowColor = '#7fe0a6'; c.shadowBlur = 16 * s * o.glow; }
   c.fillStyle = '#1b1f2a'; c.strokeStyle = o.glow ? '#7fe0a6' : '#c9ced9'; c.lineWidth = 2 * s; roundRect(c, -8 * s, -20 * s, 16 * s, 30 * s, 4 * s); c.fill(); c.stroke(); c.shadowBlur = 0;
   c.fillStyle = '#4a5063'; c.beginPath(); c.arc(-3 * s, -14 * s, 2.4 * s, 0, TAU); c.fill();   // 機背的鏡頭
