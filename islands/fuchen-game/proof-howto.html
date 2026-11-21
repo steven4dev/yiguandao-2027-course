@@ -139,19 +139,25 @@ function figureBack(c, o){
   const s = o.s, X = o.x, Y = o.y, W = c.canvas.width, H = c.canvas.height;
   if(OC.width !== W || OC.height !== H){ OC.width = W; OC.height = H; }
   const g = OC.getContext('2d'); g.clearRect(0, 0, W, H); g.fillStyle = '#fff'; g.strokeStyle = '#fff'; g.lineCap = 'round'; g.lineJoin = 'round';
-  // 造型照公共標誌人形（第二張參考圖）：頭大、身體短而寬、肩線斜斜連成手臂（沒有接縫）、手臂粗短往兩側斜下張開、腿長微外八。
-  // 單位 s：總高約 210。左手是靜止的斜下張開；右手是「一整條直線」（沒有手肘，靠近肩膀時縮短像透視），根部與左邊一樣斜著長在肩上。
+  // 造型照公共標誌人形（第二張參考圖）：整體是「一個外輪廓」，所有轉角都順，沒有任何內凹缺口。
+  // 肩膀：從頸側斜肩直接順到手臂上緣（多一塊斜肩多邊形補掉三頭肌的凹）；腰：身體往下直接延伸成腿，腿外緣與身體側邊對齊再微微外張（腰側不缺口）。
+  // 左手是靜止的斜下張開；右手是「一整條直線」（沒有手肘，靠近肩膀時縮短像透視）。
   const AW = 21 * s, LW = 27 * s, T = 56 * s, shY = Y - 146 * s, crY = shY + 66 * s, LL = 100 * s;
-  const ax = T / 2 - 9 * s, ay = shY + 10 * s;                                                          // 肩膀的手臂起點（左右對稱）
-  g.lineWidth = AW;
-  roundRect(g, X - T / 2, shY, T, crY - shY + 4 * s, 15 * s); g.fill();                                // 身體（上方兩角圓）
-  g.lineWidth = LW; for(const k of [-1, 1]){ g.beginPath(); g.moveTo(X + k * 11 * s, crY - 4 * s); g.lineTo(X + k * 22 * s, Y - LW / 2); g.stroke(); }   // 兩腿微外八，底端圓
-  g.beginPath(); g.arc(X, shY - 36 * s, 28 * s, 0, TAU); g.fill();                                     // 頭
-  g.lineWidth = AW; g.beginPath(); g.moveTo(X - ax, ay); g.lineTo(X - ax - 44 * s, ay + 54 * s); g.stroke();   // 左手：斜下張開
+  const ax = T / 2 - 9 * s, ay = shY + 10 * s;
   const sx = X + ax, sy = ay;
   let hx = o.hand[0], hy = o.hand[1], dx = hx - sx, dy = hy - sy, dd = Math.hypot(dx, dy) || 1; const dc = Math.max(0.7 * LL, Math.min(LL, dd)); hx = sx + dx / dd * dc; hy = sy + dy / dd * dc;
   const arm = { ex: (sx + hx) / 2, ey: (sy + hy) / 2, hx, hy };
-  g.beginPath(); g.moveTo(sx, sy); g.lineTo(hx, hy); g.stroke();                                      // 右手：肩 → 手（一條直線）
+  const slope = (k, ox, oy, ux, uy) => {   // k：+1 右、-1 左；(ox,oy)：手臂根部；(ux,uy)：手臂方向（單位向量）
+    const nx = k * uy, ny = -k * ux, top = [X + k * (T / 2 - 14 * s), shY], tip = [ox + nx * AW / 2 + ux * 36 * s, oy + ny * AW / 2 + uy * 36 * s];
+    g.beginPath(); g.moveTo(top[0], top[1]); g.lineTo(tip[0], tip[1]); g.lineTo(ox + ux * 10 * s, oy + uy * 10 * s); g.lineTo(X + k * (T / 2 - 20 * s), shY + 34 * s); g.closePath(); g.fill(); };
+  g.lineWidth = LW; g.lineJoin = 'round'; g.lineCap = 'round';
+  for(const k of [-1, 1]){ g.beginPath(); g.moveTo(X + k * (T / 2 - LW / 2), crY - 6 * s); g.lineTo(X + k * (T / 2 - LW / 2 + 9 * s), Y - LW / 2); g.stroke(); }   // 兩腿：外緣與身體側邊對齊，往下微外張，底端圓
+  g.beginPath(); g.moveTo(X - T / 2 + 12 * s, shY); g.lineTo(X + T / 2 - 12 * s, shY); g.lineTo(X + T / 2, shY + 12 * s); g.lineTo(X + T / 2, crY + 4 * s); g.lineTo(X - T / 2, crY + 4 * s); g.lineTo(X - T / 2, shY + 12 * s); g.closePath(); g.fill();   // 身體（上緣兩角圓一點）
+  g.beginPath(); g.arc(X, shY - 36 * s, 28 * s, 0, TAU); g.fill();                                    // 頭
+  g.lineWidth = AW;
+  const lux = -44, luy = 54, ll = Math.hypot(lux, luy), lx0 = X - ax, ly0 = ay;                         // 左手：斜下張開
+  g.beginPath(); g.moveTo(lx0, ly0); g.lineTo(lx0 + lux * s, ly0 + luy * s); g.stroke(); slope(-1, lx0, ly0, lux / ll, luy / ll);
+  g.beginPath(); g.moveTo(sx, sy); g.lineTo(hx, hy); g.stroke(); slope(1, sx, sy, dx / dd, dy / dd);    // 右手：肩 → 手（一條直線）
   // 貼上：半透明＋外發光；揮錯時偏紅；強調時右手臂另外發金光
   const col = o.mood === 'oops' ? 'rgba(255,120,110,.95)' : 'rgba(170,210,255,.95)';
   c.save(); c.globalAlpha = o.mood === 'oops' ? 0.3 : 0.2; c.shadowColor = col; c.shadowBlur = 22 * s; c.drawImage(OC, 0, 0); c.drawImage(OC, 0, 0); c.restore();   // 很淡的身體＋外發光輪廓：後面的符文看得清楚
