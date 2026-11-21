@@ -55,7 +55,7 @@ A.send({ t: 'ping', c: 7 }); await sleep(150); const pong = A.msgs.find(m => m.t
 
 console.log('⑤ 對戰事件');
 await sleep(A.state.startAt - Date.now() + 600);
-A.send({ t: 'cur', n: 2 }); A.send({ t: 'ev', ok: true, stage: 2, multi: true, fam: 'xiang', score: 160, lives: 3, hits: 1, combo: 1 });
+A.send({ t: 'cur', n: 2 }); A.send({ t: 'path', paths: [[[0, 0], [50, 50], [999, -999]], null, 'x', 'y'], ok: [true, false], why: ['', '動作太小很長很長很長很長很長'] }); A.send({ t: 'ev', ok: true, stage: 2, multi: true, fam: 'xiang', score: 160, lives: 3, hits: 1, combo: 1 });
 await B.until(s => s.players[0].score === 160); ok(B.state.players[0].score === 160 && B.state.players[0].last === '連擊淨化', '乙看到甲的分數與動作');
 await sleep(150); ok(B.fx.length === 1 && B.fx[0].fam === 'xiang' && B.fx[0].from === 0, '甲打中塵妖連擊 → 乙收到「干擾」（香系）');
 ok(A.fx.length === 0, '干擾只送給對手，不回送自己');
@@ -68,6 +68,9 @@ ok(B.state.result && B.state.result.players[0].score === A.state.players[0].scor
 
 ok(W.msgs.some(m => m.t === 'evx' && m.slot === 0 && m.ok) && W.msgs.some(m => m.t === 'evx' && m.slot === 1 && !m.ok), '觀戰者收到雙方的打中／失敗事件');
 ok(W.msgs.some(m => m.t === 'fx' && m.from === 0), '觀戰者也看到干擾');
+{ const pm = W.msgs.find(m => m.t === 'path'); ok(pm && pm.slot === 0 && pm.paths.length === 3 && pm.paths[0][2][0] === 150 && pm.paths[0][2][1] === -150 && pm.paths[1] === null && pm.why[1].length <= 12, '觀戰者收到揮舞路徑（格式被清理、數值被限制）'); }
+ok(!A.msgs.some(m => m.t === 'path') && !B.msgs.some(m => m.t === 'path'), '路徑只給觀戰者，不送給玩家');
+ok(W.msgs.some(m => m.t === 'evx' && m.slot === 1 && m.lives === 0), '觀戰者知道對方最後一盞心燈熄了（加重爪痕用）');
 ok(W.msgs.some(m => m.t === 'cur' && m.slot === 0 && m.n === 2), '觀戰者收到「甲開始打第 3 隻」');
 ok(W.state.phase === 'done' && W.state.result.winner === 0, '觀戰者看到結算');
 console.log('⑥ 再來一局');

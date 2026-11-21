@@ -14,12 +14,13 @@ Cloudflare Worker + Durable Objects。一個房間＝一個 Durable Object（名
 | → | `join {pid?, name, avatar}` | 進房；重連時帶回通行碼 `pid` 拿回原位置 |
 | → | `join {watch:true}` | 觀戰（投影用），不佔位置、最多 8 個，只收廣播 |
 | → | `cur {n}` | 玩家開始打第幾隻（轉給觀戰者） |
+| → | `path {paths, ok, why}` | 每一揮的路徑（最多 3 揮×40 點，-150～150 整數），只轉給觀戰者 |
 | → | `set {diff}` | 房主改難度（easy／normal／hard） |
 | → | `profile {name, avatar}` | 改暱稱、頭像 |
 | → | `ready {ready}` | 準備／取消；兩人都準備就開打 |
 | → | `ev {ok, stage, multi, fam, score, lives, hits, combo}` | 每打完一隻回報一次 |
 | → | `timeup` / `rematch` / `leave` / `ping {c}` | 時間到、再來一局、離開、校時 |
-| ← | `welcome {pid, slot}` / `state {...}` / `fx {from, fam, stage, multi}` / 觀戰者另收 `cur {slot, n}`、`evx {slot, ok, stage, multi, fam}` / `pong {c, s}` / `error {code}` | 快照、干擾、校時、錯誤（full／started） |
+| ← | `welcome {pid, slot}` / `state {...}` / `fx {from, fam, stage, multi}` / 觀戰者另收 `cur {slot, n}`、`evx {slot, ok, stage, multi, fam, lives}`、`path {slot, paths, ok, why}` / `pong {c, s}` / `error {code}` | 快照、干擾、校時、錯誤（full／started） |
 
 HTTP：`POST /api/create` 建房 → `{code}`；`GET /api/room/<房號>` 查房；`GET /api/room/<房號>/ws` 升級成 WebSocket（只接受 `ALLOWED_ORIGINS` 裡的網頁來源）。
 

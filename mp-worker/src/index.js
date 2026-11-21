@@ -113,6 +113,11 @@ export class Room extends DurableObject {
       }
       await this.save(); this.broadcast(); return;
     }
+    if (m.t === 'path' && s.phase === 'playing' && p.alive) {   // 玩家每一揮的路徑（最多 3 揮、每揮 40 點）：檢查格式後只轉給觀戰者
+      const clean = v => Array.isArray(v) ? v.slice(0, 40).filter(q => Array.isArray(q) && q.length === 2).map(q => [Math.max(-150, Math.min(150, Number(q[0]) | 0)), Math.max(-150, Math.min(150, Number(q[1]) | 0))]) : null;
+      const paths = Array.isArray(m.paths) ? m.paths.slice(0, 3).map(clean) : [], ok = Array.isArray(m.ok) ? m.ok.slice(0, 3).map(Boolean) : [], why = Array.isArray(m.why) ? m.why.slice(0, 3).map(w => String(w || '').slice(0, 12)) : [];
+      this.toWatchers({ t: 'path', slot: p.slot, paths, ok, why }); return;
+    }
     if (m.t === 'cur' && s.phase === 'playing' && p.alive) { p.cur = { n: Math.max(0, Math.min(999, Number(m.n) | 0)), at: Date.now() }; this.toWatchers({ t: 'cur', slot: p.slot, n: p.cur.n }); return; }
     if (m.t === 'ev' && s.phase === 'playing' && Date.now() >= s.startAt - 500 && p.alive) {
       // 簡單的合理性檢查：心燈只會減、分數只會加、單次加分有上限
@@ -120,7 +125,7 @@ export class Room extends DurableObject {
       p.lives = lives; p.score = score; p.hits = Math.max(p.hits, Math.min(999, Number(m.hits) | 0)); p.maxCombo = Math.max(p.maxCombo, Math.min(99, Number(m.combo) | 0));
       const stage = Math.max(1, Math.min(3, Number(m.stage) | 0)), multi = !!m.multi, fam = FAMS.includes(m.fam) ? m.fam : 'se';
       p.last = m.ok ? (multi ? '連擊淨化' : stage === 3 ? '淨化塵魔' : stage === 2 ? '淨化塵妖' : '淨化塵精') : '被塵靈抓到';
-      this.toWatchers({ t: 'evx', slot: p.slot, ok: !!m.ok, stage, multi, fam });
+      this.toWatchers({ t: 'evx', slot: p.slot, ok: !!m.ok, stage, multi, fam, lives: p.lives });
       if (m.ok && (stage >= 2 || multi)) { const opp = Object.values(s.players).find(q => q.pid !== p.pid); const fx = { t: 'fx', from: p.slot, fam, stage, multi }; if (opp) this.sendTo(opp.slot, fx); this.toWatchers(fx); }
       if (p.lives <= 0) p.alive = false;
       const alive = Object.values(s.players).filter(q => q.alive);
