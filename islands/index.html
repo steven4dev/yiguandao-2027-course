@@ -5320,6 +5320,7 @@ const fcTester = (() => {
   } catch (e) { return false; }
 })();
 const fcOpen = FC_LIVE || fcTester;
+const FC_ROOM = (() => { try { const r = new URLSearchParams(location.search).get('room'); return r && /^[A-Za-z0-9]{5}$/.test(r) ? r.toUpperCase() : ''; } catch (e) { return ''; } })();   // 雙人對戰的邀請連結 ?room=房號：入口按鈕改成「加入對戰房間」
 const FC_ANG = (135 * Math.PI) / 180, FC_R = 13;
 const fcIsl = makeIsland('fuchen', FC_R, Math.sin(FC_ANG) * 108, Math.cos(FC_ANG) * 108, 'fuchen');
 {
@@ -6932,7 +6933,7 @@ function renderPanel() {
   } else if (isl && isl.kind === 'fuchen') {
     title = '拂塵淨心島'; info = '拂塵試煉・體感打怪';
     html = `<header><span class="eyebrow">外海・${FC_LIVE ? '拂塵試煉' : '測試中'}</span><h2>🪶 拂塵淨心島</h2><p class="sub">時時勤拂拭，勿使惹塵埃——手機就是拂塵柄，大揮一拂，把六塵精淨化收進淨心錄</p></header>
-      <div class="cta"><p>${fcTester && !FC_LIVE ? '🔧 測試中：只有這支手機看得到入口，其他人看到的是施工圍籬。<br>' : ''}看清符印、等倒數、聽到「揮！」就整隻手臂揮出去；塵精一揮、塵妖要兩連擊，最後收服無明塵王。收服的塵靈會收進「淨心錄」。</p><a href="fuchen-game/" id="fcGo">🎮 進入拂塵試煉</a></div>
+      <div class="cta"><p>${fcTester && !FC_LIVE ? '🔧 測試中：只有這支手機看得到入口，其他人看到的是施工圍籬。<br>' : ''}看清符印、等倒數、聽到「揮！」就整隻手臂揮出去；塵精一揮、塵妖要兩連擊，最後收服無明塵王。收服的塵靈會收進「淨心錄」。</p><a href="fuchen-game/${FC_ROOM ? '?room=' + FC_ROOM : ''}" id="fcGo">${FC_ROOM ? '⚔️ 加入對戰房間 ' + FC_ROOM : '🎮 進入拂塵試煉'}</a></div>
       <p class="note">島中央是一座岩石堆成的石丘，一支巨大的拂塵像石中劍一樣插在頂上的岩縫裡，岩縫透出金光：黑色握把、竹節木柄、網罩圓頭、紅色綁繩，白色馬尾從頂上垂下來。外圈一圈踏石步道，十二尊塵靈石雕面向拂塵：六系各一尊原版——色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），旁邊各站一尊「異相」代表，台座石牌寫著名字和心性。</p>
       ${fcTester && !FC_LIVE ? '<p class="note"><a class="cta-link" href="fuchen-lab/">🧪 揮符實驗室（測感測器）</a>　<a class="cta-link" href="?fuchen=off#fuchen">結束測試</a></p>' : ''}
       <button class="back" data-go="temple">← 回到全真島</button>`;
