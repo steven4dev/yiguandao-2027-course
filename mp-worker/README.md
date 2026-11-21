@@ -30,7 +30,12 @@ node test/versus.test.mjs                                  # 約 40 項檢查：
 ```
 遊戲在本機（`localhost`）會自動連 `http://localhost:8787`。
 
-## 部署（需要 Cloudflare 帳號，請本人操作）
+## 目前部署
+- 網址：`https://fuchen-versus.yiguandao2027.workers.dev`（2026/11/21 部署，帳號子網域 yiguandao2027）。
+- 重新部署（改了 `src/index.js` 之後）：`npx wrangler deploy`（需要有 Workers 編輯權限的 API 金鑰，或先 `npx wrangler login`）。
+- 測線上版：`BASE=https://fuchen-versus.yiguandao2027.workers.dev node test/versus.test.mjs`（「時間到」那一段要等 2 分鐘，可先跳過）。
+
+## 第一次部署（需要 Cloudflare 帳號，請本人操作）
 1. 到 https://dash.cloudflare.com 註冊免費帳號。
 2. `cd mp-worker && npm install && npx wrangler login`（瀏覽器登入授權）。
 3. `npx wrangler deploy`，成功後會印出網址，長得像 `https://fuchen-versus.<你的子網域>.workers.dev`。
