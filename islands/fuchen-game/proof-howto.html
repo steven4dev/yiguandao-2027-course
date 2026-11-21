@@ -137,19 +137,19 @@ function figureBack(c, o){
   const s = o.s, X = o.x, Y = o.y, W = c.canvas.width, H = c.canvas.height;
   if(OC.width !== W || OC.height !== H){ OC.width = W; OC.height = H; }
   const g = OC.getContext('2d'); g.clearRect(0, 0, W, H); g.fillStyle = '#fff'; g.strokeStyle = '#fff'; g.lineCap = 'round'; g.lineJoin = 'round';
-  // 比例照公共標誌人形：頭直徑 36、身體寬 40 高 82、手腳等粗。
-  // 肩膀與身體同寬（手臂中心線放在身體邊緣內側，手臂外緣剛好貼齊身體外緣）；手臂是「一整條直線」，沒有手肘：
-  // 手靠近肩膀時就縮短（像透視），不會折起來；左手像飛機一樣往旁邊平伸，不留空隙
-  const AW = 15 * s, LW = 17 * s, T = 40 * s, shY = Y - 158.5 * s, crY = Y - 84 * s, shX = T / 2 - AW / 2 + 1.5 * s, LL = 100 * s;
+  // 造型照公共標誌人形（第二張參考圖）：頭大、身體短而寬、肩線斜斜連成手臂（沒有接縫）、手臂粗短往兩側斜下張開、腿長微外八。
+  // 單位 s：總高約 210。左手是靜止的斜下張開；右手是「一整條直線」（沒有手肘，靠近肩膀時縮短像透視），根部與左邊一樣斜著長在肩上。
+  const AW = 21 * s, LW = 27 * s, T = 56 * s, shY = Y - 146 * s, crY = shY + 66 * s, LL = 100 * s;
+  const ax = T / 2 - 9 * s, ay = shY + 10 * s;                                                          // 肩膀的手臂起點（左右對稱）
   g.lineWidth = AW;
-  g.fillRect(X - T / 2, shY - AW / 2, T, crY - shY + AW / 2 + 6 * s);                                 // 身體（上緣與肩膀齊平）
-  for(const k of [-1, 1]){ const lx = X + k * (LW / 2 + 1.5 * s); g.beginPath(); g.moveTo(lx - LW / 2, crY); g.lineTo(lx - LW / 2, Y - LW / 2); g.arc(lx, Y - LW / 2, LW / 2, Math.PI, 0, true); g.lineTo(lx + LW / 2, crY); g.closePath(); g.fill(); }   // 腳（下端圓）
-  g.beginPath(); g.arc(X, Y - 192 * s, 18 * s, 0, TAU); g.fill();                                    // 頭
-  g.beginPath(); g.moveTo(X - shX, shY); g.lineTo(X - shX - LL, shY); g.stroke();                     // 左手：往左平伸（飛機）
-  const sx = X + shX, sy = shY;
+  roundRect(g, X - T / 2, shY, T, crY - shY + 4 * s, 15 * s); g.fill();                                // 身體（上方兩角圓）
+  g.lineWidth = LW; for(const k of [-1, 1]){ g.beginPath(); g.moveTo(X + k * 11 * s, crY - 4 * s); g.lineTo(X + k * 22 * s, Y - LW / 2); g.stroke(); }   // 兩腿微外八，底端圓
+  g.beginPath(); g.arc(X, shY - 36 * s, 28 * s, 0, TAU); g.fill();                                     // 頭
+  g.lineWidth = AW; g.beginPath(); g.moveTo(X - ax, ay); g.lineTo(X - ax - 44 * s, ay + 54 * s); g.stroke();   // 左手：斜下張開
+  const sx = X + ax, sy = ay;
   let hx = o.hand[0], hy = o.hand[1], dx = hx - sx, dy = hy - sy, dd = Math.hypot(dx, dy) || 1; const dc = Math.max(0.3 * LL, Math.min(LL, dd)); hx = sx + dx / dd * dc; hy = sy + dy / dd * dc;
   const arm = { ex: (sx + hx) / 2, ey: (sy + hy) / 2, hx, hy };
-  g.beginPath(); g.moveTo(sx, sy); g.lineTo(hx, hy); g.stroke();                                      // 右手：肩膀 → 手（一條直線）
+  g.beginPath(); g.moveTo(sx, sy); g.lineTo(hx, hy); g.stroke();                                      // 右手：肩 → 手（一條直線）
   // 貼上：半透明＋外發光；揮錯時偏紅；強調時右手臂另外發金光
   const col = o.mood === 'oops' ? 'rgba(255,120,110,.95)' : 'rgba(170,210,255,.95)';
   c.save(); c.globalAlpha = o.mood === 'oops' ? 0.3 : 0.2; c.shadowColor = col; c.shadowBlur = 22 * s; c.drawImage(OC, 0, 0); c.drawImage(OC, 0, 0); c.restore();   // 很淡的身體＋外發光輪廓：後面的符文看得清楚
@@ -165,7 +165,7 @@ function figureBack(c, o){
   if(o.strap){ c.strokeStyle = `rgba(255,214,110,${0.6 + 0.4 * Math.sin(o.t * 8)})`; c.lineWidth = 2.5 * s; c.shadowColor = '#ffd27a'; c.shadowBlur = 10 * s; c.beginPath(); c.moveTo(0, 10 * s); c.quadraticCurveTo(14 * s, 24 * s, 4 * s, 28 * s); c.quadraticCurveTo(-10 * s, 24 * s, 0, 10 * s); c.stroke(); c.shadowBlur = 0; }
   c.restore();
   // 揮錯：頭上打個紅叉
-  if(o.mood === 'oops'){ c.save(); c.strokeStyle = '#ff6a5a'; c.lineWidth = 5 * s; c.lineCap = 'round'; const qx = X, qy = Y - 228 * s; c.beginPath(); c.moveTo(qx - 9 * s, qy - 9 * s); c.lineTo(qx + 9 * s, qy + 9 * s); c.moveTo(qx + 9 * s, qy - 9 * s); c.lineTo(qx - 9 * s, qy + 9 * s); c.stroke(); c.restore(); }
+  if(o.mood === 'oops'){ c.save(); c.strokeStyle = '#ff6a5a'; c.lineWidth = 5 * s; c.lineCap = 'round'; const qx = X, qy = Y - 232 * s; c.beginPath(); c.moveTo(qx - 9 * s, qy - 9 * s); c.lineTo(qx + 9 * s, qy + 9 * s); c.moveTo(qx + 9 * s, qy - 9 * s); c.lineTo(qx - 9 * s, qy + 9 * s); c.stroke(); c.restore(); }
   return arm;
 }
 function roundRect(c, x, y, w, h, r){ c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
@@ -264,7 +264,7 @@ function drawB(now){
   c.save(); c.fillStyle = 'rgba(8,10,14,.72)'; c.strokeStyle = demoEmph ? '#ffd27a' : 'rgba(232,189,90,.45)'; c.lineWidth = 3; roundRect(c, bx, by, bw, bh, 26); c.fill(); c.stroke();
   c.fillStyle = 'rgba(246,236,216,.75)'; c.font = '700 24px "PingFang TC","Noto Sans TC",sans-serif'; c.textAlign = 'left'; c.fillText('跟著做', bx + 18, by + 36);
   c.beginPath(); roundRect(c, bx, by, bw, bh, 26); c.clip();
-  const s = 1.0, fx = bx + 130, fy = by + bh - 10, mcx = fx + 14 + 62, mcy = fy - 158.5 * s - 8, mR = 46;
+  const s = 1.0, fx = bx + 120, fy = by + bh - 10, mcx = fx + 19 + 60, mcy = fy - 144 * s, mR = 46;
   const dpts = []; for(let j = 0; j <= 24; j++){ const p = f(demoK * j / 24); dpts.push([mcx + p[0] * mR, mcy + p[1] * mR]); }
   trail(c, dpts, demoK > 0 ? 0.9 : 0, 0.8, false);
   const p = f(demoK), q = f(Math.max(0, demoK - 0.05));
