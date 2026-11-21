@@ -133,6 +133,8 @@ function figure(c, o){
 /* ===== 透明人形（背對畫面）：公共標誌那種簡潔人形，面朝畫面裡面揮，左右跟玩家自己一樣；
    身體半透明，後面揮出的符文看得到。先在暫存畫布畫出實心剪影，再以半透明＋外發光貼上（重疊處不會變深） ===== */
 const OC = document.createElement('canvas');
+// 右手實際會畫到哪裡（跟 figureBack 同一套算法：根部在肩上，長度限制在 0.7～1 倍手臂長）
+function armTip(X, Y, s, hand){ const T = 56 * s, ax = T / 2 - 9 * s, sx = X + ax, sy = Y - 146 * s + 10 * s, LL = 100 * s, dx = hand[0] - sx, dy = hand[1] - sy, dd = Math.hypot(dx, dy) || 1, dc = Math.max(0.7 * LL, Math.min(LL, dd)); return [sx + dx / dd * dc, sy + dy / dd * dc]; }
 function figureBack(c, o){
   const s = o.s, X = o.x, Y = o.y, W = c.canvas.width, H = c.canvas.height;
   if(OC.width !== W || OC.height !== H){ OC.width = W; OC.height = H; }
@@ -147,7 +149,7 @@ function figureBack(c, o){
   g.beginPath(); g.arc(X, shY - 36 * s, 28 * s, 0, TAU); g.fill();                                     // 頭
   g.lineWidth = AW; g.beginPath(); g.moveTo(X - ax, ay); g.lineTo(X - ax - 44 * s, ay + 54 * s); g.stroke();   // 左手：斜下張開
   const sx = X + ax, sy = ay;
-  let hx = o.hand[0], hy = o.hand[1], dx = hx - sx, dy = hy - sy, dd = Math.hypot(dx, dy) || 1; const dc = Math.max(0.3 * LL, Math.min(LL, dd)); hx = sx + dx / dd * dc; hy = sy + dy / dd * dc;
+  let hx = o.hand[0], hy = o.hand[1], dx = hx - sx, dy = hy - sy, dd = Math.hypot(dx, dy) || 1; const dc = Math.max(0.7 * LL, Math.min(LL, dd)); hx = sx + dx / dd * dc; hy = sy + dy / dd * dc;
   const arm = { ex: (sx + hx) / 2, ey: (sy + hy) / 2, hx, hy };
   g.beginPath(); g.moveTo(sx, sy); g.lineTo(hx, hy); g.stroke();                                      // 右手：肩 → 手（一條直線）
   // 貼上：半透明＋外發光；揮錯時偏紅；強調時右手臂另外發金光
@@ -216,8 +218,11 @@ function drawA(now){
     tilt = 0.1;
   }
   if(st.kind === 'wrist'){
-    const f = PATHS.wrist, kk = Math.min(1, k / 0.6); const p = f(kk); hand = [cx - 10 + p[0] * R, cy + 85 + p[1] * R]; tilt = Math.sin(kk * TAU * 2) * 0.6; mood = kk >= 1 ? 'oops' : 'focus';
-    for(let j = 0; j <= 30; j++){ const pp = f(kk * j / 30); pts.push([cx - 10 + pp[0] * R, cy + 85 + pp[1] * R]); } alpha = 1; bad = true; label = kk >= 1 ? '動作太小' : '';
+    // 只動手腕：手臂定住（跟「直立握好」同一個位置），手機繞著手腕輕輕甩兩下（±0.45 弧度、先慢後快再回正），軌跡只有一小段
+    const kk = Math.min(1, k / 0.62), flick = Math.sin(kk * Math.PI * 2) * Math.sin(Math.min(1, kk * 1.4) * Math.PI) * 0.45;
+    hand = [cx - 20, cy + 82]; const tip = armTip(FX, FY, 1.75, hand); tilt = flick; mood = kk >= 1 ? 'oops' : 'focus';
+    for(let j = 0; j <= 14; j++){ const a2 = Math.sin((kk * j / 14) * Math.PI * 2) * 0.45; pts.push([tip[0] + Math.sin(a2) * 64, tip[1] - 6 - Math.cos(a2) * 64 + 10]); }
+    alpha = kk > 0.05 ? 1 : 0; bad = true; label = kk >= 1 ? '動作太小' : '';
   }
   if(st.kind === 'safe'){ hand = [cx - 20, cy + 82]; tilt = 0; strap = true;
     c.save(); c.strokeStyle = 'rgba(127,224,166,.7)'; c.setLineDash([10, 10]); c.lineWidth = 3; c.lineDashOffset = -now / 40; c.beginPath(); c.ellipse(FX, FY - 4, 190, 40, 0, 0, TAU); c.stroke(); c.restore();
