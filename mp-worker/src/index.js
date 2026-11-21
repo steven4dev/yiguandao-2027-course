@@ -5,7 +5,7 @@
 import { DurableObject } from 'cloudflare:workers';
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // 去掉容易看錯的 I、O、0、1
-const CODE_LEN = 5, MAX_PLAYERS = 2, IDLE_MS = 30 * 60 * 1000, DC_GRACE_MS = 15 * 1000, COUNTDOWN_MS = 4500, GAME_MS = 120 * 1000, END_GRACE_MS = 6000;
+const CODE_LEN = 5, MAX_PLAYERS = 2, MAX_WATCHERS = 8, IDLE_MS = 30 * 60 * 1000, DC_GRACE_MS = 15 * 1000, COUNTDOWN_MS = 4500, GAME_MS = 120 * 1000, END_GRACE_MS = 6000;
 const LIVES = { easy: 3, normal: 3, hard: 2 };
 const FAMS = ['se', 'sheng', 'xiang', 'wei', 'chu', 'fa'];
 const cors = (env, req) => { const o = req.headers.get('Origin') || '', ok = allowed(env, o); return { 'Access-Control-Allow-Origin': ok ? o : 'null', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Vary': 'Origin' }; };
@@ -65,9 +65,11 @@ export class Room extends DurableObject {
   snapshot(forPid) {
     const s = this.s, me = this.byPid(forPid);
     return { t: 'state', you: me ? me.slot : -1, host: s.host ? (this.byPid(s.host) || {}).slot ?? -1 : -1, phase: s.phase, diff: s.diff, seed: s.seed, startAt: s.startAt, endAt: s.endAt, now: Date.now(), result: s.result,
-      players: [0, 1].map(i => { const p = this.bySlot(i); return p ? { slot: i, name: p.name, avatar: p.avatar, ready: p.ready, lives: p.lives, score: p.score, hits: p.hits, combo: p.maxCombo, last: p.last, alive: p.alive, online: this.isConnected(p.pid) } : null; }) };
+      players: [0, 1].map(i => { const p = this.bySlot(i); return p ? { slot: i, name: p.name, avatar: p.avatar, ready: p.ready, lives: p.lives, score: p.score, hits: p.hits, combo: p.maxCombo, last: p.last, alive: p.alive, cur: p.cur || null, online: this.isConnected(p.pid) } : null; }), watchers: this.watchers().length };
   }
   broadcast() { for (const w of this.liveSockets()) { try { const a = w.deserializeAttachment() || {}; w.send(JSON.stringify(this.snapshot(a.pid))); } catch (e) {} } }
+  watchers() { return this.liveSockets().filter(w => { try { return (w.deserializeAttachment() || {}).watch === true; } catch (e) { return false; } }); }
+  toWatchers(obj) { const t = JSON.stringify(obj); for (const w of this.watchers()) { try { w.send(t); } catch (e) {} } }
   sendTo(slot, obj) { const p = this.bySlot(slot); if (!p) return; for (const w of this.liveSockets()) { try { if ((w.deserializeAttachment() || {}).pid === p.pid) w.send(JSON.stringify(obj)); } catch (e) {} } }
 
   async webSocketMessage(ws, raw) {
@@ -76,6 +78,10 @@ export class Room extends DurableObject {
     let m; try { m = JSON.parse(raw); } catch (e) { return; }
     const a = ws.deserializeAttachment() || {}, s = this.s; s.touched = Date.now();
     if (m.t === 'ping') { ws.send(JSON.stringify({ t: 'pong', c: m.c, s: Date.now() })); return; }
+    if (m.t === 'join' && m.watch) {   // 觀戰：不佔玩家位置、不能操作，只收廣播
+      if (this.watchers().filter(w => w !== ws).length >= MAX_WATCHERS) { ws.send(JSON.stringify({ t: 'error', code: 'watch_full' })); return; }
+      ws.serializeAttachment({ watch: true }); ws.send(JSON.stringify({ t: 'welcome', watch: true })); ws.send(JSON.stringify(this.snapshot(null))); this.broadcast(); return;
+    }
     if (m.t === 'join') {
       let p = m.pid && s.players[m.pid] ? s.players[m.pid] : null;   // 斷線重連：用舊的通行碼拿回原本的位置
       if (!p) {
@@ -92,6 +98,7 @@ export class Room extends DurableObject {
       ws.send(JSON.stringify({ t: 'welcome', pid: p.pid, slot: p.slot, code: undefined }));
       await this.save(); this.broadcast(); return;
     }
+    if (a.watch) return;   // 觀戰者送來的其他訊息一律忽略
     const p = a.pid ? this.byPid(a.pid) : null; if (!p) return;
     if (m.t === 'set' && s.phase === 'lobby' && s.host === p.pid) {
       if (LIVES[m.diff]) { s.diff = m.diff; for (const q of Object.values(s.players)) { q.ready = false; q.lives = LIVES[s.diff]; } }
@@ -102,17 +109,19 @@ export class Room extends DurableObject {
       p.ready = !!m.ready; const ps = Object.values(s.players);
       if (ps.length === MAX_PLAYERS && ps.every(q => q.ready && this.isConnected(q.pid))) {
         s.phase = 'playing'; s.seed = crypto.getRandomValues(new Uint32Array(1))[0]; s.startAt = Date.now() + COUNTDOWN_MS; s.endAt = s.startAt + (Number(this.env.GAME_MS) || GAME_MS);   // GAME_MS 只給測試縮短時間用 s.result = null;
-        for (const q of ps) { q.lives = LIVES[s.diff]; q.score = 0; q.hits = 0; q.maxCombo = 0; q.last = ''; q.alive = true; }
+        for (const q of ps) { q.lives = LIVES[s.diff]; q.score = 0; q.hits = 0; q.maxCombo = 0; q.last = ''; q.alive = true; q.cur = null; }
       }
       await this.save(); this.broadcast(); return;
     }
+    if (m.t === 'cur' && s.phase === 'playing' && p.alive) { p.cur = { n: Math.max(0, Math.min(999, Number(m.n) | 0)), at: Date.now() }; this.toWatchers({ t: 'cur', slot: p.slot, n: p.cur.n }); return; }
     if (m.t === 'ev' && s.phase === 'playing' && Date.now() >= s.startAt - 500 && p.alive) {
       // 簡單的合理性檢查：心燈只會減、分數只會加、單次加分有上限
       const lives = Math.max(0, Math.min(p.lives, Number(m.lives) | 0)), score = Math.max(p.score, Math.min(p.score + 600, Number(m.score) | 0));
       p.lives = lives; p.score = score; p.hits = Math.max(p.hits, Math.min(999, Number(m.hits) | 0)); p.maxCombo = Math.max(p.maxCombo, Math.min(99, Number(m.combo) | 0));
       const stage = Math.max(1, Math.min(3, Number(m.stage) | 0)), multi = !!m.multi, fam = FAMS.includes(m.fam) ? m.fam : 'se';
       p.last = m.ok ? (multi ? '連擊淨化' : stage === 3 ? '淨化塵魔' : stage === 2 ? '淨化塵妖' : '淨化塵精') : '被塵靈抓到';
-      if (m.ok && (stage >= 2 || multi)) { const opp = Object.values(s.players).find(q => q.pid !== p.pid); if (opp) this.sendTo(opp.slot, { t: 'fx', from: p.slot, fam, stage, multi }); }
+      this.toWatchers({ t: 'evx', slot: p.slot, ok: !!m.ok, stage, multi, fam });
+      if (m.ok && (stage >= 2 || multi)) { const opp = Object.values(s.players).find(q => q.pid !== p.pid); const fx = { t: 'fx', from: p.slot, fam, stage, multi }; if (opp) this.sendTo(opp.slot, fx); this.toWatchers(fx); }
       if (p.lives <= 0) p.alive = false;
       const alive = Object.values(s.players).filter(q => q.alive);
       if (alive.length <= 1) await this.finish(alive.length === 1 ? 'knockout' : 'both_out'); else { await this.save(); this.broadcast(); }

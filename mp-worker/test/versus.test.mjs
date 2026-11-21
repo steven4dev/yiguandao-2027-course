@@ -34,6 +34,14 @@ ok(A.state.players[1] && A.state.players[1].name === '乙', '甲也即時看到�
 const C = client(code, 'C'); await C.ready; C.send({ t: 'join', name: '丙' }); await sleep(300); ok(C.errors.includes('full'), '第三個人被擋下（房間已滿）');
 ok(!JSON.stringify(A.msgs).includes(B.pid), '甲的訊息裡沒有乙的通行碼');
 
+console.log('②b 觀戰（投影用）');
+const W = client(code, 'W'); await W.ready; W.send({ t: 'join', watch: true }); await W.until(s => s.you === -1);
+ok(W.state && W.state.you === -1 && W.state.players[0].name === '甲' && W.state.players[1].name === '乙', '觀戰者看得到兩位玩家、自己不佔位置');
+ok(W.msgs.some(m => m.t === 'welcome' && m.watch), '觀戰者收到 welcome（watch）');
+W.send({ t: 'ready', ready: true }); W.send({ t: 'set', diff: 'hard' }); await sleep(250); ok(A.state.diff === 'easy' && !A.state.players.some(p => p && p.ready), '觀戰者不能準備、不能改難度');
+const Ws = []; for (let i = 0; i < 8; i++) { const x = client(code, 'w' + i); await x.ready; x.send({ t: 'join', watch: true }); Ws.push(x); } await sleep(500);
+ok(Ws[7].errors.includes('watch_full') && !Ws[6].errors.length, '觀戰最多 8 個，第 9 個被擋');
+for (const x of Ws) x.ws.close(); await sleep(300);
 console.log('③ 房主換難度、準備、開打');
 B.send({ t: 'set', diff: 'hard' }); await sleep(200); ok(A.state.diff === 'easy', '非房主不能改難度');
 A.send({ t: 'set', diff: 'normal' }); await A.until(s => s.diff === 'normal'); ok(A.state.diff === 'normal' && B.state.diff === 'normal', '房主改難度，雙方都同步');
@@ -47,7 +55,7 @@ A.send({ t: 'ping', c: 7 }); await sleep(150); const pong = A.msgs.find(m => m.t
 
 console.log('⑤ 對戰事件');
 await sleep(A.state.startAt - Date.now() + 600);
-A.send({ t: 'ev', ok: true, stage: 2, multi: true, fam: 'xiang', score: 160, lives: 3, hits: 1, combo: 1 });
+A.send({ t: 'cur', n: 2 }); A.send({ t: 'ev', ok: true, stage: 2, multi: true, fam: 'xiang', score: 160, lives: 3, hits: 1, combo: 1 });
 await B.until(s => s.players[0].score === 160); ok(B.state.players[0].score === 160 && B.state.players[0].last === '連擊淨化', '乙看到甲的分數與動作');
 await sleep(150); ok(B.fx.length === 1 && B.fx[0].fam === 'xiang' && B.fx[0].from === 0, '甲打中塵妖連擊 → 乙收到「干擾」（香系）');
 ok(A.fx.length === 0, '干擾只送給對手，不回送自己');
@@ -58,6 +66,10 @@ B.send({ t: 'ev', ok: false, stage: 1, score: 0, lives: 0, hits: 0, combo: 0 });
 ok(A.state.phase === 'done' && A.state.result.winner === 0 && A.state.result.reason === 'knockout', '乙心燈用完 → 甲獲勝（knockout）');
 ok(B.state.result && B.state.result.players[0].score === A.state.players[0].score, '雙方看到相同的結算');
 
+ok(W.msgs.some(m => m.t === 'evx' && m.slot === 0 && m.ok) && W.msgs.some(m => m.t === 'evx' && m.slot === 1 && !m.ok), '觀戰者收到雙方的打中／失敗事件');
+ok(W.msgs.some(m => m.t === 'fx' && m.from === 0), '觀戰者也看到干擾');
+ok(W.msgs.some(m => m.t === 'cur' && m.slot === 0 && m.n === 2), '觀戰者收到「甲開始打第 3 隻」');
+ok(W.state.phase === 'done' && W.state.result.winner === 0, '觀戰者看到結算');
 console.log('⑥ 再來一局');
 A.send({ t: 'rematch' }); await A.until(s => s.phase === 'lobby'); ok(A.state.phase === 'lobby' && A.state.players[0].ready === false && A.state.players[0].lives === 3, '回到大廳、準備與心燈重置');
 
@@ -83,4 +95,4 @@ const D = client(code, 'D'); await D.ready; D.ws.send('x'.repeat(3000)); await s
 const evil = new WebSocket(`${WS}/api/room/${code}/ws`, { headers: { Origin: 'https://evil.example' }, agent: wsAgent }); const evilRes = await new Promise(r => { evil.on('unexpected-response', (q, res) => r(res.statusCode)); evil.on('open', () => r('open')); evil.on('error', () => r('err')); });
 ok(evilRes === 403, `陌生來源不能連 WebSocket（${evilRes}）`);
 
-console.log(fail ? `\n❌ ${fail} 項失敗` : '\n🎉 全部通過'); for (const c of [A, B, B2, C, D, E]) { try { c.ws.close(); } catch (e) {} } process.exit(fail ? 1 : 0);
+console.log(fail ? `\n❌ ${fail} 項失敗` : '\n🎉 全部通過'); for (const c of [A, B, B2, C, D, E, W]) { try { c.ws.close(); } catch (e) {} } process.exit(fail ? 1 : 0);
