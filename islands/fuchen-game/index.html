@@ -540,7 +540,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261121.06';
+const VERSION = 'v261121.07';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1911,6 +1911,7 @@ function center(html){ $('#center').innerHTML = html || ''; }
 async function countdown(beats){
   center(''); dimTarget = 0.65; document.body.dataset.phase = 'count'; bgmHold(true);
   for(let i=beats;i>=1;i--){ cd = { text:String(i), t0:performance.now(), dur:0.9, burst:false }; sfx.beat(); vib(30); await wait(900); }
+  if(!beats) await wait(350);   // 修行、精進不倒數：畫面暗下來屏息一下，就直接喊「揮」
 }
 function record(ms, th0, word = '揮', still = 300){
   return new Promise((resolve, reject) => {
@@ -2012,7 +2013,7 @@ async function encounter(opt){
   await wait(300);
   if(monster && monster.state === 'enter') monster.state = 'idle';
   document.body.dataset.key = keys[0];
-  await countdown(opt.beats || D().beats);
+  await countdown(opt.beats ?? D().beats);
   center('');
   if(hint) hint.target = 0;
   const th0 = tutorial ? SENS.light : null, strokes = [];
@@ -2111,11 +2112,11 @@ function keysFor(stage, def){ const NAMED = NAMEDP(), fam = def.fam;
   const wk = weakOf(def); if(R() < 0.4 && wk !== a && SYMS[wk] && (diffKey === 'easy' || SYMS[wk].kind !== 'dir')) b = wk;
   return [a, b];
 }
-/* 難度：入門＝原本的難度；修行（預設）＝判定變嚴、關卡變長、提示逐步退場；精進＝再少一盞心燈、倒數全部兩拍、塵魔更多 */
+/* 難度：入門＝原本的難度；修行（預設）＝判定變嚴、關卡變長、提示逐步退場；精進＝再少一盞心燈、塵魔更多；只有入門每隻倒數 3、2、1，修行、精進不倒數 */
 const DIFFS = {
   easy:   { name:'🌱 入門', shapeMin:0,  dirErr:35, lives:3, beats:3, hints:'full' },
-  normal: { name:'🪶 修行', shapeMin:55, dirErr:25, lives:3, beats:3, hints:'trail' },   // trail：每一隻都有提示軌跡（塵魔、魔王仍只標起點終點）；只有精進(fade)才讓軌跡漸漸隱去
-  hard:   { name:'🔥 精進', shapeMin:62, dirErr:25, lives:2, beats:2, hints:'fade' }
+  normal: { name:'🪶 修行', shapeMin:55, dirErr:25, lives:3, beats:0, hints:'trail' },   // trail：每一隻都有提示軌跡（塵魔、魔王仍只標起點終點）；只有精進(fade)才讓軌跡漸漸隱去
+  hard:   { name:'🔥 精進', shapeMin:62, dirErr:25, lives:2, beats:0, hints:'fade' }   // beats：每一隻的倒數拍數；只有入門倒數 3、2、1，修行、精進不倒數
 };
 let diffKey = store.get('fuchenGame.diff', 'easy'); if(!DIFFS[diffKey]) diffKey = 'easy';   // 新玩家預設入門；選過之後記在這支手機上
 const D = () => DIFFS[diffKey];
@@ -2175,9 +2176,9 @@ async function runGame(){
       { wave:'第三波・塵魔', stages:[3] }
     ];
     for(const w of plan){
-      const tip = w.stages.every(s => s === 3) && diffKey !== 'easy' ? '塵魔要三連擊，倒數只有兩拍，提示只標起點和終點！' : w.stages.some(s => s > 1) ? '塵妖要兩連擊才收得服！' : '';
+      const tip = w.stages.every(s => s === 3) && diffKey !== 'easy' ? '塵魔要三連擊，提示只標起點和終點！' : w.stages.some(s => s > 1) ? '塵妖要兩連擊才收得服！' : '';
       await banner(w.wave, tip, { red: w.stages.every(s => s === 3) });
-      for(const st of w.stages){ const sp = spawnDef(st); await encounter({ keys: keysFor(st, sp.def), ...sp, beats: st === 3 && diffKey !== 'easy' ? 2 : undefined, wave: st === 3 ? '⚠️ 塵魔出沒' : w.wave }); if(lives <= 0) throw 'over'; }
+      for(const st of w.stages){ const sp = spawnDef(st); await encounter({ keys: keysFor(st, sp.def), ...sp, wave: st === 3 ? '⚠️ 塵魔出沒' : w.wave }); if(lives <= 0) throw 'over'; }
     }
     // 魔王：無明塵王（三擊，最後一擊一定是「圓明一拂」）
     bgmSet('boss');
@@ -2589,7 +2590,7 @@ async function runVersus(m){
     for(let n = 0; !VS.over; n++){
       const { stage, sp, keys } = vsGen(seed, n, m.diff); vsSend({ t: 'cur', n });   // 告訴房間（觀戰畫面）我開始打第幾隻
       const hard = VS.debuff > 0; if(hard) VS.debuff--;
-      const r = await encounter({ keys, ...sp, hm: hard ? 'markers' : undefined, beats: stage === 3 && diffKey !== 'easy' ? 2 : undefined, wave: `⚔️ 對戰 第 ${n + 1} 隻${hard ? '（被干擾）' : ''}` });
+      const r = await encounter({ keys, ...sp, hm: hard ? 'markers' : undefined, wave: `⚔️ 對戰 第 ${n + 1} 隻${hard ? '（被干擾）' : ''}` });
       if(VS.over) break;
       vsSend({ t: 'ev', ok: !!r.ok, stage, multi: keys.length > 1, fam: sp.def.fam.key, score, lives, hits, combo: maxCombo });
       if(lives <= 0) break;
@@ -2753,7 +2754,7 @@ if(VS_API) $('#btnVsT').hidden = false;
 $('#btnStart').addEventListener('click', () => gateStart(startGyro));
 // 難度滑動開關：點刻度、左右拖滑塊都可以；一次只亮一檔，滑塊顏色跟著難度變
 const DIFF_ORDER = ['easy', 'normal', 'hard'];
-const DSW_DESC = { easy: '新手友善・有提示軌跡・從上下左右開始', normal: '開場塵魔突襲・有提示軌跡・動作要夠大', hard: '兩盞心燈・兩拍・提示軌跡漸隱・圓分正反' };
+const DSW_DESC = { easy: '新手友善・倒數 3 2 1・從上下左右開始', normal: '不倒數・有提示軌跡・開場塵魔突襲', hard: '兩盞心燈・不倒數・軌跡漸隱・圓分正反' };
 const syncDiff = () => {
   const sel = $('#diffSel'); sel.dataset.d = diffKey; sel.style.setProperty('--i', DIFF_ORDER.indexOf(diffKey));
   sel.querySelectorAll('button').forEach(b => { const on = b.dataset.d === diffKey; b.setAttribute('aria-checked', String(on)); b.setAttribute('aria-pressed', String(on)); b.tabIndex = on ? 0 : -1; });
