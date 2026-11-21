@@ -1,0 +1,17 @@
+# 拂塵試煉・雙人對戰的房間伺服器（Cloudflare Worker + Durable Objects）
+# 本機測試：npx wrangler dev   部署：npx wrangler deploy（需要 Cloudflare 帳號，見 README.md）
+name = "fuchen-versus"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+# 允許連線的網頁來源（逗號分隔）；上線後把正式網址放進來
+ALLOWED_ORIGINS = "https://steven4dev.github.io,http://localhost:8765,http://127.0.0.1:8765,http://localhost:8787"
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]

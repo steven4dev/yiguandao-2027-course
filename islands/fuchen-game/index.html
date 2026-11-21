@@ -222,6 +222,43 @@ body{line-break:strict}
 #mvCombo .mvr{display:flex;align-items:center;justify-content:center;gap:6px;margin:5px 0;padding:6px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(232,189,90,.18);font-size:.9rem}
 #mvCombo .mvr .k{padding:2px 9px;border-radius:999px;background:rgba(0,0,0,.4);border:1px solid var(--line);font-weight:800}
 #mvCombo .mvr .go{color:var(--gold);font-weight:900}
+.vsEnter{width:100%;margin-bottom:7px;padding:9px;font-weight:800;border:1.5px solid #ff9a6a;color:#ffd7c4;background:rgba(120,40,20,.45)}
+.vsJoin{display:grid;grid-template-columns:1fr auto;gap:6px}
+.vsJoin input,.vsMe input{font:inherit;font-size:1.1rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;text-align:center;padding:10px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.45);color:var(--ink);min-width:0}
+.vsCode{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0}
+.vsCode small{color:var(--muted)}.vsCode b{font-size:2rem;letter-spacing:6px;color:var(--gold);text-shadow:0 0 12px rgba(232,189,90,.4)}
+.vsCode button{padding:6px 10px;font-size:.8rem}
+.vsShareBtn{display:flex;align-items:center;justify-content:center;min-height:40px;border-radius:12px;background:#06c755;color:#fff;font-weight:800;text-decoration:none;margin-bottom:8px}
+.vsSlots{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}
+.vsSlot{position:relative;text-align:center;padding:6px 4px 8px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(232,189,90,.25);min-height:112px}
+.vsSlot.me{border-color:var(--gold)}.vsSlot.rdy{background:rgba(127,224,166,.12);border-color:#7fe0a6}
+.vsSlot canvas{display:block;width:62px;height:62px;margin:0 auto}
+.vsSlot b{display:block;font-size:.9rem}.vsSlot small{display:block;font-size:.72rem;color:var(--muted)}
+.vsSlot .tag{position:absolute;top:4px;left:6px;font-size:.62rem;font-weight:800;color:#1b1409;background:var(--gold);border-radius:8px;padding:0 6px}
+.vsSlot.empty{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.85rem}
+.vsMe{display:grid;grid-template-columns:1fr;gap:6px;margin:6px 0}
+.vsMe input{letter-spacing:1px;text-transform:none;font-size:.95rem;padding:7px}
+.vsAv{display:flex;justify-content:space-between;gap:4px}
+.vsAv button{flex:1;min-width:0;padding:2px;border-radius:10px;background:rgba(255,255,255,.05)}
+.vsAv button.on{outline:2px solid var(--gold);background:rgba(232,189,90,.15)}
+.vsAv canvas{display:block;width:100%;aspect-ratio:1/1}
+.vsMode{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;align-items:center;margin:6px 0;font-size:.8rem;color:var(--muted)}
+.vsMode button{padding:7px 2px;font-size:.85rem}.vsMode button.on{border-color:var(--gold);color:var(--gold);background:rgba(232,189,90,.14)}
+#vsDsw.ro .dsw-track{opacity:.7;pointer-events:none}
+.vsCards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.vsCard{text-align:center;padding:10px 4px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(232,189,90,.3)}
+.vsCard.win{border-color:var(--gold);box-shadow:0 0 18px rgba(232,189,90,.45)}
+.vsCard b{display:block;font-size:.95rem}.vsCard .sc{font-size:2rem;font-weight:900;color:var(--gold);line-height:1.1}.vsCard small{display:block;color:var(--muted);font-size:.72rem}
+/* 對戰中的對手狀態列：只放一條細的，因為揮的時候不看螢幕 */
+.vsOpp{position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 44px);z-index:12;display:flex;justify-content:space-between;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(10,14,22,.72);border:1px solid rgba(255,138,106,.55);font-size:.78rem;pointer-events:none;white-space:nowrap;overflow:hidden}
+.vsOpp b{color:#ffd7c4}.vsOpp .lp{letter-spacing:1px}.vsOpp small{color:var(--muted);overflow:hidden;text-overflow:ellipsis;flex:1;text-align:center}
+.vsOpp.pulse{animation:vsPulse .6s ease-out}
+@keyframes vsPulse{0%{background:rgba(255,120,90,.55)}100%{background:rgba(10,14,22,.72)}}
+.vsConn{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 80px);transform:translateX(-50%);z-index:60;padding:6px 14px;border-radius:999px;background:rgba(150,30,30,.9);color:#fff;font-size:.85rem;font-weight:800}
+/* 對手送來的干擾：整個畫面蒙一層該系的顏色（下一隻怪的提示會變少） */
+.vsFx{position:fixed;inset:0;z-index:26;pointer-events:none;display:flex;align-items:flex-start;justify-content:center;padding-top:calc(env(safe-area-inset-top) + 96px)}
+.vsFx::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 30%,var(--fx,rgba(180,120,220,.7)) 100%);animation:hvig 1.4s ease-out both}
+.vsFx span{position:relative;padding:5px 14px;border-radius:999px;background:rgba(10,14,22,.85);font-weight:800;font-size:.9rem;color:#ffd7c4;border:1px solid var(--fx);animation:ambT .4s cubic-bezier(.2,1.6,.4,1) both}
 .dsw-desc{margin:6px 0 0;text-align:center;font-size:.8rem;color:var(--ink);line-height:1.35}
 .diff button{padding:9px 4px 8px;font-size:.95rem;line-height:1.3;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px}
 .diff button small{font-size:.68rem;line-height:1.45;color:var(--muted);font-weight:500;white-space:nowrap}
@@ -304,6 +341,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
         <button class="primary big" id="btnStart">🪶 開始試煉<small>手機當拂塵大揮</small></button>
         <button class="big" id="btnTouch">👆 用手指畫<small>不方便揮的時候</small></button>
       </div>
+      <button id="btnVsT" class="vsEnter" type="button" hidden>⚔️ 雙人對戰・邀朋友切磋</button>
       <div class="twoRow"><button id="btnDexT">📖 淨心錄</button><button id="btnMovesT">📜 招式表</button></div>
     </div>
     <p class="note" id="titleMsg"></p>
@@ -352,6 +390,51 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     </div>
   </div>
 </section>
+<!-- 雙人對戰（房號或邀請連結進房；同一組怪、比分數與心燈；打出連擊會把干擾送給對手） -->
+<section class="screen" id="scrVsHome" hidden>
+  <div class="panel">
+    <h2>⚔️ 雙人對戰</h2>
+    <p class="note">邀一位朋友切磋：兩個人遇到<b>一模一樣的怪</b>，比誰淨化得多、心燈撐得久。切磋不影響任何成績，打到的塵靈照樣收進淨心錄。</p>
+    <div class="row">
+      <button class="primary big" id="vsCreate">🏠 建立房間找朋友</button>
+      <div class="vsJoin"><input id="vsCodeIn" maxlength="5" inputmode="latin" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="輸入房號"><button id="vsJoinBtn">加入</button></div>
+      <p class="note" id="vsHomeMsg" style="text-align:center;min-height:1.4em"></p>
+      <button id="vsHomeBack">← 回標題</button>
+    </div>
+  </div>
+</section>
+<section class="screen" id="scrVsRoom" hidden>
+  <div class="panel">
+    <h2>⚔️ 對戰房間</h2>
+    <div class="vsCode"><small>房號</small><b id="vsCodeShow">-----</b><button id="vsCopy" type="button">複製房號</button></div>
+    <a id="vsShare" class="vsShareBtn" href="https://line.me/R/msg/text/" target="_blank" rel="noopener">💬 分享到 LINE（連結＋房號）</a>
+    <div class="vsSlots" id="vsSlots"></div>
+    <div class="vsMe">
+      <input id="vsName" maxlength="10" placeholder="你的暱稱" autocomplete="off">
+      <div class="vsAv" id="vsAv"></div>
+    </div>
+    <div class="dsw" id="vsDsw" data-d="easy" role="radiogroup" aria-label="對戰難度">
+      <div class="dsw-h"><span>難度（房主決定）</span><b id="vsDswName">🌱 入門</b></div>
+      <div class="dsw-track"><i class="dsw-thumb" id="vsDswThumb"></i>
+        <button type="button" role="radio" data-d="easy">🌱 入門</button><button type="button" role="radio" data-d="normal">🪶 修行</button><button type="button" role="radio" data-d="hard">🔥 精進</button></div>
+    </div>
+    <div class="vsMode" id="vsMode"><span>操作</span><button type="button" data-m="gyro">🛤️ 手機揮動</button><button type="button" data-m="touch">👆 手指畫</button></div>
+    <p class="note" id="vsRoomMsg" style="text-align:center;min-height:1.4em"></p>
+    <div class="row"><button class="primary big" id="vsReady">我準備好了</button><button id="vsLeave">離開房間</button></div>
+  </div>
+</section>
+<section class="screen" id="scrVsResult" hidden>
+  <div class="panel">
+    <h2 id="vsResTitle">⚔️ 對戰結束</h2>
+    <p id="vsResWhy" class="note" style="text-align:center"></p>
+    <div class="vsCards" id="vsCards"></div>
+    <p class="note" id="vsResCaught" style="text-align:center"></p>
+    <div class="row"><button class="primary big" id="vsAgain">🔁 回房間，再來一局</button><button id="vsIsleR">🏝️ 返回島嶼</button></div>
+  </div>
+</section>
+<div class="vsOpp" id="vsOpp" hidden></div>
+<div class="vsConn" id="vsConn" hidden>連線中斷，重新連線中…</div>
+<div class="vsFx" id="vsFx" hidden></div>
 <!-- 招式表：跟著難度走（入門／修行／精進三個分頁，預設停在目前的難度），每個符印有「小圓點起筆、金光帶著畫一遍」的動畫；組合技只舉三例 -->
 <section class="screen" id="scrMoves" hidden>
   <div class="panel movp">
@@ -395,7 +478,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261114.07';
+const VERSION = 'v261121.01';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1927,14 +2010,18 @@ async function encounter(opt){
 }
 
 /* ---------------- 關卡 ---------------- */
-const pick = arr => arr[Math.floor(Math.random()*arr.length)];
-function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+// 對戰用的可重現亂數：同一個房間的兩個人，每一隻怪都用「房間種子＋第幾隻」重新播種，所以遇到的怪和符印完全一樣（不受前面打得好壞影響）
+let RNG = Math.random; const R = () => RNG();
+function mulberry32(a){ return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const reseed = (seed, n) => { RNG = mulberry32((seed ^ Math.imul(n + 1, 0x9E3779B1)) >>> 0); };
+const pick = arr => arr[Math.floor(R()*arr.length)];
+function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){ const j = Math.floor(R()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
 // 出怪：隨機一系，等級照階段；約 3% 機率是金色塵靈
 function spawnDef(stage){
   const xs = diffKey !== 'easy' ? MONS.filter(m => m.xv && m.stage === stage) : [];
-  const fam = pick(FAMS), def = xs.length && Math.random() < 0.3 ? pick(xs) : MONS.find(m => m.fam === fam && m.stage === stage && !m.xv);
-  const lv = stage === 1 ? 1 + Math.floor(Math.random()*9) : stage === 2 ? 10 + Math.floor(Math.random()*10) : 20 + Math.floor(Math.random()*10);
-  return { def, lv, gold: Math.random() < 0.03 };
+  const fam = pick(FAMS), def = xs.length && R() < 0.3 ? pick(xs) : MONS.find(m => m.fam === fam && m.stage === stage && !m.xv);
+  const lv = stage === 1 ? 1 + Math.floor(R()*9) : stage === 2 ? 10 + Math.floor(R()*10) : 20 + Math.floor(R()*10);
+  return { def, lv, gold: R() < 0.03 };
 }
 // 出題：塵精一個符印（偶爾剛好是它怕的）；塵妖、塵魔兩連擊（多半是有名字的組合技）
 const EASY = ['left','right','down','up','v','circle'], BASIC = ['v','circle','z','n','alpha','s','caret','inf'],
@@ -1947,18 +2034,18 @@ const NAMEDP = () => diffKey === 'easy' ? NAMED_ALL.slice(0, 4) :   // 入門只
 const MID0 = ['v','circle','z','n','alpha','s'], HARD0 = ['rs','rz','rn','ralpha','z','n','s','alpha'];   // 入門用的原本題庫
 function keysFor(stage, def){ const NAMED = NAMEDP(), fam = def.fam;
   if(def.xv && diffKey !== 'easy'){ const w = weakOf(def); if(stage === 1) return [w];
-    const a = pick((stage === 2 ? MID : HARD).filter(x => x !== w)); if(stage === 2) return Math.random() < 0.5 ? [a, w] : [w, a];
+    const a = pick((stage === 2 ? MID : HARD).filter(x => x !== w)); if(stage === 2) return R() < 0.5 ? [a, w] : [w, a];
     return [a, pick(MID.filter(x => x !== w && x !== a)), w]; }
   if(stage === 3 && diffKey !== 'easy'){   // 塵魔：三連擊，多半是組合技再接一個難的符號
-    const base = Math.random() < 0.5 ? pick(NAMED).slice() : [pick(HARD), pick(MID)];
+    const base = R() < 0.5 ? pick(NAMED).slice() : [pick(HARD), pick(MID)];
     return [...base, pick(HARD.filter(x => !base.includes(x)))];
   }
-  if(stage === 2 && diffKey !== 'easy' && Math.random() < 0.6){ const a = pick(MID); return [a, pick(MID.filter(x => x !== a))]; }   // 塵妖偏向 Z、N、S、阿法
-  if(stage === 1){ const P = STAGE1(); return [Math.random() < 0.4 && (P.includes(weakOf(def)) || diffKey !== 'easy') ? weakOf(def) : pick(P)]; }
-  if(Math.random() < 0.6) return pick(NAMED).slice();
+  if(stage === 2 && diffKey !== 'easy' && R() < 0.6){ const a = pick(MID); return [a, pick(MID.filter(x => x !== a))]; }   // 塵妖偏向 Z、N、S、阿法
+  if(stage === 1){ const P = STAGE1(); return [R() < 0.4 && (P.includes(weakOf(def)) || diffKey !== 'easy') ? weakOf(def) : pick(P)]; }
+  if(R() < 0.6) return pick(NAMED).slice();
   // 入門只用原本的符號（新題庫留給修行、精進）
   const pool = diffKey === 'easy' ? (stage === 2 ? MID0 : HARD0) : (stage === 2 ? MID : HARD), a = pick(pool); let b = pick(pool.filter(x => x !== a));
-  const wk = weakOf(def); if(Math.random() < 0.4 && wk !== a && SYMS[wk] && (diffKey === 'easy' || SYMS[wk].kind !== 'dir')) b = wk;
+  const wk = weakOf(def); if(R() < 0.4 && wk !== a && SYMS[wk] && (diffKey === 'easy' || SYMS[wk].kind !== 'dir')) b = wk;
   return [a, b];
 }
 /* 難度：入門＝原本的難度；修行（預設）＝判定變嚴、關卡變長、提示逐步退場；精進＝再少一盞心燈、倒數全部兩拍、塵魔更多 */
@@ -2304,6 +2391,186 @@ function gateStart(fn){ if(store.get('fuchenGame.moveIntro', false)){ fn(); retu
   $('#miGrid').innerHTML = ['left', 'right', 'down', 'up'].map(mvCell).join(''); $('#scrTitle').hidden = true; $('#scrMoveIntro').hidden = false; mvStart(); }
 $('#miGo').addEventListener('click', () => { $('#scrMoveIntro').hidden = true; const f = miPending; miPending = null; if(f) f(); });
 $('#miAll').addEventListener('click', () => { miPending = null; openMoves(); });
+
+/* ---------------- 雙人對戰 ---------------- */
+// 伺服器：Cloudflare Worker（見 /mp-worker）。還沒部署時 VS_API 是空的，按鈕不會出現；本機測試會連 localhost:8787；也可以用網址 ?vs=網址 臨時指定。
+const VS_API = (() => { try{ const q = new URLSearchParams(location.search).get('vs'); if(q && /^https?:\/\/[\w.:-]+$/.test(q)) return q; }catch(e){} return /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8787' : ''; })();
+const VS_SITE = 'https://steven4dev.github.io/yiguandao-2027-course/islands/fuchen/';
+const VS = { ws: null, code: '', st: null, off: 0, active: false, over: false, debuff: 0, retry: 0, leaving: false, started: 0, mode: 'touch', waitResult: false, quit: false, rtt: 1e9, tick: 0, lastOpp: '' };
+const vsNow = () => Date.now() + VS.off, vsEsc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const VS_FAMS = ['se', 'sheng', 'xiang', 'wei', 'chu', 'fa'], VS_FAM_COL = { se: '#d3a6e3', sheng: '#f2b47c', xiang: '#b9bdf0', wei: '#cfe28c', chu: '#a2cdea', fa: '#93dccb' }, VS_FAM_FX = { se: '色系・鏡面裂紋', sheng: '聲系・震耳欲聾', xiang: '香系・煙霧瀰漫', wei: '味系・糰子糊臉', chu: '觸系・睡意襲來', fa: '法系・思緒打結' };
+const vsDefOf = k => MONS.find(m => m.fam.key === k && m.stage === 1 && !m.xv);
+const VS_SCREENS = ['scrTitle', 'scrVsHome', 'scrVsRoom', 'scrVsResult', 'scrMoves', 'scrMoveIntro', 'scrCalib', 'scrResult', 'scrDex'];
+const vsShow = id => VS_SCREENS.forEach(x => { const el = $('#' + x); if(el) el.hidden = x !== id; });
+const vsSend = o => { try{ if(VS.ws && VS.ws.readyState === 1) VS.ws.send(JSON.stringify(o)); }catch(e){} };
+const vsMsgHome = t => { $('#vsHomeMsg').textContent = t; };
+const vsRoomLink = code => `${VS_SITE}?room=${code}`;
+const vsShareText = code => ['🪶 拂塵淨心島・雙人對戰', '來和我切磋一局！', `房號：${code}`, '點連結直接進房 👇', vsRoomLink(code)].join('\n');
+
+async function vsApi(path, opt){ const r = await fetch(VS_API + path, opt); let b = null; try{ b = await r.json(); }catch(e){} return { status: r.status, body: b }; }
+async function vsCreateRoom(){
+  vsMsgHome('建立房間中…');
+  try{ const r = await vsApi('/api/create', { method: 'POST' }); if(r.status === 200 && r.body && r.body.code) { vsConnect(r.body.code); } else vsMsgHome('現在建不了房間，等一下再試試。'); }
+  catch(e){ vsMsgHome('連不上對戰伺服器，請檢查網路。'); }
+}
+async function vsJoinRoom(raw){
+  const code = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5); if(code.length !== 5){ vsMsgHome('房號是 5 個字母或數字。'); return; }
+  vsMsgHome('尋找房間…');
+  try{ const r = await vsApi('/api/room/' + code); if(r.status === 404){ vsMsgHome(`找不到房間 ${code}，請跟朋友確認房號。`); return; }
+    if(r.body && r.body.full && !store.get(vsPidKey(code), null)){ vsMsgHome('這個房間已經滿了。'); return; }
+    if(r.body && r.body.phase !== 'lobby' && !store.get(vsPidKey(code), null)){ vsMsgHome('這個房間已經開打了，等下一局或請朋友另開房間。'); return; }
+    vsConnect(code); }
+  catch(e){ vsMsgHome('連不上對戰伺服器，請檢查網路。'); }
+}
+const vsPidKey = c => 'fuchenVs.pid.' + c;
+function vsConnect(code){ VS.code = code; VS.leaving = false; VS.st = null; VS.retry = 0; VS.started = 0; VS.quit = false; VS.waitResult = false; VS.mode = inputMode === 'gyro' ? 'gyro' : 'touch'; if(inputMode !== 'gyro') inputMode = 'touch'; vsOpen(); }
+function vsOpen(){
+  const ws = new WebSocket(VS_API.replace(/^http/, 'ws') + `/api/room/${VS.code}/ws`); VS.ws = ws;
+  ws.onopen = () => { VS.retry = 0; $('#vsConn').hidden = true; ws.send(JSON.stringify({ t: 'join', pid: store.get(vsPidKey(VS.code), null) || undefined, name: store.get('fuchenVs.name', '') || undefined, avatar: store.get('fuchenVs.avatar', 'se') })); vsSync(); };
+  ws.onmessage = e => { try{ vsMsg(JSON.parse(e.data)); }catch(err){ console.warn(err); } };
+  ws.onclose = () => { if(VS.ws !== ws) return; VS.ws = null; if(!VS.leaving) vsReconnect(); };
+  ws.onerror = () => {};
+}
+function vsReconnect(){
+  if(VS.leaving || !VS.code) return; $('#vsConn').hidden = false;
+  if(VS.retry >= 8){ $('#vsConn').textContent = '連不上伺服器了，請回到房間重新進入。'; return; }
+  const d = Math.min(8000, 600 * Math.pow(1.6, VS.retry++)); setTimeout(() => { if(!VS.leaving && !VS.ws) vsOpen(); }, d);
+}
+document.addEventListener('visibilitychange', () => { if(!document.hidden && VS.code && !VS.leaving && !VS.ws){ VS.retry = 0; vsReconnect(); } });
+// 時間同步：連線後連送幾個 ping，取來回最快的那一次推算兩邊時鐘差，倒數才會一起歸零
+function vsSync(){ VS.rtt = 1e9; [0, 250, 500, 900].forEach(d => setTimeout(() => vsSend({ t: 'ping', c: Date.now() }), d)); }
+function vsMsg(m){
+  if(m.t === 'welcome'){ store.set(vsPidKey(VS.code), m.pid); return; }
+  if(m.t === 'pong'){ const now = Date.now(), rtt = now - m.c; if(rtt < VS.rtt){ VS.rtt = rtt; VS.off = m.s + rtt/2 - now; } return; }
+  if(m.t === 'error'){ if(m.code === 'full') vsMsgHome('這個房間已經滿了。'); else if(m.code === 'started') vsMsgHome('這個房間已經開打了。'); vsLeaveRoom(); return; }
+  if(m.t === 'fx'){ vsOnFx(m); return; }
+  if(m.t === 'state'){ VS.st = m; vsOnState(m); }
+}
+function vsOnState(m){
+  const opp = m.players[1 - m.you];
+  if(m.phase === 'lobby'){
+    if(VS.active){ VS.over = true; cancelFlag = true; return; }
+    vsShow('scrVsRoom'); vsRenderRoom(m); return;
+  }
+  if(m.phase === 'playing'){
+    if(VS.active) vsRenderOpp(m);
+    else if(VS.started !== m.startAt){ VS.started = m.startAt; runVersus(m); }
+    return;
+  }
+  if(m.phase === 'done'){
+    if(VS.active){ VS.over = true; cancelFlag = true; VS.waitResult = true; return; }
+    vsRenderResult(m); vsShow('scrVsResult'); return;
+  }
+}
+function vsDrawAv(cv, key, t){ try{ const c = cv.getContext('2d'), d = vsDefOf(key); c.clearRect(0, 0, cv.width, cv.height); dust(c, d, cv.width/2, cv.height*0.56, cv.width*0.33, t || 1.2, { noMeasure: true }); }catch(e){} }
+function vsRenderRoom(m){
+  $('#vsCodeShow').textContent = VS.code; $('#vsShare').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(vsShareText(VS.code));
+  const me = m.players[m.you], isHost = m.host === m.you;
+  $('#vsSlots').innerHTML = [0, 1].map(i => { const p = m.players[i]; if(!p) return `<div class="vsSlot empty">等朋友加入…<br>分享房號或連結</div>`; return `<div class="vsSlot${i === m.you ? ' me' : ''}${p.ready ? ' rdy' : ''}"><span class="tag">P${i + 1}${i === m.host ? '・房主' : ''}</span><canvas width="124" height="124" data-av="${p.avatar}"></canvas><b>${vsEsc(p.name)}${i === m.you ? '（你）' : ''}</b><small>${!p.online ? '📴 離線' : p.ready ? '✅ 已準備' : '⏳ 準備中'}</small></div>`; }).join('');
+  $('#vsSlots').querySelectorAll('canvas').forEach(cv => vsDrawAv(cv, cv.dataset.av));
+  const nm = $('#vsName'); if(document.activeElement !== nm) nm.value = me && me.name && me.name !== '無名氏' ? me.name : (store.get('fuchenVs.name', '') || '');
+  $('#vsAv').innerHTML = VS_FAMS.map(k => `<button type="button" data-k="${k}" class="${me && me.avatar === k ? 'on' : ''}" aria-label="${k}"><canvas width="84" height="84" data-av="${k}"></canvas></button>`).join(''); $('#vsAv').querySelectorAll('canvas').forEach(cv => vsDrawAv(cv, cv.dataset.av));
+  const dsw = $('#vsDsw'); dsw.dataset.d = m.diff; dsw.style.setProperty('--i', DIFF_ORDER.indexOf(m.diff)); dsw.classList.toggle('ro', !isHost); dsw.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.d === m.diff))); $('#vsDswName').textContent = DIFFS[m.diff].name;
+  $('#vsMode').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.m === VS.mode));
+  const rb = $('#vsReady'), both = m.players[0] && m.players[1]; rb.textContent = me && me.ready ? '取消準備' : '我準備好了'; rb.disabled = !both && !(me && me.ready);
+  $('#vsRoomMsg').textContent = !both ? '等朋友進房（把房號或連結傳給他）' : me && me.ready ? '等對方準備好，就會倒數開打' : '準備好就按「我準備好了」';
+}
+// 對手資訊只放一條細的狀態列（揮的時候不看螢幕）
+function vsRenderOpp(m){
+  const o = m.players[1 - m.you]; if(!o) return; const left = Math.max(0, Math.ceil((m.endAt - vsNow())/1000)), mm = Math.floor(left/60), ss = String(left % 60).padStart(2, '0');
+  const el = $('#vsOpp'); el.hidden = false; el.innerHTML = `<span>⚔️ <b>${vsEsc(o.name)}</b></span><span class="lp">${'🪔'.repeat(Math.max(0, o.lives))}</span><b>${o.score}</b><small>${o.online ? vsEsc(o.last || '') : '📴 離線'}</small><span>⏱ ${mm}:${ss}</span>`;
+  const sig = o.last + '|' + o.score + '|' + o.lives; if(VS.lastOpp && sig !== VS.lastOpp){ el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); } VS.lastOpp = sig;
+}
+function vsOnFx(m){
+  VS.debuff++; const col = VS_FAM_COL[m.fam] || '#b9bdf0', el = $('#vsFx'); el.style.setProperty('--fx', col + 'cc'); el.innerHTML = `<span>🌫️ 對手送來干擾：${VS_FAM_FX[m.fam] || ''}（下一隻提示變少）</span>`; el.hidden = false; clearTimeout(el._t); el._t = setTimeout(() => { el.hidden = true; }, 1500); sfx.hurt(false); vib([30, 40, 30]);
+}
+function vsRenderResult(m){
+  const r = m.result; if(!r) return; const you = m.you, w = r.winner;
+  $('#vsResTitle').textContent = w === -1 ? '🤝 平手' : w === you ? '🏆 你贏了！' : '🪔 這局讓給對方';
+  $('#vsResWhy').textContent = { knockout: w === you ? '對手的心燈用完了' : '你的心燈用完了', time: w === -1 ? '時間到，分數與心燈都一樣' : '時間到，比分數', forfeit: '對方離開了房間', disconnect: '對方斷線太久，視為離場', both_out: '兩邊心燈都用完了' }[r.reason] + '。切磋不計入任何成績。';
+  $('#vsCards').innerHTML = [0, 1].map(i => { const p = r.players[i]; if(!p) return '<div class="vsCard"></div>'; return `<div class="vsCard${w === i ? ' win' : ''}"><b>${vsEsc(p.name)}${i === you ? '（你）' : ''}</b><div class="sc">${p.score}</div><small>淨化 ${p.hits} 隻・最高連擊 ${p.combo}</small><small>心燈 ${'🪔'.repeat(Math.max(0, p.lives)) || '全滅'}</small></div>`; }).join('');
+  $('#vsResCaught').textContent = caught.length ? `這局收服 ${caught.length} 隻塵靈，已收進淨心錄。` : '';
+}
+
+// 開打：倒數（用伺服器時間，雙方一起歸零）→ 同種子的怪一隻接一隻，打到心燈用完或時間到
+async function runVersus(m){
+  VS.active = true; VS.over = false; VS.quit = false; VS.waitResult = false; VS.debuff = 0; VS.lastOpp = '';
+  const savedDiff = diffKey; diffKey = m.diff; const seed = m.seed;
+  vsShow(null); $('#vsConn').hidden = true;
+  encN = 0; audioInit(); caught = []; $('#bookN').textContent = dexCount(); lives = D().lives; score = 0; combo = 0; maxCombo = 0; hits = 0; tries = 0; purified = 0; cancelFlag = false;
+  $('#hud').hidden = false; $('#bottomBar').hidden = false; $('#btnBook').hidden = true; hud(''); $('#modeTag').textContent = '⚔️ 對戰';
+  vsRenderOpp(m); clearInterval(VS.tick);
+  VS.tick = setInterval(() => { if(!VS.active || !VS.st) return; vsRenderOpp(VS.st); if(!VS.over && vsNow() >= VS.st.endAt){ VS.over = true; cancelFlag = true; vsSend({ t: 'timeup' }); } }, 400);
+  try{
+    bgmStart('battle');
+    for(;;){ const left = m.startAt - vsNow(); if(left <= 30) break; center(`<div class="big">${Math.ceil(left/1000)}</div><div class="mid">⚔️ 對戰開始！</div>`); await sleep(Math.min(120, left)); if(cancelFlag) throw 'cancel'; }
+    center(`<div class="big">揮！</div>`); setTimeout(() => center(''), 500);
+    for(let n = 0; !VS.over; n++){
+      reseed(seed, n); const stage = n < 2 ? 1 : [1, 2, 2, 3][Math.floor(R()*4)], sp = spawnDef(stage), keys = keysFor(stage, sp.def); RNG = Math.random;
+      const hard = VS.debuff > 0; if(hard) VS.debuff--;
+      const r = await encounter({ keys, ...sp, hm: hard ? 'markers' : undefined, beats: stage === 3 && diffKey !== 'easy' ? 2 : undefined, wave: `⚔️ 對戰 第 ${n + 1} 隻${hard ? '（被干擾）' : ''}` });
+      if(VS.over) break;
+      vsSend({ t: 'ev', ok: !!r.ok, stage, multi: keys.length > 1, fam: sp.def.fam.key, score, lives, hits, combo: maxCombo });
+      if(lives <= 0) break;
+    }
+  }catch(e){ if(e === 'cancel'){ if(!VS.over) VS.quit = true; } else console.error(e); }
+  RNG = Math.random; bgmStop(); clearInterval(VS.tick); VS.tick = 0;
+  center(''); monster = null; cd = null; dimTarget = 0; capFx = null; comboFx = null; document.body.dataset.phase = ''; $('#hud').hidden = true; $('#bottomBar').hidden = true; $('#vsOpp').hidden = true; $('#vsFx').hidden = true;
+  diffKey = savedDiff; syncDiff(); VS.active = false; $('#btnDexT').textContent = `📖 淨心錄（${dexCount()} / ${MONS.length}）`;
+  if(VS.quit){ vsLeaveRoom(); return; }
+  if(lives <= 0 && VS.st && VS.st.phase === 'playing') vsSend({ t: 'ev', ok: false, stage: 1, multi: false, fam: 'se', score, lives: 0, hits, combo: maxCombo });   // 保險：確定伺服器知道心燈用完了
+  if(VS.st && VS.st.phase === 'done'){ vsRenderResult(VS.st); vsShow('scrVsResult'); } else { vsShow('scrVsResult'); $('#vsResTitle').textContent = '⏳ 結算中…'; $('#vsCards').innerHTML = ''; $('#vsResWhy').textContent = ''; VS.waitResult = true; }
+}
+function vsLeaveRoom(toTitle = true){
+  VS.leaving = true; vsSend({ t: 'leave' }); try{ if(VS.ws) VS.ws.close(); }catch(e){} VS.ws = null; VS.st = null; if(VS.code) store.set(vsPidKey(VS.code), null); VS.code = ''; $('#vsConn').hidden = true; $('#vsOpp').hidden = true;
+  if(VS.active){ VS.over = true; VS.quit = true; cancelFlag = true; return; }
+  if(toTitle) vsShow('scrTitle');
+}
+// 熱身校準（只有「手機揮動」且還沒校準過才需要）：準備前先做完，才不會耽誤倒數
+async function vsWarmup(){
+  vsShow(null); cancelFlag = false; encN = 0; lives = 99; score = 0; combo = 0; hits = 0; tries = 0; caught = [];
+  $('#hud').hidden = false; $('#bottomBar').hidden = false; $('#btnBook').hidden = true; hud(''); $('#modeTag').textContent = '🧭 熱身';
+  try{
+    await banner('🧭 定心校準', '照方向整隻手臂大揮，系統會記住您的揮法');
+    const got = {}, peaks = [];
+    for(const [k, d] of [['left','L'],['right','R'],['up','U'],['down','D']]){
+      await encounter({ keys:[k], ...spawnDef(1), wave:'熱身・四方拂塵', tutorial:'照著方向大揮一次' });
+      if(lastStroke && lastStroke.input === 'gyro'){ const t = analyzeStroke(lastStroke, 'trajRaw', SENS.light); if(!t.none && !t.unavailable){ got[d] = { v: applyCal(t.mainVec[0], t.mainVec[1]), amp: Math.hypot(t.mainVec[0], t.mainVec[1]) }; peaks.push(t.peak); } }
+    }
+    learnFromWarmup(got, peaks);
+  }catch(e){ if(e !== 'cancel') console.error(e); }
+  center(''); monster = null; cd = null; dimTarget = 0; document.body.dataset.phase = ''; $('#hud').hidden = true; $('#bottomBar').hidden = true; cancelFlag = false;
+  if(VS.st) vsShow('scrVsRoom'); else vsShow('scrTitle');
+}
+async function vsEnableGyro(){
+  try{ if(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function'){ const p = await DeviceMotionEvent.requestPermission(); if(p !== 'granted'){ $('#vsRoomMsg').textContent = '沒有取得「動作與方向」權限，改用手指畫。'; return false; } } }
+  catch(e){ $('#vsRoomMsg').textContent = '無法要求動作權限，改用手指畫。'; return false; }
+  window.addEventListener('devicemotion', onMotion); const before = motionCount; await sleep(900);
+  if(motionCount - before < 5){ window.removeEventListener('devicemotion', onMotion); $('#vsRoomMsg').textContent = '這個裝置沒有回報動作感測資料，改用手指畫。'; return false; }
+  inputMode = 'gyro'; keepAwake(); return true;
+}
+$('#btnVsT').addEventListener('click', () => { audioInit(); $('#vsCodeIn').value = ''; vsMsgHome(''); vsShow('scrVsHome'); });
+$('#vsHomeBack').addEventListener('click', () => vsShow('scrTitle'));
+$('#vsCreate').addEventListener('click', vsCreateRoom);
+$('#vsJoinBtn').addEventListener('click', () => vsJoinRoom($('#vsCodeIn').value));
+$('#vsCodeIn').addEventListener('keydown', e => { if(e.key === 'Enter') vsJoinRoom($('#vsCodeIn').value); });
+$('#vsCopy').addEventListener('click', async () => { try{ await navigator.clipboard.writeText(VS.code); $('#vsCopy').textContent = '已複製 ✓'; }catch(e){ $('#vsCopy').textContent = VS.code; } setTimeout(() => { $('#vsCopy').textContent = '複製房號'; }, 1500); });
+$('#vsName').addEventListener('change', e => { const v = e.target.value.trim().slice(0, 10); store.set('fuchenVs.name', v); vsSend({ t: 'profile', name: v || undefined }); });
+$('#vsAv').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; store.set('fuchenVs.avatar', b.dataset.k); vsSend({ t: 'profile', avatar: b.dataset.k }); });
+$('#vsDsw').addEventListener('click', e => { const b = e.target.closest('button'); if(b && VS.st && VS.st.host === VS.st.you) vsSend({ t: 'set', diff: b.dataset.d }); });
+$('#vsMode').addEventListener('click', async e => { const b = e.target.closest('button'); if(!b) return; if(b.dataset.m === 'gyro'){ const ok2 = await vsEnableGyro(); VS.mode = ok2 ? 'gyro' : 'touch'; if(!ok2) inputMode = 'touch'; } else { VS.mode = 'touch'; inputMode = 'touch'; } if(VS.st) vsRenderRoom(VS.st); });
+$('#vsReady').addEventListener('click', async () => {
+  if(!VS.st) return; const me = VS.st.players[VS.st.you]; if(me && me.ready){ vsSend({ t: 'ready', ready: false }); return; }
+  if(inputMode === 'gyro' && (!calib.MT || !calib.autoTh)) await vsWarmup();
+  vsSend({ t: 'ready', ready: true });
+});
+$('#vsLeave').addEventListener('click', () => vsLeaveRoom());
+$('#vsAgain').addEventListener('click', () => { vsSend({ t: 'rematch' }); });
+$('#vsIsleR').addEventListener('click', () => { vsLeaveRoom(false); $('#btnIsleT').click(); });
+// 手機按「結束」（HUD 的離開鈕）＝離開房間
+if(VS_API) $('#btnVsT').hidden = false;
+// 邀請連結 ?room=房號：直接進房
+{ const rm = (new URLSearchParams(location.search).get('room') || '').toUpperCase(); if(/^[A-Z0-9]{5}$/.test(rm)){ if(VS_API) setTimeout(() => { audioInit(); vsShow('scrVsHome'); $('#vsCodeIn').value = rm; vsJoinRoom(rm); }, 400); else $('#titleMsg').textContent = '雙人對戰還沒開放，敬請期待。'; } }
 
 /* ---------------- 按鈕 ---------------- */
 $('#btnStart').addEventListener('click', () => gateStart(startGyro));
