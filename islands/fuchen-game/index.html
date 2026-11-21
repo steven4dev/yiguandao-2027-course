@@ -259,6 +259,49 @@ body{line-break:strict}
 .vsFx{position:fixed;inset:0;z-index:26;pointer-events:none;display:flex;align-items:flex-start;justify-content:center;padding-top:calc(env(safe-area-inset-top) + 96px)}
 .vsFx::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 30%,var(--fx,rgba(180,120,220,.7)) 100%);animation:hvig 1.4s ease-out both}
 .vsFx span{position:relative;padding:5px 14px;border-radius:999px;background:rgba(10,14,22,.85);font-weight:800;font-size:.9rem;color:#ffd7c4;border:1px solid var(--fx);animation:ambT .4s cubic-bezier(.2,1.6,.4,1) both}
+.vsCode{flex-wrap:wrap}
+/* 投影觀戰：橫向左右分割，字要大到教室後排看得到 */
+.watch{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;background:radial-gradient(ellipse at 50% 0%,#1d2a48 0%,#0b1220 60%,#070b14 100%);color:var(--ink);font-size:clamp(14px,1.6vw,22px);overflow:hidden}
+.wh{display:flex;align-items:center;gap:1.2em;white-space:nowrap;padding:.5em 1.2em;background:rgba(0,0,0,.35);border-bottom:1px solid var(--line)}
+.wh b{color:#ffe7a8;font-size:1.2em;letter-spacing:.06em}.wh #wCode{color:var(--muted)}
+.wh .wt{margin-left:auto;font-size:1.6em;font-weight:900;color:#fff;font-variant-numeric:tabular-nums}
+.wbtns{display:flex;gap:.4em}.wbtns button{font-size:.8em;padding:.3em .8em}
+.wsides{flex:1;display:grid;grid-template-columns:1fr auto 1fr;min-height:0}
+.wside{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:1em 1em 1.4em;min-width:0;transition:background .3s}
+.wside .wp{display:flex;align-items:center;gap:.5em;width:100%;font-size:1.3em;font-weight:900}
+.wside .wp .tag{font-size:.6em;background:var(--gold);color:#1b1409;border-radius:.6em;padding:.1em .5em}
+.wside .wp .lv{margin-left:auto;font-size:1.1em;letter-spacing:.1em}
+#wS1 .wp{flex-direction:row-reverse}#wS1 .wp .lv{margin-left:0;margin-right:auto}
+.wside canvas{width:min(34vh,30vw);height:min(34vh,30vw);transition:transform .35s,opacity .35s}
+.wside canvas.pop{transform:scale(1.35);opacity:0}
+.wside .wm{text-align:center;line-height:1.35}.wside .wm b{font-size:1.15em}.wside .wm small{display:block;color:var(--muted)}
+.wside .wk{display:flex;gap:.4em;justify-content:center;flex-wrap:wrap;margin-top:.3em}
+.wside .wk span{padding:.15em .7em;border-radius:999px;background:rgba(0,0,0,.45);border:1px solid var(--line);font-weight:800}
+.wside .ws{font-size:3.6em;font-weight:900;color:var(--gold);line-height:1;text-shadow:0 0 .4em rgba(232,189,90,.5);font-variant-numeric:tabular-nums}
+.wside .wst{color:var(--muted)}
+.wside .wfloat{position:absolute;top:38%;left:50%;transform:translateX(-50%);font-size:1.8em;font-weight:900;white-space:nowrap;pointer-events:none;animation:wfl 1.2s ease-out forwards}
+@keyframes wfl{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}15%{opacity:1;transform:translate(-50%,0) scale(1.1)}100%{opacity:0;transform:translate(-50%,-60px) scale(1)}}
+.wside.ok{animation:wok .7s ease-out}.wside.bad{animation:wbad .7s ease-out}
+@keyframes wok{0%{background:rgba(255,214,110,.35)}100%{background:transparent}}
+@keyframes wbad{0%{background:rgba(220,40,50,.45);transform:translateX(-8px)}20%{transform:translateX(8px)}40%{transform:translateX(-5px)}60%{transform:translateX(3px)}100%{background:transparent;transform:none}}
+.wside.out{opacity:.45;filter:grayscale(.7)}
+.wmid{display:flex;align-items:center;justify-content:center;width:3.2em;font-size:2em;font-weight:900;color:#ff9a6a;text-shadow:0 0 .5em rgba(255,120,80,.6);border-left:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.08)}
+.wmid.cd{font-size:5em;color:#fff;width:2.2em}
+.wbeam{position:fixed;top:45%;width:12vw;height:.7em;border-radius:999px;z-index:45;pointer-events:none;background:linear-gradient(90deg,transparent,var(--bc),#fff);box-shadow:0 0 1.2em var(--bc);animation:wbeam .7s ease-in forwards}
+@keyframes wbeam{from{left:var(--x0);opacity:1}to{left:var(--x1);opacity:.2}}
+.wlobby{position:absolute;inset:3.2em 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6em;background:rgba(7,11,20,.86);text-align:center}
+.wl-code small{display:block;color:var(--muted)}.wl-code b{font-size:4.5em;letter-spacing:.25em;color:var(--gold);text-shadow:0 0 .3em rgba(232,189,90,.5)}
+.wqr{background:#fff;padding:.6em;border-radius:.6em;line-height:0}.wqr svg,.wqr img{width:min(26vh,30vw);height:auto}
+.wlobby #wLMsg{font-size:1.3em;font-weight:800}
+.wres{position:absolute;inset:3.2em 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6em;background:rgba(7,11,20,.88);text-align:center}
+.wres h2{font-size:3em;margin:0;color:#ffe7a8}.wres p{color:var(--muted);margin:0}
+.wres .wrc{display:grid;grid-template-columns:1fr 1fr;gap:1.2em;margin-top:.6em}
+.wres .wrc > div{padding:.8em 1.6em;min-width:0;border-radius:1em;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+.wres .wrc > div.win{border-color:var(--gold);box-shadow:0 0 1.2em rgba(232,189,90,.5)}
+.wres .wrc b{display:block;font-size:1.2em}.wres .wrc .sc{font-size:3em;font-weight:900;color:var(--gold)}
+.wstart{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,8,14,.9);cursor:pointer;text-align:center;z-index:2}
+.wstart b{font-size:2.4em;color:#ffe7a8}.wstart p{font-size:1.2em}
+@media (max-aspect-ratio:1/1){.wh{gap:.6em;padding:.5em .7em}.wh b{display:none}.wh .wt{font-size:1.3em}.wbtns button{padding:.3em .5em}.wres .wrc{gap:.6em;width:92vw}.wres .wrc > div{padding:.6em .5em}.wres h2{font-size:2.2em}.wsides{grid-template-columns:1fr;grid-template-rows:1fr auto 1fr}.wmid{width:auto;height:1.6em;border:0}.wside canvas{width:22vh;height:22vh}}
 .dsw-desc{margin:6px 0 0;text-align:center;font-size:.8rem;color:var(--ink);line-height:1.35}
 .diff button{padding:9px 4px 8px;font-size:.95rem;line-height:1.3;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px}
 .diff button small{font-size:.68rem;line-height:1.45;color:var(--muted);font-weight:500;white-space:nowrap}
@@ -406,7 +449,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 <section class="screen" id="scrVsRoom" hidden>
   <div class="panel">
     <h2>⚔️ 對戰房間</h2>
-    <div class="vsCode"><small>房號</small><b id="vsCodeShow">-----</b><button id="vsCopy" type="button">複製房號</button></div>
+    <div class="vsCode"><small>房號</small><b id="vsCodeShow">-----</b><button id="vsCopy" type="button">複製房號</button><button id="vsWatchLink" type="button">📺 投影觀戰</button></div>
     <a id="vsShare" class="vsShareBtn" href="https://line.me/R/msg/text/" target="_blank" rel="noopener">💬 分享到 LINE（連結＋房號）</a>
     <div class="vsSlots" id="vsSlots"></div>
     <div class="vsMe">
@@ -431,6 +474,17 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     <p class="note" id="vsResCaught" style="text-align:center"></p>
     <div class="row"><button class="primary big" id="vsAgain">🔁 回房間，再來一局</button><button id="vsIsleR">🏝️ 返回島嶼</button></div>
   </div>
+</section>
+<section class="watch" id="scrWatch" hidden>
+  <header class="wh"><b>⚔️ 拂塵試煉・雙人對戰</b><span id="wCode">房號 -----</span><span class="wt" id="wTimer">⏱ 2:00</span><span class="wbtns"><button id="wSnd" type="button">🔊 音效</button><button id="wFs" type="button">⛶ 全螢幕</button></span></header>
+  <div class="wsides">
+    <div class="wside" id="wS0"></div>
+    <div class="wmid" id="wMid">VS</div>
+    <div class="wside" id="wS1"></div>
+  </div>
+  <div class="wlobby" id="wLobby" hidden><div class="wl-code"><small>房號</small><b id="wLCode">-----</b></div><div class="wqr" id="wQr"></div><p id="wLMsg">等待兩位玩家準備…</p><p class="note">手機掃描 QR Code 或輸入房號加入；觀戰畫面不影響比賽。</p></div>
+  <div class="wres" id="wRes" hidden></div>
+  <div class="wstart" id="wStart"><div><b>📺 投影觀戰</b><p>點一下畫面開始（會開啟音效）</p><small id="wStartMsg"></small></div></div>
 </section>
 <div class="vsOpp" id="vsOpp" hidden></div>
 <div class="vsConn" id="vsConn" hidden>連線中斷，重新連線中…</div>
@@ -478,7 +532,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261121.02';
+const VERSION = 'v261121.03';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -2408,8 +2462,12 @@ const vsShow = id => VS_SCREENS.forEach(x => { const el = $('#' + x); if(el) el.
 const vsSend = o => { try{ if(VS.ws && VS.ws.readyState === 1) VS.ws.send(JSON.stringify(o)); }catch(e){} };
 const vsMsgHome = t => { $('#vsHomeMsg').textContent = t; };
 const vsRoomLink = code => `${VS_SITE}?room=${code}${!VS_LIVE && VS_TEST ? '&vs=1' : ''}`;
+const VS_GAME = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? location.origin + location.pathname : 'https://steven4dev.github.io/yiguandao-2027-course/islands/fuchen-game/';
+const vsWatchUrl = code => `${VS_GAME}?watch=${code}${!VS_LIVE && VS_TEST ? '&vs=1' : ''}${/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && VS_API !== 'http://localhost:8787' ? '&vs=' + encodeURIComponent(VS_API) : ''}`;
 const vsShareText = code => ['🪶 拂塵淨心島・雙人對戰', '來和我切磋一局！', `房號：${code}`, '點連結直接進房 👇', vsRoomLink(code)].join('\n');
 
+// 同一個種子、第幾隻、難度 → 這一隻的怪與符印（玩家與觀戰畫面共用，保證算出來一樣）
+function vsGen(seed, n, diff){ const sv = diffKey; diffKey = diff; try{ reseed(seed, n); const stage = n < 2 ? 1 : [1, 2, 2, 3][Math.floor(R()*4)], sp = spawnDef(stage), keys = keysFor(stage, sp.def); return { stage, sp, keys }; } finally { RNG = Math.random; diffKey = sv; } }
 async function vsApi(path, opt){ const r = await fetch(VS_API + path, opt); let b = null; try{ b = await r.json(); }catch(e){} return { status: r.status, body: b }; }
 async function vsCreateRoom(){
   vsMsgHome('建立房間中…');
@@ -2509,7 +2567,7 @@ async function runVersus(m){
     for(;;){ const left = m.startAt - vsNow(); if(left <= 30) break; center(`<div class="big">${Math.ceil(left/1000)}</div><div class="mid">⚔️ 對戰開始！</div>`); await sleep(Math.min(120, left)); if(cancelFlag) throw 'cancel'; }
     center(`<div class="big">揮！</div>`); setTimeout(() => center(''), 500);
     for(let n = 0; !VS.over; n++){
-      reseed(seed, n); const stage = n < 2 ? 1 : [1, 2, 2, 3][Math.floor(R()*4)], sp = spawnDef(stage), keys = keysFor(stage, sp.def); RNG = Math.random;
+      const { stage, sp, keys } = vsGen(seed, n, m.diff); vsSend({ t: 'cur', n });   // 告訴房間（觀戰畫面）我開始打第幾隻
       const hard = VS.debuff > 0; if(hard) VS.debuff--;
       const r = await encounter({ keys, ...sp, hm: hard ? 'markers' : undefined, beats: stage === 3 && diffKey !== 'easy' ? 2 : undefined, wave: `⚔️ 對戰 第 ${n + 1} 隻${hard ? '（被干擾）' : ''}` });
       if(VS.over) break;
@@ -2557,6 +2615,7 @@ $('#vsHomeBack').addEventListener('click', () => vsShow('scrTitle'));
 $('#vsCreate').addEventListener('click', vsCreateRoom);
 $('#vsJoinBtn').addEventListener('click', () => vsJoinRoom($('#vsCodeIn').value));
 $('#vsCodeIn').addEventListener('keydown', e => { if(e.key === 'Enter') vsJoinRoom($('#vsCodeIn').value); });
+$('#vsWatchLink').addEventListener('click', async () => { const u = vsWatchUrl(VS.code), b = $('#vsWatchLink'); try{ await navigator.clipboard.writeText(u); b.textContent = '已複製 ✓'; $('#vsRoomMsg').textContent = '在筆電瀏覽器貼上這個連結，就能投影兩邊的即時戰況。'; }catch(e){ prompt('投影觀戰連結（在筆電瀏覽器開啟）', u); } setTimeout(() => { b.textContent = '📺 投影觀戰'; }, 1800); });
 $('#vsCopy').addEventListener('click', async () => { try{ await navigator.clipboard.writeText(VS.code); $('#vsCopy').textContent = '已複製 ✓'; }catch(e){ $('#vsCopy').textContent = VS.code; } setTimeout(() => { $('#vsCopy').textContent = '複製房號'; }, 1500); });
 $('#vsName').addEventListener('change', e => { const v = e.target.value.trim().slice(0, 10); store.set('fuchenVs.name', v); vsSend({ t: 'profile', name: v || undefined }); });
 $('#vsAv').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; store.set('fuchenVs.avatar', b.dataset.k); vsSend({ t: 'profile', avatar: b.dataset.k }); });
@@ -2570,9 +2629,87 @@ $('#vsReady').addEventListener('click', async () => {
 $('#vsLeave').addEventListener('click', () => vsLeaveRoom());
 $('#vsAgain').addEventListener('click', () => { vsSend({ t: 'rematch' }); });
 $('#vsIsleR').addEventListener('click', () => { vsLeaveRoom(false); $('#btnIsleT').click(); });
+/* ---------------- 投影觀戰（筆電、投影機用） ---------------- */
+const WT = { ws: null, code: '', st: null, off: 0, rtt: 1e9, cur: [0, 0], shown: [-1, -1], gen: [null, null], disp: [0, 0], raf: 0, snd: true, retry: 0, qr: '' };
+const wNow = () => Date.now() + WT.off;
+function wSide(i){ return $('#wS' + i); }
+function wBuildSide(i){ wSide(i).innerHTML = `<div class="wp"><span class="tag">P${i + 1}</span><span class="nm">—</span><span class="lv"></span></div><canvas width="360" height="360"></canvas><div class="wm"><b class="mn">等待開始</b><small class="mi"></small><div class="wk"></div></div><div class="ws">0</div><div class="wst"></div>`; }
+function wOpen(){
+  const ws = new WebSocket(VS_API.replace(/^http/, 'ws') + `/api/room/${WT.code}/ws`); WT.ws = ws;
+  ws.onopen = () => { WT.retry = 0; ws.send(JSON.stringify({ t: 'join', watch: true })); WT.rtt = 1e9; [0, 250, 600].forEach(d => setTimeout(() => { try{ ws.send(JSON.stringify({ t: 'ping', c: Date.now() })); }catch(e){} }, d)); $('#wStartMsg').textContent = ''; };
+  ws.onmessage = e => { let m; try{ m = JSON.parse(e.data); }catch(err){ return; } wMsg(m); };
+  ws.onclose = () => { if(WT.ws !== ws) return; WT.ws = null; const d = Math.min(8000, 600 * Math.pow(1.6, WT.retry++)); $('#wLMsg').textContent = '連線中斷，重新連線中…'; setTimeout(() => { if(!WT.ws) wOpen(); }, d); };
+}
+function wMsg(m){
+  if(m.t === 'pong'){ const now = Date.now(), rtt = now - m.c; if(rtt < WT.rtt){ WT.rtt = rtt; WT.off = m.s + rtt/2 - now; } return; }
+  if(m.t === 'error'){ $('#wStartMsg').textContent = m.code === 'watch_full' ? '這個房間的觀戰人數已滿。' : '無法觀戰：' + m.code; return; }
+  if(m.t === 'state'){ const prev = WT.st; WT.st = m; wState(m, prev); return; }
+  if(m.t === 'cur'){ WT.cur[m.slot] = m.n; return; }
+  if(m.t === 'evx'){ wFlash(m.slot, m.ok, m); return; }
+  if(m.t === 'fx'){ wBeam(m.from, m.fam); return; }
+}
+function wState(m, prev){
+  $('#wCode').textContent = '房號 ' + WT.code; $('#wLCode').textContent = WT.code;
+  [0, 1].forEach(i => { const p = m.players[i], el = wSide(i); el.querySelector('.nm').textContent = p ? p.name : '等待加入…'; el.querySelector('.lv').textContent = p ? '🪔'.repeat(Math.max(0, p.lives)) : ''; el.classList.toggle('out', !!(p && m.phase === 'playing' && !p.alive));
+    el.querySelector('.wst').textContent = p ? `淨化 ${p.hits} 隻・最高連擊 ${p.combo}${p.online ? '' : '・📴 離線'}` : ''; if(p && p.cur && m.phase === 'playing') WT.cur[i] = Math.max(WT.cur[i], p.cur.n); });
+  if(m.phase === 'lobby'){
+    $('#wRes').hidden = true; $('#wLobby').hidden = false; WT.cur = [0, 0]; WT.shown = [-1, -1]; WT.disp = [0, 0];
+    const ps = m.players.filter(Boolean); $('#wLMsg').textContent = ps.length < 2 ? `等待玩家加入（${ps.length}/2）` : ps.map(p => `${p.name} ${p.ready ? '✅ 已準備' : '⏳ 準備中'}`).join('　　');
+    wQr(); $('#wMid').textContent = 'VS'; $('#wMid').classList.remove('cd');
+  } else if(m.phase === 'playing'){
+    $('#wLobby').hidden = true; $('#wRes').hidden = true;
+    if(!prev || prev.phase !== 'playing'){ WT.cur = [0, 0]; WT.shown = [-1, -1]; WT.disp = [0, 0]; }
+  } else if(m.phase === 'done' && m.result){
+    $('#wLobby').hidden = true; const r = m.result, w = r.winner, nm = i => (r.players[i] || {}).name || '';
+    $('#wRes').innerHTML = `<h2>${w === -1 ? '🤝 平手' : '🏆 ' + vsEsc(nm(w)) + ' 獲勝！'}</h2><p>${{ knockout: '對手的心燈用完了', time: '時間到，比分數', forfeit: '對方離開了房間', disconnect: '對方斷線太久', both_out: '兩邊心燈都用完了' }[r.reason] || ''}・切磋不計入任何成績</p><div class="wrc">${[0, 1].map(i => { const p = r.players[i]; return p ? `<div class="${w === i ? 'win' : ''}"><b>${vsEsc(p.name)}</b><div class="sc">${p.score}</div><small>淨化 ${p.hits} 隻・最高連擊 ${p.combo}</small></div>` : '<div></div>'; }).join('')}</div>`;
+    $('#wRes').hidden = false; if(!prev || prev.phase !== 'done') wSfx(() => sfx.victory());
+  }
+}
+function wQr(){
+  const u = vsRoomLink(WT.code); if(WT.qr === u) return; WT.qr = u; const box = $('#wQr');
+  const draw = () => { try{ const q = qrcode(0, 'M'); q.addData(u); q.make(); box.innerHTML = q.createSvgTag(6, 2); }catch(e){ box.hidden = true; } };
+  if(window.qrcode) draw(); else { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'; sc.onload = draw; sc.onerror = () => { box.hidden = true; }; document.head.appendChild(sc); }
+}
+const wSfx = f => { if(!WT.snd) return; try{ f(); }catch(e){} };
+function wFloat(i, text, col){ const d = document.createElement('div'); d.className = 'wfloat'; d.style.color = col; d.textContent = text; wSide(i).appendChild(d); setTimeout(() => d.remove(), 1300); }
+function wFlash(i, ok2, m){
+  const el = wSide(i); el.classList.remove('ok', 'bad'); void el.offsetWidth; el.classList.add(ok2 ? 'ok' : 'bad');
+  if(ok2){ el.querySelector('canvas').classList.add('pop'); wFloat(i, m.multi ? '⚡ 連擊淨化！' : m.stage === 3 ? '✨ 淨化塵魔！' : '✨ 淨化！', '#ffe08a'); wSfx(() => (m.multi || m.stage >= 2) ? sfx.purify() : sfx.ding()); }
+  else { wFloat(i, '💥 被塵靈抓到！', '#ff8a7a'); wSfx(() => sfx.miss(null)); }
+}
+function wBeam(from, fam){
+  const b = document.createElement('div'), L = from === 0; b.className = 'wbeam'; b.style.setProperty('--bc', VS_FAM_COL[fam] || '#b9bdf0'); b.style.setProperty('--x0', L ? '22vw' : '66vw'); b.style.setProperty('--x1', L ? '66vw' : '22vw'); if(!L) b.style.transform = 'scaleX(-1)';
+  document.body.appendChild(b); setTimeout(() => { b.remove(); const to = 1 - from; wFloat(to, `🌫️ 受到干擾：${(VS_FAM_FX[fam] || '').split('・')[0]}`, VS_FAM_COL[fam] || '#ccc'); }, 650); wSfx(() => sfx.hurt(false));
+}
+function wLoop(now){
+  WT.raf = requestAnimationFrame(wLoop); const m = WT.st; if(!m) return; const t = now/1000;
+  if(m.phase === 'playing'){
+    const left = m.startAt - wNow(), mid = $('#wMid');
+    if(left > 0){ mid.textContent = Math.ceil(left/1000); mid.classList.add('cd'); } else if(mid.classList.contains('cd')){ mid.classList.remove('cd'); mid.textContent = 'VS'; }
+    const tl = Math.max(0, Math.ceil((m.endAt - Math.max(wNow(), m.startAt))/1000)); $('#wTimer').textContent = `⏱ ${Math.floor(tl/60)}:${String(tl % 60).padStart(2, '0')}`;
+  }
+  [0, 1].forEach(i => {
+    const el = wSide(i), p = m.players[i], cv = el.querySelector('canvas');
+    if(p){ const target = p.score; WT.disp[i] += (target - WT.disp[i]) * 0.12; if(Math.abs(target - WT.disp[i]) < 1) WT.disp[i] = target; el.querySelector('.ws').textContent = Math.round(WT.disp[i]); }
+    if(m.phase !== 'playing' || !p) return;
+    const n = WT.cur[i];
+    if(WT.shown[i] !== n){ WT.shown[i] = n; const g = WT.gen[i] = vsGen(m.seed, n, m.diff); cv.classList.remove('pop');
+      el.querySelector('.mn').textContent = `第 ${n + 1} 隻・${g.sp.def.name}`; el.querySelector('.mi').textContent = `${g.sp.def.fam.name}系・${STAGE_NAME[g.stage]}・Lv ${g.sp.lv}`;
+      el.querySelector('.wk').innerHTML = g.keys.map(k => `<span>${SYMS[k].icon} ${SYMS[k].name}</span>`).join('<span style="border:0;background:none">→</span>'); }
+    const g = WT.gen[i]; if(g && !cv.classList.contains('pop')){ const c = cv.getContext('2d'); c.clearRect(0, 0, cv.width, cv.height); try{ dust(c, g.sp.def, cv.width/2, cv.height*0.55, cv.width*0.3, t + i*0.7, { noMeasure: true, gold: g.sp.gold }); }catch(e){} }
+  });
+}
+function startWatch(code){
+  WT.code = code; vsShow(null); $('#scrWatch').hidden = false; wBuildSide(0); wBuildSide(1); $('#wCode').textContent = '房號 ' + code; $('#wLCode').textContent = code;
+  $('#wStart').addEventListener('click', () => { audioInit(); $('#wStart').hidden = true; }, { once: true });
+  $('#wSnd').addEventListener('click', () => { WT.snd = !WT.snd; $('#wSnd').textContent = WT.snd ? '🔊 音效' : '🔇 靜音'; });
+  $('#wFs').addEventListener('click', () => { try{ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }catch(e){} });
+  wOpen(); WT.raf = requestAnimationFrame(wLoop);
+}
 // 手機按「結束」（HUD 的離開鈕）＝離開房間
 if(VS_API) $('#btnVsT').hidden = false;
 // 邀請連結 ?room=房號：直接進房
+{ const wc = (new URLSearchParams(location.search).get('watch') || '').toUpperCase(); if(/^[A-Z0-9]{5}$/.test(wc)){ if(VS_API) startWatch(wc); else $('#titleMsg').textContent = '雙人對戰還沒開放，敬請期待。'; } }
 { const rm = (new URLSearchParams(location.search).get('room') || '').toUpperCase(); if(/^[A-Z0-9]{5}$/.test(rm)){ if(VS_API) setTimeout(() => { audioInit(); vsShow('scrVsHome'); $('#vsCodeIn').value = rm; vsJoinRoom(rm); }, 400); else $('#titleMsg').textContent = '雙人對戰還沒開放，敬請期待。'; } }
 
 /* ---------------- 按鈕 ---------------- */
