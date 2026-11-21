@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0d151d">
+<title>玩法動畫打樣｜拂塵試煉</title>
+<meta name="description" content="拂塵試煉的玩法說明改成動畫：開場示範小人，以及第一次玩熱身時的角落示範與糾正。">
+<style>
+:root{ --bg:#0d151d; --panel:rgba(20,16,12,.86); --ink:#f6ecd8; --muted:#b9ab95; --gold:#e8bd5a; --line:rgba(232,189,90,.35); --good:#7fe0a6; --bad:#ff8a7a; }
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){ --bg:#0d151d; } }
+:root[data-theme="light"]{ --bg:#0d151d; }
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;-webkit-text-size-adjust:100%}
+body{background:radial-gradient(ellipse at 70% 0%,#1d2a48 0%,#0d151d 55%) fixed;padding:16px 16px 40px}
+.wrap{max-width:440px;margin:0 auto}
+h1{font-size:1.2rem;color:var(--gold);margin:6px 0 2px}
+.lead{color:var(--muted);font-size:.85rem;line-height:1.6;margin:0 0 14px}
+.sec{margin:22px 0 8px;font-size:1rem;color:var(--gold)}
+.sec small{display:block;color:var(--muted);font-weight:400;font-size:.78rem;margin-top:2px}
+/* —— A：開場畫面的樣子 —— */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px 16px 14px;box-shadow:0 10px 40px rgba(0,0,0,.5);position:relative}
+.panel h2{margin:0;font-size:1.5rem;color:var(--gold);letter-spacing:2px}
+.tsub{margin:0 0 6px;font-size:.78rem;color:var(--muted)}
+.isleTop{position:absolute;top:12px;right:12px;padding:4px 10px;font-size:.74rem;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:rgba(255,255,255,.06)}
+.demo{position:relative;border-radius:16px;overflow:hidden;background:radial-gradient(ellipse at 60% 30%,#1b2a46,#0b1220 75%);border:1px solid rgba(232,189,90,.25)}
+.demo canvas{display:block;width:100%;aspect-ratio:360/230}
+.cap{display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:6px 8px 8px;font-size:1.15rem;font-weight:900;letter-spacing:1px}
+.cap .ok{color:var(--good)}.cap .no{color:var(--bad)}
+.dots{position:absolute;top:8px;left:0;right:0;display:flex;justify-content:center;gap:5px}
+.dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22)}.dots i.on{background:var(--gold)}
+.more{display:block;margin:6px auto 0;padding:4px 10px;font-size:.78rem;color:var(--muted);background:none;border:0;text-decoration:underline;font-family:inherit}
+.detail{font-size:.85rem;line-height:1.6;color:var(--ink);margin:6px 0 0;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.05)}
+.detail ul{margin:4px 0;padding-left:1.2em}
+.ghost{margin-top:10px;opacity:.55;pointer-events:none}
+.ghost .lbl{font-size:.72rem;color:var(--muted);text-align:center;margin-bottom:4px}
+.dswm{display:grid;grid-template-columns:repeat(3,1fr);padding:4px;border-radius:999px;background:rgba(0,0,0,.5);border:1px solid var(--line)}
+.dswm span{text-align:center;padding:8px 0;border-radius:999px;font-weight:800;font-size:.9rem;color:var(--muted)}.dswm span.on{background:#7fe0a6;color:#1b1409}
+.btnm{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.btnm span{text-align:center;padding:10px 4px;border-radius:14px;border:1px solid var(--line);font-weight:800}.btnm span.p{background:var(--gold);color:#22190f;border-color:transparent}
+/* —— B：熱身畫面（手機框） —— */
+.phone{position:relative;border-radius:28px;border:2px solid rgba(255,255,255,.12);overflow:hidden;background:radial-gradient(ellipse at 50% 20%,#1b2a46,#0b1220 70%)}
+.phone canvas{display:block;width:100%;aspect-ratio:402/600}
+.note{font-size:.8rem;color:var(--muted);line-height:1.6}
+.ctrl{display:flex;gap:6px;justify-content:center;margin:8px 0}
+.ctrl button{font-family:inherit;font-size:.82rem;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink)}
+.ctrl button.on{border-color:var(--gold);color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🪶 玩法動畫・打樣</h1>
+  <p class="lead">這頁只是設計打樣，還沒有換進遊戲。A 是新的開場畫面：用小人示範取代原本三段說明文字；B 是第一次玩時，熱身畫面角落的示範小人（揮錯時會重播正確動作）。</p>
+
+  <div class="sec">A｜開場畫面<small>約 9 秒一輪，自動循環；完整文字收進「ⓘ 詳細說明」</small></div>
+  <div class="panel">
+    <span class="isleTop">🏝️ 返回島嶼</span>
+    <h2>🪶 拂塵試煉</h2>
+    <p class="tsub">拂塵淨心島・體感小遊戲</p>
+    <div class="demo"><div class="dots" id="dots"></div><canvas id="cvA" width="720" height="460"></canvas><div class="cap" id="cap">直立握好</div></div>
+    <button class="more" id="more">ⓘ 詳細說明</button>
+    <div class="detail" id="detail" hidden>
+      「時時勤拂拭，勿使惹塵埃。」手機就是您的拂塵柄：看清符印、聽到「揮」就大揮一拂，把塵靈淨化、收進淨心錄。
+      <ul><li>🤚 直立握著、整隻手臂揮（約一個手臂長），只擺手腕會判「動作太小」</li><li>👀 揮的時候不用看螢幕，聽到「叮」再看招式</li><li>🔊 請開聲音（iPhone 關掉靜音鍵）</li></ul>
+      ⚠️ 安全第一：握緊手機、戴掛繩，周圍 1.5 公尺淨空
+    </div>
+    <div class="ghost"><div class="lbl">（以下維持現在的樣子）</div>
+      <div class="dswm"><span class="on">🌱 入門</span><span>🪶 修行</span><span>🔥 精進</span></div>
+      <div class="btnm"><span class="p">🪶 開始試煉</span><span>👆 用手指畫</span><span>📖 淨心錄</span><span>📜 招式表</span></div>
+    </div>
+  </div>
+
+  <div class="sec">B｜第一次玩：跟著揮就學會<small>不先放說明卡，直接熱身四揮；角落小人同步示範，揮錯時重播正確動作</small></div>
+  <div class="ctrl"><button id="bOk" class="on">看「揮對了」</button><button id="bBad">看「動作太小」的糾正</button></div>
+  <div class="phone"><canvas id="cvB" width="804" height="1200"></canvas></div>
+  <p class="note">真的遊戲裡，玩家揮完會由辨識結果決定走哪一條：揮對就接下一個方向；動作太小、方向反了，角落小人就把正確動作放大再示範一次。系統設定「減少動態效果」時，A 會改成三張靜態分格圖。</p>
+</div>
+<script>
+/* ===== 小人：Q 版、圓頭大眼；右手拿手機（手機就是拂塵柄，頂端飄著白色拂塵毛） =====
+   手臂用兩節（上臂、前臂）簡單反向運算：給手的位置，算出手肘 */
+const TAU = Math.PI * 2;
+function ik(sx, sy, hx, hy, a, b, bend){
+  let dx = hx - sx, dy = hy - sy, d = Math.hypot(dx, dy); const mx = a + b - 0.5; if(d > mx){ hx = sx + dx / d * mx; hy = sy + dy / d * mx; dx = hx - sx; dy = hy - sy; d = mx; }
+  const c = Math.max(-1, Math.min(1, (a * a + d * d - b * b) / (2 * a * d))), ang = Math.atan2(dy, dx) + bend * Math.acos(c);
+  return { ex: sx + Math.cos(ang) * a, ey: sy + Math.sin(ang) * a, hx, hy };
+}
+function figure(c, o){
+  // o: x,y（腳底中心）, s 縮放, hand:[x,y] 右手位置（畫布座標）, tilt 手機傾角, tuft 拂塵毛偏移, mood, glow, strap, emph(手臂強調)
+  const s = o.s, X = o.x, Y = o.y;
+  c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+  // 地上的影子
+  c.fillStyle = 'rgba(0,0,0,.35)'; c.beginPath(); c.ellipse(X, Y, 34 * s, 8 * s, 0, 0, TAU); c.fill();
+  // 身體（道袍感的圓梯形）
+  const bx = X, by = Y - 62 * s;
+  const g = c.createLinearGradient(bx, by - 40 * s, bx, Y); g.addColorStop(0, '#f2ead8'); g.addColorStop(1, '#cfc2a6');
+  c.fillStyle = g; c.beginPath(); c.moveTo(bx - 22 * s, by - 34 * s); c.quadraticCurveTo(bx, by - 44 * s, bx + 22 * s, by - 34 * s); c.lineTo(bx + 30 * s, Y - 6 * s); c.quadraticCurveTo(bx, Y + 2 * s, bx - 30 * s, Y - 6 * s); c.closePath(); c.fill();
+  c.strokeStyle = 'rgba(120,96,60,.5)'; c.lineWidth = 2 * s; c.stroke();
+  c.strokeStyle = '#c9a24e'; c.lineWidth = 4 * s; c.beginPath(); c.moveTo(bx - 25 * s, by - 6 * s); c.lineTo(bx + 25 * s, by - 6 * s); c.stroke();   // 腰帶
+  // 左手：自然下垂
+  c.strokeStyle = '#e9dcc0'; c.lineWidth = 11 * s; c.beginPath(); c.moveTo(bx - 20 * s, by - 30 * s); c.quadraticCurveTo(bx - 32 * s, by - 8 * s, bx - 28 * s, by + 12 * s); c.stroke();
+  c.fillStyle = '#f7d9bf'; c.beginPath(); c.arc(bx - 28 * s, by + 14 * s, 6 * s, 0, TAU); c.fill();
+  // 頭
+  const hx0 = X, hy0 = by - 66 * s, R = 30 * s;
+  const hg = c.createRadialGradient(hx0 - 8 * s, hy0 - 10 * s, 4 * s, hx0, hy0, R); hg.addColorStop(0, '#ffe8d4'); hg.addColorStop(1, '#f2c9a6');
+  c.fillStyle = hg; c.beginPath(); c.arc(hx0, hy0, R, 0, TAU); c.fill();
+  c.fillStyle = '#3b2b22'; c.beginPath(); c.arc(hx0, hy0 - 6 * s, R * 1.02, Math.PI * 1.08, Math.PI * 1.92); c.fill();   // 頭髮
+  c.beginPath(); c.arc(hx0, hy0 - R * 0.98, 8 * s, 0, TAU); c.fill();   // 髮髻
+  // 臉
+  const eyeY = hy0 + 4 * s, ex = 10 * s;
+  if(o.mood === 'oops'){ c.strokeStyle = '#3b2b22'; c.lineWidth = 2.5 * s; for(const k of [-1, 1]){ c.beginPath(); c.moveTo(hx0 + k * ex - 4 * s, eyeY - 3 * s); c.lineTo(hx0 + k * ex + 4 * s, eyeY + 3 * s); c.moveTo(hx0 + k * ex + 4 * s, eyeY - 3 * s); c.lineTo(hx0 + k * ex - 4 * s, eyeY + 3 * s); c.stroke(); } }
+  else { c.fillStyle = '#2a1d16'; for(const k of [-1, 1]){ c.beginPath(); c.ellipse(hx0 + k * ex, eyeY, 3.6 * s, o.mood === 'focus' ? 2.2 * s : 4.4 * s, 0, 0, TAU); c.fill(); c.fillStyle = '#fff'; c.beginPath(); c.arc(hx0 + k * ex + 1.2 * s, eyeY - 1.4 * s, 1.2 * s, 0, TAU); c.fill(); c.fillStyle = '#2a1d16'; } }
+  c.fillStyle = 'rgba(255,120,120,.35)'; for(const k of [-1, 1]){ c.beginPath(); c.ellipse(hx0 + k * 17 * s, hy0 + 12 * s, 5 * s, 3 * s, 0, 0, TAU); c.fill(); }
+  c.strokeStyle = '#7a3b2e'; c.lineWidth = 2 * s; c.beginPath(); if(o.mood === 'oops') c.arc(hx0, hy0 + 18 * s, 4 * s, Math.PI * 1.15, Math.PI * 1.85); else if(o.mood === 'focus') { c.moveTo(hx0 - 4 * s, hy0 + 15 * s); c.lineTo(hx0 + 4 * s, hy0 + 15 * s); } else c.arc(hx0, hy0 + 12 * s, 5 * s, 0.2 * Math.PI, 0.8 * Math.PI); c.stroke();
+  // 右手：肩膀 → 手肘 → 手（強調時手臂發金光）
+  const sx = bx + 20 * s, sy = by - 30 * s, arm = ik(sx, sy, o.hand[0], o.hand[1], 46 * s, 44 * s, -1);
+  if(o.emph){ c.strokeStyle = `rgba(255,214,110,${0.55 * o.emph})`; c.lineWidth = 22 * s; c.shadowColor = '#ffd27a'; c.shadowBlur = 18 * s; c.beginPath(); c.moveTo(sx, sy); c.lineTo(arm.ex, arm.ey); c.lineTo(arm.hx, arm.hy); c.stroke(); c.shadowBlur = 0; }
+  c.strokeStyle = '#e9dcc0'; c.lineWidth = 12 * s; c.beginPath(); c.moveTo(sx, sy); c.lineTo(arm.ex, arm.ey); c.lineTo(arm.hx, arm.hy); c.stroke();
+  // 手機（直立）＋拂塵毛
+  c.save(); c.translate(arm.hx, arm.hy); c.rotate(o.tilt || 0);
+  const tf = o.tuft || [0, 0];
+  for(let i = 0; i < 7; i++){ const k = (i - 3) / 3; c.strokeStyle = `rgba(255,250,236,${0.7 + 0.3 * (1 - Math.abs(k))})`; c.lineWidth = 2.2 * s; c.shadowColor = 'rgba(255,230,170,.8)'; c.shadowBlur = 6 * s; c.beginPath(); c.moveTo(k * 3 * s, -22 * s); c.quadraticCurveTo(k * 7 * s + tf[0] * 0.4, -38 * s + tf[1] * 0.3, k * 9 * s + tf[0], -52 * s + tf[1]); c.stroke(); }
+  c.shadowBlur = 0;
+  if(o.glow){ c.shadowColor = '#7fe0a6'; c.shadowBlur = 16 * s * o.glow; }
+  c.fillStyle = '#1b1f2a'; c.strokeStyle = o.glow ? '#7fe0a6' : '#8b93a6'; c.lineWidth = 2 * s; roundRect(c, -8 * s, -22 * s, 16 * s, 30 * s, 4 * s); c.fill(); c.stroke(); c.shadowBlur = 0;
+  c.fillStyle = '#3d6fa8'; roundRect(c, -6 * s, -19 * s, 12 * s, 22 * s, 2 * s); c.fill();
+  c.fillStyle = '#f7d9bf'; c.beginPath(); c.ellipse(0, 4 * s, 9 * s, 7 * s, 0, 0, TAU); c.fill();   // 握著的手
+  if(o.strap){ c.strokeStyle = `rgba(255,214,110,${0.6 + 0.4 * Math.sin(o.t * 8)})`; c.lineWidth = 2.5 * s; c.shadowColor = '#ffd27a'; c.shadowBlur = 10 * s; c.beginPath(); c.moveTo(0, 8 * s); c.quadraticCurveTo(14 * s, 22 * s, 4 * s, 26 * s); c.quadraticCurveTo(-10 * s, 22 * s, 0, 8 * s); c.stroke(); c.shadowBlur = 0; }
+  c.restore();
+  c.restore();
+  return arm;
+}
+function roundRect(c, x, y, w, h, r){ c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+// 金色殘影（越舊越淡）；bad＝紅色
+function trail(c, pts, alpha, s, bad){
+  if(pts.length < 2 || alpha <= 0) return; c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+  const col = bad ? '255,106,90' : '255,224,138';
+  for(const [w, a, bl] of [[16, 0.22, 22], [7, 0.6, 10], [3, 1, 4]]){ c.strokeStyle = `rgba(${col},${a * alpha})`; c.lineWidth = w * s; c.shadowColor = `rgba(${col},${alpha})`; c.shadowBlur = bl * s; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke(); }
+  c.restore();
+}
+const ease = k => k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+// 符印路徑（-1～1）
+const PATHS = {
+  down: k => [0, -1 + 2 * k], up: k => [0, 1 - 2 * k], left: k => [1 - 2 * k, 0], right: k => [-1 + 2 * k, 0],
+  circle: k => [Math.sin(k * TAU), -Math.cos(k * TAU)],
+  wrist: k => [Math.sin(k * TAU * 2) * 0.08, 0.05 * Math.cos(k * TAU * 2)]
+};
+
+/* ===== A：開場示範（約 9 秒一輪） ===== */
+const A = { cv: document.getElementById('cvA'), cap: document.getElementById('cap') };
+A.c = A.cv.getContext('2d');
+const STEPS = [
+  { t: 1.3, cap: '直立握好', kind: 'hold' },
+  { t: 1.9, cap: '聽到「揮」，整隻手臂大揮', kind: 'swing', path: 'down', sym: '⬇ 劈' },
+  { t: 2.1, cap: '揮出來的軌跡就是符印', kind: 'swing', path: 'circle', sym: '○ 圓' },
+  { t: 1.9, cap: '<span class="no">✖</span> 只甩手腕＝動作太小', kind: 'wrist' },
+  { t: 1.9, cap: '握緊・戴掛繩・周圍淨空', kind: 'safe' }
+];
+const TOTAL = STEPS.reduce((a, s) => a + s.t, 0);
+document.getElementById('dots').innerHTML = STEPS.map(() => '<i></i>').join('');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let lastStep = -1;
+function drawA(now){
+  const c = A.c, W = A.cv.width, H = A.cv.height, s = 2; c.clearRect(0, 0, W, H);
+  // 星空
+  c.fillStyle = 'rgba(255,246,220,.5)'; for(let i = 0; i < 40; i++){ const x = (i * 97) % W, y = (i * 53) % (H * 0.6); c.globalAlpha = 0.3 + 0.3 * Math.sin(now / 900 + i); c.fillRect(x, y, 2, 2); } c.globalAlpha = 1;
+  let t = (now / 1000) % TOTAL, i = 0; while(t > STEPS[i].t){ t -= STEPS[i].t; i++; }
+  const st = STEPS[i], k = t / st.t;
+  if(i !== lastStep){ lastStep = i; A.cap.innerHTML = st.cap; [...document.querySelectorAll('#dots i')].forEach((d, j) => d.classList.toggle('on', j === i)); }
+  const FX = 250, FY = 410, cx = 440, cy = 200, R = 105;   // 小人腳底、符印中心與大小
+  let hand = [cx - 60, cy + 40], tilt = -0.15, mood = 'happy', glow = 0, strap = false, tuft = [0, 0], pts = [], alpha = 0, bad = false, label = '', emph = 0;
+  if(st.kind === 'hold'){ const b = Math.sin(k * Math.PI); hand = [cx - 70, cy + 30 - b * 6]; tilt = 0; glow = b; label = '頂端朝上'; tuft = [Math.sin(now / 300) * 4, 0]; }
+  if(st.kind === 'swing'){
+    const pre = 0.18, kk = Math.max(0, Math.min(1, (k - pre) / 0.55)), e = ease(kk), f = PATHS[st.path];
+    if(k < pre){ const p = f(0); hand = [cx + p[0] * R, cy + p[1] * R]; mood = 'focus'; label = '揮！'; }
+    else { const p = f(e), q = f(Math.max(0, e - 0.04)); hand = [cx + p[0] * R, cy + p[1] * R]; tuft = [-(p[0] - q[0]) * 400, -(p[1] - q[1]) * 400]; mood = 'focus'; emph = kk < 1 ? 1 : 0;
+      const n = 40; for(let j = 0; j <= n; j++){ const pp = f(e * j / n); pts.push([cx + pp[0] * R, cy + pp[1] * R]); } alpha = k < 0.75 ? 1 : 1 - (k - 0.75) / 0.25 * 0.6; label = kk >= 1 ? st.sym : ''; if(kk >= 1) mood = 'happy'; }
+    tilt = 0.1;
+  }
+  if(st.kind === 'wrist'){
+    const f = PATHS.wrist, kk = Math.min(1, k / 0.6); const p = f(kk); hand = [cx - 40 + p[0] * R, cy + 20 + p[1] * R]; tilt = Math.sin(kk * TAU * 2) * 0.6; mood = kk >= 1 ? 'oops' : 'focus';
+    for(let j = 0; j <= 30; j++){ const pp = f(kk * j / 30); pts.push([cx - 40 + pp[0] * R, cy + 20 + pp[1] * R]); } alpha = 1; bad = true; label = kk >= 1 ? '動作太小' : '';
+  }
+  if(st.kind === 'safe'){ hand = [cx - 70, cy + 34]; tilt = 0; strap = true;
+    c.save(); c.strokeStyle = 'rgba(127,224,166,.7)'; c.setLineDash([10, 10]); c.lineWidth = 3; c.lineDashOffset = -now / 40; c.beginPath(); c.ellipse(FX, FY - 4, 190, 40, 0, 0, TAU); c.stroke(); c.restore();
+    c.fillStyle = 'rgba(127,224,166,.95)'; c.font = '800 26px "PingFang TC","Noto Sans TC",sans-serif'; c.textAlign = 'center'; c.fillText('周圍 1.5 公尺', FX + 150, FY + 40); label = '掛繩'; }
+  trail(c, pts, alpha, s * 0.9, bad);
+  const arm = figure(c, { x: FX, y: FY, s, hand, tilt, tuft, mood, glow, strap, emph, t: now / 1000 });
+  if(label){ c.save(); c.font = '900 34px "PingFang TC","Noto Sans TC",sans-serif'; c.textAlign = 'center'; c.fillStyle = bad ? '#ff8a7a' : label === '揮！' ? '#ffffff' : '#ffe08a'; c.shadowColor = 'rgba(0,0,0,.6)'; c.shadowBlur = 8;
+    const lx = label === '揮！' ? FX - 10 : label === '頂端朝上' ? arm.hx + 10 : label === '掛繩' ? arm.hx + 70 : cx + (bad ? 120 : 0), ly = label === '揮！' ? 70 : label === '頂端朝上' ? arm.hy - 130 : label === '掛繩' ? arm.hy + 60 : bad ? cy + 70 : cy + R + 60;
+    if(label === '揮！'){ c.fillStyle = 'rgba(255,255,255,.12)'; roundRect(c, lx - 60, ly - 40, 120, 56, 28); c.fill(); c.fillStyle = '#fff'; }
+    c.fillText(label, lx, ly); c.restore(); }
+  if(bad && label){ c.save(); c.strokeStyle = '#ff6a5a'; c.lineWidth = 8; c.lineCap = 'round'; const x0 = cx + 120, y0 = cy - 20; c.beginPath(); c.moveTo(x0 - 26, y0 - 26); c.lineTo(x0 + 26, y0 + 26); c.moveTo(x0 + 26, y0 - 26); c.lineTo(x0 - 26, y0 + 26); c.stroke(); c.restore(); }
+}
+
+/* ===== B：熱身畫面（角落示範小人） ===== */
+const B = { cv: document.getElementById('cvB'), mode: 'ok' }; B.c = B.cv.getContext('2d');
+const DIRS = [['left', '⬅ 左揮'], ['right', '➡ 右揮'], ['up', '⬆ 挑'], ['down', '⬇ 劈']];
+function drawB(now){
+  const c = B.c, W = B.cv.width, H = B.cv.height; c.clearRect(0, 0, W, H);
+  const CY = B.mode === 'ok' ? 4.2 : 6.4, T = (now / 1000) % (B.mode === 'ok' ? CY * 4 : CY), di = B.mode === 'ok' ? Math.floor(T / CY) : 0, t = B.mode === 'ok' ? T % CY : T;
+  const [dk, dname] = DIRS[di], f = PATHS[dk];
+  // 上方：波次與題目
+  c.textAlign = 'center'; c.fillStyle = 'rgba(246,236,216,.7)'; c.font = '700 30px "PingFang TC","Noto Sans TC",sans-serif'; c.fillText('熱身・四方拂塵（第一次玩）', W / 2, 70);
+  c.fillStyle = '#fff'; c.font = '900 64px "PingFang TC","Noto Sans TC",sans-serif'; c.fillText(dname, W / 2, 160);
+  // 中央：提示軌跡（遊戲本來就有）
+  const cx = W / 2, cy = H * 0.42, R = 150; c.save(); c.strokeStyle = 'rgba(255,255,255,.18)'; c.lineWidth = 18; c.lineCap = 'round'; c.setLineDash([2, 26]); c.beginPath(); for(let j = 0; j <= 20; j++){ const p = f(j / 20); j ? c.lineTo(cx + p[0] * R, cy + p[1] * R) : c.moveTo(cx + p[0] * R, cy + p[1] * R); } c.stroke(); c.restore();
+  const p0 = f(0); c.fillStyle = '#7fe0a6'; c.beginPath(); c.arc(cx + p0[0] * R, cy + p0[1] * R, 18, 0, TAU); c.fill();
+  // 玩家揮的結果（模擬）
+  let msg = '', msgCol = '#7fe0a6', ppts = [], pbad = false, demoK = 0, demoEmph = 0, demoMood = 'happy', showWave = false;
+  if(B.mode === 'ok'){
+    if(t < 1.2){ demoK = ease(Math.min(1, t / 1.1)); demoMood = 'focus'; msg = '跟著小人揮一次'; msgCol = '#f6ecd8'; }
+    else if(t < 1.6){ showWave = true; demoK = 1; msg = ''; }
+    else { const kk = Math.min(1, (t - 1.6) / 0.6), e = ease(kk); for(let j = 0; j <= 30; j++){ const p = f(e * j / 30); ppts.push([cx + p[0] * R, cy + p[1] * R]); } demoK = 1; if(kk >= 1){ msg = '✨ 揮對了！'; } }
+  } else {
+    if(t < 1.2){ demoK = ease(Math.min(1, t / 1.1)); demoMood = 'focus'; msg = '跟著小人揮一次'; msgCol = '#f6ecd8'; }
+    else if(t < 1.6){ showWave = true; demoK = 1; }
+    else if(t < 3.2){ const kk = Math.min(1, (t - 1.6) / 0.5); for(let j = 0; j <= 20; j++){ const p = f(kk * j / 20); ppts.push([cx + p[0] * R * 0.18, cy + p[1] * R * 0.18 + Math.sin(j) * 4]); } pbad = true; demoK = 1; demoMood = 'oops'; if(kk >= 1){ msg = '🤏 動作太小'; msgCol = '#ff8a7a'; } }
+    else { const kk = Math.min(1, (t - 3.4) / 1.4); demoK = ease(Math.max(0, kk)); demoEmph = kk > 0 && kk < 1 ? 1 : 0.4; demoMood = 'focus'; msg = '整隻手臂！再大一點'; msgCol = '#ffe08a'; }
+  }
+  if(showWave){ c.save(); c.fillStyle = '#fff'; c.font = '900 120px "PingFang TC","Noto Sans TC",sans-serif'; c.shadowColor = 'rgba(255,214,120,.9)'; c.shadowBlur = 30; c.fillText('揮！', cx, cy + 40); c.restore(); }
+  trail(c, ppts, 1, 1.6, pbad);
+  if(msg){ c.font = '900 52px "PingFang TC","Noto Sans TC",sans-serif'; c.fillStyle = msgCol; c.shadowColor = 'rgba(0,0,0,.6)'; c.shadowBlur = 10; c.fillText(msg, cx, H * 0.6); c.shadowBlur = 0; }
+  // 右下角：示範小人（小窗）
+  const bw = 380, bh = 330, bx = W - bw - 24, by = H - bh - 24;
+  c.save(); c.fillStyle = 'rgba(8,10,14,.72)'; c.strokeStyle = demoEmph ? '#ffd27a' : 'rgba(232,189,90,.45)'; c.lineWidth = 3; roundRect(c, bx, by, bw, bh, 26); c.fill(); c.stroke();
+  c.fillStyle = 'rgba(246,236,216,.75)'; c.font = '700 24px "PingFang TC","Noto Sans TC",sans-serif'; c.textAlign = 'left'; c.fillText('跟著做', bx + 18, by + 36);
+  c.beginPath(); roundRect(c, bx, by, bw, bh, 26); c.clip();
+  const s = 1.05, fx = bx + 85, fy = by + bh - 24, mcx = bx + 265, mcy = by + 150, mR = 62;
+  const dpts = []; for(let j = 0; j <= 24; j++){ const p = f(demoK * j / 24); dpts.push([mcx + p[0] * mR, mcy + p[1] * mR]); }
+  trail(c, dpts, demoK > 0 ? 0.9 : 0, 0.8, false);
+  const p = f(demoK), q = f(Math.max(0, demoK - 0.05));
+  figure(c, { x: fx, y: fy, s, hand: [mcx + p[0] * mR, mcy + p[1] * mR], tilt: 0.05, tuft: [-(p[0] - q[0]) * 300, -(p[1] - q[1]) * 300], mood: demoMood, emph: demoEmph, t: now / 1000 });
+  c.restore();
+}
+document.getElementById('bOk').onclick = () => { B.mode = 'ok'; document.getElementById('bOk').classList.add('on'); document.getElementById('bBad').classList.remove('on'); };
+document.getElementById('bBad').onclick = () => { B.mode = 'bad'; document.getElementById('bBad').classList.add('on'); document.getElementById('bOk').classList.remove('on'); };
+document.getElementById('more').onclick = () => { const d = document.getElementById('detail'); d.hidden = !d.hidden; };
+// 系統設定「減少動態效果」：A 只畫第 1、2、4 步的定格
+function loop(now){ drawA(reduce ? [600, 2600, 6000][Math.floor(now / 2500) % 3] : now); drawB(reduce ? 3000 : now); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+window.__frame = (ta, tb) => { drawA(ta); drawB(tb); };   // 截圖用：畫指定時間的畫面
+</script>
+</body>
+</html>
