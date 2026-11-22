@@ -57,6 +57,9 @@
   - 菜色遵守清口茹素：不用蛋、不用五辛。
   - 分享入口 `islands/chef/`（LINE 預覽圖 `islands/chef-game/og-chef.png`）。
 
+## v261122.05
+- 🏅 **徽章牆分享連結**：新增 `islands/badges/`，在 LINE 分享時顯示「48 格徽章牆，你亮了幾格？」的預覽圖；點進來直接打開徽章牆，最下面就是「用 LINE 登入・保存紀錄」。（預覽圖 `badges/og-badges.png`，設計稿 `promo/poster-badges.html`）
+
 ## v261122.04
 - 🎉 **LINE 登入・保存紀錄正式開放**：所有玩家打開徽章牆，最下面都會看到「用 LINE 登入・保存紀錄」；已經登入過的手機也可以按「取得配對碼」，把紀錄接到桌面圖示或另一支手機。不登入照樣能玩。要暫時收起，把 `ACCT_LIVE` 改回 `false` 即可。
 
