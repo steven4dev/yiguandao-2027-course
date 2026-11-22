@@ -1,7 +1,7 @@
 // 全真群島・LINE 登入與紀錄同步（手機端）
 // - 不登入照樣能玩，紀錄存在這支手機；登入後把手機上的紀錄和雲端合併（規則見 account-merge.js）
 // - 開頁、每 45 秒（有變動才送）、離開頁面時各同步一次；雲端有這支手機沒有的紀錄時，存進手機後重新整理一次頁面
-import { SYNC_KEYS, mergeSnap, canon } from './account-merge.js';
+import { SYNC_KEYS, mergeSnap, stripSnap, canon } from './account-merge.js';
 
 const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 export const ACCOUNT_API = new URLSearchParams(location.search).get('acctapi') || (LOCAL ? 'http://localhost:8788' : 'https://islands-account.yiguandao2027.workers.dev');
@@ -38,8 +38,8 @@ export async function syncNow({ apply = false, quiet = false } = {}) {
   const a = readAcct(); if (!a || state.busy) return;
   emit({ busy: true, msg: quiet ? state.msg : '同步中…' });
   try {
-    const local = snapLocal(), j = await post('/api/sync', { t: a.t, data: local });
-    lastSent = canon(local);
+    const local = snapLocal(), up = stripSnap(local), j = await post('/api/sync', { t: a.t, data: up });
+    lastSent = canon(up);
     const merged = mergeSnap(local, j.data || {}), changed = SYNC_KEYS.filter((k) => merged[k] !== undefined && canon(merged[k]) !== canon(local[k]));
     const na = { ...a, at: Date.now() }; writeAcct(na);
     if (apply && changed.length) {
@@ -50,7 +50,7 @@ export async function syncNow({ apply = false, quiet = false } = {}) {
     try { sessionStorage.removeItem('islands-acct-reload'); } catch (e) {}
     emit({ acct: na, busy: false, msg: quiet ? state.msg : '✅ 已同步' });
   } catch (e) {
-    emit({ busy: false, msg: e.message === 'auth' ? state.msg : '⚠️ 同步失敗（網路不穩），稍後會自動再試' });
+    emit({ busy: false, msg: e.message === 'auth' ? state.msg : `⚠️ 同步失敗（${e.message === 'Load failed' || e.message === 'Failed to fetch' ? '網路不穩' : e.message}），稍後會自動再試` });
   }
 }
 export async function deleteCloud() {
@@ -74,8 +74,8 @@ export function initAccount() {
   const fresh = takeHash();
   if (readAcct()) setTimeout(() => syncNow({ apply: true, quiet: !fresh }), fresh ? 0 : 1200);
   clearInterval(timer);
-  timer = setInterval(() => { if (readAcct() && !document.hidden && canon(snapLocal()) !== lastSent) syncNow({ quiet: true }); }, 45e3);
-  const flush = () => { const a = readAcct(); if (!a) return; const local = snapLocal(), c = canon(local); if (c === lastSent) return; lastSent = c; post('/api/sync', { t: a.t, data: local }, true).catch(() => {}); };
+  timer = setInterval(() => { if (readAcct() && !document.hidden && canon(stripSnap(snapLocal())) !== lastSent) syncNow({ quiet: true }); }, 45e3);
+  const flush = () => { const a = readAcct(); if (!a) return; const up = stripSnap(snapLocal()), c = canon(up); if (c === lastSent) return; lastSent = c; post('/api/sync', { t: a.t, data: up }, true).catch(() => {}); };
   addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
   addEventListener('pagehide', flush);
 }
