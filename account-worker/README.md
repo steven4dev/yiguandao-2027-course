@@ -39,7 +39,7 @@ node test/account.test.mjs     # 23 項：登入跳轉、state 防偽、401/403/
 ## 部署
 `npx wrangler deploy`（需要 Workers 編輯權限的 API 金鑰）。
 
-## 開放給所有人
+## 開放給所有人（2026/11/22 已完成：LINE Channel 已 Published、`ACCT_LIVE = true`）
 1. LINE Developers 後台把 Channel 從 Developing 改成 **Published**。Developing 狀態下只有管理者和測試者登得進去。
 2. 後台的 Privacy policy URL 填 `https://steven4dev.github.io/yiguandao-2027-course/islands/privacy.html`。
 3. `islands/index.html` 搜尋 `const ACCT_LIVE`，改成 `true`。在那之前，只有用 `?acct=1` 打開過群島的手機看得到登入按鈕（`?acct=0` 取消）。
