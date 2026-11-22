@@ -40,4 +40,17 @@ ok(d['islands-mybottles'].length === 2 && !('islands-puti' in d), '瓶中信去�
 r = await post('/api/sync', { t: tB, data: {} }); ok(r.s === 200 && Object.keys(r.j.data).length === 0, '另一個帳號看不到 A 的紀錄');
 r = await post('/api/delete', { t: tA }); ok(r.j.deleted, '刪除雲端紀錄');
 r = await post('/api/sync', { t: tA, data: {} }); ok(Object.keys(r.j.data).length === 0, '刪除後雲端是空的');
+
+// 配對碼
+const tC = await sign({ u: 'userC-' + Date.now(), e: Date.now() + 3600e3 });
+ok((await post('/api/pair/create', { t: 'bad.token' })).s === 401, '配對碼：假憑證不能產生');
+r = await post('/api/pair/create', { t: tC, nm: '小明' }); const code = r.j.code; ok(r.s === 200 && /^\d{8}$/.test(code) && r.j.exp > Date.now(), '產生 8 位數配對碼（5 分鐘內有效）');
+await post('/api/sync', { t: tC, data: { 'fuchenGame.best': 777 } });
+r = await post('/api/pair/redeem', { code: code.slice(0, 4) + ' ' + code.slice(4) }); ok(r.s === 200 && r.j.t && r.j.nm === '小明', '另一個裝置輸入代碼（含空格）→ 拿到新憑證和名字');
+r = await post('/api/sync', { t: r.j.t, data: {} }); ok(r.j.data['fuchenGame.best'] === 777, '新裝置的憑證讀得到同一個帳號的紀錄');
+r = await post('/api/pair/redeem', { code }); ok(r.s === 404, '代碼只能用一次');
+ok((await post('/api/pair/redeem', { code: '12ab' })).s === 400, '格式不對 → 400');
+ok((await post('/api/pair/redeem', { code }, 'https://evil.example')).s === 403, '其他網站來源 → 403');
+let hit429 = false; for (let i = 0; i < 14; i++) { const x = await post('/api/pair/redeem', { code: String(10000000 + i * 7919) }); if (x.s === 429) { hit429 = true; break; } }
+ok(hit429, '亂猜代碼：同一個 IP 10 分鐘試 10 次後被擋（429）');
 console.log(`\n${pass} 通過，${fail} 失敗`); process.exit(fail ? 1 : 0);

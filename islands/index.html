@@ -271,6 +271,10 @@
   .acct-sub { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; background: transparent; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; }
   .acct-msg { color: var(--muted); font-size: 12px; min-height: 0; }
   .acct-msg:empty { display: none; }
+  .acct-pair { margin-top: 8px; } .acct-pair small { display: block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+  .acct-code { margin: 8px 0 0; font: 800 28px/1.2 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .18em; color: var(--brick); user-select: all; }
+  .acct-code small { display: block; letter-spacing: 0; font: 400 12px/1.5 system-ui, sans-serif; color: var(--muted); }
+  .acct-row { display: flex; gap: 8px; } .acct-row input { flex: 1; min-width: 0; box-sizing: border-box; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font: inherit; font-size: 16px; letter-spacing: .1em; background: var(--card); color: var(--ink); }
   .acct-pv { display: inline-block; margin-top: 6px; color: var(--muted); font-size: 12px; }
   .bclaim { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 8px; }
   .bclaim small { grid-column: 1 / -1; }
@@ -731,7 +735,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261122.02</span>
+  <span class="ver">v261122.03</span>
   </div></div>
 </div>
 
@@ -805,6 +809,12 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
       <div class="acct-btns"><button type="button" class="acct-line" id="acctLogin" hidden><span aria-hidden="true">LINE</span>用 LINE 登入・保存紀錄</button>
         <button type="button" class="acct-sub" id="acctSync" hidden>☁️ 立即同步</button><button type="button" class="acct-sub" id="acctOut" hidden>登出</button></div>
       <p class="acct-msg" id="acctMsg" aria-live="polite"></p>
+      <div class="acct-pair" id="acctPair" hidden>
+        <div id="pairMake" hidden><button type="button" class="acct-sub" id="pairBtn">📲 取得配對碼（給桌面圖示或另一支手機）</button>
+          <p class="acct-code" id="pairCode" hidden></p></div>
+        <div id="pairUse" hidden><small>已經在 Safari 或別支手機登入了？在那邊按「取得配對碼」，把 8 位數代碼輸入這裡：</small>
+          <div class="acct-row"><input id="pairInput" inputmode="numeric" autocomplete="one-time-code" maxlength="9" placeholder="輸入 8 位數配對碼" aria-label="配對碼"><button type="button" class="acct-sub" id="pairGo">登入</button></div></div>
+      </div>
       <a class="acct-pv" href="privacy.html" hidden>🔒 隱私說明・刪除雲端紀錄</a>
     </div>
   </div>
@@ -9504,10 +9514,11 @@ window.__ckTrans = () => ({ busy: ckT.busy, open: !!(ckT.el && ckT.el.classList.
 </script>
 <script type="module">
 // LINE 登入・保存紀錄（account.js）：徽章牆最下面的那一塊
-import { initAccount, onAccount, loginLine, logout, syncNow } from './account.js';
+import { initAccount, onAccount, loginLine, logout, syncNow, createPairCode, redeemPairCode } from './account.js';
 const $a = (id) => document.getElementById(id);
 // 正式開放前：只有網址帶 ?acct=1 的手機（之後記住）看得到登入按鈕；LINE 後台按 Publish、測試沒問題後改成 true
 const ACCT_LIVE = false;
+const STANDALONE = (() => { try { return navigator.standalone === true || matchMedia('(display-mode: standalone)').matches; } catch (e) { return false; } })();
 const acctTest = (() => { try { const q = new URLSearchParams(location.search), v = q.get('acct'); if (v !== null) { v === '0' ? localStorage.removeItem('islands-acct-test') : localStorage.setItem('islands-acct-test', '1'); q.delete('acct'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } return localStorage.getItem('islands-acct-test') === '1'; } catch (e) { return false; } })();
 const hhmm = (t) => { const d = new Date(t); return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); };
 onAccount((st) => {
@@ -9517,9 +9528,30 @@ onAccount((st) => {
     : show ? '徽章和遊戲紀錄先存在這支手機上；換手機或清除瀏覽資料會不見。<b>用 LINE 登入</b>，就能存一份在雲端、換手機也接得回來。'
     : '徽章先存在這支手機上；換手機或清除瀏覽資料會不見，之後會開放用 LINE 帳號保存。';
   $a('acctMsg').textContent = st.msg || '';
+  // 配對碼：登入的人可以產生；沒登入的人（正式開放後所有人、測試階段的桌面圖示）可以輸入
+  $a('acctPair').hidden = !(a || show || STANDALONE); $a('pairMake').hidden = !a; $a('pairUse').hidden = !!a;
+  if (!a) $a('pairCode').hidden = true;
+  if (STANDALONE && !a && !show) $a('acctTxt').innerHTML = '在 Safari 或別支手機登入 LINE 後，按「取得配對碼」，就能把紀錄接到這個桌面圖示。';
   // 從 LINE 登入回來：自動打開徽章牆，讓人看到登入結果
 });
 $a('acctLogin').addEventListener('click', () => { $a('acctLogin').disabled = true; $a('acctMsg').textContent = '前往 LINE 登入…'; loginLine(); });
+let pairT = 0;
+$a('pairBtn').addEventListener('click', async () => {
+  $a('pairBtn').disabled = true; clearInterval(pairT);
+  try {
+    const r = await createPairCode(), el = $a('pairCode'); el.hidden = false;
+    const tick = () => { const left = Math.max(0, Math.round((r.exp - Date.now()) / 1000)); el.innerHTML = r.code.slice(0, 4) + ' ' + r.code.slice(4) + `<small>${left ? `到另一個裝置輸入（還剩 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}，只能用一次）` : '已過期，請再按一次取得新的代碼'}</small>`; if (!left) clearInterval(pairT); };
+    tick(); pairT = setInterval(tick, 1000);
+  } catch (e) { $a('acctMsg').textContent = e.message === 'auth' ? '請先登入' : e.message === 'rate' ? '產生太頻繁，請等幾分鐘再試' : '⚠️ 沒有產生成功，請稍後再試'; }
+  $a('pairBtn').disabled = false;
+});
+$a('pairGo').addEventListener('click', async () => {
+  const v = $a('pairInput').value.replace(/\D/g, ''); if (v.length !== 8) { $a('acctMsg').textContent = '配對碼是 8 位數字'; return; }
+  $a('pairGo').disabled = true; $a('acctMsg').textContent = '登入中…';
+  try { await redeemPairCode(v); } catch (e) { $a('acctMsg').textContent = e.message === 'rate' ? '試太多次了，請 10 分鐘後再試' : e.message === 'bad_code' ? '代碼不對、已過期或已經用過，請在登入的那邊重新取得' : '⚠️ 沒有連上，請稍後再試'; }
+  $a('pairGo').disabled = false;
+});
+$a('pairInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $a('pairGo').click(); });
 $a('acctSync').addEventListener('click', () => syncNow({ apply: true }));
 $a('acctOut').addEventListener('click', () => { if (confirm('要登出嗎？\n這支手機上的紀錄會留著；之後再登入同一個 LINE，就會再接上雲端的紀錄。')) logout(); });
 const back = !!window.__acctHash;
