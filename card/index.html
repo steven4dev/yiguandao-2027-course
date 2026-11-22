@@ -52,7 +52,9 @@
   </section>
 <script>
 (function(){
-  var URL_='https://steven4dev.github.io/yiguandao-2027-course/';
+  // openExternalBrowser=1：LINE 官方參數，在 LINE 裡點開會改用手機預設瀏覽器（不用內建瀏覽器）。
+  // 網址只多了查詢參數，LINE 抓預覽圖時讀到的仍是首頁同一份 og 設定。
+  var URL_='https://steven4dev.github.io/yiguandao-2027-course/?openExternalBrowser=1';
   var MSG='這次真的不一樣。\n我本來也以為又是那種要坐一整天的課，結果有瑜伽、有蔬食料理、下午還有氣球可以玩 🎈\n連報名都要先「登島」，你的名字會變成島上的小人偶 🏝️\n👉 '+URL_;
   var msg=document.getElementById('msg'),line=document.getElementById('lineBtn'),toast=document.getElementById('toast');
   function render(){
