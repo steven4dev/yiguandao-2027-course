@@ -735,7 +735,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261122.04</span>
+  <span class="ver">v261122.05</span>
   </div></div>
 </div>
 
@@ -7563,6 +7563,8 @@ try { seenHowto = localStorage.getItem('islands-howto') === '1'; } catch (e) {}
 if (!seenHowto && !location.hash) setTimeout(showHowto, 900);
 // 懶人包連結（islands/guide/ → #guide）：不管看過沒有，都再秀一次操作說明
 if (location.hash === '#guide') setTimeout(showHowto, 900);
+// 徽章牆連結（islands/badges/ → #badges）：進來直接打開徽章牆（最下面是 LINE 登入・保存紀錄）；openBadges 在後面宣告，等頁面跑起來再呼叫
+if (location.hash === '#badges') setTimeout(() => { try { openBadges(); } catch (e) {} }, 2800);
 
 // 晝夜跟著台灣時間：日出、白天、夕陽、黃昏、夜晚；右上角按鈕可以切換「自動／固定白天／固定夜晚」，選擇會記在這台裝置上
 const root = document.documentElement;
