@@ -55,7 +55,7 @@
 | 2026-10 | 登島懶人包（怎麼玩？） | `2026-10-登島懶人包.png`，宣傳連結 `islands/guide/`，點進去會跳出操作說明 |
 | 2026-11 | 拂塵淨心島（11/11 正式開放，雷擊拂塵海報） | `islands/fuchen-game/og-fuchen.png`（換圖時 `?v=` 要在 `fuchen-game/index.html` 與 `fuchen/index.html` 兩邊一起加一），宣傳連結 `islands/fuchen/`，點進去直接到拂塵淨心島 |
 | 2026-11 | 濟世靈山島（新島上岸，11/10 正式開放） | `islands/jishi/og-jishi.png`，宣傳連結 `islands/jishi/?v=2`，點進去直接飛到濟世靈山島 |
-| 2026-11 | 徽章牆（你亮了幾格？，LINE 登入・保存紀錄） | `2026-11-徽章牆.png`＝`islands/badges/og-badges.png`（設計稿 `poster-badges.html`，換圖時 `?v=` 要在 `badges/index.html` 加一），宣傳連結 `islands/badges/`，點進去直接打開徽章牆 |
+| 2026-11 | 徽章牆（你解鎖了幾枚？，不比較的正能量問法；LINE 登入・保存紀錄） | `2026-11-徽章牆.png`＝`islands/badges/og-badges.png`（設計稿 `poster-badges.html`，換圖時 `?v=` 要在 `badges/index.html` 加一（目前 v=3）），宣傳連結 `islands/badges/`，點進去直接打開徽章牆 |
 
 ## LINE 貼文文案的規則（作者指定，每次都照做）
 - **單行最多 12 個中文字**，盡量不要被 LINE 自動斷行；表情符號算約 2 字。
