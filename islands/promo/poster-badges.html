@@ -4,7 +4,9 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;width:1200px;height:630px;overflow:hidden;font-family:"Noto Sans TC","Noto Color Emoji",sans-serif;color:#1f2a3a;
- background:linear-gradient(160deg,#d3eef6 0%,#e3f4f3 45%,#f6efdc 100%);position:relative}
+ background:#8ac5dc;position:relative}
+.art{position:absolute;inset:0;width:1200px;height:630px;object-fit:cover}
+.veil{position:absolute;inset:0;background:linear-gradient(to right,rgba(255,250,238,.9) 0%,rgba(255,250,238,.78) 34%,rgba(255,250,238,.25) 52%,rgba(255,250,238,0) 64%)}
 .txt{position:absolute;left:70px;top:62px;width:590px}
 .kick{font-weight:700;font-size:26px;color:#d9770a;letter-spacing:.04em}
 h1{margin:6px 0 0;font-family:"Noto Serif TC",serif;font-weight:900;font-size:124px;line-height:1.08;letter-spacing:.04em}
@@ -14,7 +16,7 @@ h1{margin:6px 0 0;font-family:"Noto Serif TC",serif;font-weight:900;font-size:12
 .btns{margin-top:26px;display:flex;gap:16px}
 .btn{padding:13px 26px;border-radius:999px;color:#fff;font-weight:900;font-size:28px;white-space:nowrap}
 /* 徽章牆 */
-.wall{position:absolute;right:46px;top:54px;width:470px;padding:18px 18px 16px;background:rgba(255,255,255,.78);border:4px solid #fff;border-radius:26px;box-shadow:0 18px 40px rgba(50,30,15,.18);transform:rotate(2deg)}
+.wall{position:absolute;right:44px;top:40px;width:440px;padding:16px 16px 14px;background:rgba(255,255,255,.9);border:4px solid #fff;border-radius:26px;box-shadow:0 18px 40px rgba(50,30,15,.18);transform:rotate(2deg)}
 .wall .hd{display:flex;justify-content:space-between;align-items:baseline;font-weight:900;font-size:24px;color:#3f2c22;margin-bottom:10px}
 .wall .hd em{font-style:normal;color:#d9770a;font-size:30px}
 .bar{height:12px;border-radius:99px;background:#e6dccb;overflow:hidden;margin-bottom:14px}
@@ -28,10 +30,11 @@ h1{margin:6px 0 0;font-family:"Noto Serif TC",serif;font-weight:900;font-size:12
 /* 飄浮小卡 */
 .chip{position:absolute;background:#fff;border:3px solid #e8a33a;border-radius:16px;padding:9px 16px;font-weight:900;font-size:22px;color:#3f2c22;box-shadow:0 8px 18px rgba(50,30,15,.16);white-space:nowrap}
 .chip small{display:block;font-weight:500;font-size:14px;color:#7a6455;margin-top:1px}
-.k1{right:36px;top:470px;transform:rotate(-3deg);border-color:#06b84f}
-.k2{right:330px;top:530px;transform:rotate(3deg);border-color:#d6336c}
+.k1{right:40px;top:500px;transform:rotate(-3deg);border-color:#06b84f}
+.k2{right:290px;top:540px;transform:rotate(3deg);border-color:#d6336c}
 .k3{right:20px;top:548px;transform:rotate(2deg);border-color:#2f80c9;display:none}
 </style></head><body>
+<img class="art" src="art-badges.png"><div class="veil"></div>
 <div class="wall">
   <div class="hd"><span>🏅 我的群島徽章</span><span><em>10</em> / 48</span></div>
   <div class="bar"><i></i></div>
