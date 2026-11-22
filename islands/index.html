@@ -735,7 +735,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261122.03</span>
+  <span class="ver">v261122.04</span>
   </div></div>
 </div>
 
@@ -9516,8 +9516,8 @@ window.__ckTrans = () => ({ busy: ckT.busy, open: !!(ckT.el && ckT.el.classList.
 // LINE 登入・保存紀錄（account.js）：徽章牆最下面的那一塊
 import { initAccount, onAccount, loginLine, logout, syncNow, createPairCode, redeemPairCode } from './account.js';
 const $a = (id) => document.getElementById(id);
-// 正式開放前：只有網址帶 ?acct=1 的手機（之後記住）看得到登入按鈕；LINE 後台按 Publish、測試沒問題後改成 true
-const ACCT_LIVE = false;
+// 2026/11/22 正式開放（LINE Channel 已 Publish）。要暫時收起登入，改回 false：已登入的人不受影響，網址帶 ?acct=1 的手機仍看得到
+const ACCT_LIVE = true;
 const STANDALONE = (() => { try { return navigator.standalone === true || matchMedia('(display-mode: standalone)').matches; } catch (e) { return false; } })();
 const acctTest = (() => { try { const q = new URLSearchParams(location.search), v = q.get('acct'); if (v !== null) { v === '0' ? localStorage.removeItem('islands-acct-test') : localStorage.setItem('islands-acct-test', '1'); q.delete('acct'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } return localStorage.getItem('islands-acct-test') === '1'; } catch (e) { return false; } })();
 const hhmm = (t) => { const d = new Date(t); return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); };
