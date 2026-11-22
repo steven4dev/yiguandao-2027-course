@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>隱私說明｜全真群島</title>
+<style>
+  :root { --bg: #f6efe2; --card: #fffaf0; --ink: #3f2c22; --muted: #846a58; --line: rgba(63, 44, 34, .14); --brick: #c0503f; --chip: rgba(63, 44, 34, .06); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #172034; --card: #1f2a42; --ink: #f2e5d0; --muted: #b3a18b; --line: rgba(242, 229, 208, .16); --brick: #e07a63; --chip: rgba(242, 229, 208, .08); } }
+  :root[data-theme="dark"] { --bg: #172034; --card: #1f2a42; --ink: #f2e5d0; --muted: #b3a18b; --line: rgba(242, 229, 208, .16); --brick: #e07a63; --chip: rgba(242, 229, 208, .08); }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.75 system-ui, -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 28px 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 22px; font-size: 14px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; margin-bottom: 14px; }
+  h2 { font-size: 17px; margin: 0 0 8px; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: 3px 0; }
+  p { margin: 0 0 8px; } p:last-child { margin: 0; }
+  .no { color: var(--muted); }
+  .box { background: var(--chip); border-radius: 12px; padding: 12px 14px; margin-top: 10px; font-size: 14.5px; }
+  button { font: inherit; font-weight: 700; border-radius: 10px; padding: 10px 16px; cursor: pointer; }
+  .del { background: var(--brick); color: #fff; border: 0; }
+  .del:disabled { opacity: .5; cursor: default; }
+  .msg { margin-top: 8px; font-size: 14px; color: var(--muted); }
+  a { color: inherit; }
+  .home { display: inline-block; margin-top: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>🔒 隱私說明</h1>
+  <p class="sub">全真群島・LINE 登入與紀錄保存｜最後更新：2026/11/22</p>
+
+  <section>
+    <h2>不登入也能玩</h2>
+    <p>全真群島和島上的小遊戲都不用登入。你的徽章、籤冊、菩提冊和遊戲成績，原本就只存在你這支手機的瀏覽器裡。</p>
+    <p>登入 LINE 只有一個用途：<b>在雲端多存一份紀錄</b>，換手機或清除瀏覽資料之後，登入同一個 LINE 就能接回來。</p>
+  </section>
+
+  <section>
+    <h2>我們存了什麼</h2>
+    <ul>
+      <li>一個<b>匿名編號</b>：由 LINE 給的使用者代號，經過加密運算轉換而成，無法反推回你的 LINE 帳號。</li>
+      <li>你在群島上的紀錄：徽章與解鎖日期、上島的日子、求籤島籤冊、菩提島菩提冊、廚神養成島的主廚名字、每道菜最高分與期數、拂塵試煉的最高分與塵魔圖鑑、你自己寫過的瓶中信和祈福卡（本來就是公開貼出的內容）。</li>
+      <li>最後一次同步的時間。</li>
+    </ul>
+    <h2 style="margin-top:14px">我們不存什麼</h2>
+    <ul class="no">
+      <li>LINE 的名字、大頭貼、狀態消息（名字只在登入那一刻交給你的手機顯示「已登入：○○」，伺服器不留）。</li>
+      <li>email、電話、好友名單、聊天內容（我們沒有申請這些權限，也拿不到）。</li>
+      <li>廚神島的雜誌封面圖片（只留在你的手機上）。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>存在哪裡、誰看得到</h2>
+    <p>紀錄存在 Cloudflare 的雲端服務（Workers／Durable Objects），只有你登入後的手機能讀寫自己的那一份。我們不會販售、分享或拿來做廣告。</p>
+    <p>群島另外用匿名造訪統計（GoatCounter、hits.sh）計算人次，這和登入無關，也不會帶上你的匿名編號。</p>
+  </section>
+
+  <section>
+    <h2>登出與刪除</h2>
+    <p><b>登出</b>：在群島右上角 🏅 徽章牆最下面按「登出」。手機上的紀錄會留著，雲端那一份也還在。</p>
+    <p><b>刪除雲端紀錄</b>：在下面按「刪除我的雲端紀錄」，雲端那一份會立刻、永久刪除，同時登出；手機上的紀錄不受影響。</p>
+    <div class="box" id="delBox">
+      <div id="delState">讀取登入狀態中…</div>
+      <div style="margin-top:10px"><button type="button" class="del" id="delBtn" hidden>🗑️ 刪除我的雲端紀錄</button></div>
+      <div class="msg" id="delMsg" aria-live="polite"></div>
+    </div>
+    <p style="margin-top:10px">也可以在 LINE 的「設定 → 帳號 → 已連動的應用程式」取消「全真群島」的連動。</p>
+  </section>
+
+  <section>
+    <h2>聯絡我們</h2>
+    <p>對隱私或資料有任何疑問，請透過全真群島的「🛶 我要登島」表單，或直接向活動窗口反映。</p>
+  </section>
+
+  <a class="home" href="./">← 回全真群島</a>
+</main>
+<script type="module">
+import { onAccount, deleteCloud } from './account.js';
+const $ = (id) => document.getElementById(id);
+onAccount((st) => {
+  const a = st.acct;
+  $('delState').innerHTML = a ? `這支手機目前已用 LINE 登入${a.nm ? '：<b>' + a.nm.replace(/[<>&"]/g, '') + '</b>' : ''}。` : '這支手機目前沒有登入，雲端沒有屬於這支手機的紀錄可刪。<br>（要刪除某個 LINE 帳號的雲端紀錄，請先在群島登入那個帳號，再回到這裡。）';
+  $('delBtn').hidden = !a;
+  if (st.msg) $('delMsg').textContent = st.msg;
+});
+$('delBtn').addEventListener('click', async () => {
+  if (!confirm('確定要永久刪除雲端紀錄嗎？\n刪除後無法復原；這支手機上的紀錄會留著。')) return;
+  $('delBtn').disabled = true; $('delMsg').textContent = '刪除中…';
+  try { await deleteCloud(); } catch (e) { $('delMsg').textContent = '刪除沒有成功（網路不穩？），請再試一次。'; }
+  $('delBtn').disabled = false;
+});
+</script>
+</body>
+</html>
