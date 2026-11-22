@@ -46,7 +46,6 @@
     <p class="msg" id="msg" aria-live="polite"></p>
     <div class="btns">
       <a class="btn line" id="lineBtn" href="#" target="_blank" rel="noopener">分享到 LINE</a>
-      <button class="btn alt" id="swapBtn" type="button">換一句</button>
       <button class="btn alt" id="copyBtn" type="button">複製文案</button>
     </div>
     <div class="toast" id="toast" role="status"></div>
@@ -54,20 +53,15 @@
 <script>
 (function(){
   var URL_='https://steven4dev.github.io/yiguandao-2027-course/';
-  var MSGS=[
-    '這次真的不一樣。\n不是坐著聽課：瑜伽、手作、蔬食料理，下午還有氣球可以玩 🎈\n連報名都要先「登島」，你的名字會變成島上的小人偶 🏝️\n👉 '+URL_,
-    '我本來也以為又是那種要坐一整天的課。\n結果它有瑜伽、有料理、有 3D 小島，連報名都像在玩遊戲。\n你點進去看一下就懂 👉 '+URL_
-  ];
-  var i=Math.floor(Math.random()*MSGS.length);
+  var MSG='這次真的不一樣。\n我本來也以為又是那種要坐一整天的課，結果有瑜伽、有蔬食料理、下午還有氣球可以玩 🎈\n連報名都要先「登島」，你的名字會變成島上的小人偶 🏝️\n👉 '+URL_;
   var msg=document.getElementById('msg'),line=document.getElementById('lineBtn'),toast=document.getElementById('toast');
   function render(){
-    msg.textContent=MSGS[i];
-    line.href='https://line.me/R/msg/text/?'+encodeURIComponent(MSGS[i]);
+    msg.textContent=MSG;
+    line.href='https://line.me/R/msg/text/?'+encodeURIComponent(MSG);
   }
   function say(t){toast.textContent=t;setTimeout(function(){toast.textContent='';},2500);}
-  document.getElementById('swapBtn').addEventListener('click',function(){i=(i+1)%MSGS.length;render();});
   document.getElementById('copyBtn').addEventListener('click',function(){
-    var t=MSGS[i];
+    var t=MSG;
     function fallback(){
       var r=document.createRange();r.selectNodeContents(msg);
       var sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);
