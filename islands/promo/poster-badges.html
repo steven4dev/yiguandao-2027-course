@@ -6,9 +6,12 @@
 body{margin:0;width:1200px;height:630px;overflow:hidden;font-family:"Noto Sans TC","Noto Color Emoji",sans-serif;color:#1f2a3a;
  background:#8ac5dc;position:relative}
 .art{position:absolute;inset:0;width:1200px;height:630px;object-fit:cover}
+.blur{position:absolute;left:0;top:0;width:760px;height:630px;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);-webkit-mask-image:linear-gradient(to right,#000 0%,#000 55%,transparent 100%);mask-image:linear-gradient(to right,#000 0%,#000 55%,transparent 100%)}
 .veil{position:absolute;inset:0;background:linear-gradient(to right,rgba(255,250,238,.5) 0%,rgba(255,250,238,.38) 34%,rgba(255,250,238,.1) 52%,rgba(255,250,238,0) 64%)}
 .txt{position:absolute;left:70px;top:62px;width:590px}
-.kick,h1,.desc{text-shadow:0 0 14px rgba(255,255,255,.95),0 0 4px rgba(255,255,255,.9)}
+.kick,.desc{text-shadow:0 0 10px rgba(255,255,255,.95),0 0 3px #fff}
+h1{-webkit-text-stroke:14px #fff;paint-order:stroke fill;text-shadow:0 6px 16px rgba(31,42,58,.22)}
+.kick,.desc{-webkit-text-stroke:5px #fff;paint-order:stroke fill}
 .kick{font-weight:700;font-size:26px;color:#d9770a;letter-spacing:.04em}
 h1{margin:6px 0 0;font-family:"Noto Serif TC",serif;font-weight:900;font-size:124px;line-height:1.08;letter-spacing:.04em}
 .pill{display:inline-block;margin-top:14px;padding:10px 30px 12px;border-radius:18px;background:#d9770a;color:#fff;font-weight:900;font-size:46px;letter-spacing:.04em;box-shadow:0 8px 20px rgba(217,119,10,.3)}
@@ -35,7 +38,7 @@ h1{margin:6px 0 0;font-family:"Noto Serif TC",serif;font-weight:900;font-size:12
 .k2{right:290px;top:540px;transform:rotate(3deg);border-color:#d6336c}
 .k3{right:20px;top:548px;transform:rotate(2deg);border-color:#2f80c9;display:none}
 </style></head><body>
-<img class="art" src="art-badges.png"><div class="veil"></div>
+<img class="art" src="art-badges.png"><div class="veil"></div><div class="blur"></div>
 <div class="wall">
   <div class="hd"><span>🏅 我的群島徽章</span><span>已解鎖 <em>10</em> 枚</span></div>
   <div class="bar"><i></i></div>
