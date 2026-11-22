@@ -23,7 +23,7 @@ ok((await post('/api/sync', { t: 'bad.token', data: {} })).s === 401, '假憑證
 ok((await post('/api/sync', { t: await sign({ u: 'x', e: Date.now() - 1 }), data: {} })).s === 401, '過期憑證 → 401');
 ok((await post('/api/sync', { t: tA, data: {} }, 'https://evil.example')).s === 403, '其他網站來源 → 403');
 ok((await post('/api/sync', 'not json')).s === 400, '壞 JSON → 400');
-ok((await post('/api/sync', { t: tA, data: { pad: 'x'.repeat(210 * 1024) } })).s === 413, '太大 → 413');
+ok((await post('/api/sync', { t: tA, data: { pad: 'x'.repeat(1100 * 1024) } })).s === 413, '超過 1MB → 413');
 const phone1 = { 'islands-badges': { v: 1, got: { a: 300, b: 200 }, seen: { isle: ['x'] }, days: ['2026-11-20'], fresh: { a: 1 } }, 'islands-jishi': { v: 2, day: '2026-11-20', today: 5, got: { 5: '2026-11-20' } },
   'islands-chef': { v: 1, name: '小廚', best: { tofu: 70 }, issue: 2, covers: ['data:image/jpeg;base64,AAAA'] }, 'fuchenGame.best': 1200, 'fuchenGame.dex': { v: 1, m: { 灰塵: { n: 3, first: '2026/11/20' } } }, 'islands-mybottles': [{ ts: 1, text: 'hi' }], 'islands-sky': 'night', junk: 1 };
 r = await post('/api/sync', { t: tA, data: phone1 }); ok(r.s === 200 && r.h.get('access-control-allow-origin') === ORIGIN, '第一次同步 200（CORS 允許群島網頁）');

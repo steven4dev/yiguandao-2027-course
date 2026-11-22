@@ -5,7 +5,7 @@ import { mergeSnap, stripSnap, canon } from '../../islands/account-merge.js';
 const LINE_AUTH = 'https://access.line.me/oauth2/v2.1/authorize';
 const LINE_TOKEN = 'https://api.line.me/oauth2/v2.1/token';
 const LINE_VERIFY = 'https://api.line.me/oauth2/v2.1/verify';
-const SESSION_DAYS = 180, STATE_MIN = 10, MAX_BODY = 200 * 1024;
+const SESSION_DAYS = 180, STATE_MIN = 10, MAX_BODY = 200 * 1024, MAX_REQ = 1024 * 1024;   // 存起來的紀錄上限 200KB；請求上限放寬到 1MB，超過的紀錄只是不收、不要整包被拒
 
 const enc = new TextEncoder();
 const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -60,7 +60,7 @@ async function api(req, env, path) {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: { ...cors(req, env), 'Access-Control-Allow-Methods': 'POST', 'Access-Control-Max-Age': '86400' } });
   if (req.method !== 'POST') return json(req, env, { error: 'method' }, 405);
   const o = req.headers.get('Origin'); if (o && !origins(env).includes(o)) return json(req, env, { error: 'origin' }, 403);
-  const raw = await req.text(); if (raw.length > MAX_BODY) return json(req, env, { error: 'too_big' }, 413);
+  const raw = await req.text(); if (raw.length > MAX_REQ) return json(req, env, { error: 'too_big' }, 413);
   let body; try { body = JSON.parse(raw); } catch (e) { return json(req, env, { error: 'bad_json' }, 400); }
   const s = await unsign(env.SESSION_KEY, body && body.t); if (!s || !s.u) return json(req, env, { error: 'auth' }, 401);
   const stub = env.VAULT.get(env.VAULT.idFromName(s.u));
