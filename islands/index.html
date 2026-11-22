@@ -2,6 +2,10 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
+<script>
+  // LINE 登入回來時網址 # 後面帶著登入憑證：最先把它收起來並清掉網址，避免被造訪統計或島嶼連結讀到（account.js 會接手）
+  if (/(^#|&)(acct|acct_err)=/.test(location.hash)) { window.__acctHash = location.hash; history.replaceState(null, '', location.href.split('#')[0]); }
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex, nofollow">
@@ -257,6 +261,17 @@
   .btile.new::after { content: ""; position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: #fff; }
   .bdetail { margin: 0; min-height: 3.2em; padding: 10px 12px; border-radius: 12px; background: var(--chip); font-size: 13.5px; line-height: 1.6; }
   .bdetail b { font-size: 15px; }
+  /* LINE 登入・保存紀錄（徽章牆最下面） */
+  .acct { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--chip); font-size: 13px; line-height: 1.6; }
+  .acct p { margin: 0; }
+  .acct-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .acct-line { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 10px; padding: 9px 14px; background: #06c755; color: #fff; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .acct-line span { font-size: 10.5px; font-weight: 900; letter-spacing: .02em; background: #fff; color: #06c755; border-radius: 5px; padding: 1px 4px; }
+  .acct-line:disabled, .acct-sub:disabled { opacity: .55; cursor: default; }
+  .acct-sub { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; background: transparent; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; }
+  .acct-msg { color: var(--muted); font-size: 12px; min-height: 0; }
+  .acct-msg:empty { display: none; }
+  .acct-pv { display: inline-block; margin-top: 6px; color: var(--muted); font-size: 12px; }
   .bclaim { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 8px; }
   .bclaim small { grid-column: 1 / -1; }
   .bclaim input { min-width: 0; box-sizing: border-box; border: 1px solid rgba(160, 120, 60, 0.35); border-radius: 10px; padding: 8px 10px; font: inherit; font-size: 16px; background: #fff8e6; color: #3f2c22; }
@@ -716,7 +731,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261116.01</span>
+  <span class="ver">v261122.01</span>
   </div></div>
 </div>
 
@@ -785,7 +800,13 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
     <div class="bstats"><div><small>完成度</small><b id="bPct">0%</b></div><div><small>等級</small><b id="bStars">☆☆☆</b><span id="bRank"></span></div><div><small>已解鎖</small><b id="bCount">0 / 48</b></div></div>
     <div class="bgrid" id="bGrid"></div>
     <p class="bdetail" id="bDetail">點一格看看怎麼解鎖 👆</p>
-    <p class="wsub">徽章先存在這支手機上；換手機或清除瀏覽資料會不見，之後會開放用 Google 帳號保存。</p>
+    <div class="acct" id="acct">
+      <p class="acct-txt" id="acctTxt">徽章先存在這支手機上；換手機或清除瀏覽資料會不見，之後會開放用 LINE 帳號保存。</p>
+      <div class="acct-btns"><button type="button" class="acct-line" id="acctLogin" hidden><span aria-hidden="true">LINE</span>用 LINE 登入・保存紀錄</button>
+        <button type="button" class="acct-sub" id="acctSync" hidden>☁️ 立即同步</button><button type="button" class="acct-sub" id="acctOut" hidden>登出</button></div>
+      <p class="acct-msg" id="acctMsg" aria-live="polite"></p>
+      <a class="acct-pv" href="privacy.html" hidden>🔒 隱私說明・刪除雲端紀錄</a>
+    </div>
   </div>
 </div>
 <div class="bpop" id="bPop" role="status" aria-live="polite" hidden><canvas class="bconfetti" id="bConfetti" aria-hidden="true"></canvas><div class="card bpop-card"><small>🏅 解鎖新徽章</small><span class="bpe" id="bPopE"></span><b id="bPopN"></b><p id="bPopC"></p><em id="bPopNext"></em></div></div>
@@ -9480,6 +9501,31 @@ window.addEventListener('message', (e) => {
 });
 if (FC_TRANS) document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('#ckGo'); if (!a) return; e.preventDefault(); ckEnter(a.href); }, true);
 window.__ckTrans = () => ({ busy: ckT.busy, open: !!(ckT.el && ckT.el.classList.contains('open')), glow: ckIsl.boxGlow ? +ckIsl.boxGlow.material.opacity.toFixed(2) : -1, lockSky: fcT.lockSky, rafStop: fcT.rafStop });   // 測試用，唯讀
+</script>
+<script type="module">
+// LINE 登入・保存紀錄（account.js）：徽章牆最下面的那一塊
+import { initAccount, onAccount, loginLine, logout, syncNow } from './account.js';
+const $a = (id) => document.getElementById(id);
+// 正式開放前：只有網址帶 ?acct=1 的手機（之後記住）看得到登入按鈕；LINE 後台按 Publish、測試沒問題後改成 true
+const ACCT_LIVE = false;
+const acctTest = (() => { try { const q = new URLSearchParams(location.search), v = q.get('acct'); if (v !== null) { v === '0' ? localStorage.removeItem('islands-acct-test') : localStorage.setItem('islands-acct-test', '1'); q.delete('acct'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } return localStorage.getItem('islands-acct-test') === '1'; } catch (e) { return false; } })();
+const hhmm = (t) => { const d = new Date(t); return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); };
+onAccount((st) => {
+  const a = st.acct, show = ACCT_LIVE || acctTest || !!a;
+  $a('acctLogin').hidden = !!a || !show; $a('acct').querySelector('.acct-pv').hidden = !show; $a('acctSync').hidden = $a('acctOut').hidden = !a; $a('acctSync').disabled = st.busy;
+  $a('acctTxt').innerHTML = a ? `✅ 已用 LINE 登入${a.nm ? '：<b>' + a.nm.replace(/[<>&"]/g, '') + '</b>' : ''}。徽章、籤冊、菩提冊和遊戲成績會自動存到雲端，換手機登入同一個 LINE 就接得回來。${a.at ? `<br><small>上次同步 ${hhmm(a.at)}</small>` : ''}`
+    : show ? '徽章和遊戲紀錄先存在這支手機上；換手機或清除瀏覽資料會不見。<b>用 LINE 登入</b>，就能存一份在雲端、換手機也接得回來。'
+    : '徽章先存在這支手機上；換手機或清除瀏覽資料會不見，之後會開放用 LINE 帳號保存。';
+  $a('acctMsg').textContent = st.msg || '';
+  // 從 LINE 登入回來：自動打開徽章牆，讓人看到登入結果
+});
+$a('acctLogin').addEventListener('click', () => { $a('acctLogin').disabled = true; $a('acctMsg').textContent = '前往 LINE 登入…'; loginLine(); });
+$a('acctSync').addEventListener('click', () => syncNow({ apply: true }));
+$a('acctOut').addEventListener('click', () => { if (confirm('要登出嗎？\n這支手機上的紀錄會留著；之後再登入同一個 LINE，就會再接上雲端的紀錄。')) logout(); });
+const back = !!window.__acctHash;
+initAccount();
+if (back) setTimeout(() => { const b = document.getElementById('badgeBtn'); if (b) b.click(); }, 1500);
+addEventListener('pageshow', (e) => { if (e.persisted) $a('acctLogin').disabled = false; });
 </script>
 </body>
 </html>
