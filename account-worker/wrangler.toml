@@ -16,6 +16,14 @@ ALLOWED_ORIGINS = "https://steven4dev.github.io,http://localhost:8765,http://127
 name = "VAULT"
 class_name = "Vault"
 
+[[durable_objects.bindings]]
+name = "PAIR"
+class_name = "Pair"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Vault"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Pair"]

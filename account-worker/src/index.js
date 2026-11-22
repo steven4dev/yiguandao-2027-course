@@ -5,7 +5,7 @@ import { mergeSnap, stripSnap, canon } from '../../islands/account-merge.js';
 const LINE_AUTH = 'https://access.line.me/oauth2/v2.1/authorize';
 const LINE_TOKEN = 'https://api.line.me/oauth2/v2.1/token';
 const LINE_VERIFY = 'https://api.line.me/oauth2/v2.1/verify';
-const SESSION_DAYS = 180, STATE_MIN = 10, MAX_BODY = 200 * 1024, MAX_REQ = 1024 * 1024;   // 存起來的紀錄上限 200KB；請求上限放寬到 1MB，超過的紀錄只是不收、不要整包被拒
+const PAIR_MIN = 5, RL_MIN = 10, RL_MAX = 10, SESSION_DAYS = 180, STATE_MIN = 10, MAX_BODY = 200 * 1024, MAX_REQ = 1024 * 1024;   // 存起來的紀錄上限 200KB；請求上限放寬到 1MB，超過的紀錄只是不收、不要整包被拒
 
 const enc = new TextEncoder();
 const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -68,6 +68,33 @@ async function api(req, env, path) {
   return json(req, env, await r.json(), r.status);
 }
 
+// 配對碼：已登入的手機產生 8 位數代碼（5 分鐘、只能用一次），另一個裝置（例如桌面圖示的 App 模式，儲存空間和 Safari 分開）輸入後就登入同一個帳號
+// 防猜：8 位數＝一億種；同一個 IP 每 10 分鐘最多試 10 次，產生代碼也每個帳號 10 分鐘最多 10 次
+const rlHit = async (env, key) => (await env.PAIR.get(env.PAIR.idFromName('rl:' + key)).fetch('https://pair/rl', { method: 'POST', body: '{}' })).ok;
+async function pairApi(req, env, path) {
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: { ...cors(req, env), 'Access-Control-Allow-Methods': 'POST', 'Access-Control-Max-Age': '86400' } });
+  if (req.method !== 'POST') return json(req, env, { error: 'method' }, 405);
+  const o = req.headers.get('Origin'); if (o && !origins(env).includes(o)) return json(req, env, { error: 'origin' }, 403);
+  const raw = await req.text(); let body; try { if (raw.length > 4096) throw 0; body = JSON.parse(raw); } catch (e) { return json(req, env, { error: 'bad_json' }, 400); }
+  if (path === 'create') {
+    const s = await unsign(env.SESSION_KEY, body && body.t); if (!s || !s.u) return json(req, env, { error: 'auth' }, 401);
+    if (!(await rlHit(env, 'u:' + s.u))) return json(req, env, { error: 'rate' }, 429);
+    for (let i = 0; i < 6; i++) {
+      const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1e8).padStart(8, '0');
+      const r = await env.PAIR.get(env.PAIR.idFromName('c:' + code)).fetch('https://pair/create', { method: 'POST', body: JSON.stringify({ u: s.u, nm: String(body.nm || '').slice(0, 40) }) });
+      if (r.ok) return json(req, env, { code, exp: (await r.json()).exp });
+    }
+    return json(req, env, { error: 'busy' }, 503);
+  }
+  const code = String((body && body.code) || '').replace(/\D/g, '');
+  if (!/^\d{8}$/.test(code)) return json(req, env, { error: 'bad_code' }, 400);
+  if (!(await rlHit(env, 'ip:' + (req.headers.get('CF-Connecting-IP') || 'local')))) return json(req, env, { error: 'rate' }, 429);
+  const r = await env.PAIR.get(env.PAIR.idFromName('c:' + code)).fetch('https://pair/redeem', { method: 'POST', body: '{}' });
+  if (!r.ok) return json(req, env, { error: 'bad_code' }, 404);   // 打錯、過期、用過了，一律同一種回應
+  const { u, nm } = await r.json();
+  return json(req, env, { t: await sign(env.SESSION_KEY, { u, e: Date.now() + SESSION_DAYS * 864e5 }), nm });
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url), p = url.pathname;
@@ -75,6 +102,8 @@ export default {
     if (p === '/auth/line/callback') return callback(req, env, url);
     if (p === '/api/sync') return api(req, env, 'sync');
     if (p === '/api/delete') return api(req, env, 'delete');
+    if (p === '/api/pair/create') return pairApi(req, env, 'create');
+    if (p === '/api/pair/redeem') return pairApi(req, env, 'redeem');
     if (p === '/health') return json(req, env, { ok: true, line: !!env.LINE_CHANNEL_SECRET, keys: !!(env.SESSION_KEY && env.UID_KEY) });
     return new Response('全真群島帳號伺服器', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
   },
@@ -94,4 +123,25 @@ export class Vault {
     }
     return Response.json({ ok: true, data: cur.data, updated: cur.updated, created: cur.created });
   }
+}
+
+// 配對碼（一個代碼一個 Durable Object）和防猜計數器（一個 IP／帳號一個）；到期後 alarm 自動清掉
+export class Pair {
+  constructor(ctx) { this.ctx = ctx; }
+  async fetch(req) {
+    const path = new URL(req.url).pathname.slice(1), b = await req.json(), now = Date.now(), st = this.ctx.storage;
+    if (path === 'rl') {
+      const c = (await st.get('c')) || { n: 0, t0: now }; if (now - c.t0 > RL_MIN * 60e3) { c.n = 0; c.t0 = now; }
+      if (c.n >= RL_MAX) return Response.json({ error: 'rate' }, { status: 429 });
+      c.n++; await st.put('c', c); await st.setAlarm(c.t0 + RL_MIN * 60e3 + 1000); return Response.json({ ok: true });
+    }
+    const cur = await st.get('p');
+    if (path === 'create') {
+      if (cur && cur.exp > now) return Response.json({ error: 'taken' }, { status: 409 });
+      const exp = now + PAIR_MIN * 60e3; await st.put('p', { u: b.u, nm: b.nm, exp }); await st.setAlarm(exp + 1000); return Response.json({ ok: true, exp });
+    }
+    if (!cur || cur.exp <= now) return Response.json({ error: 'none' }, { status: 404 });
+    await st.deleteAll(); return Response.json({ u: cur.u, nm: cur.nm });   // 只能用一次
+  }
+  async alarm() { await this.ctx.storage.deleteAll(); }
 }

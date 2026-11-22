@@ -53,6 +53,15 @@ export async function syncNow({ apply = false, quiet = false } = {}) {
     emit({ busy: false, msg: e.message === 'auth' ? state.msg : `⚠️ 同步失敗（${e.message === 'Load failed' || e.message === 'Failed to fetch' ? '網路不穩' : e.message}），稍後會自動再試` });
   }
 }
+// 配對碼：已登入的手機產生（5 分鐘、只能用一次），另一個裝置（例如桌面圖示）輸入後登入同一個帳號
+export async function createPairCode() { const a = readAcct(); if (!a) throw new Error('auth'); return post('/api/pair/create', { t: a.t, nm: a.nm || '' }); }
+export async function redeemPairCode(code) {
+  const r = await fetch(ACCOUNT_API + '/api/pair/redeem', { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify({ code }), credentials: 'omit' });
+  let j = {}; try { j = await r.json(); } catch (e) {}
+  if (!r.ok) throw new Error(r.status === 429 ? 'rate' : r.status === 404 || r.status === 400 ? 'bad_code' : 'http' + r.status);
+  writeAcct({ t: j.t, nm: String(j.nm || '').slice(0, 40), at: 0 }); emit({ acct: readAcct(), msg: '✅ 已用配對碼登入' });
+  syncNow({ apply: true });
+}
 export async function deleteCloud() {
   const a = readAcct(); if (!a) return false;
   await post('/api/delete', { t: a.t }); writeAcct(null);
