@@ -733,9 +733,9 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count bottle-count wish-count" id="wishChip" role="button" tabindex="0" aria-label="前往希望島，看祈福卡或寫一張"><span id="wishChipText">祈福卡</span></p>
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
-  <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
+  <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261123.10</span>
+  <span class="ver">v261123.11</span>
   </div></div>
 </div>
 
@@ -7825,7 +7825,8 @@ function openJoin(visit = false) {
 }
 function closeJoin() { joinEl.classList.remove('on'); setTimeout(() => { joinEl.hidden = true; joinEl.classList.remove('toss'); }, 320); }
 $('jCancel').addEventListener('click', closeJoin);
-$('visitBtn').addEventListener('click', (e) => { e.stopPropagation(); openJoin(true); });
+// 「👀 我要觀摩」按鈕先拿掉（觀摩票只送姓名、乾坤，報名表那三題還是必填，送不進去）；表單改好後把按鈕加回品牌卡就能用
+if ($('visitBtn')) $('visitBtn').addEventListener('click', (e) => { e.stopPropagation(); openJoin(true); });
 joinEl.addEventListener('click', (e) => { if (e.target === joinEl) closeJoin(); });
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && !joinEl.hidden) closeJoin(); });
 $('joinForm').addEventListener('input', () => { jErr.hidden = true; });
@@ -7963,7 +7964,7 @@ const BADGES = [
   { id: 'puti_clear', e: '🪷', n: '雲開見日', c: '在清淨菩提島吹散雲霧，看見蓮花綻放', bc: '#c86a8a', hidden: !ptOpen },
   { id: 'puti_all', e: '📿', n: '菩提冊集滿', c: '清淨菩提島的每一句金句都收進菩提冊（每天一句）', bc: '#b07a2a', hidden: !ptOpen },
   { id: 'joined', e: '🛶', n: '登島成功', c: '用「我要登島」報名，並確認已登島', bc: '#c0503f' },
-  { id: 'visitor', e: '👀', n: '先來看看', c: '用「我要觀摩」上岸當旅人', bc: '#1d8a5f' },
+  { id: 'visitor', e: '👀', n: '先來看看', c: '登島船票的所屬單位選「我只想先登島逛逛而已」，上岸當旅人', bc: '#1d8a5f' },
   // 🌙 時間與日常
   { id: 'morning', e: '🌅', n: '早安群島', c: '早上 6～9 點來逛群島', bc: '#e0954a' },
   { id: 'night', e: '🌙', n: '夜遊群島', c: '晚上 8 點以後來逛，看火把點亮', bc: '#3a3f7a' },
