@@ -25,6 +25,7 @@
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
 } }
 </script>
+<script src="../../game/qrcode.js"></script>
 <style>
 /* 版面以手機直式為主，電腦也能玩（空白鍵／滑鼠點三下） */
 :root{
@@ -92,6 +93,76 @@ button,a{font:inherit;color:inherit;cursor:pointer;border:0;background:none;text
 #bars i:first-child{top:0}
 #bars i:last-child{bottom:0}
 body.slowmo #bars i{height:7vh}
+
+/* —— 多人對戰 —— */
+.fld{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:0 0 10px}
+.fld input,.join input{width:100%;border:1.5px solid #ead9c2;background:#fff;border-radius:14px;padding:12px 14px;font:700 17px var(--sans);color:var(--ink);-webkit-user-select:text;user-select:text}
+.join{display:grid;grid-template-columns:1fr auto;gap:8px}
+.join input{text-transform:uppercase;letter-spacing:.2em;text-align:center}
+.join .btn{width:auto;padding:0 20px}
+.roomtop{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.roomtop small{display:block;color:var(--muted);font-size:12px;font-weight:700}
+.roomtop b{font:900 38px/1.1 var(--serif);letter-spacing:.14em}
+#mpQR{width:92px;height:92px;flex:none;background:#fff;border-radius:10px;padding:5px}
+#mpQR svg{width:100%;height:100%;display:block}
+.plist{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.pl{display:flex;align-items:center;gap:8px;background:#fff1de;border-radius:12px;padding:8px 10px;min-height:46px;font-weight:700;font-size:14.5px;min-width:0}
+.pl i{flex:none;width:12px;height:12px;border-radius:50%}
+.pl span{flex:1;min-width:0;overflow-wrap:anywhere;line-height:1.25}
+.pl u{text-decoration:none;font-size:11px;font-weight:700;color:#fff;background:var(--jade);border-radius:99px;padding:0 6px;margin-left:4px;vertical-align:1px}
+.pl em{font-style:normal;font-size:12px;color:var(--muted);flex:none}
+.pl.empty{opacity:.5;font-weight:500}
+.pl.rdy{background:#e2f1e6}
+.optrow{margin:0 0 10px}
+.optrow label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:0 0 4px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px}
+.seg button{min-height:42px;border-radius:12px;background:#fff;border:1.5px solid #ead9c2;font-weight:700;font-size:14px;padding:4px 8px;line-height:1.25}
+.seg button.on{background:var(--jade);border-color:var(--jade);color:#fff}
+.seg button[disabled]{opacity:.55}
+.optrow p{margin:4px 0 0;font-size:12.5px;color:var(--muted)}
+#mpBar{position:fixed;z-index:6;left:50%;transform:translateX(-50%);top:calc(max(12px,env(safe-area-inset-top)) + 76px);background:rgba(255,248,238,.92);border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,.14);padding:5px 12px;font-weight:700;font-size:13px;text-align:center;pointer-events:none;white-space:nowrap;max-width:94vw}
+#mpBar .row{display:flex;gap:10px;align-items:center;justify-content:center}
+#mpBar i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px}
+#mpBar .me{color:var(--red)}
+#mpBar b{font:900 16px var(--serif)}
+#mpBar small{display:block;color:var(--muted);font-size:11px;font-weight:700}
+#mpBar.big{top:max(14px,env(safe-area-inset-top));padding:10px 22px;font-size:22px;border-radius:20px}
+#mpBar.big b{font-size:34px}
+#mpBar.big small{font-size:15px}
+#mpReveal{position:fixed;z-index:9;left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom));width:min(92vw,420px)}
+#mpReveal .card{padding:14px 16px}
+#mpReveal h3{margin:0 0 6px;font:900 20px var(--serif);letter-spacing:.08em}
+.rrow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-weight:700;border-bottom:1px dashed var(--line);gap:8px}
+.rrow:last-of-type{border-bottom:0}
+.rrow b{font:900 18px var(--serif)}
+.rrow span.t{color:var(--muted);font-weight:500;font-size:13px}
+#mpReveal p{margin:8px 0 0;font-size:12.5px;color:var(--muted);text-align:center}
+#mpCount{position:fixed;z-index:12;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font:900 120px var(--serif);color:#fff;text-shadow:0 4px 0 rgba(43,29,20,.5),0 0 40px rgba(43,29,20,.6)}
+#mpWait{position:fixed;z-index:5;left:0;right:0;top:36%;text-align:center;pointer-events:none;padding:0 20px}
+#mpWait span{display:inline-block;background:rgba(43,29,20,.7);color:#fff;border-radius:99px;padding:8px 18px;font-weight:700;font-size:15px}
+#scrMPEnd{justify-content:flex-end;background:linear-gradient(to bottom,rgba(43,29,20,0) 30%,rgba(43,29,20,.5))}
+#scrMP{justify-content:flex-start;background:linear-gradient(to bottom,rgba(246,234,216,0) 0%,rgba(246,234,216,.7) 30%,#f6ead8 70%);overflow-y:auto;padding-top:max(64px,calc(env(safe-area-inset-top) + 54px))}
+#scrMP .card{margin:auto 0 0}
+body.hostview #scrMP{justify-content:center;background:rgba(246,234,216,.9)}
+body.hostview #scrMP .card{max-width:620px;margin:0}
+body.hostview .roomtop b{font-size:64px}
+body.hostview #mpQR{width:180px;height:180px}
+/* —— 觸控瞄準、倒數計時 —— */
+#gE.live{pointer-events:auto;touch-action:none}
+#gE.live::before{content:"";position:absolute;inset:-8px -26px}
+#gE.live .mk{background:var(--jade)}
+#timer{position:fixed;z-index:6;left:50%;transform:translateX(-50%);bottom:calc(max(14px,env(safe-area-inset-bottom)) + var(--gb) + 96px);min-width:190px;background:rgba(255,248,238,.94);border-radius:99px;box-shadow:0 3px 10px rgba(0,0,0,.18);padding:4px 14px 7px;text-align:center;font-weight:900;font-size:14px;pointer-events:none;overflow:hidden}
+#timer span{font-variant-numeric:tabular-nums}
+#timer small{font-weight:700;color:var(--green);margin-left:6px}
+#timer i{position:absolute;left:0;bottom:0;height:4px;width:100%;background:var(--green);transform-origin:left;transition:background .3s}
+#timer.mid i{background:#e8a02a}
+#timer.low i{background:var(--red)}
+#timer.mid small{color:#b87a14}
+#timer.low small{color:var(--red)}
+#timer.out small{color:var(--muted)}
+#tcancel{position:fixed;z-index:6;left:12px;right:12px;bottom:max(10px,env(safe-area-inset-bottom));height:calc(14vh - 6px);border:2px dashed rgba(255,255,255,.7);border-radius:18px;background:rgba(43,29,20,.28);color:#fff;font-weight:900;font-size:15px;display:flex;align-items:center;justify-content:center;pointer-events:none;letter-spacing:.08em}
+#tcancel.hot{background:rgba(194,59,46,.62)}
+.linkbtn{display:block;width:100%;text-align:center;font-size:13.5px;font-weight:700;color:var(--muted);text-decoration:underline;text-underline-offset:3px;padding:6px 0}
 #vig{position:fixed;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 52%,rgba(40,20,6,.30) 100%)}
 #gH{left:50%;transform:translateX(-50%);width:min(78vw,360px);height:16px;bottom:calc(max(14px,env(safe-area-inset-bottom)) + var(--gb))}
 #gH .mk,#gH .lk{top:-4px;width:8px;height:24px;margin-left:-4px}
@@ -129,6 +200,8 @@ body.motion{--gb:82px}
 .card h2{margin:8px 0 2px;font:900 28px/1.2 var(--serif);letter-spacing:.1em}
 .card .sub{margin:0 0 8px;color:var(--muted);font-size:14px}
 .tip{background:#fff1de;border-radius:14px;padding:10px 12px;margin:8px 0 14px;font-size:14.5px}
+.tip ul.tl{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:5px;font-size:13.5px}
+.tip ul.tl li{line-height:1.4}
 .big{font:900 64px/1 var(--serif);text-align:center;margin:6px 0 0}
 .big small{font-size:18px;color:var(--muted);margin-left:4px}
 .ttl{text-align:center;font:900 24px/1.3 var(--serif);letter-spacing:.14em;color:var(--red);margin:4px 0 2px}
@@ -167,14 +240,16 @@ body.motion{--gb:82px}
   <div class="card">
     <ul class="how">
       <li><b>1</b><span>三輪、每輪四支矢：<b style="display:inline;background:none;color:inherit;width:auto;height:auto">晨光 → 風起 → 浮筏</b>，一輪比一輪遠、一輪比一輪難。</span></li>
-      <li><b>2</b><span>投進壺口 <strong>2 分</strong>，穿過壺耳 <strong>3 分</strong>。不比輸贏，投給自己看。</span></li>
+      <li><b>2</b><span>投進壺口 <strong>2 分</strong>，穿過壺耳 <strong>3 分</strong>；每矢 15 秒倒數，<strong>投得越快，最多再加 0.5 分</strong>。</span></li>
       <li><b>3</b><span>投不準也沒關係，島會告訴你偏哪邊，再靜一靜就好。</span></li>
     </ul>
     <div class="stack">
-      <button class="btn col" id="btnTap" type="button">🎯 點三下玩<small>依序點三下：仰角 → 力道 → 左右</small></button>
+      <button class="btn col" id="btnTouch" type="button">🖐️ 觸控玩<small>按住畫面拖曳落點，放開就放箭</small></button>
       <button class="btn jade col" id="btnMotion" type="button">📱 體感玩<small>傾斜手機瞄準，按住蓄力、放開放箭</small></button>
+      <button class="btn ghost col" id="btnMP" type="button" hidden>👥 多人對戰<small>一對一、二對二，找朋友一起投</small></button>
+      <button class="linkbtn" id="btnTap" type="button">經典三段式（依序點三下：仰角 → 力道 → 左右）</button>
     </div>
-    <p class="note" id="motionNote" hidden>體感需要手機；電腦請用上面的「點三下玩」（空白鍵也可以）。</p>
+    <p class="note" id="motionNote" hidden>體感需要手機；電腦請用上面的「觸控玩」（滑鼠拖曳就行）。</p>
     <p class="rec" id="rec"></p>
   </div>
 </section>
@@ -207,6 +282,59 @@ body.motion{--gb:82px}
   </div>
 </section>
 
+
+<!-- 多人對戰：入口與房間 -->
+<section class="scr" id="scrMP" hidden>
+  <div class="card">
+    <div id="mpEntry">
+      <span class="stepTag">多人對戰</span>
+      <h2>以禮會友</h2>
+      <p class="sub">一對一賓主對投，或二對二分工合投。投壺不比輸贏，投給朋友看。</p>
+      <label class="fld">你的名字<input id="mpName" maxlength="10" autocomplete="off" placeholder="例如：小明"></label>
+      <div class="stack">
+        <button class="btn" id="mpCreate" type="button">🏠 建立房間</button>
+        <div class="join"><input id="mpCode" maxlength="5" placeholder="輸入 5 碼房號" autocapitalize="characters" autocomplete="off"><button class="btn jade sm" id="mpJoin" type="button">加入</button></div>
+        <button class="btn ghost sm" id="mpHost" type="button">🖥️ 用電腦主持（大螢幕）</button>
+        <button class="btn ghost sm" id="mpBack" type="button">← 回首頁</button>
+      </div>
+    </div>
+    <div id="mpRoom" hidden>
+      <div class="roomtop"><div><small>房號（把它告訴朋友）</small><b id="mpRoomCode">-----</b></div><div id="mpQR"></div></div>
+      <div class="plist" id="mpPlayers"></div>
+      <div class="optrow"><label>對戰</label><div class="seg" id="mpKind"><button type="button" data-v="1v1">1 對 1</button><button type="button" data-v="2v2">2 對 2</button></div></div>
+      <div class="optrow"><label>節奏</label><div class="seg" id="mpPace"><button type="button" data-v="sync">同場對投</button><button type="button" data-v="turn">輪流對投</button></div><p id="mpPaceNote"></p></div>
+      <div class="optrow" id="mpRuleRow"><label>二對二規則</label><div class="seg" id="mpRule"><button type="button" data-v="split">分工合投</button><button type="button" data-v="sum">各自累計</button></div><p id="mpRuleNote"></p></div>
+      <div class="optrow" id="mpInputRow"><label>你的操作</label><div class="seg" id="mpInput"><button type="button" data-v="touch">🖐️ 觸控</button><button type="button" data-v="motion">📱 體感</button><button type="button" data-v="tap">🎯 經典</button></div></div>
+      <div class="stack">
+        <button class="btn" id="mpReady" type="button">我準備好了</button>
+        <a class="btn line" id="mpInvite" href="#" target="_blank" rel="noopener">💬 邀請朋友（LINE）</a>
+        <button class="btn ghost sm" id="mpLeave" type="button">離開房間</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="timer" hidden><i></i>⏱ <span id="tmSec">15.0</span> 秒<small id="tmBonus">加成 +0.5</small></div>
+<div id="tcancel" hidden>↓ 拖到這裡放開＝取消</div>
+<div id="mpBar" hidden></div>
+<div id="mpWait" hidden><span id="mpWaitTxt"></span></div>
+<div id="mpCount" hidden></div>
+<div id="mpReveal" hidden><div class="card"><h3 id="mpRevealTitle"></h3><div id="mpRevealBody"></div><p id="mpRevealNote"></p></div></div>
+
+<!-- 多人結算 -->
+<section class="scr" id="scrMPEnd" hidden>
+  <div class="card">
+    <span class="stepTag">對戰結算</span>
+    <div class="ttl" id="meTitle" style="margin-top:10px"></div>
+    <div class="quote" id="meSub"></div>
+    <div id="meRows"></div>
+    <div class="stack" style="margin-top:12px">
+      <button class="btn" id="meAgain" type="button">🏹 再來一局</button>
+      <button class="btn ghost" id="meLeave" type="button">離開房間</button>
+    </div>
+  </div>
+</section>
+
 <div class="ver" id="ver"></div>
 
 <script type="module">
@@ -214,7 +342,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.03';
+const VER = 'v261123.05';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -247,7 +375,7 @@ const TU = {
   arrows: 4,
 };
 const ROUNDS = [
-  { name: '晨光', sub: '無風・近距離', D: 2.2, T: 2.9, wind: 0,   sway: 0,    sky: 0, tip: '沒有風，專心瞄準就好。三個步驟：<b>仰角</b>（拋多高）、<b>力道</b>（拋多遠）、<b>左右</b>。第一輪對準時會變綠。小提醒：拋得高，矢落進壺口的角度比較陡、比較好進。' },
+  { name: '晨光', sub: '無風・近距離', D: 2.2, T: 2.9, wind: 0,   sway: 0,    sky: 0, tipTouch: '沒有風，專心瞄準就好。第一輪對準時圈會變綠。拋得高，矢落進壺口的角度比較陡、比較好進。', tip: '沒有風，專心瞄準就好。三個步驟：<b>仰角</b>（拋多高）、<b>力道</b>（拋多遠）、<b>左右</b>。第一輪對準時會變綠。小提醒：拋得高，矢落進壺口的角度比較陡、比較好進。' },
   { name: '風起', sub: '起風了・距離拉遠', D: 2.8, T: 2.5, wind: 0.45, sway: 0,    sky: 1, windAssist: true, tip: '看旗子！風會把矢吹偏。這輪的<b>黃色瞄準線和落點圈已經把風算進去</b>，把它們對到壺就對了。拋得越高，飛得越久，也被風吹得越多。' },
   { name: '浮筏', sub: '夜裡・壺在筏上', D: 3.1, T: 2.2, wind: 0.45, sway: 0.07, sky: 2, tip: '壺放在竹筏上，隨浪輕輕搖。風還在，但這輪<b>不再替你算風</b>：看旗子，把剛學到的手感用上。' },
 ];
@@ -260,16 +388,17 @@ const QUOTES = {
   bank: ['好彩頭！彈進壺裡。'],
 };
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
+// 含時間加成最高 42 分；基本分最高 36
 const TITLES = [
-  { min: 26, t: '矢直如心', q: '心定，矢自然就直。' },
-  { min: 18, t: '心手合一', q: '手跟著心走，已經很穩了。' },
-  { min: 10, t: '漸入佳境', q: '越投越穩，再來一場吧。' },
+  { min: 30, t: '矢直如心', q: '心定，矢自然就直。' },
+  { min: 20, t: '心手合一', q: '手跟著心走，已經很穩了。' },
+  { min: 11, t: '漸入佳境', q: '越投越穩，再來一場吧。' },
   { min: 0,  t: '靜心起步', q: '投壺不是比輸贏，是練一顆穩定的心。' },
 ];
 
 /* ——— 存檔：只存在這支手機的瀏覽器 ——— */
 const KEY = 'islands-touhu';
-let SAVE = { v: 1, best: 0, plays: 0, ins: 0, ears: 0, throws: 0, mode: 'tap' };
+let SAVE = { v: 1, best: 0, plays: 0, ins: 0, ears: 0, throws: 0, mode: 'tap', nick: '' };
 try { const o = JSON.parse(localStorage.getItem(KEY) || 'null'); if (o && o.v === 1) SAVE = Object.assign(SAVE, o); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(SAVE)); } catch (e) {} };
 
@@ -674,7 +803,7 @@ function trailPush(p, dt) {   // dt＝模擬時間：每 0.035 秒留一個點�
   trailAcc += dt; if (trailAcc < 0.035 && trailPts.length) return; trailAcc = 0;
   if (trailPts.length >= TRAIL_N) trailPts.shift(); trailPts.push(p.clone()); trailDraw();
 }
-function trailTick(dt) { if (S.phase !== 'fly' && trailMesh.visible) { trailK -= dt * 0.8; if (trailK <= 0) trailReset(); else trailDraw(); } }
+function trailTick(dt) { if (S.phase !== 'fly' && S.phase !== 'replay' && trailMesh.visible) { trailK -= dt * 0.8; if (trailK <= 0) trailReset(); else trailDraw(); } }
 
 /* —— 特效：花瓣／金光、漣漪 —— */
 const FX = [];
@@ -692,8 +821,25 @@ function ripple(p, color) { const r = ripples.find((x) => x.life <= 0) || ripple
 /* =========================================================
    遊戲狀態
    ========================================================= */
+/* —— 數字：分數以 0.1 分為單位 —— */
+const round1 = (n) => Math.round(n * 10) / 10;
+const fmt1 = (n) => { const r = round1(n); return Number.isInteger(r) ? String(r) : r.toFixed(1); };
+const fmt10 = (n10) => fmt1(n10 / 10);   // 多人：伺服器的分數是「十分之一分」整數
+/* —— 每矢倒數：從「可以開始瞄準」算到放箭；不含飛行、重播、等別人；剩餘比例 × 0.5 ＝ 時間加成（只有投進才有）—— */
+const TIME_LIMIT = 15;
+const TM = { show: false, on: false, acc: 0, t0: 0 };
+function timerFrac() { return clamp(1 - (TM.acc + (TM.on ? performance.now() - TM.t0 : 0)) / 1000 / TIME_LIMIT, 0, 1); }
+function timerResume() { if (!TM.on) { TM.on = true; TM.t0 = performance.now(); } TM.show = true; }
+function timerPause() { if (TM.on) { TM.acc += performance.now() - TM.t0; TM.on = false; } }
+function timerReset() { TM.acc = 0; TM.on = false; TM.show = false; }
+function timerPaint() {
+  const el = $('#timer'); el.hidden = !TM.show; if (!TM.show) return;
+  const f = timerFrac(); el.querySelector('i').style.transform = `scaleX(${f})`; $('#tmSec').textContent = (f * TIME_LIMIT).toFixed(1);
+  $('#tmBonus').textContent = f > 0 ? `加成 +${(f * 0.5).toFixed(1)}` : '加成用完了';
+  el.classList.toggle('mid', f <= 0.5 && f > 0.2); el.classList.toggle('low', f <= 0.2 && f > 0); el.classList.toggle('out', f <= 0);
+}
 const S = {
-  phase: 'title', mode: 'tap', round: 0, n: 0, score: 0, rScore: 0, ins: 0, ears: 0, hist: [],
+  phase: 'title', mode: 'touch', eTouch: 0.5, presetTl: null, round: 0, n: 0, score: 0, rScore: 0, ins: 0, ears: 0, hist: [],
   t0: 0, ph: 0, ph2: 0, ph3: 0, aH: 0, aE: 0.5, aP: 0.5, lockH: null, lockE: null, lockP: null, charging: false, cT0: 0, ts: 1, wind: 0, windSign: 1, arrows: [], cur: null, camMode: 'title', tapLock: 0,
 };
 let NOW = 0;
@@ -702,6 +848,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const tri = (u) => { u -= Math.floor(u); return u < 0.5 ? u * 2 : 2 - u * 2; };
 
 function potState(now) {
+  if (REPLAY.on) return REPLAY.pot;
   const r = R(), t = now / 1000;
   return r.sway ? { x: r.sway * Math.sin(t * 1.5), y: 0.14 + 0.025 * Math.sin(t * 2.1 + 1) } : { x: 0, y: 0.12 };
 }
@@ -717,17 +864,23 @@ function setupRound() {
   $('#hRound').textContent = `第 ${S.round + 1} 輪・${r.name}`;
 }
 function rollWind() {
-  const r = R(); S.wind = r.wind ? S.windSign * r.wind * (0.6 + Math.random() * 0.8) : 0;   // 每支矢的風力不一樣（0.6～1.4 倍），風大風小要看旗子
+  const r = R(); let f = 0.6 + Math.random() * 0.8;   // 每支矢的風力不一樣（0.6～1.4 倍），風大風小要看旗子
+  if (MP.on) {   // 多人：風向（每輪）與風力（每支矢）由房間種子決定，對手拿到一模一樣的風
+    f = 0.6 + prng((MP.seed ^ Math.imul(MP.arrowIdx + 1, 104729)) >>> 0)() * 0.8;
+    S.windSign = prng((MP.seed ^ Math.imul(MP.round + 1, 31337)) >>> 0)() < 0.5 ? -1 : 1;
+  }
+  S.wind = r.wind ? S.windSign * r.wind * f : 0;
   const lv = Math.abs(S.wind) < 0.01 ? 0 : clamp(Math.round(Math.abs(S.wind) / 0.2), 1, 3);
   $('#hWind').textContent = lv ? `💨 ${S.wind > 0 ? '→' : '←'}`.concat(' ', (S.wind > 0 ? '→' : '←').repeat(lv - 1), `　風 ${lv} 級`) : '🍃 無風';
 }
 function buildArrowDots() {
-  const h = $('#hArrows'); h.innerHTML = ''; for (let i = 0; i < TU.arrows; i++) h.appendChild(document.createElement('i'));
+  const h = $('#hArrows'); h.innerHTML = ''; for (let i = 0; i < (S.perRound || TU.arrows); i++) h.appendChild(document.createElement('i'));
   paintDots();
 }
 function paintDots() {
+  if (MP.on && MP.st && MP.st.units) return mpPaintDots();
   [...$('#hArrows').children].forEach((el, i) => { const r = (S.hist[S.round] || [])[i]; el.className = r ? r.kind === 'ear' ? 'ear' : r.kind === 'in' ? 'in' : 'miss' : (i === S.n && S.phase !== 'result' ? 'cur' : ''); });
-  $('#hScore').textContent = `${S.score} 分`;
+  $('#hScore').textContent = `${fmt1(S.score)} 分`;
 }
 
 /* ——— 發射：仰角 e、力道 p、左右 a（都是 0～1，左右是 -1～1）算出初速 ——— */
@@ -753,6 +906,7 @@ function launchVel(a, e, p) {
 function throwArrow(a, e, p) {
   const A = S.cur;
   const vel = launchVel(a, e, p), dir = vel.clone().normalize();
+  const tlNow = timerFrac(); A.tl = S.preset && S.presetTl != null ? (S.presetTl + tlNow) / 2 : tlNow;   // 分工合投：兩位各自剩餘比例取平均
   A.vel = vel; A.pos = handPos(); A.prev = A.pos.clone(); A.dir = dir.clone(); A.state = 'fly'; A.t = 0; A.launch = { a, e, p };
   S.phase = 'fly'; S.t0 = NOW; S.camMode = 'fly'; S.charging = false; trailReset();
   hideAimUI(); setHint(''); SFX.throw(); SAVE.throws++;
@@ -820,20 +974,21 @@ function updateArrow(A, dt) {
     if (A.state === 'sink') return;   // 這一幀剛入壺：矢已經掛到壺上，下一幀由入壺動畫接手
     if (A.touch) { _d.set(A.vel.x, 0, A.vel.z); if (_d.lengthSq() > 0.0004) A.dir.lerp(_d.normalize(), 0.2); else A.dir.y *= 0.8; A.dir.normalize(); }
     else if (A.vel.lengthSq() > 0.01) A.dir.copy(A.vel).normalize();
-    poseArrow(A.mesh, A.pos, A.dir); trailPush(A.pos, dt);
+    poseArrow(A.mesh, A.pos, A.dir); trailPush(A.pos, dt); recPush(A, dt, A.pos);
     if (A.t > 6 || A.state === 'rest') { A.state = 'rest'; }
     if (A.state === 'rest') { A.dir.y = 0; if (A.dir.lengthSq() < 0.01) A.dir.set(0, 0, -1); A.dir.normalize(); A.pos.y = 0.014; poseArrow(A.mesh, A.pos, A.dir); finishArrow(A); }
   } else if (A.state === 'sink') {
     const s = A.sink; s.t += dt; const u = clamp(s.t / 0.38, 0, 1), e = 1 - (1 - u) ** 3;
     _t.lerpVectors(s.from, s.to, e); _d.lerpVectors(s.d0, s.d1, e).normalize();
     A.mesh.quaternion.setFromUnitVectors(Y_AXIS, _d); A.mesh.position.copy(_t).addScaledVector(_d, -TU.arrowL / 2);
+    recPush(A, dt, _tw.set(potGroup.position.x + _t.x, potGroup.position.y + _t.y, _t.z));
     if (u >= 1) { A.state = 'done'; finishArrow(A); }
   }
 }
 
 /* ——— 結果判定 ——— */
 function finishArrow(A) {
-  if (A.finished) return; A.finished = true;
+  if (A.finished) return; A.finished = true; recFinal(A);
   let kind = A.kind, pts = 0, cap;
   if (kind === 'ear') { pts = 3; cap = ['貫耳', pick(QUOTES.ear)]; S.ears++; SAVE.ears++; }
   else if (kind === 'in') { pts = 2; cap = [A.bank ? '彈進' : '入壺', pick(A.bank ? QUOTES.bank : QUOTES.in)]; S.ins++; SAVE.ins++; }
@@ -844,10 +999,11 @@ function finishArrow(A) {
     else if (Math.abs(dz) >= Math.abs(dx)) cap = dz > 0 ? ['太近', pick(QUOTES.short)] : ['太遠', pick(QUOTES.long)];
     else cap = dx > 0 ? ['偏右', pick(QUOTES.right)] : ['偏左', pick(QUOTES.left)];
   }
-  S.score += pts; S.rScore += pts; (S.hist[S.round] = S.hist[S.round] || []).push({ kind, pts });
-  S.phase = 'result'; S.t0 = NOW; S.camMode = 'close'; paintDots(); showCap(cap[0] + (pts ? `　+${pts}` : ''), cap[1]); setHint(''); guestReact(kind); buzz(kind === 'ear' ? [30, 40, 30] : kind === 'in' ? 35 : 15);
+  const b10 = pts > 0 ? Math.round((A.tl || 0) * 5) : 0;   // 時間加成（十分之一分）：只有投進才有，最多 0.5
+  S.score = round1(S.score + pts + b10 / 10); S.rScore = round1(S.rScore + pts + b10 / 10); (S.hist[S.round] = S.hist[S.round] || []).push({ kind, pts, b: b10 });
+  S.phase = 'result'; S.t0 = NOW; S.camMode = 'close'; paintDots(); showCap(cap[0] + (pts ? `　+${fmt1(pts + b10 / 10)}` : ''), cap[1] + (b10 ? `　⏱ 時間加成 +${(b10 / 10).toFixed(1)}` : '')); setHint(''); guestReact(kind); buzz(kind === 'ear' ? [30, 40, 30] : kind === 'in' ? 35 : 15);
   save();
-  setTimeout(nextArrow, 1900);
+  if (MP.on) mpArrowDone(A, kind, pts); else setTimeout(nextArrow, 1900);
 }
 function nextArrow() {
   if (S.phase !== 'result') return;
@@ -862,26 +1018,90 @@ function nextArrow() {
    體感版：轉手機＝左右、上下抬＝仰角（隨時調整）；按住「蓄力」讓力道來回，落點圈對準壺就放開
    ========================================================= */
 const gH = $('#gH'), gE = $('#gE'), gP = $('#gP'), GAUGES = [gH, gE, gP];
+/* —— 觸控瞄準：按住畫面拖曳「落點」，放開放箭；右側滑桿調仰角（記住，不用每矢重設）——
+   落點（左右＋遠近）由伺服器同一套物理反推成左右與力道；手指越穩落點圈晃得越小（手抖），拖到底部「取消區」放開＝取消 */
+const TOUCH = { active: false, id: null, x: 0, y: 0, px: 0, py: 0, lt: 0, steady: 0, t0: 0, ph: 0, aim: null, calm: false };
+const _rc = new THREE.Raycaster(), TOUCH_OFFSET = 64, WOBBLE = [[0.10, 0.015], [0.15, 0.02], [0.18, 0.03]];   // 每輪手抖的最大／最小幅度（公尺）
+function touchAim(now) {
+  const lockJob = !!(MP.on && MP.job && MP.job.kind === 'lock'), preset = S.preset;
+  const e = preset ? S.lockE : S.eTouch, th = thetaOf(e), hand = handPos(), D = R().D, pc = potState(now), mY = pc.y + TU.mouthY;
+  if (!TOUCH.active) { TOUCH.aim = null; return { a: 0, e, p: preset ? S.lockP : 0.5, active: false, lock: lockJob }; }
+  const dt = Math.min(0.1, Math.max(0.001, (now - (TOUCH.lt || now)) / 1000)); TOUCH.lt = now;
+  const sp = Math.hypot(TOUCH.x - TOUCH.px, TOUCH.y - TOUCH.py) / dt; TOUCH.px = TOUCH.x; TOUCH.py = TOUCH.y;
+  TOUCH.steady = sp < 40 ? TOUCH.steady + dt : Math.max(0, TOUCH.steady - dt * 3);   // 手指停著越久越穩
+  const [Amax, Amin] = WOBBLE[Math.min(S.round, 2)], A = Amin + (Amax - Amin) * Math.exp(-TOUCH.steady / 0.8), s = now / 1000, ph = TOUCH.ph;
+  const wx = A * (0.65 * Math.sin(s * 2.3 + ph) + 0.35 * Math.sin(s * 5.1 + ph * 1.7)), wz = A * (0.65 * Math.sin(s * 1.9 + ph * 2.1) + 0.35 * Math.sin(s * 4.3 + ph * 0.6));
+  TOUCH.calm = TOUCH.steady > 1.0;
+  cam.updateMatrixWorld(); _rc.setFromCamera({ x: TOUCH.x / innerWidth * 2 - 1, y: -((TOUCH.y - TOUCH_OFFSET) / innerHeight * 2 - 1) }, cam);   // 落點圈浮在手指上方，手指才不會擋住它
+  const o = _rc.ray.origin, d = _rc.ray.direction, tt = d.y < -0.01 ? (mY - o.y) / d.y : 40;
+  const tx = o.x + d.x * tt + wx, tz = o.z + d.z * tt + wz, sinPsi = (X, dr) => clamp((tx - dr - hand.x) / X, -0.95, 0.95);
+  let p, L, dr = 0, a;
+  if (preset) {   // 分工合投的放箭者：只管左右，仰角與力道已經定好
+    p = S.lockP; L = landing(th, speedOf(p)); dr = windDrift(L.t); a = (D * Math.tan(Math.asin(sinPsi(L.X, dr))) + HAND_X) / TU.lat;
+  } else if (lockJob) {   // 分工合投的定參數者：只管遠近（力道），左右交給隊友
+    p = clamp(pFor(th, (hand.z - tz) / Math.cos(psiOf(0))), 0, 1); a = 0;
+  } else {
+    let X = Math.hypot(tx - hand.x, hand.z - tz); p = clamp(pFor(th, X), 0, 1); L = landing(th, speedOf(p)); dr = windDrift(L.t);
+    for (let k = 0; k < 2; k++) { X = Math.hypot(tx - dr - hand.x, hand.z - tz); p = clamp(pFor(th, X), 0, 1); L = landing(th, speedOf(p)); dr = windDrift(L.t); }   // 第二輪把風的偏移也算進去
+    a = (D * Math.tan(Math.asin(sinPsi(L.X, dr))) + HAND_X) / TU.lat;
+  }
+  TOUCH.aim = { a, e, p };
+  return { a, e, p, active: true, lock: lockJob };
+}
+addEventListener('pointerdown', (e) => {
+  if (S.phase !== 'aimT' || TOUCH.active || e.target.closest('button,a,.card,#gE')) return;
+  audioInit(); Object.assign(TOUCH, { active: true, id: e.pointerId, x: e.clientX, y: e.clientY, px: e.clientX, py: e.clientY, lt: 0, steady: 0, t0: performance.now(), ph: Math.random() * 6.283 }); SFX.lock();
+});
+addEventListener('pointermove', (e) => { if (TOUCH.active && e.pointerId === TOUCH.id) { TOUCH.x = e.clientX; TOUCH.y = e.clientY; } });
+function touchEnd(e) {
+  if (!TOUCH.active || e.pointerId !== TOUCH.id) return; TOUCH.active = false; if (S.phase !== 'aimT') return;
+  if (TOUCH.y > innerHeight * 0.86) return toast('取消了，重新瞄準');
+  if (performance.now() - TOUCH.t0 < 180 || !TOUCH.aim) return toast('按住畫面並拖曳落點，放開才投');
+  const { a, e: ee, p } = TOUCH.aim;
+  if (MP.on && MP.job && MP.job.kind === 'lock') return mpSendLock(ee, p);   // 分工合投：交給隊友
+  throwArrow(a, ee, p);
+}
+addEventListener('pointerup', touchEnd); addEventListener('pointercancel', touchEnd);
+const setE = (ev) => { const r = gE.getBoundingClientRect(); S.eTouch = clamp(1 - (ev.clientY - r.top) / r.height, 0, 1); };
+gE.addEventListener('pointerdown', (ev) => { if (S.phase !== 'aimT' || S.preset) return; ev.stopPropagation(); try { gE.setPointerCapture(ev.pointerId); } catch (_) {} gE._drag = true; setE(ev); });
+gE.addEventListener('pointermove', (ev) => { if (gE._drag) setE(ev); });
+['pointerup', 'pointercancel'].forEach((n) => gE.addEventListener(n, () => { gE._drag = false; }));
 function setHint(t) { $('#hint').hidden = !t; $('#hintTxt').textContent = t || ''; }
-function hideAimUI() { aimLine.visible = ring.visible = dash.visible = depthBar.visible = false; GAUGES.forEach((g) => { g.hidden = true; }); $('#calib').hidden = true; $('#btnThrow').hidden = true; }
+function hideAimUI() { timerReset(); TOUCH.active = false; $('#tcancel').hidden = true; gE.classList.remove('live'); aimLine.visible = ring.visible = dash.visible = depthBar.visible = false; GAUGES.forEach((g) => { g.hidden = true; }); $('#calib').hidden = true; $('#btnThrow').hidden = true; }
 function zoneSet(g, a, b) { const z = g.querySelector('.zone'); z.style.display = 'block'; if (g === gH) { z.style.left = a + '%'; z.style.width = (b - a) + '%'; } else { z.style.bottom = a + '%'; z.style.height = (b - a) + '%'; } }
 const gMark = (g, v) => { const m = g.querySelector('.mk'); if (g === gH) m.style.left = (v + 1) * 50 + '%'; else m.style.bottom = v * 100 + '%'; };
 const gShow = (g, mk) => { g.querySelector('.mk').style.display = mk ? 'block' : 'none'; };
 const gLock = (g, v) => { const l = g.querySelector('.lk'); l.style.display = 'block'; if (g === gH) l.style.left = (v + 1) * 50 + '%'; else l.style.bottom = v * 100 + '%'; gShow(g, false); g.classList.add('dim'); };
 const gActive = (g, on) => g.classList.toggle('dim', !on);
-function startAim() {
+function startAim(job) {
   rollWind(); S.cur = { mesh: makeArrow(), state: 'hand', pos: new THREE.Vector3(), rimmed: false, bodyHit: false, touch: false, finished: false };
   S.arrows.push(S.cur); S.camMode = 'aim'; S.t0 = NOW; S.tapLock = NOW + 260;
-  S.lockE = S.lockP = S.lockH = null; S.ph = Math.random(); S.ph2 = Math.random(); S.ph3 = Math.random(); S.charging = false; S.aP = 0.5;
+  S.lockE = S.lockP = S.lockH = null; S.ph = Math.random(); S.ph2 = Math.random(); S.ph3 = Math.random(); S.charging = false; S.aP = 0.5; S.preset = false; S.presetTl = null; TOUCH.active = false;
   GAUGES.forEach((g) => { g.hidden = false; g.querySelector('.lk').style.display = 'none'; g.querySelector('.zone').style.display = 'none'; gShow(g, true); });
-  paintDots();
+  paintDots(); $('#btnThrow').textContent = '🏹 按住蓄力・放開放箭'; timerReset(); gE.classList.remove('live');
+  if (job && job.kind === 'throw') {   // 分工合投：隊友已經定好仰角與力道，我只管左右並放箭
+    S.preset = true; S.presetTl = job.tl == null ? null : job.tl; S.lockE = S.aE = job.e; S.lockP = S.aP = job.p; gLock(gE, job.e); gLock(gP, job.p); gActive(gE, false); gActive(gP, false); gActive(gH, true); gShow(gH, true);
+    if (S.mode === 'tap') {
+      S.phase = 'aimH'; setHint('③　隊友定好了！點一下，鎖定「左右」，放箭'); if (S.round === 0) zoneSet(gH, 50 - TU.tol / TU.lat * 50, 50 + TU.tol / TU.lat * 50); timerResume();
+    } else if (S.mode === 'touch') {
+      S.phase = 'aimT'; gShow(gH, false); setHint('隊友定好了！左右拖曳，放開放箭'); timerResume();
+    } else {
+      S.phase = 'aim'; if (S.n === 0) { SENS.calibOK = false; SENS.anchor = null; }
+      gShow(gE, false); gShow(gP, false); $('#calib').hidden = false; $('#btnThrow').hidden = false; $('#btnThrow').textContent = '🏹 放箭'; updateCalibUI(); setHint(SENS.calibOK ? '轉動手機瞄準左右，按「放箭」（或往前一送）' : ''); if (SENS.calibOK) timerResume();
+    }
+    return;
+  }
+  const lockJob = !!(job && job.kind === 'lock');
   if (S.mode === 'tap') {
     S.phase = 'aimE'; gActive(gE, true); gActive(gP, false); gActive(gH, false); gShow(gP, false); gShow(gH, false);
-    setHint('①　點一下，鎖定「仰角」（上下）');
+    setHint(lockJob ? '①　點一下，鎖定「仰角」（左右交給隊友）' : '①　點一下，鎖定「仰角」（上下）'); timerResume();
+  } else if (S.mode === 'touch') {
+    S.phase = 'aimT'; gActive(gE, true); gE.classList.add('live'); gActive(gP, false); gShow(gH, false); gShow(gP, true);
+    setHint(lockJob ? '按住畫面上下拖曳定力道，放開交給隊友' : '按住畫面拖曳落點，放開放箭'); timerResume();
   } else {
     S.phase = 'aim'; if (S.n === 0) { SENS.calibOK = false; SENS.anchor = null; }
-    gActive(gE, true); gActive(gH, true); gActive(gP, false); gShow(gP, false);
-    $('#calib').hidden = false; $('#btnThrow').hidden = false; updateCalibUI(); setHint(SENS.calibOK ? CHARGE_HINT : '');
+    gActive(gE, true); gActive(gH, !lockJob); gActive(gP, false); gShow(gP, false); if (lockJob) gShow(gH, false);
+    $('#calib').hidden = false; $('#btnThrow').hidden = false; updateCalibUI(); setHint(SENS.calibOK ? CHARGE_HINT : ''); if (SENS.calibOK) timerResume();   // 體感：校準完（心定）才開始倒數
   }
 }
 const CHARGE_HINT = '按住蓄力，落點圈對準壺就放開';
@@ -892,6 +1112,7 @@ function lockE() {
 }
 function lockP() {
   if (S.phase !== 'aimP' || NOW < S.tapLock) return; S.lockP = S.aP; SFX.lock(); gLock(gP, S.lockP);
+  if (MP.on && MP.job && MP.job.kind === 'lock') return mpSendLock(S.lockE, S.lockP);   // 分工合投：把仰角與力道交給隊友
   S.phase = 'aimH'; S.tapLock = NOW + 220; S.t0 = NOW; gActive(gH, true); gShow(gH, true); setHint('③　最後點一下，鎖定「左右」，放箭！');
   if (S.round === 0) zoneSet(gH, 50 - TU.tol / TU.lat * 50, 50 + TU.tol / TU.lat * 50);
 }
@@ -908,7 +1129,11 @@ addEventListener('keydown', (e) => {
 addEventListener('keyup', (e) => { if ((e.code === 'Space' || e.code === 'Enter') && S.charging) releaseCharge(); });
 
 /* —— 體感：按住蓄力、放開（或往前一送）放箭 —— */
+function throwPreset() {
+  if (S.phase !== 'aim' || !S.preset) return; const { a } = aimAt(performance.now() - TU.aimLag); S.aH = a; throwArrow(a, S.lockE, S.lockP);
+}
 function startCharge() {
+  if (S.preset && S.phase === 'aim') { if (!SENS.calibOK) return toast('先舉起手機、靜止一下'); return throwPreset(); }
   if (S.phase !== 'aim' || S.charging) return;
   if (!SENS.calibOK) return toast('先舉起手機、靜止一下');
   S.charging = true; S.cT0 = performance.now(); S.aP = 0; gActive(gP, true); gShow(gP, true); SFX.lock();
@@ -917,7 +1142,9 @@ function releaseCharge() {
   if (!S.charging) return; S.charging = false;
   if (performance.now() - S.cT0 < 250) { toast('按住蓄力，落點圈對準壺再放開'); gShow(gP, false); gActive(gP, false); return; }
   const { a, e } = aimAt(performance.now() - TU.aimLag);   // 取放開「之前」那一刻的瞄準（放開手指、往前一送都會晃到手機）
-  S.aH = a; S.aE = e; gLock(gP, S.aP); throwArrow(a, e, S.aP);
+  S.aH = a; S.aE = e; gLock(gP, S.aP);
+  if (MP.on && MP.job && MP.job.kind === 'lock') return mpSendLock(e, S.aP);   // 分工合投：交給隊友放箭
+  throwArrow(a, e, S.aP);
 }
 const bT = $('#btnThrow');
 bT.addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); audioInit(); try { bT.setPointerCapture(e.pointerId); } catch (_) {} startCharge(); });
@@ -925,15 +1152,16 @@ bT.addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefaul
 
 /* —— 每幀更新瞄準物件 —— */
 function updateAim(now) {
-  const ph = S.phase; if (ph !== 'aimE' && ph !== 'aimP' && ph !== 'aimH' && ph !== 'aim') return;
+  const ph = S.phase; if (ph !== 'aimE' && ph !== 'aimP' && ph !== 'aimH' && ph !== 'aim' && ph !== 'aimT') return;
   const T = R().T, motion = S.mode === 'motion';
   if (!motion) {
     if (ph === 'aimE') S.aE = tri((now - S.t0) / 1000 / T + S.ph);
     if (ph === 'aimP') S.aP = tri((now - S.t0) / 1000 / (T * 1.4) + S.ph2);   // 力道條掃得比較慢，剛好區比較好點
     if (ph === 'aimH') S.aH = tri((now - S.t0) / 1000 / T + S.ph3) * 2 - 1;
   } else { S.aH += (SENS.a - S.aH) * 0.5; S.aE += (SENS.e - S.aE) * 0.5; if (S.charging) S.aP = tri((performance.now() - S.cT0) / 1000 / TU.chargeT); }
-  const aH = ph === 'aimE' || ph === 'aimP' ? 0 : S.aH, aE = ph === 'aimP' || ph === 'aimH' ? S.lockE : S.aE;
-  const pKnown = ph === 'aimP' || ph === 'aimH' || (motion && S.charging), aP = ph === 'aimH' ? S.lockP : S.aP;
+  const tch = ph === 'aimT' ? touchAim(now) : null;
+  const aH = tch ? tch.a : ph === 'aimE' || ph === 'aimP' ? 0 : S.aH, aE = tch ? tch.e : ph === 'aimP' || ph === 'aimH' || S.preset ? S.lockE : S.aE;
+  const pKnown = tch ? tch.active || S.preset : ph === 'aimP' || ph === 'aimH' || S.preset || (motion && S.charging), aP = tch ? tch.p : ph === 'aimH' || S.preset ? S.lockP : S.aP;
   const D = R().D, hand = handPos(), pc = potState(now), py = pc.y + TU.mouthY, th = thetaOf(aE), psi = psiOf(aH), xT = aH * TU.lat;
   const pUse = pKnown ? aP : clamp(pFor(th, D / Math.cos(psi)), 0, 1);   // 還沒定力道：先用「剛好到壺」的力道估
   const v = speedOf(pUse), L = landing(th, v), dr = windDrift(L.t);
@@ -946,12 +1174,12 @@ function updateAim(now) {
   aimLine.material.color.set(okH ? green : yellow); aimGlow.material.color.set(okH ? green : yellow);
   // 力道階段：橫條＝這個力道落在哪個遠近；左右定了之後：落點圈
   const rz0 = hand.z - L.X * Math.cos(psiOf(0));
-  depthBar.visible = !motion && ph === 'aimP'; depthBar.position.set(pc.x, py + 0.004, rz0);
+  depthBar.visible = (!motion && ph === 'aimP') || !!(tch && tch.active && tch.lock); depthBar.position.set(pc.x, py + 0.004, rz0);
   depthBar.material.color.set(S.round === 0 && Math.abs(rz0) <= TU.tol ? green : yellow);
-  ring.visible = pKnown && (ph === 'aimH' || motion); ring.position.set(rx, py + 0.004, rz);
+  ring.visible = (pKnown && (ph === 'aimH' || motion)) || !!(tch && tch.active && !tch.lock); ring.position.set(rx, py + 0.004, rz);
   ring.material.color.set(S.round === 0 && Math.hypot(rx - pc.x, rz) <= TU.tol ? green : yellow);
   // 預測拋物線（虛線）：從手到落點，風影響已算進去（只有第二輪）
-  dash.visible = ph === 'aimH' || motion;
+  dash.visible = ph === 'aimH' || motion || !!(tch && tch.active && !tch.lock);
   if (dash.visible) {
     const pos = dash.geometry.attributes.position, c = Math.cos(th), sn = Math.sin(th), sw = R().windAssist ? S.wind : 0;
     for (let i = 0; i <= DASH_N; i++) { const t = L.t * i / DASH_N; pos.setXYZ(i, hand.x + v * c * Math.sin(psi) * t + 0.5 * sw * t * t, hand.y + v * sn * t - 0.5 * TU.g * t * t, hand.z - v * c * Math.cos(psi) * t); }
@@ -960,8 +1188,9 @@ function updateAim(now) {
   // 手上的矢：矢尖朝著瞄準方向
   const a = S.cur; if (a && a.state === 'hand') { _d.set(Math.sin(psi) * Math.cos(th), Math.sin(th), -Math.cos(psi) * Math.cos(th)); a.dir = a.dir || new THREE.Vector3(); a.dir.copy(_d); poseArrow(a.mesh, hand, _d); }
   // 量表標記
-  if (ph === 'aimE' || motion) gMark(gE, aE);
-  if (ph === 'aimP' || (motion && S.charging)) gMark(gP, aP);
+  if (ph === 'aimE' || motion || ph === 'aimT') gMark(gE, aE);
+  if (ph === 'aimP' || (motion && S.charging) || (tch && tch.active)) gMark(gP, aP);
+  if (ph === 'aimT') { const c = $('#tcancel'); c.hidden = !TOUCH.active; c.classList.toggle('hot', TOUCH.active && TOUCH.y > innerHeight * 0.86); }
   if (ph === 'aimH' || motion) gMark(gH, aH);
 }
 
@@ -985,17 +1214,18 @@ function onOrient(e) {
   if (!SENS.calibOK && S.phase === 'aim') {
     const an = SENS.anchor;
     if (!an || Math.abs(wrap(yaw - an.yaw)) > TU.steadyDeg || Math.abs(pitch - an.pitch) > TU.steadyDeg) { SENS.anchor = s; SENS.since = t; }
-    else if (t - SENS.since >= TU.steadyMs) { SENS.base = { yaw: an.yaw, pitch: an.pitch }; SENS.calibOK = true; SFX.ready(); toast('心定了，瞄準吧'); if (S.phase === 'aim') setHint(CHARGE_HINT); }
+    else if (t - SENS.since >= TU.steadyMs) { SENS.base = { yaw: an.yaw, pitch: an.pitch }; SENS.calibOK = true; SFX.ready(); toast('心定了，瞄準吧'); if (S.phase === 'aim') { setHint(CHARGE_HINT); timerResume(); } }
     if (S.phase === 'aim') updateCalibUI();
   }
   if (SENS.calibOK) { SENS.a = clamp(wrap(yaw - SENS.base.yaw) / TU.yawRange, -1, 1); SENS.e = clamp(0.5 + (pitch - SENS.base.pitch) / (2 * TU.pitchRange), 0, 1); }
 }
 function onMotion(e) {
-  if (!SENS.on || S.phase !== 'aim' || !S.charging) return;   // 要先按住蓄力，往前一送才算放箭
+  if (!SENS.on || S.phase !== 'aim' || !(S.charging || (S.preset && SENS.calibOK))) return;   // 要先按住蓄力（分工合投的放箭者不用），往前一送才算放箭
   const ac = e.acceleration; let m = 0;
   if (ac && ac.x != null) m = Math.hypot(ac.x, ac.y, ac.z);
   else { const g = e.accelerationIncludingGravity; if (g && g.x != null) m = Math.abs(Math.hypot(g.x, g.y, g.z) - 9.81); }
   const t = performance.now();
+  if (S.preset) { if (m > TU.flick && t - S.t0 > 900) throwPreset(); return; }
   if (m > TU.flick && t - S.cT0 > 350) releaseCharge();
 }
 function aimAt(t) {   // 放箭「之前」那一刻的瞄準（往前一送本身會晃到手機）
@@ -1003,7 +1233,7 @@ function aimAt(t) {   // 放箭「之前」那一刻的瞄準（往前一送本�
   if (!best || !SENS.base) return { a: SENS.a, e: SENS.e };
   return { a: clamp(wrap(best.yaw - SENS.base.yaw) / TU.yawRange, -1, 1), e: clamp(0.5 + (best.pitch - SENS.base.pitch) / (2 * TU.pitchRange), 0, 1) };
 }
-$('#btnCal').addEventListener('click', (e) => { e.stopPropagation(); SENS.calibOK = false; SENS.anchor = null; updateCalibUI(); setHint(''); });
+$('#btnCal').addEventListener('click', (e) => { e.stopPropagation(); SENS.calibOK = false; SENS.anchor = null; timerPause(); updateCalibUI(); setHint(''); });   // 重新校準時暫停倒數（不重置，避免用校準來洗時間）
 function updateCalibUI() {
   const el = $('#calib'); el.classList.toggle('ok', SENS.calibOK);
   const p = SENS.calibOK ? 100 : clamp((performance.now() - SENS.since) / TU.steadyMs * 100, 0, 100); $('#calRing').style.setProperty('--p', SENS.anchor ? p : 0);
@@ -1029,24 +1259,24 @@ function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add
 function showRoundIntro() {
   const r = R(); S.phase = 'intro'; S.camMode = 'title';
   $('#rTag').textContent = `第 ${S.round + 1} 輪・共 ${ROUNDS.length} 輪`; $('#rName').textContent = r.name; $('#rSub').textContent = r.sub;
-  $('#rTip').innerHTML = r.tip + (S.mode === 'motion' && S.round === 0 ? '<br>📱 體感：手機背面對準壺、靜止一下就「心定」，轉動瞄準，<b>往前一送</b>放箭（也可以按「放箭」鈕）。' : '');
+  $('#rTip').innerHTML = (S.mode === 'touch' && r.tipTouch ? r.tipTouch : r.tip) + (S.mode === 'touch' && S.round === 0 ? '<ul class="tl"><li><b>🖐️ 按住畫面拖曳</b>：落點圈浮在手指上方，放開就放箭</li><li><b>↕️ 右邊滑桿</b>：調仰角（拋多高），調一次會記住</li><li><b>⏱ 每矢 15 秒倒數</b>：越快投進，加成越多（最多 +0.5）</li><li><b>手指停得越穩</b>，圈晃得越小；拖到底部放開＝取消</li></ul>' : '') + (S.mode === 'motion' && S.round === 0 ? '<br>📱 體感：手機背面對準壺、靜止一下就「心定」，轉動瞄準，<b>往前一送</b>放箭（也可以按「放箭」鈕）。' : '');
   $('#scrRound').hidden = false; $('#hud').hidden = false; hideAimUI(); setHint('');
 }
 function roundEnd() {
   S.phase = 'roundEnd'; SFX.chime(); S.camMode = 'title';
   const last = S.round >= ROUNDS.length - 1;
   if (last) return showFinal();
-  showCap(`第 ${S.round + 1} 輪完成`, `本輪 ${S.rScore} 分`);
+  showCap(`第 ${S.round + 1} 輪完成`, `本輪 ${fmt1(S.rScore)} 分`);
   setTimeout(() => { S.round++; setupRound(); showRoundIntro(); }, 2300);
 }
 function showFinal() {
   S.phase = 'final'; hideAimUI(); setHint('');
   SAVE.plays++; SAVE.best = Math.max(SAVE.best, S.score); save();
   const T = TITLES.find((x) => S.score >= x.min);
-  $('#fScore').textContent = S.score; $('#fTitle').textContent = T.t; $('#fQuote').textContent = T.q;
-  $('#fIn').textContent = S.ins; $('#fEar').textContent = S.ears; $('#fBest').textContent = SAVE.best;
-  $('#fRounds').innerHTML = ROUNDS.map((r, i) => `<span>${r.name} ${(S.hist[i] || []).reduce((a, b) => a + b.pts, 0)} 分</span>`).join('<span>・</span>');
-  const text = `我在全真群島的投壺島投了 ${S.score} 分，得到稱號「${T.t}」！矢直在心，你也來試試 👉 ${SHARE_URL}`;
+  $('#fScore').textContent = fmt1(S.score); $('#fTitle').textContent = T.t; $('#fQuote').textContent = T.q;
+  $('#fIn').textContent = S.ins; $('#fEar').textContent = S.ears; $('#fBest').textContent = fmt1(SAVE.best);
+  $('#fRounds').innerHTML = ROUNDS.map((r, i) => `<span>${r.name} ${fmt1((S.hist[i] || []).reduce((a, b) => a + b.pts + (b.b || 0) / 10, 0))} 分</span>`).join('<span>・</span>');
+  const text = `我在全真群島的投壺島投了 ${fmt1(S.score)} 分，得到稱號「${T.t}」！矢直在心，你也來試試 👉 ${SHARE_URL}`;
   $('#btnShare').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(text);
   $('#scrFinal').hidden = false; $('#hud').hidden = true;
 }
@@ -1057,6 +1287,7 @@ function newGame() {
 $('#btnRoundGo').addEventListener('click', () => { audioInit(); $('#scrRound').hidden = true; S.camMode = 'aim'; startAim(); });
 $('#btnAgain').addEventListener('click', () => { audioInit(); newGame(); });
 $('#btnTap').addEventListener('click', () => { audioInit(); S.mode = 'tap'; document.body.classList.remove('motion'); SAVE.mode = 'tap'; save(); newGame(); });
+$('#btnTouch').addEventListener('click', () => { audioInit(); S.mode = 'touch'; document.body.classList.remove('motion'); SAVE.mode = 'touch'; save(); newGame(); });
 const motionCapable = !!window.DeviceOrientationEvent && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
 if (!motionCapable) { $('#btnMotion').disabled = true; $('#motionNote').hidden = false; }
 $('#btnMotion').addEventListener('click', async () => {
@@ -1065,8 +1296,334 @@ $('#btnMotion').addEventListener('click', async () => {
   if (r === 'ok') { S.mode = 'motion'; document.body.classList.add('motion'); SENS.on = true; SENS.calibOK = false; SENS.anchor = null; SAVE.mode = 'motion'; save(); newGame(); }
   else toast(r === 'denied' ? '沒有取得動作感測授權，改用「點三下玩」吧' : '這個瀏覽器讀不到感測器，改用「點三下玩」吧（LINE 內可改用手機瀏覽器開啟）');
 });
-function paintRec() { $('#rec').textContent = SAVE.plays ? `你玩過 ${SAVE.plays} 場・最高 ${SAVE.best} 分・累計入壺 ${SAVE.ins}、貫耳 ${SAVE.ears}（只記在這支手機）` : ''; }
+function paintRec() { $('#rec').textContent = SAVE.plays ? `你玩過 ${SAVE.plays} 場・最高 ${fmt1(SAVE.best)} 分・累計入壺 ${SAVE.ins}、貫耳 ${SAVE.ears}（只記在這支手機）` : ''; }
 paintRec();
+
+/* =========================================================
+   多人對戰（房間伺服器見 touhu-worker/）
+   一對一或二對二；同場對投或輪流對投；二對二可以分工合投（隊友 A 定仰角與力道、隊友 B 定左右並放箭）
+   手機各自跑物理，只把「這一矢的結果＋軌跡」傳給對方，對方在自己的手機上用慢動作重播
+   ========================================================= */
+const MPQ = new URLSearchParams(location.search);
+const MP_API = (MPQ.get('mp') || 'https://touhu-room.yiguandao2027.workers.dev').replace(/\/+$/, '');
+const mpNeed = (r) => (r < 3 ? (r + 1) * 4 : 12 + (r - 2));    // 每個單位第 r 輪結束時，累計要投完幾矢（三輪之後是加賽，每次 1 矢）
+const mpStart = (r) => (r === 0 ? 0 : mpNeed(r - 1));
+function prng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const MP = { on: false, watch: false, ctl: false, ws: null, code: '', pid: '', hk: '', st: null, seed: 0, round: -1, job: null, rq: [], evs: {}, arrowIdx: 0, startAt: 0, started: false, ended: false, retries: 0, closing: false, revealKey: '', revealOpen: false, sentLock: '', lockMsg: null, ok: false, qrFor: '' };
+const REPLAY = { on: false, pot: { x: 0, y: 0.12 } };
+const TEAM = ['紅隊', '藍隊'], TCOL = ['#c23b2e', '#2f6fb5'], KIND_LABEL = { in: '入壺', ear: '貫耳', miss: '沒進', skip: '沒投' };
+const REP_RATE = 0.42;   // 重播：每秒播多少「模擬秒」（慢動作）
+const _tw = new THREE.Vector3();
+
+/* —— 記錄這一矢的軌跡（矢尖世界座標、壺的位置，單位公分），傳給對方重播 —— */
+function recPush(A, dt, p, force) {
+  if (!MP.on) return;
+  if (!A.rec) { A.rec = []; A.recAcc = 99; }
+  A.recAcc += dt; if (!force && (A.recAcc < 0.05 && A.rec.length)) return; if (A.rec.length >= 290 * 5) return; A.recAcc = 0;
+  const pc = potGroup.position; A.rec.push(Math.round(p.x * 100), Math.round(p.y * 100), Math.round(p.z * 100), Math.round(pc.x * 100), Math.round(pc.y * 100));
+}
+function recFinal(A) {
+  if (!MP.on) return; const pc = potGroup.position;
+  recPush(A, 1, A.state === 'done' && A.sink ? _tw.set(pc.x + A.sink.to.x, pc.y + A.sink.to.y, A.sink.to.z) : A.pos, true);
+}
+function buildRep(A) {
+  if (!A.rec || A.rec.length < 10) return null; _d.set(0, 1, 0).applyQuaternion(A.mesh.quaternion);   // 矢尖最後朝向
+  return [Math.round(_d.x * 1000), Math.round(_d.y * 1000), Math.round(_d.z * 1000), ...A.rec];
+}
+
+/* —— 連線 —— */
+const mpSend = (o) => { if (MP.ws && MP.ws.readyState === 1) MP.ws.send(JSON.stringify(o)); };
+function mpDefaultName() { try { const a = JSON.parse(localStorage.getItem('islands-account') || 'null'); if (a && a.nm) return String(a.nm).slice(0, 10); } catch (e) {} return SAVE.nick || ''; }
+const mpName = () => (($('#mpName').value || mpDefaultName() || '賓客').trim().slice(0, 10)) || '賓客';
+function mpSave() { try { sessionStorage.setItem('touhu-mp', JSON.stringify({ code: MP.code, pid: MP.pid, watch: MP.watch, hk: MP.hk })); } catch (e) {} }
+function mpConnect(code, opts = {}) {
+  MP.code = code; MP.watch = !!opts.watch; MP.hk = opts.hk || MP.hk || ''; if (opts.pid) MP.pid = opts.pid; MP.closing = false;
+  document.body.classList.toggle('hostview', MP.watch);
+  const ws = new WebSocket(MP_API.replace(/^http/, 'ws') + '/api/room/' + code + '/ws'); MP.ws = ws;
+  ws.onopen = () => { MP.retries = 0; const j = { t: 'join', name: mpName(), input: S.mode }; if (MP.watch) { j.watch = true; j.hk = MP.hk; } else if (MP.pid) j.pid = MP.pid; mpSend(j); };
+  ws.onmessage = (e) => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } mpOnMsg(m); };
+  ws.onclose = () => { if (ws === MP.ws && !MP.closing) mpRetry(); };
+  ws.onerror = () => {};
+}
+function mpRetry() {
+  if (MP.closing || !MP.code) return;
+  if (MP.retries++ > 8) { toast('連不上房間，請重新進入'); return mpExit(); }
+  toast('連線中斷，重新連線中…'); setTimeout(() => { if (!MP.closing) mpConnect(MP.code, { watch: MP.watch, hk: MP.hk }); }, Math.min(5000, 700 * MP.retries));
+}
+function mpOnMsg(m) {
+  if (m.t === 'welcome') { if (m.watch) MP.ctl = !!m.ctl; else MP.pid = m.pid; mpSave(); return; }
+  if (m.t === 'state') { MP.st = m; mpOnState(); return; }
+  if (m.t === 'ev') { mpOnEv(m); return; }
+  if (m.t === 'lock') { MP.lockMsg = m; mpTick(); return; }
+  if (m.t === 'error') {
+    toast({ full: '房間已經滿了', started: '這個房間已經開始了', too_many: '房裡人數太多，沒辦法改成一對一', watch_full: '大螢幕連線已達上限' }[m.code] || '發生錯誤');
+    if (m.code === 'full' || m.code === 'started') mpExit();
+  }
+}
+function mpExit() {
+  MP.closing = true; try { if (MP.ws) MP.ws.close(); } catch (e) {} try { sessionStorage.removeItem('touhu-mp'); } catch (e) {}
+  Object.assign(MP, { on: false, started: false, ended: false, st: null, code: '', pid: '', hk: '', watch: false, ctl: false, job: null, rq: [], evs: {}, revealOpen: false });
+  REPLAY.on = false; document.body.classList.remove('hostview');
+  ['#scrMP', '#scrMPEnd', '#mpBar', '#mpWait', '#mpCount', '#mpReveal', '#hud'].forEach((q) => { $(q).hidden = true; });
+  S.arrows.forEach((a) => a.mesh && a.mesh.parent && a.mesh.parent.remove(a.mesh)); S.arrows = []; hideAimUI(); setHint('');
+  S.round = 0; S.perRound = 4; setupRound(); S.phase = 'title'; S.camMode = 'title'; $('#scrTitle').hidden = false;
+}
+
+/* —— 協調器：看伺服器狀態，決定「我現在該做什麼」 —— */
+const myUnit = () => { const st = MP.st; return st && st.units ? st.units.find((u) => u.members.includes(st.you)) || null : null; };
+function rolesOf(u, i) {   // 與伺服器一致：單人單位自己鎖自己投；分工合投是 members[i%2] 定仰角與力道，另一位定左右並放箭；隊友不在了，剩下的人包辦
+  const st = MP.st, alive = (m) => st.players[m] && !st.players[m].gone;
+  if (u.members.length === 1) return { lock: null, thrower: u.members[0] };
+  const live = u.members.filter(alive); if (live.length === 1) return { lock: null, thrower: live[0] };
+  return { lock: u.members[i % 2], thrower: u.members[(i + 1) % 2] };
+}
+const unitName = (u) => { const st = MP.st; if (st.kind === '2v2' && st.rule === 'split') return TEAM[u.team]; return u.id === st.you || (st.kind === '2v2' && u.members.includes(st.you)) ? '你' : ((st.players[u.members[0]] || {}).name || '?'); };
+function mpWait(text) { hideAimUI(); setHint(''); S.camMode = 'aim'; $('#mpWait').hidden = !text; $('#mpWaitTxt').textContent = text || ''; }
+function mpStartJob(job) {
+  MP.job = job; MP.arrowIdx = job.i; S.n = job.i - mpStart(MP.st.round); $('#mpWait').hidden = true; startAim(job);
+}
+function mpDropJob() {
+  hideAimUI(); setHint(''); const c = S.cur; if (c && c.state === 'hand' && c.mesh.parent) c.mesh.parent.remove(c.mesh);
+  MP.job = null; S.preset = false; S.charging = false; S.phase = 'wait';
+}
+function mpSendLock(e, p) {
+  const job = MP.job; if (!job) return; mpSend({ t: 'lock', u: job.u, i: job.i, e, p, tl: timerFrac() }); MP.sentLock = job.u + ':' + job.i;
+  SFX.lock(); mpDropJob(); mpWait('已交給隊友，等他放箭…');
+}
+function mpArrowDone(A, kind, pts) {
+  const job = MP.job; const rep = buildRep(A);
+  if (job) mpSend({ t: 'ev', u: job.u, i: job.i, kind, tl: A.tl || 0, rep });
+  MP.job = null;
+  setTimeout(() => { if (S.phase === 'result') { S.phase = 'wait'; S.camMode = 'aim'; mpTick(); } }, 1900);
+}
+function mpEnterRound(r) {
+  MP.round = r; S.round = Math.min(r, ROUNDS.length - 1); S.perRound = r < 3 ? 4 : 1; S.n = 0; setupRound();
+  if (r >= 3) $('#hRound').textContent = `加賽・${R().name}`;
+  showCap(r >= 3 ? '加賽' : `第 ${r + 1} 輪`, r >= 3 ? '同分，再投一矢分高下' : `${R().name}・${R().sub}`);
+  S.phase = 'wait'; hideAimUI();
+}
+function mpReconcile() {
+  const st = MP.st, u = myUnit(); if (!u) return;
+  const aiming = ['aimE', 'aimP', 'aimH', 'aim', 'aimT'].includes(S.phase);
+  if (aiming && MP.job && (u.done > MP.job.i || (st.pace === 'turn' && (!st.turn || st.turn.u !== u.id || st.turn.i !== MP.job.i)))) mpDropJob();   // 這一矢已經過期（斷線重連、輪到別人了）
+  if (S.phase !== 'wait') return;
+  let i = u.done;
+  if (st.pace === 'turn') {
+    if (!st.turn) return mpWait('稍等一下…');
+    if (st.turn.u !== u.id) { const t = st.units[st.turn.u], nm = st.kind === '2v2' && st.rule === 'split' ? TEAM[t.team] : (st.players[t.members[0]] || {}).name; return mpWait(`輪到 ${nm || '對方'} 投，看他的拋物線…`); }
+    i = st.turn.i;
+  } else if (u.done >= mpNeed(st.round)) return mpWait('等其他人投完這一輪…');
+  const r = rolesOf(u, i), key = u.id + ':' + i;
+  if (r.lock === null) return mpStartJob({ kind: 'solo', u: u.id, i });
+  if (r.lock === st.you) { if (MP.sentLock === key) return mpWait('已交給隊友，等他放箭…'); return mpStartJob({ kind: 'lock', u: u.id, i }); }
+  const lk = MP.lockMsg && MP.lockMsg.u === u.id && MP.lockMsg.i === i ? MP.lockMsg : st.lock && st.lock.u === u.id && st.lock.i === i ? st.lock : null;
+  if (lk) return mpStartJob({ kind: 'throw', u: u.id, i, e: lk.e, p: lk.p, tl: lk.tl });
+  return mpWait('等隊友鎖定仰角與力道…');
+}
+function mpHostStatus() {
+  const st = MP.st; if (REPLAY.on || S.phase !== 'wait') return;
+  let t = '各組投壺中…'; if (st.pace === 'turn' && st.turn) { const u = st.units[st.turn.u]; t = `輪到 ${st.kind === '2v2' && st.rule === 'split' ? TEAM[u.team] : (st.players[u.members[0]] || {}).name || ''} 投`; }
+  mpWait(t);
+}
+function mpTick() {
+  const st = MP.st; if (!st || st.phase !== 'play' || !MP.started) return;
+  if (performance.now() < MP.startAt) return;
+  if (st.reveal) { const key = st.reveal.r + ':' + (st.sudden || 0); if (MP.revealKey !== key) mpShowReveal(st.reveal.r, key); mpPump(); return; }
+  if (MP.revealOpen) mpCloseReveal();
+  if (MP.round !== st.round) mpEnterRound(st.round);
+  if (S.phase === 'wait' && mpPump()) return;
+  if (MP.watch) return mpHostStatus();
+  mpReconcile();
+}
+setInterval(() => { if (MP.on || MP.started) mpTick(); }, 300);
+
+/* —— 別人投的矢：收到結果與軌跡，在我的畫面上慢動作重播 —— */
+function mpOnEv(m) {
+  MP.evs[m.u + ':' + m.i] = m; const st = MP.st, mu = myUnit();
+  if (MP.watch || (st && st.pace === 'turn') || (mu && mu.id === m.u)) MP.rq.push(m);   // 同場對投：只重播隊友的；其他人的留到每輪結算時看精彩一矢
+  mpTick();
+}
+function mpPump() {
+  if (REPLAY.on || !MP.rq.length || !['wait', 'reveal'].includes(S.phase)) return false;
+  while (MP.rq.length > 3) MP.rq.shift();   // 大螢幕或慢手機別積太多
+  mpReplay(MP.rq.shift()); return true;
+}
+function mpReplay(ev) {
+  const st = MP.st, who = (st.players[ev.slot] || {}).name || '?', label = `${who}　${KIND_LABEL[ev.kind] || ''}${ev.pts ? ` +${fmt1(ev.pts + (ev.b || 0) / 10)}` : ''}`;
+  $('#mpWait').hidden = true; hideAimUI(); setHint('');
+  const rep = ev.rep;
+  if (!rep || rep.length < 3 + 10) { showCap(label, ''); guestReact(ev.kind); setTimeout(() => mpReplayDone(ev), 1500); REPLAY.on = true; REPLAY.noRep = true; return; }
+  const mesh = makeArrow(), n = Math.floor((rep.length - 3) / 5);
+  Object.assign(REPLAY, { on: true, noRep: false, ev, rep, n, k: 0, hold: 0, mesh, label, fin: new THREE.Vector3(rep[0] / 1000, rep[1] / 1000, rep[2] / 1000).normalize(), cur: new THREE.Vector3(0, -0.4, -1).normalize(), pos: new THREE.Vector3(rep[3] / 100, rep[4] / 100, rep[5] / 100) });
+  REPLAY.pot.x = rep[6] / 100; REPLAY.pot.y = rep[7] / 100; mesh.visible = false;
+  S.cur = { pos: REPLAY.pos, state: 'replay', mesh }; S.arrows.push(S.cur); S.phase = 'replay'; S.camMode = 'fly'; trailReset();
+  showCap(who, '這一矢');
+}
+function replayTick(dt) {
+  const Rp = REPLAY; if (!Rp.on || Rp.noRep) return;
+  const P = (k, o) => Rp.rep[3 + k * 5 + o] / 100;
+  Rp.k = Math.min(Rp.n - 1, Rp.k + dt * REP_RATE / 0.05);
+  const k0 = Math.floor(Rp.k), k1 = Math.min(Rp.n - 1, k0 + 1), f = Rp.k - k0, L = (o) => P(k0, o) + (P(k1, o) - P(k0, o)) * f;
+  Rp.pos.set(L(0), L(1), L(2)); Rp.pot.x = L(3); Rp.pot.y = L(4); Rp.mesh.visible = true;
+  _d.set(P(k1, 0) - P(k0, 0), P(k1, 1) - P(k0, 1), P(k1, 2) - P(k0, 2));
+  if (_d.lengthSq() > 1e-6) { Rp.cur.lerp(_d.normalize(), 0.3).normalize(); }
+  if (Rp.k >= Rp.n - 3) Rp.cur.lerp(Rp.fin, 0.2).normalize();   // 最後幾格慢慢轉成最終的矢尖朝向
+  poseArrow(Rp.mesh, Rp.pos, Rp.cur); trailPush(Rp.pos, dt * REP_RATE);
+  if (Rp.k >= Rp.n - 1) {
+    Rp.hold += dt;
+    if (Rp.hold > 0.9) {
+      const ev = Rp.ev; if (Rp.mesh.parent) Rp.mesh.parent.remove(Rp.mesh); Rp.on = false;
+      showCap(Rp.label, pick(QUOTES[ev.kind === 'miss' ? 'rim' : ev.kind] || ['']).slice(0, 14)); guestReact(ev.kind); SFX[ev.kind === 'ear' ? 'ear' : ev.kind === 'in' ? 'in' : 'ground']();
+      setTimeout(() => mpReplayDone(ev), 1200);
+    }
+  }
+}
+function mpReplayDone(ev) {
+  REPLAY.on = false; S.camMode = 'aim'; S.phase = MP.revealOpen ? 'reveal' : 'wait';
+  if (MP.st && MP.st.pace === 'turn' && !MP.watch) mpSend({ t: 'ack', u: ev.u, i: ev.i });
+  mpTick();
+}
+
+/* —— 畫面：計分條、每輪結算、倒數、結算 —— */
+function mpPaintBar() {
+  const st = MP.st, el = $('#mpBar'); if (!st || !st.units || (!MP.on && !MP.started)) { el.hidden = true; return; }
+  el.hidden = false; el.classList.toggle('big', MP.watch);
+  const me = st.you, myTeam = me >= 0 ? st.players[me].team : -1, parts = [];
+  if (st.kind === '1v1') st.units.forEach((u) => parts.push({ me: u.id === me, name: u.id === me ? '你' : (st.players[u.members[0]] || {}).name || '?', score: fmt10(u.score), col: TCOL[u.id] }));
+  else [0, 1].forEach((t) => parts.push({ me: myTeam === t, name: TEAM[t], score: fmt10(st.teams[t]), col: TCOL[t] }));
+  const sub = `${st.pace === 'sync' ? '同場對投' : '輪流對投'}${st.kind === '2v2' ? '・' + (st.rule === 'split' ? '分工合投' : '各自累計') : ''}・${(st.round || 0) >= 3 ? '加賽' : '第 ' + ((st.round || 0) + 1) + ' 輪'}`;
+  el.innerHTML = `<div class="row">${parts.map((p) => `<span class="${p.me ? 'me' : ''}"><i style="background:${p.col}"></i>${p.name} <b>${p.score}</b></span>`).join('<em>：</em>')}</div><small>${sub}</small>`;
+}
+function mpPaintDots() {
+  const st = MP.st, u = myUnit(), h = $('#hArrows'); if (!u) return;
+  const base = mpStart(st.round || 0), per = S.perRound || 4;
+  [...h.children].forEach((el, j) => { const i = base + j, e = u.hist.find((x) => x[0] === i); el.className = e ? (e[1] === 'ear' ? 'ear' : e[1] === 'in' ? 'in' : 'miss') : (MP.job && MP.job.i === i ? 'cur' : ''); });
+  const mine = st.kind === '2v2' ? st.teams[u.team] : u.score; $('#hScore').textContent = `${fmt10(mine)} 分`;
+}
+function mpShowReveal(r, key) {
+  const st = MP.st; MP.revealKey = key; MP.revealOpen = true; S.phase = 'reveal'; hideAimUI(); setHint(''); $('#mpWait').hidden = true; SFX.chime();
+  const a = mpStart(r), b = mpNeed(r), rows = st.units.map((u) => ({ u, pts: u.hist.filter((h) => h[0] >= a && h[0] < b).reduce((s2, h) => s2 + h[2] * 10 + (h[3] || 0), 0) }));   // 十分之一分
+  $('#mpRevealTitle').textContent = r >= 3 ? '加賽結果' : `第 ${r + 1} 輪結算`;
+  $('#mpRevealBody').innerHTML = rows.map(({ u, pts }) => `<div class="rrow"><span>${unitName(u)}${st.kind === '2v2' && st.rule === 'sum' ? `<span class="t">（${TEAM[u.team]}）</span>` : ''}</span><span><span class="t">本輪</span> <b>${fmt10(pts)}</b>　<span class="t">累計</span> <b>${fmt10(u.score)}</b></span></div>`).join('');
+  $('#mpRevealNote').textContent = (st.pace === 'sync' ? '看看對手這輪最精彩的一矢… ' : '') + '（含時間加成，每矢最多 +0.5）';
+  $('#mpReveal').hidden = false;
+  if (st.pace === 'sync') {   // 同場對投：每輪結算時，播別人這輪分數最高的一矢
+    const c = Object.values(MP.evs).filter((e) => e.i >= a && e.i < b && e.slot !== st.you && e.rep).sort((x, y) => y.pts - x.pts || y.i - x.i)[0];
+    if (c) MP.rq.push(c);
+  }
+}
+function mpCloseReveal() { MP.revealOpen = false; $('#mpReveal').hidden = true; if (S.phase === 'reveal') S.phase = 'wait'; }
+function mpCountdown() {
+  const el = $('#mpCount'); el.hidden = false;
+  const iv = setInterval(() => {
+    const ms = MP.startAt - performance.now();
+    if (ms <= 0) { el.textContent = '開始！'; setTimeout(() => { el.hidden = true; }, 700); clearInterval(iv); mpTick(); return; }
+    const n = Math.ceil(ms / 1000); if (el.textContent !== String(n)) { el.textContent = n; SFX.lock(); }
+  }, 100);
+}
+function mpShowEnd() {
+  const st = MP.st; if (!st || st.phase !== 'end' || !st.result) return;
+  S.phase = 'mpend'; hideAimUI(); setHint(''); $('#mpWait').hidden = true; $('#mpReveal').hidden = true; $('#hud').hidden = true; $('#mpBar').hidden = true; SFX.chime();
+  const res = st.result, myTeam = st.you >= 0 ? st.players[st.you].team : -1;
+  let title, sub;
+  if (res.winner < 0) { title = '平分秋色'; sub = '加賽也分不出高下，好朋友就是這樣。'; }
+  else if (MP.watch) { title = `${TEAM[res.winner]}勝`; sub = '承讓。'; }
+  else if (res.winner === myTeam) { title = '承讓！'; sub = '矢直在心，贏得謙遜。'; }
+  else { title = '請益了'; sub = '輸贏是小事，多練幾次，下回見真章。'; }
+  $('#meTitle').textContent = title; $('#meSub').textContent = sub;
+  const rows = st.kind === '1v1' ? res.units.map((u) => ({ n: (st.players[u.id] || {}).name || '?', c: TCOL[u.id], s: fmt10(u.score), you: u.id === st.you })) : [0, 1].map((t) => ({ n: TEAM[t] + '・' + st.units.filter((u) => u.team === t).map((u) => u.members.map((m) => (st.players[m] || {}).name).join('、')).join('、'), c: TCOL[t], s: fmt10(res.teams[t]), you: t === myTeam }));
+  $('#meRows').innerHTML = rows.map((r) => `<div class="rrow"><span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r.c};margin-right:6px"></i>${r.n}${r.you ? '（你）' : ''}</span><b>${r.s} 分</b></div>`).join('');
+  $('#meAgain').hidden = MP.watch; $('#scrMPEnd').hidden = false;
+}
+function mpBackToLobby() {   // 再來一局：伺服器把房間重設回大廳
+  MP.started = false; MP.on = false; MP.ended = false; MP.job = null; MP.rq = []; MP.evs = {}; MP.revealOpen = false; MP.sentLock = ''; MP.lockMsg = null; REPLAY.on = false;
+  ['#scrMPEnd', '#mpBar', '#mpWait', '#mpCount', '#mpReveal', '#hud'].forEach((q) => { $(q).hidden = true; });
+  S.arrows.forEach((a) => a.mesh && a.mesh.parent && a.mesh.parent.remove(a.mesh)); S.arrows = []; hideAimUI(); setHint(''); S.round = 0; S.perRound = 4; setupRound();
+}
+function mpStartGame() {
+  MP.started = true; MP.ended = false; MP.on = true; MP.seed = MP.st.seed; MP.round = -1; MP.job = null; MP.rq = []; MP.evs = {}; MP.sentLock = ''; MP.lockMsg = null; MP.revealKey = ''; MP.revealOpen = false;
+  MP.startAt = performance.now() + MP.st.startIn;
+  S.score = 0; S.ins = 0; S.ears = 0; S.hist = [];
+  ['#scrMP', '#scrMPEnd', '#scrTitle', '#scrFinal', '#scrRound'].forEach((q) => { $(q).hidden = true; });
+  $('#hud').hidden = MP.watch; S.round = 0; S.perRound = 4; setupRound(); S.phase = 'wait'; S.camMode = 'aim'; hideAimUI(); mpPaintBar();
+  if (MP.st.startIn > 300) mpCountdown();
+}
+function mpOnState() {
+  const st = MP.st; mpPaintBar(); if (MP.on && st.units) paintDots();
+  if (st.phase === 'lobby') { if (MP.started) mpBackToLobby(); mpRenderLobby(); return; }
+  if (st.phase === 'play') { if (!MP.started) mpStartGame(); mpTick(); return; }
+  if (st.phase === 'end') { if (!MP.started) mpStartGame(); if (!MP.ended) { MP.ended = true; setTimeout(mpShowEnd, 2600); } }
+}
+
+/* —— 大廳 —— */
+const motionOK = () => !!window.DeviceOrientationEvent && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
+function mpInviteUrl() { const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('room', MP.code); if (MPQ.get('mp')) u.searchParams.set('mp', MPQ.get('mp')); u.searchParams.set('openExternalBrowser', '1'); return u.toString(); }
+function mpRenderLobby() {
+  const st = MP.st; S.phase = 'mplobby'; S.camMode = 'title'; $('#scrTitle').hidden = true; $('#scrFinal').hidden = true; $('#scrRound').hidden = true; $('#scrMP').hidden = false; $('#mpEntry').hidden = true; $('#mpRoom').hidden = false;
+  $('#mpRoomCode').textContent = MP.code;
+  if (MP.qrFor !== MP.code) { MP.qrFor = MP.code; try {   // 用模組矩陣自己畫 SVG：任何版本的 qrcode.js 都通用，投影放大也不糊
+      const q = window.qrcode(0, 'M'); q.addData(mpInviteUrl()); q.make(); const n = q.getModuleCount(); let d = '';
+      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c} ${r}h1v1h-1z`;
+      $('#mpQR').innerHTML = `<svg viewBox="-1 -1 ${n + 2} ${n + 2}" shape-rendering="crispEdges" role="img" aria-label="房間 QR code"><path d="${d}" fill="#2b1d14"/></svg>`;
+    } catch (e) { $('#mpQR').innerHTML = ''; } }
+  const can = st.host === st.you || MP.ctl, ready = st.you >= 0 && st.players[st.you] && st.players[st.you].ready, n = st.players.filter(Boolean).length, tot = st.players.length;
+  $('#mpPlayers').innerHTML = st.players.map((p, i) => p
+    ? `<div class="pl ${p.ready ? 'rdy' : ''}"><i style="background:${TCOL[st.kind === '2v2' ? p.team : i]}"></i><span>${p.name}${i === st.you ? '<u>你</u>' : ''}${i === st.host ? ' 👑' : ''}</span><em>${!p.online ? '離線' : p.ready ? '✓ 準備好' : p.input === 'motion' ? '📱' : p.input === 'tap' ? '🎯' : '🖐️'}</em></div>`
+    : `<div class="pl empty"><i style="background:#cdb996"></i><span>等朋友加入…</span></div>`).join('');
+  const seg = (id, v) => { [...$(id).children].forEach((b) => { b.classList.toggle('on', b.dataset.v === v); b.disabled = !can && !id.includes('Input'); }); };
+  seg('#mpKind', st.kind); seg('#mpPace', st.pace); seg('#mpRule', st.rule); seg('#mpInput', S.mode);
+  [...$('#mpInput').children].forEach((b) => { b.disabled = b.dataset.v === 'motion' && !motionOK(); });
+  $('#mpRuleRow').hidden = st.kind !== '2v2'; $('#mpInputRow').hidden = MP.watch;
+  $('#mpPaceNote').textContent = st.pace === 'sync' ? '兩邊各投各的、同一組風，每輪結束一起看對方最精彩的一矢。' : '一人一矢輪流投，輪到對方時看他的拋物線慢動作（適合大螢幕）。';
+  $('#mpRuleNote').textContent = st.rule === 'split' ? '隊友 A 定仰角與力道、隊友 B 定左右並放箭，每一矢互換。要靠喊話配合！' : '四人各投各的，隊伍分數是兩人相加。';
+  $('#mpReady').hidden = MP.watch; $('#mpReady').textContent = ready ? '取消準備' : (n < tot ? `我準備好了（還差 ${tot - n} 位朋友）` : '我準備好了'); $('#mpReady').classList.toggle('ghost', !!ready);
+  const text = `來全真群島的投壺島跟我對投一局！房號 ${MP.code} 👉 ${mpInviteUrl()}`;
+  $('#mpInvite').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(text); $('#mpInvite').hidden = MP.watch && false;
+  $('#mpLeave').textContent = MP.watch ? '關閉房間畫面' : '離開房間';
+}
+['#mpKind', '#mpPace', '#mpRule'].forEach((id) => $(id).addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b || b.disabled) return; mpSend({ t: 'set', [id === '#mpKind' ? 'kind' : id === '#mpPace' ? 'pace' : 'rule']: b.dataset.v }); }));
+$('#mpInput').addEventListener('click', async (e) => {
+  const b = e.target.closest('button'); if (!b || b.disabled) return; audioInit();
+  if (b.dataset.v === 'motion') { const r = await sensEnable(); if (r !== 'ok') return toast(r === 'denied' ? '沒有取得動作感測授權，改用點三下' : '這個瀏覽器讀不到感測器，改用點三下'); S.mode = 'motion'; document.body.classList.add('motion'); SENS.on = true; SENS.calibOK = false; SENS.anchor = null; }
+  else { S.mode = b.dataset.v; document.body.classList.remove('motion'); }
+  SAVE.mode = S.mode; save(); mpSend({ t: 'profile', input: S.mode }); mpRenderLobby();
+});
+$('#mpReady').addEventListener('click', () => { audioInit(); const st = MP.st, r = st && st.players[st.you] && st.players[st.you].ready; mpSend({ t: 'profile', name: mpName(), input: S.mode }); mpSend({ t: 'ready', ready: !r }); });
+$('#mpLeave').addEventListener('click', () => { mpSend({ t: 'leave' }); mpExit(); });
+$('#meAgain').addEventListener('click', () => { mpSend({ t: 'rematch' }); });
+$('#meLeave').addEventListener('click', () => { mpSend({ t: 'leave' }); mpExit(); });
+
+/* —— 入口：建立房間、輸入房號加入、電腦主持 —— */
+async function mpApi(path, body) {
+  const r = await fetch(MP_API + path, body ? { method: 'POST', body: JSON.stringify(body) } : {}); let j = {}; try { j = await r.json(); } catch (e) {} return { ok: r.ok, status: r.status, j };
+}
+function mpOpenEntry(code) { $('#scrTitle').hidden = true; $('#scrMP').hidden = false; $('#mpEntry').hidden = false; $('#mpRoom').hidden = true; $('#mpName').value = mpDefaultName(); if (code) $('#mpCode').value = code; S.phase = 'mplobby'; }
+$('#btnMP').addEventListener('click', () => { audioInit(); mpOpenEntry(MPQ.get('room') || ''); });
+$('#mpBack').addEventListener('click', () => { $('#scrMP').hidden = true; $('#scrTitle').hidden = false; S.phase = 'title'; });
+$('#mpCreate').addEventListener('click', async () => {
+  audioInit(); SAVE.nick = mpName(); save(); const b = $('#mpCreate'); b.disabled = true;
+  try { const r = await mpApi('/api/create', {}); if (!r.ok) throw 0; MP.qrFor = ''; mpConnect(r.j.code); } catch (e) { toast('連不上多人伺服器，晚點再試'); }
+  b.disabled = false;
+});
+$('#mpJoin').addEventListener('click', async () => {
+  audioInit(); const code = $('#mpCode').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''); if (code.length !== 5) return toast('請輸入 5 碼房號');
+  SAVE.nick = mpName(); save(); const b = $('#mpJoin'); b.disabled = true;
+  try { const r = await mpApi('/api/room/' + code); if (r.status === 404) toast('找不到這個房號'); else if (!r.ok) throw 0; else if (r.j.full) toast('這個房間已經滿了'); else if (r.j.phase !== 'lobby') toast('這個房間已經開始了'); else { MP.qrFor = ''; mpConnect(code); } } catch (e) { toast('連不上多人伺服器，晚點再試'); }
+  b.disabled = false;
+});
+$('#mpHost').addEventListener('click', async () => {
+  audioInit(); const b = $('#mpHost'); b.disabled = true;
+  try { const r = await mpApi('/api/create', { host: true }); if (!r.ok) throw 0; MP.qrFor = ''; MP.watch = true; mpConnect(r.j.code, { watch: true, hk: r.j.hk }); } catch (e) { toast('連不上多人伺服器，晚點再試'); }
+  b.disabled = false;
+});
+// 伺服器連得上才顯示「多人對戰」；分享連結帶房號（?room=）就直接帶進入口；重新整理時嘗試回到原本的房間
+(async () => {
+  try { const r = await fetch(MP_API + '/health', { signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined }); const j = await r.json(); MP.ok = !!(j && j.ok); } catch (e) { MP.ok = false; }
+  if (!MP.ok) return; $('#btnMP').hidden = false;
+  let saved = null; try { saved = JSON.parse(sessionStorage.getItem('touhu-mp') || 'null'); } catch (e) {}
+  if (saved && saved.code) { const r = await mpApi('/api/room/' + saved.code).catch(() => null); if (r && r.ok) { MP.pid = saved.pid || ''; MP.qrFor = ''; mpConnect(saved.code, { watch: !!saved.watch, hk: saved.hk, pid: saved.pid }); return; } try { sessionStorage.removeItem('touhu-mp'); } catch (e) {} }
+  if (MPQ.get('host') === '1') $('#mpHost').click(); else if (MPQ.get('room')) mpOpenEntry(MPQ.get('room'));
+})();
 
 /* =========================================================
    畫面：相機、尺寸、主迴圈
@@ -1079,7 +1636,8 @@ addEventListener('resize', resize); resize();
 const camPos = new THREE.Vector3(0, 3, 8), camLook = new THREE.Vector3(0, 0.5, 0);
 const tPos = new THREE.Vector3(), tLook = new THREE.Vector3();
 function updateCam(now, dt) {
-  const r = R(), D = r.D, pc = potState(now), k = 1 - Math.exp(-dt * 3.2);
+  if (S.phase === 'aimT' && TOUCH.active) return;   // 手指按住時鏡頭凍結：落點圈與壺的相對位置絕對穩定
+  const r = R(), D = r.D, pc = potState(now), k = 1 - Math.exp(-dt * (S.camMode === 'aim' ? 6.5 : 3.2));   // 回到瞄準視角時收斂快一點
   if (S.camMode === 'aim') { tPos.set(0, 1.78, D + 1.35); tLook.set(0, 0.28, 0.2); }
   else if (S.camMode === 'fly') {   // 飛行中：鏡頭留在投擲者身後，視線追著矢，慢慢往壺靠
     const A = S.cur, ap = A && A.pos ? A.pos : _t.set(0, 0.5, 0), f = clamp(1 - Math.abs(ap.z) / D, 0, 1);
@@ -1106,7 +1664,7 @@ function tick(t) {
   for (const f of FX) if (f.life > 0) { f.life -= dt; f.v.y -= 2.4 * dt; f.m.position.addScaledVector(f.v, dt); f.m.material.opacity = clamp(f.life / f.max, 0, 1); if (f.life <= 0) f.m.visible = false; }
   for (const r of ripples) if (r.life > 0) { r.life -= dt; const u = 1 - r.life / 0.7; r.m.scale.setScalar(1 + u * 4); r.m.material.opacity = clamp(1 - u, 0, 1) * 0.9; if (r.life <= 0) r.m.visible = false; }
   if (S.mode === 'motion' && S.phase === 'aim' && !SENS.calibOK) updateCalibUI();
-  updateAim(t);
+  updateAim(t); timerPaint();
   // 慢動作：飛行中放慢，快到壺口時更慢；入壺、落地後慢慢恢復
   let tsT = 1; const A0 = S.cur;
   if (S.phase === 'fly' && A0 && A0.pos) {
@@ -1114,18 +1672,18 @@ function tick(t) {
     else tsT = A0.state === 'sink' ? 0.6 : 0.7;
   }
   S.ts += (tsT - S.ts) * Math.min(1, dt * 8);
-  document.body.classList.toggle('slowmo', S.phase === 'fly' && S.ts < 0.85);
-  trailTick(dt);
+  document.body.classList.toggle('slowmo', (S.phase === 'fly' && S.ts < 0.85) || S.phase === 'replay');
+  trailTick(dt); replayTick(dt);
   for (const a of S.arrows) if (a.state === 'fly' || a.state === 'sink') updateArrow(a, dt * S.ts);
   updateCam(t, dt);
-  renderer.render(scene, cam);
+  if (!MPQ.has('norender')) renderer.render(scene, cam);
   requestAnimationFrame(tick);
 }
 
 // 網址 ?round=2、?round=3 可以直接從那一輪開始（預覽用）
 try { const q = new URLSearchParams(location.search); const r = parseInt(q.get('round'), 10); if (r >= 1 && r <= ROUNDS.length) S.startRound = r - 1; S.debug = q.has('debug'); } catch (e) {}
 setupRound(); skySet(0, true); S.phase = 'title';
-if (location.search.includes('debug')) window.__TH = { S, TU, SENS, R, throwArrow, startAim, newGame, potState, info: renderer.info, guest, onOrient, onMotion, lockE, lockP, lockH, pFor, thetaOf, speedOf, landing, windDrift, psiOf, startCharge, releaseCharge };
+if (location.search.includes('debug')) window.__TH = { S, TU, SENS, R, throwArrow, startAim, newGame, potState, info: renderer.info, guest, cam, potGroup, TOUCH, TM, timerFrac, MP, REPLAY, mpTick, mpReconcile, onOrient, onMotion, lockE, lockP, lockH, pFor, thetaOf, speedOf, landing, windDrift, psiOf, startCharge, releaseCharge };
 requestAnimationFrame(tick);
 </script>
 </body>

@@ -1,0 +1,18 @@
+# 投壺島・多人對戰的房間伺服器（Cloudflare Worker + Durable Objects）
+# 本機測試：npx wrangler dev --local --port 8787   部署：npx wrangler deploy（需要 Cloudflare 帳號，見 README.md）
+# 獨立於拂塵試煉的 fuchen-versus，兩個服務互不影響
+name = "touhu-room"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+# 允許連線的網頁來源（逗號分隔）
+ALLOWED_ORIGINS = "https://steven4dev.github.io,http://localhost:8765,http://127.0.0.1:8765,http://localhost:8787"
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
