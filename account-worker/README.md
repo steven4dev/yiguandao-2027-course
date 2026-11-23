@@ -7,7 +7,7 @@ Cloudflare Worker + Durable Objects。網址：`https://islands-account.yiguanda
 - 只申請 LINE 的 `openid profile`，**不拿 email**。
 - LINE 的使用者代號用 `UID_KEY` 做 HMAC，變成匿名編號，伺服器只認這個編號。
 - LINE 名字不存：登入當下放在網址 `#` 後面交給手機顯示。
-- 同步哪些紀錄、怎麼合併，看 `islands/account-merge.js`（手機和伺服器共用同一份）。廚神島封面圖片不上傳。
+- 同步哪些紀錄、怎麼合併，看 `islands/account-merge.js`（手機和伺服器共用同一份）。廚神島封面圖片不上傳。投壺島（`islands-touhu`）的最高分、場次、入壺與貫耳、投矢數取較大值，暱稱／操作方式／左右對調不上傳。
 
 ## 流程
 1. 手機按「用 LINE 登入」，前往 `GET /auth/line/start?return=<群島網址>`，再轉到 LINE 授權頁（PKCE，state 是簽過名的小憑證，10 分鐘內有效）。

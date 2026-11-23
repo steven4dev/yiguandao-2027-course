@@ -53,4 +53,12 @@ ok((await post('/api/pair/redeem', { code: '12ab' })).s === 400, '格式不對 �
 ok((await post('/api/pair/redeem', { code }, 'https://evil.example')).s === 403, '其他網站來源 → 403');
 let hit429 = false; for (let i = 0; i < 14; i++) { const x = await post('/api/pair/redeem', { code: String(10000000 + i * 7919) }); if (x.s === 429) { hit429 = true; break; } }
 ok(hit429, '亂猜代碼：同一個 IP 10 分鐘試 10 次後被擋（429）');
+// 投壺島：兩支手機各自的紀錄取較大值；暱稱、操作方式、左右對調不上傳
+const tD = await sign({ u: 'userD-' + Date.now(), e: Date.now() + 3600e3 });
+r = await post('/api/sync', { t: tD, data: { 'islands-touhu': { v: 1, best: 21.5, plays: 3, ins: 20, ears: 4, throws: 36, mode: 'touch', nick: '暱稱', nickCustom: true, flipX: true } } });
+ok(r.s === 200 && r.j.data['islands-touhu'].best === 21.5 && r.j.data['islands-touhu'].plays === 3, '投壺島：第一支手機的紀錄上傳成功');
+ok(!('nick' in r.j.data['islands-touhu']) && !('mode' in r.j.data['islands-touhu']) && !('flipX' in r.j.data['islands-touhu']) && !('nickCustom' in r.j.data['islands-touhu']), '投壺島：暱稱、操作方式、左右對調只留在手機');
+r = await post('/api/sync', { t: tD, data: { 'islands-touhu': { v: 1, best: 18, plays: 7, ins: 12, ears: 9, throws: 50 } } });
+const th = r.j.data['islands-touhu']; ok(th.best === 21.5 && th.plays === 7 && th.ins === 20 && th.ears === 9 && th.throws === 50, '投壺島：另一支手機同步後，每一項取較大值（最高分 21.5、場次 7、入壺 20、貫耳 9、投矢 50）');
+ok((await post('/api/sync', { t: tD, data: { 'islands-touhu': { v: 2, best: 99 } } })).j.data['islands-touhu'].best === 21.5, '投壺島：格式看不懂的那一份丟掉，不蓋壞好的紀錄');
 console.log(`\n${pass} 通過，${fail} 失敗`); process.exit(fail ? 1 : 0);

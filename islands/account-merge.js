@@ -34,6 +34,11 @@ export const SYNC_RULES = {
       m[k] = { ...e, n: maxN(e.n, v.n) || 0, first: e.first || str(v.first, 30) }; if (e.gold || v.gold) m[k].gold = true; if (e.hard || v.hard) m[k].hard = true; }
     return { ...a, v: 1, m };
   } },
+  // 投壺島：最高分、玩過幾場、累計入壺與貫耳、投過幾矢，都取較大值（兩邊各自累計，沒辦法相加，相加會重複算）；
+  // 暱稱、操作方式、左右對調只留在手機，不上傳
+  'islands-touhu': { ok: (o) => isObj(o) && o.v === 1, strip: ({ nick, nickCustom, mode, flipX, ...o }) => o, merge(a, b) {
+    const r = { ...a, v: 1 }; for (const k of ['best', 'plays', 'ins', 'ears', 'throws']) r[k] = maxN(a[k], b[k]) || 0; return r;
+  } },
   // 自己寫過的瓶中信、祈福卡（本來就是公開貼出去的內容）：用時間戳記去重，留最近 20 封
   'islands-mybottles': { ok: (o) => Array.isArray(o), merge(a, b) {
     const by = new Map(); for (const x of [...a, ...b]) if (isObj(x) && num(x.ts) != null && !by.has(x.ts)) by.set(x.ts, x);
