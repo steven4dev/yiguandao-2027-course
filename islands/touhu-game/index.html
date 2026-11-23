@@ -249,7 +249,6 @@ body.motion{--gb:82px}
     <ul class="how">
       <li><b>1</b><span>三輪、每輪四支矢：<b style="display:inline;background:none;color:inherit;width:auto;height:auto">晨光 → 風起 → 浮筏</b>，一輪比一輪遠、一輪比一輪難。</span></li>
       <li><b>2</b><span>投進壺口 <strong>2 分</strong>，穿過壺耳 <strong>3 分</strong>；每矢 15 秒倒數，<strong>投得越快，最多再加 0.5 分</strong>。</span></li>
-      <li><b>3</b><span>投不準也沒關係，島會告訴你偏哪邊，再靜一靜就好。</span></li>
     </ul>
     <div class="stack">
       <button class="btn col" id="btnTouch" type="button">🖐️ 觸控玩<small>按住畫面拖曳落點，放開就放箭</small></button>
@@ -352,7 +351,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.08';
+const VER = 'v261123.09';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -1369,8 +1368,8 @@ function acctPaint() {
   const nm = lineName(), msg = ACCT && ACCT.msg ? `<div class="am">${esc(ACCT.msg)}</div>` : '';
   $('#acctRow').innerHTML = nm
     ? `☁️ 已用 LINE 登入：<b>${esc(nm)}</b>・最高分與紀錄會跟著你 <button class="linkbtn inl" data-act="logout" type="button">登出</button>${msg}`
-    : `<button class="linkbtn" data-act="login" type="button">👤 用 LINE 登入：紀錄換手機也在，對戰自動帶入名字</button>${msg}`;
-  $('#mpNameNote').innerHTML = nm ? `名字來自 LINE，<b>可以改成暱稱</b>；同房的朋友會看到這個名字。` : `同房的朋友會看到這個名字。<button class="linkbtn inl" data-act="login" type="button">用 LINE 登入，自動帶入名字</button>`;
+    : `<div class="am">不用登入就能玩；登入可讓紀錄換手機也在。</div><button class="linkbtn" data-act="login" type="button">👤 用 LINE 登入（選用）</button>${msg}`;
+  $('#mpNameNote').innerHTML = nm ? `名字來自 LINE，<b>可以改成暱稱</b>；同房的朋友會看到這個名字。` : `不用登入，自己取個名字就能玩；同房的朋友會看到這個名字。<button class="linkbtn inl" data-act="login" type="button">（選用）用 LINE 登入，自動帶入名字</button>`;
   paintRec(); if (!$('#mpEntry').hidden && !$('#mpName').value) $('#mpName').value = mpDefaultName();
 }
 function acctAct(e) {
@@ -1693,7 +1692,7 @@ function updateCam(now, dt) {
     tPos.set(0, 1.78 - 0.45 * f, D + 1.35 - 0.9 * f); tLook.set(ap.x * 0.5 + pc.x * 0.5, 0.25 + ap.y * 0.38 + 0.15 * f, ap.z * 0.5);
   } else if (S.camMode === 'close') {   // 結果：拉近看壺
     tPos.set(pc.x * 0.6 - 0.4, 1.1, 2.55); tLook.set(pc.x - 0.4, 0.42, 0);
-  } else { const a = Math.sin(now / 5200) * 0.5; tPos.set(Math.sin(a) * 3.1, 0.95, Math.cos(a) * 3.1 + 0.2); tLook.set(0, -1.25, 0); }
+  } else { const a = Math.sin(now / 5200) * 0.5; tPos.set(Math.sin(a) * 3.1, 0.95, Math.cos(a) * 3.1 + 0.2); tLook.set(0, -2.05, 0); }
   camPos.lerp(tPos, k); camLook.lerp(tLook, k); cam.position.copy(camPos); cam.lookAt(camLook);
 }
 let last = performance.now();
