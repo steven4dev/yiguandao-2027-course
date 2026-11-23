@@ -127,6 +127,7 @@ body{line-break:strict}
 @keyframes hdh{50%{box-shadow:0 0 22px rgba(232,189,90,.7)}}
 .hdcap{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-weight:900;font-size:1rem;letter-spacing:1px;text-shadow:0 1px 6px rgba(0,0,0,.8)}
 .hdcap .no{color:var(--bad)}.hdcap .ok{color:var(--good)}
+.calfig{position:relative;margin:4px 0 8px;border-radius:14px;overflow:hidden;background:radial-gradient(ellipse at 60% 30%,#1b2a46,#0b1220 75%);border:1px solid rgba(232,189,90,.25)}.calfig canvas{display:block;width:100%;aspect-ratio:16/10}.calcap{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-weight:900;font-size:1rem;text-shadow:0 1px 6px rgba(0,0,0,.8)}
 .hdmore{display:block;margin:2px auto 0;padding:2px 10px;font-size:.74rem;color:var(--muted);background:none;border:0;text-decoration:underline}
 .hddetail{font-size:.85rem;line-height:1.55;padding:2px 2px 4px}
 /* 熱身時畫面下方的 3D 示範人形 */
@@ -467,7 +468,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 <section class="screen" id="scrCalib" hidden>
   <div class="panel">
     <h2>🧘 舉拂定心</h2>
-    <p>把手機<b>直立</b>拿在胸前，<b>螢幕朝著自己</b>，靜止不動約 2 秒。</p>
+    <div class="calfig"><canvas id="calFig" aria-label="示範：手機直立舉在胸前，螢幕朝著自己，靜止不動約 2 秒"></canvas><div class="calcap">🧘 舉在胸前・靜止 2 秒</div></div>
     <div class="prog"><i id="calibBar"></i></div>
     <p class="note" id="calibMsg">準備好就按「開始」。</p>
     <div class="row"><button class="primary big" id="btnCalib">開始</button><button id="btnCalibReuse" hidden>沿用上次的校正</button><button id="btnIsleC">🏝️ 返回島嶼</button></div>
@@ -618,7 +619,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261123.08';
+const VERSION = 'v261123.09';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -2092,7 +2093,7 @@ async function encounter(opt){
   await wait(300);
   if(monster && monster.state === 'enter') monster.state = 'idle';
   document.body.dataset.key = keys[0];
-  const howOn = false;   // v261121.09：小人只出現在開場示範，正式遊戲、熱身與對戰都不出現（要恢復熱身跟著揮，改回 !!tutorial && window.HowFig）
+  const howOn = !!tutorial && !!window.HowFig && SYMS[keys[0]].kind === 'dir';   // 只有第一次的校準／熱身（tutorial）小人跟著揮；正式遊戲與對戰不出現
   if(howOn) HowFig.ready(keys[0]);
   await countdown(opt.beats ?? D().beats);
   center('');
@@ -2237,11 +2238,11 @@ async function runGame(){
     const amb = diffKey !== 'easy' ? spawnDef(3) : null;
     // 教學：四方拂塵（第一次玩、或還沒有四方校正時）——順便學這位玩家的揮法和力氣
     if(inputMode === 'gyro' && (!calib.MT || !calib.autoTh)){
-      await banner('🧭 定心校準', diffKey === 'easy' ? '照方向整隻手臂大揮，系統會記住您的揮法' : '只做這一次：校準完塵魔就來了！照方向整隻手臂大揮，不算分、不扣心燈');
+      await banner('🧭 定心校準', diffKey === 'easy' ? '跟著小人，整隻手臂大揮' : '只做一次・跟著小人大揮');
       const got = {}, peaks = [];
       for(const [k, d] of [['left','L'],['right','R'],['up','U'],['down','D']]){
         // 修行、精進：校準只在第一次、沒有怪物（不是關卡題目）；入門維持原本跟小塵精熱身
-        const r = await encounter({ keys:[k], ...(diffKey === 'easy' ? spawnDef(1) : { def: MONS[0], lv: 1, gold: false }), wave: diffKey === 'easy' ? '熱身・四方拂塵' : '🧭 定心校準（只做一次）', tutorial:'照著方向大揮一次', calibOnly: diffKey !== 'easy' });
+        const r = await encounter({ keys:[k], ...(diffKey === 'easy' ? spawnDef(1) : { def: MONS[0], lv: 1, gold: false }), wave: diffKey === 'easy' ? '熱身・四方拂塵' : '🧭 定心校準（只做一次）', tutorial:'跟著小人揮', calibOnly: diffKey !== 'easy' });
         if(lastStroke && lastStroke.input === 'gyro'){ const t = analyzeStroke(lastStroke, 'trajRaw', SENS.light); if(!t.none && !t.unavailable){ got[d] = { v: applyCal(t.mainVec[0], t.mainVec[1]), amp: Math.hypot(t.mainVec[0], t.mainVec[1]) }; peaks.push(t.peak); } }
       }
       learnFromWarmup(got, peaks); if(window.HowFig) HowFig.hide();
@@ -2819,10 +2820,10 @@ async function vsWarmup(){
   vsShow(null); cancelFlag = false; encN = 0; lives = 99; score = 0; combo = 0; hits = 0; tries = 0; caught = [];
   $('#hud').hidden = false; $('#bottomBar').hidden = false; $('#btnBook').hidden = true; hud(''); $('#modeTag').textContent = '🧭 熱身';
   try{
-    await banner('🧭 定心校準', '照方向整隻手臂大揮，系統會記住您的揮法');
+    await banner('🧭 定心校準', '跟著小人，整隻手臂大揮');
     const got = {}, peaks = [];
     for(const [k, d] of [['left','L'],['right','R'],['up','U'],['down','D']]){
-      await encounter({ keys:[k], ...spawnDef(1), wave:'熱身・四方拂塵', tutorial:'照著方向大揮一次' });
+      await encounter({ keys:[k], ...spawnDef(1), wave:'熱身・四方拂塵', tutorial:'跟著小人揮' });
       if(lastStroke && lastStroke.input === 'gyro'){ const t = analyzeStroke(lastStroke, 'trajRaw', SENS.light); if(!t.none && !t.unavailable){ got[d] = { v: applyCal(t.mainVec[0], t.mainVec[1]), amp: Math.hypot(t.mainVec[0], t.mainVec[1]) }; peaks.push(t.peak); } }
     }
     learnFromWarmup(got, peaks); if(window.HowFig) HowFig.hide();
@@ -3207,6 +3208,12 @@ const swingState = (path, e) => { const f = pathFor(path), pts = []; for(let j =
   new MutationObserver(start).observe(document.getElementById('scrTitle'), { attributes: true, attributeFilter: ['hidden'] }); start();
   document.getElementById('hdMore').addEventListener('click', () => { const d = document.getElementById('hdDetail'); d.hidden = !d.hidden; document.getElementById('hdMore').textContent = d.hidden ? 'ⓘ 詳細說明' : '收起說明'; });
 }
+
+/* —— 舉拂定心：小人把手機直立舉在胸前、靜止不動（呼吸起伏），取代文字說明 —— */
+{ const cv = document.getElementById('calFig'), sc = document.getElementById('scrCalib'); cv._opt = { lookY: 1.22, lookX: 0.15, dist: 5.0, fov: 26, planeY: 1.3, R: 0.5 }; let fig = null, raf = 0;
+  const frame = now => { if(sc.hidden){ raf = 0; return; } fig = sizeFig(cv, fig); const t = now / 1000, br = Math.sin(t * 1.5) * 0.012;
+    paint(cv, fig, { world: [0.2, 1.3 + br, -0.5], roll: 0, mood: 'focus', glow: 0.6, trail: null, t }, null); raf = reduce ? 0 : requestAnimationFrame(frame); };
+  const start = () => { if(!raf) raf = requestAnimationFrame(frame); }; new MutationObserver(start).observe(sc, { attributes: true, attributeFilter: ['hidden'] }); start(); }
 
 /* —— 熱身時：畫面下方的示範人形 —— 由遊戲在「準備／揮／判定後」呼叫 —— */
 { const cv = document.getElementById('howFig'), cap = document.getElementById('howFigCap'); let fig = null, anim = null, raf = 0;
