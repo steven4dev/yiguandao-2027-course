@@ -511,7 +511,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
       <div class="vsOpt"><h3>⚔️ 1 對 1</h3><p>兩個人比誰淨化得多、心燈撐得久。用手機建房間，把房號或連結傳給朋友。</p>
         <button class="primary big" id="vsCreate">🏠 建立房間找朋友</button></div>
       <div class="vsOpt"><h3>🤝 2 對 2 合作</h3><p>四人分紅、藍兩隊：隊友輪流揮，三招的怪最後一招兩人一起揮，全隊共用心燈。要用<b>電腦</b>建房間（大螢幕投影），四個人掃 QR code 進房；1 對 1 也能這樣開。</p>
-        <button class="big" id="vsHost">🖥️ 用電腦建立房間（投影＋掃 QR 加入）</button></div>
+        <button class="primary big" id="vsHost">🖥️ 用電腦建立房間（投影＋掃 QR 加入）</button></div>
       <p class="note" style="text-align:center;margin:.2em 0 0">朋友已經開好房間了？輸入房號加入（1 對 1、2 對 2 都一樣）：</p>
       <div class="vsJoin"><input id="vsCodeIn" maxlength="5" inputmode="latin" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="輸入房號"><button id="vsJoinBtn">加入</button></div>
       <p class="note" id="vsHomeMsg" style="text-align:center;min-height:1.4em"></p>
@@ -615,7 +615,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261123.05';
+const VERSION = 'v261123.06';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
