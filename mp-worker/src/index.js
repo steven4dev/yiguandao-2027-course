@@ -21,9 +21,12 @@ export default {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: c });
     const m = url.pathname.match(/^\/api\/room\/([A-Za-z0-9]{3,8})(\/ws|\/info)?$/);
     if (url.pathname === '/api/create' && req.method === 'POST') {
+      // 電腦建房（host:true）：多給一把「主持金鑰」，拿著它的觀戰畫面可以設定難度；這種房間的玩家沒有房主，開打由兩位玩家都按準備決定
+      let body = {}; try { const t = await req.text(); if (t && t.length < 500) body = JSON.parse(t) || {}; } catch (e) {}
+      const hk = body.host === true ? [...crypto.getRandomValues(new Uint8Array(12))].map(x => ALPHABET[x % ALPHABET.length]).join('') : null;
       for (let i = 0; i < 8; i++) {
-        const code = genCode(), stub = env.ROOMS.get(env.ROOMS.idFromName(code)), r = await stub.fetch('https://room/init', { method: 'POST' });
-        if (r.status === 200) return json({ code }, 200, c);
+        const code = genCode(), stub = env.ROOMS.get(env.ROOMS.idFromName(code)), r = await stub.fetch('https://room/init', { method: 'POST', body: JSON.stringify({ hk }) });
+        if (r.status === 200) return json(hk ? { code, hk } : { code }, 200, c);
       }
       return json({ error: 'busy' }, 503, c);
     }
@@ -45,7 +48,7 @@ export default {
 export class Room extends DurableObject {
   constructor(ctx, env) { super(ctx, env); this.s = null; ctx.blockConcurrencyWhile(async () => { this.s = (await ctx.storage.get('s')) || null; }); }
   async save() { await this.ctx.storage.put('s', this.s); await this.schedule(); }
-  newState() { return { phase: 'lobby', host: null, diff: 'easy', seed: 0, startAt: 0, endAt: 0, result: null, players: {}, touched: Date.now() }; }
+  newState(hk) { return { hk: hk || null, phase: 'lobby', host: null, diff: 'easy', seed: 0, startAt: 0, endAt: 0, result: null, players: {}, touched: Date.now() }; }
   slotsUsed() { return Object.values(this.s.players).map(p => p.slot); }
   byPid(pid) { return this.s.players[pid] || null; }
   bySlot(slot) { return Object.values(this.s.players).find(p => p.slot === slot) || null; }
@@ -54,9 +57,9 @@ export class Room extends DurableObject {
 
   async fetch(req) {
     const url = new URL(req.url);
-    if (url.pathname === '/init') { if (this.s) return new Response('exists', { status: 409 }); this.s = this.newState(); await this.save(); return new Response('ok'); }
+    if (url.pathname === '/init') { if (this.s) return new Response('exists', { status: 409 }); let b = {}; try { b = await req.json(); } catch (e) {} this.s = this.newState(typeof b.hk === 'string' ? b.hk.slice(0, 24) : null); await this.save(); return new Response('ok'); }
     if (!this.s) return json({ exists: false }, 404);
-    if (url.pathname === '/info') { const n = Object.keys(this.s.players).length; return json({ exists: true, phase: this.s.phase, players: n, full: n >= MAX_PLAYERS && this.s.phase !== 'lobby' ? true : n >= MAX_PLAYERS, diff: this.s.diff }); }
+    if (url.pathname === '/info') { const n = Object.keys(this.s.players).length; return json({ exists: true, phase: this.s.phase, players: n, cx: !!this.s.hk, full: n >= MAX_PLAYERS && this.s.phase !== 'lobby' ? true : n >= MAX_PLAYERS, diff: this.s.diff }); }
     if (url.pathname === '/ws') { const pair = new WebSocketPair(); this.ctx.acceptWebSocket(pair[1]); return new Response(null, { status: 101, webSocket: pair[0] }); }
     return new Response('not found', { status: 404 });
   }
@@ -64,7 +67,7 @@ export class Room extends DurableObject {
   // —— 給每個人的快照（不含別人的通行碼）——
   snapshot(forPid) {
     const s = this.s, me = this.byPid(forPid);
-    return { t: 'state', you: me ? me.slot : -1, host: s.host ? (this.byPid(s.host) || {}).slot ?? -1 : -1, phase: s.phase, diff: s.diff, seed: s.seed, startAt: s.startAt, endAt: s.endAt, now: Date.now(), result: s.result,
+    return { t: 'state', cx: !!s.hk, you: me ? me.slot : -1, host: s.host ? (this.byPid(s.host) || {}).slot ?? -1 : -1, phase: s.phase, diff: s.diff, seed: s.seed, startAt: s.startAt, endAt: s.endAt, now: Date.now(), result: s.result,
       players: [0, 1].map(i => { const p = this.bySlot(i); return p ? { slot: i, name: p.name, avatar: p.avatar, ready: p.ready, lives: p.lives, score: p.score, hits: p.hits, combo: p.maxCombo, last: p.last, alive: p.alive, cur: p.cur || null, online: this.isConnected(p.pid) } : null; }), watchers: this.watchers().length };
   }
   broadcast() { for (const w of this.liveSockets()) { try { const a = w.deserializeAttachment() || {}; w.send(JSON.stringify(this.snapshot(a.pid))); } catch (e) {} } }
@@ -80,7 +83,8 @@ export class Room extends DurableObject {
     if (m.t === 'ping') { ws.send(JSON.stringify({ t: 'pong', c: m.c, s: Date.now() })); return; }
     if (m.t === 'join' && m.watch) {   // 觀戰：不佔玩家位置、不能操作，只收廣播
       if (this.watchers().filter(w => w !== ws).length >= MAX_WATCHERS) { ws.send(JSON.stringify({ t: 'error', code: 'watch_full' })); return; }
-      ws.serializeAttachment({ watch: true }); ws.send(JSON.stringify({ t: 'welcome', watch: true })); ws.send(JSON.stringify(this.snapshot(null))); this.broadcast(); return;
+      const ctl = !!(s.hk && typeof m.hk === 'string' && m.hk === s.hk);   // 持有主持金鑰的觀戰畫面＝電腦主持人
+      ws.serializeAttachment({ watch: true, ctl }); ws.send(JSON.stringify({ t: 'welcome', watch: true, ctl })); ws.send(JSON.stringify(this.snapshot(null))); this.broadcast(); return;
     }
     if (m.t === 'join') {
       let p = m.pid && s.players[m.pid] ? s.players[m.pid] : null;   // 斷線重連：用舊的通行碼拿回原本的位置
@@ -90,7 +94,7 @@ export class Room extends DurableObject {
         if (slot === undefined) { ws.send(JSON.stringify({ t: 'error', code: 'full' })); return; }
         const pid = crypto.randomUUID().replace(/-/g, '').slice(0, 20);
         p = s.players[pid] = { pid, slot, name: cleanName(m.name), avatar: String(m.avatar || '').slice(0, 24), ready: false, lives: LIVES[s.diff], score: 0, hits: 0, maxCombo: 0, last: '', alive: true, dc: 0 };
-        if (!s.host) s.host = pid;
+        if (!s.host && !s.hk) s.host = pid;   // 電腦建的房間沒有玩家房主
       } else { p.dc = 0; if (m.name) p.name = cleanName(m.name); if (m.avatar) p.avatar = String(m.avatar).slice(0, 24); }
       // 同一個人開了新連線：舊連線關掉
       for (const w of this.liveSockets()) { if (w !== ws && (w.deserializeAttachment() || {}).pid === p.pid) { try { w.close(1000, 'replaced'); } catch (e) {} } }
@@ -98,7 +102,10 @@ export class Room extends DurableObject {
       ws.send(JSON.stringify({ t: 'welcome', pid: p.pid, slot: p.slot, code: undefined }));
       await this.save(); this.broadcast(); return;
     }
-    if (a.watch) return;   // 觀戰者送來的其他訊息一律忽略
+    if (a.watch) {   // 觀戰者送來的訊息一律忽略；只有電腦主持人可以在大廳設定難度
+      if (a.ctl && m.t === 'set' && s.phase === 'lobby' && LIVES[m.diff]) { s.diff = m.diff; for (const q of Object.values(s.players)) { q.ready = false; q.lives = LIVES[s.diff]; } await this.save(); this.broadcast(); }
+      return;
+    }
     const p = a.pid ? this.byPid(a.pid) : null; if (!p) return;
     if (m.t === 'set' && s.phase === 'lobby' && s.host === p.pid) {
       if (LIVES[m.diff]) { s.diff = m.diff; for (const q of Object.values(s.players)) { q.ready = false; q.lives = LIVES[s.diff]; } }

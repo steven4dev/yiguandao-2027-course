@@ -308,10 +308,20 @@ body{line-break:strict}
 .wmid.cd{font-size:5em;color:#fff;width:2.2em}
 .wbeam{position:fixed;top:45%;width:12vw;height:.7em;border-radius:999px;z-index:45;pointer-events:none;background:linear-gradient(90deg,transparent,var(--bc),#fff);box-shadow:0 0 1.2em var(--bc);animation:wbeam .7s ease-in forwards}
 @keyframes wbeam{from{left:var(--x0);opacity:1}to{left:var(--x1);opacity:.2}}
-.wlobby{position:absolute;inset:3.2em 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6em;background:rgba(7,11,20,.86);text-align:center}
+.wlobby{position:absolute;inset:3.2em 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6em;background:radial-gradient(ellipse at 50% 0%,#1d2a48 0%,#0b1220 65%,#070b14 100%);text-align:center}
 .wl-code small{display:block;color:var(--muted)}.wl-code b{font-size:4.5em;letter-spacing:.25em;color:var(--gold);text-shadow:0 0 .3em rgba(232,189,90,.5)}
 .wqr{background:#fff;padding:.6em;border-radius:.6em;line-height:0}.wqr svg,.wqr img{width:min(26vh,30vw);height:auto}
 .wlobby #wLMsg{font-size:1.3em;font-weight:800}
+.wl-main{display:flex;align-items:center;justify-content:center;gap:5vw;width:100%;padding:0 4vw}
+.wl-qr{display:flex;flex-direction:column;align-items:center;gap:.5em}.wl-qr .wqr svg,.wl-qr .wqr img{width:min(44vh,32vw)}.wl-scan{margin:0;font-size:1.4em;font-weight:900}.wl-qr .wl-code b{font-size:3.4em}
+.wl-right{display:flex;flex-direction:column;gap:.8em;align-items:stretch;min-width:min(30vw,420px)}
+.wl-seats{display:flex;flex-direction:column;gap:.6em}
+.wl-seat{display:flex;align-items:center;gap:.8em;border:2px dashed var(--line);border-radius:1em;padding:.6em 1em;color:var(--muted);min-height:4.2em;text-align:left;transition:all .3s}
+.wl-seat canvas{width:3.2em;height:3.2em;filter:grayscale(1) opacity(.35)}.wl-seat .nm{font-weight:900;font-size:1.15em}.wl-seat small{display:block}.wl-seat .rd{margin-left:auto;font-size:1.5em}
+.wl-seat.in{border-style:solid;border-color:var(--gold);background:rgba(255,255,255,.06);color:var(--ink)}.wl-seat.in canvas{filter:none}
+.wl-diff{display:flex;gap:.5em;align-items:center;justify-content:center;flex-wrap:wrap;color:var(--muted);font-size:.95em}
+.wl-diff button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:999px;padding:.25em 1em;cursor:pointer}
+.wl-diff button.on{background:var(--gold);color:#1b1409;font-weight:900;border-color:var(--gold)}.wl-diff button:disabled{cursor:default;opacity:.8}.wl-diff button.on:disabled{opacity:1}
 .wres{position:absolute;inset:3.2em 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6em;background:rgba(7,11,20,.88);text-align:center}
 .wres h2{font-size:3em;margin:0;color:#ffe7a8}.wres p{color:var(--muted);margin:0}
 .wres .wrc{display:grid;grid-template-columns:1fr 1fr;gap:1.2em;margin-top:.6em}
@@ -463,6 +473,8 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     <p class="note">邀一位朋友切磋：兩個人遇到<b>一模一樣的怪</b>，比誰淨化得多、心燈撐得久。切磋不影響任何成績，打到的塵靈照樣收進淨心錄。</p>
     <div class="row">
       <button class="primary big" id="vsCreate">🏠 建立房間找朋友</button>
+      <button class="big" id="vsHost">🖥️ 用電腦建立房間（投影＋掃 QR 加入）</button>
+      <p class="note" style="text-align:center;margin:-.2em 0 .4em">在電腦上打開這一頁：大螢幕顯示房號與 QR code，朋友用手機掃一下就進房，不用再傳連結；難度也由電腦設定。</p>
       <div class="vsJoin"><input id="vsCodeIn" maxlength="5" inputmode="latin" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="輸入房號"><button id="vsJoinBtn">加入</button></div>
       <p class="note" id="vsHomeMsg" style="text-align:center;min-height:1.4em"></p>
       <button id="vsHomeBack">← 回標題</button>
@@ -480,7 +492,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
       <div class="vsAv" id="vsAv"></div>
     </div>
     <div class="dsw" id="vsDsw" data-d="easy" role="radiogroup" aria-label="對戰難度">
-      <div class="dsw-h"><span>難度（房主決定）</span><b id="vsDswName">🌱 入門</b></div>
+      <div class="dsw-h"><span id="vsDswWho">難度（房主決定）</span><b id="vsDswName">🌱 入門</b></div>
       <div class="dsw-track"><i class="dsw-thumb" id="vsDswThumb"></i>
         <button type="button" role="radio" data-d="easy">🌱 入門</button><button type="button" role="radio" data-d="normal">🪶 修行</button><button type="button" role="radio" data-d="hard">🔥 精進</button></div>
     </div>
@@ -505,7 +517,10 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     <div class="wmid" id="wMid">VS</div>
     <div class="wside" id="wS1"></div>
   </div>
-  <div class="wlobby" id="wLobby" hidden><div class="wl-code"><small>房號</small><b id="wLCode">-----</b></div><div class="wqr" id="wQr"></div><p id="wLMsg">等待兩位玩家準備…</p><p class="note">手機掃描 QR Code 或輸入房號加入；觀戰畫面不影響比賽。</p></div>
+  <div class="wlobby" id="wLobby" hidden><div class="wl-main">
+    <div class="wl-qr"><div class="wqr" id="wQr"></div><p class="wl-scan">📱 用手機掃描加入</p><div class="wl-code"><small>或在「雙人對戰」輸入房號</small><b id="wLCode">-----</b></div></div>
+    <div class="wl-right"><div class="wl-seats"><div class="wl-seat" id="wSeat0"></div><div class="wl-seat" id="wSeat1"></div></div>
+      <div class="wl-diff" id="wDiff"></div><p id="wLMsg">等待玩家加入…</p><p class="note">兩位玩家都按「我準備好了」就開打；觀戰畫面不影響比賽。</p></div></div></div>
   <div class="wres" id="wRes" hidden></div>
   <div class="wstart" id="wStart"><div><b>📺 投影觀戰</b><p>點一下畫面開始（會開啟音效）</p><small id="wStartMsg"></small></div></div>
 </section>
@@ -556,7 +571,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261121.09';
+const VERSION = 'v261123.01';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -2516,6 +2531,16 @@ async function vsCreateRoom(){
   try{ const r = await vsApi('/api/create', { method: 'POST' }); if(r.status === 200 && r.body && r.body.code) { vsConnect(r.body.code); } else vsMsgHome('現在建不了房間，等一下再試試。'); }
   catch(e){ vsMsgHome('連不上對戰伺服器，請檢查網路。'); }
 }
+// 電腦建房：拿到主持金鑰（只存在這台電腦），直接進投影畫面；玩家掃大廳的 QR code 加入
+async function vsCreateHostRoom(fromClick){
+  vsMsgHome('建立房間中…');
+  try{ const r = await vsApi('/api/create', { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ host: true }) });
+    if(r.status === 200 && r.body && r.body.code){ const code = r.body.code; store.set('fuchenVs.hk.' + code, r.body.hk);
+      try{ const sp = new URLSearchParams(location.search); sp.delete('host'); sp.set('watch', code); history.replaceState(null, '', location.pathname + '?' + sp); }catch(e){}   // 重新整理也回得到這個房間
+      startWatch(code, r.body.hk); if(fromClick) $('#wStart').hidden = true; }   // 剛按過按鈕＝已經有互動，音效可以直接開
+    else vsMsgHome('現在建不了房間，等一下再試試。'); }
+  catch(e){ vsMsgHome('連不上對戰伺服器，請檢查網路。'); }
+}
 async function vsJoinRoom(raw){
   const code = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5); if(code.length !== 5){ vsMsgHome('房號是 5 個字母或數字。'); return; }
   vsMsgHome('尋找房間…');
@@ -2573,10 +2598,10 @@ function vsRenderRoom(m){
   $('#vsSlots').querySelectorAll('canvas').forEach(cv => vsDrawAv(cv, cv.dataset.av));
   const nm = $('#vsName'); if(document.activeElement !== nm) nm.value = me && me.name && me.name !== '無名氏' ? me.name : (store.get('fuchenVs.name', '') || '');
   $('#vsAv').innerHTML = VS_FAMS.map(k => `<button type="button" data-k="${k}" class="${me && me.avatar === k ? 'on' : ''}" aria-label="${k}"><canvas width="84" height="84" data-av="${k}"></canvas></button>`).join(''); $('#vsAv').querySelectorAll('canvas').forEach(cv => vsDrawAv(cv, cv.dataset.av));
-  const dsw = $('#vsDsw'); dsw.dataset.d = m.diff; dsw.style.setProperty('--i', DIFF_ORDER.indexOf(m.diff)); dsw.classList.toggle('ro', !isHost); dsw.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.d === m.diff))); $('#vsDswName').textContent = DIFFS[m.diff].name;
+  const dsw = $('#vsDsw'); dsw.dataset.d = m.diff; dsw.style.setProperty('--i', DIFF_ORDER.indexOf(m.diff)); dsw.classList.toggle('ro', !isHost); dsw.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.d === m.diff))); $('#vsDswName').textContent = DIFFS[m.diff].name; $('#vsDswWho').textContent = m.cx ? '難度（由電腦決定）' : '難度（房主決定）'; $('#vsWatchLink').hidden = !!m.cx;   // 電腦主持的房間：難度由電腦設定，已經有投影畫面，不用再傳觀戰連結
   $('#vsMode').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.m === VS.mode));
   const rb = $('#vsReady'), both = m.players[0] && m.players[1]; rb.textContent = me && me.ready ? '取消準備' : '我準備好了'; rb.disabled = !both && !(me && me.ready);
-  $('#vsRoomMsg').textContent = !both ? '等朋友進房（把房號或連結傳給他）' : me && me.ready ? '等對方準備好，就會倒數開打' : '準備好就按「我準備好了」';
+  $('#vsRoomMsg').textContent = !both ? (m.cx ? '等另一位玩家掃電腦上的 QR code 進房' : '等朋友進房（把房號或連結傳給他）') : me && me.ready ? '等對方準備好，就會倒數開打' : '準備好就按「我準備好了」';
 }
 // 對手資訊只放一條細的狀態列（揮的時候不看螢幕）
 function vsRenderOpp(m){
@@ -2655,6 +2680,7 @@ async function vsEnableGyro(){
 $('#btnVsT').addEventListener('click', () => { audioInit(); $('#vsCodeIn').value = ''; vsMsgHome(''); vsShow('scrVsHome'); });
 $('#vsHomeBack').addEventListener('click', () => vsShow('scrTitle'));
 $('#vsCreate').addEventListener('click', vsCreateRoom);
+$('#vsHost').addEventListener('click', () => { audioInit(); vsCreateHostRoom(true); });
 $('#vsJoinBtn').addEventListener('click', () => vsJoinRoom($('#vsCodeIn').value));
 $('#vsCodeIn').addEventListener('keydown', e => { if(e.key === 'Enter') vsJoinRoom($('#vsCodeIn').value); });
 $('#vsWatchLink').addEventListener('click', () => { $('#vsRoomMsg').textContent = '在 LINE 把觀戰連結傳到筆電，用筆電瀏覽器打開就能投影。'; try{ navigator.clipboard && navigator.clipboard.writeText(vsWatchUrl(VS.code)); }catch(e){} });   // 開 LINE 分享，同時順手複製連結
@@ -2672,19 +2698,20 @@ $('#vsLeave').addEventListener('click', () => vsLeaveRoom());
 $('#vsAgain').addEventListener('click', () => { vsSend({ t: 'rematch' }); });
 $('#vsIsleR').addEventListener('click', () => { vsLeaveRoom(false); $('#btnIsleT').click(); });
 /* ---------------- 投影觀戰（筆電、投影機用） ---------------- */
-const WT = { trail: [null, null], ws: null, code: '', st: null, off: 0, rtt: 1e9, cur: [0, 0], shown: [-1, -1], gen: [null, null], disp: [0, 0], raf: 0, snd: true, retry: 0, qr: '' };
+const WT = { trail: [null, null], ws: null, code: '', st: null, off: 0, rtt: 1e9, cur: [0, 0], shown: [-1, -1], gen: [null, null], disp: [0, 0], raf: 0, snd: true, retry: 0, qr: '', hk: '', ctl: false };
 const wNow = () => Date.now() + WT.off;
 function wSide(i){ return $('#wS' + i); }
 function wBuildSide(i){ wSide(i).innerHTML = `<div class="wp"><span class="tag">P${i + 1}</span><span class="nm">—</span><span class="lv"></span></div><div class="wcv"><canvas class="mon" width="360" height="360"></canvas><canvas class="trl" width="360" height="360"></canvas></div><div class="wm"><b class="mn">等待開始</b><small class="mi"></small><div class="wk"></div></div><div class="ws">0</div><div class="wst"></div>`; }
 function wOpen(){
   const ws = new WebSocket(VS_API.replace(/^http/, 'ws') + `/api/room/${WT.code}/ws`); WT.ws = ws;
-  ws.onopen = () => { WT.retry = 0; ws.send(JSON.stringify({ t: 'join', watch: true })); WT.rtt = 1e9; [0, 250, 600].forEach(d => setTimeout(() => { try{ ws.send(JSON.stringify({ t: 'ping', c: Date.now() })); }catch(e){} }, d)); $('#wStartMsg').textContent = ''; };
+  ws.onopen = () => { WT.retry = 0; ws.send(JSON.stringify({ t: 'join', watch: true, hk: WT.hk || undefined })); WT.rtt = 1e9; [0, 250, 600].forEach(d => setTimeout(() => { try{ ws.send(JSON.stringify({ t: 'ping', c: Date.now() })); }catch(e){} }, d)); $('#wStartMsg').textContent = ''; };
   ws.onmessage = e => { let m; try{ m = JSON.parse(e.data); }catch(err){ return; } wMsg(m); };
   ws.onclose = () => { if(WT.ws !== ws) return; WT.ws = null; const d = Math.min(8000, 600 * Math.pow(1.6, WT.retry++)); $('#wLMsg').textContent = '連線中斷，重新連線中…'; setTimeout(() => { if(!WT.ws) wOpen(); }, d); };
 }
 function wMsg(m){
   if(m.t === 'pong'){ const now = Date.now(), rtt = now - m.c; if(rtt < WT.rtt){ WT.rtt = rtt; WT.off = m.s + rtt/2 - now; } return; }
   if(m.t === 'error'){ $('#wStartMsg').textContent = m.code === 'watch_full' ? '這個房間的觀戰人數已滿。' : '無法觀戰：' + m.code; return; }
+  if(m.t === 'welcome'){ WT.ctl = !!m.ctl; if(WT.st) wState(WT.st, WT.st); return; }
   if(m.t === 'state'){ const prev = WT.st; WT.st = m; wState(m, prev); return; }
   if(m.t === 'cur'){ WT.cur[m.slot] = m.n; return; }
   if(m.t === 'evx'){ wFlash(m.slot, m.ok, m); return; }
@@ -2697,7 +2724,7 @@ function wState(m, prev){
     el.querySelector('.wst').textContent = p ? `淨化 ${p.hits} 隻・最高連擊 ${p.combo}${p.online ? '' : '・📴 離線'}` : ''; if(p && p.cur && m.phase === 'playing') WT.cur[i] = Math.max(WT.cur[i], p.cur.n); });
   if(m.phase === 'lobby'){
     $('#wRes').hidden = true; $('#wLobby').hidden = false; WT.cur = [0, 0]; WT.shown = [-1, -1]; WT.disp = [0, 0];
-    const ps = m.players.filter(Boolean); $('#wLMsg').textContent = ps.length < 2 ? `等待玩家加入（${ps.length}/2）` : ps.map(p => `${p.name} ${p.ready ? '✅ 已準備' : '⏳ 準備中'}`).join('　　');
+    wLobbyUi(m);
     wQr(); $('#wMid').textContent = 'VS'; $('#wMid').classList.remove('cd');
   } else if(m.phase === 'playing'){
     $('#wLobby').hidden = true; $('#wRes').hidden = true;
@@ -2708,10 +2735,21 @@ function wState(m, prev){
     $('#wRes').hidden = false; if(!prev || prev.phase !== 'done') wSfx(() => sfx.victory());
   }
 }
+// 大廳：兩個座位（誰加入、誰準備好）＋難度（電腦主持人可以點，其他人只看得到）
+function wLobbyUi(m){
+  [0, 1].forEach(i => { const p = m.players[i], el = $('#wSeat' + i); el.classList.toggle('in', !!p);
+    if(!el.firstChild || el.dataset.av !== (p ? p.avatar : '')){ el.innerHTML = '<canvas width="96" height="96"></canvas><div><span class="nm"></span><small></small></div><span class="rd"></span>'; el.dataset.av = p ? p.avatar : ''; if(p) vsDrawAv(el.querySelector('canvas'), p.avatar); }
+    el.querySelector('.nm').textContent = p ? p.name : `玩家 ${i + 1}：等待加入…`; el.querySelector('small').textContent = p ? (p.online ? (p.ready ? '已準備' : '準備中…') : '📴 離線') : '掃 QR code 就會坐進來'; el.querySelector('.rd').textContent = p && p.ready ? '✅' : ''; });
+  const dd = $('#wDiff'), key = DIFF_ORDER.join() + WT.ctl; if(dd.dataset.k !== key){ dd.dataset.k = key; dd.innerHTML = '難度　' + DIFF_ORDER.map(k => `<button type="button" data-d="${k}"${WT.ctl ? '' : ' disabled'}>${DIFFS[k].name}</button>`).join('') + (WT.ctl ? '' : '<small>（由主持的電腦設定）</small>'); }
+  dd.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.d === m.diff));
+  const ps = m.players.filter(Boolean); $('#wLMsg').textContent = ps.length < 2 ? `等玩家掃 QR code 加入（${ps.length}/2）` : ps.every(p => p.ready) ? '都準備好了，馬上開打！' : '等兩位玩家都按「我準備好了」';
+}
+$('#wDiff').addEventListener('click', e => { const b = e.target.closest('button'); if(b && WT.ctl && WT.ws) try{ WT.ws.send(JSON.stringify({ t: 'set', diff: b.dataset.d })); }catch(err){} });
+// 先用站內自己的 QR 函式庫（場地網路不好也出得來），失敗才用 CDN
 function wQr(){
   const u = vsRoomLink(WT.code); if(WT.qr === u) return; WT.qr = u; const box = $('#wQr');
   const draw = () => { try{ const q = qrcode(0, 'M'); q.addData(u); q.make(); box.innerHTML = q.createSvgTag(6, 2); }catch(e){ box.hidden = true; } };
-  if(window.qrcode) draw(); else { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'; sc.onload = draw; sc.onerror = () => { box.hidden = true; }; document.head.appendChild(sc); }
+  if(window.qrcode) draw(); else { const sc = document.createElement('script'); sc.src = '../../game/qrcode.js'; sc.onload = draw; sc.onerror = () => { const s2 = document.createElement('script'); s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'; s2.onload = draw; s2.onerror = () => { box.hidden = true; }; document.head.appendChild(s2); }; document.head.appendChild(sc); }
 }
 const wSfx = f => { if(!WT.snd) return; try{ f(); }catch(e){} };
 function wFloat(i, text, col){ const d = document.createElement('div'); d.className = 'wfloat'; d.style.color = col; d.textContent = text; wSide(i).appendChild(d); setTimeout(() => d.remove(), 1300); }
@@ -2758,8 +2796,8 @@ function wTrail(cv, tr, now){
   });
   c.restore();
 }
-function startWatch(code){
-  WT.code = code; $('#wLine').href = vsWatchLine(code); vsShow(null); $('#scrWatch').hidden = false; wBuildSide(0); wBuildSide(1); $('#wCode').textContent = '房號 ' + code; $('#wLCode').textContent = code;
+function startWatch(code, hk){
+  WT.code = code; WT.hk = hk || store.get('fuchenVs.hk.' + code, '') || ''; $('#wLine').href = vsWatchLine(code); vsShow(null); $('#scrWatch').hidden = false; wBuildSide(0); wBuildSide(1); $('#wCode').textContent = '房號 ' + code; $('#wLCode').textContent = code;
   $('#wStart').addEventListener('click', () => { audioInit(); $('#wStart').hidden = true; }, { once: true });
   $('#wSnd').addEventListener('click', () => { WT.snd = !WT.snd; $('#wSnd').textContent = WT.snd ? '🔊 音效' : '🔇 靜音'; });
   $('#wFs').addEventListener('click', () => { try{ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }catch(e){} });
@@ -2769,6 +2807,7 @@ function startWatch(code){
 if(VS_API) $('#btnVsT').hidden = false;
 // 邀請連結 ?room=房號：直接進房
 { const wc = (new URLSearchParams(location.search).get('watch') || '').toUpperCase(); if(/^[A-Z0-9]{5}$/.test(wc)){ if(VS_API) startWatch(wc); else $('#titleMsg').textContent = '雙人對戰還沒開放，敬請期待。'; } }
+{ if(new URLSearchParams(location.search).get('host') === '1'){ if(VS_API) setTimeout(() => { vsShow('scrVsHome'); vsCreateHostRoom(); }, 400); else $('#titleMsg').textContent = '雙人對戰還沒開放，敬請期待。'; } }
 { const rm = (new URLSearchParams(location.search).get('room') || '').toUpperCase(); if(/^[A-Z0-9]{5}$/.test(rm)){ if(VS_API) setTimeout(() => { audioInit(); vsShow('scrVsHome'); $('#vsCodeIn').value = rm; vsJoinRoom(rm); }, 400); else $('#titleMsg').textContent = '雙人對戰還沒開放，敬請期待。'; } }
 
 /* ---------------- 按鈕 ---------------- */
