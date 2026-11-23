@@ -247,7 +247,7 @@ body.motion{--gb:82px}
     </ul>
     <div class="stack">
       <button class="btn col" id="btnTouch" type="button">🖐️ 觸控玩<small>按住畫面拖曳落點，放開就放箭</small></button>
-      <button class="btn jade col" id="btnMotion" type="button">📱 體感玩<small>傾斜手機瞄準，按住蓄力、放開放箭</small></button>
+      <button class="btn jade col" id="btnMotion" type="button">📱 體感玩<small>傾斜手機瞄準：直立＝近、平躺＝遠</small></button>
       <button class="btn ghost col" id="btnMP" type="button" hidden>👥 多人對戰<small>一對一、二對二，找朋友一起投</small></button>
       <button class="linkbtn" id="btnTap" type="button">經典三段式（依序點三下：仰角 → 力道 → 左右）</button>
     </div>
@@ -344,7 +344,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.06';
+const VER = 'v261123.07';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -369,6 +369,7 @@ const TU = {
   earX: 0.27, earR: 0.062, // 壺耳中心離壺心的距離、壺耳口半徑
   lat: 0.6,              // 瞄準線在壺的位置，左右最遠偏離幾公尺
   tol: 0.13,             // 第一輪的綠色提示區：落點離壺心多少公尺內
+  tiltNear: 5, tiltFar: 80, distNear: 1.2, distFar: 4.4,   // 體感：手機傾斜幾度＝最近（直立）～最遠（往前平躺），對應落點離投擲者幾公尺
   yawRange: 30, rollRange: 25, pitchRange: 20, // 體感：左右「轉身」幾度、或「左右傾」幾度＝瞄準線到頭（兩種動作疊加）；上下抬幾度＝仰角到頭
   chargeT: 1.6,                 // 體感：按住蓄力時，力道條來回一趟的秒數
   slow: 0.38, slowNear: 0.2,    // 慢動作：飛行中的時間倍率、快到壺口時的倍率
@@ -1024,9 +1025,23 @@ const gH = $('#gH'), gE = $('#gE'), gP = $('#gP'), GAUGES = [gH, gE, gP];
    落點（左右＋遠近）由伺服器同一套物理反推成左右與力道；手指越穩落點圈晃得越小（手抖），拖到底部「取消區」放開＝取消 */
 const TOUCH = { active: false, id: null, x: 0, y: 0, px: 0, py: 0, lt: 0, steady: 0, t0: 0, ph: 0, aim: null, calm: false };
 const _rc = new THREE.Raycaster(), TOUCH_OFFSET = 64, WOBBLE = [[0.10, 0.015], [0.15, 0.02], [0.18, 0.03]];   // 每輪手抖的最大／最小幅度（公尺）
+function solveAim(tx, tz, e, lockJob, preset) {   // 落點 (tx, tz) → 左右 a、力道 p（仰角 e 已定）；第二輪把風的偏移也算進去
+  const th = thetaOf(e), hand = handPos(), D = R().D, sinPsi = (X, dr) => clamp((tx - dr - hand.x) / X, -0.95, 0.95);
+  let p, L, dr = 0, a;
+  if (preset) {   // 分工合投的放箭者：只管左右，仰角與力道已經定好
+    p = S.lockP; L = landing(th, speedOf(p)); dr = windDrift(L.t); a = (D * Math.tan(Math.asin(sinPsi(L.X, dr))) + HAND_X) / TU.lat;
+  } else if (lockJob) {   // 分工合投的定參數者：只管遠近（力道），左右交給隊友
+    p = clamp(pFor(th, (hand.z - tz) / Math.cos(psiOf(0))), 0, 1); a = 0;
+  } else {
+    let X = Math.hypot(tx - hand.x, hand.z - tz); p = clamp(pFor(th, X), 0, 1); L = landing(th, speedOf(p)); dr = windDrift(L.t);
+    for (let k = 0; k < 2; k++) { X = Math.hypot(tx - dr - hand.x, hand.z - tz); p = clamp(pFor(th, X), 0, 1); L = landing(th, speedOf(p)); dr = windDrift(L.t); }
+    a = (D * Math.tan(Math.asin(sinPsi(L.X, dr))) + HAND_X) / TU.lat;
+  }
+  return { a, e, p, lock: lockJob };
+}
 function touchAim(now) {
   const lockJob = !!(MP.on && MP.job && MP.job.kind === 'lock'), preset = S.preset;
-  const e = preset ? S.lockE : S.eTouch, th = thetaOf(e), hand = handPos(), D = R().D, pc = potState(now), mY = pc.y + TU.mouthY;
+  const e = preset ? S.lockE : S.eTouch, hand = handPos(), pc = potState(now), mY = pc.y + TU.mouthY;
   if (!TOUCH.active) { TOUCH.aim = null; return { a: 0, e, p: preset ? S.lockP : 0.5, active: false, lock: lockJob }; }
   const dt = Math.min(0.1, Math.max(0.001, (now - (TOUCH.lt || now)) / 1000)); TOUCH.lt = now;
   const sp = Math.hypot(TOUCH.x - TOUCH.px, TOUCH.y - TOUCH.py) / dt; TOUCH.px = TOUCH.x; TOUCH.py = TOUCH.y;
@@ -1036,19 +1051,21 @@ function touchAim(now) {
   TOUCH.calm = TOUCH.steady > 1.0;
   cam.updateMatrixWorld(); _rc.setFromCamera({ x: TOUCH.x / innerWidth * 2 - 1, y: -((TOUCH.y - TOUCH_OFFSET) / innerHeight * 2 - 1) }, cam);   // 落點圈浮在手指上方，手指才不會擋住它
   const o = _rc.ray.origin, d = _rc.ray.direction, tt = d.y < -0.01 ? (mY - o.y) / d.y : 40;
-  const tx = o.x + d.x * tt + wx, tz = o.z + d.z * tt + wz, sinPsi = (X, dr) => clamp((tx - dr - hand.x) / X, -0.95, 0.95);
-  let p, L, dr = 0, a;
-  if (preset) {   // 分工合投的放箭者：只管左右，仰角與力道已經定好
-    p = S.lockP; L = landing(th, speedOf(p)); dr = windDrift(L.t); a = (D * Math.tan(Math.asin(sinPsi(L.X, dr))) + HAND_X) / TU.lat;
-  } else if (lockJob) {   // 分工合投的定參數者：只管遠近（力道），左右交給隊友
-    p = clamp(pFor(th, (hand.z - tz) / Math.cos(psiOf(0))), 0, 1); a = 0;
-  } else {
-    let X = Math.hypot(tx - hand.x, hand.z - tz); p = clamp(pFor(th, X), 0, 1); L = landing(th, speedOf(p)); dr = windDrift(L.t);
-    for (let k = 0; k < 2; k++) { X = Math.hypot(tx - dr - hand.x, hand.z - tz); p = clamp(pFor(th, X), 0, 1); L = landing(th, speedOf(p)); dr = windDrift(L.t); }   // 第二輪把風的偏移也算進去
-    a = (D * Math.tan(Math.asin(sinPsi(L.X, dr))) + HAND_X) / TU.lat;
-  }
-  TOUCH.aim = { a, e, p };
-  return { a, e, p, active: true, lock: lockJob };
+  const r = solveAim(o.x + d.x * tt + wx, o.z + d.z * tt + wz, e, lockJob, preset); TOUCH.aim = r;
+  return { ...r, active: true };
+}
+/* —— 體感瞄準：手機姿勢 → 落點 ——
+   左右：往左轉身或往左傾（像方向盤），落點往左；遠近：手機越直立落點越近、越往前平躺越遠（用絕對傾斜角，不受「心定」影響）；仰角：右側滑桿（記住） */
+function motionSolve(smp, e, lockJob, preset) {
+  const b = SENS.base, hand = handPos(), flip = SAVE.flipX ? -1 : 1;
+  const ax = clamp((wrap(smp.yaw - b.yaw) / TU.yawRange + wrap(smp.roll - b.roll) / TU.rollRange) * flip, -1, 1);
+  const d = clamp((-smp.pitch - TU.tiltNear) / (TU.tiltFar - TU.tiltNear), 0, 1);
+  return solveAim(ax * TU.lat, hand.z - (TU.distNear + (TU.distFar - TU.distNear) * d), e, lockJob, preset);
+}
+function motionAim() {
+  const lockJob = !!(MP.on && MP.job && MP.job.kind === 'lock'), preset = S.preset, e = preset ? S.lockE : S.eTouch;
+  if (!SENS.calibOK || !SENS.last) { SENS.aim = null; return { a: 0, e, p: preset ? S.lockP : 0.5, active: false, lock: lockJob }; }
+  const r = motionSolve(SENS.last, e, lockJob, preset); SENS.aim = r; return { ...r, active: true };
 }
 addEventListener('pointerdown', (e) => {
   if (S.phase !== 'aimT' || TOUCH.active || e.target.closest('button,a,.card,#gE')) return;
@@ -1065,7 +1082,7 @@ function touchEnd(e) {
 }
 addEventListener('pointerup', touchEnd); addEventListener('pointercancel', touchEnd);
 const setE = (ev) => { const r = gE.getBoundingClientRect(); S.eTouch = clamp(1 - (ev.clientY - r.top) / r.height, 0, 1); };
-gE.addEventListener('pointerdown', (ev) => { if (S.phase !== 'aimT' || S.preset) return; ev.stopPropagation(); try { gE.setPointerCapture(ev.pointerId); } catch (_) {} gE._drag = true; setE(ev); });
+gE.addEventListener('pointerdown', (ev) => { if ((S.phase !== 'aimT' && S.phase !== 'aim') || S.preset) return; ev.stopPropagation(); try { gE.setPointerCapture(ev.pointerId); } catch (_) {} gE._drag = true; setE(ev); });
 gE.addEventListener('pointermove', (ev) => { if (gE._drag) setE(ev); });
 ['pointerup', 'pointercancel'].forEach((n) => gE.addEventListener(n, () => { gE._drag = false; }));
 function setHint(t) { $('#hint').hidden = !t; $('#hintTxt').textContent = t || ''; }
@@ -1080,7 +1097,7 @@ function startAim(job) {
   S.arrows.push(S.cur); S.camMode = 'aim'; S.t0 = NOW; S.tapLock = NOW + 260;
   S.lockE = S.lockP = S.lockH = null; S.ph = Math.random(); S.ph2 = Math.random(); S.ph3 = Math.random(); S.charging = false; S.aP = 0.5; S.preset = false; S.presetTl = null; TOUCH.active = false;
   GAUGES.forEach((g) => { g.hidden = false; g.querySelector('.lk').style.display = 'none'; g.querySelector('.zone').style.display = 'none'; gShow(g, true); });
-  paintDots(); $('#btnThrow').textContent = '🏹 按住蓄力・放開放箭'; timerReset(); gE.classList.remove('live');
+  paintDots(); $('#btnThrow').textContent = '🏹 放箭'; timerReset(); gE.classList.remove('live');
   if (job && job.kind === 'throw') {   // 分工合投：隊友已經定好仰角與力道，我只管左右並放箭
     S.preset = true; S.presetTl = job.tl == null ? null : job.tl; S.lockE = S.aE = job.e; S.lockP = S.aP = job.p; gLock(gE, job.e); gLock(gP, job.p); gActive(gE, false); gActive(gP, false); gActive(gH, true); gShow(gH, true);
     if (S.mode === 'tap') {
@@ -1102,11 +1119,11 @@ function startAim(job) {
     setHint(lockJob ? '按住畫面上下拖曳定力道，放開交給隊友' : '按住畫面拖曳落點，放開放箭'); timerResume();
   } else {
     S.phase = 'aim'; SENS.calibOK = false; SENS.anchor = null;   // 每一矢都重新「心定」：投完手機姿勢早就變了，不能拿舊的正前方當基準
-    gActive(gE, true); gActive(gH, !lockJob); gActive(gP, false); gShow(gP, false); if (lockJob) gShow(gH, false);
+    gActive(gE, true); gE.classList.add('live'); gShow(gH, false); gActive(gP, false); gShow(gP, true);   // 右側滑桿調仰角；左側力道只顯示（由落點自動算）
     $('#calib').hidden = false; $('#btnThrow').hidden = false; updateCalibUI(); setHint(SENS.calibOK ? CHARGE_HINT : ''); if (SENS.calibOK) timerResume();   // 體感：校準完（心定）才開始倒數
   }
 }
-const CHARGE_HINT = '按住蓄力，落點圈對準壺就放開';
+const CHARGE_HINT = '落點圈對準壺，按「放箭」';
 function lockE() {
   if (S.phase !== 'aimE' || NOW < S.tapLock) return; S.lockE = S.aE; SFX.lock(); gLock(gE, S.lockE);
   S.phase = 'aimP'; S.tapLock = NOW + 220; S.t0 = NOW; gActive(gP, true); gShow(gP, true); setHint('②　再點一下，鎖定「力道」');
@@ -1131,26 +1148,19 @@ addEventListener('keydown', (e) => {
 addEventListener('keyup', (e) => { if ((e.code === 'Space' || e.code === 'Enter') && S.charging) releaseCharge(); });
 
 /* —— 體感：按住蓄力、放開（或往前一送）放箭 —— */
-function throwPreset() {
-  if (S.phase !== 'aim' || !S.preset) return; const { a } = aimAt(performance.now() - TU.aimLag); S.aH = a; throwArrow(a, S.lockE, S.lockP);
+function sampleAt(t) { let best = null; for (const sm of SENS.buf) if (!best || Math.abs(sm.t - t) < Math.abs(best.t - t)) best = sm; return best || SENS.last; }
+function motionRelease() {   // 放箭：取「按下之前」那一刻的姿勢（按按鈕、往前一送都會晃到手機）
+  if (S.phase !== 'aim') return; if (!SENS.calibOK) return toast('先舉起手機、靜止一下');
+  const now = performance.now(); if (now - S.t0 < 600 || now - (SENS.lastThrow || 0) < 800) return; SENS.lastThrow = now;
+  const lockJob = !!(MP.on && MP.job && MP.job.kind === 'lock'), preset = S.preset, r = motionSolve(sampleAt(now - TU.aimLag), preset ? S.lockE : S.eTouch, lockJob, preset);
+  if (lockJob) return mpSendLock(r.e, r.p);   // 分工合投：交給隊友放箭
+  throwArrow(r.a, r.e, r.p);
 }
-function startCharge() {
-  if (S.preset && S.phase === 'aim') { if (!SENS.calibOK) return toast('先舉起手機、靜止一下'); return throwPreset(); }
-  if (S.phase !== 'aim' || S.charging) return;
-  if (!SENS.calibOK) return toast('先舉起手機、靜止一下');
-  S.charging = true; S.cT0 = performance.now(); S.aP = 0; gActive(gP, true); gShow(gP, true); SFX.lock();
-}
-function releaseCharge() {
-  if (!S.charging) return; S.charging = false;
-  if (performance.now() - S.cT0 < 250) { toast('按住蓄力，落點圈對準壺再放開'); gShow(gP, false); gActive(gP, false); return; }
-  const { a, e } = aimAt(performance.now() - TU.aimLag);   // 取放開「之前」那一刻的瞄準（放開手指、往前一送都會晃到手機）
-  S.aH = a; S.aE = e; gLock(gP, S.aP);
-  if (MP.on && MP.job && MP.job.kind === 'lock') return mpSendLock(e, S.aP);   // 分工合投：交給隊友放箭
-  throwArrow(a, e, S.aP);
-}
+function startCharge() { motionRelease(); }
+function releaseCharge() {}
 const bT = $('#btnThrow');
 bT.addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); audioInit(); try { bT.setPointerCapture(e.pointerId); } catch (_) {} startCharge(); });
-['pointerup', 'pointercancel'].forEach((ev) => bT.addEventListener(ev, (e) => { e.stopPropagation(); releaseCharge(); }));
+['pointerup', 'pointercancel'].forEach((ev) => bT.addEventListener(ev, (e) => { e.stopPropagation(); }));
 
 /* —— 每幀更新瞄準物件 —— */
 function updateAim(now) {
@@ -1160,8 +1170,8 @@ function updateAim(now) {
     if (ph === 'aimE') S.aE = tri((now - S.t0) / 1000 / T + S.ph);
     if (ph === 'aimP') S.aP = tri((now - S.t0) / 1000 / (T * 1.4) + S.ph2);   // 力道條掃得比較慢，剛好區比較好點
     if (ph === 'aimH') S.aH = tri((now - S.t0) / 1000 / T + S.ph3) * 2 - 1;
-  } else { S.aH += (SENS.a - S.aH) * 0.5; S.aE += (SENS.e - S.aE) * 0.5; if (S.charging) S.aP = tri((performance.now() - S.cT0) / 1000 / TU.chargeT); }
-  const tch = ph === 'aimT' ? touchAim(now) : null;
+  }
+  const tch = ph === 'aimT' ? touchAim(now) : ph === 'aim' ? motionAim() : null;
   const aH = tch ? tch.a : ph === 'aimE' || ph === 'aimP' ? 0 : S.aH, aE = tch ? tch.e : ph === 'aimP' || ph === 'aimH' || S.preset ? S.lockE : S.aE;
   const pKnown = tch ? tch.active || S.preset : ph === 'aimP' || ph === 'aimH' || S.preset || (motion && S.charging), aP = tch ? tch.p : ph === 'aimH' || S.preset ? S.lockP : S.aP;
   const D = R().D, hand = handPos(), pc = potState(now), py = pc.y + TU.mouthY, th = thetaOf(aE), psi = psiOf(aH), xT = aH * TU.lat;
@@ -1170,7 +1180,7 @@ function updateAim(now) {
   const rx = hand.x + L.X * Math.sin(psi) + dr, rz = hand.z - L.X * Math.cos(psi);
   const green = 0x7dff9c, yellow = 0xffd45a;
   // 瞄準線：壺的位置（z=0 平面）
-  const showLine = ph === 'aimH' || motion, lineX = xT + dr;
+  const showLine = ph === 'aimH', lineX = xT + dr;
   aimLine.visible = showLine; aimLine.position.set(lineX, 0.62, 0); aimLine.material.opacity = 0.85;
   const okH = S.round === 0 && Math.abs(lineX - pc.x) <= TU.tol;   // 綠色提示只有第一輪
   aimLine.material.color.set(okH ? green : yellow); aimGlow.material.color.set(okH ? green : yellow);
@@ -1178,10 +1188,10 @@ function updateAim(now) {
   const rz0 = hand.z - L.X * Math.cos(psiOf(0));
   depthBar.visible = (!motion && ph === 'aimP') || !!(tch && tch.active && tch.lock); depthBar.position.set(pc.x, py + 0.004, rz0);
   depthBar.material.color.set(S.round === 0 && Math.abs(rz0) <= TU.tol ? green : yellow);
-  ring.visible = (pKnown && (ph === 'aimH' || motion)) || !!(tch && tch.active && !tch.lock); ring.position.set(rx, py + 0.004, rz);
+  ring.visible = (pKnown && ph === 'aimH') || !!(tch && tch.active && !tch.lock); ring.position.set(rx, py + 0.004, rz);
   ring.material.color.set(S.round === 0 && Math.hypot(rx - pc.x, rz) <= TU.tol ? green : yellow);
   // 預測拋物線（虛線）：從手到落點，風影響已算進去（只有第二輪）
-  dash.visible = ph === 'aimH' || motion || !!(tch && tch.active && !tch.lock);
+  dash.visible = ph === 'aimH' || !!(tch && tch.active && !tch.lock);
   if (dash.visible) {
     const pos = dash.geometry.attributes.position, c = Math.cos(th), sn = Math.sin(th), sw = R().windAssist ? S.wind : 0;
     for (let i = 0; i <= DASH_N; i++) { const t = L.t * i / DASH_N; pos.setXYZ(i, hand.x + v * c * Math.sin(psi) * t + 0.5 * sw * t * t, hand.y + v * sn * t - 0.5 * TU.g * t * t, hand.z - v * c * Math.cos(psi) * t); }
@@ -1220,7 +1230,7 @@ function onOrient(e) {
   if (!SENS.calibOK && S.phase === 'aim') {
     const an = SENS.anchor;
     if (!an || Math.abs(wrap(yaw - an.yaw)) > TU.steadyDeg || Math.abs(pitch - an.pitch) > TU.steadyDeg || Math.abs(wrap(roll - an.roll)) > TU.steadyDeg) { SENS.anchor = s; SENS.since = t; }
-    else if (t - SENS.since >= TU.steadyMs) { SENS.base = { yaw: an.yaw, pitch: an.pitch, roll: an.roll }; SENS.calibOK = true; SFX.ready(); if (S.n === 0) toast('心定了！手機往左轉或左傾，準星往左'); if (S.phase === 'aim') { setHint(CHARGE_HINT); timerResume(); } }
+    else if (t - SENS.since >= TU.steadyMs) { SENS.base = { yaw: an.yaw, pitch: an.pitch, roll: an.roll }; SENS.calibOK = true; SFX.ready(); if (S.n === 0) toast('心定了！手機越往前平躺，落點越遠'); if (S.phase === 'aim') { setHint(CHARGE_HINT); timerResume(); } }
     if (S.phase === 'aim') updateCalibUI();
   }
   if (SENS.calibOK) { const r = aimFrom(s); SENS.a = r.a; SENS.e = r.e; }
@@ -1229,14 +1239,12 @@ function aimFrom(s) {   // 這一刻的手機姿勢 → 左右（-1～1）與仰
   const b = SENS.base, x = (wrap(s.yaw - b.yaw) / TU.yawRange + wrap(s.roll - b.roll) / TU.rollRange) * (SAVE.flipX ? -1 : 1);
   return { a: clamp(x, -1, 1), e: clamp(0.5 + (s.pitch - b.pitch) / (2 * TU.pitchRange), 0, 1) };
 }
-function onMotion(e) {
-  if (!SENS.on || S.phase !== 'aim' || !(S.charging || (S.preset && SENS.calibOK))) return;   // 要先按住蓄力（分工合投的放箭者不用），往前一送才算放箭
+function onMotion(e) {   // 往前一送＝放箭
+  if (!SENS.on || S.phase !== 'aim' || !SENS.calibOK) return;
   const ac = e.acceleration; let m = 0;
   if (ac && ac.x != null) m = Math.hypot(ac.x, ac.y, ac.z);
   else { const g = e.accelerationIncludingGravity; if (g && g.x != null) m = Math.abs(Math.hypot(g.x, g.y, g.z) - 9.81); }
-  const t = performance.now();
-  if (S.preset) { if (m > TU.flick && t - S.t0 > 900) throwPreset(); return; }
-  if (m > TU.flick && t - S.cT0 > 350) releaseCharge();
+  if (m > TU.flick) motionRelease();
 }
 function aimAt(t) {   // 放箭「之前」那一刻的瞄準（往前一送本身會晃到手機）
   let best = null; for (const s of SENS.buf) if (!best || Math.abs(s.t - t) < Math.abs(best.t - t)) best = s;
@@ -1248,7 +1256,7 @@ $('#btnCal').addEventListener('click', (e) => { e.stopPropagation(); SENS.calibO
 function updateCalibUI() {
   const el = $('#calib'); el.classList.toggle('ok', SENS.calibOK);
   const p = SENS.calibOK ? 100 : clamp((performance.now() - SENS.since) / TU.steadyMs * 100, 0, 100); $('#calRing').style.setProperty('--p', SENS.anchor ? p : 0);
-  $('#calTxt').textContent = SENS.calibOK ? '心定了・手機往左，準星往左' : '舉起手機，背面對準壺，靜止一下';
+  $('#calTxt').textContent = SENS.calibOK ? '心定了・直立＝近，往前平躺＝遠' : '舉起手機，背面對準壺，靜止一下';
 }
 async function sensEnable() {
   try { if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') { if ((await DeviceMotionEvent.requestPermission()) !== 'granted') return 'denied'; } } catch (e) { return 'denied'; }
@@ -1270,7 +1278,7 @@ function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add
 function showRoundIntro() {
   const r = R(); S.phase = 'intro'; S.camMode = 'title';
   $('#rTag').textContent = `第 ${S.round + 1} 輪・共 ${ROUNDS.length} 輪`; $('#rName').textContent = r.name; $('#rSub').textContent = r.sub;
-  $('#rTip').innerHTML = ((S.mode === 'touch' || S.mode === 'motion') && r.tipTouch ? r.tipTouch : r.tip) + (S.mode === 'touch' && S.round === 0 ? '<ul class="tl"><li><b>🖐️ 按住畫面拖曳</b>：落點圈浮在手指上方，放開就放箭</li><li><b>↕️ 右邊滑桿</b>：調仰角（拋多高），調一次會記住</li><li><b>⏱ 每矢 15 秒倒數</b>：越快投進，加成越多（最多 +0.5）</li><li><b>手指停得越穩</b>，圈晃得越小；拖到底部放開＝取消</li></ul>' : '') + (S.mode === 'motion' && S.round === 0 ? '<ul class="tl"><li><b>📱 手機直立拿在胸前、背面對準壺</b>，靜止一下＝「心定」（每一矢都要）</li><li><b>↔️ 往左轉或往左傾，準星往左</b>；往右同理</li><li><b>↕️ 上緣往自己這邊傾</b>＝仰角變高</li><li><b>按住「蓄力」</b>，落點圈對準壺就放開（或往前一送）</li><li>準星跟手機左右相反？按「⇄ 左右反了？」對調</li></ul>' : '');
+  $('#rTip').innerHTML = ((S.mode === 'touch' || S.mode === 'motion') && r.tipTouch ? r.tipTouch : r.tip) + (S.mode === 'touch' && S.round === 0 ? '<ul class="tl"><li><b>🖐️ 按住畫面拖曳</b>：落點圈浮在手指上方，放開就放箭</li><li><b>↕️ 右邊滑桿</b>：調仰角（拋多高），調一次會記住</li><li><b>⏱ 每矢 15 秒倒數</b>：越快投進，加成越多（最多 +0.5）</li><li><b>手指停得越穩</b>，圈晃得越小；拖到底部放開＝取消</li></ul>' : '') + (S.mode === 'motion' && S.round === 0 ? '<ul class="tl"><li><b>📱 手機直立拿在胸前、背面對準壺</b>，靜止一下＝「心定」（每一矢都要）</li><li><b>↕️ 越直立落點越近，越往前平躺越遠</b></li><li><b>↔️ 往左轉或往左傾，落點往左</b>；往右同理</li><li><b>右邊滑桿</b>調仰角（拋多高），用拇指調一次會記住</li><li>落點圈對準壺，按「放箭」（或往前一送）；左右相反就按「⇄ 左右反了？」</li></ul>' : '');
   $('#scrRound').hidden = false; $('#hud').hidden = false; hideAimUI(); setHint('');
 }
 function roundEnd() {
