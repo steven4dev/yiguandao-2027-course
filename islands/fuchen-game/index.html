@@ -207,7 +207,7 @@ body{line-break:strict}
 .signup b{color:var(--gold);font-size:1.02rem}
 .signup p{margin:6px 0 10px;font-size:.92rem;line-height:1.7}
 .signupBtn{display:block;padding:12px;border-radius:12px;background:var(--btn);color:var(--btn-ink);font-weight:800;font-size:1.05rem;text-decoration:none}
-.quote{margin:12px 0;padding:12px 14px;border-left:3px solid var(--gold);background:var(--gold-soft);border-radius:8px;line-height:1.7}
+.quote{margin:12px 0;padding:12px 14px;border:1px solid color-mix(in srgb,var(--gold) 50%,transparent);background:var(--gold-soft);border-radius:12px;line-height:1.7}
 .quote small{display:block;color:var(--muted);font-size:.75rem;margin-top:4px}
 .teach .cite{margin:4px 0 0;line-height:1.55}
 .ver{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom) + 4px);font-size:.65rem;color:rgba(255,255,255,.35);pointer-events:none}
@@ -247,7 +247,8 @@ body{line-break:strict}
 .vsSlot canvas{display:block;width:62px;height:62px;margin:0 auto}
 .vsSlot b{display:block;font-size:.9rem}.vsSlot small{display:block;font-size:.72rem;color:var(--muted)}
 .vsSlot .tag{position:absolute;top:4px;left:6px;font-size:.62rem;font-weight:800;color:#1b1409;background:var(--gold);border-radius:8px;padding:0 6px}
-.vsSlot.t0{border-left:4px solid #ff6b5b}.vsSlot.t1{border-left:4px solid #5aa9ff}
+.vsSlot.t0{border-color:rgba(255,107,91,.75);background:linear-gradient(180deg,rgba(255,107,91,.12),rgba(255,255,255,.04))}.vsSlot.t1{border-color:rgba(90,169,255,.75);background:linear-gradient(180deg,rgba(90,169,255,.12),rgba(255,255,255,.04))}
+.vsSlot.t0 .tag{background:#ff6b5b;color:#2a0d09}.vsSlot.t1 .tag{background:#5aa9ff;color:#06182e}
 .vsOpp.team{gap:10px}.vsOpp .tmc{display:flex;align-items:center;gap:5px;opacity:.78;white-space:nowrap}.vsOpp .tmc.me{opacity:1;color:var(--c);font-weight:900}.vsOpp .tmc b{color:inherit}.vsOpp .tmc i{font-style:normal;letter-spacing:0;font-size:.7rem}
 .vsSteps{position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 84px);z-index:12;display:flex;justify-content:center;gap:6px;pointer-events:none}
 .vsSteps .stp{min-width:3.6em;text-align:center;padding:3px 8px;border-radius:12px;background:rgba(10,14,22,.72);border:2px solid rgba(255,255,255,.15);color:var(--muted);font-size:.7rem;line-height:1.25}
@@ -611,7 +612,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261123.02';
+const VERSION = 'v261123.03';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
