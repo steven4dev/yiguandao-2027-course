@@ -735,7 +735,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a></div>
   <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261123.11</span>
+  <span class="ver">v261123.12</span>
   </div></div>
 </div>
 
@@ -9006,6 +9006,86 @@ renderer.shadowMap.autoUpdate = false;
 let frameN = 0;
 // 平移的範圍：最外圍那座島再往外留一點海
 const PAN_LIMIT = Math.max(...Object.values(islands).map((i) => Math.hypot(i.x, i.z))) + 30;
+/* ---------- 海面的小巧思：遠遠看海不要太平淡——不時冒出一小簇白浪花，偶爾有飛魚躍出水面滑翔一段再落水 ----------
+   全部重複使用一小組物件（浪花 26 簇、飛魚 3 條），不會越積越多；只在鏡頭看得到的海面附近出現，避開每座島 */
+{
+  const SEA_Y = -3.36, foamM = [], crests = [];
+  const foamGeo = new THREE.CircleGeometry(1, 10).rotateX(-Math.PI / 2);
+  const onIsland = (x, z, pad) => Object.values(islands).some((i) => Math.hypot(i.x - x, i.z - z) < i.R + pad);
+  const seaSpot = (r0, r1, pad) => {
+    for (let k = 0; k < 8; k++) {
+      const a = Math.random() * Math.PI * 2, r = r0 + Math.random() * (r1 - r0);
+      const x = controls.target.x + Math.cos(a) * r, z = controls.target.z + Math.sin(a) * r;
+      if (!onIsland(x, z, pad) && Math.hypot(x, z) < PAN_LIMIT + 60) return [x, z];
+    }
+    return null;
+  };
+  for (let i = 0; i < 26; i++) {
+    const g = new THREE.Group(); g.visible = false; scene.add(g);
+    const m = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false });
+    foamM.push(m);
+    // 一簇浪花＝一長條白浪＋兩三個小泡泡
+    const main = new THREE.Mesh(foamGeo, m); main.scale.set(1.6, 1, 0.35); g.add(main);
+    for (let k = 0; k < 3; k++) { const b = new THREE.Mesh(foamGeo, m); b.scale.setScalar(0.22 + Math.random() * 0.18); b.position.set((Math.random() - 0.5) * 2.4, 0.01, (Math.random() - 0.5) * 0.9); g.add(b); }
+    crests.push({ g, m, t0: -99, life: 2.4 });
+  }
+  const spawnCrest = (t, x, z, size = 1, life = 2.2 + Math.random() * 1.2) => {
+    const c = crests.find((q) => t - q.t0 > q.life); if (!c) return;
+    c.t0 = t; c.life = life; c.size = size * (0.7 + Math.random() * 0.8);
+    c.g.position.set(x, SEA_Y, z); c.g.rotation.y = Math.random() * Math.PI; c.g.visible = true;
+  };
+  // 飛魚：銀藍色的小身體＋一對透明的長胸鰭，從水裡躍出、張開翅膀滑翔、拍兩下尾巴再落水，起落都濺一小簇浪花
+  const fishBody = lam('#7fa8c9'), fishWing = new THREE.MeshLambertMaterial({ color: '#d8eaf6', transparent: true, opacity: 0.85, side: THREE.DoubleSide });
+  const fish = [0, 1, 2].map(() => {
+    const g = new THREE.Group(); g.visible = false; scene.add(g);
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.5, 4, 8).rotateZ(Math.PI / 2), fishBody); g.add(body);
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.22, 4).rotateZ(Math.PI / 2), fishBody); tail.position.x = -0.42; g.add(tail);
+    const wings = [-1, 1].map((sz) => { const w = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.26).translate(0, 0, 0), fishWing); w.position.set(0.05, 0.03, sz * 0.2); w.rotation.x = Math.PI / 2; g.add(w); return w; });
+    g.scale.setScalar(2.2);   // 比真實大一點，遠遠看才找得到
+    return { g, wings, t0: -99, dur: 1.6 };
+  });
+  let nextCrest = 0, nextFish = 6;
+  animators.push((t) => {
+    // 浪花：每 0.15 秒左右冒一簇；鏡頭拉得越遠，範圍越大
+    const far = camera.position.distanceTo(controls.target), r1 = Math.min(220, far * 1.1);
+    if (t > nextCrest) { nextCrest = t + 0.12 + Math.random() * 0.12; const sp = seaSpot(6, r1, 4); if (sp) spawnCrest(t, sp[0], sp[1], 1 + far / 70); }   // 遠看浪花放大，才看得出來
+    const dim = 1 - nightT * 0.45;
+    for (const c of crests) {
+      if (!c.g.visible) continue;
+      const k = (t - c.t0) / c.life;
+      if (k >= 1) { c.g.visible = false; continue; }
+      c.g.scale.setScalar(c.size * (0.4 + k * 0.9));
+      c.m.opacity = 0.85 * dim * Math.min(1, k * 5) * (1 - k);
+    }
+    // 飛魚：每 5～12 秒一條（同時最多三條）
+    if (t > nextFish) {
+      nextFish = t + 5 + Math.random() * 7;
+      const f = fish.find((q) => t - q.t0 > q.dur), sp = seaSpot(10, Math.min(120, far * 0.8), 8);
+      if (f && sp) {
+        const a = Math.random() * Math.PI * 2, len = 14 + Math.random() * 12;
+        f.t0 = t; f.dur = 1.6 + Math.random() * 0.8; f.h = 2.5 + Math.random() * 2;
+        f.p0 = new THREE.Vector3(sp[0], SEA_Y, sp[1]); f.dir = new THREE.Vector3(Math.cos(a), 0, Math.sin(a)); f.len = len;
+        f.g.rotation.y = -a; f.g.visible = true; f.splashOut = false;
+        spawnCrest(t, sp[0], sp[1], 0.6, 1.2);
+      }
+    }
+    for (const f of fish) {
+      if (!f.g.visible) continue;
+      const k = (t - f.t0) / f.dur;
+      if (k >= 1) {
+        f.g.visible = false;
+        const e = f.p0.clone().addScaledVector(f.dir, f.len); spawnCrest(t, e.x, e.z, 0.6, 1.2);
+        continue;
+      }
+      // 拋物線：躍出→滑翔（中段比較平）→落水
+      const y = f.h * Math.sin(k * Math.PI) * (1 - 0.25 * Math.sin(k * Math.PI * 2) ** 2);
+      f.g.position.copy(f.p0).addScaledVector(f.dir, f.len * k); f.g.position.y = SEA_Y + 0.05 + y;
+      f.g.rotation.z = Math.cos(k * Math.PI) * 0.45;   // 起飛抬頭、落水低頭
+      const open = Math.min(1, k * 6, (1 - k) * 6), flap = k < 0.2 || k > 0.8 ? Math.sin(t * 40) * 0.4 : 0;
+      f.wings.forEach((w, i) => { w.rotation.x = Math.PI / 2 + (i ? 1 : -1) * ((1 - open) * 1.2 + flap); });
+    }
+  });
+}
 function tick() {
   // 遊戲開在上面時，群島先不畫（遊戲要用 3D 和感測器，兩個 WebGL 同時跑手機會吃力）；時鐘照走，回島時不會跳
   if (typeof fcT !== 'undefined' && fcT.rafStop) { clock.getDelta(); requestAnimationFrame(tick); return; }
