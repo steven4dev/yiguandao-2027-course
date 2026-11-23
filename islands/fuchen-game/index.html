@@ -177,8 +177,8 @@ body{line-break:strict}
 @keyframes statPop{0%{transform:scale(1)}40%{transform:scale(1.07);box-shadow:0 0 22px rgba(255,214,110,.7)}100%{transform:scale(1)}}
 #scrResult #resCaught{margin:2px 0 6px}
 #scrResult .ch{font-size:.82rem;font-weight:800;color:var(--ink);text-align:center;margin-bottom:2px}
-#scrResult .cmrow{display:flex;justify-content:space-between;gap:2px;align-items:flex-start}
-#scrResult .cm{position:relative;flex:1 1 0;min-width:0;text-align:center;line-height:1.15;opacity:0}
+#scrResult .cmrow{display:flex;justify-content:center;gap:2px;align-items:flex-start}
+#scrResult .cm{position:relative;flex:1 1 0;min-width:0;max-width:150px;text-align:center;line-height:1.15;opacity:0}
 #scrResult #resCaught.reveal .cm{animation:cmIn .42s cubic-bezier(.2,1.5,.4,1) both;animation-delay:calc(var(--i) * 90ms)}
 @keyframes cmIn{0%{opacity:0;transform:translateY(8px) scale(.5)}100%{opacity:1;transform:none}}
 #scrResult .cm canvas{display:block;width:100%;aspect-ratio:1/1}
@@ -619,7 +619,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261123.09';
+const VERSION = 'v261123.10';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -2399,7 +2399,8 @@ function showResult(kind){
   prepareShare({ kind, diff: D().name.replace(/^[^一-鿿]+/, ''), hits, acc, maxCombo, score, caught: caught.map(c => ({ def: c.def, name: c.def.name, lv: c.lv, isNew: !!c.isNew, gold: !!c.gold })) });
   { const nn = caught.filter(c => c.isNew).length; $('#btnDexR').innerHTML = '📖 看淨心錄' + (nn ? `<i class="newN">新 ${nn}</i>` : ''); }
   $('#scrResult').hidden = false;
-  requestAnimationFrame(() => { setupFlow(); document.querySelectorAll('#resCaught canvas').forEach((cv, i) => { try{ dust(cv.getContext('2d'), shown[i].def, 56, 62, 36, 1.2 + i*0.7, { noMeasure: true }); }catch(e){} }); runResultAnim(finals); });
+  // 收服的怪依實際顯示大小 × 螢幕解析度來畫（不再用固定 112 像素放大成一坨）
+  requestAnimationFrame(() => { setupFlow(); document.querySelectorAll('#resCaught canvas').forEach((cv, i) => { try{ const { w, h, d } = fitCv(cv), c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, w, h); dust(c, shown[i].def, w/2, h*0.555, w*0.32, 1.2 + i*0.7, { noMeasure: true }); }catch(e){} }); runResultAnim(finals); });
   kind === 'over' ? sfx.defeat() : sfx.victory();
   const best = store.get('fuchenGame.best', 0); if(score > best) store.set('fuchenGame.best', score);
 }
