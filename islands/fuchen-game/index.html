@@ -122,6 +122,7 @@ body{line-break:strict}
 /* 開場的 3D 玩法示範（取代原本的說明文字；原文收進「詳細說明」） */
 .hdemo{position:relative;margin:6px 0 2px;border-radius:14px;overflow:hidden;background:radial-gradient(ellipse at 60% 30%,#1b2a46,#0b1220 75%);border:1px solid rgba(232,189,90,.25)}
 .hdemo canvas{display:block;width:100%;aspect-ratio:16/9}
+.hdhint{position:absolute;top:8px;right:8px;z-index:2;font-size:.72rem;padding:3px 10px;border-radius:999px;background:rgba(10,14,22,.7);border:1px solid rgba(232,189,90,.4);color:#ffe7a8;pointer-events:none;animation:hdh 2.4s ease-in-out infinite}@keyframes hdh{50%{opacity:.55}}
 .hdcap{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-weight:900;font-size:1rem;letter-spacing:1px;text-shadow:0 1px 6px rgba(0,0,0,.8)}
 .hdcap .no{color:var(--bad)}.hdcap .ok{color:var(--good)}
 .hdmore{display:block;margin:2px auto 0;padding:2px 10px;font-size:.74rem;color:var(--muted);background:none;border:0;text-decoration:underline}
@@ -427,7 +428,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     <button id="btnIsleT" class="isleTop" type="button">🏝️ 返回島嶼</button>
     <h1>🪶 拂塵試煉</h1>
     <p class="note tsub">拂塵淨心島・體感小遊戲</p>
-    <div class="hdemo"><canvas id="hdCv" aria-label="玩法示範動畫：手機直立握好，聽到揮就整隻手臂大揮；只甩手腕會判動作太小"></canvas><div class="hdcap" id="hdCap">手機直立、對準起點</div></div>
+    <div class="hdemo"><div class="hdhint" id="hdHint" hidden>👆 拖曳可以轉視角</div><canvas id="hdCv" aria-label="玩法示範動畫：手機直立握好，聽到揮就整隻手臂大揮；只甩手腕會判動作太小"></canvas><div class="hdcap" id="hdCap">手機直立、對準起點</div></div>
     <button class="hdmore" id="hdMore" type="button">ⓘ 詳細說明</button>
     <div class="hddetail" id="hdDetail" hidden>
       <p class="tintro"><span class="nb">「時時勤拂拭，勿使惹塵埃。」</span>手機就是您的拂塵柄：<b class="nb">看清符印</b>、<span class="nb">聽到「<b>揮</b>」</span>就大揮一拂，把塵靈淨化、<b class="nb">收進淨心錄</b>。</p>
@@ -615,7 +616,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261123.06';
+const VERSION = 'v261123.07';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -3072,7 +3073,7 @@ class Fig {
     this.r = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true }); this.r.setPixelRatio(1); this.r.setSize(w, h, false); this.r.setClearColor(0x000000, 0);
     this.sc = new THREE.Scene(); this.cam = new THREE.PerspectiveCamera(o.fov || 30, w / h, 0.1, 60);
     const el = (o.elev || 40) * Math.PI / 180, d = o.dist || 5.4, lx = o.lookX ?? 0.35, ly = o.lookY ?? 1.2;
-    this.cam.position.set(lx, ly + d * Math.sin(el), -0.3 + d * Math.cos(el)); this.cam.lookAt(lx, ly, -0.3); this.cam.updateMatrixWorld(); this.cam.updateProjectionMatrix();
+    this.cam.position.set(lx, ly + d * Math.sin(el), -0.3 + d * Math.cos(el)); this.cam.lookAt(lx, ly, -0.3); this.cam.updateMatrixWorld(); this.cam.updateProjectionMatrix(); this.vb = { lx, ly, d, el: el * 180 / Math.PI };
     this.glass = new THREE.ShaderMaterial({ vertexShader: GLASS_V, fragmentShader: GLASS_F, transparent: true, depthWrite: false, uniforms: { uBase: { value: new THREE.Color(0x9fb6dc) }, uRim: { value: new THREE.Color(0xdcebff) }, uA: { value: 0.3 } } });
     this.depthMat = new THREE.MeshBasicMaterial({ colorWrite: false });
     this.parts = {}; this.body = new THREE.Group(); this.sc.add(this.body);
@@ -3113,6 +3114,11 @@ class Fig {
     set(P.sR, this.S, 0.11, 0.11, 0.11);
   }
   planePt(x, y){ return new V3(x * this.R, -y * this.R, 0).applyMatrix4(this.plane.matrixWorld); }   // 符印座標（y 朝下）→ 世界座標
+  // 繞著小人轉視角：yaw 左右（度）、pitch 俯角增減（度）、zoom 拉近拉遠；軌跡和符印平面是用 project() 投影的，會跟著鏡頭一起對齊
+  view(yaw, pitch, zoom){
+    const b = this.vb, el = Math.max(10, Math.min(70, b.el + pitch)) * Math.PI / 180, ya = yaw * Math.PI / 180, d = b.d / (zoom || 1);
+    this.cam.position.set(b.lx + d * Math.cos(el) * Math.sin(ya), b.ly + d * Math.sin(el), -0.3 + d * Math.cos(el) * Math.cos(ya)); this.cam.lookAt(b.lx, b.ly, -0.3); this.cam.updateMatrixWorld();
+  }
   project(v){ const p = v.clone().project(this.cam); return { x: (p.x * 0.5 + 0.5) * this.w, y: (-p.y * 0.5 + 0.5) * this.h }; }
   render(st){
     const S = this.S, P = this.parts, L1 = this.L, L2 = this.L;
@@ -3168,6 +3174,8 @@ const swingState = (path, e) => { const f = pathFor(path), pts = []; for(let j =
   const SEQ = []; LIST.forEach(([k, nm], i) => { const long = k === 'circle' || k === 'alpha'; SEQ.push([0.55, 'ready', k, i === 0 ? '手機直立、對準綠色起點' : nm]); SEQ.push([long ? 1.15 : 0.6, 'swing', k, i === 0 ? '聽到「揮」，整隻手臂大揮' : nm]); SEQ.push([0.5, 'done', k, nm]); });
   SEQ.push([1.3, 'wrist', '', '<span class="no">✖</span> 只甩手腕＝動作太小']); SEQ.push([0.6, 'pause', '', '<span class="no">✖</span> 只甩手腕＝動作太小']);
   const TOT = SEQ.reduce((a, s) => a + s[0], 0);
+  // 觸控轉視角（打樣：網址加 ?orbit=1 才啟用）：單指拖曳左右轉、上下調俯角，限制在背後左右各 55°、俯角 15°～65°；放開 2 秒後慢慢回到背後預設視角
+  const ORBIT = /[?&]orbit=1\b/.test(location.search), V = { yaw: 0, pitch: 0, zoom: 1, drag: false, idle: 0 }, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   const frame = now => {
     if(document.getElementById('scrTitle').hidden){ raf = 0; return; }
     fig = sizeFig(cv, fig); let t = reduce ? SEQ[1][0] + SEQ[0][0] - 0.01 : (now / 1000) % TOT, i = 0; while(t > SEQ[i][0]){ t -= SEQ[i][0]; i++; } const [d, kind, key, txt] = SEQ[i], k = t / d;
@@ -3177,10 +3185,23 @@ const swingState = (path, e) => { const f = pathFor(path), pts = []; for(let j =
     else if(kind === 'swing') st = swingState(key, ease(k));
     else if(kind === 'done'){ st = swingState(key, 1); st.trail.alpha = 1 - k * 0.6; }
     else { const kk = kind === 'wrist' ? Math.min(1, k / 0.7) : 1; st = { world: [0.36, 1.32, -0.62], roll: Math.sin(kk * TAU) * Math.sin(Math.min(1, kk * 1.4) * Math.PI) * 0.45, mood: kk >= 1 ? 'oops' : 'focus', trail: null }; extra = { wrist: kk }; }
+    if(ORBIT){ if(!V.drag && now - V.idle > 2000){ const k = reduce ? 1 : 0.07; V.yaw += (0 - V.yaw) * k; V.pitch += (0 - V.pitch) * k; V.zoom += (1 - V.zoom) * k; if(Math.abs(V.yaw) < 0.05) V.yaw = 0; if(Math.abs(V.pitch) < 0.05) V.pitch = 0; }
+      fig.view(V.yaw, V.pitch, V.zoom); }
     paint(cv, fig, st, extra);
-    raf = reduce ? 0 : requestAnimationFrame(frame);
+    raf = reduce && !(ORBIT && (V.drag || V.yaw || V.pitch || V.zoom !== 1)) ? 0 : requestAnimationFrame(frame);
   };
   const start = () => { if(!raf) raf = requestAnimationFrame(frame); };
+  if(ORBIT){
+    const hint = document.getElementById('hdHint'); let seen = false; try{ seen = !!localStorage.getItem('fuchenGame.orbitHint'); }catch(e){} if(hint && !seen) hint.hidden = false;
+    const hideHint = () => { if(hint && !hint.hidden){ hint.hidden = true; try{ localStorage.setItem('fuchenGame.orbitHint', '1'); }catch(e){} } };
+    cv.style.touchAction = 'none'; cv.style.cursor = 'grab'; let last = null;
+    cv.addEventListener('pointerdown', e => { try{ cv.setPointerCapture(e.pointerId); }catch(err){} V.drag = true; last = [e.clientX, e.clientY]; cv.style.cursor = 'grabbing'; hideHint(); start(); });
+    cv.addEventListener('pointermove', e => { if(!V.drag || !last) return; const dx = e.clientX - last[0], dy = e.clientY - last[1]; last = [e.clientX, e.clientY]; V.yaw = clamp(V.yaw - dx * 0.35, -55, 55); V.pitch = clamp(V.pitch + dy * 0.25, -21, 29); start(); });
+    const up = () => { V.drag = false; last = null; V.idle = performance.now(); cv.style.cursor = 'grab'; start(); };
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+    cv.addEventListener('wheel', e => { e.preventDefault(); V.zoom = clamp(V.zoom * (e.deltaY < 0 ? 1.08 : 0.93), 0.85, 1.35); V.idle = performance.now(); hideHint(); start(); }, { passive: false });
+    cv.addEventListener('dblclick', () => { V.yaw = V.pitch = 0; V.zoom = 1; start(); });
+  }
   new MutationObserver(start).observe(document.getElementById('scrTitle'), { attributes: true, attributeFilter: ['hidden'] }); start();
   document.getElementById('hdMore').addEventListener('click', () => { const d = document.getElementById('hdDetail'); d.hidden = !d.hidden; document.getElementById('hdMore').textContent = d.hidden ? 'ⓘ 詳細說明' : '收起說明'; });
 }
