@@ -2,6 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
+<script>if (/(^#|&)(acct|acct_err)=/.test(location.hash)) { window.__acctHash = location.hash; history.replaceState(null, '', location.href.split('#')[0]); }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#2b1d14">
 <title>投壺島｜全真群島</title>
@@ -162,6 +163,11 @@ body.hostview #mpQR{width:180px;height:180px}
 #timer.out small{color:var(--muted)}
 #tcancel{position:fixed;z-index:6;left:12px;right:12px;bottom:max(10px,env(safe-area-inset-bottom));height:calc(14vh - 6px);border:2px dashed rgba(255,255,255,.7);border-radius:18px;background:rgba(43,29,20,.28);color:#fff;font-weight:900;font-size:15px;display:flex;align-items:center;justify-content:center;pointer-events:none;letter-spacing:.08em}
 #tcancel.hot{background:rgba(194,59,46,.62)}
+.acct{margin:10px 0 0;text-align:center;font-size:13px;color:var(--muted);line-height:1.5}
+.acct.left{text-align:left;margin:-4px 0 12px}
+.acct b{color:var(--ink)}
+.acct .am{font-size:12px;margin-top:2px}
+.linkbtn.inl{display:inline;width:auto;padding:0 2px;font-size:13px}
 .linkbtn{display:block;width:100%;text-align:center;font-size:13.5px;font-weight:700;color:var(--muted);text-decoration:underline;text-underline-offset:3px;padding:6px 0}
 #vig{position:fixed;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 52%,rgba(40,20,6,.30) 100%)}
 #gH{left:50%;transform:translateX(-50%);width:min(78vw,360px);height:16px;bottom:calc(max(14px,env(safe-area-inset-bottom)) + var(--gb))}
@@ -252,6 +258,7 @@ body.motion{--gb:82px}
       <button class="linkbtn" id="btnTap" type="button">經典三段式（依序點三下：仰角 → 力道 → 左右）</button>
     </div>
     <p class="note" id="motionNote" hidden>體感需要手機；電腦請用上面的「觸控玩」（滑鼠拖曳就行）。</p>
+    <div class="acct" id="acctRow"></div>
     <p class="rec" id="rec"></p>
   </div>
 </section>
@@ -293,6 +300,7 @@ body.motion{--gb:82px}
       <h2>以禮會友</h2>
       <p class="sub">一對一賓主對投，或二對二分工合投。投壺不比輸贏，投給朋友看。</p>
       <label class="fld">你的名字<input id="mpName" maxlength="10" autocomplete="off" placeholder="例如：小明"></label>
+      <div class="acct left" id="mpNameNote"></div>
       <div class="stack">
         <button class="btn" id="mpCreate" type="button">🏠 建立房間</button>
         <div class="join"><input id="mpCode" maxlength="5" placeholder="輸入 5 碼房號" autocapitalize="characters" autocomplete="off"><button class="btn jade sm" id="mpJoin" type="button">加入</button></div>
@@ -344,7 +352,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.07';
+const VER = 'v261123.08';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -401,9 +409,12 @@ const TITLES = [
 
 /* ——— 存檔：只存在這支手機的瀏覽器 ——— */
 const KEY = 'islands-touhu';
-let SAVE = { v: 1, best: 0, plays: 0, ins: 0, ears: 0, throws: 0, mode: 'tap', nick: '', flipX: false };
+let SAVE = { v: 1, best: 0, plays: 0, ins: 0, ears: 0, throws: 0, mode: 'tap', nick: '', nickCustom: false, flipX: false };
 try { const o = JSON.parse(localStorage.getItem(KEY) || 'null'); if (o && o.v === 1) SAVE = Object.assign(SAVE, o); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(SAVE)); } catch (e) {} };
+/* —— LINE 登入的名字（群島共用的 islands-account，只存在這支手機）、HTML 跳脫：這兩個在載入時就會用到，所以放最前面 —— */
+const esc = (x) => String(x).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+const lineName = () => { try { const a = JSON.parse(localStorage.getItem('islands-account') || 'null'); return a && a.t && a.nm ? String(a.nm).slice(0, 10) : ''; } catch (e) { return ''; } };
 
 /* =========================================================
    聲音：全部用 Web Audio 即時合成（沒有音檔）
@@ -1315,7 +1326,7 @@ $('#btnMotion').addEventListener('click', async () => {
   if (r === 'ok') { S.mode = 'motion'; document.body.classList.add('motion'); SENS.on = true; SENS.calibOK = false; SENS.anchor = null; SAVE.mode = 'motion'; save(); newGame(); }
   else toast(r === 'denied' ? '沒有取得動作感測授權，改用「點三下玩」吧' : '這個瀏覽器讀不到感測器，改用「點三下玩」吧（LINE 內可改用手機瀏覽器開啟）');
 });
-function paintRec() { $('#rec').textContent = SAVE.plays ? `你玩過 ${SAVE.plays} 場・最高 ${fmt1(SAVE.best)} 分・累計入壺 ${SAVE.ins}、貫耳 ${SAVE.ears}（只記在這支手機）` : ''; }
+function paintRec() { $('#rec').textContent = SAVE.plays ? `你玩過 ${SAVE.plays} 場・最高 ${fmt1(SAVE.best)} 分・累計入壺 ${SAVE.ins}、貫耳 ${SAVE.ears}（${lineName() ? '已綁定 LINE，換手機也在' : '只記在這支手機，登入 LINE 就能帶著走'}）` : ''; }
 paintRec();
 
 /* =========================================================
@@ -1352,7 +1363,26 @@ function buildRep(A) {
 
 /* —— 連線 —— */
 const mpSend = (o) => { if (MP.ws && MP.ws.readyState === 1) MP.ws.send(JSON.stringify(o)); };
-function mpDefaultName() { try { const a = JSON.parse(localStorage.getItem('islands-account') || 'null'); if (a && a.nm) return String(a.nm).slice(0, 10); } catch (e) {} return SAVE.nick || ''; }
+/* —— LINE 登入（群島共用的帳號伺服器，見 account-worker/；同網域的 islands-account 存登入憑證與 LINE 名字）—— */
+let ACCT = null;   // account.js 回報的狀態：{acct, busy, msg}
+function acctPaint() {
+  const nm = lineName(), msg = ACCT && ACCT.msg ? `<div class="am">${esc(ACCT.msg)}</div>` : '';
+  $('#acctRow').innerHTML = nm
+    ? `☁️ 已用 LINE 登入：<b>${esc(nm)}</b>・最高分與紀錄會跟著你 <button class="linkbtn inl" data-act="logout" type="button">登出</button>${msg}`
+    : `<button class="linkbtn" data-act="login" type="button">👤 用 LINE 登入：紀錄換手機也在，對戰自動帶入名字</button>${msg}`;
+  $('#mpNameNote').innerHTML = nm ? `名字來自 LINE，<b>可以改成暱稱</b>；同房的朋友會看到這個名字。` : `同房的朋友會看到這個名字。<button class="linkbtn inl" data-act="login" type="button">用 LINE 登入，自動帶入名字</button>`;
+  paintRec(); if (!$('#mpEntry').hidden && !$('#mpName').value) $('#mpName').value = mpDefaultName();
+}
+function acctAct(e) {
+  const b = e.target.closest('[data-act]'); if (!b) return; e.stopPropagation(); audioInit();
+  const A = window.__acct; if (!A) return toast('登入功能還在載入，或這個網路連不上，晚點再試');
+  if (b.dataset.act === 'login') A.loginLine(); else if (b.dataset.act === 'logout') A.logout();
+}
+['#acctRow', '#mpNameNote'].forEach((q) => $(q).addEventListener('click', acctAct));
+addEventListener('acct', (e) => { ACCT = e.detail; acctPaint(); });
+acctPaint();
+function mpDefaultName() { const l = lineName(); return (SAVE.nickCustom && SAVE.nick) ? SAVE.nick : (l || SAVE.nick || ''); }   // 自己改過的暱稱優先，否則用 LINE 名字
+function mpRememberName() { const n = mpName(), l = lineName(); SAVE.nick = n; SAVE.nickCustom = !!l && n !== l; save(); }
 const mpName = () => (($('#mpName').value || mpDefaultName() || '賓客').trim().slice(0, 10)) || '賓客';
 function mpSave() { try { sessionStorage.setItem('touhu-mp', JSON.stringify({ code: MP.code, pid: MP.pid, watch: MP.watch, hk: MP.hk })); } catch (e) {} }
 function mpConnect(code, opts = {}) {
@@ -1620,13 +1650,13 @@ function mpOpenEntry(code) { $('#scrTitle').hidden = true; $('#scrMP').hidden = 
 $('#btnMP').addEventListener('click', () => { audioInit(); mpOpenEntry(MPQ.get('room') || ''); });
 $('#mpBack').addEventListener('click', () => { $('#scrMP').hidden = true; $('#scrTitle').hidden = false; S.phase = 'title'; });
 $('#mpCreate').addEventListener('click', async () => {
-  audioInit(); SAVE.nick = mpName(); save(); const b = $('#mpCreate'); b.disabled = true;
+  audioInit(); mpRememberName(); const b = $('#mpCreate'); b.disabled = true;
   try { const r = await mpApi('/api/create', {}); if (!r.ok) throw 0; MP.qrFor = ''; mpConnect(r.j.code); } catch (e) { toast('連不上多人伺服器，晚點再試'); }
   b.disabled = false;
 });
 $('#mpJoin').addEventListener('click', async () => {
   audioInit(); const code = $('#mpCode').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''); if (code.length !== 5) return toast('請輸入 5 碼房號');
-  SAVE.nick = mpName(); save(); const b = $('#mpJoin'); b.disabled = true;
+  mpRememberName(); const b = $('#mpJoin'); b.disabled = true;
   try { const r = await mpApi('/api/room/' + code); if (r.status === 404) toast('找不到這個房號'); else if (!r.ok) throw 0; else if (r.j.full) toast('這個房間已經滿了'); else if (r.j.phase !== 'lobby') toast('這個房間已經開始了'); else { MP.qrFor = ''; mpConnect(code); } } catch (e) { toast('連不上多人伺服器，晚點再試'); }
   b.disabled = false;
 });
@@ -1704,6 +1734,13 @@ try { const q = new URLSearchParams(location.search); const r = parseInt(q.get('
 setupRound(); skySet(0, true); S.phase = 'title';
 if (location.search.includes('debug')) window.__TH = { S, TU, SENS, R, throwArrow, startAim, newGame, potState, info: renderer.info, guest, cam, potGroup, TOUCH, TM, timerFrac, MP, REPLAY, mpTick, mpReconcile, onOrient, onMotion, lockE, lockP, lockH, pFor, thetaOf, speedOf, landing, windDrift, psiOf, startCharge, releaseCharge };
 requestAnimationFrame(tick);
+</script>
+<script type="module">
+// 群島共用的帳號：LINE 登入與紀錄同步（開頁、每 45 秒、離開頁面時同步；規則見 islands/account-merge.js）。這支載入失敗不影響遊戲
+import { initAccount, onAccount, loginLine, logout } from '../account.js';
+window.__acct = { loginLine, logout };
+onAccount((st) => dispatchEvent(new CustomEvent('acct', { detail: st })));
+initAccount();
 </script>
 </body>
 </html>
