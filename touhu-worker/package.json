@@ -1,0 +1,8 @@
+{
+  "name": "touhu-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "投壺島多人對戰房間伺服器",
+  "scripts": { "dev": "wrangler dev --local --port 8787", "test": "node test/touhu.test.mjs" },
+  "devDependencies": { "wrangler": "^4.166.0", "ws": "^8.23.0" }
+}
