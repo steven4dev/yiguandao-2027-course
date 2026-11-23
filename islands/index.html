@@ -80,6 +80,7 @@
   .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; }
   .status > span { min-width: 0; }
   .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); flex: none; }
+  .status[data-state="error"] i { background: var(--brick); }
   .status[data-state="live"] i { background: var(--jade); box-shadow: 0 0 0 3px color-mix(in srgb, var(--jade) 25%, transparent); }
 
   /* 介面原則：資訊卡和時光捲軸一次只展開一個，收起來時都只剩一行 */
@@ -734,8 +735,8 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a></div>
-  <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261123.11</span>
+  <span class="status" id="status" data-state="loading" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取即時報名資料中…</span></span>
+  <span class="ver">v261123.12</span>
   </div></div>
 </div>
 
@@ -980,19 +981,10 @@ function cadreUidsOf(masked, groups) {
   return CADRE_NAMES.map((n, u) => [n, u]).filter(([n]) => mask(n) === masked && CADRE_OF.get(n).some((g) => groups.includes(g))).map(([, u]) => u);
 }
 
-// 報名資料備份（signup/data.json 2026/10/24 版本，只保留畫面需要的欄位，不含姓名）
-const SNAPSHOT = {
-  updated: '2026-10-25T01:06:27.952Z',
-  people: [
-    { g: '坤道', city: '桃園市', unit: '天選區', isCadre: true, cadre: ['公關禮節組'], m: '林○涵', date: '2026-10-24' },
-    { g: '乾道', city: '桃園市', unit: '至善區', isCadre: false, cadre: [], m: '李○賢', date: '2026-10-24' },
-    { g: '乾道', city: '新北市', unit: '天選區', isCadre: true, cadre: ['班務團隊'], m: '周○翔', date: '2026-10-24' },
-    { g: '坤道', city: '新北市', unit: '天選區', isCadre: true, cadre: ['班務團隊'], m: '何○貞', date: '2026-10-24' },
-  ],
-};
-SNAPSHOT.people.forEach((p) => { p.uids = p.isCadre ? cadreUidsOf(p.m, p.cadre) : []; });
-
-let realPeople = SNAPSHOT.people, dataStamp = SNAPSHOT.updated;
+// 登島人數只用報名表的即時資料，不內建備份：還沒讀到就寫「讀取中」，讀不到就明說原因
+let realPeople = [], dataStamp = '';
+let dataState = 'loading', dataErr = '';   // loading 讀取中｜live 即時｜stale 連線中斷（顯示上次讀到的）｜error 從沒讀到
+const peopleReady = () => dataState === 'live' || dataState === 'stale';
 // 報名表「所屬單位」選「我只想先登島逛逛而已」的是來逛逛的旅人：不算進登島人數，人偶戴草帽、揹背包，站在渡口島上看風景
 const isVisit = (p) => /逛逛/.test(p.unit || '');
 const peopleNow = () => realPeople.filter((p) => !isVisit(p));
@@ -6807,7 +6799,7 @@ function applyDate() {
   // 登島人數、倒數天數、瓶中信各一行；數字都用同一種大字（登島紅、倒數金、瓶中信藍）
   const countdown = next && left > 0 ? `距離「${esc(next.name)}」還有 <b class="n-gold">${left}</b> 天` : esc(nextText);
   const nv = visitorsNow().filter((p) => p.date <= now).length;
-  document.getElementById('brandCount').innerHTML = `<b>${list.length}</b> 位夥伴已登島${nv ? `<span class="visit-n">・另有 <b class="n-green">${nv}</b> 位旅人來逛逛</span>` : ''}`;
+  document.getElementById('brandCount').innerHTML = peopleReady() ? `<b>${list.length}</b> 位夥伴已登島${nv ? `<span class="visit-n">・另有 <b class="n-green">${nv}</b> 位旅人來逛逛</span>` : ''}` : (dataState === 'error' ? '登島人數暫時讀不到' : '登島人數讀取中…');
   document.getElementById('brandNext').innerHTML = countdown;
   renderWelcome(list.filter((p) => p.date === now), now === todayISO);
   const view = now + '|' + dataStamp + '|' + (selected || '');
@@ -7009,7 +7001,12 @@ function renderPanel() {
       ${bars('所屬單位', countBy(list, (p) => p.unit), list.length)}
       ${bars('居住縣市', countBy(list, (p) => p.city), list.length)}
       <div class="cta"><p>還沒登島嗎？填好報名表，你的小人偶就會出現在廣場上，跟大家一起度過 2027。</p><a href="${SIGNUP_URL}" target="_blank" rel="noopener">🛶 我要登島</a></div>
-      <p class="note">資料來源：${liveOk ? '報名表即時資料' : '報名資料備份'}（${stampText()} 更新）。點廣場上的小人偶可以看是誰：拿小旗的是班長、斜背彩帶的是副班長、戴金色小帽的是組長。</p>`;
+      <p class="note">資料來源：報名表即時資料（${liveOk ? stampText() + ' 更新' : '連線中斷，這是 ' + stampText() + ' 讀到的'}）。點廣場上的小人偶可以看是誰：拿小旗的是班長、斜背彩帶的是副班長、戴金色小帽的是組長。</p>`;
+    if (!peopleReady()) {
+      info = dataState === 'error' ? '登島人數暫時讀不到' : '登島人數讀取中…';
+      html = `<header><span class="eyebrow">全真島・第四期報名</span><h2>全真道院</h2></header>
+        <p class="note">${dataState === 'error' ? `即時報名資料讀不到（${esc(dataErr)}），所以現在沒有人數可以顯示。點左上角的連線狀態可以重試。` : '正在讀取報名表的即時資料⋯'}</p>`;
+    }
   } else if (isl.kind === 'course') {
     const c = isl.course, s = courseStatus(c, now), diff = dayIndex(c.date) - dayIndex(now);
     const d = new Date(c.date + 'T00:00:00+08:00');
@@ -7341,7 +7338,7 @@ function renderNav() {
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島</span></a>
     <button class="home" data-howto><span aria-hidden="true">👆</span><span>操作說明：旋轉、平移、縮放</span></button>
-    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('hope', '🍎 希望島・祈福樹與噴泉')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${jsOpen ? navItem('jishi', '⛰️ 濟世靈山島・濟公活佛體感抽籤', JS_DAILY && jsTodayFortune() ? '今日已抽' : '') : navItem('jishi', '🚧 濟世靈山島・施工中')}${ptOpen ? navItem('puti', '🪷 清淨菩提島・吹散無明、雲開見日', ptToday() ? '今日已雲開' : '') : navItem('puti', '🚧 清淨菩提島・施工中')}${fcOpen ? navItem('fuchen', '🪶 拂塵淨心島・拂塵試煉（體感打怪）') : navItem('fuchen', '🚧 拂塵淨心島・施工中')}${ckOpen ? navItem('chef', '🍳 廚神養成島・體感料理＋雜誌封面') : navItem('chef', '🚧 廚神養成島・施工中')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
+    <h3>中央</h3>${navItem('temple', '全真島・全真道院', peopleReady() ? `${peopleNow().filter((p) => p.date <= curISO()).length} 人` : (dataState === 'error' ? '讀不到' : '讀取中'))}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('hope', '🍎 希望島・祈福樹與噴泉')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${jsOpen ? navItem('jishi', '⛰️ 濟世靈山島・濟公活佛體感抽籤', JS_DAILY && jsTodayFortune() ? '今日已抽' : '') : navItem('jishi', '🚧 濟世靈山島・施工中')}${ptOpen ? navItem('puti', '🪷 清淨菩提島・吹散無明、雲開見日', ptToday() ? '今日已雲開' : '') : navItem('puti', '🚧 清淨菩提島・施工中')}${fcOpen ? navItem('fuchen', '🪶 拂塵淨心島・拂塵試煉（體感打怪）') : navItem('fuchen', '🚧 拂塵淨心島・施工中')}${ckOpen ? navItem('chef', '🍳 廚神養成島・體感料理＋雜誌封面') : navItem('chef', '🚧 廚神養成島・施工中')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
@@ -8227,37 +8224,37 @@ function summarize(table) {
 }
 
 let liveOk = false, lastLive = null, busy = false;
-const stampText = () => new Date(dataStamp).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+const stampText = () => dataStamp ? new Date(dataStamp).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : '—';
 function setStatus() {
   const st = $('status'), tx = $('statusText');
-  st.dataset.state = liveOk ? 'live' : 'backup';
-  tx.textContent = liveOk ? `已連線即時報名資料・${stampText()} 更新` : `即時資料連線失敗，顯示 ${stampText()} 的備份`;
+  st.dataset.state = dataState;
+  tx.textContent = {
+    loading: '讀取即時報名資料中…',
+    live: `已連線即時報名資料・${stampText()} 更新`,
+    stale: `連線中斷（${dataErr}），顯示 ${stampText()} 讀到的資料`,
+    error: `即時報名資料讀不到（${dataErr}）・點一下重試`,
+  }[dataState];
 }
+// 只讀報名表的即時資料；讀不到不再用備份，已經讀過就保留上次的即時資料並標明連線中斷
 async function loadPeople() {
   try {
     const r = await fetch(`${SHEET_URL}&t=${Date.now()}`, { cache: 'no-store' });
+    if (!r.ok) throw new Error(`試算表回應 ${r.status}`);
     const text = await r.text();
-    const json = JSON.parse(text.replace(/^[\s\S]*?setResponse\(/, '').replace(/\);?\s*$/, ''));
+    let json;
+    try { json = JSON.parse(text.replace(/^[\s\S]*?setResponse\(/, '').replace(/\);?\s*$/, '')); }
+    catch (x) { throw new Error('試算表回傳的內容不對，可能沒有開放檢視'); }
     const people = summarize(json.table);
-    if (!people.length) throw new Error('沒有資料');
+    if (!people.length) throw new Error('試算表目前沒有報名資料');
     realPeople = people;
     dataStamp = new Date().toISOString();
-    liveOk = true;
+    liveOk = true; dataState = 'live'; dataErr = '';
     lastLive = new Date();
-    return;
   } catch (e) {
-    // 已經連上過就保留上次的即時資料，只是狀態改成備份
-    if (lastLive) { liveOk = false; return; }
+    dataErr = e instanceof TypeError ? '網路連不上' : (e.message || '原因不明');
+    liveOk = false;
+    dataState = lastLive ? 'stale' : 'error';
   }
-  try {
-    const r = await fetch('../signup/data.json', { cache: 'no-store' });
-    if (!r.ok) throw new Error();
-    const d = await r.json();
-    realPeople = d.people.map((p) => ({ g: p.gender, city: p.city, unit: p.unit, isCadre: !!p.isCadre, cadre: p.cadreGroups || [],
-      uids: p.cadreGroups && p.cadreGroups.length ? cadreUidsOf(p.name, p.cadreGroups) : [], m: p.name, date: p.last }));
-    dataStamp = d.updated;
-  } catch (e) {}
-  liveOk = false;
 }
 // 漂流瓶：讀公開用試算表（只有審核通過的留言），欄位依標題找，順序換了也沒關係
 // 祈福卡：新表單的試算表＋瓶中信表單裡的舊祈福卡，新的排前面；自己剛寫、還沒讀到的先放進來
