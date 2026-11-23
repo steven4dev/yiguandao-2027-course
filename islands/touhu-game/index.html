@@ -60,11 +60,16 @@ button,a{font:inherit;color:inherit;cursor:pointer;border:0;background:none;text
 
 /* —— 開場 —— */
 /* 柔膠質感：奶油色的霧從下往上慢慢升起（多段漸層，沒有任何硬邊），壺在霧的上方，標題浮在霧裡、用柔光襯底 */
-#scrTitle{justify-content:flex-end;gap:10px;background:linear-gradient(to bottom,rgba(246,234,216,0) 0%,rgba(246,234,216,0) 26%,rgba(246,234,216,.16) 34%,rgba(246,234,216,.46) 42%,rgba(246,234,216,.74) 50%,rgba(246,234,216,.9) 60%,#f6ead8 78%)}
+#scrTitle{justify-content:flex-end;gap:10px;background:linear-gradient(to bottom,rgba(246,234,216,0) 0%,rgba(246,234,216,0) 24%,rgba(246,234,216,.3) 33%,rgba(246,234,216,.78) 43%,rgba(246,234,216,.94) 54%,#f6ead8 70%)}
 .brand{text-align:center;margin-bottom:2px;text-shadow:0 0 18px rgba(255,248,238,.95),0 0 8px rgba(255,248,238,.9),0 1px 0 rgba(255,255,255,.6)}
 .brand .eyebrow{font-size:13px;letter-spacing:.2em;color:#7a6652;font-weight:700}
 .brand h1{margin:0;font:900 42px/1.15 var(--serif);letter-spacing:.14em;text-indent:.14em}
 .brand p{margin:2px 0 0;color:#7a6652;font-size:13.5px;letter-spacing:.08em;font-weight:500}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
+.chips div{background:#fff1de;border-radius:14px;padding:8px 4px;text-align:center;line-height:1.25}
+.chips small{display:block;font-size:11.5px;color:var(--muted);font-weight:700}
+.chips b{display:block;font:900 15px var(--serif);margin-top:2px;color:var(--ink)}
+@media (max-height:680px){#scrTitle .chips{display:none}#scrTitle .acct .am{display:none}}   /* 短螢幕：把卡片瘦身，壺才有地方站 */
 .rules{margin:0 0 12px;font-size:13.5px;line-height:1.6;color:var(--ink);text-align:center}
 .rules b{color:var(--red)}
 .how{margin:0 0 12px;padding:0;list-style:none;font-size:14.5px;display:grid;gap:6px}
@@ -129,6 +134,8 @@ body.slowmo #bars i{height:7vh}
 #mpBar i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px}
 #mpBar .me{color:var(--red)}
 #mpBar b{font:900 16px var(--serif)}
+#mpBar .nm{display:inline-block;max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;text-decoration:none}
+#mpBar.big .nm{max-width:22vw}
 #mpBar small{display:block;color:var(--muted);font-size:11px;font-weight:700}
 #mpBar.big{top:max(14px,env(safe-area-inset-top));padding:10px 22px;font-size:22px;border-radius:20px}
 #mpBar.big b{font-size:34px}
@@ -147,10 +154,45 @@ body.slowmo #bars i{height:7vh}
 #scrMPEnd{justify-content:flex-end;background:linear-gradient(to bottom,rgba(43,29,20,0) 30%,rgba(43,29,20,.5))}
 #scrMP{justify-content:flex-start;background:linear-gradient(to bottom,rgba(246,234,216,0) 0%,rgba(246,234,216,.7) 30%,#f6ead8 70%);overflow-y:auto;padding-top:max(64px,calc(env(safe-area-inset-top) + 54px))}
 #scrMP .card{margin:auto 0 0}
-body.hostview #scrMP{justify-content:center;background:rgba(246,234,216,.9)}
-body.hostview #scrMP .card{max-width:620px;margin:0}
-body.hostview .roomtop b{font-size:64px}
-body.hostview #mpQR{width:180px;height:180px}
+/* —— 電腦大螢幕大廳（參考拂塵試煉）：左邊超大 QR code＋「用手機掃描加入」＋大房號，右邊座位、選項、狀態 —— */
+body.hostview #scrMP{justify-content:center;align-items:center;padding:3vh 3vw;overflow:hidden;background:radial-gradient(ellipse at 50% 0%,#fff7e8 0%,#f3e6cb 60%,#e8d6b0 100%)}
+body.hostview #scrMP .card{max-width:none;width:100%;height:100%;background:transparent;border:0;box-shadow:none;padding:0;margin:0;display:flex;align-items:center;justify-content:center}
+body.hostview #mpRoom{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:5vw;row-gap:1.6vh;align-items:center;width:100%;max-width:1600px;font-size:clamp(13px,2.2vh,28px)}
+body.hostview #mpRoom>*{grid-column:2}
+body.hostview #mpRoom>.roomtop{grid-column:1;grid-row:1/span 12}
+body.hostview .roomtop{flex-direction:column;gap:1.4vh;margin:0}
+body.hostview #mpQR{order:1;width:min(46vh,34vw);height:min(46vh,34vw);padding:1.4vh;border-radius:1.6vh;box-shadow:0 1vh 3vh rgba(50,30,15,.2)}
+body.hostview .roomtop .scan{order:2;display:block}
+body.hostview .roomtop .rcode{order:3;text-align:center}
+body.hostview .roomtop .rcode small{font-size:1.1em}
+body.hostview .roomtop b{font-size:clamp(40px,9vh,110px);letter-spacing:.2em;text-indent:.2em;color:#8f2a20}
+.roomtop .scan{display:none;margin:0;font:900 clamp(18px,3.6vh,44px) var(--serif);letter-spacing:.08em}
+body.hostview .plist{grid-template-columns:1fr;grid-auto-flow:row;gap:1.2vh;margin:0}
+body.hostview .plist[data-kind="2v2"]{grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,auto);grid-auto-flow:column}   /* 2 對 2：左欄紅隊、右欄藍隊 */
+body.hostview .pl{min-height:7.4vh;padding:1.2vh 1.6vh;border-radius:1.6vh;font-size:1.25em;border:.3vh dashed rgba(63,44,34,.22);background:rgba(255,255,255,.35)}
+body.hostview .pl i{width:1.8vh;height:1.8vh}
+body.hostview .pl em{font-size:.7em}
+body.hostview .pl.rdy,body.hostview .pl:not(.empty){border-style:solid;border-color:var(--gold);background:rgba(255,255,255,.7)}
+body.hostview .pl.rdy{background:#e2f1e6;border-color:var(--green)}
+body.hostview .optrow{margin:0}
+body.hostview .optrow label{font-size:.95em}
+body.hostview .seg button{min-height:6.4vh;font-size:1.15em;border-radius:1.4vh}
+body.hostview .optrow p{font-size:.9em}
+body.hostview #mpHostNote{display:block!important;margin:.4vh 0}
+body.hostview #mpHostNote b{display:block;font:900 1.7em/1.3 var(--serif)}
+body.hostview #mpHostNote small{display:block;color:var(--muted);font-size:.95em;margin-top:.4vh}
+body.hostview #mpReady,body.hostview #mpInvite{display:none!important}
+body.hostview #mpLeave{width:auto;justify-self:end;min-height:5vh;padding:0 2.4vh;font-size:1em}
+#mpHostBrand{position:fixed;left:max(68px,3vw);top:2.2vh;z-index:3;display:none;font-family:var(--serif);line-height:1.1}
+#mpHostBrand b{display:block;font-size:clamp(24px,5vh,56px);font-weight:900;letter-spacing:.14em}
+#mpHostBrand span{font-size:clamp(12px,2vh,22px);color:var(--muted);letter-spacing:.1em}
+body.hostview #mpHostBrand{display:block}
+@media (orientation:portrait){
+  body.hostview #mpRoom{grid-template-columns:1fr;font-size:clamp(13px,1.7vh,22px)}
+  body.hostview #mpRoom>*,body.hostview #mpRoom>.roomtop{grid-column:1;grid-row:auto}
+  body.hostview #mpQR{width:min(60vw,34vh);height:min(60vw,34vh)}
+  #mpHostBrand{display:none!important}
+}
 /* —— 觸控瞄準、倒數計時 —— */
 #gE.live{pointer-events:auto;touch-action:none}
 #gE.live::before{content:"";position:absolute;inset:-8px -26px}
@@ -249,7 +291,7 @@ body.motion{--gb:82px}
 <section class="scr" id="scrTitle">
   <div class="brand"><div class="eyebrow">全真群島・禮樂小遊戲</div><h1>投壺島</h1><p>矢直在心・以禮會友</p></div>
   <div class="card">
-    <p class="rules">三輪、每輪四矢（晨光 → 風起 → 浮筏）。入壺 <b>2 分</b>、貫耳 <b>3 分</b>；每矢 15 秒倒數，投得越快最多再加 <b>0.5 分</b>。</p>
+    <div class="chips"><div><small>三輪</small><b>每輪 4 矢</b></div><div><small>入壺・貫耳</small><b>2 分・3 分</b></div><div><small>⏱ 15 秒倒數</small><b>快投 +0.5</b></div></div>
     <div class="stack">
       <button class="btn col" id="btnTouch" type="button">🖐️ 觸控玩<small>按住畫面拖曳落點，放開就放箭</small></button>
       <button class="btn jade col" id="btnMotion" type="button">📱 體感玩<small>傾斜手機瞄準：直立＝近、平躺＝遠</small></button>
@@ -293,13 +335,14 @@ body.motion{--gb:82px}
 
 <!-- 多人對戰：入口與房間 -->
 <section class="scr" id="scrMP" hidden>
+  <div id="mpHostBrand"><b>投壺島</b><span>多人對戰・以禮會友</span></div>
   <div class="card">
     <div id="mpEntry">
       <span class="stepTag">多人對戰</span>
       <h2>以禮會友</h2>
       <p class="sub">一對一賓主對投，或二對二分工合投。投壺不比輸贏，投給朋友看。</p>
       <div id="mpLoginBox"></div>
-      <label class="fld">你的名字<input id="mpName" maxlength="10" autocomplete="off" placeholder="例如：小明"></label>
+      <label class="fld">你的名字<input id="mpName" maxlength="20" autocomplete="off" placeholder="例如：小明"></label>
       <div class="acct left" id="mpNameNote"></div>
       <div class="stack">
         <button class="btn" id="mpCreate" type="button">🏠 建立房間</button>
@@ -309,8 +352,8 @@ body.motion{--gb:82px}
       </div>
     </div>
     <div id="mpRoom" hidden>
-      <div class="roomtop"><div><small>房號（把它告訴朋友）</small><b id="mpRoomCode">-----</b></div><div id="mpQR"></div></div>
-      <p class="note" id="mpHostNote" style="margin:-4px 0 10px;text-align:left" hidden>用手機掃右邊的 QR code，或輸入房號加入。不用登入也能玩；用 LINE 登入可以自動帶入名字。</p>
+      <div class="roomtop"><div class="rcode"><small>房號（把它告訴朋友）</small><b id="mpRoomCode">-----</b></div><div id="mpQR"></div><p class="scan" id="mpScan">📱 用手機掃描加入</p></div>
+      <div id="mpHostNote" hidden><b id="mpHostMsg"></b><small>也可以在手機輸入房號加入。不用登入也能玩；用 LINE 登入可以自動帶入名字。</small></div>
       <div class="plist" id="mpPlayers"></div>
       <div class="optrow"><label>對戰</label><div class="seg" id="mpKind"><button type="button" data-v="1v1">1 對 1</button><button type="button" data-v="2v2">2 對 2</button></div></div>
       <div class="optrow"><label>節奏</label><div class="seg" id="mpPace"><button type="button" data-v="sync">同場對投</button><button type="button" data-v="turn">輪流對投</button></div><p id="mpPaceNote"></p></div>
@@ -353,7 +396,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.11';
+const VER = 'v261123.13';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -415,7 +458,7 @@ try { const o = JSON.parse(localStorage.getItem(KEY) || 'null'); if (o && o.v ==
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(SAVE)); } catch (e) {} };
 /* —— LINE 登入的名字（群島共用的 islands-account，只存在這支手機）、HTML 跳脫：這兩個在載入時就會用到，所以放最前面 —— */
 const esc = (x) => String(x).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
-const lineName = () => { try { const a = JSON.parse(localStorage.getItem('islands-account') || 'null'); return a && a.t && a.nm ? String(a.nm).slice(0, 10) : ''; } catch (e) { return ''; } };
+const lineName = () => { try { const a = JSON.parse(localStorage.getItem('islands-account') || 'null'); return a && a.t && a.nm ? String(a.nm).slice(0, 20) : ''; } catch (e) { return ''; } };
 
 /* =========================================================
    聲音：全部用 Web Audio 即時合成（沒有音檔）
@@ -1390,7 +1433,7 @@ function tryAutoJoin() { if (autoJoined || !CAME_FROM_LOGIN || !MPQ.get('room') 
 acctPaint();
 function mpDefaultName() { const l = lineName(); return (SAVE.nickCustom && SAVE.nick) ? SAVE.nick : (l || SAVE.nick || ''); }   // 自己改過的暱稱優先，否則用 LINE 名字
 function mpRememberName() { const n = mpName(), l = lineName(); SAVE.nick = n; SAVE.nickCustom = !!l && n !== l; save(); }
-const mpName = () => (($('#mpName').value || mpDefaultName() || '賓客').trim().slice(0, 10)) || '賓客';
+const mpName = () => (($('#mpName').value || mpDefaultName() || '賓客').trim().slice(0, 20)) || '賓客';
 function mpSave() { try { sessionStorage.setItem('touhu-mp', JSON.stringify({ code: MP.code, pid: MP.pid, watch: MP.watch, hk: MP.hk })); } catch (e) {} }
 function mpConnect(code, opts = {}) {
   MP.code = code; MP.watch = !!opts.watch; MP.hk = opts.hk || MP.hk || ''; if (opts.pid) MP.pid = opts.pid; MP.closing = false;
@@ -1548,7 +1591,7 @@ function mpPaintBar() {
   if (st.kind === '1v1') st.units.forEach((u) => parts.push({ me: u.id === me, name: u.id === me ? '你' : (st.players[u.members[0]] || {}).name || '?', score: fmt10(u.score), col: TCOL[u.id] }));
   else [0, 1].forEach((t) => parts.push({ me: myTeam === t, name: TEAM[t], score: fmt10(st.teams[t]), col: TCOL[t] }));
   const sub = `${st.pace === 'sync' ? '同場對投' : '輪流對投'}${st.kind === '2v2' ? '・' + (st.rule === 'split' ? '分工合投' : '各自累計') : ''}・${(st.round || 0) >= 3 ? '加賽' : '第 ' + ((st.round || 0) + 1) + ' 輪'}`;
-  el.innerHTML = `<div class="row">${parts.map((p) => `<span class="${p.me ? 'me' : ''}"><i style="background:${p.col}"></i>${p.name} <b>${p.score}</b></span>`).join('<em>：</em>')}</div><small>${sub}</small>`;
+  el.innerHTML = `<div class="row">${parts.map((p) => `<span class="${p.me ? 'me' : ''}"><i style="background:${p.col}"></i><u class="nm">${p.name}</u> <b>${p.score}</b></span>`).join('<em>：</em>')}</div><small>${sub}</small>`;
 }
 function mpPaintDots() {
   const st = MP.st, u = myUnit(), h = $('#hArrows'); if (!u) return;
@@ -1616,7 +1659,7 @@ const motionOK = () => !!window.DeviceOrientationEvent && (navigator.maxTouchPoi
 function mpInviteUrl() { const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('room', MP.code); if (MPQ.get('mp')) u.searchParams.set('mp', MPQ.get('mp')); u.searchParams.set('openExternalBrowser', '1'); return u.toString(); }
 function mpRenderLobby() {
   const st = MP.st; S.phase = 'mplobby'; S.camMode = 'title'; $('#scrTitle').hidden = true; $('#scrFinal').hidden = true; $('#scrRound').hidden = true; $('#scrMP').hidden = false; $('#mpEntry').hidden = true; $('#mpRoom').hidden = false;
-  $('#mpRoomCode').textContent = MP.code; $('#mpHostNote').hidden = !MP.watch;
+  $('#mpRoomCode').textContent = MP.code;
   if (MP.qrFor !== MP.code) { MP.qrFor = MP.code; try {   // 用模組矩陣自己畫 SVG：任何版本的 qrcode.js 都通用，投影放大也不糊
       const q = window.qrcode(0, 'M'); q.addData(mpInviteUrl()); q.make(); const n = q.getModuleCount(); let d = '';
       for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c} ${r}h1v1h-1z`;
@@ -1625,12 +1668,15 @@ function mpRenderLobby() {
   const can = st.host === st.you || MP.ctl, ready = st.you >= 0 && st.players[st.you] && st.players[st.you].ready, n = st.players.filter(Boolean).length, tot = st.players.length;
   $('#mpPlayers').innerHTML = st.players.map((p, i) => p
     ? `<div class="pl ${p.ready ? 'rdy' : ''}"><i style="background:${TCOL[st.kind === '2v2' ? p.team : i]}"></i><span>${p.name}${i === st.you ? '<u>你</u>' : ''}${i === st.host ? ' 👑' : ''}</span><em>${!p.online ? '離線' : p.ready ? '✓ 準備好' : p.input === 'motion' ? '📱' : p.input === 'tap' ? '🎯' : '🖐️'}</em></div>`
-    : `<div class="pl empty"><i style="background:#cdb996"></i><span>等朋友加入…</span></div>`).join('');
+    : `<div class="pl empty"><i style="background:#cdb996"></i><span>${st.kind === '2v2' ? (i >> 1 ? '藍' : '紅') + '隊空位：等朋友加入…' : '等朋友加入…'}</span></div>`).join('');
   const seg = (id, v) => { [...$(id).children].forEach((b) => { b.classList.toggle('on', b.dataset.v === v); b.disabled = !can && !id.includes('Input'); }); };
   seg('#mpKind', st.kind); seg('#mpPace', st.pace); seg('#mpRule', st.rule); seg('#mpInput', S.mode);
   [...$('#mpInput').children].forEach((b) => { b.disabled = b.dataset.v === 'motion' && !motionOK(); });
   $('#mpRuleRow').hidden = st.kind !== '2v2'; $('#mpInputRow').hidden = MP.watch;
   $('#mpPaceNote').textContent = st.pace === 'sync' ? '兩邊各投各的、同一組風，每輪結束一起看對方最精彩的一矢。' : '一人一矢輪流投，輪到對方時看他的拋物線慢動作（適合大螢幕）。';
+  const nin = st.players.filter(Boolean).length, nrd = st.players.filter((p) => p && p.ready).length;
+  $('#mpPlayers').dataset.kind = st.kind; $('#mpHostNote').hidden = !MP.watch;
+  $('#mpHostMsg').textContent = nin < tot ? `等玩家掃 QR code 加入（${nin}/${tot}）` : nrd === tot ? '都準備好了，馬上開打！' : `等玩家按「我準備好了」（${nrd}/${tot}）`;
   $('#mpRuleNote').textContent = st.rule === 'split' ? '隊友 A 定仰角與力道、隊友 B 定左右並放箭，每一矢互換。要靠喊話配合！' : '四人各投各的，隊伍分數是兩人相加。';
   $('#mpReady').hidden = MP.watch; $('#mpReady').textContent = ready ? '取消準備' : (n < tot ? `我準備好了（還差 ${tot - n} 位朋友）` : '我準備好了'); $('#mpReady').classList.toggle('ghost', !!ready);
   const text = `來全真群島的投壺島跟我對投一局！房號 ${MP.code} 👉 ${mpInviteUrl()}`;
@@ -1691,6 +1737,18 @@ function resize() {
 addEventListener('resize', resize); resize();
 const camPos = new THREE.Vector3(0, 3, 8), camLook = new THREE.Vector3(0, 0.5, 0);
 const tPos = new THREE.Vector3(), tLook = new THREE.Vector3();
+let heroK = 0, heroTop = 0, heroTopAt = 0;
+function heroTopPx() {   // 目前畫面上「卡片或標題」的上緣在哪（壺要放在它上方那塊空地的正中間）
+  const t = performance.now(); if (t - heroTopAt < 250 && heroTop) return heroTop; heroTopAt = t;
+  for (const q of ['#scrTitle .brand', '#scrRound .card', '#scrMP .card', '#scrFinal .card', '#scrMPEnd .card']) { const el = document.querySelector(q); if (el && !el.closest('[hidden]')) { const r = el.getBoundingClientRect(); if (r.height) return (heroTop = r.top); } }
+  return (heroTop = innerHeight * 0.6);
+}
+function heroFrame(dt) {   // 首頁／說明卡的構圖：鏡頭看著壺，再把畫面往上推，讓壺落在標題（或卡片）上方空地的正中間，不管手機的長寬比、瀏覽器工具列多高
+  heroK += ((S.camMode === 'title' ? 1 : 0) - heroK) * Math.min(1, dt * 5);
+  if (heroK < 0.004) { if (cam.view && cam.view.enabled) cam.clearViewOffset(); return; }
+  const w = innerWidth, h = innerHeight, y = clamp(heroTopPx() * 0.5, h * 0.2, h * 0.36);
+  cam.setViewOffset(w, h, 0, (h * 0.5 - y) * heroK, w, h);
+}
 function updateCam(now, dt) {
   if (S.phase === 'aimT' && TOUCH.active) return;   // 手指按住時鏡頭凍結：落點圈與壺的相對位置絕對穩定
   const r = R(), D = r.D, pc = potState(now), k = 1 - Math.exp(-dt * (S.camMode === 'aim' ? 6.5 : 3.2));   // 回到瞄準視角時收斂快一點
@@ -1700,8 +1758,8 @@ function updateCam(now, dt) {
     tPos.set(0, 1.78 - 0.45 * f, D + 1.35 - 0.9 * f); tLook.set(ap.x * 0.5 + pc.x * 0.5, 0.25 + ap.y * 0.38 + 0.15 * f, ap.z * 0.5);
   } else if (S.camMode === 'close') {   // 結果：拉近看壺
     tPos.set(pc.x * 0.6 - 0.4, 1.1, 2.55); tLook.set(pc.x - 0.4, 0.42, 0);
-  } else { const a = Math.sin(now / 5200) * 0.5; tPos.set(Math.sin(a) * 3.1, 0.95, Math.cos(a) * 3.1 + 0.2); tLook.set(0, innerWidth < innerHeight ? -2.05 : -0.9, 0); }   // 直的螢幕：壺要升到標題牌匾上方；橫的螢幕（電腦）：壺放在畫面上半部
-  camPos.lerp(tPos, k); camLook.lerp(tLook, k); cam.position.copy(camPos); cam.lookAt(camLook);
+  } else { const a = Math.sin(now / 5200) * 0.45; const R0 = innerWidth < innerHeight && innerHeight < 680 ? 3.6 : 2.7; tPos.set(Math.sin(a) * R0, 0.9, Math.cos(a) * R0 + 0.2); tLook.set(0, 0.34, 0); }   // 直的螢幕：壺要升到標題牌匾上方；橫的螢幕（電腦）：壺放在畫面上半部
+  camPos.lerp(tPos, k); camLook.lerp(tLook, k); cam.position.copy(camPos); cam.lookAt(camLook); heroFrame(dt);
 }
 let last = performance.now();
 function tick(t) {
