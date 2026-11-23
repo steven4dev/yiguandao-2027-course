@@ -612,7 +612,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261123.03';
+const VERSION = 'v261123.04';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -2864,7 +2864,7 @@ function wOpen(){
 }
 function wMsg(m){
   if(m.t === 'pong'){ const now = Date.now(), rtt = now - m.c; if(rtt < WT.rtt){ WT.rtt = rtt; WT.off = m.s + rtt/2 - now; } return; }
-  if(m.t === 'error'){ $('#wStartMsg').textContent = m.code === 'watch_full' ? '這個房間的觀戰人數已滿。' : '無法觀戰：' + m.code; return; }
+  if(m.t === 'error'){ if(m.code === 'too_many'){ $('#wLMsg').textContent = '已經有 3 位以上玩家，無法切回 1 對 1（要先讓多的人離開房間）'; return; } $('#wStartMsg').textContent = m.code === 'watch_full' ? '這個房間的觀戰人數已滿。' : '無法觀戰：' + m.code; return; }
   if(m.t === 'welcome'){ WT.ctl = !!m.ctl; if(WT.st) wState(WT.st, WT.st); return; }
   if(m.t === 'state'){ const prev = WT.st; WT.st = m; wState(m, prev); return; }
   if(m.t === 'cur'){ WT.cur[m.slot] = m.n; return; }
@@ -2905,7 +2905,8 @@ function wLobbyUi(m){
     if(!el.firstChild || el.dataset.av !== (p ? p.avatar : '')){ el.innerHTML = '<canvas width="96" height="96"></canvas><div><span class="nm"></span><small></small></div><span class="rd"></span>'; el.dataset.av = p ? p.avatar : ''; if(p) vsDrawAv(el.querySelector('canvas'), p.avatar); }
     el.querySelector('.nm').textContent = p ? p.name : (TM ? `${i >> 1 ? '藍' : '紅'}隊空位：等待加入…` : `玩家 ${i + 1}：等待加入…`); el.querySelector('small').textContent = p ? (p.online ? (p.ready ? '已準備' : '準備中…') : '📴 離線') : '掃 QR code 就會坐進來'; el.querySelector('.rd').textContent = p && p.ready ? '✅' : ''; });
   const md = $('#wMode'), mk = 'm' + WT.ctl; if(md.dataset.k !== mk){ md.dataset.k = mk; md.innerHTML = '模式　' + [['duo', '⚔️ 1 對 1'], ['team', '🤝 2 對 2 合作']].map(([k, nmx]) => `<button type="button" data-m="${k}"${WT.ctl ? '' : ' disabled'}>${nmx}</button>`).join('') + (WT.ctl ? '' : '<small>（由主持的電腦設定）</small>'); }
-  md.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.m === m.mode));
+  md.querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.m === m.mode); if(b.dataset.m === 'duo'){ const full = WT.ctl && m.players.filter(Boolean).length > 2; b.disabled = !WT.ctl || full; b.title = full ? '已經有 3 位以上玩家，要先讓多的人離開房間才能切回 1 對 1' : ''; } });
+  if(WT.ctl && m.players.filter(Boolean).length > 2 && m.mode === 'team') md.dataset.hint = '1'; else delete md.dataset.hint;
   const dd = $('#wDiff'), key = DIFF_ORDER.join() + WT.ctl; if(dd.dataset.k !== key){ dd.dataset.k = key; dd.innerHTML = '難度　' + DIFF_ORDER.map(k => `<button type="button" data-d="${k}"${WT.ctl ? '' : ' disabled'}>${DIFFS[k].name}</button>`).join('') + (WT.ctl ? '' : '<small>（由主持的電腦設定）</small>'); }
   dd.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.d === m.diff));
   const ps = m.players.filter(Boolean); $('#wLMsg').textContent = ps.length < N ? `等玩家掃 QR code 加入（${ps.length}/${N}）` : ps.every(p => p.ready) ? '都準備好了，馬上開打！' : `等${N > 2 ? '大家' : '兩位玩家'}都按「我準備好了」`;
