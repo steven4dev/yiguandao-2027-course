@@ -28,7 +28,7 @@ const allowed = (env, origin) => !!origin && String(env.ALLOWED_ORIGINS || '').s
 const json = (obj, status = 200, extra = {}) => new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', ...extra } });
 const normCode = (s) => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, CODE_LEN);
 const genCode = () => { const b = crypto.getRandomValues(new Uint8Array(CODE_LEN)); return [...b].map((x) => ALPHABET[x % ALPHABET.length]).join(''); };
-const cleanName = (s) => String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 10) || '賓客';
+const cleanName = (s) => String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 20) || '賓客';   // LINE 名字常常比 10 個字長
 // 每個單位第 r 輪結束時，累計應該投完幾矢
 const need = (r) => (r < ROUNDS ? (r + 1) * PER_ROUND : ROUNDS * PER_ROUND + (r - ROUNDS + 1));
 const startOf = (r) => (r === 0 ? 0 : need(r - 1));
