@@ -45,15 +45,15 @@ console.log('1v1 同場');
   ev(A, 0, 0, 'in', [1, 2, 3, 4, 5, 6]); await until(() => B.got('ev').length === 1); const e = B.got('ev')[0];
   ok(e.slot === 0 && e.kind === 'in' && e.pts === 2 && e.rep.length === 6, '對手收到這矢的結果與重播');
   ok(A.got('ev').length === 0, '自己不會收到自己的重播');
-  ev(B, 0, 0, 'miss'); await sleep(150); ok(unitScore(B, 0) === 2 && unitScore(B, 1) === 0, 'B 不能代替 A 投');
+  ev(B, 0, 0, 'miss'); await sleep(150); ok(unitScore(B, 0) === 20 && unitScore(B, 1) === 0, 'B 不能代替 A 投');
   ev(A, 0, 1, 'ear'); ev(A, 0, 2, 'miss'); ev(A, 0, 3, 'in'); ev(A, 0, 4, 'in'); await sleep(200); ok(A.st.units[0].done === 4, '同場：本輪最多 4 矢，不能超前');
   ok(!A.st.reveal, 'B 還沒投完，不對帳');
   for (let i = 0; i < 4; i++) ev(B, 1, i, 'ear'); await until(() => A.st.reveal, 3000, '對帳');
-  ok(A.st.reveal.r === 0 && A.st.teams[0] === 7 && A.st.teams[1] === 12, '第一輪分數 7 : 12');
+  ok(A.st.reveal.r === 0 && A.st.teams[0] === 70 && A.st.teams[1] === 120, '第一輪分數 7 : 12（單位：十分之一分）');
   await until(() => A.st.round === 1 && !A.st.reveal, 3000, '下一輪');
   for (let r = 1; r < 3; r++) { for (let i = 0; i < 4; i++) { ev(A, 0, r * 4 + i, 'in'); ev(B, 1, r * 4 + i, 'in'); } await until(() => A.st.reveal || A.st.phase === 'end', 3000); await until(() => !A.st.reveal || A.st.phase === 'end', 3000); }
   await until(() => A.st.phase === 'end', 3000, '結束');
-  ok(A.st.result.winner === 1 && A.st.result.teams[0] === 7 + 16 && A.st.result.teams[1] === 12 + 16, '結果：B 勝 28 : 23');
+  ok(A.st.result.winner === 1 && A.st.result.teams[0] === 230 && A.st.result.teams[1] === 280, '結果：B 勝 28 : 23');
   A.send({ t: 'rematch' }); await until(() => A.st.phase === 'lobby'); ok(A.st.players.every((p) => p && !p.ready) && !A.st.units, '重賽回到大廳');
   cs.forEach((c) => c.close());
 }
@@ -64,7 +64,7 @@ console.log('平手加賽');
   for (let r = 0; r < 3; r++) { for (let i = 0; i < 4; i++) { ev(A, 0, r * 4 + i, 'in'); ev(B, 1, r * 4 + i, 'in'); } await until(() => A.st.reveal || A.st.round > r, 3000); await until(() => !A.st.reveal, 3000); }
   await until(() => A.st.round === 3 && A.st.sudden === 1, 3000, '同分進加賽');
   ev(A, 0, 12, 'ear'); ev(B, 1, 12, 'miss'); await until(() => A.st.phase === 'end', 4000, '加賽結束');
-  ok(A.st.result.winner === 0 && A.st.result.teams[0] === 27 && A.st.result.teams[1] === 24, '加賽分出勝負 27 : 24');
+  ok(A.st.result.winner === 0 && A.st.result.teams[0] === 270 && A.st.result.teams[1] === 240, '加賽分出勝負 27 : 24');
   cs.forEach((c) => c.close());
 }
 // ---------- 3. 一對一・輪流 ----------
@@ -82,7 +82,7 @@ console.log('1v1 輪流');
     await until(() => A.st.turn && A.st.turn.u === 0 && A.st.turn.i === i, 3000, 'A 的回合 ' + i); ev(A, 0, i, 'miss'); await sleep(80); B.send({ t: 'ack' }); B.send({ t: 'ack', u: 0, i });
     await until(() => A.st.turn && A.st.turn.u === 1 && A.st.turn.i === i, 3000, 'B 的回合 ' + i); ev(B, 1, i, 'miss'); await sleep(80); A.send({ t: 'ack', u: 1, i });
   }
-  await until(() => A.st.reveal, 3000, '輪流：本輪結束對帳'); ok(A.st.reveal.r === 0 && A.st.teams[0] === 2 && A.st.teams[1] === 3, '輪流第一輪 2 : 3');
+  await until(() => A.st.reveal, 3000, '輪流：本輪結束對帳'); ok(A.st.reveal.r === 0 && A.st.teams[0] === 20 && A.st.teams[1] === 30, '輪流第一輪 2 : 3');
   cs.forEach((c) => c.close());
 }
 // ---------- 4. 二對二・分工合投 ----------
@@ -103,17 +103,17 @@ console.log('2v2 分工合投');
   g(0).send({ t: 'lock', u: 0, i: 0, e: 0.5, p: 0.3 }); await until(() => g(1).got('lock').length === 1); const lk0 = g(1).got('lock')[0];
   ok(lk0.i === 0 && lk0.e === 0.5 && lk0.p === 0.3, 'slot1 收到 slot0 鎖定的仰角與力道');
   ev(g(0), 0, 0, 'in'); await sleep(120); ok(unitScore(cs[0], 0) === 0, '定參數的人（slot0）不能放箭');
-  ev(g(1), 0, 0, 'in'); await sleep(150); ok(unitScore(cs[0], 0) === 2, 'slot1 放箭：入壺 +2');
+  ev(g(1), 0, 0, 'in'); await sleep(150); ok(unitScore(cs[0], 0) === 20, 'slot1 放箭：入壺 +2');
   // 第 1 矢：角色互換，slot1 定、slot0 放箭
   g(1).send({ t: 'lock', u: 0, i: 1, e: 0.6, p: 0.25 }); await until(() => g(0).got('lock').length === 1); const lk1 = g(0).got('lock')[0];
   ok(lk1.i === 1 && lk1.e === 0.6 && lk1.p === 0.25, '第 1 矢角色互換：slot0 收到 slot1 的仰角與力道');
   g(0).send({ t: 'profile', name: 'P0' }); await sleep(150);   // 觸發一次快照（隊友重連時就是拿這份）
   ok(g(0).st.lock && g(0).st.lock.i === 1 && g(0).st.lock.e === 0.6, '快照也帶著這組 lock（重連用）');
-  ev(g(0), 0, 1, 'ear'); await sleep(150); ok(unitScore(cs[0], 0) === 5, 'slot0 放箭：貫耳 +3，紅隊 5 分');
-  ev(g(1), 0, 2, 'miss'); ev(g(0), 0, 3, 'miss'); await sleep(150); ok(cs[0].st.units[0].done === 4, '紅隊 4 矢');
+  ev(g(0), 0, 1, 'ear'); await sleep(150); ok(unitScore(cs[0], 0) === 50, 'slot0 放箭：貫耳 +3，紅隊 5 分');
+  ev(g(1), 0, 2, 'miss'); await sleep(80); ev(g(0), 0, 3, 'miss'); await sleep(150);   // 兩個連線的訊息到達順序不保證，要依序送 ok(cs[0].st.units[0].done === 4, '紅隊 4 矢');
   // 藍隊（成員 2、3）全部入壺，各矢由放箭的人回報
   for (let i = 0; i < 4; i++) { const th = g(i % 2 === 0 ? 3 : 2); ev(th, 1, i, 'in'); } await until(() => cs[0].st.reveal, 3000);
-  ok(cs[0].st.teams[0] === 5 && cs[0].st.teams[1] === 8, '二對二第一輪 5 : 8');
+  ok(cs[0].st.teams[0] === 50 && cs[0].st.teams[1] === 80, '二對二第一輪 5 : 8');
   all.forEach((c) => c.close());
 }
 // ---------- 5. 二對二・各自累計 ----------
@@ -124,7 +124,7 @@ console.log('2v2 各自累計');
   all.forEach((c) => c.send({ t: 'ready', ready: true })); await until(() => all.every((c) => c.st.phase === 'play')); await sleep(450);
   ok(cs[0].st.units.length === 4, '累計：四個單位');
   all.forEach((c) => { for (let i = 0; i < 4; i++) ev(c, c.slot, i, c.slot < 2 ? 'in' : 'ear'); }); await until(() => cs[0].st.reveal, 3000);
-  ok(cs[0].st.teams[0] === 16 && cs[0].st.teams[1] === 24, '累計：紅 2×8=16、藍 2×12=24');
+  ok(cs[0].st.teams[0] === 160 && cs[0].st.teams[1] === 240, '累計：紅 2×8=16、藍 2×12=24');
   all.forEach((c) => c.close());
 }
 // ---------- 6. 斷線 ----------
@@ -141,6 +141,22 @@ console.log('斷線');
   const { cs } = await lobby(2); const [A, B] = cs; await readyAll(cs);
   A.close(); await sleep(500); const A2 = await new C(A.code, 'P0').connect({ pid: A.pid }); ok(A2.slot === 0 && A2.pid === A.pid, '寬限內用通行碼重連，拿回原位');
   ok(A2.st.phase === 'play', '重連後看到遊戲進度'); A2.close(); B.close();
+}
+// ---------- 時間加成 ----------
+console.log('時間加成');
+{
+  const { cs } = await lobby(2); const [A, B] = cs; await readyAll(cs);
+  const evt = (c, u, i, kind, tl) => c.send({ t: 'ev', u, i, kind, tl });
+  evt(A, 0, 0, 'in', 1); await sleep(120); ok(unitScore(A, 0) === 25, '入壺 + 滿時間 ＝ 2.5');
+  evt(A, 0, 1, 'ear', 0.5); await sleep(120); ok(unitScore(A, 0) === 25 + 33, '貫耳 + 剩一半 ＝ 3.3（加成 0.25 四捨五入成 0.3）');
+  evt(A, 0, 2, 'miss', 1); await sleep(120); ok(unitScore(A, 0) === 58, '沒進沒有加成，就算時間滿');
+  evt(A, 0, 3, 'in', 9); await sleep(120); ok(unitScore(A, 0) === 58 + 25, 'tl 超過 1 會被夾到 1，最多 +0.5');
+  evt(B, 1, 0, 'in', -3); await sleep(120); ok(unitScore(B, 1) === 20, 'tl 小於 0 夾到 0，沒有加成');
+  evt(B, 1, 1, 'in'); await sleep(120); ok(unitScore(B, 1) === 40, '沒帶 tl（舊版手機）一律 0 加成');
+  evt(B, 1, 2, 'ear', 'abc'); await sleep(120); ok(unitScore(B, 1) === 70, '亂填的 tl 當 0');
+  ok(A.st.units[0].hist[0].join() === '0,in,2,5', '紀錄帶著加成：[矢序, 種類, 基本分, 加成]');
+  const e0 = B.got('ev')[0]; ok(e0 && e0.b === 5 && e0.pts === 2, '對手收到的重播資訊帶加成');
+  cs.forEach((c) => c.close());
 }
 // ---------- 7. 電腦主持（觀戰）----------
 console.log('電腦主持');

@@ -12,23 +12,23 @@ Cloudflare Worker + Durable Objects。一個房間＝一個 Durable Object（名
 - **2v2 規則 `rule`**：
   - `split` 分工合投：每個隊伍是一個計分單位。第 `i` 矢由 `members[i%2]` 定仰角與力道（送 `lock`），另一位定左右並放箭（送 `ev`），每矢互換；隊友離場後剩下的人包辦。
   - `sum` 各自累計：四位各是一個單位，隊伍分數是兩人相加。
-- **計分**：入壺 2、貫耳 3、沒進 0（離場或太久沒動靜記 `skip`＝0）。三輪、每輪每單位 4 矢，三輪後同分就**加賽**：每單位 1 矢，最多 3 次，還是同分算平手。
+- **計分**：入壺 2、貫耳 3、沒進 0（離場或太久沒動靜記 `skip`＝0）。**時間加成**：只有投進的矢才有，`加成 ＝ 0.5 × tl`（`tl` 是放箭的手機回報的「剩餘時間比例」0～1，伺服器夾在 0～1，沒帶或亂填一律當 0），四捨五入到 0.1。**分數一律用「十分之一分」整數**（`score`、`teams`、`result` 都是，手機顯示時除以 10；`hist` 是 `[矢序, 種類, 基本分, 加成十分之一分]`）。三輪、每輪每單位 4 矢，三輪後同分就**加賽**：每單位 1 矢，最多 3 次，還是同分算平手。
 - **風**：由房間種子（`state.seed`）加上輪次與矢序，手機各自用同一個函式產生，雙方這一矢的風向風力一樣。壺在第三輪的搖晃是手機本地時間決定的，不同步（算「浪的運氣」）。
 - 動作與物理都在各自手機上跑，**伺服器不驗證物理**（只驗順序、角色、分數與種類是否合法），適合朋友之間切磋，不是防作弊。
 
 ## 通訊協定（JSON，小訊息；`ev` 的重播軌跡最多 1500 個整數）
 | 方向 | 訊息 | 說明 |
 |---|---|---|
-| → | `join {pid?, name, avatar?, input}` | 進房；重連時帶回通行碼 `pid` 拿回原位置。`input` 是 `tap` 或 `motion`（只供顯示） |
+| → | `join {pid?, name, avatar?, input}` | 進房；重連時帶回通行碼 `pid` 拿回原位置。`input` 是 `touch`／`motion`／`tap`（只供顯示） |
 | → | `join {watch:true, hk?}` | 觀戰（大螢幕），不佔位置、最多 8 個；帶對主持金鑰 `hk` 就是電腦主持人 |
 | → | `set {kind?, pace?, rule?}` | 大廳選項：玩家房主或電腦主持人；換類型時依加入順序重排座位，所有人取消準備 |
 | → | `profile {name?, avatar?, input?}` | 改暱稱、操作方式 |
 | → | `ready {ready}` | 準備／取消；人數到齊且全部準備就開打（倒數 `COUNTDOWN_MS`） |
-| → | `lock {u, i, e, p}` | 分工合投：定仰角 `e`、力道 `p`（0～1）的那位，把數值交給隊友 |
-| → | `ev {u, i, kind, rep?}` | 放箭的人回報第 `u` 單位第 `i` 矢的結果（`in`／`ear`／`miss`）與重播軌跡 |
+| → | `lock {u, i, e, p, tl}` | 分工合投：定仰角 `e`、力道 `p`（0～1）的那位，把數值與自己剩餘的時間比例 `tl` 交給隊友 |
+| → | `ev {u, i, kind, tl, rep?}` | 放箭的人回報第 `u` 單位第 `i` 矢的結果（`in`／`ear`／`miss`）、剩餘時間比例 `tl`（分工合投是兩位的平均）與重播軌跡 |
 | → | `ack {u, i}` | 輪流：我看完這一矢的重播了 |
 | → | `rematch` / `leave` / `ping {c}` | 再來一局（回大廳）、離開、校時 |
-| ← | `welcome {pid, slot}` / `state {...}` / `ev {u, i, slot, kind, pts, rep}` / `lock {u, i, e, p}` / `pong` / `error {code}` | 快照、別人的結果與重播（發送者自己不會收到）、隊友鎖定的數值、錯誤（`full`／`started`／`too_many`／`watch_full`） |
+| ← | `welcome {pid, slot}` / `state {...}` / `ev {u, i, slot, kind, pts, b, rep}`（`b`＝時間加成十分之一分） / `lock {u, i, e, p}` / `pong` / `error {code}` | 快照、別人的結果與重播（發送者自己不會收到）、隊友鎖定的數值、錯誤（`full`／`started`／`too_many`／`watch_full`） |
 
 HTTP：`POST /api/create` 建房 → `{code}`；body 帶 `{"host":true}`（電腦建房）會多回一把 `hk` 主持金鑰。`GET /api/room/<房號>` 查房；`GET /api/room/<房號>/ws` 升級成 WebSocket（只接受 `ALLOWED_ORIGINS` 裡的網頁來源）。
 

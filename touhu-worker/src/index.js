@@ -7,13 +7,16 @@
    節奏 pace：'sync'＝同場對投（各投各的，每輪結束才對帳）、'turn'＝輪流對投（你投我看重播）
    2v2 規則 rule：'split'＝分工合投（隊友 A 定仰角與力道，隊友 B 定左右並放箭，每矢互換）、'sum'＝各自投、隊伍累計
    「單位 unit」＝計分的最小單位：1v1 與 2v2-sum 是每位玩家；2v2-split 是每個隊伍
-   每個單位三輪、每輪 4 矢；三輪後同分就加賽，每個單位 1 矢，最多 3 次 */
+   每個單位三輪、每輪 4 矢；三輪後同分就加賽，每個單位 1 矢，最多 3 次
+   計分：入壺 2、貫耳 3，另有「時間加成」——只有投進的矢才有，加成 ＝ 0.5 × 剩餘時間比例（0～1，由放箭的手機回報 tl）。
+   分數以 0.1 分為單位，伺服器內部與傳給手機的都是「十分之一分」整數（避免小數誤差），手機顯示時再除以 10 */
 import { DurableObject } from 'cloudflare:workers';
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // 去掉容易看錯的 I、O、0、1
 const CODE_LEN = 5, MAX_WATCHERS = 8, IDLE_MS = 30 * 60 * 1000;
 const PER_ROUND = 4, ROUNDS = 3, SUDDEN_MAX = 3;
 const SEATS = { '1v1': [0, 1], '2v2': [0, 2, 1, 3] }, MAXP = { '1v1': 2, '2v2': 4 };
+const INPUTS = ['touch', 'motion', 'tap'];   // 各人的操作方式（只供顯示）
 const KINDS = ['1v1', '2v2'], PACES = ['sync', 'turn'], RULES = ['split', 'sum'], PTS = { in: 2, ear: 3, miss: 0 };
 const MAX_MSG = 14000;
 const CFG = (env) => ({
@@ -116,11 +119,11 @@ export class Room extends DurableObject {
     };
     if (g) {
       out.round = g.round; out.sudden = g.sudden;
-      out.units = g.units.map((u) => ({ id: u.id, members: u.members, team: u.team, score: u.score, done: u.done, hist: u.hist.map((h) => [h.i, h.kind, h.pts]) }));
+      out.units = g.units.map((u) => ({ id: u.id, members: u.members, team: u.team, score: u.score, done: u.done, hist: u.hist.map((h) => [h.i, h.kind, h.pts, h.b | 0]) }));
       out.turn = s.pace === 'turn' && g.queue && !g.reveal && g.tp < g.queue.length ? { u: g.queue[g.tp][0], i: g.queue[g.tp][1] } : null;
       out.reveal = g.reveal ? { r: g.reveal.r, ms: Math.max(0, g.reveal.until - now) } : null;
       // 分工合投：隊友已經鎖好、正等你放箭的仰角與力道（重連也拿得到）
-      if (me) { const u = g.units.find((x) => x.members.includes(me.slot)); if (u && u.lock && u.lock.i === u.done) out.lock = { u: u.id, i: u.lock.i, e: u.lock.e, p: u.lock.p }; }
+      if (me) { const u = g.units.find((x) => x.members.includes(me.slot)); if (u && u.lock && u.lock.i === u.done) out.lock = { u: u.id, i: u.lock.i, e: u.lock.e, p: u.lock.p, tl: u.lock.tl }; }
     }
     return out;
   }
@@ -143,7 +146,7 @@ export class Room extends DurableObject {
     while (g.tp < g.queue.length) { const [id, i] = g.queue[g.tp], u = g.units[id]; if (this.unitAlive(u)) break; this.record(u, i, 'skip', 0); g.tp++; }
     g.turnAt = Date.now();
   }
-  record(u, i, kind, pts) { u.done = i + 1; u.score += pts; u.hist.push({ i, kind, pts }); u.lock = null; }
+  record(u, i, kind, pts, b = 0) { u.done = i + 1; u.score += pts * 10 + b; u.hist.push({ i, kind, pts, b }); u.lock = null; }   // score 與 b 都是十分之一分
   roundDone() { const g = this.s.g; return g.units.every((u) => !this.unitAlive(u) || u.done >= need(g.round)); }
   beginReveal() {
     const g = this.s.g; if (g.reveal) return;
@@ -154,7 +157,7 @@ export class Room extends DurableObject {
     if (g.round >= ROUNDS - 1) {   // 三輪（或加賽）打完：看分數
       const t = this.teamScores();
       if (t[0] === t[1] && g.sudden < SUDDEN_MAX) { g.sudden++; g.round = ROUNDS - 1 + g.sudden; }
-      else { s.phase = 'end'; s.result = { teams: t, winner: t[0] === t[1] ? -1 : t[0] > t[1] ? 0 : 1, units: g.units.map((u) => ({ id: u.id, score: u.score, hist: u.hist.map((h) => [h.i, h.kind, h.pts]) })) }; return; }
+      else { s.phase = 'end'; s.result = { teams: t, winner: t[0] === t[1] ? -1 : t[0] > t[1] ? 0 : 1, units: g.units.map((u) => ({ id: u.id, score: u.score, hist: u.hist.map((h) => [h.i, h.kind, h.pts, h.b | 0]) })) }; return; }
     } else g.round++;
     // 沒人在的單位，補滿 skip，避免卡住
     for (const u of g.units) if (!this.unitAlive(u)) while (u.done < need(g.round)) this.record(u, u.done, 'skip', 0);
@@ -188,9 +191,9 @@ export class Room extends DurableObject {
         const used = Object.values(s.players).map((q) => q.slot), slot = SEATS[s.kind].find((i) => !used.includes(i));
         if (slot === undefined) { this.sendWs(ws, { t: 'error', code: 'full' }); return; }
         const pid = crypto.randomUUID().replace(/-/g, '').slice(0, 20);
-        p = s.players[pid] = { pid, slot, name: cleanName(m.name), avatar: String(m.avatar || '').slice(0, 24), input: m.input === 'motion' ? 'motion' : 'tap', ready: false, gone: false, dc: 0 };
+        p = s.players[pid] = { pid, slot, name: cleanName(m.name), avatar: String(m.avatar || '').slice(0, 24), input: INPUTS.includes(m.input) ? m.input : 'touch', ready: false, gone: false, dc: 0 };
         if (!s.host && !s.hk) s.host = pid;   // 電腦建的房間沒有玩家房主
-      } else { p.dc = 0; p.gone = false; if (m.name) p.name = cleanName(m.name); if (m.avatar) p.avatar = String(m.avatar).slice(0, 24); if (m.input) p.input = m.input === 'motion' ? 'motion' : 'tap'; }
+      } else { p.dc = 0; p.gone = false; if (m.name) p.name = cleanName(m.name); if (m.avatar) p.avatar = String(m.avatar).slice(0, 24); if (m.input) p.input = INPUTS.includes(m.input) ? m.input : 'touch'; }
       for (const w of this.sockets()) { if (w !== ws && this.att(w).pid === p.pid) { try { w.close(1000, 'replaced'); } catch (e) {} } }   // 同一個人開了新連線：舊連線關掉
       ws.serializeAttachment({ pid: p.pid });
       this.sendWs(ws, { t: 'welcome', pid: p.pid, slot: p.slot });
@@ -211,7 +214,7 @@ export class Room extends DurableObject {
     }
     if (a.watch) return;   // 觀戰者送來的其他訊息一律忽略
     const me = this.byPid(a.pid); if (!me) return;
-    if (m.t === 'profile') { if (m.name) me.name = cleanName(m.name); if (m.avatar) me.avatar = String(m.avatar).slice(0, 24); if (m.input) me.input = m.input === 'motion' ? 'motion' : 'tap'; await this.save(); this.broadcast(); return; }
+    if (m.t === 'profile') { if (m.name) me.name = cleanName(m.name); if (m.avatar) me.avatar = String(m.avatar).slice(0, 24); if (m.input) me.input = INPUTS.includes(m.input) ? m.input : 'touch'; await this.save(); this.broadcast(); return; }
     if (m.t === 'leave') { if (s.phase === 'lobby') { delete s.players[me.pid]; if (s.host === me.pid) s.host = Object.keys(s.players)[0] || null; } else { me.gone = true; me.dc = Date.now(); this.autoSkip(); } try { ws.close(1000, 'bye'); } catch (e) {} await this.save(); this.broadcast(); return; }
     if (m.t === 'ready' && s.phase === 'lobby') { me.ready = !!m.ready; if (this.allReady()) this.startGame(); await this.save(); this.broadcast(); return; }
     if (m.t === 'rematch' && s.phase === 'end') {
@@ -225,16 +228,17 @@ export class Room extends DurableObject {
     if (m.t === 'lock') {   // 分工合投：定仰角與力道的那位，把數值交給隊友
       const u = g.units[m.u | 0]; if (!u || g.reveal) return; const i = m.i | 0, r = this.roles(u, i);
       if (i !== u.done || r.lock !== me.slot || !(m.e >= 0 && m.e <= 1 && m.p >= 0 && m.p <= 1)) return;
-      u.lock = { i, e: +m.e, p: +m.p }; this.sendSlot(r.thrower, { t: 'lock', u: u.id, i, e: u.lock.e, p: u.lock.p });
+      const tl = Math.max(0, Math.min(1, +m.tl || 0)); u.lock = { i, e: +m.e, p: +m.p, tl }; this.sendSlot(r.thrower, { t: 'lock', u: u.id, i, e: u.lock.e, p: u.lock.p, tl });
       if (s.pace === 'turn') g.turnAt = now; await this.save(); this.toWatchers({ t: 'locked', u: u.id, i }); return;
     }
     if (m.t === 'ev') {
       const u = g.units[m.u | 0]; if (!u || g.reveal || now < s.startAt - 500) return; const i = m.i | 0, r = this.roles(u, i);
       if (i !== u.done || r.thrower !== me.slot || !PTS.hasOwnProperty(m.kind) || i >= need(g.round)) return;
       if (s.pace === 'turn') { const q = g.queue[g.tp]; if (!q || q[0] !== u.id || q[1] !== i) return; }
-      this.record(u, i, m.kind, PTS[m.kind]); g.lastEv = now;
+      const tl = Math.max(0, Math.min(1, +m.tl || 0)), b = PTS[m.kind] > 0 ? Math.round(tl * 5) : 0;   // 時間加成：只有投進的矢，最多 +0.5（5 個十分之一分）
+      this.record(u, i, m.kind, PTS[m.kind], b); g.lastEv = now;
       const rep = Array.isArray(m.rep) && m.rep.length <= 1500 ? m.rep.map((n) => n | 0) : null;
-      this.toAll({ t: 'ev', u: u.id, i, slot: me.slot, kind: m.kind, pts: PTS[m.kind], rep }, me.slot);   // 發送者自己不用收重播
+      this.toAll({ t: 'ev', u: u.id, i, slot: me.slot, kind: m.kind, pts: PTS[m.kind], b, rep }, me.slot);   // 發送者自己不用收重播
       if (s.pace === 'turn') { g.wait = { slot: me.slot, acks: [], until: now + this.cfg.ACK_WAIT }; if (!this.waitingFor().length) this.advanceTurn(); } else this.checkBarrier();
       await this.save(); this.broadcast(); return;
     }
