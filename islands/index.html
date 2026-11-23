@@ -736,7 +736,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a></div>
   <span class="status" id="status" data-state="loading" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取即時報名資料中…</span></span>
-  <span class="ver">v261123.14</span>
+  <span class="ver">v261123.15</span>
   </div></div>
 </div>
 
@@ -9041,18 +9041,23 @@ const PAN_LIMIT = Math.max(...Object.values(islands).map((i) => Math.hypot(i.x, 
     g.scale.setScalar(2.2);   // 比真實大一點，遠遠看才找得到
     return { g, wings, t0: -99, dur: 1.6 };
   });
-  // 島邊拍岸的浪：每座島外面兩圈六角形的白色浪線，一圈一圈從島邊往外推開、淡掉（像海浪拍上岸又退回去），
-  // 再不時在島邊濺起一小簇浪花。一座島只多兩片平面，整片群島加起來也很輕
-  const shoreGeo = new THREE.RingGeometry(0.97, 1.04, 6, 1).rotateX(-Math.PI / 2);
+  // 島邊拍岸的浪：照洋流的方向拍——迎著浪的那幾個邊（通常兩三個邊）同時被拍，背著浪的邊很少有浪；
+  // 浪從上游往下游一波一波掃過整片群島，所以相鄰的島也會先後被拍到。洋流的方向會很慢很慢地轉
+  // 每座島 6 條沿著邊的白色浪條，背著浪的那幾條直接藏起來不畫
+  const stripGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
   const shores = [];
   for (const isl of Object.values(islands)) {
-    for (let k = 0; k < 2; k++) {
+    const Rs = isl.R * 0.95;   // 島往下收窄，碰到海面的那一圈大約是島頂的 94%
+    for (let k = 0; k < 6; k++) {
+      const phi = ((k + 1) * Math.PI) / 3, n = new THREE.Vector2(Math.sin(phi), Math.cos(phi));   // 這條邊朝外的方向（跟六角島的邊對齊）
       const m = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false });
-      const ring = new THREE.Mesh(shoreGeo, m); ring.position.set(isl.x, SEA_Y + 0.01, isl.z); ring.userData.noMerge = true;
-      scene.add(ring); shores.push({ ring, m, R: isl.R * 0.95,   // 島往下收窄，碰到海面的那一圈大約是島頂的 94%
-       ph: k * 0.5 + Math.random() * 0.3 });
+      const strip = new THREE.Mesh(stripGeo, m); strip.rotation.y = phi; strip.userData.noMerge = true; strip.visible = false;
+      scene.add(strip);
+      const mx = isl.x + n.x * Rs * COS30, mz = isl.z + n.y * Rs * COS30;
+      shores.push({ strip, m, n, mx, mz, len: Rs, jit: Math.random() * 0.15 });
     }
   }
+  const SWELL = 3.4, WAVE_LEN = 40;   // 一波約 3.4 秒；浪頭之間約 40 個單位
   let nextShore = 0;
   let nextCrest = 0, nextFish = 6;
   animators.push((t) => {
@@ -9060,18 +9065,27 @@ const PAN_LIMIT = Math.max(...Object.values(islands).map((i) => Math.hypot(i.x, 
     const far = camera.position.distanceTo(controls.target), r1 = Math.min(220, far * 1.1);
     if (t > nextCrest) { nextCrest = t + 0.12 + Math.random() * 0.12; const sp = seaSpot(6, r1, 4); if (sp) spawnCrest(t, sp[0], sp[1], 1 + far / 70); }   // 遠看浪花放大，才看得出來
     const dim = 1 - nightT * 0.45;
-    // 拍岸浪線：約 3.2 秒一個來回，兩圈錯開半拍
+    // 洋流：浪往 cur 的方向走（很慢地轉向）；迎著浪的邊（朝外方向和浪來的方向相反）才被拍，越正對越大浪
+    // 浪從鏡頭預設那一側（東南外海）往群島推過來，這樣迎浪拍岸的那幾個邊大多看得到
+    const ca = 0.8 + Math.PI + Math.sin(t * 0.01) * 0.9, cx = Math.sin(ca), cz = Math.cos(ca);
     for (const sh of shores) {
-      const k = (t / 3.2 + sh.ph) % 1;
-      sh.ring.scale.setScalar(sh.R * (1 + k * 0.14));
-      sh.m.opacity = 0.7 * dim * Math.min(1, k * 4) * (1 - k);
+      const face = -(sh.n.x * cx + sh.n.y * cz);
+      if (face < 0.2) { if (sh.strip.visible) sh.strip.visible = false; continue; }
+      sh.strip.visible = true;
+      // 浪頭沿著洋流方向推進：同一條浪頭先打到上游的邊、再打到下游的邊
+      const k = ((t / SWELL - (sh.mx * cx + sh.mz * cz) / WAVE_LEN + sh.jit) % 1 + 1) % 1;
+      const out = 0.15 + k * 1.1, w = 0.35 + k * 0.5;
+      sh.strip.position.set(sh.mx + sh.n.x * out, SEA_Y + 0.01, sh.mz + sh.n.y * out);
+      sh.strip.scale.set(sh.len * (1 + k * 0.12), 1, w);
+      sh.m.opacity = 0.8 * dim * face * Math.min(1, k * 5) * (1 - k);
     }
-    // 島邊濺浪：每 0.25 秒挑一座鏡頭附近的島，在島邊隨便一點濺一小簇
+    // 島邊濺浪：每 0.25 秒挑一座鏡頭附近的島，在迎浪那一側濺一小簇
     if (t > nextShore) {
       nextShore = t + 0.2 + Math.random() * 0.15;
       const near = Object.values(islands).filter((i) => Math.hypot(i.x - controls.target.x, i.z - controls.target.z) < r1);
       const isl = near[(Math.random() * near.length) | 0];
-      if (isl) { const a = Math.random() * Math.PI * 2, d = hexEdge(isl.R, a) * 0.96; spawnCrest(t, isl.x + Math.sin(a) * d, isl.z + Math.cos(a) * d, 0.5 + isl.R / 14, 1.4 + Math.random() * 0.8); }
+      if (isl) { const a = ca + Math.PI + (Math.random() - 0.5) * 2, d = hexEdge(isl.R, a) * 0.96;   // 濺浪也只在迎浪那一側
+        spawnCrest(t, isl.x + Math.sin(a) * d, isl.z + Math.cos(a) * d, 0.5 + isl.R / 14, 1.4 + Math.random() * 0.8); }
     }
     for (const c of crests) {
       if (!c.g.visible) continue;
