@@ -93,6 +93,26 @@ A.send({ t: 'ev', ok: true, stage: 1, multi: false, fam: 'se', score: 100, lives
 await sleep(Math.max(0, A.state.endAt - Date.now() - 1000)); A.send({ t: 'timeup' }); await A.until(s => s.phase === 'done', 3000);
 ok(A.state.phase === 'done' && A.state.result.reason === 'time' && A.state.result.winner === 0, '時間到 → 分數高的甲獲勝（time）');
 E.ws.close(); await sleep(200);
+console.log('⑩ 電腦建房（主持人）');
+const hr = await api('/api/create', { method: 'POST', body: JSON.stringify({ host: true }) }); const hcode = hr.body.code, hk = hr.body.hk;
+ok(hr.status === 200 && /^[A-HJ-NP-Z2-9]{5}$/.test(hcode) && /^[A-HJ-NP-Z2-9]{12}$/.test(hk), `電腦建房拿到房號 ${hcode} 和主持金鑰`);
+ok(!(await api('/api/create', { method: 'POST' })).body.hk, '一般建房（手機）沒有主持金鑰');
+ok((await api(`/api/room/${hcode}`)).body.cx === true, '房間資訊標示為電腦主持');
+const H = client(hcode, 'H'); await H.ready; H.send({ t: 'join', watch: true, hk }); await H.until(s => s.cx === true);
+ok(H.msgs.some(m => m.t === 'welcome' && m.watch && m.ctl === true), '帶金鑰的觀戰畫面＝主持人（ctl）');
+const H2 = client(hcode, 'H2'); await H2.ready; H2.send({ t: 'join', watch: true, hk: 'WRONGKEY' }); await H2.until(s => s.cx === true);
+ok(H2.msgs.some(m => m.t === 'welcome' && m.watch && m.ctl === false), '金鑰不對只是一般觀戰');
+H2.send({ t: 'set', diff: 'hard' }); await sleep(250); ok(H.state.diff === 'easy', '一般觀戰不能改難度');
+H.send({ t: 'set', diff: 'hard' }); await H.until(s => s.diff === 'hard'); ok(H.state.diff === 'hard', '主持人可以改難度');
+const P1 = client(hcode, 'P1'); await P1.ready; P1.send({ t: 'join', name: '甲' }); await P1.until(s => s.you === 0);
+ok(P1.state.host === -1 && P1.state.cx === true, '第一位玩家進房，不會變成房主（host = -1）');
+P1.send({ t: 'set', diff: 'easy' }); await sleep(250); ok(P1.state.diff === 'hard', '玩家不能改難度（由電腦決定）');
+const P2 = client(hcode, 'P2'); await P2.ready; P2.send({ t: 'join', name: '乙' }); await P2.until(s => s.you === 1);
+H.send({ t: 'set', diff: 'normal' }); await P1.until(s => s.diff === 'normal'); ok(P2.state.diff === 'normal', '難度改了，兩位玩家都同步');
+ok(!JSON.stringify([P1.msgs, P2.msgs, H2.msgs]).includes(hk), '金鑰不會出現在其他人收到的訊息裡');
+P1.send({ t: 'ready', ready: true }); P2.send({ t: 'ready', ready: true }); await P1.until(s => s.phase === 'playing'); ok(P1.state.phase === 'playing' && H.state.phase === 'playing', '兩位玩家都準備就開打，電腦端也同步');
+for (const c of [H, H2, P1, P2]) { try { c.ws.close(); } catch (e) {} }
+
 console.log('⑨ 防護');
 const D = client(code, 'D'); await D.ready; D.ws.send('x'.repeat(3000)); await sleep(300); ok(D.ws.readyState >= 2, '超大訊息會被斷線');
 const evil = new WebSocket(`${WS}/api/room/${code}/ws`, { headers: { Origin: 'https://evil.example' }, agent: wsAgent }); const evilRes = await new Promise(r => { evil.on('unexpected-response', (q, res) => r(res.statusCode)); evil.on('open', () => r('open')); evil.on('error', () => r('err')); });

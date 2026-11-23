@@ -22,7 +22,7 @@ Cloudflare Worker + Durable Objects。一個房間＝一個 Durable Object（名
 | → | `timeup` / `rematch` / `leave` / `ping {c}` | 時間到、再來一局、離開、校時 |
 | ← | `welcome {pid, slot}` / `state {...}` / `fx {from, fam, stage, multi}` / 觀戰者另收 `cur {slot, n}`、`evx {slot, ok, stage, multi, fam, lives}`、`path {slot, paths, ok, why}` / `pong {c, s}` / `error {code}` | 快照、干擾、校時、錯誤（full／started） |
 
-HTTP：`POST /api/create` 建房 → `{code}`；`GET /api/room/<房號>` 查房；`GET /api/room/<房號>/ws` 升級成 WebSocket（只接受 `ALLOWED_ORIGINS` 裡的網頁來源）。
+HTTP：`POST /api/create` 建房 → `{code}`；body 帶 `{"host":true}`（電腦建房）會多回一把 `hk` 主持金鑰：觀戰時 `join {watch:true, hk}` 對上就是主持人（welcome 帶 `ctl:true`），可以在大廳送 `set {diff}`；這種房間的玩家沒有房主（state 的 `host` 是 -1、`cx` 是 true），難度只有主持人能改。`GET /api/room/<房號>` 查房；`GET /api/room/<房號>/ws` 升級成 WebSocket（只接受 `ALLOWED_ORIGINS` 裡的網頁來源）。
 
 ## 本機測試（不需要 Cloudflare 帳號）
 ```bash
