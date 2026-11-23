@@ -247,6 +247,11 @@ body{line-break:strict}
 .vsSlot canvas{display:block;width:62px;height:62px;margin:0 auto}
 .vsSlot b{display:block;font-size:.9rem}.vsSlot small{display:block;font-size:.72rem;color:var(--muted)}
 .vsSlot .tag{position:absolute;top:4px;left:6px;font-size:.62rem;font-weight:800;color:#1b1409;background:var(--gold);border-radius:8px;padding:0 6px}
+.vsSlot.t0{border-left:4px solid #ff6b5b}.vsSlot.t1{border-left:4px solid #5aa9ff}
+.vsOpp.team{gap:10px}.vsOpp .tmc{display:flex;align-items:center;gap:5px;opacity:.78;white-space:nowrap}.vsOpp .tmc.me{opacity:1;color:var(--c);font-weight:900}.vsOpp .tmc b{color:inherit}.vsOpp .tmc i{font-style:normal;letter-spacing:0;font-size:.7rem}
+.vsSteps{position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top) + 84px);z-index:12;display:flex;justify-content:center;gap:6px;pointer-events:none}
+.vsSteps .stp{min-width:3.6em;text-align:center;padding:3px 8px;border-radius:12px;background:rgba(10,14,22,.72);border:2px solid rgba(255,255,255,.15);color:var(--muted);font-size:.7rem;line-height:1.25}
+.vsSteps .stp b{display:block;font-size:1.1rem;color:inherit}.vsSteps .stp.done{border-color:#7fe0a6;color:#7fe0a6}.vsSteps .stp.cur{border-color:var(--gold);color:#fff;background:rgba(232,189,90,.22);box-shadow:0 0 10px rgba(232,189,90,.6)}.vsSteps .stp.me.cur{box-shadow:0 0 14px #ffd77a}
 .vsSlot.empty{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.85rem}
 .vsMe{display:grid;grid-template-columns:1fr;gap:6px;margin:6px 0}
 .vsMe input{letter-spacing:1px;text-transform:none;font-size:.95rem;padding:7px}
@@ -319,6 +324,35 @@ body{line-break:strict}
 .wl-seat{display:flex;align-items:center;gap:.8em;border:2px dashed var(--line);border-radius:1em;padding:.6em 1em;color:var(--muted);min-height:4.2em;text-align:left;transition:all .3s}
 .wl-seat canvas{width:3.2em;height:3.2em;filter:grayscale(1) opacity(.35)}.wl-seat .nm{font-weight:900;font-size:1.15em}.wl-seat small{display:block}.wl-seat .rd{margin-left:auto;font-size:1.5em}
 .wl-seat.in{border-style:solid;border-color:var(--gold);background:rgba(255,255,255,.06);color:var(--ink)}.wl-seat.in canvas{filter:none}
+.wteam{position:absolute;inset:3.2em 0 0;display:flex;flex-direction:column;background:inherit}
+.wt-banner{display:grid;grid-template-columns:1fr 1fr;height:22vh;position:relative}
+.wt-team{display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;transition:background .5s}
+.wt-team.t0{background:linear-gradient(180deg,rgba(255,107,91,.22),rgba(255,107,91,.04));color:#ff6b5b}.wt-team.t1{background:linear-gradient(180deg,rgba(90,169,255,.22),rgba(90,169,255,.04));color:#5aa9ff}
+.wt-team .tn{font-weight:900;letter-spacing:.15em;font-size:1.1em}.wt-team .ts{font-weight:900;line-height:1;font-variant-numeric:tabular-nums;text-shadow:0 0 .35em currentColor;transition:font-size .6s cubic-bezier(.2,.9,.3,1.2),opacity .6s}
+.wt-team.trail .ts{opacity:.6}.wt-team .crown{position:absolute;top:.3em;left:.6em;font-size:1.6em;opacity:0;transition:opacity .4s}.wt-team.lead .crown{opacity:1}
+.wt-vs{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:3.2em;height:3.2em;border-radius:50%;background:#0b1220;border:2px solid var(--line);display:grid;place-items:center;font-weight:900}
+.wt-tug{height:.7em;display:flex;background:rgba(0,0,0,.4)}.wt-tug i{display:block;height:100%;transition:width .6s cubic-bezier(.2,.9,.3,1);width:50%}.wt-tug .t0{background:#ff6b5b}.wt-tug .t1{background:#5aa9ff}
+.wt-coop{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr}
+.wt-tp{--c:#ff6b5b;position:relative;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:.6em .8em .9em;min-width:0;border-right:1px solid var(--line);background:linear-gradient(180deg,color-mix(in srgb,var(--c) 9%,transparent),transparent 60%)}.wt-tp.t1{--c:#5aa9ff;border-right:0}
+.wt-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.8em;width:100%;flex:1;min-height:0}
+.wt-pl{display:flex;flex-direction:column;align-items:center;gap:.25em;text-align:center;opacity:.55;transition:transform .3s,opacity .3s}.wt-pl .face{width:3.6em;height:3.6em;border-radius:50%;background:rgba(255,255,255,.07);border:3px solid transparent;transition:all .3s;display:grid;place-items:center}.wt-pl .face canvas{width:100%;height:100%}
+.wt-pl b{font-size:1.15em}.wt-pl .st{font-weight:800;color:var(--muted);min-height:1.3em}.wt-pl em{font-style:normal;color:var(--muted);font-size:.8em}.wt-pl.off{filter:grayscale(1);opacity:.35}
+.wt-pl.on{opacity:1;transform:scale(1.08)}.wt-pl.on .face{border-color:var(--c);box-shadow:0 0 1.2em var(--c);animation:wtp 1s ease-in-out infinite}.wt-pl.on .st{color:var(--c)}
+@keyframes wtp{50%{box-shadow:0 0 1.8em var(--c),inset 0 0 1em color-mix(in srgb,var(--c) 50%,transparent)}}
+.wt-mon{position:relative;width:min(34vh,21vw);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.12),rgba(255,255,255,.02));border:3px solid color-mix(in srgb,var(--c) 60%,transparent)}
+.wt-mon canvas{position:absolute;inset:0;width:100%;height:100%;transition:transform .35s,opacity .35s}.wt-mon canvas.mon.pop{transform:scale(1.35);opacity:0}
+.wt-cue{position:absolute;left:50%;bottom:-.9em;transform:translateX(-50%);white-space:nowrap;font-weight:900;background:var(--c);color:#0b1220;border-radius:999px;padding:.15em .9em;opacity:0;transition:opacity .2s}.wt-cue.show{opacity:1}
+.wt-steps{display:flex;gap:.6em;justify-content:center;margin:.5em 0 .3em}
+.wt-stp{min-width:8.5em;padding:.35em .8em;border-radius:.9em;border:2px solid var(--line);background:rgba(0,0,0,.3);color:var(--muted);text-align:center;line-height:1.3;transition:all .25s}.wt-stp .sy{font-size:1.5em;font-weight:900;display:block}.wt-stp small{display:block}
+.wt-stp.done{border-color:#4ad295;color:#4ad295;background:rgba(74,210,149,.1)}.wt-stp.act{border-color:var(--c);color:var(--ink);background:color-mix(in srgb,var(--c) 22%,transparent);box-shadow:0 0 1em color-mix(in srgb,var(--c) 60%,transparent);transform:translateY(-.15em)}.wt-stp.both{border-style:dashed}
+.wt-lives{letter-spacing:.15em;font-size:1.15em}.wt-lives small{letter-spacing:0;color:var(--muted);font-size:.7em;margin-left:.6em}
+.wt-toast{position:absolute;top:14%;left:50%;transform:translate(-50%,0);font-weight:900;font-size:1.8em;white-space:nowrap;opacity:0;color:var(--gold);text-shadow:0 0 .5em currentColor;pointer-events:none;z-index:3}.wt-toast.show{animation:wtt 1.5s ease-out}.wt-toast.bad{color:#ff8a7a}
+@keyframes wtt{0%{opacity:0;transform:translate(-50%,.6em) scale(.8)}20%{opacity:1;transform:translate(-50%,0) scale(1.05)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-.8em)}}
+.wt-flash{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%) scale(.6);font-size:3em;font-weight:900;padding:.1em .6em;white-space:nowrap;border-radius:.5em;background:rgba(11,18,32,.88);border:3px solid currentColor;opacity:0;pointer-events:none;z-index:5}.wt-flash.show{animation:wtf 1.7s ease-out}
+@keyframes wtf{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.1)}}
+.wt-count{position:absolute;inset:0;display:grid;place-items:center;font-size:12em;font-weight:900;color:var(--gold);text-shadow:0 0 .3em rgba(232,189,90,.6);background:rgba(7,11,20,.55);z-index:6}
+.wl-seat.t0.in{border-color:#ff6b5b}.wl-seat.t1.in{border-color:#5aa9ff}.wl-grp{font-weight:900;margin-top:.2em;text-align:left}.wl-grp.t0{color:#ff6b5b}.wl-grp.t1{color:#5aa9ff}
+.wres .wrc.team{grid-template-columns:1fr 1fr}.wres .wrc.team small{display:block}
 .wl-diff{display:flex;gap:.5em;align-items:center;justify-content:center;flex-wrap:wrap;color:var(--muted);font-size:.95em}
 .wl-diff button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:999px;padding:.25em 1em;cursor:pointer}
 .wl-diff button.on{background:var(--gold);color:#1b1409;font-weight:900;border-color:var(--gold)}.wl-diff button:disabled{cursor:default;opacity:.8}.wl-diff button.on:disabled{opacity:1}
@@ -517,15 +551,21 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
     <div class="wmid" id="wMid">VS</div>
     <div class="wside" id="wS1"></div>
   </div>
+  <div class="wteam" id="wTeam" hidden>
+    <div class="wt-banner"><div class="wt-team t0" id="wtT0"><span class="crown">👑</span><span class="tn">🔴 紅隊</span><span class="ts" id="wtS0">0</span></div><div class="wt-team t1" id="wtT1"><span class="crown">👑</span><span class="tn">藍隊 🔵</span><span class="ts" id="wtS1">0</span></div><div class="wt-vs">VS</div></div>
+    <div class="wt-tug"><i class="t0" id="wtG0"></i><i class="t1" id="wtG1"></i></div>
+    <div class="wt-coop" id="wtCoop"></div><div class="wt-flash" id="wtFlash"></div><div class="wt-count" id="wtCount" hidden></div>
+  </div>
   <div class="wlobby" id="wLobby" hidden><div class="wl-main">
     <div class="wl-qr"><div class="wqr" id="wQr"></div><p class="wl-scan">📱 用手機掃描加入</p><div class="wl-code"><small>或在「雙人對戰」輸入房號</small><b id="wLCode">-----</b></div></div>
-    <div class="wl-right"><div class="wl-seats"><div class="wl-seat" id="wSeat0"></div><div class="wl-seat" id="wSeat1"></div></div>
-      <div class="wl-diff" id="wDiff"></div><p id="wLMsg">等待玩家加入…</p><p class="note">兩位玩家都按「我準備好了」就開打；觀戰畫面不影響比賽。</p></div></div></div>
+    <div class="wl-right"><div class="wl-seats" id="wSeats"></div>
+      <div class="wl-diff" id="wMode"></div><div class="wl-diff" id="wDiff"></div><p id="wLMsg">等待玩家加入…</p><p class="note">兩位玩家都按「我準備好了」就開打；觀戰畫面不影響比賽。</p></div></div></div>
   <div class="wres" id="wRes" hidden></div>
   <div class="wstart" id="wStart"><div><b>📺 投影觀戰</b><p>點一下畫面開始（會開啟音效）</p><small id="wStartMsg"></small></div></div>
 </section>
 <canvas id="howFig" hidden></canvas><div id="howFigCap"></div>
 <div class="vsOpp" id="vsOpp" hidden></div>
+<div class="vsSteps" id="vsSteps" hidden></div>
 <div class="vsConn" id="vsConn" hidden>連線中斷，重新連線中…</div>
 <div class="vsFx" id="vsFx" hidden></div>
 <!-- 招式表：跟著難度走（入門／修行／精進三個分頁，預設停在目前的難度），每個符印有「小圓點起筆、金光帶著畫一遍」的動畫；組合技只舉三例 -->
@@ -571,7 +611,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261123.01';
+const VERSION = 'v261123.02';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
@@ -1930,8 +1970,9 @@ function frame(t){
 
 /* ---------------- HUD ---------------- */
 let lives = 3, score = 0, combo = 0, maxCombo = 0, hits = 0, tries = 0;
+let TEAM_LAMPS = 0;   // 2 對 2：全隊共用的心燈數（0＝不是組隊）
 function hud(waveText){
-  $('#lamps').innerHTML = Array.from({ length: D().lives }, (_, i) => `<span class="${i < lives ? '' : 'off'}">🪔</span>`).join('');
+  $('#lamps').innerHTML = Array.from({ length: TEAM_LAMPS || D().lives }, (_, i) => `<span class="${i < lives ? '' : 'off'}">🪔</span>`).join('');
   if(waveText != null) $('#wave').textContent = waveText;
   $('#score').textContent = score; $('#combo').textContent = combo > 1 ? `連擊 ×${combo}` : '';
   $('#modeTag').textContent = `${D().name}・` + (inputMode === 'touch' ? '👆 觸控' : accAvail() ? '🛤️ 軌跡' : '🔄 轉動');
@@ -2499,7 +2540,7 @@ const VS_PROD = 'https://fuchen-versus.yiguandao2027.workers.dev', VS_LIVE = tru
 const VS_TEST = (() => { try{ const v = new URLSearchParams(location.search).get('vs'); if(v === '1') localStorage.setItem('fuchenVs.test', '1'); else if(v === 'off') localStorage.removeItem('fuchenVs.test'); return localStorage.getItem('fuchenVs.test') === '1'; }catch(e){ return false; } })();
 const VS_API = (() => { try{ const q = new URLSearchParams(location.search).get('vs'); if(q && /^https?:\/\/[\w.:-]+$/.test(q)) return q; }catch(e){} if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return 'http://localhost:8787'; return VS_LIVE || VS_TEST ? VS_PROD : ''; })();
 const VS_SITE = 'https://steven4dev.github.io/yiguandao-2027-course/islands/fuchen/';
-const VS = { ws: null, code: '', st: null, off: 0, active: false, over: false, debuff: 0, retry: 0, leaving: false, started: 0, mode: 'touch', waitResult: false, quit: false, rtt: 1e9, tick: 0, lastOpp: '' };
+const VS = { ws: null, code: '', st: null, off: 0, active: false, over: false, debuff: 0, retry: 0, leaving: false, started: 0, mode: 'touch', waitResult: false, quit: false, rtt: 1e9, tick: 0, lastOpp: '', team: false, maxLives: 0 };
 const vsNow = () => Date.now() + VS.off, vsEsc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const VS_FAMS = ['se', 'sheng', 'xiang', 'wei', 'chu', 'fa'], VS_FAM_COL = { se: '#d3a6e3', sheng: '#f2b47c', xiang: '#b9bdf0', wei: '#cfe28c', chu: '#a2cdea', fa: '#93dccb' }, VS_FAM_FX = { se: '色系・鏡面裂紋', sheng: '聲系・震耳欲聾', xiang: '香系・煙霧瀰漫', wei: '味系・糰子糊臉', chu: '觸系・睡意襲來', fa: '法系・思緒打結' };
 const vsDefOf = k => MONS.find(m => m.fam.key === k && m.stage === 1 && !m.xv);
@@ -2515,12 +2556,12 @@ const vsWatchLine = code => 'https://line.me/R/msg/text/?' + encodeURIComponent(
 const vsShareText = code => ['🪶 拂塵淨心島・雙人對戰', '來和我切磋一局！', `房號：${code}`, '點連結直接進房 👇', vsRoomLink(code)].join('\n');
 
 // 把每一揮的路徑壓成 32 個點（-100～100 的整數，y 朝下），連同成敗與原因送出；觀戰畫面用來畫玩家實際揮的軌跡
-function vsSendPath(rs){
+function vsSendPath(rs, key){
   try{
     const paths = rs.map(r => { const xy = r && !r.none && r.a && r.a.xy; if(!xy || xy.length < 2) return null; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for(const q of xy){ x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }
       const sc = Math.max(x1 - x0, y1 - y0) || 1, cx = (x0 + x1)/2, cy = (y0 + y1)/2; return resample(xy, 32).map(q => [Math.round((q[0] - cx)/sc*200), Math.round(-(q[1] - cy)/sc*200)]); });
     const why = rs.map(r => r.ok ? '' : r.none ? '沒揮到' : r.small ? '動作太小' : r.wrongDir ? '方向反了' : r.close ? `不夠像 ${r.score}%` : '符散了');
-    vsSend({ t: 'path', paths, ok: rs.map(r => !!r.ok), why });
+    vsSend({ t: 'path', paths, ok: rs.map(r => !!r.ok), why, keys: key ? [key] : undefined });
   }catch(e){}
 }
 // 同一個種子、第幾隻、難度 → 這一隻的怪與符印（玩家與觀戰畫面共用，保證算出來一樣）
@@ -2581,8 +2622,8 @@ function vsOnState(m){
     vsShow('scrVsRoom'); vsRenderRoom(m); return;
   }
   if(m.phase === 'playing'){
-    if(VS.active) vsRenderOpp(m);
-    else if(VS.started !== m.startAt){ VS.started = m.startAt; runVersus(m); }
+    if(VS.active){ if(m.mode === 'team'){ vsRenderTeamBar(m); vsRenderSteps(m); } else vsRenderOpp(m); }
+    else if(VS.started !== m.startAt){ VS.started = m.startAt; m.mode === 'team' ? runVersusTeam(m) : runVersus(m); }
     return;
   }
   if(m.phase === 'done'){
@@ -2594,14 +2635,15 @@ function vsDrawAv(cv, key, t){ try{ const c = cv.getContext('2d'), d = vsDefOf(k
 function vsRenderRoom(m){
   $('#vsCodeShow').textContent = VS.code; $('#vsWatchLink').href = vsWatchLine(VS.code); $('#vsShare').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(vsShareText(VS.code));
   const me = m.players[m.you], isHost = m.host === m.you;
-  $('#vsSlots').innerHTML = [0, 1].map(i => { const p = m.players[i]; if(!p) return `<div class="vsSlot empty">等朋友加入…<br>分享房號或連結</div>`; return `<div class="vsSlot${i === m.you ? ' me' : ''}${p.ready ? ' rdy' : ''}"><span class="tag">P${i + 1}${i === m.host ? '・房主' : ''}</span><canvas width="124" height="124" data-av="${p.avatar}"></canvas><b>${vsEsc(p.name)}${i === m.you ? '（你）' : ''}</b><small>${!p.online ? '📴 離線' : p.ready ? '✅ 已準備' : '⏳ 準備中'}</small></div>`; }).join('');
+  const TM = m.mode === 'team', SEAT_NAME = ['紅1', '紅2', '藍1', '藍2'];
+  $('#vsSlots').innerHTML = m.players.map((p, i) => { if(!p) return `<div class="vsSlot empty${TM ? ' t' + (i >> 1) : ''}">${TM ? (i >> 1 ? '藍' : '紅') + '隊空位' : '等朋友加入…'}<br>${m.cx ? '掃電腦上的 QR code' : '分享房號或連結'}</div>`; return `<div class="vsSlot${TM ? ' t' + (i >> 1) : ''}${i === m.you ? ' me' : ''}${p.ready ? ' rdy' : ''}"><span class="tag">${TM ? SEAT_NAME[(i >> 1) * 2 + (i & 1)].replace(/^(.)(\d)$/, (_, c, d) => c + '隊' + d) : 'P' + (i + 1) + (i === m.host ? '・房主' : '')}</span><canvas width="124" height="124" data-av="${p.avatar}"></canvas><b>${vsEsc(p.name)}${i === m.you ? '（你）' : ''}</b><small>${!p.online ? '📴 離線' : p.ready ? '✅ 已準備' : '⏳ 準備中'}</small></div>`; }).join('');
   $('#vsSlots').querySelectorAll('canvas').forEach(cv => vsDrawAv(cv, cv.dataset.av));
   const nm = $('#vsName'); if(document.activeElement !== nm) nm.value = me && me.name && me.name !== '無名氏' ? me.name : (store.get('fuchenVs.name', '') || '');
   $('#vsAv').innerHTML = VS_FAMS.map(k => `<button type="button" data-k="${k}" class="${me && me.avatar === k ? 'on' : ''}" aria-label="${k}"><canvas width="84" height="84" data-av="${k}"></canvas></button>`).join(''); $('#vsAv').querySelectorAll('canvas').forEach(cv => vsDrawAv(cv, cv.dataset.av));
   const dsw = $('#vsDsw'); dsw.dataset.d = m.diff; dsw.style.setProperty('--i', DIFF_ORDER.indexOf(m.diff)); dsw.classList.toggle('ro', !isHost); dsw.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.d === m.diff))); $('#vsDswName').textContent = DIFFS[m.diff].name; $('#vsDswWho').textContent = m.cx ? '難度（由電腦決定）' : '難度（房主決定）'; $('#vsWatchLink').hidden = !!m.cx;   // 電腦主持的房間：難度由電腦設定，已經有投影畫面，不用再傳觀戰連結
   $('#vsMode').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.m === VS.mode));
-  const rb = $('#vsReady'), both = m.players[0] && m.players[1]; rb.textContent = me && me.ready ? '取消準備' : '我準備好了'; rb.disabled = !both && !(me && me.ready);
-  $('#vsRoomMsg').textContent = !both ? (m.cx ? '等另一位玩家掃電腦上的 QR code 進房' : '等朋友進房（把房號或連結傳給他）') : me && me.ready ? '等對方準備好，就會倒數開打' : '準備好就按「我準備好了」';
+  const rb = $('#vsReady'), both = m.players.every(Boolean), nIn = m.players.filter(Boolean).length; rb.textContent = me && me.ready ? '取消準備' : '我準備好了'; rb.disabled = !both && !(me && me.ready);
+  $('#vsRoomMsg').textContent = !both ? (m.cx ? `等其他玩家掃電腦上的 QR code 進房（${nIn}/${m.players.length}）` : '等朋友進房（把房號或連結傳給他）') : me && me.ready ? (m.mode === 'team' ? '等其他三位準備好，就會倒數開打' : '等對方準備好，就會倒數開打') : (m.mode === 'team' ? '🤝 2 對 2 合作：隊友輪流揮、最後一招一起揮。準備好就按「我準備好了」' : '準備好就按「我準備好了」');
 }
 // 對手資訊只放一條細的狀態列（揮的時候不看螢幕）
 function vsRenderOpp(m){
@@ -2614,6 +2656,13 @@ function vsOnFx(m){
 }
 function vsRenderResult(m){
   const r = m.result; if(!r) return; const you = m.you, w = r.winner;
+  if(r.mode === 'team'){   // 2 對 2：兩張隊伍卡，各列兩位隊員的貢獻
+    const mine = you >> 1, TN = VS_TEAM;
+    $('#vsResTitle').textContent = w === -1 ? '🤝 平手' : w === mine ? '🏆 你們贏了！' : '🪔 這局讓給對方隊';
+    $('#vsResWhy').textContent = { knockout: w === mine ? '對方隊的心燈用完了' : '你們的心燈用完了', time: w === -1 ? '時間到，隊伍分數與心燈都一樣' : '時間到，比隊伍分數', forfeit: '對方隊離開了房間', disconnect: '對方隊斷線太久，視為離場' }[r.reason] + '。切磋不計入任何成績。';
+    $('#vsCards').innerHTML = [0, 1].map(i => { const t = r.teams[i], mem = r.players.filter(q => q && q.team === i); return `<div class="vsCard${w === i ? ' win' : ''}"><b>${TN[i].e} ${TN[i].n}${i === mine ? '（你們）' : ''}</b><div class="sc">${t.score}</div><small>${mem.map(q => vsEsc(q.name) + ' ' + q.score).join('・') || '—'}</small><small>淨化 ${t.hits} 隻・最高連擊 ${t.combo}</small><small>心燈 ${'🪔'.repeat(Math.max(0, t.lives)) || '全滅'}</small></div>`; }).join('');
+    $('#vsResCaught').textContent = caught.length ? `這局收服 ${caught.length} 隻塵靈，已收進淨心錄。` : ''; return;
+  }
   $('#vsResTitle').textContent = w === -1 ? '🤝 平手' : w === you ? '🏆 你贏了！' : '🪔 這局讓給對方';
   $('#vsResWhy').textContent = { knockout: w === you ? '對手的心燈用完了' : '你的心燈用完了', time: w === -1 ? '時間到，分數與心燈都一樣' : '時間到，比分數', forfeit: '對方離開了房間', disconnect: '對方斷線太久，視為離場', both_out: '兩邊心燈都用完了' }[r.reason] + '。切磋不計入任何成績。';
   $('#vsCards').innerHTML = [0, 1].map(i => { const p = r.players[i]; if(!p) return '<div class="vsCard"></div>'; return `<div class="vsCard${w === i ? ' win' : ''}"><b>${vsEsc(p.name)}${i === you ? '（你）' : ''}</b><div class="sc">${p.score}</div><small>淨化 ${p.hits} 隻・最高連擊 ${p.combo}</small><small>心燈 ${'🪔'.repeat(Math.max(0, p.lives)) || '全滅'}</small></div>`; }).join('');
@@ -2647,6 +2696,110 @@ async function runVersus(m){
   diffKey = savedDiff; syncDiff(); VS.active = false; $('#btnDexT').textContent = `📖 淨心錄（${dexCount()} / ${MONS.length}）`;
   if(VS.quit){ vsLeaveRoom(); return; }
   if(lives <= 0 && VS.st && VS.st.phase === 'playing') vsSend({ t: 'ev', ok: false, stage: 1, multi: false, fam: 'se', score, lives: 0, hits, combo: maxCombo });   // 保險：確定伺服器知道心燈用完了
+  if(VS.st && VS.st.phase === 'done'){ vsRenderResult(VS.st); vsShow('scrVsResult'); } else { vsShow('scrVsResult'); $('#vsResTitle').textContent = '⏳ 結算中…'; $('#vsCards').innerHTML = ''; $('#vsResWhy').textContent = ''; VS.waitResult = true; }
+}
+/* ================= 2 對 2 合作對戰 =================
+   每隊一隻共同的怪：第 s 步由 (n+s)%2 那位揮（跟伺服器同一條公式），三招怪的第 3 步兩人同時揮；
+   全隊共用心燈。手機各自判斷自己那一揮、回報 step；怪的結果、分數、心燈都以伺服器的 teams 狀態為準。 */
+const VS_TEAM = [{ n: '紅隊', e: '🔴', c: '#ff6b5b' }, { n: '藍隊', e: '🔵', c: '#5aa9ff' }];
+const vsActors = (ti, t) => { const sl = [ti * 2, ti * 2 + 1]; if(t.solo >= 0) return [t.solo]; if(t.s === 2) return sl; return [sl[(t.n + t.s) % 2]]; };
+const vsSig = t => t.n + ':' + t.s;
+const vsUntil = async (fn, ms) => { const t0 = Date.now(); while(Date.now() - t0 < ms){ if(VS.over || cancelFlag || fn()) return true; await sleep(60); } return false; };
+// 測試用（只在 localhost）：?vsauto=1 手機自動揮對，?vsauto=0.7 有 30% 機率揮錯
+const VS_AUTO = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && /[?&]vsauto=/.test(location.search) ? (parseFloat(new URLSearchParams(location.search).get('vsauto')) || 1) : 0;
+function vsRenderTeamBar(m){
+  if(!m.teams) return; const ti = m.you >> 1, left = Math.max(0, Math.ceil((m.endAt - vsNow())/1000)), mm = Math.floor(left/60), ss = String(left % 60).padStart(2, '0');
+  const el = $('#vsOpp'); el.hidden = false; el.classList.add('team');
+  const cell = i => { const t = m.teams[i], tm = VS_TEAM[i]; return `<span class="tmc${i === ti ? ' me' : ''}" style="--c:${tm.c}">${tm.e}<b>${t.score}</b><i>${'🪔'.repeat(Math.max(0, t.lives))}</i></span>`; };
+  el.innerHTML = `${cell(0)}${cell(1)}<span>⏱ ${mm}:${ss}</span>`;
+}
+// 這一隻怪的每一招由誰揮、做到哪了
+function vsRenderSteps(m){
+  const el = $('#vsSteps'); if(!m.teams || m.phase !== 'playing' || !VS.active){ el.hidden = true; return; }
+  const ti = m.you >> 1, t = m.teams[ti], sig = t.n + '|' + t.s + '|' + t.solo + '|' + m.you; if(el.dataset.sig === sig && !el.hidden) return; el.dataset.sig = sig;
+  const keys = vsGen(m.seed, t.n, m.diff).keys.map(k => m.diff !== 'hard' && k === 'itri' ? 'tri' : k), nm = sl => { const p = m.players[sl]; return p ? vsEsc(p.name).slice(0, 4) : '?'; };
+  el.hidden = false; el.innerHTML = keys.map((k, s) => { const act = vsActors(ti, { n: t.n, s, solo: t.solo }), mine = act.includes(m.you);
+    return `<span class="stp${s < t.s ? ' done' : s === t.s ? ' cur' : ''}${mine ? ' me' : ''}"><b>${s < t.s ? '✅' : SYMS[k].icon}</b>${act.length > 1 ? '一起' : mine ? '你' : nm(act[0])}</span>`; }).join('');
+}
+async function vsCueCountdown(cueAt){
+  for(;;){ const left = cueAt - vsNow(); if(left <= 30) break; center(`<div class="big">${Math.ceil(left/1000)}</div><div class="mid">🤝 兩人一起揮！</div>`); await sleep(Math.min(120, left)); if(VS.over || cancelFlag) throw 'cancel'; }
+  center('');
+}
+async function vsMyStep(m, ti, n, s, keys, g, hard, joint){
+  const key = keys[s], sy = SYMS[key], K = keys.length; document.body.dataset.key = key; if(monster) monster.sym = key;
+  const hm = hard ? 'markers' : D().hints === 'fade' ? 'brief' : 'full';
+  center(`<div class="mid">${joint ? '🤝 這一招兩人一起揮！' : '👉 輪到你揮！'}</div><div class="sub">${K > 1 ? `第 ${s + 1} / ${K} 招：` : ''}${sy.icon} ${sy.name}</div>`);
+  hint = makeHint(key);
+  if(hint){ if(hm === 'markers') hint.markers = true; if(hm === 'full'){ fu.glow = 0.6; await playReplay(hint.pts.map(q => [q[0], q[1]]), sy.kind === 'dir' ? 650 : 1300); } else { await wait(joint ? 300 : 900); hint.target = 0; await wait(250); } }
+  if(monster && monster.state === 'enter') monster.state = 'idle';
+  if(joint) await vsCueCountdown(VS.st.teams[ti].cueAt); else if(s === 0) await countdown(D().beats); else { dimTarget = 0; await wait(250); }   // 只有每隻怪的第一揮倒數；後面的招式跟單人連擊一樣，看完提示就揮
+  center(''); if(hint) hint.target = 0;
+  let r;
+  if(VS_AUTO){ await wait(joint ? 200 : 500); r = { ok: Math.random() < VS_AUTO, score: 90 }; }
+  else {
+    const st = await record(sy.win || (sy.kind === 'dir' ? 1600 : 2800), null, '揮', sy.still || 300); lastStroke = st;
+    document.body.dataset.phase = ''; bgmHold(false); sfx.ding(); vib(50); r = judgeSwing(key, st, null, false); tries++;
+  }
+  vsSend({ t: 'step', n, s, ok: !!r.ok, k: K, stage: g.stage, fam: g.sp.def.fam.key });   // 先回報，讓隊友（和伺服器）馬上知道
+  if(!VS_AUTO) vsSendPath([r], key);
+  if(!VS_AUTO){ const scr = !r.none ? pathOnScreen(r.a) : null; hint = makeHint(key); if(hint){ hint.a = 0; hint.target = 0.3; } if(scr){ swoosh(1); await playReplay(scr, 650); } if(hint) hint.target = 0; }
+  const why = r.ok ? '' : r.none ? '💤 沒揮到' : r.small ? '🤏 動作太小' : r.wrongDir ? '🔄 方向反了' : r.close ? `💨 不夠像（${r.score}%）` : '💨 符散了';
+  if(monster) spawnText(MON.x, MON.y + monster.r*2.2, r.ok ? (K > 1 ? `第 ${s + 1} 招 ✔` : '✔') : why, r.ok ? '#7fe0a6' : '#ff8a7a');
+}
+async function vsTeamRound(n, ti, m){
+  const g = vsGen(m.seed, n, m.diff), sp = g.sp, def = sp.def;
+  const keys = g.keys.map((k, i) => m.diff !== 'hard' && k === 'itri' ? 'tri' : (m.diff === 'hard' && k === 'circle' ? ((n + i) % 2 ? 'ccw' : 'cw') : k)), K = keys.length;
+  monster = { type: sp.type, def, lv: sp.lv, gold: sp.gold, sym: keys[0], x: MON.x, y: MON.y, r: U()*0.14, t0: performance.now(), state: 'enter', boss: false, hp: 1, maxHp: 1, seed: Math.random()*10 }; sfx.appear(def);
+  const hard = VS.debuff > 0; if(hard) VS.debuff--;
+  hud(`🤝 合作 第 ${n + 1} 隻${hard ? '（被干擾）' : ''}`);
+  center(symCard(keys, [K > 1 ? `合力連擊：${K} 招，輪流揮${K === 3 ? '，最後一招兩人一起' : ''}` : '輪流揮：這隻看輪到誰', '', '', '']));
+  await wait(700); center('');
+  let did = '';
+  for(;;){
+    if(VS.over || cancelFlag) throw 'cancel';
+    const t = VS.st.teams[ti]; if(t.n > n) break;
+    const cur = vsSig(t), act = vsActors(ti, t), joint = act.length > 1;
+    if(act.includes(m.you) && did !== cur){ did = cur; await vsMyStep(m, ti, n, t.s, keys, g, hard, joint); continue; }
+    const names = act.map(sl => (VS.st.players[sl] || {}).name || '隊友').join('、');
+    center(`<div class="mid">${act.includes(m.you) ? '⏳ 等隊友也揮完…' : `⏳ 等 ${vsEsc(names)} 揮…`}</div>`);
+    const moved = await vsUntil(() => { const q = VS.st && VS.st.teams && VS.st.teams[ti]; return !q || q.n > n || vsSig(q) !== cur; }, 4000);
+    if(!moved && VS.st && VS.st.teams) vsSend({ t: 'stall', n: t.n, s: t.s });   // 太久沒動靜：請伺服器判斷是不是卡住（沒超時它不會理）
+  }
+  center(''); document.body.dataset.phase = ''; if(hint) hint.target = 0;
+  const t = VS.st.teams[ti], known = t.lastN === n, ok = known ? t.lastOk : null; score = t.score; combo = t.combo; lives = t.lives;
+  if(ok === true){
+    hits++; maxCombo = Math.max(maxCombo, t.combo); purified++;
+    const cname = K === 3 ? '三才連拂' : K > 1 ? COMBO_NAME[keys.map(k => k === 'cw' || k === 'ccw' ? 'circle' : k).join('+')] : null;
+    if(cname) await startCombo(cname);
+    spawnText(MON.x, MON.y + monster.r*2.2, `+${t.lastPts}`, '#7fe0a6');
+    const isNew = dexAdd(def, sp.gold); caught.push({ def, lv: sp.lv, gold: sp.gold, isNew });
+    await startCapture(monster, keys[K - 1], false, isNew); hud(); await wait(150);
+  } else if(ok === false){
+    const lastLamp = lives <= 0; spawnDust(monster.x, monster.y, 18, 'rgba(150,140,130,.8)', 0.8);
+    monster.state = 'laugh'; monster.tHit = performance.now(); monster.lunge = performance.now();
+    sfx.miss(def); sfx.hurt(lastLamp); vib(lastLamp ? [60,40,60,40,180] : [40,60,40]); setTimeout(() => hurtFx(lastLamp), 170); shakeAmp = Math.max(shakeAmp, lastLamp ? 22 : 14); if(lastLamp) dimTarget = 0.6;
+    hud(); const sp2 = $('#lamps').children[lives]; if(sp2) sp2.classList.add('lost');
+    await wait(lastLamp ? 1900 : 1200); monster.state = 'hit'; monster.tHit = performance.now(); await wait(400);
+  } else { hud(); }   // 追不上進度（落後好幾隻）：直接跳到現在這一隻
+}
+async function runVersusTeam(m){
+  VS.active = true; VS.team = true; VS.over = false; VS.quit = false; VS.waitResult = false; VS.debuff = 0; VS.lastOpp = '';
+  const savedDiff = diffKey; diffKey = m.diff; const ti = m.you >> 1; TEAM_LAMPS = m.teams[ti].lives;
+  vsShow(null); $('#vsConn').hidden = true;
+  encN = 0; audioInit(); caught = []; $('#bookN').textContent = dexCount(); lives = TEAM_LAMPS; score = 0; combo = 0; maxCombo = 0; hits = 0; tries = 0; purified = 0; cancelFlag = false;
+  $('#hud').hidden = false; $('#bottomBar').hidden = false; $('#btnBook').hidden = true; hud(''); $('#modeTag').textContent = '🤝 合作對戰';
+  vsRenderTeamBar(m); vsRenderSteps(m); clearInterval(VS.tick);
+  VS.tick = setInterval(() => { if(!VS.active || !VS.st) return; vsRenderTeamBar(VS.st); if(!VS.over && vsNow() >= VS.st.endAt){ VS.over = true; cancelFlag = true; vsSend({ t: 'timeup' }); } }, 400);
+  try{
+    bgmStart('battle');
+    for(;;){ const left = m.startAt - vsNow(); if(left <= 30) break; center(`<div class="big">${Math.ceil(left/1000)}</div><div class="mid">🤝 ${VS_TEAM[ti].e} ${VS_TEAM[ti].n}，合力開戰！</div>`); await sleep(Math.min(120, left)); if(cancelFlag) throw 'cancel'; }
+    center(`<div class="big">揮！</div>`); setTimeout(() => center(''), 500);
+    for(let n = 0; !VS.over; n++){ await vsTeamRound(n, ti, m); if(VS.st.teams[ti].lives <= 0) break; }
+  }catch(e){ if(e === 'cancel'){ if(!VS.over) VS.quit = true; } else console.error(e); }
+  RNG = Math.random; bgmStop(); clearInterval(VS.tick); VS.tick = 0; TEAM_LAMPS = 0; VS.team = false;
+  center(''); monster = null; cd = null; dimTarget = 0; capFx = null; comboFx = null; document.body.dataset.phase = ''; $('#hud').hidden = true; $('#bottomBar').hidden = true; $('#vsOpp').hidden = true; $('#vsOpp').classList.remove('team'); $('#vsSteps').hidden = true; $('#vsFx').hidden = true;
+  diffKey = savedDiff; syncDiff(); VS.active = false; $('#btnDexT').textContent = `📖 淨心錄（${dexCount()} / ${MONS.length}）`;
+  if(VS.quit){ vsLeaveRoom(); return; }
   if(VS.st && VS.st.phase === 'done'){ vsRenderResult(VS.st); vsShow('scrVsResult'); } else { vsShow('scrVsResult'); $('#vsResTitle').textContent = '⏳ 結算中…'; $('#vsCards').innerHTML = ''; $('#vsResWhy').textContent = ''; VS.waitResult = true; }
 }
 function vsLeaveRoom(toTitle = true){
@@ -2698,7 +2851,7 @@ $('#vsLeave').addEventListener('click', () => vsLeaveRoom());
 $('#vsAgain').addEventListener('click', () => { vsSend({ t: 'rematch' }); });
 $('#vsIsleR').addEventListener('click', () => { vsLeaveRoom(false); $('#btnIsleT').click(); });
 /* ---------------- 投影觀戰（筆電、投影機用） ---------------- */
-const WT = { trail: [null, null], ws: null, code: '', st: null, off: 0, rtt: 1e9, cur: [0, 0], shown: [-1, -1], gen: [null, null], disp: [0, 0], raf: 0, snd: true, retry: 0, qr: '', hk: '', ctl: false };
+const WT = { trail: [null, null], ws: null, code: '', st: null, off: 0, rtt: 1e9, cur: [0, 0], shown: [-1, -1], gen: [null, null], disp: [0, 0], raf: 0, snd: true, retry: 0, qr: '', hk: '', ctl: false, tgen: [null, null], tshown: [-1, -1], ttrail: [null, null], tlead: null };
 const wNow = () => Date.now() + WT.off;
 function wSide(i){ return $('#wS' + i); }
 function wBuildSide(i){ wSide(i).innerHTML = `<div class="wp"><span class="tag">P${i + 1}</span><span class="nm">—</span><span class="lv"></span></div><div class="wcv"><canvas class="mon" width="360" height="360"></canvas><canvas class="trl" width="360" height="360"></canvas></div><div class="wm"><b class="mn">等待開始</b><small class="mi"></small><div class="wk"></div></div><div class="ws">0</div><div class="wst"></div>`; }
@@ -2714,13 +2867,17 @@ function wMsg(m){
   if(m.t === 'welcome'){ WT.ctl = !!m.ctl; if(WT.st) wState(WT.st, WT.st); return; }
   if(m.t === 'state'){ const prev = WT.st; WT.st = m; wState(m, prev); return; }
   if(m.t === 'cur'){ WT.cur[m.slot] = m.n; return; }
+  if(m.t === 'tdone'){ wTeamDone(m); return; }
+  if(m.t === 'tstep'){ return; }
   if(m.t === 'evx'){ wFlash(m.slot, m.ok, m); return; }
+  if(m.t === 'path' && WT.st && WT.st.mode === 'team'){ WT.ttrail[m.slot >> 1] = { paths: m.paths || [], ok: m.ok || [], keys: m.keys || [], t0: performance.now() }; const bad = (m.why || []).filter(Boolean); if(bad.length){ const to = $('#wtTo' + (m.slot >> 1)); to.textContent = '✖ ' + bad.join('、'); to.className = 'wt-toast show bad'; } return; }
   if(m.t === 'path'){ const g = WT.gen[m.slot]; WT.trail[m.slot] = { paths: m.paths || [], ok: m.ok || [], keys: g ? g.keys : [], t0: performance.now() }; const bad = (m.why || []).filter(Boolean); if(bad.length) wFloat(m.slot, '✖ ' + bad.join('、'), '#ffb3a8'); return; }
-  if(m.t === 'fx'){ wBeam(m.from, m.fam); return; }
+  if(m.t === 'fx'){ if(WT.st && WT.st.mode === 'team'){ const ti = 1 - (m.from >> 1), to = $('#wtTo' + ti); to.textContent = `🌫️ 受到干擾：${(VS_FAM_FX[m.fam] || '').split('・')[0]}`; to.className = 'wt-toast show bad'; wSfx(() => sfx.hurt(false)); } else wBeam(m.from, m.fam); return; }
 }
 function wState(m, prev){
   $('#wCode').textContent = '房號 ' + WT.code; $('#wLCode').textContent = WT.code;
-  [0, 1].forEach(i => { const p = m.players[i], el = wSide(i); el.querySelector('.nm').textContent = p ? p.name : '等待加入…'; el.querySelector('.lv').textContent = p ? '🪔'.repeat(Math.max(0, p.lives)) : ''; el.classList.toggle('out', !!(p && m.phase === 'playing' && !p.alive));
+  const TM = m.mode === 'team'; $('.wsides').hidden = TM; $('#wTeam').hidden = !TM || m.phase === 'lobby'; if(TM && m.phase !== 'lobby') wTeamUi(m); if(!TM) WT.tlead = null;
+  (TM ? [] : [0, 1]).forEach(i => { const p = m.players[i], el = wSide(i); el.querySelector('.nm').textContent = p ? p.name : '等待加入…'; el.querySelector('.lv').textContent = p ? '🪔'.repeat(Math.max(0, p.lives)) : ''; el.classList.toggle('out', !!(p && m.phase === 'playing' && !p.alive));
     el.querySelector('.wst').textContent = p ? `淨化 ${p.hits} 隻・最高連擊 ${p.combo}${p.online ? '' : '・📴 離線'}` : ''; if(p && p.cur && m.phase === 'playing') WT.cur[i] = Math.max(WT.cur[i], p.cur.n); });
   if(m.phase === 'lobby'){
     $('#wRes').hidden = true; $('#wLobby').hidden = false; WT.cur = [0, 0]; WT.shown = [-1, -1]; WT.disp = [0, 0];
@@ -2728,22 +2885,65 @@ function wState(m, prev){
     wQr(); $('#wMid').textContent = 'VS'; $('#wMid').classList.remove('cd');
   } else if(m.phase === 'playing'){
     $('#wLobby').hidden = true; $('#wRes').hidden = true;
-    if(!prev || prev.phase !== 'playing'){ WT.cur = [0, 0]; WT.shown = [-1, -1]; WT.disp = [0, 0]; }
+    if(!prev || prev.phase !== 'playing'){ WT.cur = [0, 0]; WT.shown = [-1, -1]; WT.disp = [0, 0]; WT.tshown = [-1, -1]; WT.ttrail = [null, null]; WT.tlead = null; }
   } else if(m.phase === 'done' && m.result){
     $('#wLobby').hidden = true; const r = m.result, w = r.winner, nm = i => (r.players[i] || {}).name || '';
+    if(r.mode === 'team'){
+      $('#wRes').innerHTML = `<h2>${w === -1 ? '🤝 平手' : '🏆 ' + VS_TEAM[w].e + ' ' + VS_TEAM[w].n + '獲勝！'}</h2><p>${{ knockout: '對方隊的心燈用完了', time: '時間到，比隊伍分數', forfeit: '對方隊離開了房間', disconnect: '對方隊斷線太久' }[r.reason] || ''}・切磋不計入任何成績</p><div class="wrc team">${[0, 1].map(i => { const t = r.teams[i], mem = r.players.filter(q => q && q.team === i); return `<div class="${w === i ? 'win' : ''}"><b>${VS_TEAM[i].e} ${VS_TEAM[i].n}</b><div class="sc">${t.score}</div>${mem.map(q => `<small>${vsEsc(q.name)}：${q.score}</small>`).join('')}<small>淨化 ${t.hits} 隻・最高連擊 ${t.combo}</small></div>`; }).join('')}</div>`;
+      $('#wRes').hidden = false; if(!prev || prev.phase !== 'done') wSfx(() => sfx.victory()); return;
+    }
     $('#wRes').innerHTML = `<h2>${w === -1 ? '🤝 平手' : '🏆 ' + vsEsc(nm(w)) + ' 獲勝！'}</h2><p>${{ knockout: '對手的心燈用完了', time: '時間到，比分數', forfeit: '對方離開了房間', disconnect: '對方斷線太久', both_out: '兩邊心燈都用完了' }[r.reason] || ''}・切磋不計入任何成績</p><div class="wrc">${[0, 1].map(i => { const p = r.players[i]; return p ? `<div class="${w === i ? 'win' : ''}"><b>${vsEsc(p.name)}</b><div class="sc">${p.score}</div><small>淨化 ${p.hits} 隻・最高連擊 ${p.combo}</small></div>` : '<div></div>'; }).join('')}</div>`;
     $('#wRes').hidden = false; if(!prev || prev.phase !== 'done') wSfx(() => sfx.victory());
   }
 }
 // 大廳：兩個座位（誰加入、誰準備好）＋難度（電腦主持人可以點，其他人只看得到）
 function wLobbyUi(m){
-  [0, 1].forEach(i => { const p = m.players[i], el = $('#wSeat' + i); el.classList.toggle('in', !!p);
+  const TM = m.mode === 'team', N = m.players.length, sk = N + '|' + WT.ctl, box = $('#wSeats');
+  if(box.dataset.k !== sk){ box.dataset.k = sk; box.innerHTML = m.players.map((_, i) => `${TM && !(i & 1) ? `<div class="wl-grp t${i >> 1}">${i >> 1 ? '🔵 藍隊' : '🔴 紅隊'}</div>` : ''}<div class="wl-seat${TM ? ' t' + (i >> 1) : ''}" id="wSeat${i}"></div>`).join(''); }
+  m.players.forEach((p, i) => { const el = $('#wSeat' + i); el.classList.toggle('in', !!p);
     if(!el.firstChild || el.dataset.av !== (p ? p.avatar : '')){ el.innerHTML = '<canvas width="96" height="96"></canvas><div><span class="nm"></span><small></small></div><span class="rd"></span>'; el.dataset.av = p ? p.avatar : ''; if(p) vsDrawAv(el.querySelector('canvas'), p.avatar); }
-    el.querySelector('.nm').textContent = p ? p.name : `玩家 ${i + 1}：等待加入…`; el.querySelector('small').textContent = p ? (p.online ? (p.ready ? '已準備' : '準備中…') : '📴 離線') : '掃 QR code 就會坐進來'; el.querySelector('.rd').textContent = p && p.ready ? '✅' : ''; });
+    el.querySelector('.nm').textContent = p ? p.name : (TM ? `${i >> 1 ? '藍' : '紅'}隊空位：等待加入…` : `玩家 ${i + 1}：等待加入…`); el.querySelector('small').textContent = p ? (p.online ? (p.ready ? '已準備' : '準備中…') : '📴 離線') : '掃 QR code 就會坐進來'; el.querySelector('.rd').textContent = p && p.ready ? '✅' : ''; });
+  const md = $('#wMode'), mk = 'm' + WT.ctl; if(md.dataset.k !== mk){ md.dataset.k = mk; md.innerHTML = '模式　' + [['duo', '⚔️ 1 對 1'], ['team', '🤝 2 對 2 合作']].map(([k, nmx]) => `<button type="button" data-m="${k}"${WT.ctl ? '' : ' disabled'}>${nmx}</button>`).join('') + (WT.ctl ? '' : '<small>（由主持的電腦設定）</small>'); }
+  md.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.m === m.mode));
   const dd = $('#wDiff'), key = DIFF_ORDER.join() + WT.ctl; if(dd.dataset.k !== key){ dd.dataset.k = key; dd.innerHTML = '難度　' + DIFF_ORDER.map(k => `<button type="button" data-d="${k}"${WT.ctl ? '' : ' disabled'}>${DIFFS[k].name}</button>`).join('') + (WT.ctl ? '' : '<small>（由主持的電腦設定）</small>'); }
   dd.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.d === m.diff));
-  const ps = m.players.filter(Boolean); $('#wLMsg').textContent = ps.length < 2 ? `等玩家掃 QR code 加入（${ps.length}/2）` : ps.every(p => p.ready) ? '都準備好了，馬上開打！' : '等兩位玩家都按「我準備好了」';
+  const ps = m.players.filter(Boolean); $('#wLMsg').textContent = ps.length < N ? `等玩家掃 QR code 加入（${ps.length}/${N}）` : ps.every(p => p.ready) ? '都準備好了，馬上開打！' : `等${N > 2 ? '大家' : '兩位玩家'}都按「我準備好了」`;
+  $('#wLobby .note').textContent = TM ? '2 對 2 合作：每隊一隻共同的怪，隊友輪流揮、最後一招一起揮，全隊共用心燈。' : '兩位玩家都按「我準備好了」就開打；觀戰畫面不影響比賽。';
 }
+// ---- 2 對 2 合作的投影畫面：每隊一隻共同的怪、輪流發亮、三招進度、全隊共用心燈、領先隊分數放大 ----
+const wFmt = n => Number(n || 0).toLocaleString('en-US'), wLivesMax = d => d === 'hard' ? 3 : 4;
+function wTeamBuild(){
+  const root = $('#wtCoop'); if(root.dataset.b) return; root.dataset.b = 1;
+  const pl = (i, j) => `<div class="wt-pl" id="wtPl${i}${j}"><div class="face"><canvas width="96" height="96"></canvas></div><b></b><span class="st"></span><em></em></div>`;
+  root.innerHTML = [0, 1].map(i => `<div class="wt-tp t${i}" id="wtP${i}"><div class="wt-toast" id="wtTo${i}"></div><div class="wt-row">${pl(i, 0)}<div class="wt-mon" id="wtM${i}"><canvas class="mon" width="360" height="360"></canvas><canvas class="trl" width="360" height="360"></canvas><span class="wt-cue" id="wtC${i}"></span></div>${pl(i, 1)}</div><div class="wt-steps" id="wtSt${i}"></div><div class="wt-lives" id="wtLv${i}"></div></div>`).join('');
+}
+function wTeamFlash(txt, col){ const f = $('#wtFlash'); f.textContent = txt; f.style.color = col; f.classList.remove('show'); void f.offsetWidth; f.classList.add('show'); }
+function wTeamUi(m){
+  wTeamBuild(); const T = m.teams; if(!T) return; const A = T[0].score, B = T[1].score, tot = Math.max(1, A + B), size = x => (3 + 7.5 * x).toFixed(2) + 'vw', L = A === B ? null : A > B ? 0 : 1;
+  [0, 1].forEach(i => { const t = T[i], sh = i ? B / tot : A / tot, act = vsActors(i, t), nowN = wNow();
+    $('#wtS' + i).textContent = wFmt(t.score); $('#wtS' + i).style.fontSize = size(sh); $('#wtT' + i).classList.toggle('lead', L === i); $('#wtT' + i).classList.toggle('trail', L !== null && L !== i); $('#wtG' + i).style.width = (sh * 100) + '%';
+    for(let j = 0; j < 2; j++){ const slot = i * 2 + j, p = m.players[slot], el = $('#wtPl' + i + j); el.classList.toggle('on', !!p && act.includes(slot) && m.phase === 'playing'); el.classList.toggle('off', !p || !p.online);
+      el.querySelector('b').textContent = p ? p.name : '—'; el.querySelector('em').textContent = p ? `貢獻 ${wFmt(p.score)}` : ''; if(p && el.dataset.av !== p.avatar){ el.dataset.av = p.avatar; vsDrawAv(el.querySelector('canvas'), p.avatar); }
+      el.querySelector('.st').textContent = !p ? '' : !p.online ? '📴 離線' : act.includes(slot) ? (act.length > 1 ? '一起揮！' : t.rep.includes(slot) ? '已揮' : '揮！') : '準備'; }
+    const g = vsGen(m.seed, t.n, m.diff), keys = g.keys.map(k => m.diff !== 'hard' && k === 'itri' ? 'tri' : k);
+    $('#wtSt' + i).innerHTML = keys.map((k, s) => { const a2 = vsActors(i, { n: t.n, s, solo: t.solo }), p0 = m.players[a2[0]]; return `<div class="wt-stp${s < t.s ? ' done' : s === t.s ? ' act' : ''}${a2.length > 1 ? ' both' : ''}"><span class="sy">${s < t.s ? '✅' : SYMS[k].icon}</span><small>${s + 1}. ${SYMS[k].name}</small><small>${a2.length > 1 ? '兩人一起' : p0 ? vsEsc(p0.name) : '?'}</small></div>`; }).join('');
+    $('#wtLv' + i).innerHTML = '🪔'.repeat(Math.max(0, t.lives)) + `<span style="opacity:.25">${'🪔'.repeat(Math.max(0, wLivesMax(m.diff) - t.lives))}</span><small>全隊共用心燈${t.solo >= 0 ? '・隊友離線，一人包辦' : ''}</small>`; });
+  if(L !== null){ if(WT.tlead !== null && WT.tlead !== L && m.phase === 'playing'){ wTeamFlash(`${VS_TEAM[L].e} ${VS_TEAM[L].n}反超！`, VS_TEAM[L].c); wSfx(() => sfx.victory && sfx.victory()); } WT.tlead = L; }
+}
+function wTeamLoop(m, now){
+  const t = now / 1000, left0 = m.startAt - wNow(), cnt = $('#wtCount'); cnt.hidden = left0 <= 0; if(left0 > 0) cnt.textContent = Math.ceil(left0/1000);
+  [0, 1].forEach(i => { const tm = m.teams[i], root = $('#wtM' + i), cv = root.querySelector('canvas.mon'), n = tm.n;
+    if(WT.tshown[i] !== n){ WT.tshown[i] = n; WT.tgen[i] = vsGen(m.seed, n, m.diff); cv.classList.remove('pop'); }
+    const g = WT.tgen[i]; if(g && !cv.classList.contains('pop')){ const c = cv.getContext('2d'); c.clearRect(0, 0, cv.width, cv.height); try{ dust(c, g.sp.def, cv.width/2, cv.height*0.55, cv.width*0.3, t + i*0.7, { noMeasure: true, gold: g.sp.gold }); }catch(e){} }
+    wTrail(root.querySelector('canvas.trl'), WT.ttrail[i], now);
+    const cue = $('#wtC' + i), left = tm.cueAt - wNow(); if(tm.cueAt && left > -1500 && tm.alive){ cue.textContent = left > 0 ? `🤝 兩人一起揮…${Math.ceil(left/1000)}` : '🤝 揮！'; cue.classList.add('show'); } else cue.classList.remove('show'); });
+}
+function wTeamDone(m){
+  const i = m.team, root = $('#wtM' + i), to = $('#wtTo' + i);
+  if(m.ok){ root.querySelector('canvas.mon').classList.add('pop'); to.textContent = (m.k === 3 ? '三才連拂！' : m.k > 1 ? '連擊！' : '淨化！') + ` +${m.pts}`; to.className = 'wt-toast show'; wSfx(() => (m.k > 1 || m.stage >= 2) ? sfx.purify() : sfx.ding()); }
+  else { to.textContent = '失誤！ −1 🪔'; to.className = 'wt-toast show bad'; hurtFx(false, $('#wtP' + i)); wSfx(() => { sfx.miss(null); sfx.hurt(false); }); }
+}
+$('#wMode').addEventListener('click', e => { const b = e.target.closest('button'); if(b && WT.ctl && WT.ws) try{ WT.ws.send(JSON.stringify({ t: 'set', mode: b.dataset.m })); }catch(err){} });
 $('#wDiff').addEventListener('click', e => { const b = e.target.closest('button'); if(b && WT.ctl && WT.ws) try{ WT.ws.send(JSON.stringify({ t: 'set', diff: b.dataset.d })); }catch(err){} });
 // 先用站內自己的 QR 函式庫（場地網路不好也出得來），失敗才用 CDN
 function wQr(){
@@ -2769,6 +2969,7 @@ function wLoop(now){
     if(left > 0){ mid.textContent = Math.ceil(left/1000); mid.classList.add('cd'); } else if(mid.classList.contains('cd')){ mid.classList.remove('cd'); mid.textContent = 'VS'; }
     const tl = Math.max(0, Math.ceil((m.endAt - Math.max(wNow(), m.startAt))/1000)); $('#wTimer').textContent = `⏱ ${Math.floor(tl/60)}:${String(tl % 60).padStart(2, '0')}`;
   }
+  if(m.mode === 'team'){ if(m.phase === 'playing') wTeamLoop(m, now); return; }
   [0, 1].forEach(i => {
     const el = wSide(i), p = m.players[i], cv = el.querySelector('canvas.mon');
     wTrail(el.querySelector('canvas.trl'), WT.trail[i], now);
