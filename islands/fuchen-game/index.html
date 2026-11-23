@@ -235,6 +235,7 @@ body{line-break:strict}
 #mvCombo .mvr .k{padding:2px 9px;border-radius:999px;background:rgba(0,0,0,.4);border:1px solid var(--line);font-weight:800}
 #mvCombo .mvr .go{color:var(--gold);font-weight:900}
 .vsEnter{width:100%;margin-bottom:7px;padding:9px;font-weight:800;border:1.5px solid #ff9a6a;color:#ffd7c4;background:rgba(120,40,20,.45)}
+.vsOpt{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:2px 0 6px;background:rgba(255,255,255,.04)}.vsOpt h3{margin:0 0 4px;font-size:1.02rem}.vsOpt p{margin:0 0 8px;font-size:.84rem;line-height:1.55;color:var(--muted)}.vsOpt button{width:100%}
 .vsJoin{display:grid;grid-template-columns:1fr auto;gap:6px}
 .vsJoin input,.vsMe input{font:inherit;font-size:1.1rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;text-align:center;padding:10px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.45);color:var(--ink);min-width:0}
 .vsCode{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0}
@@ -452,7 +453,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
         <button class="primary big" id="btnStart">🪶 開始試煉<small>手機當拂塵大揮</small></button>
         <button class="big" id="btnTouch">👆 用手指畫<small>不方便揮的時候</small></button>
       </div>
-      <button id="btnVsT" class="vsEnter" type="button" hidden>⚔️ 雙人對戰・邀朋友切磋</button>
+      <button id="btnVsT" class="vsEnter" type="button" hidden>⚔️ 對戰・1 對 1／2 對 2 合作</button>
       <div class="twoRow"><button id="btnDexT">📖 淨心錄</button><button id="btnMovesT">📜 招式表</button></div>
     </div>
     <p class="note" id="titleMsg"></p>
@@ -504,12 +505,14 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 <!-- 雙人對戰（房號或邀請連結進房；同一組怪、比分數與心燈；打出連擊會把干擾送給對手） -->
 <section class="screen" id="scrVsHome" hidden>
   <div class="panel">
-    <h2>⚔️ 雙人對戰</h2>
-    <p class="note">邀一位朋友切磋：兩個人遇到<b>一模一樣的怪</b>，比誰淨化得多、心燈撐得久。切磋不影響任何成績，打到的塵靈照樣收進淨心錄。</p>
+    <h2>⚔️ 對戰</h2>
+    <p class="note">切磋不影響任何成績，打到的塵靈照樣收進淨心錄。兩邊（兩人或兩隊）遇到<b>一模一樣的怪</b>。</p>
     <div class="row">
-      <button class="primary big" id="vsCreate">🏠 建立房間找朋友</button>
-      <button class="big" id="vsHost">🖥️ 用電腦建立房間（投影＋掃 QR 加入）</button>
-      <p class="note" style="text-align:center;margin:-.2em 0 .4em">在電腦上打開這一頁：大螢幕顯示房號與 QR code，朋友用手機掃一下就進房，不用再傳連結；難度也由電腦設定。</p>
+      <div class="vsOpt"><h3>⚔️ 1 對 1</h3><p>兩個人比誰淨化得多、心燈撐得久。用手機建房間，把房號或連結傳給朋友。</p>
+        <button class="primary big" id="vsCreate">🏠 建立房間找朋友</button></div>
+      <div class="vsOpt"><h3>🤝 2 對 2 合作</h3><p>四人分紅、藍兩隊：隊友輪流揮，三招的怪最後一招兩人一起揮，全隊共用心燈。要用<b>電腦</b>建房間（大螢幕投影），四個人掃 QR code 進房；1 對 1 也能這樣開。</p>
+        <button class="big" id="vsHost">🖥️ 用電腦建立房間（投影＋掃 QR 加入）</button></div>
+      <p class="note" style="text-align:center;margin:.2em 0 0">朋友已經開好房間了？輸入房號加入（1 對 1、2 對 2 都一樣）：</p>
       <div class="vsJoin"><input id="vsCodeIn" maxlength="5" inputmode="latin" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="輸入房號"><button id="vsJoinBtn">加入</button></div>
       <p class="note" id="vsHomeMsg" style="text-align:center;min-height:1.4em"></p>
       <button id="vsHomeBack">← 回標題</button>
@@ -612,7 +615,7 @@ body[data-phase="count"] .hud,body[data-phase="count"] .bottom{opacity:.3}
 
 <script>
 'use strict';
-const VERSION = 'v261123.04';
+const VERSION = 'v261123.05';
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const $ = s => document.querySelector(s);
 $('#ver').textContent = '拂塵試煉 ' + VERSION;
