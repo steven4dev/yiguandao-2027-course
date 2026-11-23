@@ -7825,7 +7825,8 @@ function openJoin(visit = false) {
 }
 function closeJoin() { joinEl.classList.remove('on'); setTimeout(() => { joinEl.hidden = true; joinEl.classList.remove('toss'); }, 320); }
 $('jCancel').addEventListener('click', closeJoin);
-// 「我要觀摩」按鈕暫時移除（2026/11/23）：報名表的生日、居住地區、手機是必填，觀摩票送不進試算表；表單改成非必填或另開觀摩表單後再放回來（openJoin(true) 與觀摩版面仍保留）
+// 「👀 我要觀摩」按鈕先拿掉（觀摩票只送姓名、乾坤，報名表那三題還是必填，送不進去）；表單改好後把按鈕加回品牌卡就能用
+if ($('visitBtn')) $('visitBtn').addEventListener('click', (e) => { e.stopPropagation(); openJoin(true); });
 joinEl.addEventListener('click', (e) => { if (e.target === joinEl) closeJoin(); });
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && !joinEl.hidden) closeJoin(); });
 $('joinForm').addEventListener('input', () => { jErr.hidden = true; });
