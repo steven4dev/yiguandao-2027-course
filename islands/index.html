@@ -736,7 +736,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a></div>
   <span class="status" id="status" data-state="loading" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取即時報名資料中…</span></span>
-  <span class="ver">v261123.15</span>
+  <span class="ver">v261123.16</span>
   </div></div>
 </div>
 
@@ -9054,7 +9054,7 @@ const PAN_LIMIT = Math.max(...Object.values(islands).map((i) => Math.hypot(i.x, 
       const strip = new THREE.Mesh(stripGeo, m); strip.rotation.y = phi; strip.userData.noMerge = true; strip.visible = false;
       scene.add(strip);
       const mx = isl.x + n.x * Rs * COS30, mz = isl.z + n.y * Rs * COS30;
-      shores.push({ strip, m, n, mx, mz, len: Rs, jit: Math.random() * 0.15 });
+      shores.push({ strip, m, n, mx, mz, len: Rs, jit: Math.random() * 0.15, sp: 0.85 + Math.random() * 0.3, id: shores.length });
     }
   }
   const SWELL = 3.4, WAVE_LEN = 40;   // 一波約 3.4 秒；浪頭之間約 40 個單位
@@ -9073,11 +9073,18 @@ const PAN_LIMIT = Math.max(...Object.values(islands).map((i) => Math.hypot(i.x, 
       if (face < 0.2) { if (sh.strip.visible) sh.strip.visible = false; continue; }
       sh.strip.visible = true;
       // 浪頭沿著洋流方向推進：同一條浪頭先打到上游的邊、再打到下游的邊
-      const k = ((t / SWELL - (sh.mx * cx + sh.mz * cz) / WAVE_LEN + sh.jit) % 1 + 1) % 1;
-      const out = 0.15 + k * 1.1, w = 0.35 + k * 0.5;
-      sh.strip.position.set(sh.mx + sh.n.x * out, SEA_Y + 0.01, sh.mz + sh.n.y * out);
-      sh.strip.scale.set(sh.len * (1 + k * 0.12), 1, w);
-      sh.m.opacity = 0.8 * dim * face * Math.min(1, k * 5) * (1 - k);
+      // 不規則：每條邊的節奏快慢不同；每一波大小、長短、拍在邊上的位置都不一樣，有些波直接沒拍上岸；
+      // 整片海還有「一陣大、一陣小」的湧浪（大浪成群來）
+      const ph = t / (SWELL * sh.sp) - (sh.mx * cx + sh.mz * cz) / WAVE_LEN + sh.jit, cyc = Math.floor(ph), k = ph - cyc;
+      const h = (q) => { const x = Math.sin((sh.id * 12.9898 + cyc * 78.233 + q * 37.719)) * 43758.5453; return x - Math.floor(x); };
+      const sets = 0.55 + 0.45 * Math.sin(t * 0.11 + sh.mx * 0.02) * Math.sin(t * 0.047 + sh.mz * 0.02);
+      const amp = h(1) < 0.25 ? 0 : (0.45 + h(2) * 0.55) * (0.6 + sets * 0.6);
+      if (amp <= 0) { sh.m.opacity = 0; continue; }
+      const L = sh.len * (0.45 + h(3) * 0.6), slide = (h(4) - 0.5) * (sh.len - L);   // 這一波拍到的那一段
+      const out = 0.15 + k * (0.7 + amp * 0.8), w = 0.3 + k * (0.3 + amp * 0.5);
+      sh.strip.position.set(sh.mx + sh.n.x * out + sh.n.y * slide, SEA_Y + 0.01, sh.mz + sh.n.y * out - sh.n.x * slide);
+      sh.strip.scale.set(L * (1 + k * 0.12), 1, w);
+      sh.m.opacity = Math.min(0.95, 0.85 * dim * face * amp * Math.min(1, k * 5) * (1 - k));
     }
     // 島邊濺浪：每 0.25 秒挑一座鏡頭附近的島，在迎浪那一側濺一小簇
     if (t > nextShore) {
