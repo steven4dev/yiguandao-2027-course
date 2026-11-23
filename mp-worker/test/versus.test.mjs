@@ -30,7 +30,7 @@ const A = client(code, 'A'); await A.ready; A.send({ t: 'join', name: '甲', ava
 ok(A.pid && A.state.you === 0 && A.state.host === 0, '甲進房，是 P1 也是房主');
 const B = client(code, 'B'); await B.ready; B.send({ t: 'join', name: '乙', avatar: 'fa' }); await B.until(s => s.you === 1);
 ok(B.state.you === 1 && B.state.players[0].name === '甲', '乙進房，看得到甲');
-ok(A.state.players[1] && A.state.players[1].name === '乙', '甲也即時看到乙');
+await A.until(s => s.players[1] && s.players[1].name === '乙'); ok(A.state.players[1] && A.state.players[1].name === '乙', '甲也即時看到乙');
 const C = client(code, 'C'); await C.ready; C.send({ t: 'join', name: '丙' }); await sleep(300); ok(C.errors.includes('full'), '第三個人被擋下（房間已滿）');
 ok(!JSON.stringify(A.msgs).includes(B.pid), '甲的訊息裡沒有乙的通行碼');
 
@@ -110,7 +110,7 @@ P1.send({ t: 'set', diff: 'easy' }); await sleep(250); ok(P1.state.diff === 'har
 const P2 = client(hcode, 'P2'); await P2.ready; P2.send({ t: 'join', name: '乙' }); await P2.until(s => s.you === 1);
 H.send({ t: 'set', diff: 'normal' }); await P1.until(s => s.diff === 'normal'); ok(P2.state.diff === 'normal', '難度改了，兩位玩家都同步');
 ok(!JSON.stringify([P1.msgs, P2.msgs, H2.msgs]).includes(hk), '金鑰不會出現在其他人收到的訊息裡');
-P1.send({ t: 'ready', ready: true }); P2.send({ t: 'ready', ready: true }); await P1.until(s => s.phase === 'playing'); ok(P1.state.phase === 'playing' && H.state.phase === 'playing', '兩位玩家都準備就開打，電腦端也同步');
+P1.send({ t: 'ready', ready: true }); P2.send({ t: 'ready', ready: true }); await P1.until(s => s.phase === 'playing'); await H.until(s => s.phase === 'playing'); ok(P1.state.phase === 'playing' && H.state.phase === 'playing', '兩位玩家都準備就開打，電腦端也同步');
 for (const c of [H, H2, P1, P2]) { try { c.ws.close(); } catch (e) {} }
 
 console.log('⑪ 2 對 2 合作組隊');
