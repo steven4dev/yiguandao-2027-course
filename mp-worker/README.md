@@ -24,6 +24,14 @@ Cloudflare Worker + Durable Objects。一個房間＝一個 Durable Object（名
 
 HTTP：`POST /api/create` 建房 → `{code}`；body 帶 `{"host":true}`（電腦建房）會多回一把 `hk` 主持金鑰：觀戰時 `join {watch:true, hk}` 對上就是主持人（welcome 帶 `ctl:true`），可以在大廳送 `set {diff}`；這種房間的玩家沒有房主（state 的 `host` 是 -1、`cx` 是 true），難度只有主持人能改。`GET /api/room/<房號>` 查房；`GET /api/room/<房號>/ws` 升級成 WebSocket（只接受 `ALLOWED_ORIGINS` 裡的網頁來源）。
 
+## 2 對 2 合作（電腦主持的房間）
+- 主持人（持 `hk` 的觀戰連線）在大廳送 `set {mode:'duo'|'team'}`；`team` 有 4 個座位：0、1＝紅隊，2、3＝藍隊，加入順序依 0,2,1,3 排（兩隊人數一樣多）。換模式會依加入順序重排座位並清掉準備。
+- 4 位都準備就開打，state 帶 `mode:'team'` 與 `teams:[{score,lives,n,s,k,stage,combo,hits,lastOk,lastN,lastPts,lastK,cueAt,solo,alive,rep}]`（n＝第幾隻、s＝第幾步、k＝這隻幾招、cueAt＝同步揮的時間、solo＝隊友離開後剩下的座位、rep＝這一步已回報的座位）。
+- 一步由誰揮：`actorsOf`＝第 s 步 (n+s)%2 那位、第 3 步（s=2）兩人一起；隊友不在了（solo）就剩下的人。手機回報 `step {n,s,ok,k,stage,fam}`（第 0 步帶 k／stage／fam），兩人的那一步要兩人都回報且都成功；過期或不是你的步驟會被忽略。太久沒動靜可以送 `stall {n,s}`，超過 14 秒（兩人的那一步是 cue 後 9 秒）伺服器才會判這一步失敗。
+- 一隻怪結束：成功＝隊伍分數 `STAGE_PTS[stage] + 50*(k-1) + 連擊加成（最多 100）`，平分給在場隊員；失敗＝全隊共用心燈 −1、連擊歸零。心燈 0＝整隊出局（`knockout`）。打中塵妖或連擊會對另一隊兩位送 `fx`。
+- 觀戰者另收 `tstep {team,n,s,slot,ok,part}`、`tdone {team,n,ok,k,stage,fam,pts}`；玩家的 `path` 可帶 `keys`（這一揮的符印）。結算 `result.mode === 'team'`，帶 `teams` 與 4 位玩家的貢獻。
+- 玩家離開或斷線超過寬限：隊友還在就 `solo`，整隊沒人就 `forfeit`／`disconnect` 判輸。
+
 ## 本機測試（不需要 Cloudflare 帳號）
 ```bash
 cd mp-worker
