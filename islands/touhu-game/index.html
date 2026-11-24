@@ -124,6 +124,18 @@ body.slowmo #bars i{height:7vh}
 .pl.rdy{background:#e2f1e6}
 .optrow{margin:0 0 10px}
 .optrow label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:0 0 4px}
+/* 操作方式滑動開關（參考拂塵試煉的難度開關）：點刻度或左右拖滑塊，滑塊顏色跟著模式變 */
+.msw{--mc:var(--gold);--i:0;text-align:left}
+.msw[data-m=touch]{--mc:var(--jade)}
+.msw[data-m=motion]{--mc:var(--red)}
+.msw-h{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:#8a735a;margin-bottom:5px;padding:0 4px}
+.msw-h b{color:var(--mc);font-size:15px;transition:color .2s}
+.msw-track{position:relative;display:grid;grid-template-columns:repeat(3,1fr);padding:4px;border-radius:999px;background:#efe2cc;border:1.5px solid #ead9c2;touch-action:none;user-select:none;-webkit-user-select:none}
+.msw-thumb{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px) / 3);border-radius:999px;background:var(--mc);box-shadow:0 2px 8px rgba(0,0,0,.22),inset 0 2px 3px rgba(255,255,255,.35);transform:translateX(calc(var(--i) * 100%));transition:transform .3s cubic-bezier(.3,1.5,.5,1),background .2s;pointer-events:none}
+.msw-track button{position:relative;z-index:1;background:none;border:0;border-radius:999px;padding:10px 0;font-weight:800;font-size:15px;color:#7a6550;transition:color .2s;white-space:nowrap}
+.msw-track button[aria-checked=true]{color:#fff}
+.msw-track button:disabled{opacity:.4}
+.msw-desc{margin:7px 4px 4px;font-size:13px;line-height:1.5;color:#7a6550;min-height:2.9em}
 .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px}
 .seg button{min-height:42px;border-radius:12px;background:#fff;border:1.5px solid #ead9c2;font-weight:700;font-size:14px;padding:4px 8px;line-height:1.25}
 .seg button.on{background:var(--jade);border-color:var(--jade);color:#fff}
@@ -296,12 +308,20 @@ body.motion{--gb:82px}
   <div class="card">
     <div class="chips"><div><small>三輪</small><b>每輪 4 矢</b></div><div><small>入壺・貫耳</small><b>2 分・3 分</b></div><div><small>⏱ 15 秒倒數</small><b>快投 +0.5</b></div></div>
     <div class="stack">
-      <button class="btn col" id="btnTap" type="button">🎯 開始投壺<small>經典三段式：依序點三下（仰角 → 力道 → 左右）</small></button>
-      <button class="btn ghost col" id="btnTouch" type="button">🖐️ 觸控玩<small>拖曳移動落點圈，放開就放箭</small></button>
-      <button class="btn ghost col" id="btnMotion" type="button">📱 體感玩<small>傾斜手機瞄準：直立＝近、平躺＝遠</small></button>
+      <div class="msw" id="modeSel" data-m="tap" role="radiogroup" aria-label="操作方式">
+        <div class="msw-h"><span>操作方式</span><b id="mswName">🎯 經典</b></div>
+        <div class="msw-track" id="mswTrack">
+          <i class="msw-thumb" id="mswThumb"></i>
+          <button type="button" role="radio" data-m="tap">🎯 經典</button>
+          <button type="button" role="radio" data-m="touch">🖐️ 觸控</button>
+          <button type="button" role="radio" data-m="motion" id="mswMotion">📱 體感</button>
+        </div>
+        <p class="msw-desc" id="mswDesc"></p>
+      </div>
+      <button class="btn col" id="btnStart" type="button">🏹 開始投壺</button>
       <button class="btn ghost col" id="btnMP" type="button" hidden>👥 多人對戰<small>一對一、二對二，找朋友一起投</small></button>
     </div>
-    <p class="note" id="motionNote" hidden>體感需要手機；電腦請用上面的「觸控玩」（滑鼠拖曳就行）。</p>
+    <p class="note" id="motionNote" hidden>體感需要手機；電腦請選「經典」或「觸控」（滑鼠就能玩）。</p>
     <div class="acct" id="acctRow"></div>
     <p class="rec" id="rec"></p>
   </div>
@@ -399,7 +419,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.16';
+const VER = 'v261123.17';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -1357,15 +1377,37 @@ function newGame() {
 }
 $('#btnRoundGo').addEventListener('click', () => { audioInit(); $('#scrRound').hidden = true; S.camMode = 'aim'; startAim(); });
 $('#btnAgain').addEventListener('click', () => { audioInit(); newGame(); });
-$('#btnTap').addEventListener('click', () => { audioInit(); S.mode = 'tap'; document.body.classList.remove('motion'); SAVE.mode = 'tap'; save(); newGame(); });
-$('#btnTouch').addEventListener('click', () => { audioInit(); S.mode = 'touch'; document.body.classList.remove('motion'); SAVE.mode = 'touch'; save(); newGame(); });
 const motionCapable = !!window.DeviceOrientationEvent && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
-if (!motionCapable) { $('#btnMotion').disabled = true; $('#motionNote').hidden = false; }
-$('#btnMotion').addEventListener('click', async () => {
-  audioInit(); const b = $('#btnMotion'); b.disabled = true;
-  const r = await sensEnable(); b.disabled = false;
-  if (r === 'ok') { S.mode = 'motion'; document.body.classList.add('motion'); SENS.on = true; SENS.calibOK = false; SENS.anchor = null; SAVE.mode = 'motion'; save(); newGame(); }
-  else toast(r === 'denied' ? '沒有取得動作感測授權，改用「點三下玩」吧' : '這個瀏覽器讀不到感測器，改用「點三下玩」吧（LINE 內可改用手機瀏覽器開啟）');
+if (!motionCapable) { $('#mswMotion').disabled = true; $('#motionNote').hidden = false; }
+// 操作方式滑動開關：點刻度、左右拖滑塊都可以；選擇記在這支手機上
+const MODES = ['tap', 'touch', 'motion'];
+const MSW_DESC = { tap: '經典三段式：依序點三下，定仰角 → 力道 → 左右，抓時機的節奏玩法', touch: '在畫面上拖曳移動落點圈，放開就放箭；手指越穩圈越不晃', motion: '傾斜手機瞄準：直立＝近、平躺＝遠，左右轉動對準壺，按「放箭」' };
+const MSW_NAME = { tap: '🎯 經典', touch: '🖐️ 觸控', motion: '📱 體感' };
+let pickMode = MODES.includes(SAVE.mode) && !(SAVE.mode === 'motion' && !motionCapable) ? SAVE.mode : 'tap';
+const syncMode = () => {
+  const sel = $('#modeSel'); sel.dataset.m = pickMode; sel.style.setProperty('--i', MODES.indexOf(pickMode));
+  sel.querySelectorAll('button').forEach((b) => { const on = b.dataset.m === pickMode; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+  $('#mswName').textContent = MSW_NAME[pickMode]; $('#mswDesc').textContent = MSW_DESC[pickMode];
+};
+const setPick = (m) => { if (m === 'motion' && !motionCapable) { syncMode(); return; } if (m === pickMode) { syncMode(); return; } pickMode = m; SAVE.mode = m; save(); syncMode(); try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} };
+{ const tr = $('#mswTrack'), sel = $('#modeSel'), th = $('#mswThumb'); let drag = null;
+  const idxAt = (x, r) => Math.max(0, Math.min(2, Math.floor((x - r.left - 4) / ((r.width - 8) / 3))));
+  tr.addEventListener('pointerdown', (e) => { drag = { r: tr.getBoundingClientRect(), x0: e.clientX, moved: false }; try { tr.setPointerCapture(e.pointerId); } catch (err) {} });
+  tr.addEventListener('pointermove', (e) => { if (!drag) return; if (Math.abs(e.clientX - drag.x0) > 6) drag.moved = true; if (!drag.moved) return; th.style.transition = 'none'; sel.style.setProperty('--i', Math.max(0, Math.min(2, (e.clientX - drag.r.left - 4) / ((drag.r.width - 8) / 3) - 0.5))); });
+  const end = (e, cancel) => { if (!drag) return; const d = drag; drag = null; th.style.transition = ''; if (cancel) { syncMode(); return; } setPick(MODES[idxAt(e.clientX, d.r)]); };
+  tr.addEventListener('pointerup', (e) => end(e)); tr.addEventListener('pointercancel', (e) => end(e, true));
+  tr.addEventListener('keydown', (e) => { const i = MODES.indexOf(pickMode); if (e.key === 'ArrowRight' || e.key === 'ArrowDown') setPick(MODES[Math.min(2, i + 1)]); else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') setPick(MODES[Math.max(0, i - 1)]); else return; e.preventDefault(); });
+  tr.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && e.detail === 0) setPick(b.dataset.m); });   // 鍵盤 Enter／空白鍵
+}
+syncMode();
+$('#btnStart').addEventListener('click', async () => {
+  audioInit(); const m = pickMode;
+  if (m === 'motion') {
+    const b = $('#btnStart'); b.disabled = true; const r = await sensEnable(); b.disabled = false;
+    if (r !== 'ok') { toast(r === 'denied' ? '沒有取得動作感測授權，改用「經典」或「觸控」吧' : '這個瀏覽器讀不到感測器，改用「經典」或「觸控」吧（LINE 內可改用手機瀏覽器開啟）'); return; }
+    S.mode = 'motion'; document.body.classList.add('motion'); SENS.on = true; SENS.calibOK = false; SENS.anchor = null;
+  } else { S.mode = m; document.body.classList.remove('motion'); }
+  SAVE.mode = m; save(); newGame();
 });
 function paintRec() { $('#rec').textContent = SAVE.plays ? `你玩過 ${SAVE.plays} 場・最高 ${fmt1(SAVE.best)} 分・累計入壺 ${SAVE.ins}、貫耳 ${SAVE.ears}（${lineName() ? '已綁定 LINE，換手機也在' : '只記在這支手機，登入 LINE 就能帶著走'}）` : ''; }
 paintRec();
