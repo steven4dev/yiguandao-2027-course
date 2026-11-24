@@ -388,6 +388,8 @@ body.motion{--gb:82px}
       <div class="stack">
         <button class="btn" id="mpReady" type="button">我準備好了</button>
         <a class="btn line" id="mpInvite" href="#" target="_blank" rel="noopener">💬 邀請朋友（LINE）</a>
+        <a class="btn ghost" id="mpWatchLink" href="#" target="_blank" rel="noopener">📺 電腦觀戰（把連結傳到筆電投影）</a>
+        <p class="note" id="mpWatchMsg" hidden></p>
         <button class="btn ghost sm" id="mpLeave" type="button">離開房間</button>
       </div>
     </div>
@@ -422,7 +424,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.27';
+const VER = 'v261123.28';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -1725,6 +1727,7 @@ function mpOnState() {
 
 /* —— 大廳 —— */
 const motionOK = () => !!window.DeviceOrientationEvent && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
+function mpWatchUrl() { const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('watch', MP.code); if (MPQ.get('mp')) u.searchParams.set('mp', MPQ.get('mp')); return u.toString(); }   // 觀戰連結（筆電、投影機用）：不佔位置、只看不操作
 function mpInviteUrl() { const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('room', MP.code); if (MPQ.get('mp')) u.searchParams.set('mp', MPQ.get('mp')); u.searchParams.set('openExternalBrowser', '1'); return u.toString(); }
 function mpRenderLobby() {
   const st = MP.st; S.phase = 'mplobby'; S.camMode = 'title'; $('#scrTitle').hidden = true; $('#scrFinal').hidden = true; $('#scrRound').hidden = true; $('#scrMP').hidden = false; $('#mpEntry').hidden = true; $('#mpRoom').hidden = false;
@@ -1741,7 +1744,7 @@ function mpRenderLobby() {
   const seg = (id, v) => { [...$(id).children].forEach((b) => { b.classList.toggle('on', b.dataset.v === v); b.disabled = !can && !id.includes('Input'); }); };
   seg('#mpKind', st.kind); seg('#mpPace', st.pace); seg('#mpRule', st.rule); seg('#mpInput', S.mode);
   [...$('#mpInput').children].forEach((b) => { b.disabled = b.dataset.v === 'motion' && !motionOK(); });
-  $('#mpRuleRow').hidden = true;   // 分工合投已取消，二對二固定「各自累計」 $('#mpInputRow').hidden = MP.watch;
+  $('#mpRuleRow').hidden = true; $('#mpInputRow').hidden = MP.watch;   // 分工合投已取消，二對二固定「各自累計」
   $('#mpPaceNote').textContent = st.pace === 'sync' ? '兩邊各投各的、同一組風，每輪結束一起看對方最精彩的一矢。' : '一人一矢輪流投，輪到對方時看他的拋物線慢動作（適合大螢幕）。';
   const nin = st.players.filter(Boolean).length, nrd = st.players.filter((p) => p && p.ready).length;
   $('#mpPlayers').dataset.kind = st.kind; $('#mpHostNote').hidden = !MP.watch;
@@ -1750,6 +1753,8 @@ function mpRenderLobby() {
   $('#mpReady').hidden = MP.watch; $('#mpReady').textContent = ready ? '取消準備' : (n < tot ? `我準備好了（還差 ${tot - n} 位朋友）` : '我準備好了'); $('#mpReady').classList.toggle('ghost', !!ready);
   const text = `來全真群島的投壺島跟我對投一局！房號 ${MP.code} 👉 ${mpInviteUrl()}`;
   $('#mpInvite').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(text); $('#mpInvite').hidden = MP.watch && false;
+  $('#mpWatchLink').hidden = MP.watch;   // 已經是大螢幕就不用再給觀戰連結
+  $('#mpWatchLink').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(['📺 投壺島・對戰觀戰', `房號：${MP.code}`, '用筆電打開就能投影', '看雙方即時戰況 👇', mpWatchUrl()].join('\n'));
   $('#mpLeave').textContent = MP.watch ? '關閉房間畫面' : '離開房間';
 }
 ['#mpKind', '#mpPace', '#mpRule'].forEach((id) => $(id).addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b || b.disabled) return; mpSend({ t: 'set', [id === '#mpKind' ? 'kind' : id === '#mpPace' ? 'pace' : 'rule']: b.dataset.v }); }));
@@ -1760,6 +1765,7 @@ $('#mpInput').addEventListener('click', async (e) => {
   SAVE.mode = S.mode; save(); mpSend({ t: 'profile', input: S.mode }); mpRenderLobby();
 });
 $('#mpReady').addEventListener('click', () => { audioInit(); const st = MP.st, r = st && st.players[st.you] && st.players[st.you].ready; mpSend({ t: 'profile', name: mpName(), input: S.mode }); mpSend({ t: 'ready', ready: !r }); });
+$('#mpWatchLink').addEventListener('click', () => { const m = $('#mpWatchMsg'); m.hidden = false; m.textContent = '在 LINE 把觀戰連結傳到筆電，用筆電瀏覽器打開就能投影（連結也已複製）。'; try { navigator.clipboard && navigator.clipboard.writeText(mpWatchUrl()); } catch (e) {} });   // 開 LINE 分享，同時順手複製連結
 $('#mpLeave').addEventListener('click', () => { mpSend({ t: 'leave' }); mpExit(); });
 $('#meAgain').addEventListener('click', () => { mpSend({ t: 'rematch' }); });
 $('#meLeave').addEventListener('click', () => { mpSend({ t: 'leave' }); mpExit(); });
@@ -1791,6 +1797,8 @@ $('#mpHost').addEventListener('click', async () => {
 (async () => {
   try { const r = await fetch(MP_API + '/health', { signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined }); const j = await r.json(); MP.ok = !!(j && j.ok); } catch (e) { MP.ok = false; }
   if (!MP.ok) return; $('#btnMP').hidden = false; tryAutoJoin();
+  const wc = (MPQ.get('watch') || '').toUpperCase();
+  if (/^[A-Z0-9]{3,8}$/.test(wc)) { const r = await mpApi('/api/room/' + wc).catch(() => null); if (r && r.ok) { MP.qrFor = ''; MP.watch = true; mpConnect(wc, { watch: true, hk: '' }); } else toast('找不到這個房間，請確認房號或請朋友重新傳連結'); return; }
   let saved = null; try { saved = JSON.parse(sessionStorage.getItem('touhu-mp') || 'null'); } catch (e) {}
   if (saved && saved.code) { const r = await mpApi('/api/room/' + saved.code).catch(() => null); if (r && r.ok) { MP.pid = saved.pid || ''; MP.qrFor = ''; mpConnect(saved.code, { watch: !!saved.watch, hk: saved.hk, pid: saved.pid }); return; } try { sessionStorage.removeItem('touhu-mp'); } catch (e) {} }
   if (MPQ.get('host') === '1') $('#mpHost').click(); else if (MPQ.get('room')) mpOpenEntry(MPQ.get('room'));
