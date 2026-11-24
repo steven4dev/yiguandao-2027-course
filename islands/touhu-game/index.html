@@ -295,7 +295,7 @@ body.motion{--gb:82px}
 </div></div>
 <div id="gH" class="gauge" hidden><i class="zone"></i><i class="lk"></i><i class="mk"></i><span class="gl" style="left:0">左</span><span class="gl" style="left:100%">右</span></div>
 <div id="gE" class="gauge" hidden><i class="zone"></i><i class="lk"></i><i class="mk"></i><span class="gt">仰角</span><span class="gl" style="top:0;transform:none">高</span><span class="gl" style="bottom:0;transform:none">低</span></div>
-<div id="gP" class="gauge" hidden><i class="zone"></i><i class="lk"></i><i class="mk"></i><span class="gt">力道</span><span class="gl" style="top:0;transform:none">強</span><span class="gl" style="bottom:0;transform:none">弱</span></div>
+<div id="gP" class="gauge" hidden><i class="zone"></i><i class="lk"></i><i class="mk"></i><span class="gt">力道</span><span class="gl" style="top:0;transform:none">遠</span><span class="gl" style="bottom:0;transform:none">近</span></div>
 <div id="calib" hidden><span class="ring" id="calRing"></span><span id="calTxt">舉起手機，背面對準壺，靜止一下</span><button id="btnCal" type="button">🧭 重來</button><button id="btnFlip" type="button" title="如果準星的左右跟手機相反，按這裡對調">⇄ 左右反了？</button></div>
 <div id="hint" hidden><span id="hintTxt"></span></div>
 <button id="btnThrow" type="button" hidden>🏹 按住蓄力・放開放箭</button>
@@ -419,7 +419,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.18';
+const VER = 'v261123.19';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -437,7 +437,7 @@ const SHARE_URL = 'https://steven4dev.github.io/yiguandao-2027-course/islands/to
 const TU = {
   g: 9.81, handY: 1.05, arrowL: 0.55,
   thMin: 36, thMax: 70,  // 仰角範圍（度）：低平快 ～ 高拋
-  vMin: 3.9, vMax: 7.1,  // 出手速度範圍（m/s）＝力道 0%～100%
+  xMin: 0.8, xMax: 4.4,  // 力道條＝落點離投擲者的距離：0%＝近處 0.8 公尺、100%＝最遠處 4.4 公尺，中間等距對應（出手速度由距離與仰角反推）
   mouthY: 0.55,          // 壺口離壺底的高度
   inR: 0.138,            // 穿過壺口平面時，離壺心不超過這個才算入壺
   rimR: 0.19,            // 超過 inR、不超過這個＝擦到壺口彈開
@@ -968,20 +968,18 @@ function paintDots() {
 const HAND_X = 0.16;   // 右手拿矢，不擋住壺
 const handPos = () => new THREE.Vector3(HAND_X, TU.handY, R().D);
 const thetaOf = (e) => (TU.thMin + (TU.thMax - TU.thMin) * e) * Math.PI / 180;
-const speedOf = (p) => TU.vMin + (TU.vMax - TU.vMin) * p;
+const xOf = (p) => TU.xMin + (TU.xMax - TU.xMin) * p;   // 力道 p → 落點距離（等距）
+const speedOf = (p, th) => { const dy = TU.handY - mouthW(), X = xOf(p); return Math.sqrt(Math.max(0.01, TU.g * X * X / (2 * Math.cos(th) ** 2 * (dy + X * Math.tan(th))))); };   // 仰角 th 要把矢送到距離 X 所需的出手速度
 const mouthW = () => (R().sway ? 0.14 : 0.12) + TU.mouthY;                 // 壺口平面離地高度（壺放在底座上）
 const psiOf = (a) => Math.atan2(a * TU.lat - HAND_X, R().D);              // 左右＝瞄準線在壺的位置偏幾公尺
 function landing(th, v) {   // 矢飛回壺口平面時：水平飛了多遠 X、花了多久 t（不含風）
   const dy = TU.handY - mouthW(), vy = v * Math.sin(th), t = (vy + Math.sqrt(vy * vy + 2 * TU.g * dy)) / TU.g;
   return { X: v * Math.cos(th) * t, t };
 }
-function pFor(th, X) {      // 仰角 th 要落在水平距離 X，需要多大力道（0～1，可能超出範圍）
-  const dy = TU.handY - mouthW(), v = Math.sqrt(Math.max(0.01, TU.g * X * X / (2 * Math.cos(th) ** 2 * (dy + X * Math.tan(th)))));
-  return (v - TU.vMin) / (TU.vMax - TU.vMin);
-}
+function pFor(th, X) { return (X - TU.xMin) / (TU.xMax - TU.xMin); }   // 仰角無關：力道＝距離在「近處～最遠處」之間的位置（0～1，可能超出範圍）
 const windDrift = (t) => R().windAssist ? 0.5 * S.wind * t * t : 0;   // 第二輪：把風造成的偏移畫進瞄準線與落點圈
 function launchVel(a, e, p) {
-  const th = thetaOf(e), v = speedOf(p), psi = psiOf(a);
+  const th = thetaOf(e), v = speedOf(p, th), psi = psiOf(a);
   return new THREE.Vector3(Math.sin(psi) * v * Math.cos(th), v * Math.sin(th), -Math.cos(psi) * v * Math.cos(th));
 }
 function throwArrow(a, e, p) {
@@ -1107,12 +1105,12 @@ function solveAim(tx, tz, e, lockJob, preset) {   // 落點 (tx, tz) → 左右 
   const th = thetaOf(e), hand = handPos(), D = R().D, sinPsi = (X, dr) => clamp((tx - dr - hand.x) / X, -0.95, 0.95);
   let p, L, dr = 0, a;
   if (preset) {   // 分工合投的放箭者：只管左右，仰角與力道已經定好
-    p = S.lockP; L = landing(th, speedOf(p)); dr = windDrift(L.t); a = (D * Math.tan(Math.asin(sinPsi(L.X, dr))) + HAND_X) / TU.lat;
+    p = S.lockP; L = landing(th, speedOf(p, th)); dr = windDrift(L.t); a = (D * Math.tan(Math.asin(sinPsi(L.X, dr))) + HAND_X) / TU.lat;
   } else if (lockJob) {   // 分工合投的定參數者：只管遠近（力道），左右交給隊友
     p = clamp(pFor(th, (hand.z - tz) / Math.cos(psiOf(0))), 0, 1); a = 0;
   } else {
-    let X = Math.hypot(tx - hand.x, hand.z - tz); p = clamp(pFor(th, X), 0, 1); L = landing(th, speedOf(p)); dr = windDrift(L.t);
-    for (let k = 0; k < 2; k++) { X = Math.hypot(tx - dr - hand.x, hand.z - tz); p = clamp(pFor(th, X), 0, 1); L = landing(th, speedOf(p)); dr = windDrift(L.t); }
+    let X = Math.hypot(tx - hand.x, hand.z - tz); p = clamp(pFor(th, X), 0, 1); L = landing(th, speedOf(p, th)); dr = windDrift(L.t);
+    for (let k = 0; k < 2; k++) { X = Math.hypot(tx - dr - hand.x, hand.z - tz); p = clamp(pFor(th, X), 0, 1); L = landing(th, speedOf(p, th)); dr = windDrift(L.t); }
     a = (D * Math.tan(Math.asin(sinPsi(L.X, dr))) + HAND_X) / TU.lat;
   }
   return { a, e, p, lock: lockJob };
@@ -1122,7 +1120,7 @@ function solveAim(tx, tz, e, lockJob, preset) {   // 落點 (tx, tz) → 左右 
 function touchAim(now) {
   const lockJob = !!(MP.on && MP.job && MP.job.kind === 'lock'), preset = S.preset, e = preset ? S.lockE : S.eTouch, hand = handPos(), th = thetaOf(e);
   if (TOUCH.tx == null) { TOUCH.tx = 0.4; TOUCH.tz = 0.9; }   // 第一次：在壺的左前方一點點
-  const zHi = hand.z - landing(th, speedOf(0)).X, zLo = hand.z - landing(th, speedOf(1)).X;   // 這個仰角能投到的最近、最遠位置：圈不能超出，免得手指在範圍外白拖
+  const zHi = hand.z - TU.xMin, zLo = hand.z - TU.xMax;   // 這個仰角能投到的最近、最遠位置：圈不能超出，免得手指在範圍外白拖
   let wx = 0, wz = 0;
   if (TOUCH.active) {
     const dt = Math.min(0.1, Math.max(0.001, (now - (TOUCH.lt || now)) / 1000)); TOUCH.lt = now;
@@ -1248,7 +1246,7 @@ function updateAim(now) {
   const pKnown = tch ? tch.active || S.preset : ph === 'aimP' || ph === 'aimH' || S.preset || (motion && S.charging), aP = tch ? tch.p : ph === 'aimH' || S.preset ? S.lockP : S.aP;
   const D = R().D, hand = handPos(), pc = potState(now), py = pc.y + TU.mouthY, th = thetaOf(aE), psi = psiOf(aH), xT = aH * TU.lat;
   const pUse = pKnown ? aP : clamp(pFor(th, D / Math.cos(psi)), 0, 1);   // 還沒定力道：先用「剛好到壺」的力道估
-  const v = speedOf(pUse), L = landing(th, v), dr = windDrift(L.t);
+  const v = speedOf(pUse, th), L = landing(th, v), dr = windDrift(L.t);
   const rx = hand.x + L.X * Math.sin(psi) + dr, rz = hand.z - L.X * Math.cos(psi);
   const green = 0x7dff9c, yellow = 0xffd45a;
   // 瞄準線：壺的位置（z=0 平面）
