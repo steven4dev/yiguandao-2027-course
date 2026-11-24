@@ -61,15 +61,16 @@ button,a{font:inherit;color:inherit;cursor:pointer;border:0;background:none;text
 /* —— 開場 —— */
 /* 柔膠質感：奶油色的霧從下往上慢慢升起（多段漸層，沒有任何硬邊），壺在霧的上方，標題浮在霧裡、用柔光襯底 */
 #scrTitle{justify-content:flex-end;gap:10px;background:linear-gradient(to bottom,rgba(246,234,216,0) 0%,rgba(246,234,216,0) 24%,rgba(246,234,216,.3) 33%,rgba(246,234,216,.78) 43%,rgba(246,234,216,.94) 54%,#f6ead8 70%)}
-.brand{text-align:center;margin-bottom:2px;text-shadow:0 0 18px rgba(255,248,238,.95),0 0 8px rgba(255,248,238,.9),0 1px 0 rgba(255,255,255,.6)}
-.brand .eyebrow{font-size:13px;letter-spacing:.2em;color:#7a6652;font-weight:700}
+.brand{text-align:center;margin-bottom:2px;text-shadow:0 0 26px rgba(255,248,238,1),0 0 14px rgba(255,248,238,.95),0 0 6px rgba(255,248,238,.9),0 1px 0 rgba(255,255,255,.7)}
+.brand .eyebrow{font-size:13px;letter-spacing:.2em;color:#5e4a38;font-weight:800}
 .brand h1{margin:0;font:900 42px/1.15 var(--serif);letter-spacing:.14em;text-indent:.14em}
-.brand p{margin:2px 0 0;color:#7a6652;font-size:13.5px;letter-spacing:.08em;font-weight:500}
+.brand p{margin:2px 0 0;color:#5e4a38;font-size:13.5px;letter-spacing:.08em;font-weight:700}
 .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
 .chips div{background:#fff1de;border-radius:14px;padding:8px 4px;text-align:center;line-height:1.25}
 .chips small{display:block;font-size:11.5px;color:var(--muted);font-weight:700}
 .chips b{display:block;font:900 15px var(--serif);margin-top:2px;color:var(--ink)}
-@media (max-height:680px){#scrTitle .chips{display:none}#scrTitle .acct .am{display:none}}   /* 短螢幕：把卡片瘦身，壺才有地方站 */
+@media (max-height:860px){#scrTitle .chips{display:none}}   /* 手機直立（含瀏覽器工具列）：把三格數據收掉，卡片瘦身，壺和標題才有地方站、不互相重疊 */
+@media (max-height:720px){#scrTitle .msw-desc{min-height:0}#scrTitle .acct .am{display:none}}
 .rules{margin:0 0 12px;font-size:13.5px;line-height:1.6;color:var(--ink);text-align:center}
 .rules b{color:var(--red)}
 .how{margin:0 0 12px;padding:0;list-style:none;font-size:14.5px;display:grid;gap:6px}
@@ -419,7 +420,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.22';
+const VER = 'v261123.23';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -764,7 +765,8 @@ const foam = [0, 1, 2].map((i) => { const m = new THREE.Mesh(new THREE.RingGeome
 const NG = 150, glGeo = new THREE.BufferGeometry(), glPos = new Float32Array(NG * 3), glCol = new Float32Array(NG * 3), glPh = [];
 for (let i = 0; i < NG; i++) { const a = Math.random() * 6.283, r = 7 + Math.random() * 40; glPos.set([Math.cos(a) * r, -0.5, Math.sin(a) * r - 6], i * 3); glPh.push(Math.random() * 6.28); }
 glGeo.setAttribute('position', new THREE.BufferAttribute(glPos, 3)); glGeo.setAttribute('color', new THREE.BufferAttribute(glCol, 3));
-const glitter = new THREE.Points(glGeo, new THREE.PointsMaterial({ size: 3, sizeAttenuation: false, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); glitter.frustumCulled = false; scene.add(glitter);
+const glSprite = (() => { const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d'), gr = g.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.4, 'rgba(255,255,255,.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 32, 32); return new THREE.CanvasTexture(c); })();
+const glitter = new THREE.Points(glGeo, new THREE.PointsMaterial({ map: glSprite, size: 5, sizeAttenuation: false, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); glitter.frustumCulled = false; scene.add(glitter);
 const _pm = new THREE.Matrix4(), _pq = new THREE.Quaternion(), _pe = new THREE.Euler(), _pp = new THREE.Vector3(), _ps = new THREE.Vector3(), _pc = new THREE.Color();
 function fineTick(t, dt) {
   const ts = t / 1000, night = skyCur.stars, glow = clamp(skyCur.lamp / 2.4, 0, 1);
@@ -786,8 +788,8 @@ function fineTick(t, dt) {
   flies.instanceMatrix.needsUpdate = true;
   // 浪花
   foam.forEach((m, i) => { const u = ((ts / 6) + i / 3) % 1; m.scale.setScalar(1 + u * 0.35); m.material.opacity = (1 - u) * (1 - u) * 0.38 * (1 - 0.7 * night); });
-  // 海面波光
-  for (let i = 0; i < NG; i++) { const v = Math.max(0, Math.sin(ts * 2.2 + glPh[i])) ** 6 * (1 - night * 0.75); glCol[i * 3] = v; glCol[i * 3 + 1] = v * 0.97; glCol[i * 3 + 2] = v * 0.9; }
+  // 海面波光：慢慢明滅的柔光點（原本是方形亮點快速閃爍）
+  for (let i = 0; i < NG; i++) { const v = (0.5 + 0.5 * Math.sin(ts * 0.9 + glPh[i])) ** 3 * 0.5 * (1 - night * 0.75); glCol[i * 3] = v; glCol[i * 3 + 1] = v * 0.97; glCol[i * 3 + 2] = v * 0.9; }
   glGeo.attributes.color.needsUpdate = true;
   // 小人偶：呼吸、看你投、投完反應
   const G = guest, k = (t - G.t0) / 1000; if (G.mode !== 'idle' && k > 1.9) G.mode = 'idle';
@@ -1784,7 +1786,7 @@ function heroTopPx() {   // 目前畫面上「卡片或標題」的上緣在哪�
 function heroFrame(dt) {   // 首頁／說明卡的構圖：鏡頭看著壺，再把畫面往上推，讓壺落在標題（或卡片）上方空地的正中間，不管手機的長寬比、瀏覽器工具列多高
   heroK += ((S.camMode === 'title' ? 1 : 0) - heroK) * Math.min(1, dt * 5);
   if (heroK < 0.004) { if (cam.view && cam.view.enabled) cam.clearViewOffset(); return; }
-  const w = innerWidth, h = innerHeight, y = clamp(heroTopPx() * 0.5, h * 0.2, h * 0.36);
+  const w = innerWidth, h = innerHeight, y = clamp((heroTopPx() + 76) * 0.5, h * 0.14, h * 0.4);   // 壺放在「上方按鈕列」與「標題上緣」之間的正中央
   cam.setViewOffset(w, h, 0, (h * 0.5 - y) * heroK, w, h);
 }
 function updateCam(now, dt) {
@@ -1796,7 +1798,7 @@ function updateCam(now, dt) {
     tPos.set(0, 1.78 - 0.45 * f, D + 1.35 - 0.9 * f); tLook.set(ap.x * 0.5 + pc.x * 0.5, 0.25 + ap.y * 0.38 + 0.15 * f, ap.z * 0.5);
   } else if (S.camMode === 'close') {   // 結果：拉近看壺
     tPos.set(pc.x * 0.6 - 0.4, 1.1, 2.55); tLook.set(pc.x - 0.4, 0.42, 0);
-  } else { const a = Math.sin(now / 5200) * 0.45; const R0 = innerWidth < innerHeight && innerHeight < 680 ? 3.6 : 2.7; tPos.set(Math.sin(a) * R0, 0.9, Math.cos(a) * R0 + 0.2); tLook.set(0, 0.34, 0); }   // 直的螢幕：壺要升到標題牌匾上方；橫的螢幕（電腦）：壺放在畫面上半部
+  } else { const a = Math.sin(now / 5200) * 0.45; /* 壺要完整放進「標題上方的空地」：空地越小鏡頭退得越後（壺在畫面上約佔 0.175 倍螢幕高，距離 2.7 時） */ const avail = Math.max(70, heroTopPx() - 76) * 0.9, fit = 0.175 * innerHeight * 2.7 / avail, R0 = clamp(Math.max(innerWidth < innerHeight && innerHeight < 680 ? 3.6 : 2.7, fit), 2.7, 7); tPos.set(Math.sin(a) * R0, 0.9, Math.cos(a) * R0 + 0.2); tLook.set(0, 0.34, 0); }   // 直的螢幕：壺要升到標題牌匾上方；橫的螢幕（電腦）：壺放在畫面上半部
   camPos.lerp(tPos, k); camLook.lerp(tLook, k); cam.position.copy(camPos); cam.lookAt(camLook); heroFrame(dt);
 }
 let last = performance.now();
