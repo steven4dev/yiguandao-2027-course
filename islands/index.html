@@ -736,7 +736,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a></div>
   <span class="status" id="status" data-state="loading" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取即時報名資料中…</span></span>
-  <span class="ver">v261124.05</span>
+  <span class="ver">v261124.06</span>
   </div></div>
 </div>
 
@@ -5944,11 +5944,19 @@ const thIsl = makeIsland('touhu', TH_R, Math.sin(TH_ANG) * 108, Math.cos(TH_ANG)
     const koi = [0, 1].map((i) => { const k = new THREE.Group(); const b = mesh(new THREE.SphereGeometry(0.2, 10, 8), lam(i ? '#fff3e0' : '#ee7a2a'), 0, 0, 0, k, false); b.scale.set(1.6, 0.4, 0.55); const tl = mesh(new THREE.ConeGeometry(0.12, 0.28, 4), lam(i ? '#ffd8b0' : '#ee7a2a'), -0.36, 0, 0, k, false); tl.rotation.z = Math.PI / 2; tl.scale.z = 0.4; if (i === 1) mesh(new THREE.SphereGeometry(0.1, 8, 6), lam('#ee7a2a'), 0.05, 0.05, 0, k, false); P.add(k); k.userData.noMerge = true; return k; });
     animators.push((t) => { koi.forEach((k, i) => { const a = t * (0.5 + i * 0.18) + i * 3, r = 1.25 - i * 0.4; k.position.set(Math.cos(a) * r, 0.05, Math.sin(a) * r); k.rotation.y = -a - Math.PI / 2; }); }); }
   // —— 示範小人：站在站位線上，每隔幾秒投一矢 ——
-  const hero = new THREE.Group(); hero.position.set(-1.2, 0, 5.4); hero.rotation.y = Math.PI; hero.userData.noMerge = true; mark.add(hero);   // 面向壺（-z）
-  mesh(new THREE.ConeGeometry(0.5, 1.15, 14), lam('#2f6b5a'), 0, 0.62, 0, hero); mesh(new THREE.TorusGeometry(0.34, 0.05, 6, 16), goldM, 0, 0.78, 0, hero, false).rotation.x = Math.PI / 2;
-  mesh(new THREE.SphereGeometry(0.28, 14, 10), lam('#f2c9a0'), 0, 1.42, 0, hero); mesh(new THREE.SphereGeometry(0.29, 14, 8, 0, 6.3, 0, 1.6), lam('#2b1d14'), 0, 1.46, -0.02, hero, false); mesh(new THREE.SphereGeometry(0.12, 8, 6), lam('#2b1d14'), 0, 1.74, 0.0, hero, false);
-  const armR = new THREE.Group(); armR.position.set(0.3, 1.15, 0); hero.add(armR); mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.5, 8), lam('#2f6b5a'), 0, -0.2, 0, armR, false);
-  const armL = new THREE.Group(); armL.position.set(-0.3, 1.15, 0); hero.add(armL); mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.5, 8), lam('#2f6b5a'), 0, -0.2, 0, armL, false);
+  // 骨架用跟學員、旅人同一個 figure()（蛋形身體、點狀眼睛、腮紅、微笑、肩膀樞紐的手臂），衣服是投壺島自己的設計：
+  // 青玉色短褂（下擺金邊）、紅色腰帶、短袖袖口、紅色髮帶垂兩條飄帶。
+  const hero = figure(qianMat, '', false); hero.position.set(-1.2, 0, 5.4); hero.rotation.y = Math.PI; hero.scale.setScalar(1.7); hero.userData.noMerge = true; mark.add(hero);   // 面向壺（-z）
+  { const gB = hero.children[0], coat = lam('#2f7f78'), trim = lam('#e3b44f'), sash = lam('#c23b2e'), put = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); gB.add(o); return o; };
+    put(new THREE.LatheGeometry([[0, 0.1], [0.42, 0.1], [0.44, 0.15], [0.39, 0.34], [0.34, 0.5], [0.35, 0.6], [0, 0.62]].map(([r, y]) => new THREE.Vector2(r, y)), 28), coat, 0, 0, 0);   // 短褂
+    put(new THREE.TorusGeometry(0.43, 0.022, 6, 28), trim, 0, 0.13, 0).rotation.x = Math.PI / 2;      // 下擺金邊
+    put(new THREE.TorusGeometry(0.385, 0.05, 8, 28), sash, 0, 0.42, 0).rotation.x = Math.PI / 2;      // 紅腰帶
+    put(new THREE.BoxGeometry(0.1, 0.24, 0.04), sash, 0.1, 0.3, 0.4).rotation.z = 0.25;               // 腰帶垂尾
+    for (const sx of [-1, 1]) put(new THREE.BoxGeometry(0.05, 0.28, 0.03), trim, sx * 0.07, 0.47, 0.34).rotation.z = sx * 0.5;   // 交領金線
+    hero.userData.arms.forEach((sh) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.135, 0.2, 12), coat); c.position.set(0, -0.06, 0); sh.add(c); const t = new THREE.Mesh(new THREE.TorusGeometry(0.135, 0.016, 6, 16), trim); t.position.set(0, -0.16, 0); t.rotation.x = Math.PI / 2; sh.add(t); });   // 短袖＋金袖口
+    put(new THREE.TorusGeometry(0.455, 0.04, 8, 32), sash, 0, 1.2, 0).rotation.x = Math.PI / 2 + 0.1;    // 紅髮帶（圍在頭的額頭那圈）
+    for (const sx of [-1, 1]) { const rb = put(new THREE.BoxGeometry(0.08, 0.4, 0.02), sash, sx * 0.1, 1.0, -0.47); rb.rotation.set(0.3, 0, sx * 0.3); } }   // 腦後兩條飄帶   // 兩條飄帶
+  const armL = hero.userData.arms[0], armR = hero.userData.arms[1];
   // 要投的矢（飛行時顯示）
   const fly = new THREE.Group(); fly.visible = false; AN.add(fly);
   mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.2, 6), lam('#d8a65c'), 0, 0, 0, fly, false); mesh(new THREE.ConeGeometry(0.06, 0.18, 6), lam('#7a4b1e'), 0, 0.69, 0, fly, false); mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.16, 6), lam('#c23b2e'), 0, -0.5, 0, fly, false);
@@ -5965,8 +5973,8 @@ const thIsl = makeIsland('touhu', TH_R, Math.sin(TH_ANG) * 108, Math.cos(TH_ANG)
     if (n !== cyc) { cyc = n; const r = Math.random(); outcome = r < 0.62 ? 'in' : r < 0.82 ? 'ear' : 'miss'; tgt = outcome === 'ear' ? new THREE.Vector3(0.7, 1.9, -2.6) : outcome === 'miss' ? new THREE.Vector3((Math.random() < 0.5 ? -1 : 1) * 1.1, 0.12, -1.6) : mouth.clone(); spCur = outcome === 'ear' ? spEar : outcome === 'miss' ? spMiss : spIn; }
     // 小人：投之前舉臂、投出時前送，之後歡呼或搖頭
     const wind = u < 0.9 ? u / 0.9 : u < 1.2 ? 1 - (u - 0.9) / 0.3 * 1.6 : 0;
-    armR.rotation.x = -2.2 * wind + 0.05 * Math.sin(t * 2); armL.rotation.z = 0.12 + 0.04 * Math.sin(t * 2 + 1);
-    const cheer = u > 2.6 && u < 3.8 && outcome !== 'miss'; if (cheer) { armL.rotation.z = 2.6; armR.rotation.z = -2.6; armR.rotation.x = 0; } else armR.rotation.z = 0;
+    armR.rotation.x = -2.2 * wind + 0.05 * Math.sin(t * 2); armL.rotation.z = -(ARM_REST + 0.04 * Math.sin(t * 2 + 1)); armL.rotation.x = 0;
+    const cheer = u > 2.6 && u < 3.8 && outcome !== 'miss'; if (cheer) { armL.rotation.z = -2.6; armR.rotation.z = 2.6; armR.rotation.x = 0; } else armR.rotation.z = ARM_REST;
     hero.position.y = cheer ? Math.abs(Math.sin((u - 2.6) * 7)) * 0.14 : 0.004 * Math.sin(t * 2);
     // 矢：1.2～2.7 秒拋物線飛向目標
     const f = (u - 1.2) / 1.5;
