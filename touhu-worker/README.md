@@ -10,7 +10,7 @@ Cloudflare Worker + Durable Objects。一個房間＝一個 Durable Object（名
   - `sync` 同場對投：各投各的、同一組風；每個單位這輪 4 矢都投完才一起對帳（顯示本輪結算，各自看對方最精彩的一矢重播）。
   - `turn` 輪流對投：一人一矢，輪到誰誰投，其他人看他的重播；重播看完（都送 `ack`）或等太久（`ACK_WAIT_MS`）就換下一位。
 - **2v2 規則 `rule`**：
-  - `split` 分工合投：每個隊伍是一個計分單位。第 `i` 矢由 `members[i%2]` 定仰角與力道（送 `lock`），另一位定左右並放箭（送 `ev`），每矢互換；隊友離場後剩下的人包辦。
+<!-- 已取消 -->  - `split` 分工合投：每個隊伍是一個計分單位。第 `i` 矢由 `members[i%2]` 定仰角與力道（送 `lock`），另一位定左右並放箭（送 `ev`），每矢互換；隊友離場後剩下的人包辦。
   - `sum` 各自累計：四位各是一個單位，隊伍分數是兩人相加。
 - **計分**：入壺 2、貫耳 3、沒進 0（離場或太久沒動靜記 `skip`＝0）。**時間加成**：只有投進的矢才有，`加成 ＝ 0.5 × tl`（`tl` 是放箭的手機回報的「剩餘時間比例」0～1，伺服器夾在 0～1，沒帶或亂填一律當 0），四捨五入到 0.1。**分數一律用「十分之一分」整數**（`score`、`teams`、`result` 都是，手機顯示時除以 10；`hist` 是 `[矢序, 種類, 基本分, 加成十分之一分]`）。三輪、每輪每單位 4 矢，三輪後同分就**加賽**：每單位 1 矢，最多 3 次，還是同分算平手。
 - **風**：由房間種子（`state.seed`）加上輪次與矢序，手機各自用同一個函式產生，雙方這一矢的風向風力一樣。壺在第三輪的搖晃是手機本地時間決定的，不同步（算「浪的運氣」）。
@@ -46,7 +46,7 @@ cd touhu-worker
 npm install
 # 用縮短的計時器啟動（測試專用）：
 npx wrangler dev --local --port 8787 --var COUNTDOWN_MS:300 --var REVEAL_MS:700 --var TURN_REVEAL_MS:300 --var ACK_WAIT_MS:600 --var STALL_MS:3000 --var SYNC_STALL_MS:4000 --var DC_GRACE_MS:1500
-node test/touhu.test.mjs     # 約 45 項檢查：1v1 同場／輪流、2v2 分工／累計、平手加賽、斷線重連與離場、電腦主持權限、重賽
+node test/touhu.test.mjs     # 約 45 項檢查：1v1 同場／輪流、2v2 各自累計、平手加賽、斷線重連與離場、電腦主持權限、重賽
 ```
 遊戲在本機測試：先 `python3 -m http.server 8765`（在專案根目錄），再打開 `http://localhost:8765/islands/touhu-game/?mp=http://localhost:8787`（`?mp=` 指定房間伺服器位址；`?norender` 只跑邏輯不繪圖，給自動測試用；`?room=ABCDE` 帶房號進加入畫面；`?host=1` 用電腦主持）。
 

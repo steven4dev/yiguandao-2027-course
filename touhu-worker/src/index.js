@@ -5,7 +5,7 @@
 
    對戰類型 kind：'1v1'（2 人）、'2v2'（4 人，座位 0、1＝紅隊，2、3＝藍隊）
    節奏 pace：'sync'＝同場對投（各投各的，每輪結束才對帳）、'turn'＝輪流對投（你投我看重播）
-   2v2 規則 rule：'split'＝分工合投（隊友 A 定仰角與力道，隊友 B 定左右並放箭，每矢互換）、'sum'＝各自投、隊伍累計
+   2v2 規則 rule：'sum'＝各自投、隊伍累計（分工合投已取消）
    「單位 unit」＝計分的最小單位：1v1 與 2v2-sum 是每位玩家；2v2-split 是每個隊伍
    每個單位三輪、每輪 4 矢；三輪後同分就加賽，每個單位 1 矢，最多 3 次
    計分：入壺 2、貫耳 3，另有「時間加成」——只有投進的矢才有，加成 ＝ 0.5 × 剩餘時間比例（0～1，由放箭的手機回報 tl）。
@@ -17,7 +17,7 @@ const CODE_LEN = 5, MAX_WATCHERS = 8, IDLE_MS = 30 * 60 * 1000;
 const PER_ROUND = 4, ROUNDS = 3, SUDDEN_MAX = 3;
 const SEATS = { '1v1': [0, 1], '2v2': [0, 2, 1, 3] }, MAXP = { '1v1': 2, '2v2': 4 };
 const INPUTS = ['touch', 'motion', 'tap'];   // 各人的操作方式（只供顯示）
-const KINDS = ['1v1', '2v2'], PACES = ['sync', 'turn'], RULES = ['split', 'sum'], PTS = { in: 2, ear: 3, miss: 0 };
+const KINDS = ['1v1', '2v2'], PACES = ['sync', 'turn'], RULES = ['sum'], PTS = { in: 2, ear: 3, miss: 0 };
 const MAX_MSG = 14000;
 const CFG = (env) => ({
   COUNTDOWN: +env.COUNTDOWN_MS || 4000, REVEAL: +env.REVEAL_MS || 9000, TURN_REVEAL: +env.TURN_REVEAL_MS || 4000, ACK_WAIT: +env.ACK_WAIT_MS || 9000,
@@ -66,7 +66,7 @@ export default {
 export class Room extends DurableObject {
   constructor(ctx, env) { super(ctx, env); this.s = null; this.cfg = CFG(env); ctx.blockConcurrencyWhile(async () => { this.s = (await ctx.storage.get('s')) || null; }); }
   async save() { await this.ctx.storage.put('s', this.s); await this.schedule(); }
-  newState(hk) { return { hk: hk || null, kind: '1v1', pace: 'sync', rule: 'split', phase: 'lobby', host: null, seed: 0, startAt: 0, g: null, result: null, players: {}, touched: Date.now() }; }
+  newState(hk) { return { hk: hk || null, kind: '1v1', pace: 'sync', rule: 'sum', phase: 'lobby', host: null, seed: 0, startAt: 0, g: null, result: null, players: {}, touched: Date.now() }; }
 
   // —— 小工具 ——
   maxP() { return MAXP[this.s.kind]; }
