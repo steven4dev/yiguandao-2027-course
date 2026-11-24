@@ -419,7 +419,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.20';
+const VER = 'v261123.22';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -1260,7 +1260,7 @@ function updateAim(now) {
   depthBar.material.color.set(S.round === 0 && Math.abs(rz0) <= TU.tol ? green : yellow);
   ring.visible = (pKnown && ph === 'aimH') || !!(tch && tch.active && !tch.lock); ring.position.set(rx, py + 0.004, rz);
   ring.material.color.set(S.round === 0 && Math.hypot(rx - pc.x, rz) <= TU.tol ? green : yellow);
-  ring.scale.setScalar(clamp(L.X / 2.2, 0.5, 2.0));   // 近處圈小、遠處圈大（投得越遠越不準）；第一輪壺的距離 2.2 公尺時＝實際入壺範圍
+  ring.scale.setScalar(clamp(L.X / 1.1, 0.5, 3.0));   // 近處圈小、遠處圈大（投得越遠越不準）；對到壺時圈明顯比壺口大（壺口與兩耳整個套在圈裡，圈心對壺心才算對準；圈小的話一碰到壺口就誤以為瞄到了）
   // 預測拋物線（虛線）：從手到落點，風影響已算進去（只有第二輪）
   dash.visible = ph === 'aimH' || !!(tch && tch.active && !tch.lock);
   if (dash.visible) {
