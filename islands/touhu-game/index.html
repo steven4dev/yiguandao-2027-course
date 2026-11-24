@@ -151,6 +151,18 @@ body.slowmo #bars i{height:7vh}
 #mpBar b{font:900 16px var(--serif)}
 #mpBar .nm{display:inline-block;max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;text-decoration:none}
 #mpBar.big .nm{max-width:22vw}
+/* 對戰配色呼應隊伍：紅隊／藍隊（觀戰＝左紅右藍）。body[data-team] 由 mpTeamTheme() 設定 */
+body[data-team="0"]{--tm:#c23b2e;--tmd:#8f2a20}
+body[data-team="1"]{--tm:#2f6fb5;--tmd:#1f4d85}
+#teamGlow{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .8s}
+body[data-team] #teamGlow{opacity:1}
+body[data-team="0"] #teamGlow{background:radial-gradient(ellipse 85% 75% at 50% 52%,transparent 52%,rgba(194,59,46,.30) 100%)}
+body[data-team="1"] #teamGlow{background:radial-gradient(ellipse 85% 75% at 50% 52%,transparent 52%,rgba(47,111,181,.30) 100%)}
+body[data-team="w"] #teamGlow{background:linear-gradient(90deg,rgba(194,59,46,.38),rgba(194,59,46,0) 24%,rgba(47,111,181,0) 76%,rgba(47,111,181,.38))}
+body[data-team="0"] #btnThrow,body[data-team="1"] #btnThrow{background:var(--tm);box-shadow:0 4px 0 var(--tmd)}
+body[data-team="0"] .gauge .mk,body[data-team="1"] .gauge .mk,body[data-team="0"] #gE.live .mk,body[data-team="1"] #gE.live .mk{background:var(--tm)}
+body[data-team="0"] #mpBar .me,body[data-team="1"] #mpBar .me{color:var(--tm)}
+body[data-team="0"] #scrMPEnd .card,body[data-team="1"] #scrMPEnd .card,body[data-team="0"] #mpReveal,body[data-team="1"] #mpReveal{border-top:5px solid var(--tm)}
 #mpBar small{display:block;color:var(--muted);font-size:11px;font-weight:700}
 /* 拔河桿：雙方共用一條，紅藍分界點隨分差左右移動（領先越多，分界點越往對手那邊推） */
 #mpBar{min-width:min(86vw,300px)}
@@ -321,6 +333,7 @@ body.motion{--gb:82px}
 <canvas id="gl"></canvas>
 <div id="bars"><i></i><i></i></div>
 <div id="vig"></div>
+<div id="teamGlow"></div>
 
 <a class="iconbtn" id="btnHome" href="../" aria-label="回群島">🏠</a>
 <button class="iconbtn" id="btnSound" aria-label="聲音">🔊</button>
@@ -463,7 +476,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.32';
+const VER = 'v261124.01';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -1574,6 +1587,7 @@ function mpOnMsg(m) {
   }
 }
 function mpExit() {
+  delete document.body.dataset.team; arrowMats.band.color.set('#c23b2e');
   MP.closing = true; try { if (MP.ws) MP.ws.close(); } catch (e) {} try { sessionStorage.removeItem('touhu-mp'); } catch (e) {}
   Object.assign(MP, { on: false, started: false, ended: false, st: null, code: '', pid: '', hk: '', watch: false, ctl: false, job: null, rq: [], evs: {}, revealOpen: false });
   REPLAY.on = false; document.body.classList.remove('hostview');
@@ -1676,6 +1690,7 @@ function mpReplay(ev) {
 function clearKeep() { KEEP.forEach((o) => { if (o.parent) o.parent.remove(o); if (o.geometry) o.geometry.dispose(); }); KEEP.length = 0; }
 function keepReplay(Rp) {
   const st = MP.st, ev = Rp.ev; if (!st || !st.units) return;
+  clearKeep();   // 只留最後一次的弧線給觀眾看（整輪全留會太花）；矢仍留在原地
   const u = st.units[ev.u], col = new THREE.Color(TCOL[st.kind === '1v1' ? ev.u : (u ? u.team : 0)]);
   const pts = []; for (let k = 0; k < Rp.n; k++) pts.push(new THREE.Vector3(Rp.rep[3 + k * 5] / 100, Rp.rep[4 + k * 5] / 100, Rp.rep[5 + k * 5] / 100));
   const line = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), Math.min(48, pts.length * 2), 0.011, 5, false), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.75, fog: false }));   // 細管子：投影在遠處也看得到（1 像素的線看不清）
@@ -1780,8 +1795,13 @@ function mpStartGame() {
   $('#hud').hidden = MP.watch; S.round = 0; S.perRound = 4; setupRound(); S.phase = 'wait'; S.camMode = 'aim'; hideAimUI(); mpPaintBar();
   if (MP.st.startIn > 300) mpCountdown();
 }
+function mpTeamTheme() {   // 紅隊／藍隊配色：玩家＝自己的隊色，大螢幕觀戰＝左紅右藍；離開房間就清掉
+  const st = MP.st, me = st && st.you >= 0 ? st.players[st.you] : null, team = me ? String(me.team) : MP.watch ? 'w' : '';
+  if (team) document.body.dataset.team = team; else delete document.body.dataset.team;
+  arrowMats.band.color.set(team === '0' || team === '1' ? TCOL[+team] : '#c23b2e');   // 自己的矢尾羽也用隊色
+}
 function mpOnState() {
-  const st = MP.st; mpPaintBar(); if (MP.on && st.units) paintDots();
+  const st = MP.st; mpTeamTheme(); mpPaintBar(); if (MP.on && st.units) paintDots();
   if (st.phase === 'lobby') { if (MP.started) mpBackToLobby(); mpRenderLobby(); return; }
   if (st.phase === 'play') { if (!MP.started) mpStartGame(); mpTick(); return; }
   if (st.phase === 'end') { if (!MP.started) mpStartGame(); if (!MP.ended) { MP.ended = true; setTimeout(mpShowEnd, 2600); } }
