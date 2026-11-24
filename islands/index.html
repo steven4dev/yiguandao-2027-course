@@ -736,7 +736,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a></div>
   <span class="status" id="status" data-state="loading" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取即時報名資料中…</span></span>
-  <span class="ver">v261124.01</span>
+  <span class="ver">v261124.02</span>
   </div></div>
 </div>
 
@@ -5769,7 +5769,7 @@ const thIsl = makeIsland('touhu', TH_R, Math.sin(TH_ANG) * 116, Math.cos(TH_ANG)
   // —— 青銅雙耳壺（跟遊戲裡同一個剖面，放大 2.6 倍）放在石墩上 ——
   const PED = new THREE.Group(); PED.position.set(0, 0, -2.6); mark.add(PED);
   mesh(new THREE.CylinderGeometry(1.0, 1.2, 0.5, 36), lam('#cdbfa4'), 0, 0.25, 0, PED);
-  const POT = new THREE.Group(); POT.position.set(0, 0.5, 0); POT.scale.setScalar(2.6); PED.add(POT);
+  const POT = new THREE.Group(); POT.position.set(0, 0.5, 0); POT.scale.setScalar(2.6); PED.add(POT); thIsl.pot = POT;
   const prof = [[0.001, 0], [0.10, 0], [0.17, 0.04], [0.215, 0.16], [0.22, 0.26], [0.19, 0.36], [0.135, 0.45], [0.13, 0.5], [0.16, 0.545], [0.17, 0.55], [0.15, 0.55], [0.125, 0.5], [0.12, 0.45], [0.1, 0.2], [0.08, 0.08], [0.001, 0.08]].map(([r, y]) => new THREE.Vector2(r, y));
   mesh(new THREE.LatheGeometry(prof, 36), bronze, 0, 0, 0, POT);
   mesh(new THREE.TorusGeometry(0.221, 0.011, 8, 36), goldM, 0, 0.26, 0, POT, false).rotation.x = Math.PI / 2;
@@ -5795,7 +5795,7 @@ const thIsl = makeIsland('touhu', TH_R, Math.sin(TH_ANG) * 116, Math.cos(TH_ANG)
     mesh(new THREE.CylinderGeometry(0.42, 0.5, 1.0, 14), wood, 0, 0.5, 0, R); mesh(new THREE.TorusGeometry(0.46, 0.04, 6, 16), woodD, 0, 0.78, 0, R, false).rotation.x = Math.PI / 2;
     [[-0.15, 0.05, 0.1], [0.12, -0.1, -0.15], [0.0, 0.12, 0.05], [-0.08, -0.12, 0.2], [0.18, 0.1, 0.0]].forEach(([x, z, rz], i) => { const A = arrow(R, 1.4 + (i % 2) * 0.15); A.position.set(x, 1.45, z); A.rotation.z = rz; }); }
   // —— 石燈（左）——
-  { const L = new THREE.Group(); L.position.set(-4.7, 0, -1.4); L.scale.setScalar(1.8); mark.add(L);
+  { const L = new THREE.Group(); L.position.set(-4.9, 0, -2.6); L.scale.setScalar(1.8); mark.add(L);
     mesh(new THREE.BoxGeometry(0.42, 0.1, 0.42), stone, 0, 0.05, 0, L); mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.55, 8), stone, 0, 0.37, 0, L); mesh(new THREE.BoxGeometry(0.36, 0.1, 0.36), stone, 0, 0.69, 0, L);
     mesh(new THREE.BoxGeometry(0.22, 0.2, 0.22), new THREE.MeshStandardMaterial({ color: '#fff0c4', emissive: '#ffc060', emissiveIntensity: 0.3, roughness: 0.6 }), 0, 0.84, 0, L, false);
     mesh(new THREE.ConeGeometry(0.34, 0.2, 4), stone, 0, 1.04, 0, L).rotation.y = Math.PI / 4; mesh(new THREE.SphereGeometry(0.05, 8, 6), stone, 0, 1.17, 0, L); }
@@ -5806,7 +5806,7 @@ const thIsl = makeIsland('touhu', TH_R, Math.sin(TH_ANG) * 116, Math.cos(TH_ANG)
     mesh(new THREE.SphereGeometry(0.17, 14, 10), lam('#3f7f78'), -0.1, 0.72, 0, T).scale.y = 0.85; mesh(new THREE.CylinderGeometry(0.03, 0.045, 0.22, 6), lam('#3f7f78'), 0.1, 0.76, 0, T).rotation.z = -1.0;
     for (const x of [0.2, 0.38]) mesh(new THREE.CylinderGeometry(0.065, 0.05, 0.09, 12), cream, x, 0.6, 0.2, T); }
   // —— 風旗（右後）——
-  const flagG = new THREE.Group(); flagG.position.set(4.4, 0, -4.2); flagG.userData.noMerge = true; mark.add(flagG);
+  const flagG = new THREE.Group(); flagG.position.set(2.9, 0, -4.4); flagG.userData.noMerge = true; mark.add(flagG);
   mesh(new THREE.CylinderGeometry(0.05, 0.07, 3.6, 8), lam('#5b3a22'), 0, 1.8, 0, flagG); mesh(new THREE.SphereGeometry(0.1, 8, 6), goldM, 0, 3.64, 0, flagG, false);
   const flagP = new THREE.Group(); flagP.position.set(0, 3.2, 0); flagG.add(flagP);
   { const geo = new THREE.PlaneGeometry(1.2, 0.58, 12, 1); geo.translate(0.6, 0, 0); const f = mesh(geo, new THREE.MeshLambertMaterial({ color: '#c23b2e', side: THREE.DoubleSide }), 0, 0, 0, flagP); f.userData.noMerge = true; thIsl.flagGeo = geo; thIsl.flagBase = geo.attributes.position.array.slice(); }
@@ -5873,6 +5873,100 @@ const thIsl = makeIsland('touhu', TH_R, Math.sin(TH_ANG) * 116, Math.cos(TH_ANG)
     mesh(new THREE.BoxGeometry(5.2, 2, 0.1), [signY, signY, signY, signY, new THREE.MeshLambertMaterial({ map: sTex }), signY], 0, 1.75, edgeR + 0.25, sy);
     for (const x of [-2.2, 2.2]) mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.8, 6), postM, x, 1.4, edgeR + 0.18, sy);
   }
+}
+
+/* ---------- 投壺島・豐富版：庭院石板、涼亭、櫻花樹與落花、計分石碑、長椅、岩石與草叢、錦鯉，
+     還有一個「示範小人」每隔幾秒投一矢：多半入壺（壺「叮」一下、冒出 +2／貫耳 +3），偶爾投歪落在草蓆上，讓人一看就知道這是投壺的島 ---------- */
+{
+  const mark = thIsl.mark, POT = thIsl.pot;
+  const AN = new THREE.Group(); AN.userData.noMerge = true; mark.add(AN);   // 會動的東西都放這組，不被合併
+  const goldM = new THREE.MeshStandardMaterial({ color: '#e3b44f', roughness: 0.35, metalness: 0.4 });
+  const stone = lam('#b9b1a2'), stoneD = lam('#8f887a'), woodD = lam('#8a5a32'), red = lam('#b8372a'), roofM = lam('#4b4a52');
+  // —— 庭院石板：整圈米色石板鋪在草地上，邊緣一圈深色石條，把草蓆圍成一個「場」——
+  mesh(new THREE.CylinderGeometry(9.7, 9.9, 0.05, 6), lam('#a89a78'), 0, 0.02, 0, mark, false).rotation.y = Math.PI / 6;
+  mesh(new THREE.CylinderGeometry(9.45, 9.45, 0.07, 6), lam('#e9dcc0'), 0, 0.03, 0, mark, false).rotation.y = Math.PI / 6;
+  { const m = lam('#d6c8a6'); for (let i = 0; i < 34; i++) { const a = Math.random() * 6.28, r = 3.4 + Math.random() * 5.6; const x = Math.sin(a) * r, z = Math.cos(a) * r; if (Math.abs(x) < 3.0 && z > -4.8 && z < 6.4) continue; mesh(new THREE.BoxGeometry(0.9 + Math.random() * 0.6, 0.02, 0.9 + Math.random() * 0.6), m, x, 0.075, z, mark, false).rotation.y = Math.random() * 3; } }   // 石板縫
+  // 前方踏石小徑：從島邊走向草蓆
+  for (let i = 0; i < 4; i++) mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.06, 10), stoneD, (i % 2 ? 0.25 : -0.25), 0.09, 7.0 + i * 1.0, mark, false);
+  // —— 涼亭（右後）：四根紅柱、方錐黑瓦頂、紅欄杆，跟遊戲場景左邊那座同款 ——
+  { const P = new THREE.Group(); P.position.set(6.4, 0, -5.6); P.rotation.y = -0.5; mark.add(P);
+    mesh(new THREE.BoxGeometry(3.6, 0.22, 3.6), stone, 0, 0.11, 0, P);
+    for (const [x, z] of [[-1.5, -1.5], [1.5, -1.5], [-1.5, 1.5], [1.5, 1.5]]) mesh(new THREE.CylinderGeometry(0.12, 0.14, 2.7, 10), red, x, 1.57, z, P);
+    mesh(new THREE.BoxGeometry(3.5, 0.18, 0.18), red, 0, 2.8, 1.5, P); mesh(new THREE.BoxGeometry(3.5, 0.18, 0.18), red, 0, 2.8, -1.5, P);
+    mesh(new THREE.BoxGeometry(0.18, 0.18, 3.5), red, 1.5, 2.8, 0, P); mesh(new THREE.BoxGeometry(0.18, 0.18, 3.5), red, -1.5, 2.8, 0, P);
+    mesh(new THREE.ConeGeometry(3.1, 1.2, 4), roofM, 0, 3.5, 0, P).rotation.y = Math.PI / 4; mesh(new THREE.SphereGeometry(0.14, 8, 6), goldM, 0, 4.2, 0, P);
+    for (const x of [-1.2, 0, 1.2]) mesh(new THREE.BoxGeometry(0.08, 0.5, 0.08), red, x, 0.5, 1.5, P, false);
+    mesh(new THREE.BoxGeometry(3.2, 0.08, 0.1), red, 0, 0.78, 1.5, P, false);
+    mesh(new THREE.BoxGeometry(2.4, 0.1, 0.7), woodD, 0, 0.5, -1.0, P);   // 亭裡一條長凳
+    const hang = mesh(new THREE.SphereGeometry(0.22, 12, 8), new THREE.MeshStandardMaterial({ color: '#d4402a', emissive: '#ff7a3a', emissiveIntensity: 0.3 }), 0, 2.45, 1.45, P, false); hang.scale.y = 1.25; thIsl.pavilionLamp = hang; }
+  // —— 計分石碑（左側）：寫著規則 ——
+  { const S = new THREE.Group(); S.position.set(-4.3, 0, 1.4); S.rotation.y = 0.55; mark.add(S);
+    const tx = canvasTex(256, 384, (c) => { c.fillStyle = '#d9d2c2'; c.fillRect(0, 0, 256, 384); c.strokeStyle = '#8c3b2b'; c.lineWidth = 6; c.strokeRect(10, 10, 236, 364); c.fillStyle = '#2b1d14'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '900 50px "Noto Serif TC","Noto Sans TC",serif'; c.fillText('投壺', 128, 56); c.font = 'bold 30px "Noto Sans TC","PingFang TC",sans-serif'; c.fillText('入壺', 128, 130); c.fillStyle = '#b8372a'; c.fillText('2 分', 128, 168); c.fillStyle = '#2b1d14'; c.fillText('貫耳', 128, 230); c.fillStyle = '#b8372a'; c.fillText('3 分', 128, 268); c.fillStyle = '#2f7f78'; c.font = 'bold 24px "Noto Sans TC",sans-serif'; c.fillText('快投 +0.5', 128, 330); });
+    mesh(new THREE.BoxGeometry(1.5, 0.3, 0.7), stoneD, 0, 0.15, 0, S); mesh(new THREE.BoxGeometry(1.1, 2.0, 0.22), [stone, stone, stone, stone, new THREE.MeshLambertMaterial({ map: tx }), stone], 0, 1.3, 0, S); mesh(new THREE.ConeGeometry(0.85, 0.3, 4), stoneD, 0, 2.45, 0, S).rotation.y = Math.PI / 4; }
+  // —— 櫻花樹（左側）＋落花 ——
+  { const T = new THREE.Group(); T.position.set(-8.0, 0, 1.6); T.scale.setScalar(0.78); mark.add(T);
+    mesh(new THREE.CylinderGeometry(0.2, 0.32, 2.6, 8), lam('#6b4a2f'), 0, 1.3, 0, T);
+    mesh(new THREE.CylinderGeometry(0.09, 0.14, 1.3, 6), lam('#6b4a2f'), 0.5, 2.5, 0.1, T).rotation.z = -0.8;
+    mesh(new THREE.CylinderGeometry(0.09, 0.14, 1.2, 6), lam('#6b4a2f'), -0.45, 2.55, -0.1, T).rotation.z = 0.8;
+    const pk = ['#f6bfd0', '#f2a9c0', '#f9d2de', '#eea0b8']; [[0, 3.5, 0, 1.55], [0.95, 3.1, 0.2, 1.1], [-1.0, 3.2, -0.2, 1.15], [0.1, 4.2, 0.3, 1.0], [-0.3, 3.0, 0.9, 1.0]].forEach(([x, y, z, r], i) => { const c = mesh(new THREE.IcosahedronGeometry(r, 1), lam(pk[i % 4], { flatShading: true }), x, y, z, T); c.scale.y = 0.82; });
+    // 落花：17 片小花瓣慢慢飄下來，落地就回到樹上重來
+    const petalM = new THREE.MeshBasicMaterial({ color: '#f9c4d4', side: THREE.DoubleSide }), petalG = new THREE.PlaneGeometry(0.14, 0.1), petals = [];
+    for (let i = 0; i < 17; i++) { const p = new THREE.Mesh(petalG, petalM); p.userData = { x: (Math.random() - 0.5) * 3.4, z: (Math.random() - 0.5) * 3.4, y: Math.random() * 3.6, v: 0.25 + Math.random() * 0.25, ph: Math.random() * 6.28 }; AN.add(p); petals.push(p); }
+    animators.push((t) => { const dt = 1 / 60; for (const p of petals) { const u = p.userData; u.y -= u.v * dt; if (u.y < 0.05) { u.y = 3.8; u.x = (Math.random() - 0.5) * 3; u.z = (Math.random() - 0.5) * 3; } p.position.set(T.position.x + u.x + Math.sin(t * 0.8 + u.ph) * 0.45, u.y, T.position.z + u.z + Math.cos(t * 0.6 + u.ph) * 0.3); p.rotation.set(t * 1.3 + u.ph, t * 0.9, 0); } }); }
+  // —— 長椅（右側）——
+  { const B = new THREE.Group(); B.position.set(6.8, 0, 1.6); B.rotation.y = -1.25; mark.add(B);
+    mesh(new THREE.BoxGeometry(1.9, 0.1, 0.6), woodD, 0, 0.5, 0, B); mesh(new THREE.BoxGeometry(1.9, 0.5, 0.08), woodD, 0, 0.85, -0.28, B);
+    for (const x of [-0.8, 0.8]) mesh(new THREE.BoxGeometry(0.1, 0.5, 0.5), lam('#5b3a22'), x, 0.25, 0, B); }
+  // —— 岩石與草叢、小花 ——
+  { const rm = [lam('#9a9a92', { flatShading: true }), lam('#7fae6a', { flatShading: true }), lam('#b0aba0', { flatShading: true })];
+    [[-8.2, -3.8, 0.7], [8.4, -1.8, 0.6], [7.6, 4.4, 0.55], [-7.9, 5.2, 0.5], [2.4, -8.6, 0.6], [-2.8, 9.0, 0.45]].forEach(([x, z, r], i) => { const m = mesh(new THREE.DodecahedronGeometry(r, 0), rm[i % 3], x, r * 0.5, z, mark); m.scale.y = 0.7; m.rotation.set(Math.random(), Math.random() * 6, 0); });
+    const gm = lam('#7fbf5f'), fl = ['#ffd45a', '#ffffff', '#f6a0b8', '#ffb347'].map((c) => lam(c));
+    for (let i = 0; i < 44; i++) { const a = Math.random() * 6.28, r = 9.4 + Math.random() * 1.7, x = Math.sin(a) * r, z = Math.cos(a) * r; if (Math.hypot(x, z) > 11.0) continue; for (let k = 0; k < 3; k++) { const tf = mesh(new THREE.ConeGeometry(0.06, 0.4 + Math.random() * 0.25, 4), gm, x + (k - 1) * 0.07, 0.22, z + (k % 2) * 0.06, mark, false); tf.rotation.z = (k - 1) * 0.25; } if (i % 3 === 0) mesh(new THREE.SphereGeometry(0.07, 6, 5), fl[i % 4], x, 0.42, z, mark, false); } }
+  // —— 池裡兩尾錦鯉、幾片荷葉 ——
+  { const P = new THREE.Group(); P.position.set(-5.2, 0.2, -5.4); mark.add(P);
+    for (const [x, z] of [[0.9, 0.9], [-1.0, 0.7], [0.5, -1.3]]) mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.02, 12), lam('#4f9a4a'), x, 0.02, z, P, false);
+    const koi = [0, 1].map((i) => { const k = new THREE.Group(); const b = mesh(new THREE.SphereGeometry(0.2, 10, 8), lam(i ? '#fff3e0' : '#ee7a2a'), 0, 0, 0, k, false); b.scale.set(1.6, 0.4, 0.55); const tl = mesh(new THREE.ConeGeometry(0.12, 0.28, 4), lam(i ? '#ffd8b0' : '#ee7a2a'), -0.36, 0, 0, k, false); tl.rotation.z = Math.PI / 2; tl.scale.z = 0.4; if (i === 1) mesh(new THREE.SphereGeometry(0.1, 8, 6), lam('#ee7a2a'), 0.05, 0.05, 0, k, false); P.add(k); k.userData.noMerge = true; return k; });
+    animators.push((t) => { koi.forEach((k, i) => { const a = t * (0.5 + i * 0.18) + i * 3, r = 1.25 - i * 0.4; k.position.set(Math.cos(a) * r, 0.05, Math.sin(a) * r); k.rotation.y = -a - Math.PI / 2; }); }); }
+  // —— 示範小人：站在站位線上，每隔幾秒投一矢 ——
+  const hero = new THREE.Group(); hero.position.set(-1.2, 0, 5.4); hero.rotation.y = Math.PI; hero.userData.noMerge = true; mark.add(hero);   // 面向壺（-z）
+  mesh(new THREE.ConeGeometry(0.5, 1.15, 14), lam('#2f6b5a'), 0, 0.62, 0, hero); mesh(new THREE.TorusGeometry(0.34, 0.05, 6, 16), goldM, 0, 0.78, 0, hero, false).rotation.x = Math.PI / 2;
+  mesh(new THREE.SphereGeometry(0.28, 14, 10), lam('#f2c9a0'), 0, 1.42, 0, hero); mesh(new THREE.SphereGeometry(0.29, 14, 8, 0, 6.3, 0, 1.6), lam('#2b1d14'), 0, 1.46, -0.02, hero, false); mesh(new THREE.SphereGeometry(0.12, 8, 6), lam('#2b1d14'), 0, 1.74, 0.0, hero, false);
+  const armR = new THREE.Group(); armR.position.set(0.3, 1.15, 0); hero.add(armR); mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.5, 8), lam('#2f6b5a'), 0, -0.2, 0, armR, false);
+  const armL = new THREE.Group(); armL.position.set(-0.3, 1.15, 0); hero.add(armL); mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.5, 8), lam('#2f6b5a'), 0, -0.2, 0, armL, false);
+  // 要投的矢（飛行時顯示）
+  const fly = new THREE.Group(); fly.visible = false; AN.add(fly);
+  mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.2, 6), lam('#d8a65c'), 0, 0, 0, fly, false); mesh(new THREE.ConeGeometry(0.06, 0.18, 6), lam('#7a4b1e'), 0, 0.69, 0, fly, false); mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.16, 6), lam('#c23b2e'), 0, -0.5, 0, fly, false);
+  // 軌跡小點
+  const dotM = new THREE.MeshBasicMaterial({ color: '#fff1b8', transparent: true, opacity: 0.8 }), dots = []; for (let i = 0; i < 14; i++) { const d = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 4), dotM); d.visible = false; AN.add(d); dots.push(d); }
+  // 命中時的金色擴散圈與分數
+  const ringG = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.28, 32), new THREE.MeshBasicMaterial({ color: '#ffd45a', transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false })); ringG.rotation.x = -Math.PI / 2; ringG.position.set(0, 1.9, -2.6); AN.add(ringG);
+  const scoreSprite = (txt, col) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: canvasTex(256, 96, (c) => { c.font = '900 64px "Noto Sans TC","PingFang TC",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 10; c.strokeStyle = 'rgba(43,29,20,.85)'; c.strokeText(txt, 128, 52); c.fillStyle = col; c.fillText(txt, 128, 52); }), transparent: true, opacity: 0, depthWrite: false })); sp.scale.set(2.0, 0.75, 1); AN.add(sp); return sp; };
+  const spIn = scoreSprite('入壺 +2', '#ffd45a'), spEar = scoreSprite('貫耳 +3', '#ff8a5a'), spMiss = scoreSprite('差一點', '#cfe3ff');
+  thIsl.dbg = { fly, hero, spIn, spEar, spMiss, POT };
+  const CYC = 8.0, hand = new THREE.Vector3(-1.45, 1.25, 4.7), mouth = new THREE.Vector3(0, 1.88, -2.6); let cyc = -1, outcome = 'in', tgt = mouth.clone(), spCur = spIn;
+  animators.push((t) => {
+    const n = Math.floor(t / CYC), u = t % CYC;
+    if (n !== cyc) { cyc = n; const r = Math.random(); outcome = r < 0.62 ? 'in' : r < 0.82 ? 'ear' : 'miss'; tgt = outcome === 'ear' ? new THREE.Vector3(0.7, 1.9, -2.6) : outcome === 'miss' ? new THREE.Vector3((Math.random() < 0.5 ? -1 : 1) * 1.1, 0.12, -1.6) : mouth.clone(); spCur = outcome === 'ear' ? spEar : outcome === 'miss' ? spMiss : spIn; }
+    // 小人：投之前舉臂、投出時前送，之後歡呼或搖頭
+    const wind = u < 0.9 ? u / 0.9 : u < 1.2 ? 1 - (u - 0.9) / 0.3 * 1.6 : 0;
+    armR.rotation.x = -2.2 * wind + 0.05 * Math.sin(t * 2); armL.rotation.z = 0.12 + 0.04 * Math.sin(t * 2 + 1);
+    const cheer = u > 2.6 && u < 3.8 && outcome !== 'miss'; if (cheer) { armL.rotation.z = 2.6; armR.rotation.z = -2.6; armR.rotation.x = 0; } else armR.rotation.z = 0;
+    hero.position.y = cheer ? Math.abs(Math.sin((u - 2.6) * 7)) * 0.14 : 0.004 * Math.sin(t * 2);
+    // 矢：1.2～2.7 秒拋物線飛向目標
+    const f = (u - 1.2) / 1.5;
+    if (f >= 0 && f <= 1) { fly.visible = true; const x = hand.x + (tgt.x - hand.x) * f, z = hand.z + (tgt.z - hand.z) * f, y = hand.y + (tgt.y - hand.y) * f + 1.6 * 4 * f * (1 - f); const nx = hand.x + (tgt.x - hand.x) * Math.min(1, f + 0.02), nz = hand.z + (tgt.z - hand.z) * Math.min(1, f + 0.02), ny = hand.y + (tgt.y - hand.y) * Math.min(1, f + 0.02) + 1.6 * 4 * Math.min(1, f + 0.02) * (1 - Math.min(1, f + 0.02)); fly.position.set(x, y, z); fly.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(nx - x, ny - y, nz - z).normalize()); const di = Math.min(dots.length - 1, Math.floor(f * dots.length)); dots[di].position.set(x, y, z); dots[di].visible = true; }
+    else if (u > 2.7 && u < 5.4) { fly.visible = true; if (outcome === 'miss') { fly.position.set(tgt.x, 0.1, tgt.z); fly.rotation.set(Math.PI / 2, 0, 0.5); fly.quaternion.setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0.5)); } else { fly.position.set(tgt.x, 1.9, tgt.z); fly.quaternion.setFromEuler(new THREE.Euler(0.12, 0, -0.1)); } }
+    else { fly.visible = false; }
+    if (u < 1.0 || u > 5.6) dots.forEach((d) => { d.visible = false; });
+    dots.forEach((d) => { if (d.visible) d.scale.setScalar(Math.max(0.2, d.scale.x * 0.985)); });
+    if (u < 1.2) dots.forEach((d) => d.scale.setScalar(1));
+    // 命中：壺「叮」一下、金圈擴散、分數往上飄
+    const h = u - 2.7;
+    if (outcome !== 'miss' && h > 0 && h < 1.4) { const k = h / 1.4; POT.scale.setScalar(2.6 * (1 + 0.05 * Math.sin(Math.min(1, h * 4) * Math.PI) * (1 - k))); ringG.position.set(tgt.x, 1.92, tgt.z); ringG.scale.setScalar(1 + k * 4); ringG.material.opacity = 0.85 * (1 - k); } else { POT.scale.setScalar(2.6); ringG.material.opacity = 0; }
+    for (const sp of [spIn, spEar, spMiss]) sp.material.opacity = 0;
+    if (h > 0.1 && h < 2.2) { const k = (h - 0.1) / 2.1; spCur.position.set(outcome === 'miss' ? tgt.x : 0, (outcome === 'miss' ? 1.2 : 2.7) + k * 0.9, outcome === 'miss' ? tgt.z : -2.6); spCur.material.opacity = Math.sin(Math.min(1, k * 1.15) * Math.PI) ** 0.5; }
+    if (thIsl.pavilionLamp) thIsl.pavilionLamp.material.emissiveIntensity = 0.3 + 0.1 * Math.sin(t * 2);
+  });
 }
 
 /* ---------- 清淨菩提島：吹散無明 ----------
