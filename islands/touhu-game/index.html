@@ -293,10 +293,10 @@ body.motion{--gb:82px}
   <div class="card">
     <div class="chips"><div><small>三輪</small><b>每輪 4 矢</b></div><div><small>入壺・貫耳</small><b>2 分・3 分</b></div><div><small>⏱ 15 秒倒數</small><b>快投 +0.5</b></div></div>
     <div class="stack">
-      <button class="btn col" id="btnTouch" type="button">🖐️ 觸控玩<small>拖曳移動落點圈，放開就放箭</small></button>
-      <button class="btn jade col" id="btnMotion" type="button">📱 體感玩<small>傾斜手機瞄準：直立＝近、平躺＝遠</small></button>
+      <button class="btn col" id="btnTap" type="button">🎯 開始投壺<small>經典三段式：依序點三下（仰角 → 力道 → 左右）</small></button>
+      <button class="btn ghost col" id="btnTouch" type="button">🖐️ 觸控玩<small>拖曳移動落點圈，放開就放箭</small></button>
+      <button class="btn ghost col" id="btnMotion" type="button">📱 體感玩<small>傾斜手機瞄準：直立＝近、平躺＝遠</small></button>
       <button class="btn ghost col" id="btnMP" type="button" hidden>👥 多人對戰<small>一對一、二對二，找朋友一起投</small></button>
-      <button class="linkbtn" id="btnTap" type="button">經典三段式（依序點三下：仰角 → 力道 → 左右）</button>
     </div>
     <p class="note" id="motionNote" hidden>體感需要手機；電腦請用上面的「觸控玩」（滑鼠拖曳就行）。</p>
     <div class="acct" id="acctRow"></div>
@@ -396,7 +396,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.14';
+const VER = 'v261123.15';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -897,7 +897,7 @@ function timerPaint() {
   el.classList.toggle('mid', f <= 0.5 && f > 0.2); el.classList.toggle('low', f <= 0.2 && f > 0); el.classList.toggle('out', f <= 0);
 }
 const S = {
-  phase: 'title', mode: 'touch', eTouch: 0.5, presetTl: null, round: 0, n: 0, score: 0, rScore: 0, ins: 0, ears: 0, hist: [],
+  phase: 'title', mode: 'tap', eTouch: 0.5, presetTl: null, round: 0, n: 0, score: 0, rScore: 0, ins: 0, ears: 0, hist: [],
   t0: 0, ph: 0, ph2: 0, ph3: 0, aH: 0, aE: 0.5, aP: 0.5, lockH: null, lockE: null, lockP: null, charging: false, cT0: 0, ts: 1, wind: 0, windSign: 1, arrows: [], cur: null, camMode: 'title', tapLock: 0,
 };
 let NOW = 0;
@@ -1666,7 +1666,7 @@ function mpRenderLobby() {
   const seg = (id, v) => { [...$(id).children].forEach((b) => { b.classList.toggle('on', b.dataset.v === v); b.disabled = !can && !id.includes('Input'); }); };
   seg('#mpKind', st.kind); seg('#mpPace', st.pace); seg('#mpRule', st.rule); seg('#mpInput', S.mode);
   [...$('#mpInput').children].forEach((b) => { b.disabled = b.dataset.v === 'motion' && !motionOK(); });
-  $('#mpRuleRow').hidden = st.kind !== '2v2'; $('#mpInputRow').hidden = MP.watch;
+  $('#mpRuleRow').hidden = true;   // 分工合投已取消，二對二固定「各自累計」 $('#mpInputRow').hidden = MP.watch;
   $('#mpPaceNote').textContent = st.pace === 'sync' ? '兩邊各投各的、同一組風，每輪結束一起看對方最精彩的一矢。' : '一人一矢輪流投，輪到對方時看他的拋物線慢動作（適合大螢幕）。';
   const nin = st.players.filter(Boolean).length, nrd = st.players.filter((p) => p && p.ready).length;
   $('#mpPlayers').dataset.kind = st.kind; $('#mpHostNote').hidden = !MP.watch;

@@ -85,37 +85,6 @@ console.log('1v1 輪流');
   await until(() => A.st.reveal, 3000, '輪流：本輪結束對帳'); ok(A.st.reveal.r === 0 && A.st.teams[0] === 20 && A.st.teams[1] === 30, '輪流第一輪 2 : 3');
   cs.forEach((c) => c.close());
 }
-// ---------- 4. 二對二・分工合投 ----------
-console.log('2v2 分工合投');
-{
-  const { cs } = await lobby(2); cs[0].send({ t: 'set', kind: '2v2', rule: 'split' }); await until(() => cs[0].st.kind === '2v2');
-  const c2 = await new C(cs[0].code, 'P2').connect(), c3 = await new C(cs[0].code, 'P3').connect(); const all = [...cs, c2, c3];
-  await until(() => all.every((c) => c.st.players.filter(Boolean).length === 4));
-  // 座位順序：紅1(0) 藍1(2) 紅2(1) 藍2(3)
-  ok(cs[0].slot === 0 && cs[1].slot === 2 && c2.slot === 1 && c3.slot === 3, '座位依加入順序 0、2、1、3');
-  all.forEach((c) => c.send({ t: 'ready', ready: true })); await until(() => all.every((c) => c.st.phase === 'play')); await sleep(450);
-  const g = (slot) => all.find((c) => c.slot === slot);
-  ok(cs[0].st.units.length === 2 && cs[0].st.units[0].members.join() === '0,1', '分工合投：兩個隊伍單位');
-  // 紅隊（成員 0、1）分工：第 i 矢由 members[i%2] 定仰角與力道、另一位定左右並放箭
-  // 第 0 矢：slot0 定、slot1 放箭
-  g(1).send({ t: 'lock', u: 0, i: 0, e: 0.4, p: 0.4 }); await sleep(120); ok(g(0).got('lock').length === 0, '放箭的人（slot1）不能 lock 第 0 矢');
-  g(0).send({ t: 'lock', u: 0, i: 1, e: 0.4, p: 0.4 }); await sleep(120); ok(g(1).got('lock').length === 0, '錯的矢號 lock 被忽略');
-  g(0).send({ t: 'lock', u: 0, i: 0, e: 0.5, p: 0.3 }); await until(() => g(1).got('lock').length === 1); const lk0 = g(1).got('lock')[0];
-  ok(lk0.i === 0 && lk0.e === 0.5 && lk0.p === 0.3, 'slot1 收到 slot0 鎖定的仰角與力道');
-  ev(g(0), 0, 0, 'in'); await sleep(120); ok(unitScore(cs[0], 0) === 0, '定參數的人（slot0）不能放箭');
-  ev(g(1), 0, 0, 'in'); await sleep(150); ok(unitScore(cs[0], 0) === 20, 'slot1 放箭：入壺 +2');
-  // 第 1 矢：角色互換，slot1 定、slot0 放箭
-  g(1).send({ t: 'lock', u: 0, i: 1, e: 0.6, p: 0.25 }); await until(() => g(0).got('lock').length === 1); const lk1 = g(0).got('lock')[0];
-  ok(lk1.i === 1 && lk1.e === 0.6 && lk1.p === 0.25, '第 1 矢角色互換：slot0 收到 slot1 的仰角與力道');
-  g(0).send({ t: 'profile', name: 'P0' }); await sleep(150);   // 觸發一次快照（隊友重連時就是拿這份）
-  ok(g(0).st.lock && g(0).st.lock.i === 1 && g(0).st.lock.e === 0.6, '快照也帶著這組 lock（重連用）');
-  ev(g(0), 0, 1, 'ear'); await sleep(150); ok(unitScore(cs[0], 0) === 50, 'slot0 放箭：貫耳 +3，紅隊 5 分');
-  ev(g(1), 0, 2, 'miss'); await sleep(80); ev(g(0), 0, 3, 'miss'); await sleep(150);   // 兩個連線的訊息到達順序不保證，要依序送 ok(cs[0].st.units[0].done === 4, '紅隊 4 矢');
-  // 藍隊（成員 2、3）全部入壺，各矢由放箭的人回報
-  for (let i = 0; i < 4; i++) { const th = g(i % 2 === 0 ? 3 : 2); ev(th, 1, i, 'in'); } await until(() => cs[0].st.reveal, 3000);
-  ok(cs[0].st.teams[0] === 50 && cs[0].st.teams[1] === 80, '二對二第一輪 5 : 8');
-  all.forEach((c) => c.close());
-}
 // ---------- 5. 二對二・各自累計 ----------
 console.log('2v2 各自累計');
 {
