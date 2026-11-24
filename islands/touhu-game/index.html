@@ -476,7 +476,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261124.01';
+const VER = 'v261124.02';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -991,10 +991,14 @@ const R = () => ROUNDS[S.round];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const tri = (u) => { u -= Math.floor(u); return u < 0.5 ? u * 2 : 2 - u * 2; };
 
+/* 壺的時鐘 potT：每一幀跟著慢動作一起走（potT += dt × S.ts），不再用掛鐘時間。
+   這樣一支矢飛行時，壺在「矢的第 k 步」的位置＝potAtT(potT0 + k/240)，完全由出手那一刻決定，
+   出手時就能把整條飛行先算完（simulateThrow），對戰時立刻把結果送出去，不必等本機的慢動作播完。 */
+let potT = 0;
+const potAtT = (t) => { const r = R(); return r.sway ? { x: r.sway * Math.sin(t * 1.5), y: 0.14 + 0.025 * Math.sin(t * 2.1 + 1) } : { x: 0, y: 0.12 }; };
 function potState(now) {
   if (REPLAY.on) return REPLAY.pot;
-  const r = R(), t = now / 1000;
-  return r.sway ? { x: r.sway * Math.sin(t * 1.5), y: 0.14 + 0.025 * Math.sin(t * 2.1 + 1) } : { x: 0, y: 0.12 };
+  return potAtT(potT);
 }
 function setupRound() {
   const r = R(); if (S.round === 0) TOUCH.tx = null;   // 新的一局：落點圈回到起點
@@ -1050,6 +1054,12 @@ function throwArrow(a, e, p) {
   const vel = launchVel(a, e, p), dir = vel.clone().normalize();
   const tlNow = timerFrac(); A.tl = S.preset && S.presetTl != null ? (S.presetTl + tlNow) / 2 : tlNow;   // 分工合投：兩位各自剩餘比例取平均
   A.vel = vel; A.pos = handPos(); A.prev = A.pos.clone(); A.dir = dir.clone(); A.state = 'fly'; A.t = 0; A.launch = { a, e, p };
+  A.pot0 = potT; A.k = 0; A.acc = 0;
+  if (location.search.includes('predict')) A.pre = simulateThrow(vel, A.pos, A.pot0);   // 測試用：單人也先算一次，跟實際飛行比對
+  if (MP.on && MP.job) {   // 對戰：出手就把結果算完並送出去（本機的慢動作照常播，但別人不必等）
+    const pre = simulateThrow(vel, A.pos, A.pot0); A.pre = pre; A.evSent = true;
+    mpSend({ t: 'ev', u: MP.job.u, i: MP.job.i, kind: pre.kind, tl: A.tl || 0, rep: pre.rep });
+  }
   S.phase = 'fly'; S.t0 = NOW; S.camMode = 'fly'; S.charging = false; trailReset();
   hideAimUI(); setHint(''); SFX.throw(); SAVE.throws++;
 }
@@ -1059,7 +1069,7 @@ const bodyProf = [[0, 0.1], [0.04, 0.17], [0.16, 0.215], [0.26, 0.22], [0.36, 0.
 function bodyR(y) { for (let i = 1; i < bodyProf.length; i++) if (y <= bodyProf[i][0]) { const [y0, r0] = bodyProf[i - 1], [y1, r1] = bodyProf[i]; return r0 + (r1 - r0) * (y - y0) / (y1 - y0); } return 0.17; }
 const _v = new THREE.Vector3();
 function stepArrow(A, h) {
-  const pc = potState(NOW), py = pc.y, mY = TU.mouthY;
+  A.k = (A.k || 0) + 1; const pc = A.pot0 != null ? potAtT(A.pot0 + A.k * h) : potState(NOW), py = pc.y, mY = TU.mouthY;   // 矢的第 k 步用「出手時壺的時鐘 + k/240」，結果可以事先算出來
   A.prev.copy(A.pos);
   A.vel.x += S.wind * h; A.vel.y -= TU.g * h; A.pos.addScaledVector(A.vel, h);
   const yy = A.pos.y - py, pyy = A.prev.y - py;
@@ -1073,7 +1083,7 @@ function stepArrow(A, h) {
     if (r <= TU.rimR) {   // 擦到壺口：往外彈開
       A.rimmed = true; const nx = r > 1e-3 ? cx / r : 1, nz = r > 1e-3 ? cz / r : 0;
       A.vel.set(A.vel.x * 0.25 + nx * 1.3, -A.vel.y * 0.3 + 0.5, A.vel.z * 0.25 + nz * 1.3);
-      A.pos.set(pc.x + cx, py + mY + 0.01, cz); sfxOnce(A, 'rim'); burst(A.pos, 0xffe9b0, 5, 0.5, 0.4);
+      A.pos.set(pc.x + cx, py + mY + 0.01, cz); sfxOnce(A, 'rim'); if (!A.dry) burst(A.pos, 0xffe9b0, 5, 0.5, 0.4);
     }
     return;
   }
@@ -1088,12 +1098,33 @@ function stepArrow(A, h) {
   }
   // 3) 地面
   if (A.pos.y <= 0.014) {
-    A.pos.y = 0.014; if (!A.touch) { A.touch = true; if (!A.sfxDone) SFX.ground(); }
+    A.pos.y = 0.014; if (!A.touch) { A.touch = true; if (!A.sfxDone && !A.dry) SFX.ground(); }
     if (Math.abs(A.vel.y) > 0.5) { A.vel.y = -A.vel.y * 0.28; A.vel.x *= 0.55; A.vel.z *= 0.55; } else { A.vel.y = 0; A.vel.x *= 0.9; A.vel.z *= 0.9; }
     if (Math.hypot(A.vel.x, A.vel.z) < 0.12 && Math.abs(A.vel.y) < 0.2) { A.vel.set(0, 0, 0); A.state = 'rest'; }
   }
 }
-function sfxOnce(A, k) { const t = NOW; if (A.lastSfx && t - A.lastSfx < 160) return; A.lastSfx = t; SFX[k](); }
+/* 事先模擬：出手那一刻就把整條飛行算完（跟畫面上的飛行用同一個 stepArrow、同樣固定 1/240 步長），
+   得到結果（入壺／貫耳／沒進）與重播資料。對戰時立刻送出，觀戰的筆電不用等本機慢動作播完。 */
+function simulateThrow(vel, start, pot0) {
+  const A = { dry: true, pos: start.clone(), prev: start.clone(), vel: vel.clone(), state: 'fly', k: 0, pot0, rimmed: false }, h = 1 / 240, rec = [];
+  const push = (x, y, z, pt) => { const pc = potAtT(pt); rec.push(Math.round(x * 100), Math.round(y * 100), Math.round(z * 100), Math.round(pc.x * 100), Math.round(pc.y * 100)); };
+  const last = vel.clone().normalize(); let acc = 0; push(A.pos.x, A.pos.y, A.pos.z, pot0);
+  while (A.state === 'fly' && A.k * h <= 6) {
+    stepArrow(A, h); acc += h;
+    if (A.vel.lengthSq() > 0.01) last.copy(A.vel).normalize();
+    if (acc >= 0.05 - 1e-9 && A.state === 'fly') { acc = 0; if (rec.length < 290 * 5) push(A.pos.x, A.pos.y, A.pos.z, pot0 + A.k * h); }
+  }
+  let kind = 'miss', fin;
+  if (A.state === 'sink') {
+    kind = A.kind; const s = A.sink, tEnd = pot0 + A.k * h; push(A.pos.x, A.pos.y, A.pos.z, tEnd);
+    for (let u = 0.05; u < 0.38 + 1e-9; u += 0.05) { const e = 1 - (1 - Math.min(1, u / 0.38)) ** 3, pc = potAtT(tEnd), q = new THREE.Vector3().lerpVectors(s.from, s.to, e); if (rec.length < 290 * 5) rec.push(Math.round((pc.x + q.x) * 100), Math.round((pc.y + q.y) * 100), Math.round(q.z * 100), Math.round(pc.x * 100), Math.round(pc.y * 100)); }
+    fin = s.d1.clone();
+  } else {
+    push(A.pos.x, 0.014, A.pos.z, pot0 + A.k * h); fin = last.clone(); fin.y = 0; if (fin.lengthSq() < 0.01) fin.set(0, 0, -1); fin.normalize();
+  }
+  return { kind, bank: !!A.bank, rep: rec.length >= 10 ? [Math.round(fin.x * 1000), Math.round(fin.y * 1000), Math.round(fin.z * 1000), ...rec] : null };
+}
+function sfxOnce(A, k) { if (A.dry) return; const t = NOW; if (A.lastSfx && t - A.lastSfx < 160) return; A.lastSfx = t; SFX[k](); }
 function enter(A, kind, ox, oz, side) {
   A.state = 'sink'; A.kind = A.rimmed && kind === 'in' ? 'in' : kind; A.bank = A.rimmed; A.sfxDone = true;
   const dir = A.vel.clone().normalize();
@@ -1104,20 +1135,22 @@ function enter(A, kind, ox, oz, side) {
   } else {
     const ex = side * TU.earX; A.sink.from.x += ex; A.sink.to = new THREE.Vector3(ex + ox * 0.3, 0.17, oz * 0.3); A.sink.d1 = new THREE.Vector3(ox * 1.2, -1, oz * 1.2).normalize();
   }
-  potGroup.add(A.mesh); A.sink.to0 = A.sink.to;
+  A.sink.to0 = A.sink.to;
+  if (A.dry) return;   // 事先模擬：只要結果，不做音效、特效、掛箭
+  potGroup.add(A.mesh);
   if (kind === 'ear') { SFX.ear(); burst(new THREE.Vector3(potGroup.position.x + A.sink.from.x, potGroup.position.y + TU.mouthY, A.sink.from.z), 0xffd45a, 22, 0.9); ripple(new THREE.Vector3(potGroup.position.x + side * TU.earX, potGroup.position.y + TU.mouthY, 0), 0xffd45a); }
   else { SFX.in(); burst(new THREE.Vector3(potGroup.position.x + ox, potGroup.position.y + TU.mouthY, oz), 0xffffff, 14, 0.7); ripple(new THREE.Vector3(potGroup.position.x, potGroup.position.y + TU.mouthY, 0), 0xffffff); }
 }
 const _d = new THREE.Vector3(), _t = new THREE.Vector3();
 function updateArrow(A, dt) {
   if (A.state === 'fly') {
-    A.t += dt; let rem = Math.min(dt, 0.05); const h = 1 / 240;
-    while (rem > 1e-6 && A.state === 'fly') { stepArrow(A, Math.min(h, rem)); rem -= h; }
+    A.t += dt; A.acc = (A.acc || 0) + Math.min(dt, 0.05); const h = 1 / 240;
+    while (A.acc >= h && A.state === 'fly') { stepArrow(A, h); A.acc -= h; }   // 永遠用固定步長：跟 simulateThrow 逐步一模一樣，結果才會相同
     if (A.state === 'sink') return;   // 這一幀剛入壺：矢已經掛到壺上，下一幀由入壺動畫接手
     if (A.touch) { _d.set(A.vel.x, 0, A.vel.z); if (_d.lengthSq() > 0.0004) A.dir.lerp(_d.normalize(), 0.2); else A.dir.y *= 0.8; A.dir.normalize(); }
     else if (A.vel.lengthSq() > 0.01) A.dir.copy(A.vel).normalize();
     poseArrow(A.mesh, A.pos, A.dir); trailPush(A.pos, dt); recPush(A, dt, A.pos);
-    if (A.t > 6 || A.state === 'rest') { A.state = 'rest'; }
+    if ((A.k || 0) * h > 6 || A.state === 'rest') { A.state = 'rest'; }
     if (A.state === 'rest') { A.dir.y = 0; if (A.dir.lengthSq() < 0.01) A.dir.set(0, 0, -1); A.dir.normalize(); A.pos.y = 0.014; poseArrow(A.mesh, A.pos, A.dir); finishArrow(A); }
   } else if (A.state === 'sink') {
     const s = A.sink; s.t += dt; const u = clamp(s.t / 0.38, 0, 1), e = 1 - (1 - u) ** 3;
@@ -1132,6 +1165,7 @@ function updateArrow(A, dt) {
 function finishArrow(A) {
   if (A.finished) return; A.finished = true; recFinal(A);
   let kind = A.kind, pts = 0, cap;
+  if (A.pre && (A.pre.kind !== (kind === 'ear' || kind === 'in' ? kind : 'miss'))) console.warn('PREDICT-MISMATCH', A.pre.kind, kind);
   if (kind === 'ear') { pts = 3; cap = ['貫耳', pick(QUOTES.ear)]; S.ears++; SAVE.ears++; }
   else if (kind === 'in') { pts = 2; cap = [A.bank ? '彈進' : '入壺', pick(A.bank ? QUOTES.bank : QUOTES.in)]; S.ins++; SAVE.ins++; }
   else {
@@ -1618,8 +1652,9 @@ function mpSendLock(e, p) {
   SFX.lock(); mpDropJob(); mpWait('已交給隊友，等他放箭…');
 }
 function mpArrowDone(A, kind, pts) {
-  const job = MP.job; const rep = buildRep(A);
-  if (job) mpSend({ t: 'ev', u: job.u, i: job.i, kind, tl: A.tl || 0, rep });
+  const job = MP.job;
+  if (A.pre && A.pre.kind !== kind && location.search.includes('debug')) console.warn('事先模擬與實際飛行結果不同', A.pre.kind, kind);
+  if (job && !A.evSent) mpSend({ t: 'ev', u: job.u, i: job.i, kind, tl: A.tl || 0, rep: buildRep(A) });   // 保險：沒有事先送過才補送
   MP.job = null;
   setTimeout(() => { if (S.phase === 'result') { S.phase = 'wait'; S.camMode = 'aim'; mpTick(); } }, 1900);
 }
@@ -1944,7 +1979,7 @@ function tick(t) {
     if (A0.state === 'fly' && !A0.touch) { tsT = TU.slow; if (A0.vel.y < 0 && Math.hypot(A0.pos.x - pc.x, A0.pos.z, A0.pos.y - (pc.y + TU.mouthY)) < 0.9) tsT = TU.slowNear; }
     else tsT = A0.state === 'sink' ? 0.6 : 0.7;
   }
-  S.ts += (tsT - S.ts) * Math.min(1, dt * 8);
+  S.ts += (tsT - S.ts) * Math.min(1, dt * 8); potT += dt * S.ts;   // 壺的時鐘跟著慢動作走
   document.body.classList.toggle('slowmo', (S.phase === 'fly' && S.ts < 0.85) || S.phase === 'replay');
   trailTick(dt); replayTick(dt);
   for (const a of S.arrows) if (a.state === 'fly' || a.state === 'sink') updateArrow(a, dt * S.ts);
