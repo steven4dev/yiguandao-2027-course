@@ -76,6 +76,8 @@ button,a{font:inherit;color:inherit;cursor:pointer;border:0;background:none;text
 .how{margin:0 0 12px;padding:0;list-style:none;font-size:14.5px;display:grid;gap:6px}
 .how li{display:flex;gap:10px;align-items:flex-start}
 .how b{flex:none;width:22px;height:22px;border-radius:50%;background:var(--jade);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.nb{display:inline-block}
+.rec,.acct,.note,.msw-desc{text-wrap:balance}
 .rec{margin:10px 0 0;text-align:center;font-size:12.5px;color:var(--muted)}
 .note{margin:2px 0 0;text-align:center;font-size:12px;color:var(--muted)}
 
@@ -420,7 +422,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.23';
+const VER = 'v261123.24';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -481,6 +483,7 @@ let SAVE = { v: 1, best: 0, plays: 0, ins: 0, ears: 0, throws: 0, mode: 'tap', n
 try { const o = JSON.parse(localStorage.getItem(KEY) || 'null'); if (o && o.v === 1) SAVE = Object.assign(SAVE, o); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(SAVE)); } catch (e) {} };
 /* —— LINE 登入的名字（群島共用的 islands-account，只存在這支手機）、HTML 跳脫：這兩個在載入時就會用到，所以放最前面 —— */
+const nb = (t) => String(t).split(/(?<=[，；：、。・])/).filter(Boolean).map((x) => `<span class="nb">${esc(x)}</span>`).join('');   // 換行只發生在標點之後（整段詞組不拆開），避免「跟著／你」「越／不晃」這種斷字
 const esc = (x) => String(x).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const lineName = () => { try { const a = JSON.parse(localStorage.getItem('islands-account') || 'null'); return a && a.t && a.nm ? String(a.nm).slice(0, 20) : ''; } catch (e) { return ''; } };
 
@@ -1388,7 +1391,7 @@ let pickMode = MODES.includes(SAVE.mode) && !(SAVE.mode === 'motion' && !motionC
 const syncMode = () => {
   const sel = $('#modeSel'); sel.dataset.m = pickMode; sel.style.setProperty('--i', MODES.indexOf(pickMode));
   sel.querySelectorAll('button').forEach((b) => { const on = b.dataset.m === pickMode; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
-  $('#mswName').textContent = MSW_NAME[pickMode]; $('#mswDesc').textContent = MSW_DESC[pickMode];
+  $('#mswName').textContent = MSW_NAME[pickMode]; $('#mswDesc').innerHTML = nb(MSW_DESC[pickMode]);
 };
 const setPick = (m) => { if (m === 'motion' && !motionCapable) { syncMode(); return; } if (m === pickMode) { syncMode(); return; } pickMode = m; SAVE.mode = m; save(); syncMode(); try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} };
 { const tr = $('#mswTrack'), sel = $('#modeSel'), th = $('#mswThumb'); let drag = null;
@@ -1410,7 +1413,7 @@ $('#btnStart').addEventListener('click', async () => {
   } else { S.mode = m; document.body.classList.remove('motion'); }
   SAVE.mode = m; save(); newGame();
 });
-function paintRec() { $('#rec').textContent = SAVE.plays ? `你玩過 ${SAVE.plays} 場・最高 ${fmt1(SAVE.best)} 分・累計入壺 ${SAVE.ins}、貫耳 ${SAVE.ears}（${lineName() ? '已綁定 LINE，換手機也在' : '只記在這支手機，登入 LINE 就能帶著走'}）` : ''; }
+function paintRec() { $('#rec').innerHTML = SAVE.plays ? nb(`你玩過 ${SAVE.plays} 場・最高 ${fmt1(SAVE.best)} 分・累計入壺 ${SAVE.ins}、貫耳 ${SAVE.ears}`) + `<span class="nb">（${lineName() ? '已綁定 LINE，換手機也在' : '只記在這支手機，登入 LINE 就能帶著走'}）</span>` : ''; }
 paintRec();
 
 /* =========================================================
@@ -1453,8 +1456,8 @@ const CAME_FROM_LOGIN = /(^#|&)acct=/.test(window.__acctHash || ''); let autoJoi
 function acctPaint() {
   const nm = lineName(), msg = ACCT && ACCT.msg ? `<div class="am">${esc(ACCT.msg)}</div>` : '';
   $('#acctRow').innerHTML = nm
-    ? `☁️ 已用 LINE 登入：<b>${esc(nm)}</b>・最高分與紀錄會跟著你 <button class="linkbtn inl" data-act="logout" type="button">登出</button>${msg}`
-    : `<div class="am">不用登入就能玩；登入可讓紀錄換手機也在。</div><button class="linkbtn" data-act="login" type="button">👤 用 LINE 登入（選用）</button>${msg}`;
+    ? `<span class="nb">☁️ 已用 LINE 登入：</span><b>${esc(nm)}</b>・${nb('最高分與紀錄會跟著你')} <button class="linkbtn inl" data-act="logout" type="button">登出</button>${msg}`
+    : `<div class="am">${nb('不用登入就能玩；登入可讓紀錄換手機也在。')}</div><button class="linkbtn" data-act="login" type="button">👤 用 LINE 登入（選用）</button>${msg}`;
   $('#mpLoginBox').innerHTML = nm
     ? `<div class="acct left">✅ 已用 LINE 登入：<b>${esc(nm)}</b>　<button class="linkbtn inl" data-act="logout" type="button">登出</button></div>`
     : `<button class="btn line sm" data-act="login" type="button">👤 用 LINE 登入（名字自動帶入）</button><p class="note" style="margin:6px 0 12px">登入是選用的：不登入也能玩，直接在下面取個名字。</p>`;
