@@ -422,7 +422,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.24';
+const VER = 'v261123.25';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -1122,9 +1122,18 @@ function solveAim(tx, tz, e, lockJob, preset) {   // 落點 (tx, tz) → 左右 
 }
 /* 觸控＝相對拖曳（像觸控板）：落點圈一直顯示在上次的位置，手指放哪裡都行，一動圈就跟著動；
    慢拖精細、快拖走遠。不是把手指位置直接投影到地面：畫面下半部對應的地面比最近能投到的距離還近，手指在那裡怎麼動圈都被鎖住，要推到上半部才開始動 */
+/* 每一矢的起點：落點圈放在離壺 0.7～1.1 公尺遠的隨機位置（不是上一矢的位置，更不在壺口），玩家一定要自己把圈拖到壺上 */
+function touchStart() {
+  const D = R().D, zHi = D - TU.xMin, zLo = D - TU.xMax; let tx = 0, tz = 0;
+  for (let k = 0; k < 20; k++) {
+    const a = Math.random() * Math.PI * 2, r = 0.7 + Math.random() * 0.4; tx = clamp(Math.sin(a) * r, -1.2, 1.2); tz = clamp(Math.cos(a) * r, zLo, zHi);
+    if (Math.hypot(tx, tz) >= 0.6) break;
+  }
+  TOUCH.tx = tx; TOUCH.tz = tz;
+}
 function touchAim(now) {
   const lockJob = !!(MP.on && MP.job && MP.job.kind === 'lock'), preset = S.preset, e = preset ? S.lockE : S.eTouch, hand = handPos(), th = thetaOf(e);
-  if (TOUCH.tx == null) { TOUCH.tx = 0.4; TOUCH.tz = 0.9; }   // 第一次：在壺的左前方一點點
+  if (TOUCH.tx == null) touchStart();
   const zHi = hand.z - TU.xMin, zLo = hand.z - TU.xMax;   // 這個仰角能投到的最近、最遠位置：圈不能超出，免得手指在範圍外白拖
   let wx = 0, wz = 0;
   if (TOUCH.active) {
@@ -1190,7 +1199,7 @@ function startAim(job) {
     S.phase = 'aimE'; gActive(gE, true); gActive(gP, false); gActive(gH, false); gShow(gP, false); gShow(gH, false);
     setHint(lockJob ? '①　點一下，鎖定「仰角」（左右交給隊友）' : '①　點一下，鎖定「仰角」（上下）'); timerResume();
   } else if (S.mode === 'touch') {
-    S.phase = 'aimT'; S.eTouch = 0.5; gE.classList.remove('live'); gE.hidden = true; gActive(gP, false); gH.hidden = true; gShow(gP, true);   // 觸控：仰角固定（實測仰角只讓箭弧高低不同、入壺判定幾乎沒差，滑桿沒意義，拿掉）；左側力道只顯示
+    S.phase = 'aimT'; S.eTouch = 0.5; touchStart(); gE.classList.remove('live'); gE.hidden = true; gActive(gP, false); gH.hidden = true; gShow(gP, true);   // 觸控：仰角固定（實測仰角只讓箭弧高低不同、入壺判定幾乎沒差，滑桿沒意義，拿掉）；左側力道只顯示
     setHint(lockJob ? '上下拖曳移動落點圈，放開交給隊友' : '拖曳移動落點圈，放開放箭'); timerResume();
   } else {
     S.phase = 'aim'; SENS.calibOK = false; SENS.anchor = null;   // 每一矢都重新「心定」：投完手機姿勢早就變了，不能拿舊的正前方當基準
