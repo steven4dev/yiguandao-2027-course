@@ -736,7 +736,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a></div>
   <span class="status" id="status" data-state="loading" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取即時報名資料中…</span></span>
-  <span class="ver">v261124.03</span>
+  <span class="ver">v261124.04</span>
   </div></div>
 </div>
 
@@ -1023,8 +1023,16 @@ controls.screenSpacePanning = false;
 
 const HOME = { target: new THREE.Vector3(0, 2, 6), pos: new THREE.Vector3(118, 112, 168) };
 if (innerWidth < innerHeight) HOME.pos.multiplyScalar(1.55);
-camera.position.copy(HOME.pos);
-controls.target.copy(HOME.target);
+/* 手機直立的起始視角：預設只照得到內圈，前方外海（投壺島）整條被下方時間軸遮住。
+   改成：方位從 35° 轉到 10°、視線中心往前（+z）移 45、距離略縮 2%（仍在 maxDistance 內）。算出來投壺島落在畫面正中偏下，濟世靈山、清淨菩提、渡口、漂流瓶也都在畫面內。
+   HOME 本身不動（許多島的朝向、島上物件都是依 HOME.pos 算的），只有「相機起點與回家鍵」用 HOME_VIEW。電腦（橫向）完全不變。 */
+const HOME_VIEW = { target: HOME.target.clone(), pos: HOME.pos.clone() };
+if (innerWidth < innerHeight) {
+  const hor = Math.hypot(HOME.pos.x, HOME.pos.z) * 0.98, a = (10 * Math.PI) / 180, tz = HOME.target.z + 45;
+  HOME_VIEW.target.set(0, HOME.target.y, tz); HOME_VIEW.pos.set(Math.sin(a) * hor, HOME.pos.y * 0.98 + HOME.target.y, tz + Math.cos(a) * hor);
+}
+camera.position.copy(HOME_VIEW.pos);
+controls.target.copy(HOME_VIEW.target);
 
 const hemi = new THREE.HemisphereLight('#fff6e6', '#b9a27f', 1.6);
 scene.add(hemi);
@@ -7471,7 +7479,7 @@ function select(key, sel = key) {
   lastView = '';
   applyDate();
 }
-function goHome() { flyTo(HOME.target.clone(), HOME.pos.clone()); }
+function goHome() { flyTo(HOME_VIEW.target.clone(), HOME_VIEW.pos.clone()); }
 const selectMember = (id) => select(SLOTS[id].key, 'm:' + id);
 document.getElementById('panelBody').addEventListener('click', (e) => {
   if (e.target.closest('.cta-wish')) { openWrite(true); return; }
