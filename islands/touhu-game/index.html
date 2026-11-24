@@ -282,6 +282,30 @@ body.motion{--gb:82px}
 .stat span{font-size:12px;color:var(--muted)}
 .rounds{display:flex;gap:8px;justify-content:center;margin:6px 0 0;font-size:13px;color:var(--muted)}
 .quote{text-align:center;color:var(--muted);font-size:13.5px;margin:6px 0 12px}
+/* 結算卡：宣紙色底、金邊、朱紅印章稱號、金色大分數、三色數據與每輪色條 */
+.card.fin{--tc:#c23b2e;--tg:#e3a72f;position:relative;overflow:hidden;background:linear-gradient(180deg,#fffaf0 0%,#f8ecd6 100%);border:1.5px solid #e3c98f;box-shadow:0 12px 34px rgba(50,30,15,.28),inset 0 0 0 4px #fffaf0,inset 0 0 0 5px rgba(227,167,47,.45)}
+.card.fin::before{content:"";position:absolute;left:0;right:0;top:0;height:7px;background:linear-gradient(90deg,var(--jade),var(--tg),var(--tc))}
+.card.fin[data-tier="1"]{--tc:#2f7f78}.card.fin[data-tier="2"]{--tc:#3d5a80}.card.fin[data-tier="3"]{--tc:#8a7764}
+.finTop{display:flex;justify-content:space-between;align-items:center;margin:4px 2px 0}
+.finTag{font-size:12px;font-weight:900;letter-spacing:.18em;color:#8a6a2a}
+.finNew{font-size:12px;font-weight:900;color:#fff;background:linear-gradient(135deg,#e3a72f,#c23b2e);padding:3px 11px;border-radius:99px;box-shadow:0 2px 6px rgba(194,59,46,.35);animation:finPulse 1.6s ease-in-out infinite}
+@keyframes finPulse{50%{transform:scale(1.07)}}
+.finHero{text-align:center;padding:6px 0 2px;background:radial-gradient(ellipse 70% 80% at 50% 38%,rgba(227,167,47,.2),transparent 70%)}
+.finSeal{display:inline-block;transform:rotate(-3deg);margin:2px 0 0;padding:5px 16px 5px 20px;border:2.5px solid var(--tc);border-radius:8px;color:var(--tc);font:900 24px/1.25 var(--serif);letter-spacing:.2em;background:rgba(255,255,255,.35);box-shadow:inset 0 0 0 2px rgba(255,255,255,.6);animation:finStamp .5s cubic-bezier(.3,1.6,.5,1) both .25s}
+@keyframes finStamp{from{transform:rotate(-12deg) scale(1.7);opacity:0}to{transform:rotate(-3deg) scale(1);opacity:1}}
+.card.fin .big{margin:8px 0 0;font-size:68px;background:linear-gradient(180deg,#f2c14e 0%,#c98a1e 55%,#a8641a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 0 rgba(255,255,255,.7)) drop-shadow(0 4px 6px rgba(150,90,20,.25))}
+.card.fin .big small{-webkit-text-fill-color:#8a6a2a;color:#8a6a2a}
+.card.fin .stat{gap:8px;margin:10px 0 8px}
+.card.fin .stat div{position:relative;border-radius:14px;padding:9px 4px 8px;border:1px solid transparent}
+.card.fin .stat i{display:block;font-style:normal;font-size:18px;line-height:1.1;margin-bottom:1px}
+.card.fin .stat .s1{background:linear-gradient(180deg,#e6f3ee,#d6ebe4);border-color:#bcdccf}.card.fin .stat .s1 b{color:#1f6a63}
+.card.fin .stat .s2{background:linear-gradient(180deg,#fff3d6,#fbe6b0);border-color:#efd08a}.card.fin .stat .s2 b{color:#9a6410}
+.card.fin .stat .s3{background:linear-gradient(180deg,#fde8e3,#f8d3ca);border-color:#efb9ac}.card.fin .stat .s3 b{color:#a8321f}
+.rbars{display:grid;gap:7px;margin:4px 0 0}
+.rbar{display:grid;grid-template-columns:3.2em 1fr 3.6em;align-items:center;gap:8px;font-size:13px;color:#6a5844;font-weight:700}
+.rbar em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);font-weight:900}
+.rbar span.tr{display:block;height:10px;border-radius:99px;background:rgba(43,29,20,.1);overflow:hidden}
+.rbar span.tr i{display:block;height:100%;width:0;border-radius:99px;background:var(--c);box-shadow:inset 0 -2px 0 rgba(0,0,0,.15);transition:width .9s cubic-bezier(.2,.8,.2,1) .35s}
 </style>
 </head>
 <body>
@@ -343,14 +367,20 @@ body.motion{--gb:82px}
 
 <!-- 結算 -->
 <section class="scr" id="scrFinal" hidden>
-  <div class="card">
-    <span class="stepTag">本場結算</span>
-    <div class="big"><span id="fScore">0</span><small>分</small></div>
-    <div class="ttl" id="fTitle"></div>
-    <div class="quote" id="fQuote"></div>
-    <div class="stat"><div><b id="fIn">0</b><span>入壺</span></div><div><b id="fEar">0</b><span>貫耳</span></div><div><b id="fBest">0</b><span>最高分</span></div></div>
-    <div class="rounds" id="fRounds"></div>
-    <div class="stack" style="margin-top:12px">
+  <div class="card fin" id="finCard" data-tier="0">
+    <div class="finTop"><span class="finTag">本場結算</span><span class="finNew" id="fNew" hidden>🎉 新紀錄</span></div>
+    <div class="finHero">
+      <div class="finSeal" id="fSeal"><span id="fTitle"></span></div>
+      <div class="big"><span id="fScore">0</span><small>分</small></div>
+      <div class="quote" id="fQuote"></div>
+    </div>
+    <div class="stat">
+      <div class="s1"><i>🏺</i><b id="fIn">0</b><span>入壺</span></div>
+      <div class="s2"><i>🎯</i><b id="fEar">0</b><span>貫耳</span></div>
+      <div class="s3"><i>🏅</i><b id="fBest">0</b><span>最高分</span></div>
+    </div>
+    <div class="rbars" id="fRounds"></div>
+    <div class="stack" style="margin-top:14px">
       <button class="btn" id="btnAgain" type="button">🏹 再投一場</button>
       <a class="btn line" id="btnShare" href="#" target="_blank" rel="noopener">💬 分享到 LINE</a>
       <a class="btn ghost" href="../">🏠 回群島</a>
@@ -424,7 +454,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.28';
+const VER = 'v261123.29';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -1394,11 +1424,14 @@ function roundEnd() {
 }
 function showFinal() {
   S.phase = 'final'; hideAimUI(); setHint('');
-  SAVE.plays++; SAVE.best = Math.max(SAVE.best, S.score); save();
+  const prevBest = SAVE.best; SAVE.plays++; SAVE.best = Math.max(SAVE.best, S.score); save();
   const T = TITLES.find((x) => S.score >= x.min);
   $('#fScore').textContent = fmt1(S.score); $('#fTitle').textContent = T.t; $('#fQuote').textContent = T.q;
+  $('#finCard').dataset.tier = String(TITLES.indexOf(T)); $('#fNew').hidden = !(SAVE.plays > 1 && S.score > prevBest && S.score > 0);
   $('#fIn').textContent = S.ins; $('#fEar').textContent = S.ears; $('#fBest').textContent = fmt1(SAVE.best);
-  $('#fRounds').innerHTML = ROUNDS.map((r, i) => `<span>${r.name} ${fmt1((S.hist[i] || []).reduce((a, b) => a + b.pts + (b.b || 0) / 10, 0))} 分</span>`).join('<span>・</span>');
+  const RC = ['#e3a72f', '#2f7f78', '#3d5a80'], MAXR = 4 * 3.5;   // 每輪 4 矢，每矢最高 3 分＋0.5 加成
+  $('#fRounds').innerHTML = ROUNDS.map((r, i) => { const v = (S.hist[i] || []).reduce((a, b) => a + b.pts + (b.b || 0) / 10, 0); return `<div class="rbar" style="--c:${RC[i % 3]}"><span>${r.name}</span><span class="tr"><i data-w="${Math.min(100, Math.round(v / MAXR * 100))}"></i></span><em>${fmt1(v)}</em></div>`; }).join('');
+  requestAnimationFrame(() => requestAnimationFrame(() => document.querySelectorAll('#fRounds .tr i').forEach((el) => { el.style.width = el.dataset.w + '%'; })));
   const text = `我在全真群島的投壺島投了 ${fmt1(S.score)} 分，得到稱號「${T.t}」！矢直在心，你也來試試 👉 ${SHARE_URL}`;
   $('#btnShare').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(text);
   $('#scrFinal').hidden = false; $('#hud').hidden = true;
@@ -1874,7 +1907,7 @@ function tick(t) {
 // 網址 ?round=2、?round=3 可以直接從那一輪開始（預覽用）
 try { const q = new URLSearchParams(location.search); const r = parseInt(q.get('round'), 10); if (r >= 1 && r <= ROUNDS.length) S.startRound = r - 1; S.debug = q.has('debug'); } catch (e) {}
 setupRound(); skySet(0, true); S.phase = 'title';
-if (location.search.includes('debug')) window.__TH = { setupRound, S, TU, SENS, R, throwArrow, startAim, newGame, potState, info: renderer.info, guest, cam, potGroup, TOUCH, TM, timerFrac, MP, REPLAY, mpTick, mpReconcile, onOrient, onMotion, lockE, lockP, lockH, pFor, thetaOf, speedOf, landing, windDrift, psiOf, startCharge, releaseCharge };
+if (location.search.includes('debug')) window.__TH = { showFinal, setupRound, S, TU, SENS, R, throwArrow, startAim, newGame, potState, info: renderer.info, guest, cam, potGroup, TOUCH, TM, timerFrac, MP, REPLAY, mpTick, mpReconcile, onOrient, onMotion, lockE, lockP, lockH, pFor, thetaOf, speedOf, landing, windDrift, psiOf, startCharge, releaseCharge };
 requestAnimationFrame(tick);
 </script>
 <script type="module">
