@@ -736,7 +736,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a></div>
   <span class="status" id="status" data-state="loading" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取即時報名資料中…</span></span>
-  <span class="ver">v261123.16</span>
+  <span class="ver">v261124.01</span>
   </div></div>
 </div>
 
@@ -5735,6 +5735,146 @@ const ckIsl = (() => {
   }
 }
 
+/* ---------- 投壺島：全真島前方外海（方位 5°、離中心 116）----------
+   位置：漂流瓶島（-12, 66）和渡口島（43, 66）的外面，是從渡口進來第一眼看到的島；跟最近的島空隙約 36（外海島之間大多 45 左右）。
+   島中央是遊戲裡那張紅邊草蓆：後面石墩上一只青銅雙耳壺、壺口斜插著一支矢；前面一條站位線、右前一個箭筒架。
+   四周：後方一圈竹林、左邊石燈和茶几、右後風旗、兩根立柱間一串紅燈籠、左後一座石砌水池＋竹筏（第三輪「浮筏」）、右前一塊「投壺島」立牌。
+   還沒開放前整座島圍施工圍籬（TH_LIVE = false）；測試的人在網址加 ?touhu=測試碼（islands/?touhu=thq-8w4n#touhu）打開測試模式，?touhu=off 關掉。
+   互動：資訊卡 →「進入投壺島」→ islands/touhu-game/（單人三輪十二矢；多人對戰一對一／二對二）。 */
+const TH_LIVE = false;   // 正式開放時改成 true，圍籬就拆掉、大家都能玩
+const TH_TEST_TOKEN = 'thq-8w4n', TH_TEST_KEY = 'islands-touhu-test';
+const thTester = (() => {
+  try {
+    const q = new URLSearchParams(location.search), v = q.get('touhu');
+    if (v === TH_TEST_TOKEN) localStorage.setItem(TH_TEST_KEY, '1');
+    else if (v === 'off') localStorage.removeItem(TH_TEST_KEY);
+    if (v !== null) { q.delete('touhu'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }   // 測試碼不留在網址上
+    return localStorage.getItem(TH_TEST_KEY) === '1';
+  } catch (e) { return false; }
+})();
+const thOpen = TH_LIVE || thTester;
+const TH_ANG = (5 * Math.PI) / 180, TH_R = 13;
+const thIsl = makeIsland('touhu', TH_R, Math.sin(TH_ANG) * 116, Math.cos(TH_ANG) * 116, 'touhu');
+{
+  const g = thIsl.group;
+  const mark = new THREE.Group(); mark.rotation.y = faceCam(thIsl.x, thIsl.z); g.add(mark); thIsl.mark = mark;   // 本地 +z 朝向預設鏡頭
+  const bronze = new THREE.MeshStandardMaterial({ color: '#b7793a', roughness: 0.5, metalness: 0.25, side: THREE.DoubleSide }), goldM = new THREE.MeshStandardMaterial({ color: '#e3b44f', roughness: 0.35, metalness: 0.4 });
+  const wood = lam('#c08a52'), woodD = lam('#8a5a32'), stone = lam('#b9b1a2'), stoneD = lam('#8f887a'), cream = lam('#f6efe2');
+  // —— 草蓆：深紅布邊＋草席紋 ——
+  const strawT = canvasTex(256, 256, (c) => { c.fillStyle = '#e4cd86'; c.fillRect(0, 0, 256, 256); for (let i = 0; i < 64; i++) { c.fillStyle = i % 2 ? 'rgba(160,120,50,.28)' : 'rgba(255,240,180,.35)'; c.fillRect(i * 4, 0, 2, 256); } for (let j = 0; j < 8; j++) { c.fillStyle = 'rgba(120,85,30,.25)'; c.fillRect(0, j * 32, 256, 2); } }, true);
+  strawT.repeat.set(2, 4);
+  mesh(new THREE.BoxGeometry(5.6, 0.06, 10.4), lam('#8c3b2b'), 0, 0.03, 0.8, mark, false);
+  mesh(new THREE.BoxGeometry(5.0, 0.08, 9.8), new THREE.MeshLambertMaterial({ map: strawT }), 0, 0.04, 0.8, mark, false);
+  mesh(new THREE.BoxGeometry(1.5, 0.05, 0.22), lam('#5b3a22'), 0, 0.09, 4.6, mark, false);   // 站位線
+  // —— 青銅雙耳壺（跟遊戲裡同一個剖面，放大 2.6 倍）放在石墩上 ——
+  const PED = new THREE.Group(); PED.position.set(0, 0, -2.6); mark.add(PED);
+  mesh(new THREE.CylinderGeometry(1.0, 1.2, 0.5, 36), lam('#cdbfa4'), 0, 0.25, 0, PED);
+  const POT = new THREE.Group(); POT.position.set(0, 0.5, 0); POT.scale.setScalar(2.6); PED.add(POT);
+  const prof = [[0.001, 0], [0.10, 0], [0.17, 0.04], [0.215, 0.16], [0.22, 0.26], [0.19, 0.36], [0.135, 0.45], [0.13, 0.5], [0.16, 0.545], [0.17, 0.55], [0.15, 0.55], [0.125, 0.5], [0.12, 0.45], [0.1, 0.2], [0.08, 0.08], [0.001, 0.08]].map(([r, y]) => new THREE.Vector2(r, y));
+  mesh(new THREE.LatheGeometry(prof, 36), bronze, 0, 0, 0, POT);
+  mesh(new THREE.TorusGeometry(0.221, 0.011, 8, 36), goldM, 0, 0.26, 0, POT, false).rotation.x = Math.PI / 2;
+  mesh(new THREE.TorusGeometry(0.133, 0.009, 8, 30), goldM, 0, 0.47, 0, POT, false).rotation.x = Math.PI / 2;
+  mesh(new THREE.CircleGeometry(0.146, 30), new THREE.MeshBasicMaterial({ color: 0x1b120a }), 0, 0.52, 0, POT, false).rotation.x = -Math.PI / 2;
+  for (const s of [-1, 1]) {   // 兩耳
+    mesh(new THREE.CylinderGeometry(0.062, 0.062, 0.4, 16, 1, true), bronze, s * 0.27, 0.35, 0, POT);
+    mesh(new THREE.TorusGeometry(0.062, 0.01, 8, 18), goldM, s * 0.27, 0.55, 0, POT, false).rotation.x = Math.PI / 2;
+    const br = mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.12, 8), bronze, s * 0.2, 0.43, 0, POT, false); br.rotation.z = Math.PI / 2;
+  }
+  // —— 矢：一支斜插在壺口、一支落在草蓆上、一組插在箭筒架裡 ——
+  const arrow = (parent, len = 1.5) => {
+    const A = new THREE.Group(); parent.add(A);
+    mesh(new THREE.CylinderGeometry(0.03, 0.03, len, 6), lam('#d8a65c'), 0, 0, 0, A, false);
+    mesh(new THREE.ConeGeometry(0.06, 0.18, 6), lam('#7a4b1e'), 0, len / 2 + 0.09, 0, A, false);
+    mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.16, 6), lam('#c23b2e'), 0, -len / 2 + 0.14, 0, A, false);
+    return A;
+  };
+  { const A = arrow(mark, 1.6); A.position.set(0.18, 2.85, -2.45); A.rotation.set(0.2, 0, -0.16); }   // 壺口那支
+  { const A = arrow(mark, 1.5); A.position.set(-1.4, 0.12, 2.2); A.rotation.set(Math.PI / 2, 0, 1.2); }   // 躺在草蓆上
+  // 箭筒架（右前）：木桶＋幾支矢
+  { const R = new THREE.Group(); R.position.set(3.7, 0, 3.6); mark.add(R);
+    mesh(new THREE.CylinderGeometry(0.42, 0.5, 1.0, 14), wood, 0, 0.5, 0, R); mesh(new THREE.TorusGeometry(0.46, 0.04, 6, 16), woodD, 0, 0.78, 0, R, false).rotation.x = Math.PI / 2;
+    [[-0.15, 0.05, 0.1], [0.12, -0.1, -0.15], [0.0, 0.12, 0.05], [-0.08, -0.12, 0.2], [0.18, 0.1, 0.0]].forEach(([x, z, rz], i) => { const A = arrow(R, 1.4 + (i % 2) * 0.15); A.position.set(x, 1.45, z); A.rotation.z = rz; }); }
+  // —— 石燈（左）——
+  { const L = new THREE.Group(); L.position.set(-4.7, 0, -1.4); L.scale.setScalar(1.8); mark.add(L);
+    mesh(new THREE.BoxGeometry(0.42, 0.1, 0.42), stone, 0, 0.05, 0, L); mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.55, 8), stone, 0, 0.37, 0, L); mesh(new THREE.BoxGeometry(0.36, 0.1, 0.36), stone, 0, 0.69, 0, L);
+    mesh(new THREE.BoxGeometry(0.22, 0.2, 0.22), new THREE.MeshStandardMaterial({ color: '#fff0c4', emissive: '#ffc060', emissiveIntensity: 0.3, roughness: 0.6 }), 0, 0.84, 0, L, false);
+    mesh(new THREE.ConeGeometry(0.34, 0.2, 4), stone, 0, 1.04, 0, L).rotation.y = Math.PI / 4; mesh(new THREE.SphereGeometry(0.05, 8, 6), stone, 0, 1.17, 0, L); }
+  // —— 茶几與茶具（左前）——
+  { const T = new THREE.Group(); T.position.set(-4.5, 0, 3.4); mark.add(T);
+    mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.1, 20), lam('#7a5a33'), 0, 0.5, 0, T);
+    for (const [x, z] of [[-0.38, -0.38], [0.38, -0.38], [-0.38, 0.38], [0.38, 0.38]]) mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.46, 6), lam('#5b3a22'), x, 0.23, z, T);
+    mesh(new THREE.SphereGeometry(0.17, 14, 10), lam('#3f7f78'), -0.1, 0.72, 0, T).scale.y = 0.85; mesh(new THREE.CylinderGeometry(0.03, 0.045, 0.22, 6), lam('#3f7f78'), 0.1, 0.76, 0, T).rotation.z = -1.0;
+    for (const x of [0.2, 0.38]) mesh(new THREE.CylinderGeometry(0.065, 0.05, 0.09, 12), cream, x, 0.6, 0.2, T); }
+  // —— 風旗（右後）——
+  const flagG = new THREE.Group(); flagG.position.set(4.4, 0, -4.2); flagG.userData.noMerge = true; mark.add(flagG);
+  mesh(new THREE.CylinderGeometry(0.05, 0.07, 3.6, 8), lam('#5b3a22'), 0, 1.8, 0, flagG); mesh(new THREE.SphereGeometry(0.1, 8, 6), goldM, 0, 3.64, 0, flagG, false);
+  const flagP = new THREE.Group(); flagP.position.set(0, 3.2, 0); flagG.add(flagP);
+  { const geo = new THREE.PlaneGeometry(1.2, 0.58, 12, 1); geo.translate(0.6, 0, 0); const f = mesh(geo, new THREE.MeshLambertMaterial({ color: '#c23b2e', side: THREE.DoubleSide }), 0, 0, 0, flagP); f.userData.noMerge = true; thIsl.flagGeo = geo; thIsl.flagBase = geo.attributes.position.array.slice(); }
+  // —— 兩根立柱間一串紅燈籠 ——
+  const lanternM = new THREE.MeshStandardMaterial({ color: '#d4402a', emissive: '#ff7a3a', emissiveIntensity: 0.25, roughness: 0.55 });
+  { const y0 = 3.6, x0 = -5.4, x1 = 5.4, zL = 0.6;
+    for (const x of [x0, x1]) mesh(new THREE.CylinderGeometry(0.08, 0.1, y0 + 0.2, 8), lam('#5b3a22'), x, (y0 + 0.2) / 2, zL, mark);
+    const N = 8, pts = []; for (let i = 0; i <= N; i++) { const u = i / N; pts.push(new THREE.Vector3(x0 + (x1 - x0) * u, y0 - 0.9 * Math.sin(Math.PI * u), zL)); }
+    mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.025, 4, false), lam('#3a2a1c'), 0, 0, 0, mark, false);
+    for (let i = 1; i < N; i++) { const p = pts[i]; const L = mesh(new THREE.SphereGeometry(0.3, 14, 10), lanternM, p.x, p.y - 0.34, p.z, mark, false); L.scale.y = 1.2; mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.06, 8), goldM, p.x, p.y - 0.02, p.z, mark, false); mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.06, 8), goldM, p.x, p.y - 0.66, p.z, mark, false); } }
+  // —— 竹林：後方一圈 ——
+  { const bm = lam('#6fae5c'), bm2 = lam('#8cc06a');
+    for (let i = 0; i < 15; i++) {
+      const a = (-78 + i * (156 / 14) + (Math.random() - 0.5) * 6) * Math.PI / 180, r = 10.2 + Math.random() * 0.8, h = 4.6 + Math.random() * 2.2, x = Math.sin(a) * r, z = -Math.cos(a) * r;
+      const P = new THREE.Group(); P.position.set(x, 0, z); mark.add(P);
+      mesh(new THREE.CylinderGeometry(0.085, 0.11, h, 8), i % 2 ? bm : bm2, 0, h / 2, 0, P);
+      for (let k = 1; k < 6; k++) mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.04, 8), bm, 0, k * h / 6, 0, P, false);
+      for (let k = 0; k < 3; k++) { const lf = mesh(new THREE.PlaneGeometry(1.0, 0.17), lam('#79b857', { side: THREE.DoubleSide }), 0, h - 0.3 - k * 0.35, 0, P, false); lf.geometry.translate(0.5, 0, 0); lf.rotation.set(0, Math.random() * 6.28, -0.5 + Math.random() * 0.4); }
+    } }
+  // —— 石砌水池＋竹筏（左後）：第三輪「浮筏」——
+  { const P = new THREE.Group(); P.position.set(-5.2, 0, -5.4); mark.add(P);
+    mesh(new THREE.LatheGeometry([[1.9, 0], [2.3, 0], [2.3, 0.36], [2.18, 0.43], [2.04, 0.43], [1.9, 0.36], [1.9, 0]].map(([r, y]) => new THREE.Vector2(r, y)), 40), new THREE.MeshLambertMaterial({ color: '#b9b1a2', side: THREE.DoubleSide }), 0, 0, 0, P);
+    mesh(new THREE.CylinderGeometry(1.9, 1.9, 0.18, 40), new THREE.MeshStandardMaterial({ color: '#4a9fc0', roughness: 0.25, transparent: true, opacity: 0.92 }), 0, 0.09, 0, P, false);
+    const RF = new THREE.Group(); RF.position.set(0.1, 0.18, 0); RF.rotation.y = 0.25; P.add(RF);
+    for (let i = 0; i < 7; i++) { const lg = mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.0, 10), lam(i % 2 ? '#c7a463' : '#d2b274'), -0.84 + i * 0.28, 0.02, 0, RF); lg.rotation.x = Math.PI / 2; }
+    for (const z of [-0.55, 0.55]) mesh(new THREE.BoxGeometry(2.1, 0.06, 0.1), lam('#7a5a33'), 0, 0.12, z, RF, false); }
+  // —— 「投壺島」立牌（右前）——
+  { const S = new THREE.Group(); S.position.set(4.9, 0, 6.2); S.rotation.y = -0.3; mark.add(S);
+    const tx = canvasTex(512, 200, (c) => { c.fillStyle = '#f3e3c1'; c.fillRect(0, 0, 512, 200); c.strokeStyle = '#8c3b2b'; c.lineWidth = 8; c.strokeRect(8, 8, 496, 184); c.fillStyle = '#2b1d14'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '900 92px "Noto Serif TC", "Noto Sans TC", serif'; c.fillText('投壺島', 256, 84); c.font = 'bold 34px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillStyle = '#8c3b2b'; c.fillText('矢直在心・以禮會友', 256, 150); });
+    for (const x of [-1.5, 1.5]) mesh(new THREE.CylinderGeometry(0.08, 0.1, 2.2, 8), lam('#5b3a22'), x, 1.1, 0, S);
+    mesh(new THREE.BoxGeometry(3.6, 1.4, 0.1), [woodD, woodD, woodD, woodD, new THREE.MeshLambertMaterial({ map: tx }), woodD], 0, 1.55, 0, S); }
+  // —— 動起來：風旗飄、燈籠微微呼吸 ——
+  animators.push((t) => {
+    const ps = thIsl.flagGeo.attributes.position, b = thIsl.flagBase;
+    for (let i = 0; i < ps.count; i++) { const x = b[i * 3]; ps.setZ(i, Math.sin(t * 4 - x * 4) * 0.12 * x); ps.setY(i, b[i * 3 + 1] + Math.sin(t * 3 - x * 3) * 0.04 * x); }
+    ps.needsUpdate = true; flagP.rotation.y = Math.sin(t * 1.1) * 0.25;
+    lanternM.emissiveIntensity = 0.25 + 0.08 * Math.sin(t * 2.2);
+  });
+  // 還沒開放：施工圍籬＋「施工中」告示牌（跟其他新島一樣；測試模式看不到圍籬）
+  if (!thOpen) {
+    const FN = new THREE.Group(); FN.userData.noMerge = true; g.add(FN);
+    const fTex = canvasTex(256, 64, (c) => {
+      c.fillStyle = '#f4f1ea'; c.fillRect(0, 0, 256, 64);
+      c.fillStyle = '#e0602a'; for (let i = -1; i < 9; i++) { c.beginPath(); c.moveTo(i * 32, 64); c.lineTo(i * 32 + 16, 64); c.lineTo(i * 32 + 40, 0); c.lineTo(i * 32 + 24, 0); c.fill(); }
+      c.fillStyle = '#2f6b45'; c.fillRect(0, 0, 256, 6); c.fillRect(0, 58, 256, 6);
+    }, true);
+    const postM = lam('#5f6b73'), RF = TH_R * 0.97;
+    for (let k = 0; k < 6; k++) {
+      const a0 = Math.PI / 6 + (k * Math.PI) / 3, a1 = a0 + Math.PI / 3;
+      const p0 = new THREE.Vector3(Math.sin(a0) * RF, 0, Math.cos(a0) * RF), p1 = new THREE.Vector3(Math.sin(a1) * RF, 0, Math.cos(a1) * RF);
+      const len = p0.distanceTo(p1), mid = p0.clone().add(p1).multiplyScalar(0.5);
+      const m = new THREE.MeshLambertMaterial({ map: fTex.clone(), side: THREE.DoubleSide }); m.map.repeat.set(len / 4, 1); m.map.needsUpdate = true;
+      const panel = mesh(new THREE.PlaneGeometry(len, 1.6), m, mid.x, 0.8, mid.z, FN, false);
+      panel.rotation.y = Math.atan2(p1.x - p0.x, p1.z - p0.z) + Math.PI / 2;
+      for (let i = 0; i <= Math.round(len / 3); i++) { const q = p0.clone().lerp(p1, i / Math.round(len / 3)); mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.8, 6), postM, q.x, 0.9, q.z, FN, false); }
+    }
+    const sTex = canvasTex(512, 200, (c) => {
+      c.fillStyle = '#f2b632'; c.fillRect(0, 0, 512, 200);
+      c.fillStyle = '#1f1a1a'; c.font = 'bold 50px "Noto Sans TC", "PingFang TC", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText('🚧 投壺島 施工中', 256, 80); c.font = 'bold 40px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText('即將開放・敬請期待', 256, 154);
+    });
+    const sy = new THREE.Group(); sy.rotation.y = mark.rotation.y; FN.add(sy);
+    const edgeR = RF * Math.cos(Math.PI / 6), signY = lam('#f2b632');
+    mesh(new THREE.BoxGeometry(5.2, 2, 0.1), [signY, signY, signY, signY, new THREE.MeshLambertMaterial({ map: sTex }), signY], 0, 1.75, edgeR + 0.25, sy);
+    for (const x of [-2.2, 2.2]) mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.8, 6), postM, x, 1.4, edgeR + 0.18, sy);
+  }
+}
+
 /* ---------- 清淨菩提島：吹散無明 ----------
    流程（狀態機）：idle → perm（請開啟麥克風）→ calib（先聽 0.8 秒環境音當底噪）→ blow（吹氣累積 progress 0～100）→ cleared（雲開見日）→ 回到 idle
    吹氣偵測只用 Web Audio 的 AnalyserNode 即時算音量和頻譜，不錄音、不上傳，聲音也不會接到喇叭。
@@ -6661,6 +6801,7 @@ addTag(jsIsl, jsOpen ? '⛰️ 濟世靈山島・抽籤' : '🚧 濟世靈山島
 addTag(ptIsl, ptOpen ? '清淨菩提島 🎮' : '🚧 清淨菩提島・施工中', 'main', 12);   // 跟有小遊戲的課程島一樣，名字後面加 🎮
 addTag(fcIsl, fcOpen ? '拂塵淨心島 🎮' : '🚧 拂塵淨心島・施工中', 'main', 12);
 addTag(ckIsl, ckOpen ? '廚神養成島 🎮' : '🚧 廚神養成島・施工中', 'main', 7.5);
+addTag(thIsl, thOpen ? '投壺島 🎮' : '🚧 投壺島・施工中', 'main', 8);
 // 登島是重要入口：渡口島的標籤排在全真島和課程島之後、其他小標籤之前
 tags.splice(1 + COURSES.length, 0, tags.pop());
 // 瞭望氣球的小標籤跟著氣球飄，點了就是搜尋
@@ -6960,6 +7101,19 @@ function renderPanel() {
       <div class="cta"><p>${fcTester && !FC_LIVE ? '🔧 測試中：只有這支手機看得到入口，其他人看到的是施工圍籬。<br>' : ''}看清符印、等倒數、聽到「揮！」就整隻手臂揮出去；塵精一揮、塵妖要兩連擊，最後收服無明塵王。收服的塵靈會收進「淨心錄」。</p><a href="fuchen-game/${FC_ROOM ? '?room=' + FC_ROOM + (FC_VS ? '&vs=1' : '') : (FC_VS ? '?vs=1' : '')}" id="fcGo">${FC_ROOM ? '⚔️ 加入對戰房間 ' + FC_ROOM : '🎮 進入拂塵試煉'}</a></div>
       <p class="note">島中央是一座岩石堆成的石丘，一支巨大的拂塵像石中劍一樣插在頂上的岩縫裡，岩縫透出金光：黑色握把、竹節木柄、網罩圓頭、紅色綁繩，白色馬尾從頂上垂下來。外圈一圈踏石步道，十二尊塵靈石雕面向拂塵：六系各一尊原版——色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），旁邊各站一尊「異相」代表，台座石牌寫著名字和心性。</p>
       ${fcTester && !FC_LIVE ? '<p class="note"><a class="cta-link" href="fuchen-lab/">🧪 揮符實驗室（測感測器）</a>　<a class="cta-link" href="?fuchen=off#fuchen">結束測試</a></p>' : ''}
+      <button class="back" data-go="temple">← 回到全真島</button>`;
+  } else if (isl && isl.kind === 'touhu' && !thOpen) {
+    title = '投壺島'; info = '施工中・敬請期待';
+    html = `<header><span class="eyebrow">全真島前方外海・施工中</span><h2>🚧 投壺島</h2><p class="sub">新島正在整地施工，整座島用施工圍籬圍起來，完工後開放</p></header>
+      <p class="note">圍籬裡面隱約看得到一張紅邊草蓆，後面石墩上立著一只青銅雙耳壺，四周是竹林、石燈和一串紅燈籠。聽說完工後可以在這裡投壺，還能找朋友對戰，敬請期待。</p>
+      <button class="back" data-go="temple">← 回到全真島</button>`;
+  } else if (isl && isl.kind === 'touhu') {
+    let best = 0; try { const o = JSON.parse(localStorage.getItem('islands-touhu') || 'null'); best = (o && o.best) || 0; } catch (e) {}
+    title = '投壺島'; info = best ? `最高 ${Math.round(best * 10) / 10} 分` : '投壺・一對一二對二對戰';
+    html = `<header><span class="eyebrow">全真島前方外海・${TH_LIVE ? '投壺' : '測試中'}</span><h2>🏺 投壺島</h2><p class="sub">矢直在心・以禮會友——三輪十二矢，把矢投進壺口得 2 分、貫耳得 3 分，投得越快加成越多</p></header>
+      <div class="cta"><p>${thTester && !TH_LIVE ? '🔧 測試中：只有這支手機看得到入口，其他人看到的是施工圍籬。<br>' : ''}點三下、手指拖曳或傾斜手機都能玩；第一輪晨光無風、第二輪風起、第三輪浮筏壺在水上搖。也可以建房間找朋友對戰（一對一、二對二），電腦還能投影觀戰。</p><a href="touhu-game/" id="thGo">🎮 進入投壺島</a></div>
+      <p class="note">島中央是一張紅邊草蓆，後面石墩上一只青銅雙耳壺、壺口斜插著一支矢；右前一個箭筒架，後方一圈竹林，左邊石燈和茶几，兩根立柱間掛著一串紅燈籠，左後一座石砌水池載著竹筏。</p>
+      ${thTester && !TH_LIVE ? '<p class="note"><a class="cta-link" href="?touhu=off#touhu">結束測試</a></p>' : ''}
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'chef' && !ckOpen) {
     title = '廚神養成島'; info = '施工中・敬請期待';
@@ -7379,6 +7533,8 @@ const PLACES = [
     : { key: 'fuchen', icon: '🚧', title: '拂塵淨心島', sub: '施工中・敬請期待', words: ['拂塵淨心島', '拂塵島', '拂塵', '淨心', '施工', '建置中'] },
   ckOpen ? { key: 'chef', icon: '🍳', title: '廚神養成島', sub: '體感料理・南瓜濃湯，拍成雜誌封面', words: ['廚神養成島', '廚神', '料理', '煮菜', '南瓜', '濃湯', '雜誌', '封面', '拍照', '體感', 'VEGGIE', '素食', '蔬食'] }
     : { key: 'chef', icon: '🚧', title: '廚神養成島', sub: '施工中・敬請期待', words: ['廚神養成島', '廚神', '料理', '施工', '建置中'] },
+  thOpen ? { key: 'touhu', icon: '🏺', title: '投壺島', sub: '投壺・三輪十二矢，一對一二對二對戰', words: ['投壺島', '投壺', '壺', '矢', '貫耳', '對戰', '禮樂', '射禮'] }
+    : { key: 'touhu', icon: '🚧', title: '投壺島', sub: '施工中・敬請期待', words: ['投壺島', '投壺', '施工', '建置中'] },
   { key: 'newisle', icon: '🚧', title: '忠恕島', sub: '忠恕道院・施工中', words: ['忠恕島', '忠恕道院', '忠恕', '大殿', '施工', '建置中'] },
   { key: 'zhongyi', icon: '🏮', title: '中一島', sub: '中一堂・全真青年凝聚晚會 11/28', words: ['中一島', '中一堂', '中一', '忠恕道場', '凝聚晚會', '晚會', '烤肉', '烤盤', '住宿', '青年'] },
   { key: 'hope', icon: '🍎', title: '希望島', sub: '祈福樹與噴泉', words: ['希望島', '希望', '祈福樹', '祈福', '蘋果', '噴泉', '許願'] },
