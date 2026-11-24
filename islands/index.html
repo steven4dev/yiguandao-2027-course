@@ -736,7 +736,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a></div>
   <span class="status" id="status" data-state="loading" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取即時報名資料中…</span></span>
-  <span class="ver">v261124.02</span>
+  <span class="ver">v261124.03</span>
   </div></div>
 </div>
 
@@ -5817,15 +5817,22 @@ const thIsl = makeIsland('touhu', TH_R, Math.sin(TH_ANG) * 116, Math.cos(TH_ANG)
     const N = 8, pts = []; for (let i = 0; i <= N; i++) { const u = i / N; pts.push(new THREE.Vector3(x0 + (x1 - x0) * u, y0 - 0.9 * Math.sin(Math.PI * u), zL)); }
     mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.025, 4, false), lam('#3a2a1c'), 0, 0, 0, mark, false);
     for (let i = 1; i < N; i++) { const p = pts[i]; const L = mesh(new THREE.SphereGeometry(0.3, 14, 10), lanternM, p.x, p.y - 0.34, p.z, mark, false); L.scale.y = 1.2; mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.06, 8), goldM, p.x, p.y - 0.02, p.z, mark, false); mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.06, 8), goldM, p.x, p.y - 0.66, p.z, mark, false); } }
-  // —— 竹林：後方一圈 ——
-  { const bm = lam('#6fae5c'), bm2 = lam('#8cc06a');
-    for (let i = 0; i < 15; i++) {
-      const a = (-78 + i * (156 / 14) + (Math.random() - 0.5) * 6) * Math.PI / 180, r = 10.2 + Math.random() * 0.8, h = 4.6 + Math.random() * 2.2, x = Math.sin(a) * r, z = -Math.cos(a) * r;
+  // —— 竹林：後方與兩側三層（外圈密排、中圈成叢、前角點綴），高矮粗細參差，避開涼亭、水池、櫻花樹與草蓆 ——
+  { const bm = lam('#6fae5c'), bm2 = lam('#8cc06a'), bm3 = lam('#5e9a4d'), lfM = lam('#79b857', { side: THREE.DoubleSide }), lfM2 = lam('#68a94c', { side: THREE.DoubleSide });
+    const blocked = (x, z) => Math.hypot(x - 6.4, z + 5.6) < 3.3 || Math.hypot(x + 5.2, z + 5.4) < 3.0 || Math.hypot(x + 8.0, z - 1.6) < 2.2 || (Math.abs(x) < 3.4 && z > -5.0 && z < 6.8);
+    const stalk = (x, z, h, w) => {
       const P = new THREE.Group(); P.position.set(x, 0, z); mark.add(P);
-      mesh(new THREE.CylinderGeometry(0.085, 0.11, h, 8), i % 2 ? bm : bm2, 0, h / 2, 0, P);
-      for (let k = 1; k < 6; k++) mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.04, 8), bm, 0, k * h / 6, 0, P, false);
-      for (let k = 0; k < 3; k++) { const lf = mesh(new THREE.PlaneGeometry(1.0, 0.17), lam('#79b857', { side: THREE.DoubleSide }), 0, h - 0.3 - k * 0.35, 0, P, false); lf.geometry.translate(0.5, 0, 0); lf.rotation.set(0, Math.random() * 6.28, -0.5 + Math.random() * 0.4); }
-    } }
+      mesh(new THREE.CylinderGeometry(0.075 * w, 0.1 * w, h, 7), [bm, bm2, bm3][Math.floor(Math.random() * 3)], 0, h / 2, 0, P);
+      for (let k = 1; k < 5; k++) mesh(new THREE.CylinderGeometry(0.11 * w, 0.11 * w, 0.04, 7), bm, 0, k * h / 5, 0, P, false);
+      for (let k = 0; k < 4; k++) { const lf = mesh(new THREE.PlaneGeometry(1.0, 0.17), k % 2 ? lfM : lfM2, 0, h - 0.2 - k * 0.38, 0, P, false); lf.geometry.translate(0.5, 0, 0); lf.rotation.set(0, Math.random() * 6.28, -0.5 + Math.random() * 0.45); lf.scale.setScalar(0.8 + Math.random() * 0.5); }
+      P.rotation.set((Math.random() - 0.5) * 0.08, 0, (Math.random() - 0.5) * 0.08);
+    };
+    // 外圈：後方與兩側 ±105°，每隔幾度一根，帶一點前後錯位（兩排）
+    for (let i = 0; i < 38; i++) { const a = (-105 + i * (210 / 37) + (Math.random() - 0.5) * 3) * Math.PI / 180, r = (i % 2 ? 10.3 : 9.6) + Math.random() * 0.9, x = Math.sin(a) * r, z = -Math.cos(a) * r; if (blocked(x, z) && Math.hypot(x, z) < 9.9) continue; stalk(x, z, (4.8 + Math.random() * 3.2) * Math.max(0.5, Math.cos(a) * 0.6 + 0.55), 0.9 + Math.random() * 0.45); }   // 兩側的竹子比較矮（依角度縮），不擋住從側面看過來的視線
+    // 中圈：後半部成叢（每叢 3～5 根）
+    for (let c = 0, tries = 0; c < 9 && tries < 80; tries++) { const a = (-65 + Math.random() * 130) * Math.PI / 180, r = 6.8 + Math.random() * 2.2, cx = Math.sin(a) * r, cz = -Math.cos(a) * r; if (blocked(cx, cz)) continue; c++; const n = 3 + Math.floor(Math.random() * 3); for (let k = 0; k < n; k++) { const x = cx + (Math.random() - 0.5) * 1.3, z = cz + (Math.random() - 0.5) * 1.3; if (blocked(x, z)) continue; stalk(x, z, 3.8 + Math.random() * 3.0, 0.8 + Math.random() * 0.4); } }
+    // 前角：左前、右前各一小叢，矮一點，不擋視線
+    for (const [cx, cz] of [[-8.3, 6.2], [8.4, 5.6]]) for (let k = 0; k < 3; k++) { const x = cx + (Math.random() - 0.5) * 1.2, z = cz + (Math.random() - 0.5) * 1.2; if (!blocked(x, z)) stalk(x, z, 3.0 + Math.random() * 1.6, 0.75 + Math.random() * 0.3); } }
   // —— 石砌水池＋竹筏（左後）：第三輪「浮筏」——
   { const P = new THREE.Group(); P.position.set(-5.2, 0, -5.4); mark.add(P);
     mesh(new THREE.LatheGeometry([[1.9, 0], [2.3, 0], [2.3, 0.36], [2.18, 0.43], [2.04, 0.43], [1.9, 0.36], [1.9, 0]].map(([r, y]) => new THREE.Vector2(r, y)), 40), new THREE.MeshLambertMaterial({ color: '#b9b1a2', side: THREE.DoubleSide }), 0, 0, 0, P);
