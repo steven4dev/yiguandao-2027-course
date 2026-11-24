@@ -422,7 +422,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.26';
+const VER = 'v261123.27';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -1154,6 +1154,20 @@ function touchAim(now) {
   const r = solveAim(TOUCH.tx + wx, TOUCH.tz + wz, e, lockJob, preset); TOUCH.aim = r;
   return { ...r, active: true, lock: lockJob };
 }
+/* —— 體感瞄準：手機姿勢 → 落點 ——
+   左右：往左轉身或往左傾（像方向盤），落點往左；遠近：手機越直立落點越近、越往前平躺越遠（用絕對傾斜角，不受「心定」影響）；仰角固定。
+   每一矢「心定」時，落點圈的左右會先偏離壺 0.4～0.7 公尺（SENS.bx，隨機左或右），玩家得轉動手機把圈拉回壺上，不是一心定就對準 */
+function motionSolve(smp, e, lockJob, preset) {
+  const b = SENS.base, hand = handPos(), flip = SAVE.flipX ? -1 : 1;
+  const ax = clamp((wrap(smp.yaw - b.yaw) / TU.yawRange + wrap(smp.roll - b.roll) / TU.rollRange) * flip, -1, 1);
+  const d = clamp((-smp.pitch - TU.tiltNear) / (TU.tiltFar - TU.tiltNear), 0, 1);
+  return solveAim(ax * TU.lat + (SENS.bx || 0), hand.z - (TU.distNear + (TU.distFar - TU.distNear) * d), e, lockJob, preset);
+}
+function motionAim() {
+  const lockJob = !!(MP.on && MP.job && MP.job.kind === 'lock'), preset = S.preset, e = preset ? S.lockE : S.eTouch;
+  if (!SENS.calibOK || !SENS.last) { SENS.aim = null; return { a: 0, e, p: preset ? S.lockP : 0.5, active: false, lock: lockJob }; }
+  const r = motionSolve(SENS.last, e, lockJob, preset); SENS.aim = r; return { ...r, active: true };
+}
 addEventListener('pointerdown', (e) => {
   if (S.phase !== 'aimT' || TOUCH.active || e.target.closest('button,a,.card,#gE')) return;
   audioInit(); Object.assign(TOUCH, { active: true, id: e.pointerId, x: e.clientX, y: e.clientY, px: e.clientX, py: e.clientY, lt: 0, steady: 0, t0: performance.now(), ph: Math.random() * 6.283 }); SFX.lock();
@@ -1192,7 +1206,7 @@ function startAim(job) {
     } else if (S.mode === 'touch') {
       S.phase = 'aimT'; gH.hidden = true; setHint('隊友定好了！左右拖曳，放開放箭'); timerResume();
     } else {
-      S.phase = 'aim'; SENS.calibOK = false; SENS.anchor = null;   // 每一矢都重新「心定」：投完手機姿勢早就變了，不能拿舊的正前方當基準
+      S.phase = 'aim'; SENS.calibOK = false; SENS.anchor = null; SENS.bx = (Math.random() < 0.5 ? -1 : 1) * (0.4 + Math.random() * 0.3);   // 每一矢都重新「心定」：投完手機姿勢早就變了，不能拿舊的正前方當基準
       gShow(gE, false); gShow(gP, false); $('#calib').hidden = false; $('#btnThrow').hidden = false; $('#btnThrow').textContent = '🏹 放箭'; updateCalibUI(); setHint(SENS.calibOK ? '轉動手機瞄準左右，按「放箭」（或往前一送）' : ''); if (SENS.calibOK) timerResume();
     }
     return;
@@ -1205,7 +1219,7 @@ function startAim(job) {
     S.phase = 'aimT'; S.eTouch = 0.5; touchStart(); gE.classList.remove('live'); gE.hidden = true; gActive(gP, false); gH.hidden = true; gShow(gP, true);   // 觸控：仰角固定（實測仰角只讓箭弧高低不同、入壺判定幾乎沒差，滑桿沒意義，拿掉）；左側力道只顯示
     setHint(lockJob ? '上下拖曳移動落點圈，放開交給隊友' : '拖曳移動落點圈，放開放箭'); timerResume();
   } else {
-    S.phase = 'aim'; SENS.calibOK = false; SENS.anchor = null;   // 每一矢都重新「心定」：投完手機姿勢早就變了，不能拿舊的正前方當基準
+    S.phase = 'aim'; SENS.calibOK = false; SENS.anchor = null; SENS.bx = (Math.random() < 0.5 ? -1 : 1) * (0.4 + Math.random() * 0.3);   // 每一矢都重新「心定」：投完手機姿勢早就變了，不能拿舊的正前方當基準
     gActive(gE, true); gE.classList.add('live'); gShow(gH, false); gActive(gP, false); gShow(gP, true);   // 右側滑桿調仰角；左側力道只顯示（由落點自動算）
     $('#calib').hidden = false; $('#btnThrow').hidden = false; updateCalibUI(); setHint(SENS.calibOK ? CHARGE_HINT : ''); if (SENS.calibOK) timerResume();   // 體感：校準完（心定）才開始倒數
   }
