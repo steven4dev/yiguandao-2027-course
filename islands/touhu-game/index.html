@@ -422,7 +422,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.25';
+const VER = 'v261123.26';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -599,8 +599,11 @@ const pedestal = add(scene, new THREE.CylinderGeometry(0.36, 0.42, 0.12, 36), ma
 const raftG = new THREE.Group(); potGroup.add(raftG);
 for (let i = 0; i < 7; i++) add(raftG, new THREE.CylinderGeometry(0.06, 0.06, 1.0, 10), mat(i % 2 ? 0xc7a463 : 0xd2b274), -0.42 + i * 0.14, -0.05, 0, true).rotation.x = Math.PI / 2;
 for (const z of [-0.28, 0.28]) add(raftG, new THREE.BoxGeometry(1.05, 0.03, 0.05), mat(0x7a5a33), 0, 0.012, z);
-const pond = add(scene, new THREE.CylinderGeometry(0.95, 0.95, 0.05, 40), mat(0x4a9fc0, { roughness: 0.3, transparent: true, opacity: 0.9 }), 0, 0.02, 0, false);
+// 水池：石砌的池緣圈住水（水面在池緣下面，不會溢出來），竹筏半浸在水面上
+const pond = add(scene, new THREE.CylinderGeometry(0.95, 0.95, 0.09, 48), mat(0x4a9fc0, { roughness: 0.25, metalness: 0.05, transparent: true, opacity: 0.92 }), 0, 0.045, 0, false);
 pond.receiveShadow = true;
+const pondWall = new THREE.Mesh(new THREE.LatheGeometry([[0.95, 0], [1.16, 0], [1.16, 0.18], [1.1, 0.215], [1.02, 0.215], [0.95, 0.18], [0.95, 0]].map(([r, y]) => new THREE.Vector2(r, y)), 56), mat(0xb9b1a2, { side: THREE.DoubleSide }));
+pondWall.castShadow = pondWall.receiveShadow = true; scene.add(pondWall);
 
 // 竹林
 const bambooMat = mat(0x6fae5c), bambooMat2 = mat(0x8cc06a);
@@ -940,7 +943,7 @@ function potState(now) {
 }
 function setupRound() {
   const r = R(); if (S.round === 0) TOUCH.tx = null;   // 新的一局：落點圈回到起點
-  pedestal.visible = !r.sway; raftG.visible = pond.visible = r.sway > 0;
+  pedestal.visible = !r.sway; raftG.visible = pond.visible = pondWall.visible = r.sway > 0;
   skySet(r.sky);
   standMark.position.z = r.D + 0.2;
   S.windSign = Math.random() < 0.5 ? -1 : 1;
@@ -1849,7 +1852,7 @@ function tick(t) {
 // 網址 ?round=2、?round=3 可以直接從那一輪開始（預覽用）
 try { const q = new URLSearchParams(location.search); const r = parseInt(q.get('round'), 10); if (r >= 1 && r <= ROUNDS.length) S.startRound = r - 1; S.debug = q.has('debug'); } catch (e) {}
 setupRound(); skySet(0, true); S.phase = 'title';
-if (location.search.includes('debug')) window.__TH = { S, TU, SENS, R, throwArrow, startAim, newGame, potState, info: renderer.info, guest, cam, potGroup, TOUCH, TM, timerFrac, MP, REPLAY, mpTick, mpReconcile, onOrient, onMotion, lockE, lockP, lockH, pFor, thetaOf, speedOf, landing, windDrift, psiOf, startCharge, releaseCharge };
+if (location.search.includes('debug')) window.__TH = { setupRound, S, TU, SENS, R, throwArrow, startAim, newGame, potState, info: renderer.info, guest, cam, potGroup, TOUCH, TM, timerFrac, MP, REPLAY, mpTick, mpReconcile, onOrient, onMotion, lockE, lockP, lockH, pFor, thetaOf, speedOf, landing, windDrift, psiOf, startCharge, releaseCharge };
 requestAnimationFrame(tick);
 </script>
 <script type="module">
