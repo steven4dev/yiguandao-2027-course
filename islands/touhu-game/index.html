@@ -228,7 +228,10 @@ body.hostview #mpHostBrand{display:block}
 #gH .gl{top:22px;transform:translateX(-50%)}
 #gE .gl{right:26px;transform:translateY(50%)}
 #gP .gl{left:26px;transform:translateY(50%)}
-#calib{position:fixed;z-index:7;left:50%;top:calc(max(12px,env(safe-area-inset-top)) + 78px);transform:translateX(-50%);background:rgba(255,248,238,.94);border-radius:16px;box-shadow:0 4px 14px rgba(0,0,0,.18);padding:9px 14px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;max-width:92vw}
+#calib{position:fixed;z-index:7;left:50%;top:56%;transform:translateX(-50%);background:rgba(255,248,238,.9);border-radius:16px;box-shadow:0 4px 14px rgba(0,0,0,.18);padding:7px 12px;display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;max-width:68vw;pointer-events:none}
+#calib button{pointer-events:auto}
+#calib.ok{padding:4px 10px;background:rgba(255,248,238,.72)}
+#calib.ok #calTxt{display:none}   /* 心定之後只留小圓點與按鈕，不再蓋住壺 */
 #calib .ring{flex:none;width:30px;height:30px;border-radius:50%;background:conic-gradient(var(--jade) calc(var(--p,0)*1%), #e6d8c2 0)}
 #calib .ring::after{content:"";display:block;width:20px;height:20px;border-radius:50%;background:#fff8ee;margin:5px}
 #calib.ok .ring{background:var(--green)}
@@ -396,7 +399,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.15';
+const VER = 'v261123.16';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -1305,7 +1308,7 @@ $('#btnCal').addEventListener('click', (e) => { e.stopPropagation(); SENS.calibO
 function updateCalibUI() {
   const el = $('#calib'); el.classList.toggle('ok', SENS.calibOK);
   const p = SENS.calibOK ? 100 : clamp((performance.now() - SENS.since) / TU.steadyMs * 100, 0, 100); $('#calRing').style.setProperty('--p', SENS.anchor ? p : 0);
-  $('#calTxt').textContent = SENS.calibOK ? '心定了・直立＝近，往前平躺＝遠' : '舉起手機，背面對準壺，靜止一下';
+  $('#calTxt').textContent = SENS.calibOK ? '心定了' : '舉起手機，背面對準壺，靜止一下';
 }
 async function sensEnable() {
   try { if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') { if ((await DeviceMotionEvent.requestPermission()) !== 'granted') return 'denied'; } } catch (e) { return 'denied'; }
