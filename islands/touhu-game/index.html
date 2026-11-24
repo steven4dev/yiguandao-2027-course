@@ -419,7 +419,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = (s) => document.querySelector(s);
-const VER = 'v261123.17';
+const VER = 'v261123.18';
 $('#ver').textContent = VER;
 
 /* =========================================================
@@ -1099,7 +1099,7 @@ function nextArrow() {
    體感版：轉手機＝左右、上下抬＝仰角（隨時調整）；按住「蓄力」讓力道來回，落點圈對準壺就放開
    ========================================================= */
 const gH = $('#gH'), gE = $('#gE'), gP = $('#gP'), GAUGES = [gH, gE, gP];
-/* —— 觸控瞄準：按住畫面拖曳「落點」，放開放箭；右側滑桿調仰角（記住，不用每矢重設）——
+/* —— 觸控瞄準：按住畫面拖曳「落點」，放開放箭；仰角固定——
    落點（左右＋遠近）由伺服器同一套物理反推成左右與力道；手指越穩落點圈晃得越小（手抖），拖到底部「取消區」放開＝取消 */
 const TOUCH = { active: false, id: null, x: 0, y: 0, px: 0, py: 0, lt: 0, steady: 0, t0: 0, ph: 0, aim: null, calm: false, tx: null, tz: null };   // tx、tz：落點圈目前在地面的位置（世界座標，壺在原點），每一矢沿用上一矢的位置
 const _rc = new THREE.Raycaster(), TOUCH_OFFSET = 64, WOBBLE = [[0.10, 0.015], [0.15, 0.02], [0.18, 0.03]];   // 每輪手抖的最大／最小幅度（公尺）
@@ -1187,7 +1187,7 @@ function startAim(job) {
     S.phase = 'aimE'; gActive(gE, true); gActive(gP, false); gActive(gH, false); gShow(gP, false); gShow(gH, false);
     setHint(lockJob ? '①　點一下，鎖定「仰角」（左右交給隊友）' : '①　點一下，鎖定「仰角」（上下）'); timerResume();
   } else if (S.mode === 'touch') {
-    S.phase = 'aimT'; gActive(gE, true); gE.classList.add('live'); gActive(gP, false); gH.hidden = true; gShow(gP, true);   // 觸控用不到底部的左右量表
+    S.phase = 'aimT'; S.eTouch = 0.5; gE.classList.remove('live'); gE.hidden = true; gActive(gP, false); gH.hidden = true; gShow(gP, true);   // 觸控：仰角固定（實測仰角只讓箭弧高低不同、入壺判定幾乎沒差，滑桿沒意義，拿掉）；左側力道只顯示
     setHint(lockJob ? '上下拖曳移動落點圈，放開交給隊友' : '拖曳移動落點圈，放開放箭'); timerResume();
   } else {
     S.phase = 'aim'; SENS.calibOK = false; SENS.anchor = null;   // 每一矢都重新「心定」：投完手機姿勢早就變了，不能拿舊的正前方當基準
@@ -1350,7 +1350,7 @@ function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add
 function showRoundIntro() {
   const r = R(); S.phase = 'intro'; S.camMode = 'title';
   $('#rTag').textContent = `第 ${S.round + 1} 輪・共 ${ROUNDS.length} 輪`; $('#rName').textContent = r.name; $('#rSub').textContent = r.sub;
-  $('#rTip').innerHTML = ((S.mode === 'touch' || S.mode === 'motion') && r.tipTouch ? r.tipTouch : r.tip) + (S.mode === 'touch' && S.round === 0 ? '<ul class="tl"><li><b>🖐️ 在畫面上拖曳</b>：落點圈跟著動（慢拖精細、快拖走遠），放開就放箭</li><li><b>↕️ 右邊滑桿</b>：調仰角（拋多高），調一次會記住</li><li><b>⏱ 每矢 15 秒倒數</b>：越快投進，加成越多（最多 +0.5）</li><li><b>手指停得越穩</b>，圈晃得越小；拖到底部放開＝取消</li></ul>' : '') + (S.mode === 'motion' && S.round === 0 ? '<ul class="tl"><li><b>📱 手機直立拿在胸前、背面對準壺</b>，靜止一下＝「心定」（每一矢都要）</li><li><b>↕️ 越直立落點越近，越往前平躺越遠</b></li><li><b>↔️ 往左轉或往左傾，落點往左</b>；往右同理</li><li><b>右邊滑桿</b>調仰角（拋多高），用拇指調一次會記住</li><li>落點圈對準壺，按「放箭」（或往前一送）；左右相反就按「⇄ 左右反了？」</li></ul>' : '');
+  $('#rTip').innerHTML = ((S.mode === 'touch' || S.mode === 'motion') && r.tipTouch ? r.tipTouch : r.tip) + (S.mode === 'touch' && S.round === 0 ? '<ul class="tl"><li><b>🖐️ 在畫面上拖曳</b>：落點圈跟著動（慢拖精細、快拖走遠），放開就放箭</li><li><b>⏱ 每矢 15 秒倒數</b>：越快投進，加成越多（最多 +0.5）</li><li><b>手指停得越穩</b>，圈晃得越小；拖到底部放開＝取消</li></ul>' : '') + (S.mode === 'motion' && S.round === 0 ? '<ul class="tl"><li><b>📱 手機直立拿在胸前、背面對準壺</b>，靜止一下＝「心定」（每一矢都要）</li><li><b>↕️ 越直立落點越近，越往前平躺越遠</b></li><li><b>↔️ 往左轉或往左傾，落點往左</b>；往右同理</li><li><b>右邊滑桿</b>調仰角（拋多高），用拇指調一次會記住</li><li>落點圈對準壺，按「放箭」（或往前一送）；左右相反就按「⇄ 左右反了？」</li></ul>' : '');
   $('#scrRound').hidden = false; $('#hud').hidden = false; hideAimUI(); setHint('');
 }
 function roundEnd() {
