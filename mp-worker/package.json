@@ -1,0 +1,17 @@
+{
+  "name": "mp-worker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "https-proxy-agent": "^9.1.0",
+    "wrangler": "^4.166.0",
+    "ws": "^8.23.0"
+  }
+}

@@ -1,0 +1,2005 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<script>if (/(^#|&)(acct|acct_err)=/.test(location.hash)) { window.__acctHash = location.hash; history.replaceState(null, '', location.href.split('#')[0]); }</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#2b1d14">
+<title>投壺島｜全真群島</title>
+<meta name="description" content="全真群島的投壺島：以禮會友的古典小遊戲。依序點三下鎖定仰角、力道、左右，或用手機傾斜瞄準、按住蓄力，把矢投進壺裡、貫穿壺耳。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="全真群島・2027 全真社青">
+<meta property="og:title" content="投壺島｜矢直在心・全真群島">
+<meta property="og:description" content="三輪十二矢：晨光、風起、浮筏。點三下就能玩，也能用手機傾斜瞄準、按住蓄力放箭，投出去是拋物線慢動作。">
+<meta property="og:url" content="https://steven4dev.github.io/yiguandao-2027-course/islands/touhu-game/">
+<meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/islands/touhu-game/og-touhu.png?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="zh_TW">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script src="../../game/qrcode.js"></script>
+<style>
+/* 版面以手機直式為主，電腦也能玩（空白鍵／滑鼠點三下） */
+:root{
+  --gb:40px;
+  --ink:#2b1d14; --paper:#fff8ee; --cream:#f6ead8; --gold:#e3a72f; --red:#c23b2e; --green:#3f8a5a; --jade:#2f7f78;
+  --muted:#8a7764; --line:rgba(43,29,20,.12); --shadow:0 10px 30px rgba(43,29,20,.2);
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; --serif:"Noto Serif TC","Songti TC",serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#bfe6f5;color:var(--ink);font:16px/1.55 var(--sans);overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block}
+button,a{font:inherit;color:inherit;cursor:pointer;border:0;background:none;text-decoration:none}
+[hidden]{display:none!important}
+.scr{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom))}
+.card{background:rgba(255,251,243,.96);border:1px solid rgba(63,44,34,.1);border-radius:22px;box-shadow:0 10px 30px rgba(50,30,15,.16),inset 0 1px 0 rgba(255,255,255,.85);padding:18px 18px;width:100%;max-width:420px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;padding:10px 16px;border-radius:16px;font-weight:900;font-size:17px;background:var(--red);color:#fff;box-shadow:0 4px 0 #8f2a20}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #8f2a20}
+.btn small{font-weight:500;font-size:12.5px;opacity:.9}
+.btn.col{flex-direction:column;gap:0;line-height:1.3}
+.btn.jade{background:var(--jade);box-shadow:0 4px 0 #1f5752}
+.btn.jade:active{box-shadow:0 1px 0 #1f5752}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 4px 0 #dcc9b1;border:1.5px solid #ead9c2}
+.btn.ghost:active{box-shadow:0 1px 0 #dcc9b1}
+.btn.line{background:#06c755;box-shadow:0 4px 0 #04943f}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.stack{display:flex;flex-direction:column;gap:10px;width:100%}
+.iconbtn{position:fixed;z-index:20;top:max(12px,env(safe-area-inset-top));width:42px;height:42px;border-radius:50%;background:rgba(255,248,238,.92);box-shadow:0 3px 10px rgba(0,0,0,.15);font-size:20px;display:flex;align-items:center;justify-content:center}
+#btnSound{right:12px}
+#btnHome{left:12px}
+.ver{position:fixed;right:10px;bottom:max(4px,env(safe-area-inset-bottom));font-size:10px;color:rgba(43,29,20,.4);z-index:11;pointer-events:none}
+
+/* —— 開場 —— */
+/* 柔膠質感：奶油色的霧從下往上慢慢升起（多段漸層，沒有任何硬邊），壺在霧的上方，標題浮在霧裡、用柔光襯底 */
+#scrTitle{justify-content:flex-end;gap:10px;background:linear-gradient(to bottom,rgba(246,234,216,0) 0%,rgba(246,234,216,0) 24%,rgba(246,234,216,.3) 33%,rgba(246,234,216,.78) 43%,rgba(246,234,216,.94) 54%,#f6ead8 70%)}
+.brand{text-align:center;margin-bottom:2px;text-shadow:0 0 26px rgba(255,248,238,1),0 0 14px rgba(255,248,238,.95),0 0 6px rgba(255,248,238,.9),0 1px 0 rgba(255,255,255,.7)}
+.brand .eyebrow{font-size:13px;letter-spacing:.2em;color:#5e4a38;font-weight:800}
+.brand h1{margin:0;font:900 42px/1.15 var(--serif);letter-spacing:.14em;text-indent:.14em}
+.brand p{margin:2px 0 0;color:#5e4a38;font-size:13.5px;letter-spacing:.08em;font-weight:700}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
+.chips div{background:#fff1de;border-radius:14px;padding:8px 4px;text-align:center;line-height:1.25}
+.chips small{display:block;font-size:11.5px;color:var(--muted);font-weight:700}
+.chips b{display:block;font:900 15px var(--serif);margin-top:2px;color:var(--ink)}
+@media (max-height:860px){#scrTitle .chips{display:none}}   /* 手機直立（含瀏覽器工具列）：把三格數據收掉，卡片瘦身，壺和標題才有地方站、不互相重疊 */
+@media (max-height:720px){#scrTitle .msw-desc{min-height:0}#scrTitle .acct .am{display:none}}
+.rules{margin:0 0 12px;font-size:13.5px;line-height:1.6;color:var(--ink);text-align:center}
+.rules b{color:var(--red)}
+.how{margin:0 0 12px;padding:0;list-style:none;font-size:14.5px;display:grid;gap:6px}
+.how li{display:flex;gap:10px;align-items:flex-start}
+.how b{flex:none;width:22px;height:22px;border-radius:50%;background:var(--jade);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.nb{display:inline-block}
+.rec,.acct,.note,.msw-desc{text-wrap:balance}
+.rec{margin:10px 0 0;text-align:center;font-size:12.5px;color:var(--muted)}
+.note{margin:2px 0 0;text-align:center;font-size:12px;color:var(--muted)}
+
+/* —— 遊戲 HUD —— */
+#hud{position:fixed;z-index:6;left:0;right:0;top:max(12px,env(safe-area-inset-top));display:flex;justify-content:center;pointer-events:none}
+.hudbox{display:flex;flex-direction:column;align-items:center;gap:6px}
+.pill{background:rgba(255,248,238,.92);border-radius:99px;box-shadow:0 3px 10px rgba(0,0,0,.14);padding:5px 14px;font-weight:900;font-size:14px;display:flex;align-items:center;gap:10px;white-space:nowrap}
+.pill .rn{font-family:var(--serif);letter-spacing:.08em}
+#hArrows{display:flex;gap:5px}
+#hArrows i{width:11px;height:11px;border-radius:50%;background:#e2d3bd;border:2px solid #cdb996;display:block}
+#hArrows i.cur{border-color:var(--red);background:#fff}
+#hArrows i.in{background:var(--gold);border-color:#b8851a}
+#hArrows i.ear{background:var(--red);border-color:#8f2a20}
+#hArrows i.miss{background:#fff;border-color:#a89a86}
+#hWind{font-size:13px;font-weight:700;color:#3a566b}
+#hint{position:fixed;z-index:6;left:0;right:0;bottom:calc(max(14px,env(safe-area-inset-bottom)) + var(--gb) + 44px);text-align:center;pointer-events:none;padding:0 20px}
+#hint span{display:inline-block;background:rgba(43,29,20,.78);color:#fff;border-radius:99px;padding:7px 16px;font-weight:700;font-size:15px;letter-spacing:.04em}
+.gauge{position:fixed;z-index:6;background:rgba(255,248,238,.88);border-radius:99px;box-shadow:0 3px 10px rgba(0,0,0,.14);pointer-events:none}
+.gauge .zone{position:absolute;background:rgba(63,138,90,.45);border-radius:99px;display:none}
+.gauge .mk{position:absolute;background:var(--red);border-radius:99px}
+.gauge .lk{position:absolute;background:var(--ink);border-radius:99px;display:none}
+.gauge.dim{opacity:.5}
+/* 慢動作時上下的電影黑邊 */
+#bars i{position:fixed;left:0;right:0;height:0;background:#000;z-index:4;pointer-events:none;transition:height .35s ease}
+#bars i:first-child{top:0}
+#bars i:last-child{bottom:0}
+body.slowmo #bars i{height:7vh}
+
+/* —— 多人對戰 —— */
+.fld{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:0 0 10px}
+.fld input,.join input{width:100%;border:1.5px solid #ead9c2;background:#fff;border-radius:14px;padding:12px 14px;font:700 17px var(--sans);color:var(--ink);-webkit-user-select:text;user-select:text}
+.join{display:grid;grid-template-columns:1fr auto;gap:8px}
+.join input{text-transform:uppercase;letter-spacing:.2em;text-align:center}
+.join .btn{width:auto;padding:0 20px}
+.roomtop{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.roomtop small{display:block;color:var(--muted);font-size:12px;font-weight:700}
+.roomtop b{font:900 38px/1.1 var(--serif);letter-spacing:.14em}
+#mpQR{width:92px;height:92px;flex:none;background:#fff;border-radius:10px;padding:5px}
+#mpQR svg{width:100%;height:100%;display:block}
+.plist{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.pl{display:flex;align-items:center;gap:8px;background:#fff1de;border-radius:12px;padding:8px 10px;min-height:46px;font-weight:700;font-size:14.5px;min-width:0}
+.pl i{flex:none;width:12px;height:12px;border-radius:50%}
+.pl span{flex:1;min-width:0;overflow-wrap:anywhere;line-height:1.25}
+.pl u{text-decoration:none;font-size:11px;font-weight:700;color:#fff;background:var(--jade);border-radius:99px;padding:0 6px;margin-left:4px;vertical-align:1px}
+.pl em{font-style:normal;font-size:12px;color:var(--muted);flex:none}
+.pl.empty{opacity:.5;font-weight:500}
+.pl.rdy{background:#e2f1e6}
+.optrow{margin:0 0 10px}
+.optrow label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:0 0 4px}
+/* 操作方式滑動開關（參考拂塵試煉的難度開關）：點刻度或左右拖滑塊，滑塊顏色跟著模式變 */
+.msw{--mc:var(--gold);--i:0;text-align:left}
+.msw[data-m=touch]{--mc:var(--jade)}
+.msw[data-m=motion]{--mc:var(--red)}
+.msw-h{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:#8a735a;margin-bottom:5px;padding:0 4px}
+.msw-h b{color:var(--mc);font-size:15px;transition:color .2s}
+.msw-track{position:relative;display:grid;grid-template-columns:repeat(3,1fr);padding:4px;border-radius:999px;background:#efe2cc;border:1.5px solid #ead9c2;touch-action:none;user-select:none;-webkit-user-select:none}
+.msw-thumb{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px) / 3);border-radius:999px;background:var(--mc);box-shadow:0 2px 8px rgba(0,0,0,.22),inset 0 2px 3px rgba(255,255,255,.35);transform:translateX(calc(var(--i) * 100%));transition:transform .3s cubic-bezier(.3,1.5,.5,1),background .2s;pointer-events:none}
+.msw-track button{position:relative;z-index:1;background:none;border:0;border-radius:999px;padding:10px 0;font-weight:800;font-size:15px;color:#7a6550;transition:color .2s;white-space:nowrap}
+.msw-track button[aria-checked=true]{color:#fff}
+.msw-track button:disabled{opacity:.4}
+.msw-desc{margin:7px 4px 4px;font-size:13px;line-height:1.5;color:#7a6550;min-height:2.9em}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px}
+.seg button{min-height:42px;border-radius:12px;background:#fff;border:1.5px solid #ead9c2;font-weight:700;font-size:14px;padding:4px 8px;line-height:1.25}
+.seg button.on{background:var(--jade);border-color:var(--jade);color:#fff}
+.seg button[disabled]{opacity:.55}
+.optrow p{margin:4px 0 0;font-size:12.5px;color:var(--muted)}
+#mpBar{position:fixed;z-index:6;left:50%;transform:translateX(-50%);top:calc(max(12px,env(safe-area-inset-top)) + 76px);background:rgba(255,248,238,.92);border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,.14);padding:5px 12px;font-weight:700;font-size:13px;text-align:center;pointer-events:none;white-space:nowrap;max-width:94vw}
+#mpBar .row{display:flex;gap:10px;align-items:center;justify-content:center}
+#mpBar i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px}
+#mpBar .me{color:var(--red)}
+#mpBar b{font:900 16px var(--serif)}
+#mpBar .nm{display:inline-block;max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;text-decoration:none}
+#mpBar.big .nm{max-width:22vw}
+/* 對戰配色呼應隊伍：紅隊／藍隊（觀戰＝左紅右藍）。body[data-team] 由 mpTeamTheme() 設定 */
+body[data-team="0"]{--tm:#c23b2e;--tmd:#8f2a20}
+body[data-team="1"]{--tm:#2f6fb5;--tmd:#1f4d85}
+#teamGlow{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .8s}
+body[data-team] #teamGlow{opacity:1}
+body[data-team="0"] #teamGlow{background:radial-gradient(ellipse 85% 75% at 50% 52%,transparent 52%,rgba(194,59,46,.30) 100%)}
+body[data-team="1"] #teamGlow{background:radial-gradient(ellipse 85% 75% at 50% 52%,transparent 52%,rgba(47,111,181,.30) 100%)}
+body[data-team="w"] #teamGlow{background:linear-gradient(90deg,rgba(194,59,46,.38),rgba(194,59,46,0) 24%,rgba(47,111,181,0) 76%,rgba(47,111,181,.38))}
+body[data-team="0"] #btnThrow,body[data-team="1"] #btnThrow{background:var(--tm);box-shadow:0 4px 0 var(--tmd)}
+body[data-team="0"] .gauge .mk,body[data-team="1"] .gauge .mk,body[data-team="0"] #gE.live .mk,body[data-team="1"] #gE.live .mk{background:var(--tm)}
+body[data-team="0"] #mpBar .me,body[data-team="1"] #mpBar .me{color:var(--tm)}
+body[data-team="0"] #scrMPEnd .card,body[data-team="1"] #scrMPEnd .card,body[data-team="0"] #mpReveal,body[data-team="1"] #mpReveal{border-top:5px solid var(--tm)}
+#mpBar small{display:block;color:var(--muted);font-size:11px;font-weight:700}
+/* 拔河桿：雙方共用一條，紅藍分界點隨分差左右移動（領先越多，分界點越往對手那邊推） */
+#mpBar{min-width:min(86vw,300px)}
+#mpBar .tug{position:relative;height:13px;margin:5px 0 3px;border-radius:99px;overflow:hidden;background:var(--cb);box-shadow:inset 0 1px 3px rgba(0,0,0,.28)}
+#mpBar .tug .a{position:absolute;left:0;top:0;bottom:0;width:50%;background:var(--ca);transition:width .9s cubic-bezier(.3,1.3,.5,1)}
+#mpBar .tug::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,0) 55%);pointer-events:none}
+#mpBar .tug .mid{position:absolute;left:50%;top:2px;bottom:2px;width:2px;margin-left:-1px;background:rgba(255,255,255,.7);border-radius:2px;z-index:1}
+#mpBar .tug .knob{position:absolute;top:-2px;bottom:-2px;width:8px;margin-left:-4px;left:50%;border-radius:99px;background:#fff;box-shadow:0 0 8px rgba(255,255,255,.95),0 1px 4px rgba(0,0,0,.4);transition:left .9s cubic-bezier(.3,1.3,.5,1);z-index:2}
+#mpBar .lead-chip{display:inline-block;margin-left:6px;padding:0 7px;border-radius:99px;color:#fff;font-weight:900;font-size:11px;background:var(--c)}
+#mpBar.big{min-width:min(60vw,720px)}#mpBar.big .tug{height:22px}#mpBar.big .tug .knob{width:12px;margin-left:-6px}#mpBar.big .lead-chip{font-size:16px;padding:1px 12px}
+#mpBar.big{top:max(14px,env(safe-area-inset-top));padding:10px 22px;font-size:22px;border-radius:20px}
+#mpBar.big b{font-size:34px}
+#mpBar.big small{font-size:15px}
+#mpReveal{position:fixed;z-index:9;left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom));width:min(92vw,420px)}
+#mpReveal .card{padding:14px 16px}
+#mpReveal h3{margin:0 0 6px;font:900 20px var(--serif);letter-spacing:.08em}
+.rrow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-weight:700;border-bottom:1px dashed var(--line);gap:8px}
+.rrow:last-of-type{border-bottom:0}
+.rrow b{font:900 18px var(--serif)}
+.rrow span.t{color:var(--muted);font-weight:500;font-size:13px}
+#mpReveal p{margin:8px 0 0;font-size:12.5px;color:var(--muted);text-align:center}
+#mpCount{position:fixed;z-index:12;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font:900 120px var(--serif);color:#fff;text-shadow:0 4px 0 rgba(43,29,20,.5),0 0 40px rgba(43,29,20,.6)}
+#mpWait{position:fixed;z-index:5;left:0;right:0;top:36%;text-align:center;pointer-events:none;padding:0 20px}
+#mpWait span{display:inline-block;background:rgba(43,29,20,.7);color:#fff;border-radius:99px;padding:8px 18px;font-weight:700;font-size:15px}
+#scrMPEnd{justify-content:flex-end;background:linear-gradient(to bottom,rgba(43,29,20,0) 30%,rgba(43,29,20,.5))}
+#scrMP{justify-content:flex-start;background:linear-gradient(to bottom,rgba(246,234,216,0) 0%,rgba(246,234,216,.7) 30%,#f6ead8 70%);overflow-y:auto;padding-top:max(64px,calc(env(safe-area-inset-top) + 54px))}
+#scrMP .card{margin:auto 0 0}
+/* —— 電腦大螢幕大廳（參考拂塵試煉）：左邊超大 QR code＋「用手機掃描加入」＋大房號，右邊座位、選項、狀態 —— */
+body.hostview #scrMP{justify-content:center;align-items:center;padding:3vh 3vw;overflow:hidden;background:radial-gradient(ellipse at 50% 0%,#fff7e8 0%,#f3e6cb 60%,#e8d6b0 100%)}
+body.hostview #scrMP .card{max-width:none;width:100%;height:100%;background:transparent;border:0;box-shadow:none;padding:0;margin:0;display:flex;align-items:center;justify-content:center}
+body.hostview #mpRoom{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:5vw;row-gap:1.6vh;align-items:center;width:100%;max-width:1600px;font-size:clamp(13px,2.2vh,28px)}
+body.hostview #mpRoom>*{grid-column:2}
+body.hostview #mpRoom>.roomtop{grid-column:1;grid-row:1/span 12}
+body.hostview .roomtop{flex-direction:column;gap:1.4vh;margin:0}
+body.hostview #mpQR{order:1;width:min(46vh,34vw);height:min(46vh,34vw);padding:1.4vh;border-radius:1.6vh;box-shadow:0 1vh 3vh rgba(50,30,15,.2)}
+body.hostview .roomtop .scan{order:2;display:block}
+body.hostview .roomtop .rcode{order:3;text-align:center}
+body.hostview .roomtop .rcode small{font-size:1.1em}
+body.hostview .roomtop b{font-size:clamp(40px,9vh,110px);letter-spacing:.2em;text-indent:.2em;color:#8f2a20}
+.roomtop .scan{display:none;margin:0;font:900 clamp(18px,3.6vh,44px) var(--serif);letter-spacing:.08em}
+body.hostview .plist{grid-template-columns:1fr;grid-auto-flow:row;gap:1.2vh;margin:0}
+body.hostview .plist[data-kind="2v2"]{grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,auto);grid-auto-flow:column}   /* 2 對 2：左欄紅隊、右欄藍隊 */
+body.hostview .pl{min-height:7.4vh;padding:1.2vh 1.6vh;border-radius:1.6vh;font-size:1.25em;border:.3vh dashed rgba(63,44,34,.22);background:rgba(255,255,255,.35)}
+body.hostview .pl i{width:1.8vh;height:1.8vh}
+body.hostview .pl em{font-size:.7em}
+body.hostview .pl.rdy,body.hostview .pl:not(.empty){border-style:solid;border-color:var(--gold);background:rgba(255,255,255,.7)}
+body.hostview .pl.rdy{background:#e2f1e6;border-color:var(--green)}
+body.hostview .optrow{margin:0}
+body.hostview .optrow label{font-size:.95em}
+body.hostview .seg button{min-height:6.4vh;font-size:1.15em;border-radius:1.4vh}
+body.hostview .optrow p{font-size:.9em}
+body.hostview #mpHostNote{display:block!important;margin:.4vh 0}
+body.hostview #mpHostNote b{display:block;font:900 1.7em/1.3 var(--serif)}
+body.hostview #mpHostNote small{display:block;color:var(--muted);font-size:.95em;margin-top:.4vh}
+body.hostview #mpReady,body.hostview #mpInvite{display:none!important}
+body.hostview #mpLeave{width:auto;justify-self:end;min-height:5vh;padding:0 2.4vh;font-size:1em}
+#mpHostBrand{position:fixed;left:max(68px,3vw);top:2.2vh;z-index:3;display:none;font-family:var(--serif);line-height:1.1}
+#mpHostBrand b{display:block;font-size:clamp(24px,5vh,56px);font-weight:900;letter-spacing:.14em}
+#mpHostBrand span{font-size:clamp(12px,2vh,22px);color:var(--muted);letter-spacing:.1em}
+body.hostview #mpHostBrand{display:block}
+@media (orientation:portrait){
+  body.hostview #mpRoom{grid-template-columns:1fr;font-size:clamp(13px,1.7vh,22px)}
+  body.hostview #mpRoom>*,body.hostview #mpRoom>.roomtop{grid-column:1;grid-row:auto}
+  body.hostview #mpQR{width:min(60vw,34vh);height:min(60vw,34vh)}
+  #mpHostBrand{display:none!important}
+}
+/* —— 觸控瞄準、倒數計時 —— */
+#gE.live{pointer-events:auto;touch-action:none}
+#gE.live::before{content:"";position:absolute;inset:-8px -26px}
+#gE.live .mk{background:var(--jade)}
+#timer{position:fixed;z-index:6;left:50%;transform:translateX(-50%);bottom:calc(max(14px,env(safe-area-inset-bottom)) + var(--gb) + 96px);min-width:190px;background:rgba(255,248,238,.94);border-radius:99px;box-shadow:0 3px 10px rgba(0,0,0,.18);padding:4px 14px 7px;text-align:center;font-weight:900;font-size:14px;pointer-events:none;overflow:hidden}
+#timer span{font-variant-numeric:tabular-nums}
+#timer small{font-weight:700;color:var(--green);margin-left:6px}
+#timer i{position:absolute;left:0;bottom:0;height:4px;width:100%;background:var(--green);transform-origin:left;transition:background .3s}
+#timer.mid i{background:#e8a02a}
+#timer.low i{background:var(--red)}
+#timer.mid small{color:#b87a14}
+#timer.low small{color:var(--red)}
+#timer.out small{color:var(--muted)}
+#tcancel{position:fixed;z-index:6;left:12px;right:12px;bottom:max(10px,env(safe-area-inset-bottom));height:calc(8vh - 4px);border:2px dashed rgba(255,255,255,.7);border-radius:18px;background:rgba(43,29,20,.28);color:#fff;font-weight:900;font-size:15px;display:flex;align-items:center;justify-content:center;pointer-events:none;letter-spacing:.08em}
+#tcancel.hot{background:rgba(194,59,46,.62)}
+.acct{margin:10px 0 0;text-align:center;font-size:13px;color:var(--muted);line-height:1.5}
+.acct.left{text-align:left;margin:-4px 0 12px}
+.acct b{color:var(--ink)}
+.acct .am{font-size:12px;margin-top:2px}
+.linkbtn.inl{display:inline;width:auto;padding:0 2px;font-size:13px}
+.linkbtn{display:block;width:100%;text-align:center;font-size:13.5px;font-weight:700;color:var(--muted);text-decoration:underline;text-underline-offset:3px;padding:6px 0}
+#vig{position:fixed;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 52%,rgba(40,20,6,.30) 100%)}
+#gH{left:50%;transform:translateX(-50%);width:min(78vw,360px);height:16px;bottom:calc(max(14px,env(safe-area-inset-bottom)) + var(--gb))}
+#gH .mk,#gH .lk{top:-4px;width:8px;height:24px;margin-left:-4px}
+#gH .zone{top:0;height:100%}
+#gE,#gP{top:50%;transform:translateY(-50%);width:16px;height:min(36vh,260px)}
+#gE{right:14px}
+#gP{left:14px}
+#gE .mk,#gE .lk,#gP .mk,#gP .lk{left:-4px;height:8px;width:24px;margin-bottom:-4px}
+#gE .zone,#gP .zone{left:0;width:100%}
+.gt{position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:900;color:#fff;background:rgba(43,29,20,.72);padding:0 9px;border-radius:99px;line-height:20px;white-space:nowrap}
+.gl{position:absolute;font-size:11px;font-weight:700;color:#fff;background:rgba(43,29,20,.62);padding:0 7px;border-radius:99px;line-height:18px;white-space:nowrap}
+#gH .gl{top:22px;transform:translateX(-50%)}
+#gE .gl{right:26px;transform:translateY(50%)}
+#gP .gl{left:26px;transform:translateY(50%)}
+#calib{position:fixed;z-index:7;left:50%;top:56%;transform:translateX(-50%);background:rgba(255,248,238,.9);border-radius:16px;box-shadow:0 4px 14px rgba(0,0,0,.18);padding:7px 12px;display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;max-width:68vw;pointer-events:none}
+#calib button{pointer-events:auto}
+#calib.ok{padding:4px 10px;background:rgba(255,248,238,.72)}
+#calib.ok #calTxt{display:none}   /* 心定之後只留小圓點與按鈕，不再蓋住壺 */
+#calib .ring{flex:none;width:30px;height:30px;border-radius:50%;background:conic-gradient(var(--jade) calc(var(--p,0)*1%), #e6d8c2 0)}
+#calib .ring::after{content:"";display:block;width:20px;height:20px;border-radius:50%;background:#fff8ee;margin:5px}
+#calib.ok .ring{background:var(--green)}
+body.motion{--gb:82px}
+#calTxt{white-space:nowrap}
+#calib button{flex:none;font-size:13px;color:var(--jade);font-weight:900;padding:4px 6px}
+#calib{flex-wrap:wrap;justify-content:center}
+#btnFlip{font-weight:700!important;color:var(--muted)!important}
+#btnThrow{position:fixed;z-index:7;left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom));width:min(60vw,240px);min-height:50px;border-radius:16px;background:var(--red);color:#fff;font-weight:900;font-size:17px;box-shadow:0 4px 0 #8f2a20}
+#btnThrow:active{transform:translateX(-50%) translateY(3px);box-shadow:0 1px 0 #8f2a20}
+#cap{position:fixed;z-index:8;left:0;right:0;top:24%;text-align:center;pointer-events:none;opacity:0;padding:0 16px}
+#cap b{display:inline-block;max-width:100%;text-wrap:balance;font:900 27px/1.35 var(--serif);letter-spacing:.08em;color:#fff;text-shadow:0 2px 0 rgba(43,29,20,.55),0 0 18px rgba(43,29,20,.5);padding:0 12px}
+#cap small{display:block;font-weight:900;font-size:15px;letter-spacing:.2em;color:#ffe9b0;text-shadow:0 1px 6px rgba(43,29,20,.7);margin-bottom:2px}
+#cap.show{animation:cap 2.1s ease both}
+@keyframes cap{0%{opacity:0;transform:translateX(60px) scale(.96)}14%{opacity:1;transform:translateX(0) scale(1)}78%{opacity:1;transform:translateX(0)}100%{opacity:0;transform:translateX(-60px)}}
+#toast{position:fixed;z-index:40;left:50%;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 200px);transform:translateX(-50%);background:rgba(43,29,20,.88);color:#fff;border-radius:99px;padding:8px 16px;font-size:14px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .25s}
+#toast.show{opacity:1}
+
+/* —— 輪次說明、結算 —— */
+#scrRound,#scrFinal{justify-content:flex-end;background:linear-gradient(to bottom,rgba(43,29,20,0) 38%,rgba(43,29,20,.42))}
+.stepTag{display:inline-block;font-size:12px;font-weight:900;letter-spacing:.14em;color:#fff;background:var(--jade);padding:3px 11px;border-radius:99px}
+.card h2{margin:8px 0 2px;font:900 28px/1.2 var(--serif);letter-spacing:.1em}
+.card .sub{margin:0 0 8px;color:var(--muted);font-size:14px}
+.tip{background:#fff1de;border-radius:14px;padding:10px 12px;margin:8px 0 14px;font-size:14.5px}
+.tip ul.tl{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:5px;font-size:13.5px}
+.tip ul.tl li{line-height:1.4}
+.big{font:900 64px/1 var(--serif);text-align:center;margin:6px 0 0}
+.big small{font-size:18px;color:var(--muted);margin-left:4px}
+.ttl{text-align:center;font:900 24px/1.3 var(--serif);letter-spacing:.14em;color:var(--red);margin:4px 0 2px}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0;text-align:center}
+.stat div{background:#fff1de;border-radius:12px;padding:8px 4px}
+.stat b{display:block;font-size:22px;font-weight:900}
+.stat span{font-size:12px;color:var(--muted)}
+.rounds{display:flex;gap:8px;justify-content:center;margin:6px 0 0;font-size:13px;color:var(--muted)}
+.quote{text-align:center;color:var(--muted);font-size:13.5px;margin:6px 0 12px}
+/* 結算卡：宣紙色底、金邊、朱紅印章稱號、金色大分數、三色數據與每輪色條 */
+.card.fin{--tc:#c23b2e;--tg:#e3a72f;position:relative;overflow:hidden;background:linear-gradient(180deg,#fffaf0 0%,#f8ecd6 100%);border:1.5px solid #e3c98f;box-shadow:0 12px 34px rgba(50,30,15,.28),inset 0 0 0 4px #fffaf0,inset 0 0 0 5px rgba(227,167,47,.45)}
+.card.fin::before{content:"";position:absolute;left:0;right:0;top:0;height:7px;background:linear-gradient(90deg,var(--jade),var(--tg),var(--tc))}
+.card.fin[data-tier="1"]{--tc:#2f7f78}.card.fin[data-tier="2"]{--tc:#3d5a80}.card.fin[data-tier="3"]{--tc:#8a7764}
+.finTop{display:flex;justify-content:space-between;align-items:center;margin:4px 2px 0}
+.finTag{font-size:12px;font-weight:900;letter-spacing:.18em;color:#8a6a2a}
+.finNew{font-size:12px;font-weight:900;color:#fff;background:linear-gradient(135deg,#e3a72f,#c23b2e);padding:3px 11px;border-radius:99px;box-shadow:0 2px 6px rgba(194,59,46,.35);animation:finPulse 1.6s ease-in-out infinite}
+@keyframes finPulse{50%{transform:scale(1.07)}}
+.finHero{text-align:center;padding:6px 0 2px;background:radial-gradient(ellipse 70% 80% at 50% 38%,rgba(227,167,47,.2),transparent 70%)}
+.finSeal{display:inline-block;transform:rotate(-3deg);margin:2px 0 0;padding:5px 16px 5px 20px;border:2.5px solid var(--tc);border-radius:8px;color:var(--tc);font:900 24px/1.25 var(--serif);letter-spacing:.2em;background:rgba(255,255,255,.35);box-shadow:inset 0 0 0 2px rgba(255,255,255,.6);animation:finStamp .5s cubic-bezier(.3,1.6,.5,1) both .25s}
+@keyframes finStamp{from{transform:rotate(-12deg) scale(1.7);opacity:0}to{transform:rotate(-3deg) scale(1);opacity:1}}
+.card.fin .big{margin:8px 0 0;font-size:68px;background:linear-gradient(180deg,#f2c14e 0%,#c98a1e 55%,#a8641a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 0 rgba(255,255,255,.7)) drop-shadow(0 4px 6px rgba(150,90,20,.25))}
+.card.fin .big small{-webkit-text-fill-color:#8a6a2a;color:#8a6a2a}
+.card.fin .stat{gap:8px;margin:10px 0 8px}
+.card.fin .stat div{position:relative;border-radius:14px;padding:9px 4px 8px;border:1px solid transparent}
+.card.fin .stat i{display:block;font-style:normal;font-size:18px;line-height:1.1;margin-bottom:1px}
+.card.fin .stat .s1{background:linear-gradient(180deg,#e6f3ee,#d6ebe4);border-color:#bcdccf}.card.fin .stat .s1 b{color:#1f6a63}
+.card.fin .stat .s2{background:linear-gradient(180deg,#fff3d6,#fbe6b0);border-color:#efd08a}.card.fin .stat .s2 b{color:#9a6410}
+.card.fin .stat .s3{background:linear-gradient(180deg,#fde8e3,#f8d3ca);border-color:#efb9ac}.card.fin .stat .s3 b{color:#a8321f}
+.rbars{display:grid;gap:7px;margin:4px 0 0}
+.rbar{display:grid;grid-template-columns:3.2em 1fr 3.6em;align-items:center;gap:8px;font-size:13px;color:#6a5844;font-weight:700}
+.rbar em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);font-weight:900}
+.rbar span.tr{display:block;height:10px;border-radius:99px;background:rgba(43,29,20,.1);overflow:hidden}
+.rbar span.tr i{display:block;height:100%;width:0;border-radius:99px;background:var(--c);box-shadow:inset 0 -2px 0 rgba(0,0,0,.15);transition:width .9s cubic-bezier(.2,.8,.2,1) .35s}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="bars"><i></i><i></i></div>
+<div id="vig"></div>
+<div id="teamGlow"></div>
+
+<a class="iconbtn" id="btnHome" href="../" aria-label="回群島">🏠</a>
+<button class="iconbtn" id="btnSound" aria-label="聲音">🔊</button>
+
+<div id="hud" hidden><div class="hudbox">
+  <div class="pill"><span class="rn" id="hRound">第 1 輪・晨光</span><span id="hArrows"></span><span id="hScore">0 分</span></div>
+  <div class="pill" id="hWindPill"><span id="hWind">🍃 無風</span></div>
+</div></div>
+<div id="gH" class="gauge" hidden><i class="zone"></i><i class="lk"></i><i class="mk"></i><span class="gl" style="left:0">左</span><span class="gl" style="left:100%">右</span></div>
+<div id="gE" class="gauge" hidden><i class="zone"></i><i class="lk"></i><i class="mk"></i><span class="gt">仰角</span><span class="gl" style="top:0;transform:none">高</span><span class="gl" style="bottom:0;transform:none">低</span></div>
+<div id="gP" class="gauge" hidden><i class="zone"></i><i class="lk"></i><i class="mk"></i><span class="gt">力道</span><span class="gl" style="top:0;transform:none">遠</span><span class="gl" style="bottom:0;transform:none">近</span></div>
+<div id="calib" hidden><span class="ring" id="calRing"></span><span id="calTxt">舉起手機，背面對準壺，靜止一下</span><button id="btnCal" type="button">🧭 重來</button><button id="btnFlip" type="button" title="如果準星的左右跟手機相反，按這裡對調">⇄ 左右反了？</button></div>
+<div id="hint" hidden><span id="hintTxt"></span></div>
+<button id="btnThrow" type="button" hidden>🏹 按住蓄力・放開放箭</button>
+<div id="cap"><b id="capTxt"></b></div>
+<div id="toast"></div>
+
+<!-- 開場 -->
+<section class="scr" id="scrTitle">
+  <div class="brand"><div class="eyebrow">全真群島・禮樂小遊戲</div><h1>投壺島</h1><p>矢直在心・以禮會友</p></div>
+  <div class="card">
+    <div class="chips"><div><small>三輪</small><b>每輪 4 矢</b></div><div><small>入壺・貫耳</small><b>2 分・3 分</b></div><div><small>⏱ 15 秒倒數</small><b>快投 +0.5</b></div></div>
+    <div class="stack">
+      <div class="msw" id="modeSel" data-m="tap" role="radiogroup" aria-label="操作方式">
+        <div class="msw-h"><span>操作方式</span><b id="mswName">🎯 經典</b></div>
+        <div class="msw-track" id="mswTrack">
+          <i class="msw-thumb" id="mswThumb"></i>
+          <button type="button" role="radio" data-m="tap">🎯 經典</button>
+          <button type="button" role="radio" data-m="touch">🖐️ 觸控</button>
+          <button type="button" role="radio" data-m="motion" id="mswMotion">📱 體感</button>
+        </div>
+        <p class="msw-desc" id="mswDesc"></p>
+      </div>
+      <button class="btn col" id="btnStart" type="button">🏹 開始投壺</button>
+      <button class="btn ghost col" id="btnMP" type="button" hidden>👥 多人對戰<small>一對一、二對二，找朋友一起投</small></button>
+    </div>
+    <p class="note" id="motionNote" hidden>體感需要手機；電腦請選「經典」或「觸控」（滑鼠就能玩）。</p>
+    <div class="acct" id="acctRow"></div>
+    <p class="rec" id="rec"></p>
+  </div>
+</section>
+
+<!-- 每輪開始 -->
+<section class="scr" id="scrRound" hidden>
+  <div class="card">
+    <span class="stepTag" id="rTag">第 1 輪</span>
+    <h2 id="rName">晨光</h2>
+    <p class="sub" id="rSub"></p>
+    <div class="tip" id="rTip"></div>
+    <button class="btn" id="btnRoundGo" type="button">開始投壺</button>
+  </div>
+</section>
+
+<!-- 結算 -->
+<section class="scr" id="scrFinal" hidden>
+  <div class="card fin" id="finCard" data-tier="0">
+    <div class="finTop"><span class="finTag">本場結算</span><span class="finNew" id="fNew" hidden>🎉 新紀錄</span></div>
+    <div class="finHero">
+      <div class="finSeal" id="fSeal"><span id="fTitle"></span></div>
+      <div class="big"><span id="fScore">0</span><small>分</small></div>
+      <div class="quote" id="fQuote"></div>
+    </div>
+    <div class="stat">
+      <div class="s1"><i>🏺</i><b id="fIn">0</b><span>入壺</span></div>
+      <div class="s2"><i>🎯</i><b id="fEar">0</b><span>貫耳</span></div>
+      <div class="s3"><i>🏅</i><b id="fBest">0</b><span>最高分</span></div>
+    </div>
+    <div class="rbars" id="fRounds"></div>
+    <div class="stack" style="margin-top:14px">
+      <button class="btn" id="btnAgain" type="button">🏹 再投一場</button>
+      <a class="btn line" id="btnShare" href="#" target="_blank" rel="noopener">💬 分享到 LINE</a>
+      <a class="btn ghost" href="../">🏠 回群島</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- 多人對戰：入口與房間 -->
+<section class="scr" id="scrMP" hidden>
+  <div id="mpHostBrand"><b>投壺島</b><span>多人對戰・以禮會友</span></div>
+  <div class="card">
+    <div id="mpEntry">
+      <span class="stepTag">多人對戰</span>
+      <h2>以禮會友</h2>
+      <p class="sub">一對一賓主對投，或二對二分工合投。投壺不比輸贏，投給朋友看。</p>
+      <div id="mpLoginBox"></div>
+      <label class="fld">你的名字<input id="mpName" maxlength="20" autocomplete="off" placeholder="例如：小明"></label>
+      <div class="acct left" id="mpNameNote"></div>
+      <div class="stack">
+        <button class="btn" id="mpCreate" type="button">🏠 建立房間</button>
+        <div class="join"><input id="mpCode" maxlength="5" placeholder="輸入 5 碼房號" autocapitalize="characters" autocomplete="off"><button class="btn jade sm" id="mpJoin" type="button">加入</button></div>
+        <button class="btn ghost sm" id="mpHost" type="button">🖥️ 用電腦主持（大螢幕）</button>
+        <button class="btn ghost sm" id="mpBack" type="button">← 回首頁</button>
+      </div>
+    </div>
+    <div id="mpRoom" hidden>
+      <div class="roomtop"><div class="rcode"><small>房號（把它告訴朋友）</small><b id="mpRoomCode">-----</b></div><div id="mpQR"></div><p class="scan" id="mpScan">📱 用手機掃描加入</p></div>
+      <div id="mpHostNote" hidden><b id="mpHostMsg"></b><small>也可以在手機輸入房號加入。不用登入也能玩；用 LINE 登入可以自動帶入名字。</small></div>
+      <div class="plist" id="mpPlayers"></div>
+      <div class="optrow"><label>對戰</label><div class="seg" id="mpKind"><button type="button" data-v="1v1">1 對 1</button><button type="button" data-v="2v2">2 對 2</button></div></div>
+      <div class="optrow"><label>節奏</label><div class="seg" id="mpPace"><button type="button" data-v="sync">同場對投</button><button type="button" data-v="turn">輪流對投</button></div><p id="mpPaceNote"></p></div>
+      <div class="optrow" id="mpRuleRow"><label>二對二規則</label><div class="seg" id="mpRule"><button type="button" data-v="split">分工合投</button><button type="button" data-v="sum">各自累計</button></div><p id="mpRuleNote"></p></div>
+      <div class="optrow" id="mpInputRow"><label>你的操作</label><div class="seg" id="mpInput"><button type="button" data-v="touch">🖐️ 觸控</button><button type="button" data-v="motion">📱 體感</button><button type="button" data-v="tap">🎯 經典</button></div></div>
+      <div class="stack">
+        <button class="btn" id="mpReady" type="button">我準備好了</button>
+        <a class="btn line" id="mpInvite" href="#" target="_blank" rel="noopener">💬 邀請朋友（LINE）</a>
+        <a class="btn ghost" id="mpWatchLink" href="#" target="_blank" rel="noopener">📺 電腦觀戰（把連結傳到筆電投影）</a>
+        <p class="note" id="mpWatchMsg" hidden></p>
+        <button class="btn ghost sm" id="mpLeave" type="button">離開房間</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="timer" hidden><i></i>⏱ <span id="tmSec">15.0</span> 秒<small id="tmBonus">加成 +0.5</small></div>
+<div id="tcancel" hidden>↓ 拖到這裡放開＝取消</div>
+<div id="mpBar" hidden></div>
+<div id="mpWait" hidden><span id="mpWaitTxt"></span></div>
+<div id="mpCount" hidden></div>
+<div id="mpReveal" hidden><div class="card"><h3 id="mpRevealTitle"></h3><div id="mpRevealBody"></div><p id="mpRevealNote"></p></div></div>
+
+<!-- 多人結算 -->
+<section class="scr" id="scrMPEnd" hidden>
+  <div class="card">
+    <span class="stepTag">對戰結算</span>
+    <div class="ttl" id="meTitle" style="margin-top:10px"></div>
+    <div class="quote" id="meSub"></div>
+    <div id="meRows"></div>
+    <div class="stack" style="margin-top:12px">
+      <button class="btn" id="meAgain" type="button">🏹 再來一局</button>
+      <button class="btn ghost" id="meLeave" type="button">離開房間</button>
+    </div>
+  </div>
+</section>
+
+<div class="ver" id="ver"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const $ = (s) => document.querySelector(s);
+const VER = 'v261124.02';
+$('#ver').textContent = VER;
+
+/* =========================================================
+   投壺島：小遊戲本體
+   - 兩種操作，同一套物理：
+     點三下：依序鎖定仰角（上下）、力道、左右（左右放最後，風的偏移才算得準）
+     體感：手機背面對準壺，左右轉＝左右、上下抬＝仰角，靜止校準後按住「蓄力」、放開（或往前一送）放箭
+     投出去是拋物線慢動作：飛行放慢、快到壺口更慢，身後留一串白點畫出弧線
+   - 彈幕與稱號是示範文案（TH_DEMO），換成審定過的文字後把它改成 false
+   ========================================================= */
+const TH_DEMO = true;
+const SHARE_URL = 'https://steven4dev.github.io/yiguandao-2027-course/islands/touhu-game/?openExternalBrowser=1';
+
+/* ——— 手感與尺寸：想調難易度改這裡 ——— */
+const TU = {
+  g: 9.81, handY: 1.05, arrowL: 0.55,
+  thMin: 36, thMax: 70,  // 仰角範圍（度）：低平快 ～ 高拋
+  xMin: 0.8, xMax: 4.4,  // 力道條＝落點離投擲者的距離：0%＝近處 0.8 公尺、100%＝最遠處 4.4 公尺，中間等距對應（出手速度由距離與仰角反推）
+  mouthY: 0.55,          // 壺口離壺底的高度
+  inR: 0.138,            // 穿過壺口平面時，離壺心不超過這個才算入壺
+  rimR: 0.19,            // 超過 inR、不超過這個＝擦到壺口彈開
+  earX: 0.27, earR: 0.062, // 壺耳中心離壺心的距離、壺耳口半徑
+  lat: 0.6,              // 瞄準線在壺的位置，左右最遠偏離幾公尺
+  tol: 0.13,             // 第一輪的綠色提示區：落點離壺心多少公尺內
+  tiltNear: 5, tiltFar: 80, distNear: 1.2, distFar: 4.4,   // 體感：手機傾斜幾度＝最近（直立）～最遠（往前平躺），對應落點離投擲者幾公尺
+  yawRange: 30, rollRange: 25, pitchRange: 20, // 體感：左右「轉身」幾度、或「左右傾」幾度＝瞄準線到頭（兩種動作疊加）；上下抬幾度＝仰角到頭
+  chargeT: 1.6,                 // 體感：按住蓄力時，力道條來回一趟的秒數
+  slow: 0.38, slowNear: 0.2,    // 慢動作：飛行中的時間倍率、快到壺口時的倍率
+  steadyDeg: 2.4, steadyMs: 900,  // 體感：多穩、穩多久才算「心定」
+  flick: 11, aimLag: 160,         // 體感：往前一送的加速度門檻（m/s²）、取放箭前幾毫秒的瞄準
+  arrows: 4,
+};
+const ROUNDS = [
+  { name: '晨光', sub: '無風・近距離', D: 2.2, T: 2.9, wind: 0,   sway: 0,    sky: 0, tipTouch: '沒有風，專心瞄準就好。第一輪對準時圈會變綠。拋得高，矢落進壺口的角度比較陡、比較好進。', tip: '沒有風，專心瞄準就好。三個步驟：<b>仰角</b>（拋多高）、<b>力道</b>（拋多遠）、<b>左右</b>。第一輪對準時會變綠。小提醒：拋得高，矢落進壺口的角度比較陡、比較好進。' },
+  { name: '風起', sub: '起風了・距離拉遠', D: 2.8, T: 2.5, wind: 0.45, sway: 0,    sky: 1, windAssist: true, tip: '看旗子！風會把矢吹偏。這輪的<b>黃色瞄準線和落點圈已經把風算進去</b>，把它們對到壺就對了。拋得越高，飛得越久，也被風吹得越多。' },
+  { name: '浮筏', sub: '夜裡・壺在筏上', D: 3.1, T: 2.2, wind: 0.45, sway: 0.07, sky: 2, tip: '壺放在竹筏上，隨浪輕輕搖。風還在，但這輪<b>不再替你算風</b>：看旗子，把剛學到的手感用上。' },
+];
+const QUOTES = {
+  in:   ['心正，矢自直。', '穩，才進得了壺。', '一矢入壺，心也定了。'],
+  ear:  ['貫耳！心手合一。', '巧，不如誠。', '穿耳而過，好手法。'],
+  rim:  ['差一點，再靜一靜。', '壺口輕輕一吻，穩一穩。'],
+  body: ['撞到壺身，力道收一點。', '碰到壺肚了，抬高一點點。'],
+  short:['短了，再遠一點。'], long: ['遠了，氣再收一收。'], left: ['偏左了，往右一點。'], right: ['偏右了，往左一點。'],
+  bank: ['好彩頭！彈進壺裡。'],
+};
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+// 含時間加成最高 42 分；基本分最高 36
+const TITLES = [
+  { min: 30, t: '矢直如心', q: '心定，矢自然就直。' },
+  { min: 20, t: '心手合一', q: '手跟著心走，已經很穩了。' },
+  { min: 11, t: '漸入佳境', q: '越投越穩，再來一場吧。' },
+  { min: 0,  t: '靜心起步', q: '投壺不是比輸贏，是練一顆穩定的心。' },
+];
+
+/* ——— 存檔：只存在這支手機的瀏覽器 ——— */
+const KEY = 'islands-touhu';
+let SAVE = { v: 1, best: 0, plays: 0, ins: 0, ears: 0, throws: 0, mode: 'tap', nick: '', nickCustom: false, flipX: false };
+try { const o = JSON.parse(localStorage.getItem(KEY) || 'null'); if (o && o.v === 1) SAVE = Object.assign(SAVE, o); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(SAVE)); } catch (e) {} };
+/* —— LINE 登入的名字（群島共用的 islands-account，只存在這支手機）、HTML 跳脫：這兩個在載入時就會用到，所以放最前面 —— */
+const nb = (t) => String(t).split(/(?<=[，；：、。・])/).filter(Boolean).map((x) => `<span class="nb">${esc(x)}</span>`).join('');   // 換行只發生在標點之後（整段詞組不拆開），避免「跟著／你」「越／不晃」這種斷字
+const esc = (x) => String(x).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+const lineName = () => { try { const a = JSON.parse(localStorage.getItem('islands-account') || 'null'); return a && a.t && a.nm ? String(a.nm).slice(0, 20) : ''; } catch (e) { return ''; } };
+
+/* =========================================================
+   聲音：全部用 Web Audio 即時合成（沒有音檔）
+   ========================================================= */
+const SND = { ctx: null, master: null, on: true, noise: null };
+try { SND.on = localStorage.getItem('islands-touhu-mute') !== '1'; } catch (e) {}
+$('#btnSound').textContent = SND.on ? '🔊' : '🔇';
+try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}   // iPhone 靜音鍵也聽得到
+function unlockAudio(ctx) { try { const s = ctx.createBufferSource(); s.buffer = ctx.createBuffer(1, 1, 22050); s.connect(ctx.destination); s.start(0); } catch (e) {} }
+function audioInit() {
+  if (SND.ctx) { if (SND.ctx.state !== 'running') { unlockAudio(SND.ctx); SND.ctx.resume().catch(() => {}); } return; }
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+  SND.ctx = new AC(); unlockAudio(SND.ctx);
+  SND.master = SND.ctx.createGain(); SND.master.gain.value = SND.on ? 0.9 : 0; SND.master.connect(SND.ctx.destination);
+  const len = SND.ctx.sampleRate * 1.2, b = SND.ctx.createBuffer(1, len, SND.ctx.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  SND.noise = b; ambientStart();
+}
+['pointerup', 'touchend', 'click', 'keydown'].forEach((ev) => addEventListener(ev, () => { if (SND.ctx && SND.ctx.state !== 'running' && !document.hidden) audioInit(); }, true));
+document.addEventListener('visibilitychange', () => { if (!SND.ctx) return; if (document.hidden) SND.ctx.suspend().catch(() => {}); else SND.ctx.resume().catch(() => {}); });
+$('#btnSound').addEventListener('click', () => {
+  SND.on = !SND.on; $('#btnSound').textContent = SND.on ? '🔊' : '🔇';
+  try { localStorage.setItem('islands-touhu-mute', SND.on ? '0' : '1'); } catch (e) {}
+  audioInit(); if (SND.master) SND.master.gain.value = SND.on ? 0.9 : 0;
+});
+function tone(f, dur = 0.15, type = 'sine', vol = 0.15, at = 0, slide = 0) {
+  if (!SND.ctx) return; const c = SND.ctx, t = c.currentTime + at, o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f * slide), t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(SND.master); o.start(t); o.stop(t + dur + 0.05);
+}
+function noise(dur = 0.1, f = 2000, q = 1, vol = 0.2, type = 'bandpass', at = 0, f2 = 0) {
+  if (!SND.ctx || !SND.noise) return; const c = SND.ctx, t = c.currentTime + at, s = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain();
+  s.buffer = SND.noise; fl.type = type; fl.frequency.setValueAtTime(f, t); if (f2) fl.frequency.exponentialRampToValueAtTime(f2, t + dur); fl.Q.value = q;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.03, dur / 3)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(fl).connect(g).connect(SND.master); s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
+}
+const SFX = {
+  lock()  { buzz(8); tone(540, 0.08, 'triangle', 0.14, 0, 0.6); noise(0.04, 3200, 2, 0.07); },                       // 木頭「叩」
+  throw() { noise(1.0, 500, 1.2, 0.16, 'bandpass', 0, 2000); tone(300, 0.9, 'sine', 0.04, 0, 0.55); },        // 慢動作的破風
+  in()    { tone(170, 0.42, 'sine', 0.42, 0, 0.5); tone(330, 0.09, 'square', 0.05); noise(0.12, 900, 1, 0.1, 'lowpass'); },
+  ear()   { tone(1046, 1.0, 'sine', 0.13); tone(1568, 0.8, 'sine', 0.08, 0.02); tone(2093, 0.55, 'sine', 0.05, 0.04); tone(190, 0.3, 'sine', 0.22, 0, 0.5); },
+  rim()   { tone(900, 0.28, 'triangle', 0.13, 0, 0.8); tone(1350, 0.22, 'square', 0.035); },                  // 銅「鏗」
+  body()  { tone(240, 0.2, 'triangle', 0.14, 0, 0.6); noise(0.08, 700, 1, 0.08); },
+  ground(){ noise(0.1, 500, 1, 0.13, 'lowpass'); tone(120, 0.12, 'sine', 0.1, 0, 0.6); },
+  chime() { [523, 659, 784].forEach((f, i) => tone(f, 0.6, 'sine', 0.1, i * 0.16)); },
+  ready() { tone(660, 0.12, 'sine', 0.1); tone(990, 0.2, 'sine', 0.08, 0.09); },
+};
+
+/* =========================================================
+   場景
+   ========================================================= */
+const canvas = $('#gl');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xbfe6f5, 14, 48);
+const cam = new THREE.PerspectiveCamera(50, 1, 0.1, 140);
+
+const hemi = new THREE.HemisphereLight(0xdff3ff, 0xcdb98f, 1.1); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff1d0, 2.6); sun.position.set(4, 8, 5); sun.castShadow = true;
+const SHADOW = matchMedia('(pointer: coarse)').matches ? 1024 : 2048;   // 手機 1024 省電，電腦 2048 邊緣更細
+sun.shadow.mapSize.set(SHADOW, SHADOW); Object.assign(sun.shadow.camera, { left: -5.5, right: 5.5, top: 5.5, bottom: -5.5, near: 1, far: 24 }); sun.shadow.bias = -0.0006;
+scene.add(sun, sun.target);
+const lampLight = new THREE.PointLight(0xffc477, 0, 7, 2); lampLight.position.set(-2.0, 1.0, -0.2); scene.add(lampLight);
+
+const mat = (c, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.85, metalness: 0 }, o));
+const add = (parent, geo, m, x = 0, y = 0, z = 0, shadow = true) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = shadow; o.receiveShadow = true; parent.add(o); return o; };
+
+// 草蓆紋理
+function strawTex() {
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+  g.fillStyle = '#d6bd78'; g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 64; i++) { g.fillStyle = i % 2 ? 'rgba(255,240,180,.25)' : 'rgba(120,90,30,.14)'; g.fillRect(0, i * 4, 256, 2); }
+  for (let i = 0; i < 400; i++) { g.fillStyle = 'rgba(100,70,20,.10)'; g.fillRect(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 6, 1); }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2, 5); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+
+// 海、島台
+const sea = new THREE.Mesh(new THREE.CircleGeometry(60, 48), mat(0x57b4d3, { roughness: 0.6 })); sea.rotation.x = -Math.PI / 2; sea.position.y = -0.55; sea.receiveShadow = true; scene.add(sea);
+add(scene, new THREE.CylinderGeometry(5.9, 6.3, 0.55, 56), mat(0xa88a5e), 0, -0.275, 0, false);                       // 島基座
+const plaza = add(scene, new THREE.CylinderGeometry(5.6, 5.6, 0.1, 56), mat(0xe8dcc0), 0, -0.05, 0, false);             // 石板庭院
+add(scene, new THREE.TorusGeometry(5.62, 0.07, 8, 64), mat(0xb99c6c), 0, 0.0, 0, false).rotation.x = Math.PI / 2;     // 邊緣
+// 草蓆（深紅布邊＋草席）
+add(scene, new THREE.BoxGeometry(3.3, 0.016, 7.4), mat(0x8c3b2b), 0, 0.008, 1.9, false);
+add(scene, new THREE.BoxGeometry(3.0, 0.02, 7.1), mat(0xffffff, { map: strawTex() }), 0, 0.012, 1.9, false);
+// 站位標記
+const standMark = add(scene, new THREE.BoxGeometry(0.6, 0.012, 0.1), mat(0x5b3a22), 0, 0.024, 3, false);
+
+// 壺
+const potGroup = new THREE.Group(); scene.add(potGroup);
+const prof = [[0.001, 0], [0.10, 0], [0.17, 0.04], [0.215, 0.16], [0.22, 0.26], [0.19, 0.36], [0.135, 0.45], [0.13, 0.5], [0.16, 0.545], [0.17, 0.55], [0.15, 0.55], [0.125, 0.5], [0.12, 0.45], [0.1, 0.2], [0.08, 0.08], [0.001, 0.08]].map(([r, y]) => new THREE.Vector2(r, y));
+const bronze = mat(0xb7793a, { roughness: 0.5, metalness: 0.25, side: THREE.DoubleSide });
+const gold = mat(0xe3b44f, { roughness: 0.35, metalness: 0.4 });
+const dark = new THREE.MeshBasicMaterial({ color: 0x1b120a });
+add(potGroup, new THREE.LatheGeometry(prof, 44), bronze);
+add(potGroup, new THREE.TorusGeometry(0.221, 0.011, 8, 44), gold, 0, 0.26, 0).rotation.x = Math.PI / 2;
+add(potGroup, new THREE.TorusGeometry(0.133, 0.009, 8, 36), gold, 0, 0.47, 0).rotation.x = Math.PI / 2;
+add(potGroup, new THREE.TorusGeometry(0.16, 0.012, 8, 40), gold, 0, 0.55, 0).rotation.x = Math.PI / 2;
+const mouthDisc = add(potGroup, new THREE.CircleGeometry(0.146, 36), dark, 0, 0.52, 0, false); mouthDisc.rotation.x = -Math.PI / 2;
+for (const s of [-1, 1]) {   // 壺耳：兩根直立的銅管
+  add(potGroup, new THREE.CylinderGeometry(TU.earR, TU.earR, 0.4, 24, 1, true), bronze, s * TU.earX, 0.35, 0);
+  add(potGroup, new THREE.TorusGeometry(TU.earR, 0.01, 8, 24), gold, s * TU.earX, 0.55, 0, false).rotation.x = Math.PI / 2;
+  add(potGroup, new THREE.CircleGeometry(TU.earR - 0.005, 24), dark, s * TU.earX, 0.525, 0, false).rotation.x = -Math.PI / 2;
+  const br = add(potGroup, new THREE.CylinderGeometry(0.018, 0.018, 0.12, 8), bronze, s * 0.2, 0.43, 0); br.rotation.z = Math.PI / 2;
+}
+// 底座：石墩（前兩輪）／竹筏（第三輪）
+const pedestal = add(scene, new THREE.CylinderGeometry(0.36, 0.42, 0.12, 36), mat(0xcdbfa4), 0, 0.06, 0);
+const raftG = new THREE.Group(); potGroup.add(raftG);
+for (let i = 0; i < 7; i++) add(raftG, new THREE.CylinderGeometry(0.06, 0.06, 1.0, 10), mat(i % 2 ? 0xc7a463 : 0xd2b274), -0.42 + i * 0.14, -0.05, 0, true).rotation.x = Math.PI / 2;
+for (const z of [-0.28, 0.28]) add(raftG, new THREE.BoxGeometry(1.05, 0.03, 0.05), mat(0x7a5a33), 0, 0.012, z);
+// 水池：石砌的池緣圈住水（水面在池緣下面，不會溢出來），竹筏半浸在水面上
+const pond = add(scene, new THREE.CylinderGeometry(0.95, 0.95, 0.09, 48), mat(0x4a9fc0, { roughness: 0.25, metalness: 0.05, transparent: true, opacity: 0.92 }), 0, 0.045, 0, false);
+pond.receiveShadow = true;
+const pondWall = new THREE.Mesh(new THREE.LatheGeometry([[0.95, 0], [1.16, 0], [1.16, 0.18], [1.1, 0.215], [1.02, 0.215], [0.95, 0.18], [0.95, 0]].map(([r, y]) => new THREE.Vector2(r, y)), 56), mat(0xb9b1a2, { side: THREE.DoubleSide }));
+pondWall.castShadow = pondWall.receiveShadow = true; scene.add(pondWall);
+
+// 竹林
+const bambooMat = mat(0x6fae5c), bambooMat2 = mat(0x8cc06a);
+const bamboo = new THREE.Group(); scene.add(bamboo); const leafAnchors = [];
+for (let i = 0; i < 18; i++) {
+  const a = Math.PI + (i / 17 - 0.5) * 2.1 + (Math.random() - 0.5) * 0.12, r = 4.1 + Math.random() * 1.1, h = 3.2 + Math.random() * 1.8;
+  const g = new THREE.Group(); g.position.set(Math.sin(a) * r, 0, Math.cos(a) * r - 0.0); g.position.z = -Math.abs(g.position.z) - 0.4; bamboo.add(g);
+  add(g, new THREE.CylinderGeometry(0.045, 0.06, h, 8), i % 2 ? bambooMat : bambooMat2, 0, h / 2, 0);
+  for (let k = 1; k < 6; k++) add(g, new THREE.CylinderGeometry(0.066, 0.066, 0.03, 8), bambooMat, 0, k * h / 6, 0, false);
+  leafAnchors.push({ x: g.position.x, z: g.position.z, h });
+}
+// 石燈
+const lamp = new THREE.Group(); lamp.position.set(-2.0, 0, -0.2); scene.add(lamp);
+const stone = mat(0xb9b1a2);
+add(lamp, new THREE.BoxGeometry(0.42, 0.1, 0.42), stone, 0, 0.05, 0);
+add(lamp, new THREE.CylinderGeometry(0.07, 0.09, 0.55, 8), stone, 0, 0.37, 0);
+add(lamp, new THREE.BoxGeometry(0.36, 0.1, 0.36), stone, 0, 0.69, 0);
+const lampBulb = add(lamp, new THREE.BoxGeometry(0.22, 0.2, 0.22), new THREE.MeshStandardMaterial({ color: 0xfff0c4, emissive: 0xffc060, emissiveIntensity: 0.2, roughness: 0.6 }), 0, 0.84, 0, false);
+const lampRoof = add(lamp, new THREE.ConeGeometry(0.34, 0.2, 4), stone, 0, 1.04, 0); lampRoof.rotation.y = Math.PI / 4;
+add(lamp, new THREE.SphereGeometry(0.05, 8, 6), stone, 0, 1.17, 0);
+// 茶几與茶具
+const tea = new THREE.Group(); tea.position.set(1.85, 0, 1.4); scene.add(tea);
+add(tea, new THREE.CylinderGeometry(0.28, 0.28, 0.05, 20), mat(0x7a5a33), 0, 0.22, 0);
+for (const [x, z] of [[-0.18, -0.18], [0.18, -0.18], [-0.18, 0.18], [0.18, 0.18]]) add(tea, new THREE.CylinderGeometry(0.02, 0.02, 0.2, 6), mat(0x5b3a22), x, 0.1, z);
+add(tea, new THREE.SphereGeometry(0.075, 14, 10), mat(0x3f7f78, { roughness: 0.4 }), -0.05, 0.31, 0, true).scale.y = 0.85;
+add(tea, new THREE.CylinderGeometry(0.014, 0.02, 0.1, 6), mat(0x3f7f78), 0.04, 0.33, 0, false).rotation.z = -1.0;
+for (const x of [0.09, 0.17]) add(tea, new THREE.CylinderGeometry(0.03, 0.022, 0.04, 12), mat(0xf5efe2), x, 0.265, 0.1);
+// 風旗
+const flagPole = add(scene, new THREE.CylinderGeometry(0.022, 0.032, 1.4, 8), mat(0x5b3a22), 1.25, 0.7, -1.1);
+const flagG = new THREE.Group(); flagG.position.set(1.25, 1.28, -1.1); scene.add(flagG);
+const flagGeo = new THREE.PlaneGeometry(0.5, 0.24, 12, 1); flagGeo.translate(0.25, 0, 0);
+const flagBase = flagGeo.attributes.position.array.slice();
+const flag = new THREE.Mesh(flagGeo, new THREE.MeshStandardMaterial({ color: 0xc23b2e, side: THREE.DoubleSide, roughness: 0.8 })); flag.castShadow = true; flagG.add(flag);
+add(flagG, new THREE.SphereGeometry(0.036, 8, 6), gold, 0, 0.14, 0, false);
+// 雲、星星、遠山
+const clouds = [];
+for (let i = 0; i < 6; i++) {
+  const g = new THREE.Group(); g.position.set((i - 2.5) * 11 + Math.random() * 4, 8 + Math.random() * 5, -18 - Math.random() * 14);
+  for (let k = 0; k < 4; k++) { const s = new THREE.Mesh(new THREE.SphereGeometry(1.4 + Math.random() * 0.9, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, fog: false })); s.position.set(k * 1.7 - 2.4, Math.random() * 0.5, Math.random()); s.scale.y = 0.5; g.add(s); }
+  scene.add(g); clouds.push(g);
+}
+const starGeo = new THREE.BufferGeometry(), sp = [];
+for (let i = 0; i < 160; i++) { const a = Math.random() * Math.PI * 2, e = 0.15 + Math.random() * 0.9, r = 90; sp.push(Math.cos(a) * Math.cos(e) * r, Math.sin(e) * r, Math.sin(a) * Math.cos(e) * r - 20); }
+starGeo.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3));
+const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 2.2, sizeAttenuation: false, transparent: true, opacity: 0, fog: false });
+scene.add(new THREE.Points(starGeo, starMat));
+const hills = new THREE.Group(); scene.add(hills);
+[[-30, -50, 12, 0x9ab8c9], [-6, -58, 16, 0x8fb0c4], [26, -52, 11, 0xa4c0cf], [48, -46, 8, 0x9ab8c9]].forEach(([x, z, h, c]) => { const m = new THREE.Mesh(new THREE.ConeGeometry(h * 1.3, h, 7), new THREE.MeshBasicMaterial({ color: c, fog: false })); m.position.set(x, h / 2 - 0.6, z); hills.add(m); });
+
+/* =========================================================
+   精緻化：金屬反射、材質紋理、竹葉、涼亭、燈籠、小人偶、花瓣／螢火蟲、浪花
+   全部程式即時生成（沒有圖檔），重複的東西用實例化繪製，手機也跑得動
+   ========================================================= */
+const pmrem = new THREE.PMREMGenerator(renderer);
+const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture; pmrem.dispose();   // 只給金屬材質用的環境反射
+function canvasTex(w, h, draw, rx = 1, ry = 1) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
+}
+// 銅壺：銅綠斑點、回紋腰帶、金屬反光
+const bronzeMap = canvasTex(512, 256, (g, w, h) => {
+  g.fillStyle = '#b97b3d'; g.fillRect(0, 0, w, h);
+  const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,225,160,.18)'); gr.addColorStop(1, 'rgba(60,30,10,.24)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 1800; i++) { g.fillStyle = Math.random() < 0.5 ? 'rgba(70,130,105,.11)' : 'rgba(255,225,160,.07)'; g.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 5, 1 + Math.random() * 3); }
+  const meander = (y, bh) => {
+    g.fillStyle = 'rgba(45,25,8,.30)'; g.fillRect(0, y, w, bh); g.strokeStyle = 'rgba(40,22,8,.78)'; g.lineWidth = 2.5;
+    for (let x = 0; x < w; x += bh) { g.strokeRect(x + 4, y + 4, bh - 8, bh - 8); g.strokeRect(x + 10, y + 10, bh - 20, bh - 20); }
+    g.fillStyle = 'rgba(255,225,160,.55)'; g.fillRect(0, y - 2, w, 2); g.fillRect(0, y + bh, w, 2);
+  };
+  meander(168, 36); meander(128, 20);
+});
+bronze.map = bronzeMap; bronze.bumpMap = bronzeMap; bronze.bumpScale = 0.8; bronze.color.set(0xffffff);
+bronze.metalness = 0.6; bronze.roughness = 0.36; bronze.envMap = envTex; bronze.envMapIntensity = 1.0; bronze.needsUpdate = true;
+gold.envMap = envTex; gold.envMapIntensity = 1.2; gold.metalness = 0.7; gold.roughness = 0.28; gold.needsUpdate = true;
+// 石板庭院
+plaza.material = mat(0xffffff, { map: canvasTex(512, 512, (g, w, h) => {
+  g.fillStyle = '#d9ccaf'; g.fillRect(0, 0, w, h); const n = 4, s = w / n;
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+    const v = Math.floor(Math.random() * 28) - 14; g.fillStyle = `rgb(${232 + v},${220 + v},${192 + v})`; g.fillRect(c * s + 3, r * s + 3, s - 6, s - 6);
+    for (let k = 0; k < 50; k++) { g.fillStyle = Math.random() < 0.5 ? 'rgba(120,100,70,.10)' : 'rgba(255,250,230,.14)'; g.fillRect(c * s + Math.random() * s, r * s + Math.random() * s, 1 + Math.random() * 4, 1 + Math.random() * 3); }
+  }
+  g.strokeStyle = 'rgba(110,90,60,.55)'; g.lineWidth = 4; for (let i = 0; i <= n; i++) { g.beginPath(); g.moveTo(i * s, 0); g.lineTo(i * s, h); g.moveTo(0, i * s); g.lineTo(w, i * s); g.stroke(); }
+}, 5, 5) });
+// 竹葉：每根竹子頂端一撮細長葉片（實例化，一次畫完）
+const leafGeo = new THREE.PlaneGeometry(0.46, 0.085, 2, 1); leafGeo.translate(0.23, 0, 0);
+const LEAVES = 22, leaves = new THREE.InstancedMesh(leafGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide, roughness: 0.8 }), leafAnchors.length * LEAVES);
+{
+  const e = new THREE.Euler(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(), m = new THREE.Matrix4(), col = new THREE.Color(); let i = 0;
+  for (const a of leafAnchors) for (let j = 0; j < LEAVES; j++) {
+    p.set(a.x + (Math.random() - 0.5) * 0.08, a.h - Math.random() * 1.5, a.z + (Math.random() - 0.5) * 0.08); e.set(0, Math.random() * 6.283, -0.1 - Math.random() * 0.9, 'YZX'); q.setFromEuler(e);
+    sc.setScalar(0.8 + Math.random() * 0.7); m.compose(p, q, sc); leaves.setMatrixAt(i, m); col.setHSL(0.27 + Math.random() * 0.05, 0.45, 0.36 + Math.random() * 0.13); leaves.setColorAt(i, col); i++;
+  }
+  leaves.frustumCulled = false; scene.add(leaves);
+}
+// 岩石與灌木（島的邊緣）
+{
+  const rockM = mat(0xa7a092, { flatShading: true }), bushM = mat(0x78b25f, { flatShading: true });
+  for (let i = 0; i < 26; i++) {
+    const a = Math.random() * Math.PI * 2, r = 4.5 + Math.random() * 0.95; if (Math.sin(a) > 0.2 && Math.cos(a) > 0) continue;   // 鏡頭這側的邊緣留空，不擋視線
+    const x = Math.cos(a) * r, z = Math.sin(a) * r;
+    if (Math.random() < 0.5) { const k = add(scene, new THREE.DodecahedronGeometry(0.16 + Math.random() * 0.22, 0), rockM, x, 0.05, z, false); k.rotation.set(Math.random() * 3, Math.random() * 3, 0); k.scale.y = 0.65; }
+    else { const b = add(scene, new THREE.IcosahedronGeometry(0.22 + Math.random() * 0.2, 0), bushM, x, 0.14, z, false); b.scale.y = 0.7; b.rotation.y = Math.random() * 3; }
+  }
+}
+// 涼亭
+const pav = new THREE.Group(); pav.position.set(-3.2, 0, -2.5); pav.rotation.y = 0.45; scene.add(pav);
+{
+  const red = mat(0xb23a2c, { roughness: 0.6 }), roofM = mat(0x3d4a56, { roughness: 0.7 });
+  add(pav, new THREE.BoxGeometry(2.1, 0.14, 2.1), mat(0xcdbfa4), 0, 0.07, 0);
+  for (const [x, z] of [[-0.85, -0.85], [0.85, -0.85], [-0.85, 0.85], [0.85, 0.85]]) add(pav, new THREE.CylinderGeometry(0.065, 0.07, 1.7, 12), red, x, 1.0, z);
+  for (const s of [-0.85, 0.85]) { add(pav, new THREE.BoxGeometry(1.9, 0.1, 0.1), red, 0, 1.78, s, false); add(pav, new THREE.BoxGeometry(0.1, 0.1, 1.9), red, s, 1.78, 0, false); }
+  const roof = add(pav, new THREE.ConeGeometry(1.7, 0.78, 4), roofM, 0, 2.25, 0); roof.rotation.y = Math.PI / 4;
+  const roof2 = add(pav, new THREE.ConeGeometry(0.5, 0.42, 4), roofM, 0, 2.78, 0, false); roof2.rotation.y = Math.PI / 4; add(pav, new THREE.SphereGeometry(0.07, 10, 8), gold, 0, 3.05, 0, false);
+}
+// 光暈（燈籠、石燈）：夜裡才亮
+const haloTex = canvasTex(128, 128, (g) => { const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(255,205,125,.95)'); r.addColorStop(0.4, 'rgba(255,150,60,.35)'); r.addColorStop(1, 'rgba(255,120,40,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); });
+const halos = [];
+function halo(parent, x, y, z, size) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false, opacity: 0 })); s.position.set(x, y, z); s.scale.setScalar(size); parent.add(s); halos.push(s); return s; }
+halo(scene, -2.0, 0.86, -0.2, 1.3);
+// 掛燈籠的繩子（兩根竹竿之間，五盞紅燈籠）
+const lanternMats = [];
+{
+  const poleM = mat(0x5b3a22), Z = -2.0, pts = [];
+  for (const x of [-2.05, 2.05]) add(scene, new THREE.CylinderGeometry(0.03, 0.04, 2.4, 8), poleM, x, 1.2, Z);
+  for (let i = 0; i <= 24; i++) { const u = i / 24; pts.push(new THREE.Vector3(-2.05 + u * 4.1, 2.32 - 0.34 * Math.sin(Math.PI * u), Z)); }
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x4a3320 })));
+  for (let i = 0; i < 5; i++) {
+    const u = (i + 0.5) / 5, g = new THREE.Group(); g.position.set(-2.05 + u * 4.1, 2.32 - 0.34 * Math.sin(Math.PI * u), Z); scene.add(g);
+    const lm = new THREE.MeshStandardMaterial({ color: 0xd8402f, emissive: 0xff6a2a, emissiveIntensity: 0.12, roughness: 0.5 }); lanternMats.push(lm);
+    const b = add(g, new THREE.SphereGeometry(0.14, 14, 10), lm, 0, -0.2, 0, false); b.scale.y = 1.15;
+    add(g, new THREE.CylinderGeometry(0.06, 0.06, 0.035, 10), gold, 0, -0.04, 0, false); add(g, new THREE.CylinderGeometry(0.045, 0.045, 0.03, 10), gold, 0, -0.37, 0, false);
+    add(g, new THREE.CylinderGeometry(0.008, 0.012, 0.16, 6), mat(0xe3b44f), 0, -0.47, 0, false);
+    halo(g, 0, -0.2, 0, 0.8);
+  }
+}
+// 小人偶賓客：站在草蓆邊看你投，投完會有反應
+const guest = { g: new THREE.Group(), mode: 'idle', t0: 0 };
+{
+  const G = guest.g, robe = mat(0x3f7f78), skin = mat(0xf2c9a0), hair = mat(0x2a1d14), sash = mat(0xe3b44f, { metalness: 0.3, roughness: 0.4 });
+  G.position.set(-0.9, 0.0, 0.42); G.scale.setScalar(0.8); scene.add(G);
+  add(G, new THREE.CylinderGeometry(0.085, 0.16, 0.5, 16), robe, 0, 0.27, 0);
+  add(G, new THREE.TorusGeometry(0.115, 0.017, 6, 20), sash, 0, 0.3, 0, false).rotation.x = Math.PI / 2;
+  const head = new THREE.Group(); head.position.y = 0.62; G.add(head); guest.head = head;
+  add(head, new THREE.SphereGeometry(0.088, 18, 14), skin, 0, 0, 0);
+  const cap = add(head, new THREE.SphereGeometry(0.094, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.55), hair, 0, 0.012, -0.004, false);
+  add(head, new THREE.SphereGeometry(0.04, 10, 8), hair, 0, 0.115, -0.02, false);
+  for (const s of [-1, 1]) { add(head, new THREE.SphereGeometry(0.0115, 8, 6), new THREE.MeshBasicMaterial({ color: 0x1b120a }), s * 0.034, 0.005, 0.082, false); add(head, new THREE.SphereGeometry(0.016, 8, 6), mat(0xf0a09a), s * 0.056, -0.025, 0.07, false).scale.set(1, 0.6, 0.5); }
+  guest.arms = [1, -1].map((s) => {
+    const a = new THREE.Group(); a.position.set(s * 0.105, 0.5, 0); G.add(a);
+    add(a, new THREE.CylinderGeometry(0.03, 0.036, 0.24, 10), robe, 0, -0.12, 0, false); add(a, new THREE.SphereGeometry(0.034, 10, 8), skin, 0, -0.26, 0, false); a.userData.s = s; return a;
+  });
+  G.lookAt(0, 0, 0);
+}
+function guestReact(kind) { guest.mode = kind === 'ear' ? 'cheer2' : kind === 'in' ? 'cheer' : 'oops'; guest.t0 = performance.now(); }
+// 落花（白天綠葉、黃昏楓紅）與夜裡的螢火蟲、島邊浪花、海面波光
+const PETAL = [0xa9d46a, 0xf0a05a, 0xffe27a];
+const petalMat = new THREE.MeshBasicMaterial({ color: PETAL[0], side: THREE.DoubleSide, transparent: true, opacity: 0.92 });
+const NP = 42, petals = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.07, 0.05), petalMat, NP), pd = [];
+for (let i = 0; i < NP; i++) pd.push({ x: (Math.random() - 0.5) * 7, y: Math.random() * 4.5, z: -3 + Math.random() * 7, v: 0.16 + Math.random() * 0.26, ph: Math.random() * 6.28, sp: 1 + Math.random() * 2 });
+petals.frustumCulled = false; scene.add(petals);
+const NF = 26, flies = new THREE.InstancedMesh(new THREE.SphereGeometry(0.02, 6, 4), new THREE.MeshBasicMaterial({ color: 0xfff09a, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, opacity: 0 }), NF), fd = [];
+for (let i = 0; i < NF; i++) fd.push({ x: (Math.random() - 0.5) * 6, y: 0.3 + Math.random() * 1.5, z: -2.5 + Math.random() * 6, ph: Math.random() * 6.28, sp: 0.4 + Math.random() * 0.6 });
+flies.frustumCulled = false; scene.add(flies);
+const foam = [0, 1, 2].map((i) => { const m = new THREE.Mesh(new THREE.RingGeometry(6.3, 6.5, 72), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, fog: false })); m.rotation.x = -Math.PI / 2; m.position.y = -0.52; scene.add(m); return m; });
+const NG = 150, glGeo = new THREE.BufferGeometry(), glPos = new Float32Array(NG * 3), glCol = new Float32Array(NG * 3), glPh = [];
+for (let i = 0; i < NG; i++) { const a = Math.random() * 6.283, r = 7 + Math.random() * 40; glPos.set([Math.cos(a) * r, -0.5, Math.sin(a) * r - 6], i * 3); glPh.push(Math.random() * 6.28); }
+glGeo.setAttribute('position', new THREE.BufferAttribute(glPos, 3)); glGeo.setAttribute('color', new THREE.BufferAttribute(glCol, 3));
+const glSprite = (() => { const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d'), gr = g.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.4, 'rgba(255,255,255,.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 32, 32); return new THREE.CanvasTexture(c); })();
+const glitter = new THREE.Points(glGeo, new THREE.PointsMaterial({ map: glSprite, size: 5, sizeAttenuation: false, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); glitter.frustumCulled = false; scene.add(glitter);
+const _pm = new THREE.Matrix4(), _pq = new THREE.Quaternion(), _pe = new THREE.Euler(), _pp = new THREE.Vector3(), _ps = new THREE.Vector3(), _pc = new THREE.Color();
+function fineTick(t, dt) {
+  const ts = t / 1000, night = skyCur.stars, glow = clamp(skyCur.lamp / 2.4, 0, 1);
+  lanternMats.forEach((m, i) => { m.emissiveIntensity = 0.1 + skyCur.lamp * 0.5 * (0.93 + 0.07 * Math.sin(ts * 3.4 + i * 2)); });
+  halos.forEach((h, i) => { h.material.opacity = (0.04 + 0.96 * glow) * (0.9 + 0.1 * Math.sin(ts * 4 + i)); });
+  // 落花
+  petals.visible = night < 0.5; petalMat.color.lerp(_pc.set(PETAL[SKY.indexOf(skyTarget)] || PETAL[0]), 0.04);
+  if (petals.visible) for (let i = 0; i < NP; i++) {
+    const d = pd[i]; d.y -= d.v * dt; if (d.y < 0.02) { d.y = 4.5; d.x = (Math.random() - 0.5) * 7; d.z = -3 + Math.random() * 7; }
+    _pp.set(d.x + Math.sin(ts * 0.8 + d.ph) * 0.35, d.y, d.z + Math.cos(ts * 0.6 + d.ph) * 0.2); _pe.set(ts * d.sp + d.ph, ts * d.sp * 0.7, 0); _pq.setFromEuler(_pe); _ps.setScalar(1); _pm.compose(_pp, _pq, _ps); petals.setMatrixAt(i, _pm);
+  }
+  petals.instanceMatrix.needsUpdate = true;
+  // 螢火蟲
+  flies.visible = night > 0.3; flies.material.opacity = clamp(night, 0, 1);
+  if (flies.visible) for (let i = 0; i < NF; i++) {
+    const d = fd[i]; _pp.set(d.x + Math.sin(ts * d.sp + d.ph) * 0.6, d.y + Math.sin(ts * d.sp * 1.7 + d.ph) * 0.25, d.z + Math.cos(ts * d.sp * 0.8 + d.ph) * 0.5);
+    _ps.setScalar(0.6 + 0.5 * (0.5 + 0.5 * Math.sin(ts * 3 + d.ph * 3))); _pm.compose(_pp, _pq.identity(), _ps); flies.setMatrixAt(i, _pm);
+  }
+  flies.instanceMatrix.needsUpdate = true;
+  // 浪花
+  foam.forEach((m, i) => { const u = ((ts / 6) + i / 3) % 1; m.scale.setScalar(1 + u * 0.35); m.material.opacity = (1 - u) * (1 - u) * 0.38 * (1 - 0.7 * night); });
+  // 海面波光：慢慢明滅的柔光點（原本是方形亮點快速閃爍）
+  for (let i = 0; i < NG; i++) { const v = (0.5 + 0.5 * Math.sin(ts * 0.9 + glPh[i])) ** 3 * 0.5 * (1 - night * 0.75); glCol[i * 3] = v; glCol[i * 3 + 1] = v * 0.97; glCol[i * 3 + 2] = v * 0.9; }
+  glGeo.attributes.color.needsUpdate = true;
+  // 小人偶：呼吸、看你投、投完反應
+  const G = guest, k = (t - G.t0) / 1000; if (G.mode !== 'idle' && k > 1.9) G.mode = 'idle';
+  const fade = G.mode === 'idle' ? 0 : Math.max(0, 1 - k / 1.7); let hop = 0, up = [0.16, 0.16], yaw = 0;
+  if (G.mode === 'cheer') { hop = Math.abs(Math.sin(k * 8)) * 0.1 * fade; up = [0.16, 2.7 * Math.min(1, k * 6) * (k < 1.5 ? 1 : 0) + 0.16]; }
+  else if (G.mode === 'cheer2') { hop = Math.abs(Math.sin(k * 8)) * 0.17 * fade; const a = (k < 1.6 ? 2.8 : 0.16); up = [a, a]; }
+  else if (G.mode === 'oops') { yaw = Math.sin(k * 9) * 0.45 * fade; up = [0.16 + 1.1 * Math.min(1, k * 5) * (k < 1.3 ? 1 : 0), 0.16 + 1.1 * Math.min(1, k * 5) * (k < 1.3 ? 1 : 0)]; }
+  G.g.position.y = hop + 0.006 * Math.sin(ts * 2); G.head.rotation.y = yaw; G.head.rotation.z = G.mode === 'oops' ? Math.sin(k * 5) * 0.1 * fade : 0;
+  G.arms.forEach((a, i) => { a.rotation.z = a.userData.s * (up[i] + 0.03 * Math.sin(ts * 2 + i)); });
+}
+function buzz(p) { try { if (navigator.vibrate && SND.on) navigator.vibrate(p); } catch (e) {} }   // 手機輕震（只有 Android 會震）
+let ambT = 0;   // 背景：偶爾幾聲五聲音階的撥弦，輕輕的
+function ambientStart() {
+  if (ambT) return; const sc = [392, 440, 523, 587, 659, 784, 880];
+  ambT = setInterval(() => {
+    if (!SND.ctx || !SND.on || document.hidden || S.phase === 'fly') return; const f = sc[Math.floor(Math.random() * sc.length)];
+    tone(f, 2.2, 'triangle', 0.035); tone(f * 2.005, 1.2, 'sine', 0.012, 0.01); if (Math.random() < 0.3) tone(sc[Math.floor(Math.random() * sc.length)] / 2, 2.6, 'sine', 0.02, 0.6);
+  }, 2600);
+}
+
+/* —— 天色：三輪三種光（午後、黃昏、夜） —— */
+const SKY = [
+  { bg: 0xbfe6f5, sun: 0xfff1d0, sunI: 2.6, hS: 0xdff3ff, hG: 0xcdb98f, hI: 1.1, sea: 0x57b4d3, lamp: 0.15, lampL: 0,  stars: 0, sp: [4, 8, 5],   hill: 0x9ab8c9, cloud: 0xffffff },
+  { bg: 0xf2c08c, sun: 0xffb070, sunI: 2.3, hS: 0xffd9b3, hG: 0xb48a60, hI: 1.0, sea: 0x8eaeca, lamp: 0.8,  lampL: 2,  stars: 0, sp: [-6, 3.5, 4], hill: 0xc9a58e, cloud: 0xffe2c0 },
+  { bg: 0x1f2b4d, sun: 0x9fb6ff, sunI: 1.0, hS: 0x7088c8, hG: 0x2b2a3c, hI: 1.0, sea: 0x1b3b66, lamp: 2.4,  lampL: 16, stars: 1, sp: [3, 7, -2],   hill: 0x2c3c63, cloud: 0x6a7aa8 },
+];
+const skyCur = { bg: new THREE.Color(), sun: new THREE.Color(), hS: new THREE.Color(), hG: new THREE.Color(), sea: new THREE.Color(), hill: new THREE.Color(), cloud: new THREE.Color(), sunI: 0, hI: 0, lamp: 0, lampL: 0, stars: 0, sp: new THREE.Vector3() };
+function skySet(i, snap) {
+  const T = SKY[i], k = snap ? 1 : 0; skyTarget = T;
+  if (snap) updateSky(1, true);
+}
+let skyTarget = SKY[0];
+const _c = new THREE.Color();
+function updateSky(k, snap) {
+  const T = skyTarget, C = skyCur, kk = snap ? 1 : k;
+  C.bg.lerp(_c.set(T.bg), kk); C.sun.lerp(_c.set(T.sun), kk); C.hS.lerp(_c.set(T.hS), kk); C.hG.lerp(_c.set(T.hG), kk); C.sea.lerp(_c.set(T.sea), kk);
+  C.hill.lerp(_c.set(T.hill), kk); C.cloud.lerp(_c.set(T.cloud), kk);
+  C.sunI += (T.sunI - C.sunI) * kk; C.hI += (T.hI - C.hI) * kk; C.lamp += (T.lamp - C.lamp) * kk; C.lampL += (T.lampL - C.lampL) * kk; C.stars += (T.stars - C.stars) * kk;
+  C.sp.lerp(new THREE.Vector3(...T.sp), kk);
+  scene.background = C.bg; scene.fog.color.copy(C.bg); sun.color.copy(C.sun); sun.intensity = C.sunI; sun.position.copy(C.sp);
+  hemi.color.copy(C.hS); hemi.groundColor.copy(C.hG); hemi.intensity = C.hI; sea.material.color.copy(C.sea);
+  lampBulb.material.emissiveIntensity = C.lamp; lampLight.intensity = C.lampL; starMat.opacity = C.stars;
+  hills.children.forEach((m) => m.material.color.copy(C.hill)); clouds.forEach((g) => g.children.forEach((s) => s.material.color.copy(C.cloud)));
+  document.body.style.background = '#' + C.bg.getHexString();
+}
+skySet(0, true);
+
+/* —— 矢 —— */
+const arrowMats = { wood: mat(0xd8a65c, { roughness: 0.6 }), tip: mat(0x7a4b1e), band: mat(0xc23b2e) };
+const arrowGeos = { shaft: new THREE.CylinderGeometry(0.014, 0.014, TU.arrowL, 8), tip: new THREE.SphereGeometry(0.018, 8, 6), band: new THREE.CylinderGeometry(0.016, 0.016, 0.07, 8) };
+function makeArrow() {
+  const g = new THREE.Group();
+  add(g, arrowGeos.shaft, arrowMats.wood, 0, 0, 0);
+  add(g, arrowGeos.tip, arrowMats.tip, 0, TU.arrowL / 2, 0);
+  add(g, arrowGeos.band, arrowMats.band, 0, -TU.arrowL / 2 + 0.07, 0);
+  scene.add(g); return g;
+}
+const Y_AXIS = new THREE.Vector3(0, 1, 0);
+// 矢的位置＝矢尖；方向＝朝矢尖
+function poseArrow(mesh, tip, dir) {
+  mesh.quaternion.setFromUnitVectors(Y_AXIS, dir);
+  mesh.position.copy(tip).addScaledVector(dir, -TU.arrowL / 2);
+}
+
+/* —— 瞄準輔助：垂直瞄準線、落點圈、虛線 —— */
+const aimLine = new THREE.Mesh(new THREE.PlaneGeometry(0.035, 1.15), new THREE.MeshBasicMaterial({ color: 0xffd45a, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false, fog: false }));
+aimLine.position.y = 0.62; aimLine.visible = false; scene.add(aimLine);
+const aimGlow = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 1.15), new THREE.MeshBasicMaterial({ color: 0xffd45a, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false, fog: false }));
+aimLine.add(aimGlow);
+const ring = new THREE.Mesh(new THREE.RingGeometry(0.125, 0.16, 40), new THREE.MeshBasicMaterial({ color: 0xffd45a, transparent: true, opacity: 0.95, side: THREE.DoubleSide, depthWrite: false, depthTest: false, fog: false }));
+ring.rotation.x = -Math.PI / 2; ring.visible = false; ring.renderOrder = 5; scene.add(ring);
+const DASH_N = 32, dashGeo = new THREE.BufferGeometry();
+dashGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array((DASH_N + 1) * 3), 3));
+const dash = new THREE.Line(dashGeo, new THREE.LineDashedMaterial({ color: 0xffffff, dashSize: 0.07, gapSize: 0.06, transparent: true, opacity: 0.85, fog: false }));
+dash.frustumCulled = false;
+// 力道階段：壺的前後位置畫一條橫條，表示「這個力道會落在哪個遠近」
+const depthBar = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.1), new THREE.MeshBasicMaterial({ color: 0xffd45a, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false, depthTest: false, fog: false }));
+depthBar.rotation.x = -Math.PI / 2; depthBar.visible = false; depthBar.renderOrder = 5; scene.add(depthBar);
+dash.visible = false; scene.add(dash);
+
+/* —— 軌跡：矢飛行時身後留下一串白點，慢動作時像把拋物線畫出來 —— */
+const KEEP = [], KEEP_MAX = 24, tailGeo = new THREE.ConeGeometry(0.034, 0.1, 6);   // 重播後留在畫面上的矢與弧線（見 keepReplay）
+const TRAIL_N = 130;
+const trailMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(0.016, 6, 4), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, fog: false }), TRAIL_N);
+trailMesh.frustumCulled = false; trailMesh.count = 0; trailMesh.visible = false; scene.add(trailMesh);
+const trailPts = []; let trailAcc = 0, trailK = 1;
+const _tm = new THREE.Matrix4(), _tq = new THREE.Quaternion(), _ts = new THREE.Vector3();
+function trailDraw() {
+  const n = trailPts.length; trailMesh.count = n;
+  for (let i = 0; i < n; i++) { _tm.compose(trailPts[i], _tq, _ts.setScalar(trailK * (0.4 + 0.6 * (i / Math.max(1, n - 1))))); trailMesh.setMatrixAt(i, _tm); }
+  trailMesh.instanceMatrix.needsUpdate = true; trailMesh.visible = n > 0 && trailK > 0;
+}
+function trailReset() { trailPts.length = 0; trailAcc = 0; trailK = 1; trailMesh.count = 0; trailMesh.visible = false; }
+function trailPush(p, dt) {   // dt＝模擬時間：每 0.035 秒留一個點，慢動作時點之間的距離不變
+  trailAcc += dt; if (trailAcc < 0.035 && trailPts.length) return; trailAcc = 0;
+  if (trailPts.length >= TRAIL_N) trailPts.shift(); trailPts.push(p.clone()); trailDraw();
+}
+function trailTick(dt) { if (S.phase !== 'fly' && S.phase !== 'replay' && trailMesh.visible) { trailK -= dt * 0.8; if (trailK <= 0) trailReset(); else trailDraw(); } }
+
+/* —— 特效：花瓣／金光、漣漪 —— */
+const FX = [];
+const fxGeo = new THREE.SphereGeometry(0.014, 6, 4);
+for (let i = 0; i < 48; i++) { const m = new THREE.Mesh(fxGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, fog: false })); m.visible = false; scene.add(m); FX.push({ m, v: new THREE.Vector3(), life: 0, max: 1 }); }
+function burst(p, color, n, spd, up = 1.2) {
+  let k = 0; for (const f of FX) { if (f.life > 0) continue; if (k++ >= n) break;
+    f.m.visible = true; f.m.position.copy(p); f.m.material.color.set(color); f.life = f.max = 0.7 + Math.random() * 0.5;
+    const a = Math.random() * 6.283, s = spd * (0.4 + Math.random() * 0.8); f.v.set(Math.cos(a) * s, up * (0.6 + Math.random()), Math.sin(a) * s); }
+}
+const ripples = [];
+for (let i = 0; i < 4; i++) { const m = new THREE.Mesh(new THREE.RingGeometry(0.08, 0.1, 32), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, fog: false })); m.rotation.x = -Math.PI / 2; m.visible = false; scene.add(m); ripples.push({ m, life: 0 }); }
+function ripple(p, color) { const r = ripples.find((x) => x.life <= 0) || ripples[0]; r.m.position.copy(p); r.m.material.color.set(color); r.life = 0.7; r.m.visible = true; }
+
+/* =========================================================
+   遊戲狀態
+   ========================================================= */
+/* —— 數字：分數以 0.1 分為單位 —— */
+const round1 = (n) => Math.round(n * 10) / 10;
+const fmt1 = (n) => { const r = round1(n); return Number.isInteger(r) ? String(r) : r.toFixed(1); };
+const fmt10 = (n10) => fmt1(n10 / 10);   // 多人：伺服器的分數是「十分之一分」整數
+/* —— 每矢倒數：從「可以開始瞄準」算到放箭；不含飛行、重播、等別人；剩餘比例 × 0.5 ＝ 時間加成（只有投進才有）—— */
+const TIME_LIMIT = 15;
+const TM = { show: false, on: false, acc: 0, t0: 0 };
+function timerFrac() { return clamp(1 - (TM.acc + (TM.on ? performance.now() - TM.t0 : 0)) / 1000 / TIME_LIMIT, 0, 1); }
+function timerResume() { if (!TM.on) { TM.on = true; TM.t0 = performance.now(); } TM.show = true; }
+function timerPause() { if (TM.on) { TM.acc += performance.now() - TM.t0; TM.on = false; } }
+function timerReset() { TM.acc = 0; TM.on = false; TM.show = false; }
+function timerPaint() {
+  const el = $('#timer'); el.hidden = !TM.show; if (!TM.show) return;
+  const f = timerFrac(); el.querySelector('i').style.transform = `scaleX(${f})`; $('#tmSec').textContent = (f * TIME_LIMIT).toFixed(1);
+  $('#tmBonus').textContent = f > 0 ? `加成 +${(f * 0.5).toFixed(1)}` : '加成用完了';
+  el.classList.toggle('mid', f <= 0.5 && f > 0.2); el.classList.toggle('low', f <= 0.2 && f > 0); el.classList.toggle('out', f <= 0);
+}
+const S = {
+  phase: 'title', mode: 'tap', eTouch: 0.5, presetTl: null, round: 0, n: 0, score: 0, rScore: 0, ins: 0, ears: 0, hist: [],
+  t0: 0, ph: 0, ph2: 0, ph3: 0, aH: 0, aE: 0.5, aP: 0.5, lockH: null, lockE: null, lockP: null, charging: false, cT0: 0, ts: 1, wind: 0, windSign: 1, arrows: [], cur: null, camMode: 'title', tapLock: 0,
+};
+let NOW = 0;
+const R = () => ROUNDS[S.round];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const tri = (u) => { u -= Math.floor(u); return u < 0.5 ? u * 2 : 2 - u * 2; };
+
+/* 壺的時鐘 potT：每一幀跟著慢動作一起走（potT += dt × S.ts），不再用掛鐘時間。
+   這樣一支矢飛行時，壺在「矢的第 k 步」的位置＝potAtT(potT0 + k/240)，完全由出手那一刻決定，
+   出手時就能把整條飛行先算完（simulateThrow），對戰時立刻把結果送出去，不必等本機的慢動作播完。 */
+let potT = 0;
+const potAtT = (t) => { const r = R(); return r.sway ? { x: r.sway * Math.sin(t * 1.5), y: 0.14 + 0.025 * Math.sin(t * 2.1 + 1) } : { x: 0, y: 0.12 }; };
+function potState(now) {
+  if (REPLAY.on) return REPLAY.pot;
+  return potAtT(potT);
+}
+function setupRound() {
+  const r = R(); if (S.round === 0) TOUCH.tx = null;   // 新的一局：落點圈回到起點
+  pedestal.visible = !r.sway; raftG.visible = pond.visible = pondWall.visible = r.sway > 0;
+  skySet(r.sky);
+  standMark.position.z = r.D + 0.2;
+  S.windSign = Math.random() < 0.5 ? -1 : 1;
+  S.arrows.forEach((a) => a.mesh.parent && a.mesh.parent.remove(a.mesh)); S.arrows = []; clearKeep();
+  S.n = 0; S.rScore = 0; S.hist[S.round] = [];
+  buildArrowDots();
+  $('#hRound').textContent = `第 ${S.round + 1} 輪・${r.name}`;
+}
+function rollWind() {
+  const r = R(); let f = 0.6 + Math.random() * 0.8;   // 每支矢的風力不一樣（0.6～1.4 倍），風大風小要看旗子
+  if (MP.on) {   // 多人：風向（每輪）與風力（每支矢）由房間種子決定，對手拿到一模一樣的風
+    f = 0.6 + prng((MP.seed ^ Math.imul(MP.arrowIdx + 1, 104729)) >>> 0)() * 0.8;
+    S.windSign = prng((MP.seed ^ Math.imul(MP.round + 1, 31337)) >>> 0)() < 0.5 ? -1 : 1;
+  }
+  S.wind = r.wind ? S.windSign * r.wind * f : 0;
+  const lv = Math.abs(S.wind) < 0.01 ? 0 : clamp(Math.round(Math.abs(S.wind) / 0.2), 1, 3);
+  $('#hWind').textContent = lv ? `💨 ${S.wind > 0 ? '→' : '←'}`.concat(' ', (S.wind > 0 ? '→' : '←').repeat(lv - 1), `　風 ${lv} 級`) : '🍃 無風';
+}
+function buildArrowDots() {
+  const h = $('#hArrows'); h.innerHTML = ''; for (let i = 0; i < (S.perRound || TU.arrows); i++) h.appendChild(document.createElement('i'));
+  paintDots();
+}
+function paintDots() {
+  if (MP.on && MP.st && MP.st.units) return mpPaintDots();
+  [...$('#hArrows').children].forEach((el, i) => { const r = (S.hist[S.round] || [])[i]; el.className = r ? r.kind === 'ear' ? 'ear' : r.kind === 'in' ? 'in' : 'miss' : (i === S.n && S.phase !== 'result' ? 'cur' : ''); });
+  $('#hScore').textContent = `${fmt1(S.score)} 分`;
+}
+
+/* ——— 發射：仰角 e、力道 p、左右 a（都是 0～1，左右是 -1～1）算出初速 ——— */
+const HAND_X = 0.16;   // 右手拿矢，不擋住壺
+const handPos = () => new THREE.Vector3(HAND_X, TU.handY, R().D);
+const thetaOf = (e) => (TU.thMin + (TU.thMax - TU.thMin) * e) * Math.PI / 180;
+const xOf = (p) => TU.xMin + (TU.xMax - TU.xMin) * p;   // 力道 p → 落點距離（等距）
+const speedOf = (p, th) => { const dy = TU.handY - mouthW(), X = xOf(p); return Math.sqrt(Math.max(0.01, TU.g * X * X / (2 * Math.cos(th) ** 2 * (dy + X * Math.tan(th))))); };   // 仰角 th 要把矢送到距離 X 所需的出手速度
+const mouthW = () => (R().sway ? 0.14 : 0.12) + TU.mouthY;                 // 壺口平面離地高度（壺放在底座上）
+const psiOf = (a) => Math.atan2(a * TU.lat - HAND_X, R().D);              // 左右＝瞄準線在壺的位置偏幾公尺
+function landing(th, v) {   // 矢飛回壺口平面時：水平飛了多遠 X、花了多久 t（不含風）
+  const dy = TU.handY - mouthW(), vy = v * Math.sin(th), t = (vy + Math.sqrt(vy * vy + 2 * TU.g * dy)) / TU.g;
+  return { X: v * Math.cos(th) * t, t };
+}
+function pFor(th, X) { return (X - TU.xMin) / (TU.xMax - TU.xMin); }   // 仰角無關：力道＝距離在「近處～最遠處」之間的位置（0～1，可能超出範圍）
+const windDrift = (t) => R().windAssist ? 0.5 * S.wind * t * t : 0;   // 第二輪：把風造成的偏移畫進瞄準線與落點圈
+function launchVel(a, e, p) {
+  const th = thetaOf(e), v = speedOf(p, th), psi = psiOf(a);
+  return new THREE.Vector3(Math.sin(psi) * v * Math.cos(th), v * Math.sin(th), -Math.cos(psi) * v * Math.cos(th));
+}
+function throwArrow(a, e, p) {
+  const A = S.cur;
+  const vel = launchVel(a, e, p), dir = vel.clone().normalize();
+  const tlNow = timerFrac(); A.tl = S.preset && S.presetTl != null ? (S.presetTl + tlNow) / 2 : tlNow;   // 分工合投：兩位各自剩餘比例取平均
+  A.vel = vel; A.pos = handPos(); A.prev = A.pos.clone(); A.dir = dir.clone(); A.state = 'fly'; A.t = 0; A.launch = { a, e, p };
+  A.pot0 = potT; A.k = 0; A.acc = 0;
+  if (location.search.includes('predict')) A.pre = simulateThrow(vel, A.pos, A.pot0);   // 測試用：單人也先算一次，跟實際飛行比對
+  if (MP.on && MP.job) {   // 對戰：出手就把結果算完並送出去（本機的慢動作照常播，但別人不必等）
+    const pre = simulateThrow(vel, A.pos, A.pot0); A.pre = pre; A.evSent = true;
+    mpSend({ t: 'ev', u: MP.job.u, i: MP.job.i, kind: pre.kind, tl: A.tl || 0, rep: pre.rep });
+  }
+  S.phase = 'fly'; S.t0 = NOW; S.camMode = 'fly'; S.charging = false; trailReset();
+  hideAimUI(); setHint(''); SFX.throw(); SAVE.throws++;
+}
+
+/* ——— 物理：矢尖當質點，每 1/240 秒一步 ——— */
+const bodyProf = [[0, 0.1], [0.04, 0.17], [0.16, 0.215], [0.26, 0.22], [0.36, 0.19], [0.45, 0.135], [0.5, 0.13], [0.545, 0.16], [0.55, 0.17]];
+function bodyR(y) { for (let i = 1; i < bodyProf.length; i++) if (y <= bodyProf[i][0]) { const [y0, r0] = bodyProf[i - 1], [y1, r1] = bodyProf[i]; return r0 + (r1 - r0) * (y - y0) / (y1 - y0); } return 0.17; }
+const _v = new THREE.Vector3();
+function stepArrow(A, h) {
+  A.k = (A.k || 0) + 1; const pc = A.pot0 != null ? potAtT(A.pot0 + A.k * h) : potState(NOW), py = pc.y, mY = TU.mouthY;   // 矢的第 k 步用「出手時壺的時鐘 + k/240」，結果可以事先算出來
+  A.prev.copy(A.pos);
+  A.vel.x += S.wind * h; A.vel.y -= TU.g * h; A.pos.addScaledVector(A.vel, h);
+  const yy = A.pos.y - py, pyy = A.prev.y - py;
+  // 1) 穿過壺口平面（往下）
+  if (A.vel.y < 0 && pyy >= mY && yy < mY) {
+    const k = (pyy - mY) / (pyy - yy), cx = A.prev.x + (A.pos.x - A.prev.x) * k - pc.x, cz = A.prev.z + (A.pos.z - A.prev.z) * k, r = Math.hypot(cx, cz);
+    // 入口角度：拋得高、矢尖往下插得陡，有效的壺口比較大；低平快的矢要擦過壺口邊，有效範圍縮小
+    const steep = clamp((-A.vel.y / A.vel.length()) / 0.866, 0, 1), inR = TU.inR * (0.55 + 0.45 * steep), earR = TU.earR * (0.65 + 0.35 * steep);
+    if (r <= inR) return enter(A, 'in', cx, cz, 0);
+    for (const s of [-1, 1]) if (Math.hypot(cx - s * TU.earX, cz) <= earR) return enter(A, 'ear', cx - s * TU.earX, cz, s);
+    if (r <= TU.rimR) {   // 擦到壺口：往外彈開
+      A.rimmed = true; const nx = r > 1e-3 ? cx / r : 1, nz = r > 1e-3 ? cz / r : 0;
+      A.vel.set(A.vel.x * 0.25 + nx * 1.3, -A.vel.y * 0.3 + 0.5, A.vel.z * 0.25 + nz * 1.3);
+      A.pos.set(pc.x + cx, py + mY + 0.01, cz); sfxOnce(A, 'rim'); if (!A.dry) burst(A.pos, 0xffe9b0, 5, 0.5, 0.4);
+    }
+    return;
+  }
+  // 2) 撞壺身（壺口平面以下、壺以外）
+  if (yy < mY && yy > 0) {
+    const dx = A.pos.x - pc.x, dz = A.pos.z, r = Math.hypot(dx, dz), br = bodyR(yy) + 0.008;
+    if (r < br) {
+      const nx = r > 1e-3 ? dx / r : 1, nz = r > 1e-3 ? dz / r : 0, vr = A.vel.x * nx + A.vel.z * nz;
+      if (vr < 0) { A.vel.x -= 1.4 * vr * nx; A.vel.z -= 1.4 * vr * nz; A.vel.multiplyScalar(0.72); }
+      A.pos.x = pc.x + nx * br; A.pos.z = nz * br; A.bodyHit = true; sfxOnce(A, 'body');
+    }
+  }
+  // 3) 地面
+  if (A.pos.y <= 0.014) {
+    A.pos.y = 0.014; if (!A.touch) { A.touch = true; if (!A.sfxDone && !A.dry) SFX.ground(); }
+    if (Math.abs(A.vel.y) > 0.5) { A.vel.y = -A.vel.y * 0.28; A.vel.x *= 0.55; A.vel.z *= 0.55; } else { A.vel.y = 0; A.vel.x *= 0.9; A.vel.z *= 0.9; }
+    if (Math.hypot(A.vel.x, A.vel.z) < 0.12 && Math.abs(A.vel.y) < 0.2) { A.vel.set(0, 0, 0); A.state = 'rest'; }
+  }
+}
+/* 事先模擬：出手那一刻就把整條飛行算完（跟畫面上的飛行用同一個 stepArrow、同樣固定 1/240 步長），
+   得到結果（入壺／貫耳／沒進）與重播資料。對戰時立刻送出，觀戰的筆電不用等本機慢動作播完。 */
+function simulateThrow(vel, start, pot0) {
+  const A = { dry: true, pos: start.clone(), prev: start.clone(), vel: vel.clone(), state: 'fly', k: 0, pot0, rimmed: false }, h = 1 / 240, rec = [];
+  const push = (x, y, z, pt) => { const pc = potAtT(pt); rec.push(Math.round(x * 100), Math.round(y * 100), Math.round(z * 100), Math.round(pc.x * 100), Math.round(pc.y * 100)); };
+  const last = vel.clone().normalize(); let acc = 0; push(A.pos.x, A.pos.y, A.pos.z, pot0);
+  while (A.state === 'fly' && A.k * h <= 6) {
+    stepArrow(A, h); acc += h;
+    if (A.vel.lengthSq() > 0.01) last.copy(A.vel).normalize();
+    if (acc >= 0.05 - 1e-9 && A.state === 'fly') { acc = 0; if (rec.length < 290 * 5) push(A.pos.x, A.pos.y, A.pos.z, pot0 + A.k * h); }
+  }
+  let kind = 'miss', fin;
+  if (A.state === 'sink') {
+    kind = A.kind; const s = A.sink, tEnd = pot0 + A.k * h; push(A.pos.x, A.pos.y, A.pos.z, tEnd);
+    for (let u = 0.05; u < 0.38 + 1e-9; u += 0.05) { const e = 1 - (1 - Math.min(1, u / 0.38)) ** 3, pc = potAtT(tEnd), q = new THREE.Vector3().lerpVectors(s.from, s.to, e); if (rec.length < 290 * 5) rec.push(Math.round((pc.x + q.x) * 100), Math.round((pc.y + q.y) * 100), Math.round(q.z * 100), Math.round(pc.x * 100), Math.round(pc.y * 100)); }
+    fin = s.d1.clone();
+  } else {
+    push(A.pos.x, 0.014, A.pos.z, pot0 + A.k * h); fin = last.clone(); fin.y = 0; if (fin.lengthSq() < 0.01) fin.set(0, 0, -1); fin.normalize();
+  }
+  return { kind, bank: !!A.bank, rep: rec.length >= 10 ? [Math.round(fin.x * 1000), Math.round(fin.y * 1000), Math.round(fin.z * 1000), ...rec] : null };
+}
+function sfxOnce(A, k) { if (A.dry) return; const t = NOW; if (A.lastSfx && t - A.lastSfx < 160) return; A.lastSfx = t; SFX[k](); }
+function enter(A, kind, ox, oz, side) {
+  A.state = 'sink'; A.kind = A.rimmed && kind === 'in' ? 'in' : kind; A.bank = A.rimmed; A.sfxDone = true;
+  const dir = A.vel.clone().normalize();
+  A.sink = { t: 0, from: new THREE.Vector3(ox, TU.mouthY, oz), d0: dir };
+  if (kind === 'in') {
+    const lx = clamp(ox, -0.085, 0.085), lz = clamp(oz, -0.085, 0.085);
+    A.sink.to = new THREE.Vector3(lx, 0.1, lz); A.sink.d1 = new THREE.Vector3(lx * 1.7, -1, lz * 1.7).normalize();   // 矢尖朝下，矢尾朝上、微微靠向壺心
+  } else {
+    const ex = side * TU.earX; A.sink.from.x += ex; A.sink.to = new THREE.Vector3(ex + ox * 0.3, 0.17, oz * 0.3); A.sink.d1 = new THREE.Vector3(ox * 1.2, -1, oz * 1.2).normalize();
+  }
+  A.sink.to0 = A.sink.to;
+  if (A.dry) return;   // 事先模擬：只要結果，不做音效、特效、掛箭
+  potGroup.add(A.mesh);
+  if (kind === 'ear') { SFX.ear(); burst(new THREE.Vector3(potGroup.position.x + A.sink.from.x, potGroup.position.y + TU.mouthY, A.sink.from.z), 0xffd45a, 22, 0.9); ripple(new THREE.Vector3(potGroup.position.x + side * TU.earX, potGroup.position.y + TU.mouthY, 0), 0xffd45a); }
+  else { SFX.in(); burst(new THREE.Vector3(potGroup.position.x + ox, potGroup.position.y + TU.mouthY, oz), 0xffffff, 14, 0.7); ripple(new THREE.Vector3(potGroup.position.x, potGroup.position.y + TU.mouthY, 0), 0xffffff); }
+}
+const _d = new THREE.Vector3(), _t = new THREE.Vector3();
+function updateArrow(A, dt) {
+  if (A.state === 'fly') {
+    A.t += dt; A.acc = (A.acc || 0) + Math.min(dt, 0.05); const h = 1 / 240;
+    while (A.acc >= h && A.state === 'fly') { stepArrow(A, h); A.acc -= h; }   // 永遠用固定步長：跟 simulateThrow 逐步一模一樣，結果才會相同
+    if (A.state === 'sink') return;   // 這一幀剛入壺：矢已經掛到壺上，下一幀由入壺動畫接手
+    if (A.touch) { _d.set(A.vel.x, 0, A.vel.z); if (_d.lengthSq() > 0.0004) A.dir.lerp(_d.normalize(), 0.2); else A.dir.y *= 0.8; A.dir.normalize(); }
+    else if (A.vel.lengthSq() > 0.01) A.dir.copy(A.vel).normalize();
+    poseArrow(A.mesh, A.pos, A.dir); trailPush(A.pos, dt); recPush(A, dt, A.pos);
+    if ((A.k || 0) * h > 6 || A.state === 'rest') { A.state = 'rest'; }
+    if (A.state === 'rest') { A.dir.y = 0; if (A.dir.lengthSq() < 0.01) A.dir.set(0, 0, -1); A.dir.normalize(); A.pos.y = 0.014; poseArrow(A.mesh, A.pos, A.dir); finishArrow(A); }
+  } else if (A.state === 'sink') {
+    const s = A.sink; s.t += dt; const u = clamp(s.t / 0.38, 0, 1), e = 1 - (1 - u) ** 3;
+    _t.lerpVectors(s.from, s.to, e); _d.lerpVectors(s.d0, s.d1, e).normalize();
+    A.mesh.quaternion.setFromUnitVectors(Y_AXIS, _d); A.mesh.position.copy(_t).addScaledVector(_d, -TU.arrowL / 2);
+    recPush(A, dt, _tw.set(potGroup.position.x + _t.x, potGroup.position.y + _t.y, _t.z));
+    if (u >= 1) { A.state = 'done'; finishArrow(A); }
+  }
+}
+
+/* ——— 結果判定 ——— */
+function finishArrow(A) {
+  if (A.finished) return; A.finished = true; recFinal(A);
+  let kind = A.kind, pts = 0, cap;
+  if (A.pre && (A.pre.kind !== (kind === 'ear' || kind === 'in' ? kind : 'miss'))) console.warn('PREDICT-MISMATCH', A.pre.kind, kind);
+  if (kind === 'ear') { pts = 3; cap = ['貫耳', pick(QUOTES.ear)]; S.ears++; SAVE.ears++; }
+  else if (kind === 'in') { pts = 2; cap = [A.bank ? '彈進' : '入壺', pick(A.bank ? QUOTES.bank : QUOTES.in)]; S.ins++; SAVE.ins++; }
+  else {
+    kind = 'miss'; const pc = potState(NOW), dx = A.pos.x - pc.x, dz = A.pos.z;
+    if (A.rimmed) cap = ['擦邊', pick(QUOTES.rim)];
+    else if (A.bodyHit) cap = ['壺身', pick(QUOTES.body)];
+    else if (Math.abs(dz) >= Math.abs(dx)) cap = dz > 0 ? ['太近', pick(QUOTES.short)] : ['太遠', pick(QUOTES.long)];
+    else cap = dx > 0 ? ['偏右', pick(QUOTES.right)] : ['偏左', pick(QUOTES.left)];
+  }
+  const b10 = pts > 0 ? Math.round((A.tl || 0) * 5) : 0;   // 時間加成（十分之一分）：只有投進才有，最多 0.5
+  S.score = round1(S.score + pts + b10 / 10); S.rScore = round1(S.rScore + pts + b10 / 10); (S.hist[S.round] = S.hist[S.round] || []).push({ kind, pts, b: b10 });
+  S.phase = 'result'; S.t0 = NOW; S.camMode = 'close'; paintDots(); showCap(cap[0] + (pts ? `　+${fmt1(pts + b10 / 10)}` : ''), cap[1] + (b10 ? `　⏱ 時間加成 +${(b10 / 10).toFixed(1)}` : '')); setHint(''); guestReact(kind); buzz(kind === 'ear' ? [30, 40, 30] : kind === 'in' ? 35 : 15);
+  save();
+  if (MP.on) mpArrowDone(A, kind, pts); else setTimeout(nextArrow, 1900);
+}
+function nextArrow() {
+  if (S.phase !== 'result') return;
+  S.n++;
+  if (S.n >= TU.arrows) return roundEnd();
+  startAim();
+}
+
+/* =========================================================
+   瞄準：三個控制——仰角（上下）、力道、左右
+   點三下版：依序鎖定 仰角 → 力道 → 左右（左右放最後，風的偏移才算得準），最後一下放箭
+   體感版：轉手機＝左右、上下抬＝仰角（隨時調整）；按住「蓄力」讓力道來回，落點圈對準壺就放開
+   ========================================================= */
+const gH = $('#gH'), gE = $('#gE'), gP = $('#gP'), GAUGES = [gH, gE, gP];
+/* —— 觸控瞄準：按住畫面拖曳「落點」，放開放箭；仰角固定——
+   落點（左右＋遠近）由伺服器同一套物理反推成左右與力道；手指越穩落點圈晃得越小（手抖），拖到底部「取消區」放開＝取消 */
+const TOUCH = { active: false, id: null, x: 0, y: 0, px: 0, py: 0, lt: 0, steady: 0, t0: 0, ph: 0, aim: null, calm: false, tx: null, tz: null };   // tx、tz：落點圈目前在地面的位置（世界座標，壺在原點），每一矢沿用上一矢的位置
+const _rc = new THREE.Raycaster(), TOUCH_OFFSET = 64, WOBBLE = [[0.10, 0.015], [0.15, 0.02], [0.18, 0.03]];   // 每輪手抖的最大／最小幅度（公尺）
+function solveAim(tx, tz, e, lockJob, preset) {   // 落點 (tx, tz) → 左右 a、力道 p（仰角 e 已定）；第二輪把風的偏移也算進去
+  const th = thetaOf(e), hand = handPos(), D = R().D, sinPsi = (X, dr) => clamp((tx - dr - hand.x) / X, -0.95, 0.95);
+  let p, L, dr = 0, a;
+  if (preset) {   // 分工合投的放箭者：只管左右，仰角與力道已經定好
+    p = S.lockP; L = landing(th, speedOf(p, th)); dr = windDrift(L.t); a = (D * Math.tan(Math.asin(sinPsi(L.X, dr))) + HAND_X) / TU.lat;
+  } else if (lockJob) {   // 分工合投的定參數者：只管遠近（力道），左右交給隊友
+    p = clamp(pFor(th, (hand.z - tz) / Math.cos(psiOf(0))), 0, 1); a = 0;
+  } else {
+    let X = Math.hypot(tx - hand.x, hand.z - tz); p = clamp(pFor(th, X), 0, 1); L = landing(th, speedOf(p, th)); dr = windDrift(L.t);
+    for (let k = 0; k < 2; k++) { X = Math.hypot(tx - dr - hand.x, hand.z - tz); p = clamp(pFor(th, X), 0, 1); L = landing(th, speedOf(p, th)); dr = windDrift(L.t); }
+    a = (D * Math.tan(Math.asin(sinPsi(L.X, dr))) + HAND_X) / TU.lat;
+  }
+  return { a, e, p, lock: lockJob };
+}
+/* 觸控＝相對拖曳（像觸控板）：落點圈一直顯示在上次的位置，手指放哪裡都行，一動圈就跟著動；
+   慢拖精細、快拖走遠。不是把手指位置直接投影到地面：畫面下半部對應的地面比最近能投到的距離還近，手指在那裡怎麼動圈都被鎖住，要推到上半部才開始動 */
+/* 每一矢的起點：落點圈放在離壺 0.7～1.1 公尺遠的隨機位置（不是上一矢的位置，更不在壺口），玩家一定要自己把圈拖到壺上 */
+function touchStart() {
+  const D = R().D, zHi = D - TU.xMin, zLo = D - TU.xMax; let tx = 0, tz = 0;
+  for (let k = 0; k < 20; k++) {
+    const a = Math.random() * Math.PI * 2, r = 0.7 + Math.random() * 0.4; tx = clamp(Math.sin(a) * r, -1.2, 1.2); tz = clamp(Math.cos(a) * r, zLo, zHi);
+    if (Math.hypot(tx, tz) >= 0.6) break;
+  }
+  TOUCH.tx = tx; TOUCH.tz = tz;
+}
+function touchAim(now) {
+  const lockJob = !!(MP.on && MP.job && MP.job.kind === 'lock'), preset = S.preset, e = preset ? S.lockE : S.eTouch, hand = handPos(), th = thetaOf(e);
+  if (TOUCH.tx == null) touchStart();
+  const zHi = hand.z - TU.xMin, zLo = hand.z - TU.xMax;   // 這個仰角能投到的最近、最遠位置：圈不能超出，免得手指在範圍外白拖
+  let wx = 0, wz = 0;
+  if (TOUCH.active) {
+    const dt = Math.min(0.1, Math.max(0.001, (now - (TOUCH.lt || now)) / 1000)); TOUCH.lt = now;
+    const dx = TOUCH.x - TOUCH.px, dy = TOUCH.y - TOUCH.py, sp = Math.hypot(dx, dy) / dt; TOUCH.px = TOUCH.x; TOUCH.py = TOUCH.y;
+    const g = 3.0 / (0.55 * innerHeight) * clamp(0.45 + sp / 500, 0.45, 1.25);   // 公尺／像素：慢拖精細、快拖走遠
+    if (!lockJob) TOUCH.tx = clamp(TOUCH.tx + dx * g, -1.2, 1.2);
+    if (!preset) TOUCH.tz = clamp(TOUCH.tz + dy * g, zLo, zHi);   // 手指往上（dy<0）→ 更遠
+    TOUCH.steady = sp < 40 ? TOUCH.steady + dt : Math.max(0, TOUCH.steady - dt * 3);   // 手指停著越久越穩
+    const [Amax, Amin] = WOBBLE[Math.min(S.round, 2)], A = Amin + (Amax - Amin) * Math.exp(-TOUCH.steady / 0.8), s = now / 1000, ph = TOUCH.ph;
+    wx = A * (0.65 * Math.sin(s * 2.3 + ph) + 0.35 * Math.sin(s * 5.1 + ph * 1.7)); wz = A * (0.65 * Math.sin(s * 1.9 + ph * 2.1) + 0.35 * Math.sin(s * 4.3 + ph * 0.6));
+    TOUCH.calm = TOUCH.steady > 1.0;
+  }
+  TOUCH.tz = clamp(TOUCH.tz, zLo, zHi);
+  const r = solveAim(TOUCH.tx + wx, TOUCH.tz + wz, e, lockJob, preset); TOUCH.aim = r;
+  return { ...r, active: true, lock: lockJob };
+}
+/* —— 體感瞄準：手機姿勢 → 落點 ——
+   左右：往左轉身或往左傾（像方向盤），落點往左；遠近：手機越直立落點越近、越往前平躺越遠（用絕對傾斜角，不受「心定」影響）；仰角固定。
+   每一矢「心定」時，落點圈的左右會先偏離壺 0.4～0.7 公尺（SENS.bx，隨機左或右），玩家得轉動手機把圈拉回壺上，不是一心定就對準 */
+function motionSolve(smp, e, lockJob, preset) {
+  const b = SENS.base, hand = handPos(), flip = SAVE.flipX ? -1 : 1;
+  const ax = clamp((wrap(smp.yaw - b.yaw) / TU.yawRange + wrap(smp.roll - b.roll) / TU.rollRange) * flip, -1, 1);
+  const d = clamp((-smp.pitch - TU.tiltNear) / (TU.tiltFar - TU.tiltNear), 0, 1);
+  return solveAim(ax * TU.lat + (SENS.bx || 0), hand.z - (TU.distNear + (TU.distFar - TU.distNear) * d), e, lockJob, preset);
+}
+function motionAim() {
+  const lockJob = !!(MP.on && MP.job && MP.job.kind === 'lock'), preset = S.preset, e = preset ? S.lockE : S.eTouch;
+  if (!SENS.calibOK || !SENS.last) { SENS.aim = null; return { a: 0, e, p: preset ? S.lockP : 0.5, active: false, lock: lockJob }; }
+  const r = motionSolve(SENS.last, e, lockJob, preset); SENS.aim = r; return { ...r, active: true };
+}
+addEventListener('pointerdown', (e) => {
+  if (S.phase !== 'aimT' || TOUCH.active || e.target.closest('button,a,.card,#gE')) return;
+  audioInit(); Object.assign(TOUCH, { active: true, id: e.pointerId, x: e.clientX, y: e.clientY, px: e.clientX, py: e.clientY, lt: 0, steady: 0, t0: performance.now(), ph: Math.random() * 6.283 }); SFX.lock();
+});
+addEventListener('pointermove', (e) => { if (TOUCH.active && e.pointerId === TOUCH.id) { TOUCH.x = e.clientX; TOUCH.y = e.clientY; } });
+function touchEnd(e) {
+  if (!TOUCH.active || e.pointerId !== TOUCH.id) return; TOUCH.active = false; if (S.phase !== 'aimT') return;
+  if (TOUCH.y > innerHeight * 0.92) return toast('取消了，重新瞄準');
+  if (performance.now() - TOUCH.t0 < 180 || !TOUCH.aim) return toast('按住畫面並拖曳落點，放開才投');
+  const { a, e: ee, p } = TOUCH.aim;
+  if (MP.on && MP.job && MP.job.kind === 'lock') return mpSendLock(ee, p);   // 分工合投：交給隊友
+  throwArrow(a, ee, p);
+}
+addEventListener('pointerup', touchEnd); addEventListener('pointercancel', touchEnd);
+const setE = (ev) => { const r = gE.getBoundingClientRect(); S.eTouch = clamp(1 - (ev.clientY - r.top) / r.height, 0, 1); };
+gE.addEventListener('pointerdown', (ev) => { if ((S.phase !== 'aimT' && S.phase !== 'aim') || S.preset) return; ev.stopPropagation(); try { gE.setPointerCapture(ev.pointerId); } catch (_) {} gE._drag = true; setE(ev); });
+gE.addEventListener('pointermove', (ev) => { if (gE._drag) setE(ev); });
+['pointerup', 'pointercancel'].forEach((n) => gE.addEventListener(n, () => { gE._drag = false; }));
+function setHint(t) { $('#hint').hidden = !t; $('#hintTxt').textContent = t || ''; }
+function hideAimUI() { timerReset(); TOUCH.active = false; $('#tcancel').hidden = true; gE.classList.remove('live'); aimLine.visible = ring.visible = dash.visible = depthBar.visible = false; GAUGES.forEach((g) => { g.hidden = true; }); $('#calib').hidden = true; $('#btnThrow').hidden = true; }
+function zoneSet(g, a, b) { const z = g.querySelector('.zone'); z.style.display = 'block'; if (g === gH) { z.style.left = a + '%'; z.style.width = (b - a) + '%'; } else { z.style.bottom = a + '%'; z.style.height = (b - a) + '%'; } }
+const gMark = (g, v) => { const m = g.querySelector('.mk'); if (g === gH) m.style.left = (v + 1) * 50 + '%'; else m.style.bottom = v * 100 + '%'; };
+const gShow = (g, mk) => { g.querySelector('.mk').style.display = mk ? 'block' : 'none'; };
+const gLock = (g, v) => { const l = g.querySelector('.lk'); l.style.display = 'block'; if (g === gH) l.style.left = (v + 1) * 50 + '%'; else l.style.bottom = v * 100 + '%'; gShow(g, false); g.classList.add('dim'); };
+const gActive = (g, on) => g.classList.toggle('dim', !on);
+function startAim(job) {
+  rollWind(); S.cur = { mesh: makeArrow(), state: 'hand', pos: new THREE.Vector3(), rimmed: false, bodyHit: false, touch: false, finished: false };
+  S.arrows.push(S.cur); S.camMode = 'aim'; S.t0 = NOW; S.tapLock = NOW + 260;
+  S.lockE = S.lockP = S.lockH = null; S.ph = Math.random(); S.ph2 = Math.random(); S.ph3 = Math.random(); S.charging = false; S.aP = 0.5; S.preset = false; S.presetTl = null; TOUCH.active = false;
+  GAUGES.forEach((g) => { g.hidden = false; g.querySelector('.lk').style.display = 'none'; g.querySelector('.zone').style.display = 'none'; gShow(g, true); });
+  paintDots(); $('#btnThrow').textContent = '🏹 放箭'; timerReset(); gE.classList.remove('live');
+  if (job && job.kind === 'throw') {   // 分工合投：隊友已經定好仰角與力道，我只管左右並放箭
+    S.preset = true; S.presetTl = job.tl == null ? null : job.tl; S.lockE = S.aE = job.e; S.lockP = S.aP = job.p; gLock(gE, job.e); gLock(gP, job.p); gActive(gE, false); gActive(gP, false); gActive(gH, true); gShow(gH, true);
+    if (S.mode === 'tap') {
+      S.phase = 'aimH'; setHint('③　隊友定好了！點一下，鎖定「左右」，放箭'); if (S.round === 0) zoneSet(gH, 50 - TU.tol / TU.lat * 50, 50 + TU.tol / TU.lat * 50); timerResume();
+    } else if (S.mode === 'touch') {
+      S.phase = 'aimT'; gH.hidden = true; setHint('隊友定好了！左右拖曳，放開放箭'); timerResume();
+    } else {
+      S.phase = 'aim'; SENS.calibOK = false; SENS.anchor = null; SENS.bx = (Math.random() < 0.5 ? -1 : 1) * (0.4 + Math.random() * 0.3);   // 每一矢都重新「心定」：投完手機姿勢早就變了，不能拿舊的正前方當基準
+      gShow(gE, false); gShow(gP, false); $('#calib').hidden = false; $('#btnThrow').hidden = false; $('#btnThrow').textContent = '🏹 放箭'; updateCalibUI(); setHint(SENS.calibOK ? '轉動手機瞄準左右，按「放箭」（或往前一送）' : ''); if (SENS.calibOK) timerResume();
+    }
+    return;
+  }
+  const lockJob = !!(job && job.kind === 'lock');
+  if (S.mode === 'tap') {
+    S.phase = 'aimE'; gActive(gE, true); gActive(gP, false); gActive(gH, false); gShow(gP, false); gShow(gH, false);
+    setHint(lockJob ? '①　點一下，鎖定「仰角」（左右交給隊友）' : '①　點一下，鎖定「仰角」（上下）'); timerResume();
+  } else if (S.mode === 'touch') {
+    S.phase = 'aimT'; S.eTouch = 0.5; touchStart(); gE.classList.remove('live'); gE.hidden = true; gActive(gP, false); gH.hidden = true; gShow(gP, true);   // 觸控：仰角固定（實測仰角只讓箭弧高低不同、入壺判定幾乎沒差，滑桿沒意義，拿掉）；左側力道只顯示
+    setHint(lockJob ? '上下拖曳移動落點圈，放開交給隊友' : '拖曳移動落點圈，放開放箭'); timerResume();
+  } else {
+    S.phase = 'aim'; SENS.calibOK = false; SENS.anchor = null; SENS.bx = (Math.random() < 0.5 ? -1 : 1) * (0.4 + Math.random() * 0.3);   // 每一矢都重新「心定」：投完手機姿勢早就變了，不能拿舊的正前方當基準
+    gActive(gE, true); gE.classList.add('live'); gShow(gH, false); gActive(gP, false); gShow(gP, true);   // 右側滑桿調仰角；左側力道只顯示（由落點自動算）
+    $('#calib').hidden = false; $('#btnThrow').hidden = false; updateCalibUI(); setHint(SENS.calibOK ? CHARGE_HINT : ''); if (SENS.calibOK) timerResume();   // 體感：校準完（心定）才開始倒數
+  }
+}
+const CHARGE_HINT = '落點圈對準壺，按「放箭」';
+function lockE() {
+  if (S.phase !== 'aimE' || NOW < S.tapLock) return; S.lockE = S.aE; SFX.lock(); gLock(gE, S.lockE);
+  S.phase = 'aimP'; S.tapLock = NOW + 220; S.t0 = NOW; gActive(gP, true); gShow(gP, true); setHint('②　再點一下，鎖定「力道」');
+  if (S.round === 0) { const th = thetaOf(S.lockE), X = R().D / Math.cos(psiOf(0)); zoneSet(gP, clamp(pFor(th, X - TU.tol) * 100, 0, 100), clamp(pFor(th, X + TU.tol) * 100, 0, 100)); }
+}
+function lockP() {
+  if (S.phase !== 'aimP' || NOW < S.tapLock) return; S.lockP = S.aP; SFX.lock(); gLock(gP, S.lockP);
+  if (MP.on && MP.job && MP.job.kind === 'lock') return mpSendLock(S.lockE, S.lockP);   // 分工合投：把仰角與力道交給隊友
+  S.phase = 'aimH'; S.tapLock = NOW + 220; S.t0 = NOW; gActive(gH, true); gShow(gH, true); setHint('③　最後點一下，鎖定「左右」，放箭！');
+  if (S.round === 0) zoneSet(gH, 50 - TU.tol / TU.lat * 50, 50 + TU.tol / TU.lat * 50);
+}
+function lockH() {
+  if (S.phase !== 'aimH' || NOW < S.tapLock) return; S.lockH = S.aH; SFX.lock(); gLock(gH, S.lockH);
+  throwArrow(S.lockH, S.lockE, S.lockP);
+}
+function tap() { audioInit(); if (S.phase === 'aimE') lockE(); else if (S.phase === 'aimP') lockP(); else if (S.phase === 'aimH') lockH(); }
+addEventListener('pointerdown', (e) => { if (e.target.closest('button,a,.card')) return; tap(); });
+addEventListener('keydown', (e) => {
+  if (e.code !== 'Space' && e.code !== 'Enter') return; e.preventDefault(); if (e.repeat || !$('#scrTitle').hidden) return;
+  if (S.phase === 'aim') startCharge(); else tap();
+});
+addEventListener('keyup', (e) => { if ((e.code === 'Space' || e.code === 'Enter') && S.charging) releaseCharge(); });
+
+/* —— 體感：按住蓄力、放開（或往前一送）放箭 —— */
+function sampleAt(t) { let best = null; for (const sm of SENS.buf) if (!best || Math.abs(sm.t - t) < Math.abs(best.t - t)) best = sm; return best || SENS.last; }
+function motionRelease() {   // 放箭：取「按下之前」那一刻的姿勢（按按鈕、往前一送都會晃到手機）
+  if (S.phase !== 'aim') return; if (!SENS.calibOK) return toast('先舉起手機、靜止一下');
+  const now = performance.now(); if (now - S.t0 < 600 || now - (SENS.lastThrow || 0) < 800) return; SENS.lastThrow = now;
+  const lockJob = !!(MP.on && MP.job && MP.job.kind === 'lock'), preset = S.preset, r = motionSolve(sampleAt(now - TU.aimLag), preset ? S.lockE : S.eTouch, lockJob, preset);
+  if (lockJob) return mpSendLock(r.e, r.p);   // 分工合投：交給隊友放箭
+  throwArrow(r.a, r.e, r.p);
+}
+function startCharge() { motionRelease(); }
+function releaseCharge() {}
+const bT = $('#btnThrow');
+bT.addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); audioInit(); try { bT.setPointerCapture(e.pointerId); } catch (_) {} startCharge(); });
+['pointerup', 'pointercancel'].forEach((ev) => bT.addEventListener(ev, (e) => { e.stopPropagation(); }));
+
+/* —— 每幀更新瞄準物件 —— */
+function updateAim(now) {
+  const ph = S.phase; if (ph !== 'aimE' && ph !== 'aimP' && ph !== 'aimH' && ph !== 'aim' && ph !== 'aimT') return;
+  const T = R().T, motion = S.mode === 'motion';
+  if (!motion) {
+    if (ph === 'aimE') S.aE = tri((now - S.t0) / 1000 / T + S.ph);
+    if (ph === 'aimP') S.aP = tri((now - S.t0) / 1000 / (T * 1.4) + S.ph2);   // 力道條掃得比較慢，剛好區比較好點
+    if (ph === 'aimH') S.aH = tri((now - S.t0) / 1000 / T + S.ph3) * 2 - 1;
+  }
+  const tch = ph === 'aimT' ? touchAim(now) : ph === 'aim' ? motionAim() : null;
+  const aH = tch ? tch.a : ph === 'aimE' || ph === 'aimP' ? 0 : S.aH, aE = tch ? tch.e : ph === 'aimP' || ph === 'aimH' || S.preset ? S.lockE : S.aE;
+  const pKnown = tch ? tch.active || S.preset : ph === 'aimP' || ph === 'aimH' || S.preset || (motion && S.charging), aP = tch ? tch.p : ph === 'aimH' || S.preset ? S.lockP : S.aP;
+  const D = R().D, hand = handPos(), pc = potState(now), py = pc.y + TU.mouthY, th = thetaOf(aE), psi = psiOf(aH), xT = aH * TU.lat;
+  const pUse = pKnown ? aP : clamp(pFor(th, D / Math.cos(psi)), 0, 1);   // 還沒定力道：先用「剛好到壺」的力道估
+  const v = speedOf(pUse, th), L = landing(th, v), dr = windDrift(L.t);
+  const rx = hand.x + L.X * Math.sin(psi) + dr, rz = hand.z - L.X * Math.cos(psi);
+  const green = 0x7dff9c, yellow = 0xffd45a;
+  // 瞄準線：壺的位置（z=0 平面）
+  const showLine = ph === 'aimH', lineX = xT + dr;
+  aimLine.visible = showLine; aimLine.position.set(lineX, 0.62, 0); aimLine.material.opacity = 0.85;
+  const okH = S.round === 0 && Math.abs(lineX - pc.x) <= TU.tol;   // 綠色提示只有第一輪
+  aimLine.material.color.set(okH ? green : yellow); aimGlow.material.color.set(okH ? green : yellow);
+  // 力道階段：橫條＝這個力道落在哪個遠近；左右定了之後：落點圈
+  const rz0 = hand.z - L.X * Math.cos(psiOf(0));
+  depthBar.visible = (!motion && ph === 'aimP') || !!(tch && tch.active && tch.lock); depthBar.position.set(pc.x, py + 0.004, rz0);
+  depthBar.material.color.set(S.round === 0 && Math.abs(rz0) <= TU.tol ? green : yellow);
+  ring.visible = (pKnown && ph === 'aimH') || !!(tch && tch.active && !tch.lock); ring.position.set(rx, py + 0.004, rz);
+  ring.material.color.set(S.round === 0 && Math.hypot(rx - pc.x, rz) <= TU.tol ? green : yellow);
+  ring.scale.setScalar(clamp(L.X / 1.1, 0.5, 3.0));   // 近處圈小、遠處圈大（投得越遠越不準）；對到壺時圈明顯比壺口大（壺口與兩耳整個套在圈裡，圈心對壺心才算對準；圈小的話一碰到壺口就誤以為瞄到了）
+  // 預測拋物線（虛線）：從手到落點，風影響已算進去（只有第二輪）
+  dash.visible = ph === 'aimH' || !!(tch && tch.active && !tch.lock);
+  if (dash.visible) {
+    const pos = dash.geometry.attributes.position, c = Math.cos(th), sn = Math.sin(th), sw = R().windAssist ? S.wind : 0;
+    for (let i = 0; i <= DASH_N; i++) { const t = L.t * i / DASH_N; pos.setXYZ(i, hand.x + v * c * Math.sin(psi) * t + 0.5 * sw * t * t, hand.y + v * sn * t - 0.5 * TU.g * t * t, hand.z - v * c * Math.cos(psi) * t); }
+    pos.needsUpdate = true; dash.computeLineDistances();
+  }
+  // 手上的矢：矢尖朝著瞄準方向
+  const a = S.cur; if (a && a.state === 'hand') { _d.set(Math.sin(psi) * Math.cos(th), Math.sin(th), -Math.cos(psi) * Math.cos(th)); a.dir = a.dir || new THREE.Vector3(); a.dir.copy(_d); poseArrow(a.mesh, hand, _d); }
+  // 量表標記
+  if (ph === 'aimE' || motion || ph === 'aimT') gMark(gE, aE);
+  if (ph === 'aimP' || (motion && S.charging) || (tch && tch.active)) gMark(gP, aP);
+  if (ph === 'aimT') { const c = $('#tcancel'); c.hidden = !TOUCH.active; c.classList.toggle('hot', TOUCH.active && TOUCH.y > innerHeight * 0.92); }
+  if (ph === 'aimH' || motion) gMark(gH, aH);
+}
+
+/* =========================================================
+   體感：背面對準壺，左右轉＝左右，上下抬＝仰角，按住蓄力、放開放箭
+   ========================================================= */
+const SENS = { on: false, listening: false, got: false, a: 0, e: 0.5, buf: [], base: null, anchor: null, since: 0, calibOK: false, lastThrow: 0, last: null };
+const wrap = (d) => ((d + 540) % 360) - 180;
+function onOrient(e) {
+  if (e.beta == null || e.gamma == null) return;
+  SENS.got = true;
+  const d = Math.PI / 180, al = (e.alpha || 0) * d, be = e.beta * d, ga = e.gamma * d;
+  // 手機「背面」朝向在世界座標的方向（避開上下抬到 90° 時 alpha／gamma 搶同一個軸的問題）
+  const wx = Math.sin(ga) * Math.cos(al) + Math.cos(ga) * Math.sin(be) * Math.sin(al);
+  const wy = Math.sin(ga) * Math.sin(al) - Math.cos(ga) * Math.sin(be) * Math.cos(al);
+  const wz = Math.cos(ga) * Math.cos(be);
+  const yaw = Math.atan2(-wx, -wy) / d, pitch = Math.asin(clamp(-wz, -1, 1)) / d;
+  // 左右傾斜角（像轉方向盤）：手機上緣相對於「世界的上」繞著瞄準軸轉了幾度；往左傾為負、往右傾為正
+  const ux = -Math.cos(be) * Math.sin(al), uy = Math.cos(be) * Math.cos(al), uz = Math.sin(be), fx = -wx, fy = -wy, fz = -wz;
+  let roll = 0; { const ax0 = -fz * fx, ay0 = -fz * fy, az0 = 1 - fz * fz, n = Math.hypot(ax0, ay0, az0);
+    if (n > 0.2) { const ax = ax0 / n, ay = ay0 / n, az = az0 / n, rx = fy * az - fz * ay, ry = fz * ax - fx * az, rz = fx * ay - fy * ax; roll = Math.atan2(ux * rx + uy * ry + uz * rz, ux * ax + uy * ay + uz * az) / d; } }
+  const t = performance.now(), s = { t, yaw, pitch, roll }; SENS.last = s; SENS.buf.push(s); while (SENS.buf.length > 50) SENS.buf.shift();
+  if (!SENS.on) return;
+  // 心定：連續穩住一段時間，就把此刻當作「對準壺」
+  if (!SENS.calibOK && S.phase === 'aim') {
+    const an = SENS.anchor;
+    if (!an || Math.abs(wrap(yaw - an.yaw)) > TU.steadyDeg || Math.abs(pitch - an.pitch) > TU.steadyDeg || Math.abs(wrap(roll - an.roll)) > TU.steadyDeg) { SENS.anchor = s; SENS.since = t; }
+    else if (t - SENS.since >= TU.steadyMs) { SENS.base = { yaw: an.yaw, pitch: an.pitch, roll: an.roll }; SENS.calibOK = true; SFX.ready(); if (S.n === 0) toast('心定了！手機越往前平躺，落點越遠'); if (S.phase === 'aim') { setHint(CHARGE_HINT); timerResume(); } }
+    if (S.phase === 'aim') updateCalibUI();
+  }
+  if (SENS.calibOK) { const r = aimFrom(s); SENS.a = r.a; SENS.e = r.e; }
+}
+function aimFrom(s) {   // 這一刻的手機姿勢 → 左右（-1～1）與仰角（0～1）
+  const b = SENS.base, x = (wrap(s.yaw - b.yaw) / TU.yawRange + wrap(s.roll - b.roll) / TU.rollRange) * (SAVE.flipX ? -1 : 1);
+  return { a: clamp(x, -1, 1), e: clamp(0.5 + (s.pitch - b.pitch) / (2 * TU.pitchRange), 0, 1) };
+}
+function onMotion(e) {   // 往前一送＝放箭
+  if (!SENS.on || S.phase !== 'aim' || !SENS.calibOK) return;
+  const ac = e.acceleration; let m = 0;
+  if (ac && ac.x != null) m = Math.hypot(ac.x, ac.y, ac.z);
+  else { const g = e.accelerationIncludingGravity; if (g && g.x != null) m = Math.abs(Math.hypot(g.x, g.y, g.z) - 9.81); }
+  if (m > TU.flick) motionRelease();
+}
+function aimAt(t) {   // 放箭「之前」那一刻的瞄準（往前一送本身會晃到手機）
+  let best = null; for (const s of SENS.buf) if (!best || Math.abs(s.t - t) < Math.abs(best.t - t)) best = s;
+  if (!best || !SENS.base) return { a: SENS.a, e: SENS.e };
+  return aimFrom(best);
+}
+$('#btnFlip').addEventListener('click', (e) => { e.stopPropagation(); SAVE.flipX = !SAVE.flipX; save(); toast(SAVE.flipX ? '已對調：現在手機往左，準星往右' : '已恢復：手機往左，準星往左'); });
+$('#btnCal').addEventListener('click', (e) => { e.stopPropagation(); SENS.calibOK = false; SENS.anchor = null; timerPause(); updateCalibUI(); setHint(''); });   // 重新校準時暫停倒數（不重置，避免用校準來洗時間）
+function updateCalibUI() {
+  const el = $('#calib'); el.classList.toggle('ok', SENS.calibOK);
+  const p = SENS.calibOK ? 100 : clamp((performance.now() - SENS.since) / TU.steadyMs * 100, 0, 100); $('#calRing').style.setProperty('--p', SENS.anchor ? p : 0);
+  $('#calTxt').textContent = SENS.calibOK ? '心定了' : '舉起手機，背面對準壺，靜止一下';
+}
+async function sensEnable() {
+  try { if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') { if ((await DeviceMotionEvent.requestPermission()) !== 'granted') return 'denied'; } } catch (e) { return 'denied'; }
+  try { if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') { if ((await DeviceOrientationEvent.requestPermission()) !== 'granted') return 'denied'; } } catch (e) {}
+  if (!SENS.listening) { SENS.listening = true; addEventListener('deviceorientation', onOrient); addEventListener('devicemotion', onMotion); }
+  SENS.got = false; for (let i = 0; i < 15 && !SENS.got; i++) await new Promise((r) => setTimeout(r, 100));
+  return SENS.got ? 'ok' : 'none';
+}
+
+/* =========================================================
+   說明字卡、輪次、結算
+   ========================================================= */
+let capT = 0;
+function showCap(small, text) {
+  const c = $('#cap'); $('#capTxt').innerHTML = `<small>${small}</small>${text}`; c.classList.remove('show'); void c.offsetWidth; c.classList.add('show');
+}
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(capT); capT = setTimeout(() => el.classList.remove('show'), 1800); }
+
+function showRoundIntro() {
+  const r = R(); S.phase = 'intro'; S.camMode = 'title';
+  $('#rTag').textContent = `第 ${S.round + 1} 輪・共 ${ROUNDS.length} 輪`; $('#rName').textContent = r.name; $('#rSub').textContent = r.sub;
+  $('#rTip').innerHTML = ((S.mode === 'touch' || S.mode === 'motion') && r.tipTouch ? r.tipTouch : r.tip) + (S.mode === 'touch' && S.round === 0 ? '<ul class="tl"><li><b>🖐️ 在畫面上拖曳</b>：落點圈跟著動（慢拖精細、快拖走遠），放開就放箭</li><li><b>⏱ 每矢 15 秒倒數</b>：越快投進，加成越多（最多 +0.5）</li><li><b>手指停得越穩</b>，圈晃得越小；拖到底部放開＝取消</li></ul>' : '') + (S.mode === 'motion' && S.round === 0 ? '<ul class="tl"><li><b>📱 手機直立拿在胸前、背面對準壺</b>，靜止一下＝「心定」（每一矢都要）</li><li><b>↕️ 越直立落點越近，越往前平躺越遠</b></li><li><b>↔️ 往左轉或往左傾，落點往左</b>；往右同理</li><li><b>右邊滑桿</b>調仰角（拋多高），用拇指調一次會記住</li><li>落點圈對準壺，按「放箭」（或往前一送）；左右相反就按「⇄ 左右反了？」</li></ul>' : '');
+  $('#scrRound').hidden = false; $('#hud').hidden = false; hideAimUI(); setHint('');
+}
+function roundEnd() {
+  S.phase = 'roundEnd'; SFX.chime(); S.camMode = 'title';
+  const last = S.round >= ROUNDS.length - 1;
+  if (last) return showFinal();
+  showCap(`第 ${S.round + 1} 輪完成`, `本輪 ${fmt1(S.rScore)} 分`);
+  setTimeout(() => { S.round++; setupRound(); showRoundIntro(); }, 2300);
+}
+function showFinal() {
+  S.phase = 'final'; hideAimUI(); setHint('');
+  const prevBest = SAVE.best; SAVE.plays++; SAVE.best = Math.max(SAVE.best, S.score); save();
+  const T = TITLES.find((x) => S.score >= x.min);
+  $('#fScore').textContent = fmt1(S.score); $('#fTitle').textContent = T.t; $('#fQuote').textContent = T.q;
+  $('#finCard').dataset.tier = String(TITLES.indexOf(T)); $('#fNew').hidden = !(SAVE.plays > 1 && S.score > prevBest && S.score > 0);
+  $('#fIn').textContent = S.ins; $('#fEar').textContent = S.ears; $('#fBest').textContent = fmt1(SAVE.best);
+  const RC = ['#e3a72f', '#2f7f78', '#3d5a80'], MAXR = 4 * 3.5;   // 每輪 4 矢，每矢最高 3 分＋0.5 加成
+  $('#fRounds').innerHTML = ROUNDS.map((r, i) => { const v = (S.hist[i] || []).reduce((a, b) => a + b.pts + (b.b || 0) / 10, 0); return `<div class="rbar" style="--c:${RC[i % 3]}"><span>${r.name}</span><span class="tr"><i data-w="${Math.min(100, Math.round(v / MAXR * 100))}"></i></span><em>${fmt1(v)}</em></div>`; }).join('');
+  requestAnimationFrame(() => requestAnimationFrame(() => document.querySelectorAll('#fRounds .tr i').forEach((el) => { el.style.width = el.dataset.w + '%'; })));
+  const text = `我在全真群島的投壺島投了 ${fmt1(S.score)} 分，得到稱號「${T.t}」！矢直在心，你也來試試 👉 ${SHARE_URL}`;
+  $('#btnShare').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(text);
+  $('#scrFinal').hidden = false; $('#hud').hidden = true;
+}
+function newGame() {
+  S.score = 0; S.ins = 0; S.ears = 0; S.hist = []; S.round = Math.max(0, Math.min(ROUNDS.length - 1, S.startRound || 0));
+  $('#scrFinal').hidden = true; $('#scrTitle').hidden = true; setupRound(); showRoundIntro();
+}
+$('#btnRoundGo').addEventListener('click', () => { audioInit(); $('#scrRound').hidden = true; S.camMode = 'aim'; startAim(); });
+$('#btnAgain').addEventListener('click', () => { audioInit(); newGame(); });
+const motionCapable = !!window.DeviceOrientationEvent && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
+if (!motionCapable) { $('#mswMotion').disabled = true; $('#motionNote').hidden = false; }
+// 操作方式滑動開關：點刻度、左右拖滑塊都可以；選擇記在這支手機上
+const MODES = ['tap', 'touch', 'motion'];
+const MSW_DESC = { tap: '經典三段式：依序點三下，定仰角 → 力道 → 左右，抓時機的節奏玩法', touch: '在畫面上拖曳移動落點圈，放開就放箭；手指越穩圈越不晃', motion: '傾斜手機瞄準：直立＝近、平躺＝遠，左右轉動對準壺，按「放箭」' };
+const MSW_NAME = { tap: '🎯 經典', touch: '🖐️ 觸控', motion: '📱 體感' };
+let pickMode = MODES.includes(SAVE.mode) && !(SAVE.mode === 'motion' && !motionCapable) ? SAVE.mode : 'tap';
+const syncMode = () => {
+  const sel = $('#modeSel'); sel.dataset.m = pickMode; sel.style.setProperty('--i', MODES.indexOf(pickMode));
+  sel.querySelectorAll('button').forEach((b) => { const on = b.dataset.m === pickMode; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+  $('#mswName').textContent = MSW_NAME[pickMode]; $('#mswDesc').innerHTML = nb(MSW_DESC[pickMode]);
+};
+const setPick = (m) => { if (m === 'motion' && !motionCapable) { syncMode(); return; } if (m === pickMode) { syncMode(); return; } pickMode = m; SAVE.mode = m; save(); syncMode(); try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} };
+{ const tr = $('#mswTrack'), sel = $('#modeSel'), th = $('#mswThumb'); let drag = null;
+  const idxAt = (x, r) => Math.max(0, Math.min(2, Math.floor((x - r.left - 4) / ((r.width - 8) / 3))));
+  tr.addEventListener('pointerdown', (e) => { drag = { r: tr.getBoundingClientRect(), x0: e.clientX, moved: false }; try { tr.setPointerCapture(e.pointerId); } catch (err) {} });
+  tr.addEventListener('pointermove', (e) => { if (!drag) return; if (Math.abs(e.clientX - drag.x0) > 6) drag.moved = true; if (!drag.moved) return; th.style.transition = 'none'; sel.style.setProperty('--i', Math.max(0, Math.min(2, (e.clientX - drag.r.left - 4) / ((drag.r.width - 8) / 3) - 0.5))); });
+  const end = (e, cancel) => { if (!drag) return; const d = drag; drag = null; th.style.transition = ''; if (cancel) { syncMode(); return; } setPick(MODES[idxAt(e.clientX, d.r)]); };
+  tr.addEventListener('pointerup', (e) => end(e)); tr.addEventListener('pointercancel', (e) => end(e, true));
+  tr.addEventListener('keydown', (e) => { const i = MODES.indexOf(pickMode); if (e.key === 'ArrowRight' || e.key === 'ArrowDown') setPick(MODES[Math.min(2, i + 1)]); else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') setPick(MODES[Math.max(0, i - 1)]); else return; e.preventDefault(); });
+  tr.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && e.detail === 0) setPick(b.dataset.m); });   // 鍵盤 Enter／空白鍵
+}
+syncMode();
+$('#btnStart').addEventListener('click', async () => {
+  audioInit(); const m = pickMode;
+  if (m === 'motion') {
+    const b = $('#btnStart'); b.disabled = true; const r = await sensEnable(); b.disabled = false;
+    if (r !== 'ok') { toast(r === 'denied' ? '沒有取得動作感測授權，改用「經典」或「觸控」吧' : '這個瀏覽器讀不到感測器，改用「經典」或「觸控」吧（LINE 內可改用手機瀏覽器開啟）'); return; }
+    S.mode = 'motion'; document.body.classList.add('motion'); SENS.on = true; SENS.calibOK = false; SENS.anchor = null;
+  } else { S.mode = m; document.body.classList.remove('motion'); }
+  SAVE.mode = m; save(); newGame();
+});
+function paintRec() { $('#rec').innerHTML = SAVE.plays ? nb(`你玩過 ${SAVE.plays} 場・最高 ${fmt1(SAVE.best)} 分・累計入壺 ${SAVE.ins}、貫耳 ${SAVE.ears}`) + `<span class="nb">（${lineName() ? '已綁定 LINE，換手機也在' : '只記在這支手機，登入 LINE 就能帶著走'}）</span>` : ''; }
+paintRec();
+
+/* =========================================================
+   多人對戰（房間伺服器見 touhu-worker/）
+   一對一或二對二；同場對投或輪流對投；二對二可以分工合投（隊友 A 定仰角與力道、隊友 B 定左右並放箭）
+   手機各自跑物理，只把「這一矢的結果＋軌跡」傳給對方，對方在自己的手機上用慢動作重播
+   ========================================================= */
+const MPQ = new URLSearchParams(location.search);
+const MP_API = (MPQ.get('mp') || 'https://touhu-room.yiguandao2027.workers.dev').replace(/\/+$/, '');
+const mpNeed = (r) => (r < 3 ? (r + 1) * 4 : 12 + (r - 2));    // 每個單位第 r 輪結束時，累計要投完幾矢（三輪之後是加賽，每次 1 矢）
+const mpStart = (r) => (r === 0 ? 0 : mpNeed(r - 1));
+function prng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const MP = { on: false, watch: false, ctl: false, ws: null, code: '', pid: '', hk: '', st: null, seed: 0, round: -1, job: null, rq: [], evs: {}, arrowIdx: 0, startAt: 0, started: false, ended: false, retries: 0, closing: false, revealKey: '', revealOpen: false, sentLock: '', lockMsg: null, ok: false, qrFor: '' };
+const REPLAY = { on: false, pot: { x: 0, y: 0.12 } };
+const TEAM = ['紅隊', '藍隊'], TCOL = ['#c23b2e', '#2f6fb5'], KIND_LABEL = { in: '入壺', ear: '貫耳', miss: '沒進', skip: '沒投' };
+const REP_RATE = 0.42;   // 重播：每秒播多少「模擬秒」（慢動作）
+const _tw = new THREE.Vector3();
+
+/* —— 記錄這一矢的軌跡（矢尖世界座標、壺的位置，單位公分），傳給對方重播 —— */
+function recPush(A, dt, p, force) {
+  if (!MP.on) return;
+  if (!A.rec) { A.rec = []; A.recAcc = 99; }
+  A.recAcc += dt; if (!force && (A.recAcc < 0.05 && A.rec.length)) return; if (A.rec.length >= 290 * 5) return; A.recAcc = 0;
+  const pc = potGroup.position; A.rec.push(Math.round(p.x * 100), Math.round(p.y * 100), Math.round(p.z * 100), Math.round(pc.x * 100), Math.round(pc.y * 100));
+}
+function recFinal(A) {
+  if (!MP.on) return; const pc = potGroup.position;
+  recPush(A, 1, A.state === 'done' && A.sink ? _tw.set(pc.x + A.sink.to.x, pc.y + A.sink.to.y, A.sink.to.z) : A.pos, true);
+}
+function buildRep(A) {
+  if (!A.rec || A.rec.length < 10) return null; _d.set(0, 1, 0).applyQuaternion(A.mesh.quaternion);   // 矢尖最後朝向
+  return [Math.round(_d.x * 1000), Math.round(_d.y * 1000), Math.round(_d.z * 1000), ...A.rec];
+}
+
+/* —— 連線 —— */
+const mpSend = (o) => { if (MP.ws && MP.ws.readyState === 1) MP.ws.send(JSON.stringify(o)); };
+/* —— LINE 登入（群島共用的帳號伺服器，見 account-worker/；同網域的 islands-account 存登入憑證與 LINE 名字）—— */
+let ACCT = null;   // account.js 回報的狀態：{acct, busy, msg}
+const CAME_FROM_LOGIN = /(^#|&)acct=/.test(window.__acctHash || ''); let autoJoined = false;   // 剛從 LINE 登入回來？（網址的憑證頁面最前面就收起來了）
+function acctPaint() {
+  const nm = lineName(), msg = ACCT && ACCT.msg ? `<div class="am">${esc(ACCT.msg)}</div>` : '';
+  $('#acctRow').innerHTML = nm
+    ? `<span class="nb">☁️ 已用 LINE 登入：</span><b>${esc(nm)}</b>・${nb('最高分與紀錄會跟著你')} <button class="linkbtn inl" data-act="logout" type="button">登出</button>${msg}`
+    : `<div class="am">${nb('不用登入就能玩；登入可讓紀錄換手機也在。')}</div><button class="linkbtn" data-act="login" type="button">👤 用 LINE 登入（選用）</button>${msg}`;
+  $('#mpLoginBox').innerHTML = nm
+    ? `<div class="acct left">✅ 已用 LINE 登入：<b>${esc(nm)}</b>　<button class="linkbtn inl" data-act="logout" type="button">登出</button></div>`
+    : `<button class="btn line sm" data-act="login" type="button">👤 用 LINE 登入（名字自動帶入）</button><p class="note" style="margin:6px 0 12px">登入是選用的：不登入也能玩，直接在下面取個名字。</p>`;
+  $('#mpNameNote').innerHTML = nm ? `名字來自 LINE，<b>可以改成暱稱</b>；同房的朋友會看到這個名字。` : `同房的朋友會看到這個名字。`;
+  paintRec(); if (!$('#mpEntry').hidden && !$('#mpName').value) $('#mpName').value = mpDefaultName();
+}
+function acctAct(e) {
+  const b = e.target.closest('[data-act]'); if (!b) return; e.stopPropagation(); audioInit();
+  const A = window.__acct; if (!A) return toast('登入功能還在載入，或這個網路連不上，晚點再試');
+  if (b.dataset.act === 'login') A.loginLine(); else if (b.dataset.act === 'logout') A.logout();
+}
+['#acctRow', '#mpLoginBox'].forEach((q) => $(q).addEventListener('click', acctAct));
+addEventListener('acct', (e) => { ACCT = e.detail; acctPaint(); tryAutoJoin(); });
+// 掃 QR code 進來、為了帶入名字才去登入：登入完回來就直接加入原本的房間，不用再按一次
+function tryAutoJoin() { if (autoJoined || !CAME_FROM_LOGIN || !MPQ.get('room') || !MP.ok || !lineName() || MP.ws) return; autoJoined = true; mpOpenEntry(MPQ.get('room')); $('#mpName').value = mpDefaultName(); $('#mpJoin').click(); }
+acctPaint();
+function mpDefaultName() { const l = lineName(); return (SAVE.nickCustom && SAVE.nick) ? SAVE.nick : (l || SAVE.nick || ''); }   // 自己改過的暱稱優先，否則用 LINE 名字
+function mpRememberName() { const n = mpName(), l = lineName(); SAVE.nick = n; SAVE.nickCustom = !!l && n !== l; save(); }
+const mpName = () => (($('#mpName').value || mpDefaultName() || '賓客').trim().slice(0, 20)) || '賓客';
+function mpSave() { try { sessionStorage.setItem('touhu-mp', JSON.stringify({ code: MP.code, pid: MP.pid, watch: MP.watch, hk: MP.hk })); } catch (e) {} }
+function mpConnect(code, opts = {}) {
+  MP.code = code; MP.watch = !!opts.watch; MP.hk = opts.hk || MP.hk || ''; if (opts.pid) MP.pid = opts.pid; MP.closing = false;
+  document.body.classList.toggle('hostview', MP.watch);
+  const ws = new WebSocket(MP_API.replace(/^http/, 'ws') + '/api/room/' + code + '/ws'); MP.ws = ws;
+  ws.onopen = () => { MP.retries = 0; const j = { t: 'join', name: mpName(), input: S.mode }; if (MP.watch) { j.watch = true; j.hk = MP.hk; } else if (MP.pid) j.pid = MP.pid; mpSend(j); };
+  ws.onmessage = (e) => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } mpOnMsg(m); };
+  ws.onclose = () => { if (ws === MP.ws && !MP.closing) mpRetry(); };
+  ws.onerror = () => {};
+}
+function mpRetry() {
+  if (MP.closing || !MP.code) return;
+  if (MP.retries++ > 8) { toast('連不上房間，請重新進入'); return mpExit(); }
+  toast('連線中斷，重新連線中…'); setTimeout(() => { if (!MP.closing) mpConnect(MP.code, { watch: MP.watch, hk: MP.hk }); }, Math.min(5000, 700 * MP.retries));
+}
+function mpOnMsg(m) {
+  if (m.t === 'welcome') { if (m.watch) MP.ctl = !!m.ctl; else MP.pid = m.pid; mpSave(); return; }
+  if (m.t === 'state') { MP.st = m; mpOnState(); return; }
+  if (m.t === 'ev') { mpOnEv(m); return; }
+  if (m.t === 'lock') { MP.lockMsg = m; mpTick(); return; }
+  if (m.t === 'error') {
+    toast({ full: '房間已經滿了', started: '這個房間已經開始了', too_many: '房裡人數太多，沒辦法改成一對一', watch_full: '大螢幕連線已達上限' }[m.code] || '發生錯誤');
+    if (m.code === 'full' || m.code === 'started') mpExit();
+  }
+}
+function mpExit() {
+  delete document.body.dataset.team; arrowMats.band.color.set('#c23b2e');
+  MP.closing = true; try { if (MP.ws) MP.ws.close(); } catch (e) {} try { sessionStorage.removeItem('touhu-mp'); } catch (e) {}
+  Object.assign(MP, { on: false, started: false, ended: false, st: null, code: '', pid: '', hk: '', watch: false, ctl: false, job: null, rq: [], evs: {}, revealOpen: false });
+  REPLAY.on = false; document.body.classList.remove('hostview');
+  ['#scrMP', '#scrMPEnd', '#mpBar', '#mpWait', '#mpCount', '#mpReveal', '#hud'].forEach((q) => { $(q).hidden = true; });
+  S.arrows.forEach((a) => a.mesh && a.mesh.parent && a.mesh.parent.remove(a.mesh)); S.arrows = []; clearKeep(); hideAimUI(); setHint('');
+  S.round = 0; S.perRound = 4; setupRound(); S.phase = 'title'; S.camMode = 'title'; $('#scrTitle').hidden = false;
+}
+
+/* —— 協調器：看伺服器狀態，決定「我現在該做什麼」 —— */
+const myUnit = () => { const st = MP.st; return st && st.units ? st.units.find((u) => u.members.includes(st.you)) || null : null; };
+function rolesOf(u, i) {   // 與伺服器一致：單人單位自己鎖自己投；分工合投是 members[i%2] 定仰角與力道，另一位定左右並放箭；隊友不在了，剩下的人包辦
+  const st = MP.st, alive = (m) => st.players[m] && !st.players[m].gone;
+  if (u.members.length === 1) return { lock: null, thrower: u.members[0] };
+  const live = u.members.filter(alive); if (live.length === 1) return { lock: null, thrower: live[0] };
+  return { lock: u.members[i % 2], thrower: u.members[(i + 1) % 2] };
+}
+const unitName = (u) => { const st = MP.st; if (st.kind === '2v2' && st.rule === 'split') return TEAM[u.team]; return u.id === st.you || (st.kind === '2v2' && u.members.includes(st.you)) ? '你' : ((st.players[u.members[0]] || {}).name || '?'); };
+function mpWait(text) { hideAimUI(); setHint(''); S.camMode = 'aim'; $('#mpWait').hidden = !text; $('#mpWaitTxt').textContent = text || ''; }
+function mpStartJob(job) {
+  MP.job = job; MP.arrowIdx = job.i; S.n = job.i - mpStart(MP.st.round); $('#mpWait').hidden = true; startAim(job);
+}
+function mpDropJob() {
+  hideAimUI(); setHint(''); const c = S.cur; if (c && c.state === 'hand' && c.mesh.parent) c.mesh.parent.remove(c.mesh);
+  MP.job = null; S.preset = false; S.charging = false; S.phase = 'wait';
+}
+function mpSendLock(e, p) {
+  const job = MP.job; if (!job) return; mpSend({ t: 'lock', u: job.u, i: job.i, e, p, tl: timerFrac() }); MP.sentLock = job.u + ':' + job.i;
+  SFX.lock(); mpDropJob(); mpWait('已交給隊友，等他放箭…');
+}
+function mpArrowDone(A, kind, pts) {
+  const job = MP.job;
+  if (A.pre && A.pre.kind !== kind && location.search.includes('debug')) console.warn('事先模擬與實際飛行結果不同', A.pre.kind, kind);
+  if (job && !A.evSent) mpSend({ t: 'ev', u: job.u, i: job.i, kind, tl: A.tl || 0, rep: buildRep(A) });   // 保險：沒有事先送過才補送
+  MP.job = null;
+  setTimeout(() => { if (S.phase === 'result') { S.phase = 'wait'; S.camMode = 'aim'; mpTick(); } }, 1900);
+}
+function mpEnterRound(r) {
+  MP.round = r; S.round = Math.min(r, ROUNDS.length - 1); S.perRound = r < 3 ? 4 : 1; S.n = 0; setupRound();
+  if (r >= 3) $('#hRound').textContent = `加賽・${R().name}`;
+  showCap(r >= 3 ? '加賽' : `第 ${r + 1} 輪`, r >= 3 ? '同分，再投一矢分高下' : `${R().name}・${R().sub}`);
+  S.phase = 'wait'; hideAimUI();
+}
+function mpReconcile() {
+  const st = MP.st, u = myUnit(); if (!u) return;
+  const aiming = ['aimE', 'aimP', 'aimH', 'aim', 'aimT'].includes(S.phase);
+  if (aiming && MP.job && (u.done > MP.job.i || (st.pace === 'turn' && (!st.turn || st.turn.u !== u.id || st.turn.i !== MP.job.i)))) mpDropJob();   // 這一矢已經過期（斷線重連、輪到別人了）
+  if (S.phase !== 'wait') return;
+  let i = u.done;
+  if (st.pace === 'turn') {
+    if (!st.turn) return mpWait('稍等一下…');
+    if (st.turn.u !== u.id) { const t = st.units[st.turn.u], nm = st.kind === '2v2' && st.rule === 'split' ? TEAM[t.team] : (st.players[t.members[0]] || {}).name; return mpWait(`輪到 ${nm || '對方'} 投，看他的拋物線…`); }
+    i = st.turn.i;
+  } else if (u.done >= mpNeed(st.round)) return mpWait('等其他人投完這一輪…');
+  const r = rolesOf(u, i), key = u.id + ':' + i;
+  if (r.lock === null) return mpStartJob({ kind: 'solo', u: u.id, i });
+  if (r.lock === st.you) { if (MP.sentLock === key) return mpWait('已交給隊友，等他放箭…'); return mpStartJob({ kind: 'lock', u: u.id, i }); }
+  const lk = MP.lockMsg && MP.lockMsg.u === u.id && MP.lockMsg.i === i ? MP.lockMsg : st.lock && st.lock.u === u.id && st.lock.i === i ? st.lock : null;
+  if (lk) return mpStartJob({ kind: 'throw', u: u.id, i, e: lk.e, p: lk.p, tl: lk.tl });
+  return mpWait('等隊友鎖定仰角與力道…');
+}
+function mpHostStatus() {
+  const st = MP.st; if (REPLAY.on || S.phase !== 'wait') return;
+  let t = '各組投壺中…'; if (st.pace === 'turn' && st.turn) { const u = st.units[st.turn.u]; t = `輪到 ${st.kind === '2v2' && st.rule === 'split' ? TEAM[u.team] : (st.players[u.members[0]] || {}).name || ''} 投`; }
+  mpWait(t);
+}
+function mpTick() {
+  const st = MP.st; if (!st || st.phase !== 'play' || !MP.started) return;
+  if (performance.now() < MP.startAt) return;
+  if (st.reveal) { const key = st.reveal.r + ':' + (st.sudden || 0); if (MP.revealKey !== key) mpShowReveal(st.reveal.r, key); mpPump(); return; }
+  if (MP.revealOpen) mpCloseReveal();
+  if (MP.round !== st.round) mpEnterRound(st.round);
+  if (S.phase === 'wait' && mpPump()) return;
+  if (MP.watch) return mpHostStatus();
+  mpReconcile();
+}
+setInterval(() => { if (MP.on || MP.started) mpTick(); }, 300);
+
+/* —— 別人投的矢：收到結果與軌跡，在我的畫面上慢動作重播 —— */
+function mpOnEv(m) {
+  MP.evs[m.u + ':' + m.i] = m; const st = MP.st, mu = myUnit();
+  if (MP.watch || (st && st.pace === 'turn') || (mu && mu.id === m.u)) MP.rq.push(m);   // 同場對投：只重播隊友的；其他人的留到每輪結算時看精彩一矢
+  mpTick();
+}
+function mpPump() {
+  if (REPLAY.on || !MP.rq.length || !['wait', 'reveal'].includes(S.phase)) return false;
+  while (MP.rq.length > 3) MP.rq.shift();   // 大螢幕或慢手機別積太多
+  mpReplay(MP.rq.shift()); return true;
+}
+function mpReplay(ev) {
+  const st = MP.st, who = (st.players[ev.slot] || {}).name || '?', label = `${who}　${KIND_LABEL[ev.kind] || ''}${ev.pts ? ` +${fmt1(ev.pts + (ev.b || 0) / 10)}` : ''}`;
+  $('#mpWait').hidden = true; hideAimUI(); setHint('');
+  const rep = ev.rep;
+  if (!rep || rep.length < 3 + 10) { showCap(label, ''); guestReact(ev.kind); setTimeout(() => mpReplayDone(ev), 1500); REPLAY.on = true; REPLAY.noRep = true; return; }
+  const mesh = makeArrow(), n = Math.floor((rep.length - 3) / 5);
+  Object.assign(REPLAY, { on: true, noRep: false, ev, rep, n, k: 0, hold: 0, mesh, label, fin: new THREE.Vector3(rep[0] / 1000, rep[1] / 1000, rep[2] / 1000).normalize(), cur: new THREE.Vector3(0, -0.4, -1).normalize(), pos: new THREE.Vector3(rep[3] / 100, rep[4] / 100, rep[5] / 100) });
+  REPLAY.pot.x = rep[6] / 100; REPLAY.pot.y = rep[7] / 100; mesh.visible = false;
+  S.cur = { pos: REPLAY.pos, state: 'replay', mesh }; S.arrows.push(S.cur); S.phase = 'replay'; S.camMode = 'fly'; trailReset();
+  showCap(who, '這一矢');
+}
+/* —— 重播結束後：矢留在原地（落地的躺在地上、入壺／貫耳的插在壺裡，會跟著壺搖），並把整條弧線用隊色畫出來，一輪結束前都留著，投影上就看得到雙方投過的每一矢 —— */
+function clearKeep() { KEEP.forEach((o) => { if (o.parent) o.parent.remove(o); if (o.geometry) o.geometry.dispose(); }); KEEP.length = 0; }
+function keepReplay(Rp) {
+  const st = MP.st, ev = Rp.ev; if (!st || !st.units) return;
+  clearKeep();   // 只留最後一次的弧線給觀眾看（整輪全留會太花）；矢仍留在原地
+  const u = st.units[ev.u], col = new THREE.Color(TCOL[st.kind === '1v1' ? ev.u : (u ? u.team : 0)]);
+  const pts = []; for (let k = 0; k < Rp.n; k++) pts.push(new THREE.Vector3(Rp.rep[3 + k * 5] / 100, Rp.rep[4 + k * 5] / 100, Rp.rep[5 + k * 5] / 100));
+  const line = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), Math.min(48, pts.length * 2), 0.011, 5, false), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.75, fog: false }));   // 細管子：投影在遠處也看得到（1 像素的線看不清）
+  line.frustumCulled = false; scene.add(line); KEEP.push(line);
+  const tail = new THREE.Mesh(tailGeo, new THREE.MeshBasicMaterial({ color: col, fog: false })); tail.position.set(0, -TU.arrowL / 2 + 0.02, 0); tail.rotation.x = Math.PI; Rp.mesh.add(tail);   // 隊色尾羽：一眼分出是誰的矢
+  if (ev.kind === 'in' || ev.kind === 'ear') potGroup.attach(Rp.mesh);
+  while (KEEP.length > KEEP_MAX) { const o = KEEP.shift(); if (o.parent) o.parent.remove(o); if (o.geometry) o.geometry.dispose(); }
+}
+function replayTick(dt) {
+  const Rp = REPLAY; if (!Rp.on || Rp.noRep) return;
+  const P = (k, o) => Rp.rep[3 + k * 5 + o] / 100;
+  Rp.k = Math.min(Rp.n - 1, Rp.k + dt * REP_RATE / 0.05);
+  const k0 = Math.floor(Rp.k), k1 = Math.min(Rp.n - 1, k0 + 1), f = Rp.k - k0, L = (o) => P(k0, o) + (P(k1, o) - P(k0, o)) * f;
+  Rp.pos.set(L(0), L(1), L(2)); Rp.pot.x = L(3); Rp.pot.y = L(4); Rp.mesh.visible = true;
+  _d.set(P(k1, 0) - P(k0, 0), P(k1, 1) - P(k0, 1), P(k1, 2) - P(k0, 2));
+  if (_d.lengthSq() > 1e-6) { Rp.cur.lerp(_d.normalize(), 0.3).normalize(); }
+  if (Rp.k >= Rp.n - 3) Rp.cur.lerp(Rp.fin, 0.2).normalize();   // 最後幾格慢慢轉成最終的矢尖朝向
+  poseArrow(Rp.mesh, Rp.pos, Rp.cur); trailPush(Rp.pos, dt * REP_RATE);
+  if (Rp.k >= Rp.n - 1) {
+    Rp.hold += dt;
+    if (Rp.hold > 0.9) {
+      const ev = Rp.ev; keepReplay(Rp); Rp.on = false;
+      showCap(Rp.label, pick(QUOTES[ev.kind === 'miss' ? 'rim' : ev.kind] || ['']).slice(0, 14)); guestReact(ev.kind); SFX[ev.kind === 'ear' ? 'ear' : ev.kind === 'in' ? 'in' : 'ground']();
+      setTimeout(() => mpReplayDone(ev), 1200);
+    }
+  }
+}
+function mpReplayDone(ev) {
+  REPLAY.on = false; S.camMode = 'aim'; S.phase = MP.revealOpen ? 'reveal' : 'wait';
+  if (MP.st && MP.st.pace === 'turn' && !MP.watch) mpSend({ t: 'ack', u: ev.u, i: ev.i });
+  mpTick();
+}
+
+/* —— 畫面：計分條、每輪結算、倒數、結算 —— */
+function mpPaintBar() {
+  const st = MP.st, el = $('#mpBar'); if (!st || !st.units || (!MP.on && !MP.started)) { el.hidden = true; return; }
+  el.hidden = false; el.classList.toggle('big', MP.watch);
+  const me = st.you, myTeam = me >= 0 ? st.players[me].team : -1, parts = [];
+  if (st.kind === '1v1') st.units.forEach((u) => parts.push({ me: u.id === me, name: u.id === me ? '你' : (st.players[u.members[0]] || {}).name || '?', score: fmt10(u.score), col: TCOL[u.id] }));
+  else [0, 1].forEach((t) => parts.push({ me: myTeam === t, name: TEAM[t], score: fmt10(st.teams[t]), col: TCOL[t] }));
+  const sub = `${st.pace === 'sync' ? '同場對投' : '輪流對投'}${st.kind === '2v2' ? '・' + (st.rule === 'split' ? '分工合投' : '各自累計') : ''}・${(st.round || 0) >= 3 ? '加賽' : '第 ' + ((st.round || 0) + 1) + ' 輪'}`;
+  // 拔河桿：分界點（紅方佔的比例）＝50% ± 分差；領先 15 分就推到頭（±46%），有分差至少推開一點
+  const raw = st.kind === '1v1' ? st.units.map((u) => u.score) : [st.teams[0], st.teams[1]], diff = raw[0] - raw[1], lead = Math.abs(diff), li = diff === 0 ? -1 : (diff > 0 ? 0 : 1);
+  const pos = 50 + Math.max(-1, Math.min(1, diff / 150)) * 46, prevPos = MP.tugPrev == null ? 50 : MP.tugPrev; MP.tugPrev = pos;
+  const chip = li >= 0 ? `<span class="lead-chip" style="--c:${parts[li].col}">領先 ${fmt10(lead)}</span>` : '';
+  el.innerHTML = `<div class="row">${parts.map((p) => `<span class="${p.me ? 'me' : ''}"><i style="background:${p.col}"></i><u class="nm">${p.name}</u> <b>${p.score}</b></span>`).join('<em>：</em>')}</div>`
+    + `<div class="tug" style="--ca:${parts[0].col};--cb:${parts[1].col}"><span class="a" style="width:${prevPos}%"></span><span class="mid"></span></div><small>${sub}${chip}</small>`;
+  { const tug = el.querySelector('.tug'), k = document.createElement('span'); k.className = 'knob'; k.style.left = prevPos + '%'; tug.appendChild(k);
+    requestAnimationFrame(() => requestAnimationFrame(() => { const a = el.querySelector('.tug .a'), kn = el.querySelector('.tug .knob'); if (a) a.style.width = pos + '%'; if (kn) kn.style.left = pos + '%'; })); }
+}
+function mpPaintDots() {
+  const st = MP.st, u = myUnit(), h = $('#hArrows'); if (!u) return;
+  const base = mpStart(st.round || 0), per = S.perRound || 4;
+  [...h.children].forEach((el, j) => { const i = base + j, e = u.hist.find((x) => x[0] === i); el.className = e ? (e[1] === 'ear' ? 'ear' : e[1] === 'in' ? 'in' : 'miss') : (MP.job && MP.job.i === i ? 'cur' : ''); });
+  const mine = st.kind === '2v2' ? st.teams[u.team] : u.score; $('#hScore').textContent = `${fmt10(mine)} 分`;
+}
+function mpShowReveal(r, key) {
+  const st = MP.st; MP.revealKey = key; MP.revealOpen = true; S.phase = 'reveal'; hideAimUI(); setHint(''); $('#mpWait').hidden = true; SFX.chime();
+  const a = mpStart(r), b = mpNeed(r), rows = st.units.map((u) => ({ u, pts: u.hist.filter((h) => h[0] >= a && h[0] < b).reduce((s2, h) => s2 + h[2] * 10 + (h[3] || 0), 0) }));   // 十分之一分
+  $('#mpRevealTitle').textContent = r >= 3 ? '加賽結果' : `第 ${r + 1} 輪結算`;
+  $('#mpRevealBody').innerHTML = rows.map(({ u, pts }) => `<div class="rrow"><span>${unitName(u)}${st.kind === '2v2' && st.rule === 'sum' ? `<span class="t">（${TEAM[u.team]}）</span>` : ''}</span><span><span class="t">本輪</span> <b>${fmt10(pts)}</b>　<span class="t">累計</span> <b>${fmt10(u.score)}</b></span></div>`).join('');
+  $('#mpRevealNote').textContent = (st.pace === 'sync' ? '看看對手這輪最精彩的一矢… ' : '') + '（含時間加成，每矢最多 +0.5）';
+  $('#mpReveal').hidden = false;
+  if (st.pace === 'sync') {   // 同場對投：每輪結算時，播別人這輪分數最高的一矢
+    const c = Object.values(MP.evs).filter((e) => e.i >= a && e.i < b && e.slot !== st.you && e.rep).sort((x, y) => y.pts - x.pts || y.i - x.i)[0];
+    if (c) MP.rq.push(c);
+  }
+}
+function mpCloseReveal() { MP.revealOpen = false; $('#mpReveal').hidden = true; if (S.phase === 'reveal') S.phase = 'wait'; }
+function mpCountdown() {
+  const el = $('#mpCount'); el.hidden = false;
+  const iv = setInterval(() => {
+    const ms = MP.startAt - performance.now();
+    if (ms <= 0) { el.textContent = '開始！'; setTimeout(() => { el.hidden = true; }, 700); clearInterval(iv); mpTick(); return; }
+    const n = Math.ceil(ms / 1000); if (el.textContent !== String(n)) { el.textContent = n; SFX.lock(); }
+  }, 100);
+}
+function mpShowEnd() {
+  const st = MP.st; if (!st || st.phase !== 'end' || !st.result) return;
+  S.phase = 'mpend'; hideAimUI(); setHint(''); $('#mpWait').hidden = true; $('#mpReveal').hidden = true; $('#hud').hidden = true; $('#mpBar').hidden = true; SFX.chime();
+  const res = st.result, myTeam = st.you >= 0 ? st.players[st.you].team : -1;
+  let title, sub;
+  if (res.winner < 0) { title = '平分秋色'; sub = '加賽也分不出高下，好朋友就是這樣。'; }
+  else if (MP.watch) { title = `${TEAM[res.winner]}勝`; sub = '承讓。'; }
+  else if (res.winner === myTeam) { title = '承讓！'; sub = '矢直在心，贏得謙遜。'; }
+  else { title = '請益了'; sub = '輸贏是小事，多練幾次，下回見真章。'; }
+  $('#meTitle').textContent = title; $('#meSub').textContent = sub;
+  const rows = st.kind === '1v1' ? res.units.map((u) => ({ n: (st.players[u.id] || {}).name || '?', c: TCOL[u.id], s: fmt10(u.score), you: u.id === st.you })) : [0, 1].map((t) => ({ n: TEAM[t] + '・' + st.units.filter((u) => u.team === t).map((u) => u.members.map((m) => (st.players[m] || {}).name).join('、')).join('、'), c: TCOL[t], s: fmt10(res.teams[t]), you: t === myTeam }));
+  $('#meRows').innerHTML = rows.map((r) => `<div class="rrow"><span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r.c};margin-right:6px"></i>${r.n}${r.you ? '（你）' : ''}</span><b>${r.s} 分</b></div>`).join('');
+  $('#meAgain').hidden = MP.watch; $('#scrMPEnd').hidden = false;
+}
+function mpBackToLobby() {   // 再來一局：伺服器把房間重設回大廳
+  MP.started = false; MP.on = false; MP.ended = false; MP.job = null; MP.rq = []; MP.evs = {}; MP.revealOpen = false; MP.sentLock = ''; MP.lockMsg = null; REPLAY.on = false;
+  ['#scrMPEnd', '#mpBar', '#mpWait', '#mpCount', '#mpReveal', '#hud'].forEach((q) => { $(q).hidden = true; });
+  S.arrows.forEach((a) => a.mesh && a.mesh.parent && a.mesh.parent.remove(a.mesh)); S.arrows = []; clearKeep(); hideAimUI(); setHint(''); S.round = 0; S.perRound = 4; setupRound();
+}
+function mpStartGame() {
+  MP.tugPrev = null; MP.started = true; MP.ended = false; MP.on = true; MP.seed = MP.st.seed; MP.round = -1; MP.job = null; MP.rq = []; MP.evs = {}; MP.sentLock = ''; MP.lockMsg = null; MP.revealKey = ''; MP.revealOpen = false;
+  MP.startAt = performance.now() + MP.st.startIn;
+  S.score = 0; S.ins = 0; S.ears = 0; S.hist = [];
+  ['#scrMP', '#scrMPEnd', '#scrTitle', '#scrFinal', '#scrRound'].forEach((q) => { $(q).hidden = true; });
+  $('#hud').hidden = MP.watch; S.round = 0; S.perRound = 4; setupRound(); S.phase = 'wait'; S.camMode = 'aim'; hideAimUI(); mpPaintBar();
+  if (MP.st.startIn > 300) mpCountdown();
+}
+function mpTeamTheme() {   // 紅隊／藍隊配色：玩家＝自己的隊色，大螢幕觀戰＝左紅右藍；離開房間就清掉
+  const st = MP.st, me = st && st.you >= 0 ? st.players[st.you] : null, team = me ? String(me.team) : MP.watch ? 'w' : '';
+  if (team) document.body.dataset.team = team; else delete document.body.dataset.team;
+  arrowMats.band.color.set(team === '0' || team === '1' ? TCOL[+team] : '#c23b2e');   // 自己的矢尾羽也用隊色
+}
+function mpOnState() {
+  const st = MP.st; mpTeamTheme(); mpPaintBar(); if (MP.on && st.units) paintDots();
+  if (st.phase === 'lobby') { if (MP.started) mpBackToLobby(); mpRenderLobby(); return; }
+  if (st.phase === 'play') { if (!MP.started) mpStartGame(); mpTick(); return; }
+  if (st.phase === 'end') { if (!MP.started) mpStartGame(); if (!MP.ended) { MP.ended = true; setTimeout(mpShowEnd, 2600); } }
+}
+
+/* —— 大廳 —— */
+const motionOK = () => !!window.DeviceOrientationEvent && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
+function mpWatchUrl() { const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('watch', MP.code); if (MPQ.get('mp')) u.searchParams.set('mp', MPQ.get('mp')); return u.toString(); }   // 觀戰連結（筆電、投影機用）：不佔位置、只看不操作
+function mpInviteUrl() { const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('room', MP.code); if (MPQ.get('mp')) u.searchParams.set('mp', MPQ.get('mp')); u.searchParams.set('openExternalBrowser', '1'); return u.toString(); }
+function mpRenderLobby() {
+  const st = MP.st; S.phase = 'mplobby'; S.camMode = 'title'; $('#scrTitle').hidden = true; $('#scrFinal').hidden = true; $('#scrRound').hidden = true; $('#scrMP').hidden = false; $('#mpEntry').hidden = true; $('#mpRoom').hidden = false;
+  $('#mpRoomCode').textContent = MP.code;
+  if (MP.qrFor !== MP.code) { MP.qrFor = MP.code; try {   // 用模組矩陣自己畫 SVG：任何版本的 qrcode.js 都通用，投影放大也不糊
+      const q = window.qrcode(0, 'M'); q.addData(mpInviteUrl()); q.make(); const n = q.getModuleCount(); let d = '';
+      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c} ${r}h1v1h-1z`;
+      $('#mpQR').innerHTML = `<svg viewBox="-1 -1 ${n + 2} ${n + 2}" shape-rendering="crispEdges" role="img" aria-label="房間 QR code"><path d="${d}" fill="#2b1d14"/></svg>`;
+    } catch (e) { $('#mpQR').innerHTML = ''; } }
+  const can = st.host === st.you || MP.ctl, ready = st.you >= 0 && st.players[st.you] && st.players[st.you].ready, n = st.players.filter(Boolean).length, tot = st.players.length;
+  $('#mpPlayers').innerHTML = st.players.map((p, i) => p
+    ? `<div class="pl ${p.ready ? 'rdy' : ''}"><i style="background:${TCOL[st.kind === '2v2' ? p.team : i]}"></i><span>${p.name}${i === st.you ? '<u>你</u>' : ''}${i === st.host ? ' 👑' : ''}</span><em>${!p.online ? '離線' : p.ready ? '✓ 準備好' : p.input === 'motion' ? '📱' : p.input === 'tap' ? '🎯' : '🖐️'}</em></div>`
+    : `<div class="pl empty"><i style="background:#cdb996"></i><span>${st.kind === '2v2' ? (i >> 1 ? '藍' : '紅') + '隊空位：等朋友加入…' : '等朋友加入…'}</span></div>`).join('');
+  const seg = (id, v) => { [...$(id).children].forEach((b) => { b.classList.toggle('on', b.dataset.v === v); b.disabled = !can && !id.includes('Input'); }); };
+  seg('#mpKind', st.kind); seg('#mpPace', st.pace); seg('#mpRule', st.rule); seg('#mpInput', S.mode);
+  [...$('#mpInput').children].forEach((b) => { b.disabled = b.dataset.v === 'motion' && !motionOK(); });
+  $('#mpRuleRow').hidden = true; $('#mpInputRow').hidden = MP.watch;   // 分工合投已取消，二對二固定「各自累計」
+  $('#mpPaceNote').textContent = st.pace === 'sync' ? '兩邊各投各的、同一組風，每輪結束一起看對方最精彩的一矢。' : '一人一矢輪流投，輪到對方時看他的拋物線慢動作（適合大螢幕）。';
+  const nin = st.players.filter(Boolean).length, nrd = st.players.filter((p) => p && p.ready).length;
+  $('#mpPlayers').dataset.kind = st.kind; $('#mpHostNote').hidden = !MP.watch;
+  $('#mpHostMsg').textContent = nin < tot ? `等玩家掃 QR code 加入（${nin}/${tot}）` : nrd === tot ? '都準備好了，馬上開打！' : `等玩家按「我準備好了」（${nrd}/${tot}）`;
+  $('#mpRuleNote').textContent = st.rule === 'split' ? '隊友 A 定仰角與力道、隊友 B 定左右並放箭，每一矢互換。要靠喊話配合！' : '四人各投各的，隊伍分數是兩人相加。';
+  $('#mpReady').hidden = MP.watch; $('#mpReady').textContent = ready ? '取消準備' : (n < tot ? `我準備好了（還差 ${tot - n} 位朋友）` : '我準備好了'); $('#mpReady').classList.toggle('ghost', !!ready);
+  const text = `來全真群島的投壺島跟我對投一局！房號 ${MP.code} 👉 ${mpInviteUrl()}`;
+  $('#mpInvite').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(text); $('#mpInvite').hidden = MP.watch && false;
+  $('#mpWatchLink').hidden = MP.watch;   // 已經是大螢幕就不用再給觀戰連結
+  $('#mpWatchLink').href = 'https://line.me/R/msg/text/?' + encodeURIComponent(['📺 投壺島・對戰觀戰', `房號：${MP.code}`, '用筆電打開就能投影', '看雙方即時戰況 👇', mpWatchUrl()].join('\n'));
+  $('#mpLeave').textContent = MP.watch ? '關閉房間畫面' : '離開房間';
+}
+['#mpKind', '#mpPace', '#mpRule'].forEach((id) => $(id).addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b || b.disabled) return; mpSend({ t: 'set', [id === '#mpKind' ? 'kind' : id === '#mpPace' ? 'pace' : 'rule']: b.dataset.v }); }));
+$('#mpInput').addEventListener('click', async (e) => {
+  const b = e.target.closest('button'); if (!b || b.disabled) return; audioInit();
+  if (b.dataset.v === 'motion') { const r = await sensEnable(); if (r !== 'ok') return toast(r === 'denied' ? '沒有取得動作感測授權，改用點三下' : '這個瀏覽器讀不到感測器，改用點三下'); S.mode = 'motion'; document.body.classList.add('motion'); SENS.on = true; SENS.calibOK = false; SENS.anchor = null; }
+  else { S.mode = b.dataset.v; document.body.classList.remove('motion'); }
+  SAVE.mode = S.mode; save(); mpSend({ t: 'profile', input: S.mode }); mpRenderLobby();
+});
+$('#mpReady').addEventListener('click', () => { audioInit(); const st = MP.st, r = st && st.players[st.you] && st.players[st.you].ready; mpSend({ t: 'profile', name: mpName(), input: S.mode }); mpSend({ t: 'ready', ready: !r }); });
+$('#mpWatchLink').addEventListener('click', () => { const m = $('#mpWatchMsg'); m.hidden = false; m.textContent = '在 LINE 把觀戰連結傳到筆電，用筆電瀏覽器打開就能投影（連結也已複製）。'; try { navigator.clipboard && navigator.clipboard.writeText(mpWatchUrl()); } catch (e) {} });   // 開 LINE 分享，同時順手複製連結
+$('#mpLeave').addEventListener('click', () => { mpSend({ t: 'leave' }); mpExit(); });
+$('#meAgain').addEventListener('click', () => { mpSend({ t: 'rematch' }); });
+$('#meLeave').addEventListener('click', () => { mpSend({ t: 'leave' }); mpExit(); });
+
+/* —— 入口：建立房間、輸入房號加入、電腦主持 —— */
+async function mpApi(path, body) {
+  const r = await fetch(MP_API + path, body ? { method: 'POST', body: JSON.stringify(body) } : {}); let j = {}; try { j = await r.json(); } catch (e) {} return { ok: r.ok, status: r.status, j };
+}
+function mpOpenEntry(code) { $('#scrTitle').hidden = true; $('#scrMP').hidden = false; $('#mpEntry').hidden = false; $('#mpRoom').hidden = true; $('#mpName').value = mpDefaultName(); if (code) $('#mpCode').value = code; S.phase = 'mplobby'; }
+$('#btnMP').addEventListener('click', () => { audioInit(); mpOpenEntry(MPQ.get('room') || ''); });
+$('#mpBack').addEventListener('click', () => { $('#scrMP').hidden = true; $('#scrTitle').hidden = false; S.phase = 'title'; });
+$('#mpCreate').addEventListener('click', async () => {
+  audioInit(); mpRememberName(); const b = $('#mpCreate'); b.disabled = true;
+  try { const r = await mpApi('/api/create', {}); if (!r.ok) throw 0; MP.qrFor = ''; mpConnect(r.j.code); } catch (e) { toast('連不上多人伺服器，晚點再試'); }
+  b.disabled = false;
+});
+$('#mpJoin').addEventListener('click', async () => {
+  audioInit(); const code = $('#mpCode').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''); if (code.length !== 5) return toast('請輸入 5 碼房號');
+  mpRememberName(); const b = $('#mpJoin'); b.disabled = true;
+  try { const r = await mpApi('/api/room/' + code); if (r.status === 404) toast('找不到這個房號'); else if (!r.ok) throw 0; else if (r.j.full) toast('這個房間已經滿了'); else if (r.j.phase !== 'lobby') toast('這個房間已經開始了'); else { MP.qrFor = ''; mpConnect(code); } } catch (e) { toast('連不上多人伺服器，晚點再試'); }
+  b.disabled = false;
+});
+$('#mpHost').addEventListener('click', async () => {
+  audioInit(); const b = $('#mpHost'); b.disabled = true;
+  try { const r = await mpApi('/api/create', { host: true }); if (!r.ok) throw 0; MP.qrFor = ''; MP.watch = true; mpConnect(r.j.code, { watch: true, hk: r.j.hk }); } catch (e) { toast('連不上多人伺服器，晚點再試'); }
+  b.disabled = false;
+});
+// 伺服器連得上才顯示「多人對戰」；分享連結帶房號（?room=）就直接帶進入口；重新整理時嘗試回到原本的房間
+(async () => {
+  try { const r = await fetch(MP_API + '/health', { signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined }); const j = await r.json(); MP.ok = !!(j && j.ok); } catch (e) { MP.ok = false; }
+  if (!MP.ok) return; $('#btnMP').hidden = false; tryAutoJoin();
+  const wc = (MPQ.get('watch') || '').toUpperCase();
+  if (/^[A-Z0-9]{3,8}$/.test(wc)) { const r = await mpApi('/api/room/' + wc).catch(() => null); if (r && r.ok) { MP.qrFor = ''; MP.watch = true; mpConnect(wc, { watch: true, hk: '' }); } else toast('找不到這個房間，請確認房號或請朋友重新傳連結'); return; }
+  let saved = null; try { saved = JSON.parse(sessionStorage.getItem('touhu-mp') || 'null'); } catch (e) {}
+  if (saved && saved.code) { const r = await mpApi('/api/room/' + saved.code).catch(() => null); if (r && r.ok) { MP.pid = saved.pid || ''; MP.qrFor = ''; mpConnect(saved.code, { watch: !!saved.watch, hk: saved.hk, pid: saved.pid }); return; } try { sessionStorage.removeItem('touhu-mp'); } catch (e) {} }
+  if (MPQ.get('host') === '1') $('#mpHost').click(); else if (MPQ.get('room')) mpOpenEntry(MPQ.get('room'));
+})();
+
+/* =========================================================
+   畫面：相機、尺寸、主迴圈
+   ========================================================= */
+function resize() {
+  const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); cam.aspect = w / h;
+  cam.fov = cam.aspect < 1 ? clamp(2 * Math.atan(Math.tan(19 * Math.PI / 180) / cam.aspect) * 180 / Math.PI, 40, 88) : 46; cam.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+const camPos = new THREE.Vector3(0, 3, 8), camLook = new THREE.Vector3(0, 0.5, 0);
+const tPos = new THREE.Vector3(), tLook = new THREE.Vector3();
+let heroK = 0, heroTop = 0, heroTopAt = 0;
+function heroTopPx() {   // 目前畫面上「卡片或標題」的上緣在哪（壺要放在它上方那塊空地的正中間）
+  const t = performance.now(); if (t - heroTopAt < 250 && heroTop) return heroTop; heroTopAt = t;
+  for (const q of ['#scrTitle .brand', '#scrRound .card', '#scrMP .card', '#scrFinal .card', '#scrMPEnd .card']) { const el = document.querySelector(q); if (el && !el.closest('[hidden]')) { const r = el.getBoundingClientRect(); if (r.height) return (heroTop = r.top); } }
+  return (heroTop = innerHeight * 0.6);
+}
+function heroFrame(dt) {   // 首頁／說明卡的構圖：鏡頭看著壺，再把畫面往上推，讓壺落在標題（或卡片）上方空地的正中間，不管手機的長寬比、瀏覽器工具列多高
+  heroK += ((S.camMode === 'title' ? 1 : 0) - heroK) * Math.min(1, dt * 5);
+  if (heroK < 0.004) { if (cam.view && cam.view.enabled) cam.clearViewOffset(); return; }
+  const w = innerWidth, h = innerHeight, y = clamp((heroTopPx() + 76) * 0.5, h * 0.14, h * 0.4);   // 壺放在「上方按鈕列」與「標題上緣」之間的正中央
+  cam.setViewOffset(w, h, 0, (h * 0.5 - y) * heroK, w, h);
+}
+function updateCam(now, dt) {
+  if (S.phase === 'aimT' && TOUCH.active) return;   // 手指按住時鏡頭凍結：落點圈與壺的相對位置絕對穩定
+  const r = R(), D = r.D, pc = potState(now), k = 1 - Math.exp(-dt * (S.camMode === 'aim' ? 6.5 : 3.2));   // 回到瞄準視角時收斂快一點
+  if (S.camMode === 'aim') { tPos.set(0, 1.78, D + 1.35); tLook.set(0, 0.28, 0.2); }
+  else if (S.camMode === 'fly') {   // 飛行中：鏡頭留在投擲者身後，視線追著矢，慢慢往壺靠
+    const A = S.cur, ap = A && A.pos ? A.pos : _t.set(0, 0.5, 0), f = clamp(1 - Math.abs(ap.z) / D, 0, 1);
+    tPos.set(0, 1.78 - 0.45 * f, D + 1.35 - 0.9 * f); tLook.set(ap.x * 0.5 + pc.x * 0.5, 0.25 + ap.y * 0.38 + 0.15 * f, ap.z * 0.5);
+  } else if (S.camMode === 'close') {   // 結果：拉近看壺
+    tPos.set(pc.x * 0.6 - 0.4, 1.1, 2.55); tLook.set(pc.x - 0.4, 0.42, 0);
+  } else { const a = Math.sin(now / 5200) * 0.45; /* 壺要完整放進「標題上方的空地」：空地越小鏡頭退得越後（壺在畫面上約佔 0.175 倍螢幕高，距離 2.7 時） */ const avail = Math.max(70, heroTopPx() - 76) * 0.9, fit = 0.175 * innerHeight * 2.7 / avail, R0 = clamp(Math.max(innerWidth < innerHeight && innerHeight < 680 ? 3.6 : 2.7, fit), 2.7, 7); tPos.set(Math.sin(a) * R0, 0.9, Math.cos(a) * R0 + 0.2); tLook.set(0, 0.34, 0); }   // 直的螢幕：壺要升到標題牌匾上方；橫的螢幕（電腦）：壺放在畫面上半部
+  camPos.lerp(tPos, k); camLook.lerp(tLook, k); cam.position.copy(camPos); cam.lookAt(camLook); heroFrame(dt);
+}
+let last = performance.now();
+function tick(t) {
+  const dt = Math.min(0.05, (t - last) / 1000); last = t; NOW = t;
+  const pc = potState(t); potGroup.position.set(pc.x, pc.y, 0);
+  if (R().sway) { raftG.rotation.z = Math.sin(t / 1000 * 1.5 + 0.3) * 0.03; raftG.rotation.x = Math.sin(t / 1000 * 1.9) * 0.02; } else { raftG.rotation.set(0, 0, 0); }
+  updateSky(1 - Math.exp(-dt * 2.2)); fineTick(t, dt);
+  // 風旗
+  const w = S.phase === 'title' || S.phase === 'intro' ? (R().wind ? S.windSign * R().wind : 0) : S.wind, aw = Math.abs(w);
+  flagG.rotation.y = w < 0 ? Math.PI : 0; flag.rotation.z = -(1 - clamp(aw * 3.2, 0, 1)) * 1.15;
+  const fp = flagGeo.attributes.position, amp = 0.012 + aw * 0.1;
+  for (let i = 0; i < fp.count; i++) { const x0 = flagBase[i * 3]; fp.setZ(i, Math.sin(x0 * 13 - t / 1000 * (4 + aw * 14)) * amp * (x0 / 0.5) * 1.6); fp.setY(i, flagBase[i * 3 + 1] - (x0 / 0.5) * Math.sin(t / 1000 * 3) * 0.01); }
+  fp.needsUpdate = true;
+  clouds.forEach((g, i) => { g.position.x += dt * (0.25 + i * 0.03); if (g.position.x > 60) g.position.x = -60; });
+  // 特效
+  for (const f of FX) if (f.life > 0) { f.life -= dt; f.v.y -= 2.4 * dt; f.m.position.addScaledVector(f.v, dt); f.m.material.opacity = clamp(f.life / f.max, 0, 1); if (f.life <= 0) f.m.visible = false; }
+  for (const r of ripples) if (r.life > 0) { r.life -= dt; const u = 1 - r.life / 0.7; r.m.scale.setScalar(1 + u * 4); r.m.material.opacity = clamp(1 - u, 0, 1) * 0.9; if (r.life <= 0) r.m.visible = false; }
+  if (S.mode === 'motion' && S.phase === 'aim' && !SENS.calibOK) updateCalibUI();
+  updateAim(t); timerPaint();
+  // 慢動作：飛行中放慢，快到壺口時更慢；入壺、落地後慢慢恢復
+  let tsT = 1; const A0 = S.cur;
+  if (S.phase === 'fly' && A0 && A0.pos) {
+    if (A0.state === 'fly' && !A0.touch) { tsT = TU.slow; if (A0.vel.y < 0 && Math.hypot(A0.pos.x - pc.x, A0.pos.z, A0.pos.y - (pc.y + TU.mouthY)) < 0.9) tsT = TU.slowNear; }
+    else tsT = A0.state === 'sink' ? 0.6 : 0.7;
+  }
+  S.ts += (tsT - S.ts) * Math.min(1, dt * 8); potT += dt * S.ts;   // 壺的時鐘跟著慢動作走
+  document.body.classList.toggle('slowmo', (S.phase === 'fly' && S.ts < 0.85) || S.phase === 'replay');
+  trailTick(dt); replayTick(dt);
+  for (const a of S.arrows) if (a.state === 'fly' || a.state === 'sink') updateArrow(a, dt * S.ts);
+  updateCam(t, dt);
+  if (!MPQ.has('norender')) renderer.render(scene, cam);
+  requestAnimationFrame(tick);
+}
+
+// 網址 ?round=2、?round=3 可以直接從那一輪開始（預覽用）
+try { const q = new URLSearchParams(location.search); const r = parseInt(q.get('round'), 10); if (r >= 1 && r <= ROUNDS.length) S.startRound = r - 1; S.debug = q.has('debug'); } catch (e) {}
+setupRound(); skySet(0, true); S.phase = 'title';
+if (location.search.includes('debug')) window.__TH = { KEEP, showFinal, setupRound, S, TU, SENS, R, throwArrow, startAim, newGame, potState, info: renderer.info, guest, cam, potGroup, TOUCH, TM, timerFrac, MP, REPLAY, mpTick, mpReconcile, onOrient, onMotion, lockE, lockP, lockH, pFor, thetaOf, speedOf, landing, windDrift, psiOf, startCharge, releaseCharge };
+requestAnimationFrame(tick);
+</script>
+<script type="module">
+// 群島共用的帳號：LINE 登入與紀錄同步（開頁、每 45 秒、離開頁面時同步；規則見 islands/account-merge.js）。這支載入失敗不影響遊戲
+import { initAccount, onAccount, loginLine, logout } from '../account.js';
+window.__acct = { loginLine, logout };
+onAccount((st) => dispatchEvent(new CustomEvent('acct', { detail: st })));
+initAccount();
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全真社青班 課程分享卡</title>
+<meta name="description" content="116 年（2027）全真社青班上課流程與全年課程表，長按圖片即可儲存轉傳。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="116 年（2027）全真社青班上課流程課表">
+<meta property="og:description" content="每月給自己一天，攜手把日子過成喜歡的樣子。">
+<meta property="og:image" content="https://steven4dev.github.io/yiguandao-2027-course/card/course-card.jpg?v=8">
+<style>
+  :root{--bg:#f4f1e4;--fg:#2b3a26;--muted:#66745a;--card:#fffdf3;--line:#c9d6b4;--msgbg:#f4f8ea}
+  @media (prefers-color-scheme: dark){:root{--bg:#1d241b;--fg:#e6ecd9;--muted:#a3b293;--card:#262e23;--line:#44543d;--msgbg:#1f271d}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Noto Sans TC","PingFang TC",sans-serif;padding:20px 16px}
+  main{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+  h1{font-size:1.25rem;margin:0}
+  p{margin:0;color:var(--muted);line-height:1.7;font-size:.95rem}
+  .warn{margin:0;padding:12px 14px;border-radius:10px;background:rgba(200,40,30,.08);border:1px solid rgba(200,40,30,.35);color:#c0281e;font-weight:700;line-height:1.7;font-size:.95rem}
+  .warn a{color:inherit;word-break:break-all}
+  @media (prefers-color-scheme: dark){.warn{color:#ff8a80;background:rgba(255,120,110,.12);border-color:rgba(255,120,110,.4)}}
+  .invite{display:flex;flex-direction:column;gap:12px;margin-top:10px;padding:18px 16px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+  .invite h2{margin:0;font-size:1.1rem}
+  .invite .sub{font-size:.88rem}
+  .msg{margin:0;padding:14px;border-radius:10px;background:var(--msgbg);color:var(--fg);white-space:pre-wrap;word-break:break-all;line-height:1.8;font-size:1rem;border:1px dashed var(--line)}
+  .btns{display:flex;flex-wrap:wrap;gap:10px}
+  .btn{flex:1 1 140px;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:10px 14px;border-radius:12px;border:0;font:inherit;font-weight:700;font-size:1rem;cursor:pointer;text-decoration:none}
+  .btn:focus-visible{outline:3px solid #2f6a3a;outline-offset:2px}
+  .btn.line{flex:2 1 260px;background:#06c755;color:#fff}
+  .btn.alt{background:transparent;color:var(--fg);border:1.5px solid var(--line)}
+  .toast{min-height:1.4em;font-size:.9rem;color:var(--muted)}
+  img{display:block;width:100%;height:auto;border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,.15)}
+</style>
+</head>
+<body>
+<main>
+  <h1>116 年（2027）全真社青班上課流程課表</h1>
+  <p class="warn">※ 此內容不建議直接轉傳給邀約的對象。邀約對象請使用社青班網址：<a href="https://steven4dev.github.io/yiguandao-2027-course/">https://steven4dev.github.io/yiguandao-2027-course/</a></p>
+  <p>手機：長按圖片 → 儲存圖片或分享給朋友。電腦：在圖片上按右鍵另存。</p>
+  <img src="course-card.jpg?v=8" alt="116 年全真社青班上課流程與課程表分享卡">
+
+  <section class="invite" aria-labelledby="inv-t">
+    <h2 id="inv-t">想邀朋友一起？直接傳 LINE</h2>
+    <p class="sub">按下按鈕會帶出邀約訊息，選好友送出就好。訊息最後的連結會自動顯示縮圖。</p>
+    <p class="msg" id="msg" aria-live="polite"></p>
+    <div class="btns">
+      <a class="btn line" id="lineBtn" href="#" target="_blank" rel="noopener">分享到 LINE</a>
+      <button class="btn alt" id="copyBtn" type="button">複製文案</button>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+  </section>
+<script>
+(function(){
+  // openExternalBrowser=1：LINE 官方參數，在 LINE 裡點開會改用手機預設瀏覽器（不用內建瀏覽器）。
+  // 網址只多了查詢參數，LINE 抓預覽圖時讀到的仍是首頁同一份 og 設定。
+  var URL_='https://steven4dev.github.io/yiguandao-2027-course/?openExternalBrowser=1';
+  var MSG='這次真的不一樣。\n我本來也以為又是那種要坐一整天的課，結果有瑜伽、有蔬食料理、下午還有氣球可以玩 🎈\n連報名都要先「登島」，你的名字會變成島上的小人偶 🏝️\n島上還有線上小遊戲：抽籤、拂塵對戰、吹散無明……等你來探索 🎮\n👉 '+URL_;
+  var msg=document.getElementById('msg'),line=document.getElementById('lineBtn'),toast=document.getElementById('toast');
+  function render(){
+    msg.textContent=MSG;
+    line.href='https://line.me/R/msg/text/?'+encodeURIComponent(MSG);
+  }
+  function say(t){toast.textContent=t;setTimeout(function(){toast.textContent='';},2500);}
+  document.getElementById('copyBtn').addEventListener('click',function(){
+    var t=MSG;
+    function fallback(){
+      var r=document.createRange();r.selectNodeContents(msg);
+      var sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);
+      var ok=false;try{ok=document.execCommand('copy');}catch(e){}
+      say(ok?'已複製，貼到 LINE 就能送出':'請長按上方文字，選「拷貝」');
+    }
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){say('已複製，貼到 LINE 就能送出');},fallback);
+    }else{fallback();}
+  });
+  render();
+})();
+</script>
+</main>
+</body>
+</html>

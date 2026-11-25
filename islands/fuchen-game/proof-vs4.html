@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>打樣｜四人對戰投影畫面</title>
+<style>
+  :root { --bg: #0b1220; --ink: #f2e5d0; --muted: #9fb0c8; --gold: #f0b54d; --line: rgba(242,229,208,.16);
+    --red: #ff6b5b; --blue: #5aa9ff; --green: #4ad295; --amber: #ffcf5c; --p0: #ff6b5b; --p1: #ff9b5b; --p2: #5aa9ff; --p3: #6ee0d0; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif; overflow: hidden; }
+  .stage { position: fixed; inset: 0; display: flex; flex-direction: column; background: radial-gradient(ellipse at 50% 0%, #1d2a48 0%, #0b1220 60%, #070b14 100%); font-size: clamp(12px, 1.5vw, 24px); }
+  /* 打樣控制列（正式版沒有） */
+  .demo { display: flex; gap: .5em; align-items: center; padding: .35em 1em; background: rgba(255,255,255,.06); font-size: .75em; color: var(--muted); }
+  .demo button { font: inherit; color: var(--ink); background: rgba(255,255,255,.1); border: 1px solid var(--line); border-radius: .6em; padding: .2em .8em; cursor: pointer; }
+  .demo button.on { background: var(--gold); color: #1b1409; font-weight: 800; }
+  .demo .sp { margin-left: auto; }
+  /* 上方列 */
+  .top { display: flex; align-items: center; gap: 1.2em; padding: .5em 1.2em; background: rgba(0,0,0,.35); border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .top b { color: #ffe7a8; font-size: 1.2em; letter-spacing: .06em; }
+  .top .code { color: var(--muted); }
+  .top .time { margin-left: auto; font-size: 1.8em; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .view { flex: 1; min-height: 0; position: relative; }
+  .view > section { position: absolute; inset: 0; display: none; }
+  .view > section.on { display: flex; flex-direction: column; }
+
+  /* ===== 大廳：電腦建立房間，掃 QR 加入 ===== */
+  #lobby { flex-direction: row; align-items: center; justify-content: center; gap: 4vw; padding: 2vh 4vw; }
+  .qrbox { text-align: center; }
+  .qrbox .qr { background: #fff; border-radius: 1.2em; padding: 1em; width: min(46vh, 30vw); aspect-ratio: 1; display: grid; place-items: center; }
+  .qrbox .qr svg { width: 100%; height: 100%; display: block; }
+  .qrbox h2 { margin: .8em 0 .1em; font-size: 1.5em; }
+  .qrbox .big { font-size: 3.2em; font-weight: 900; letter-spacing: .25em; color: var(--gold); line-height: 1.1; text-indent: .25em; }
+  .qrbox small { color: var(--muted); display: block; margin-top: .3em; }
+  .seats { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; width: min(46vw, 760px); }
+  .seats .grp { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size: 1.1em; margin-top: .2em; }
+  .grp.r { color: var(--red); } .grp.b { color: var(--blue); }
+  .seat { border: 2px dashed var(--line); border-radius: 1.1em; padding: .9em 1em; min-height: 5.2em; display: flex; align-items: center; gap: .8em; color: var(--muted); transition: all .3s; }
+  .seat .av { font-size: 2.2em; filter: grayscale(1) opacity(.35); }
+  .seat.in { border-style: solid; color: var(--ink); background: rgba(255,255,255,.06); }
+  .seat.in .av { filter: none; }
+  .seat.r.in { border-color: var(--red); } .seat.b.in { border-color: var(--blue); }
+  .seat .nm { font-weight: 900; font-size: 1.15em; } .seat small { display: block; color: var(--muted); }
+  .seat .rd { margin-left: auto; font-size: 1.4em; }
+  .opts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .6em 1.4em; align-items: center; padding-top: .4em; color: var(--muted); font-size: .9em; }
+  .opts .chip { padding: .25em .9em; border-radius: 999px; border: 1px solid var(--line); color: var(--ink); }
+  .opts .chip.on { background: var(--gold); color: #1b1409; font-weight: 800; border-color: var(--gold); }
+  .startbtn { grid-column: 1 / -1; font: inherit; font-weight: 900; font-size: 1.2em; padding: .6em; border-radius: .9em; border: 0; background: #2b3550; color: var(--muted); }
+  .startbtn.ok { background: linear-gradient(#ffd77a, #e8a93a); color: #1b1409; }
+
+  /* ===== 對戰中 ===== */
+  .banner { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; position: relative; height: 22vh; }
+  .team { display: flex; flex-direction: column; justify-content: center; align-items: center; transition: background .5s, flex .5s; position: relative; overflow: hidden; }
+  .team.r { background: linear-gradient(180deg, rgba(255,107,91,.22), rgba(255,107,91,.04)); color: var(--red); }
+  .team.b { background: linear-gradient(180deg, rgba(90,169,255,.22), rgba(90,169,255,.04)); color: var(--blue); }
+  .team .tn { font-weight: 900; letter-spacing: .15em; font-size: 1.1em; opacity: .95; }
+  .team .ts { font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 0 .35em currentColor; transition: font-size .6s cubic-bezier(.2,.9,.3,1.2), opacity .6s; }
+  .team.lead .ts { opacity: 1; } .team.trail .ts { opacity: .62; }
+  .team .crown { position: absolute; top: .3em; left: .6em; font-size: 1.6em; opacity: 0; transition: opacity .4s, transform .4s; transform: translateY(-.5em); }
+  .team.lead .crown { opacity: 1; transform: none; }
+  .vsmark { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 3.2em; height: 3.2em; border-radius: 50%; background: #0b1220; border: 2px solid var(--line); display: grid; place-items: center; font-weight: 900; z-index: 2; color: var(--ink); }
+  .tug { height: .7em; display: flex; background: rgba(0,0,0,.4); }
+  .tug i { display: block; height: 100%; transition: width .6s cubic-bezier(.2,.9,.3,1); }
+  .tug .r { background: var(--red); } .tug .b { background: var(--blue); }
+  .cols { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+  .col { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: .8em .8em 1em; min-width: 0; border-right: 1px solid var(--line); }
+  .col:last-child { border-right: 0; }
+  .col .who { display: flex; align-items: center; gap: .5em; width: 100%; font-weight: 900; font-size: 1.05em; }
+  .col .who .lv { margin-left: auto; letter-spacing: .08em; }
+  .col .dot { width: .8em; height: .8em; border-radius: 50%; background: var(--c); box-shadow: 0 0 .6em var(--c); flex: none; }
+  .col .mon { position: relative; width: min(24vh, 17vw); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.1), rgba(255,255,255,.02)); border: 2px solid color-mix(in srgb, var(--c) 55%, transparent); display: grid; place-items: center; font-size: min(11vh, 8vw); }
+  .col .mon svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .col .mon path { fill: none; stroke: var(--c); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 5px var(--c)); stroke-dasharray: 400; animation: draw 1.6s linear infinite; }
+  @keyframes draw { 0% { stroke-dashoffset: 400; } 60% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: .0; } }
+  .col .stat { text-align: center; color: var(--muted); font-size: .85em; line-height: 1.4; }
+  .col .ps { font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ink); text-shadow: 0 0 .4em var(--c); transition: font-size .6s cubic-bezier(.2,.9,.3,1.2), opacity .6s; }
+  .col .rank { font-size: 1.8em; line-height: 1; height: 1.1em; }
+  .col.lead { background: linear-gradient(180deg, color-mix(in srgb, var(--c) 18%, transparent), transparent 70%); }
+  .col.dim .ps { opacity: .6; }
+  .teamlab { position: absolute; top: 0; font-size: .7em; font-weight: 900; padding: .15em .8em; border-radius: 0 0 .7em .7em; background: var(--c); color: #0b1220; }
+  .flash { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%) scale(.6); font-size: 3em; font-weight: 900; padding: .1em .6em; white-space: nowrap; border-radius: .5em; background: rgba(11,18,32,.88); border: 3px solid currentColor; opacity: 0; pointer-events: none; z-index: 5; text-shadow: 0 0 .4em currentColor; }
+  .flash.show { animation: fl 1.7s ease-out; }
+  @keyframes fl { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.5); } 15% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); } 70% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); } }
+  /* 混戰的名次條 */
+  .ranks { display: none; height: 11vh; padding: .5em 1.2em; gap: .6em; align-items: center; background: rgba(0,0,0,.35); border-top: 1px solid var(--line); }
+  .ranks .rb { flex: 1; height: 100%; border-radius: .7em; background: rgba(255,255,255,.06); position: relative; overflow: hidden; }
+  .ranks .rb i { position: absolute; inset: 0 auto 0 0; background: var(--c); opacity: .55; transition: width .6s; }
+  .ranks .rb span { position: relative; display: flex; justify-content: space-between; align-items: center; height: 100%; padding: 0 .9em; font-weight: 900; }
+  .mode-ffa .banner, .mode-ffa .tug, .mode-ffa .teamlab { display: none; } .mode-ffa .ranks { display: flex; }
+  .mode-team .ranks { display: none; } .mode-team .rank { display: none; }
+  /* ===== 2 對 2 合作：每隊一隻共同的怪 ===== */
+  .coop { flex: 1; min-height: 0; display: none; grid-template-columns: 1fr 1fr; }
+  .mode-team .coop { display: grid; } .mode-team .cols { display: none; }
+  .tp { position: relative; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: .6em .8em .9em; min-width: 0; border-right: 1px solid var(--line); background: linear-gradient(180deg, color-mix(in srgb, var(--c) 9%, transparent), transparent 60%); }
+  .tp:last-child { border-right: 0; }
+  .tp .row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .8em; width: 100%; flex: 1; min-height: 0; }
+  .tp .pl { display: flex; flex-direction: column; align-items: center; gap: .25em; text-align: center; transition: transform .3s, opacity .3s; opacity: .55; }
+  .tp .pl .face { width: 3.4em; height: 3.4em; border-radius: 50%; display: grid; place-items: center; font-size: 1.9em; background: rgba(255,255,255,.07); border: 3px solid transparent; transition: all .3s; }
+  .tp .pl b { font-size: 1.15em; } .tp .pl .st { font-weight: 800; color: var(--muted); min-height: 1.3em; } .tp .pl em { font-style: normal; color: var(--muted); font-size: .8em; }
+  .tp .pl.on { opacity: 1; transform: scale(1.08); }
+  .tp .pl.on .face { border-color: var(--c); box-shadow: 0 0 1.2em var(--c), inset 0 0 .8em color-mix(in srgb, var(--c) 40%, transparent); animation: pulse 1s ease-in-out infinite; }
+  .tp .pl.on .st { color: var(--c); }
+  @keyframes pulse { 50% { box-shadow: 0 0 1.8em var(--c), inset 0 0 1.1em color-mix(in srgb, var(--c) 55%, transparent); } }
+  .tp .mon { position: relative; width: min(34vh, 21vw); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.12), rgba(255,255,255,.02)); border: 3px solid color-mix(in srgb, var(--c) 60%, transparent); display: grid; place-items: center; font-size: min(15vh, 9vw); transition: transform .35s, opacity .35s; }
+  .tp .mon.pop { transform: scale(1.25); opacity: .15; }
+  .tp .mon svg { position: absolute; inset: 6%; width: 88%; height: 88%; z-index: 1; }
+  .tp .mon path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .tp .mon .ghost { stroke: rgba(255,255,255,.28); stroke-width: 4; stroke-dasharray: 2 9; }
+  .tp .mon .go { stroke: var(--c); stroke-width: 7; filter: drop-shadow(0 0 7px var(--c)); stroke-dasharray: 300; stroke-dashoffset: 300; animation: sw .7s ease-out forwards; }
+  @keyframes sw { to { stroke-dashoffset: 0; } }
+  .tp .cue { z-index: 2; position: absolute; bottom: -.9em; left: 50%; transform: translateX(-50%); white-space: nowrap; font-weight: 900; background: var(--c); color: #0b1220; border-radius: 999px; padding: .15em .9em; font-size: clamp(13px, 1.45vw, 24px); font-family: system-ui, sans-serif; opacity: 0; transition: opacity .2s; }
+  .tp .cue.show { opacity: 1; }
+  .tp .steps { display: flex; gap: .6em; justify-content: center; margin: .5em 0 .3em; }
+  .tp .stp { min-width: 8.5em; padding: .35em .8em; border-radius: .9em; border: 2px solid var(--line); background: rgba(0,0,0,.3); color: var(--muted); text-align: center; line-height: 1.3; transition: all .25s; }
+  .tp .stp .sy { font-size: 1.5em; font-weight: 900; display: block; } .tp .stp small { display: block; }
+  .tp .stp.done { border-color: var(--green); color: var(--green); background: rgba(74,210,149,.1); }
+  .tp .stp.act { border-color: var(--c); color: var(--ink); background: color-mix(in srgb, var(--c) 22%, transparent); box-shadow: 0 0 1em color-mix(in srgb, var(--c) 60%, transparent); transform: translateY(-.15em); }
+  .tp .stp.both { border-style: dashed; }
+  .tp .lives { letter-spacing: .15em; font-size: 1.15em; } .tp .lives small { letter-spacing: 0; color: var(--muted); font-size: .7em; margin-left: .6em; }
+  .tp .toast { position: absolute; top: 14%; left: 50%; transform: translate(-50%, 0); font-weight: 900; font-size: 1.8em; white-space: nowrap; opacity: 0; color: var(--gold); text-shadow: 0 0 .5em currentColor; pointer-events: none; }
+  .tp .toast.show { animation: tt 1.5s ease-out; } .tp .toast.bad { color: #ff8a7a; }
+  @keyframes tt { 0% { opacity: 0; transform: translate(-50%, .6em) scale(.8); } 20% { opacity: 1; transform: translate(-50%, 0) scale(1.05); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -.8em); } }
+  .note { display: none; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="demo"><span>打樣：</span>
+    <button data-v="lobby" class="on">① 大廳（掃碼加入）</button><button data-v="team">② 2 對 2 合作組隊</button><button data-v="ffa">③ 4 人混戰（之後再做）</button>
+    <button id="sim" class="sp">⏩ 快轉到反敗為勝</button></div>
+  <div class="top"><b>🪶 拂塵試煉・對戰</b><span class="code">房號 K7M2Q</span><span id="topmode" class="code"></span><span class="time" id="clock">2:00</span></div>
+  <div class="view">
+    <!-- ① 大廳 -->
+    <section id="lobby" class="on">
+      <div class="qrbox"><div class="qr" id="qr"></div><h2>用手機掃描加入</h2><div class="big">K7M2Q</div><small>或打開群島 → 拂塵試煉 → 輸入房號</small></div>
+      <div class="seats" id="seats">
+        <div class="grp r">🔴 紅隊</div>
+        <div class="seat r" data-i="0"><span class="av">🦊</span><div><span class="nm">等待加入…</span><small>掃 QR code 就會坐進來</small></div><span class="rd"></span></div>
+        <div class="seat r" data-i="1"><span class="av">🐼</span><div><span class="nm">等待加入…</span><small>掃 QR code 就會坐進來</small></div><span class="rd"></span></div>
+        <div class="grp b">🔵 藍隊</div>
+        <div class="seat b" data-i="2"><span class="av">🐯</span><div><span class="nm">等待加入…</span><small>掃 QR code 就會坐進來</small></div><span class="rd"></span></div>
+        <div class="seat b" data-i="3"><span class="av">🐸</span><div><span class="nm">等待加入…</span><small>掃 QR code 就會坐進來</small></div><span class="rd"></span></div>
+        <div class="opts"><span>模式</span><span class="chip">1 對 1</span><span class="chip on">2 對 2 組隊</span><span class="chip">4 人混戰（之後）</span><span>難度</span><span class="chip">入門</span><span class="chip on">修行</span><span class="chip">精進</span></div>
+        <button class="startbtn" id="startbtn">等 4 位玩家都準備好</button>
+      </div>
+    </section>
+    <!-- ②③ 對戰中 -->
+    <section id="play">
+      <div class="banner" id="banner">
+        <div class="team r" id="tA"><span class="crown">👑</span><span class="tn">🔴 紅隊</span><span class="ts" id="tAs">0</span></div>
+        <div class="team b" id="tB"><span class="crown">👑</span><span class="tn">藍隊 🔵</span><span class="ts" id="tBs">0</span></div>
+        <div class="vsmark">VS</div>
+      </div>
+      <div class="tug" id="tug"><i class="r" id="tugA" style="width:50%"></i><i class="b" id="tugB" style="width:50%"></i></div>
+      <div class="cols" id="cols"></div>
+      <div class="coop" id="coop"></div>
+      <div class="ranks" id="ranks"></div>
+      <div class="flash" id="flash">反超！</div>
+      <div class="note" id="note"></div>
+    </section>
+  </div>
+</div>
+<script src="../../game/qrcode.js"></script>
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const PL = [
+  { n: '小明', av: '🦊', c: '#ff6b5b', team: 'r', mon: '👻' }, { n: 'Momo', av: '🐼', c: '#ff9b5b', team: 'r', mon: '🐛' },
+  { n: '阿哲', av: '🐯', c: '#5aa9ff', team: 'b', mon: '😈' }, { n: '佳佳', av: '🐸', c: '#6ee0d0', team: 'b', mon: '🦠' },
+];
+const PATHS = ['M20 80 L50 20 L80 80', 'M20 25 Q80 10 70 50 T25 85', 'M50 15 L50 85', 'M20 50 Q50 5 80 50 Q50 95 20 50'];
+const TEAMS = [{ p: [0, 1], c: 'var(--red)', n: '紅隊' }, { p: [2, 3], c: 'var(--blue)', n: '藍隊' }];
+const SY = { up: ['⬆', '挑', 'M50 88 L50 14 M30 34 L50 14 L70 34'], down: ['⬇', '劈', 'M50 12 L50 86 M30 66 L50 86 L70 66'], left: ['⬅', '左揮', 'M88 50 L14 50 M34 30 L14 50 L34 70'], right: ['➡', '右揮', 'M12 50 L86 50 M66 30 L86 50 L66 70'], circle: ['○', '圓', 'M50 14 A36 36 0 1 1 28 22 M28 8 L28 22 L42 24'], alpha: ['α', '阿法', 'M80 22 C46 -2 18 34 50 50 C82 66 54 104 20 80'] };
+const MONS = ['👻', '🐛', '😈', '🦠', '👹', '🕷️'];
+let T = [], tsc = [0, 0], contrib = [0, 0, 0, 0];
+let mode = 'lobby', tick = 0, sc = [0, 0, 0, 0], lives = [3, 3, 3, 3], hits = [0, 0, 0, 0], lead = null, secs = 120;
+// 可重現的亂數
+let seed = 7; const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+
+// QR code
+(() => { try { const q = qrcode(0, 'M'); q.addData('https://steven4dev.github.io/yiguandao-2027-course/islands/fuchen-game/?room=K7M2Q'); q.make(); $('#qr').innerHTML = q.createSvgTag(6, 0); } catch (e) { $('#qr').textContent = 'QR'; } })();
+
+// 大廳：玩家陸續掃碼進來
+const seats = [...document.querySelectorAll('.seat')]; let joined = 0;
+function lobbyStep() {
+  if (joined < 4) { const s = seats[joined], p = PL[joined]; s.classList.add('in'); $('.nm', s).textContent = p.n; $('small', s).textContent = '剛剛加入'; joined++; }
+  else { seats.forEach(s => { $('.rd', s).textContent = '✅'; $('small', s).textContent = '已準備'; }); $('#startbtn').classList.add('ok'); $('#startbtn').textContent = '▶ 開始對戰（4 位都準備好了）'; }
+}
+
+// 對戰畫面
+const cols = $('#cols'), ranks = $('#ranks');
+PL.forEach((p, i) => {
+  cols.insertAdjacentHTML('beforeend', `<div class="col" style="--c:${p.c}" id="c${i}"><span class="teamlab" data-team>${p.team === 'r' ? '紅隊' : '藍隊'}</span><div class="who" style="margin-top:1.2em"><span class="dot"></span>${p.av} ${p.n}<span class="lv"></span></div>
+    <div class="mon">${p.mon}<svg viewBox="0 0 100 100"><path d="${PATHS[i]}" style="animation-delay:${i * .35}s"/></svg></div>
+    <div class="stat"></div><div class="rank"></div><div class="ps">0</div></div>`);
+  ranks.insertAdjacentHTML('beforeend', `<div class="rb" style="--c:${p.c}" id="r${i}"><i style="width:0"></i><span><b>${p.av} ${p.n}</b><b class="v">0</b></span></div>`);
+});
+const fmt = n => n.toLocaleString('en-US');
+function render() {
+  const A = mode === 'team' ? tsc[0] : sc[0] + sc[1], B = mode === 'team' ? tsc[1] : sc[2] + sc[3], tot = Math.max(1, A + B), mx = Math.max(1, ...sc);
+  $('#clock').textContent = Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0');
+  // 組隊：兩隊總分，領先的字大（3.2vw～9.5vw），落後的字小；反敗為勝時大小對調
+  if (mode === 'team') {
+    const sa = A / tot, sb = B / tot, size = s => (3 + 7.5 * s).toFixed(2) + 'vw';
+    $('#tAs').textContent = fmt(A); $('#tBs').textContent = fmt(B); $('#tAs').style.fontSize = size(sa); $('#tBs').style.fontSize = size(sb);
+    $('#tA').classList.toggle('lead', A > B); $('#tA').classList.toggle('trail', A < B); $('#tB').classList.toggle('lead', B > A); $('#tB').classList.toggle('trail', B < A);
+    $('#tugA').style.width = (sa * 100) + '%'; $('#tugB').style.width = (sb * 100) + '%';
+    const L = A === B ? null : (A > B ? 'r' : 'b');
+    if (L && lead && L !== lead) flash(L === 'r' ? '🔴 紅隊反超！' : '🔵 藍隊反超！', L === 'r' ? 'var(--red)' : 'var(--blue)');
+    if (L) lead = L;
+  }
+  const order = [0, 1, 2, 3].sort((a, b) => sc[b] - sc[a]);
+  PL.forEach((p, i) => {
+    const el = $('#c' + i), r = order.indexOf(i);
+    // 個人分數：混戰時大小跟名次走（領先者最大）；組隊時以個人貢獻較小的字顯示
+    const size = mode === 'ffa' ? (2.6 + 3.6 * (sc[i] / mx)).toFixed(2) : (2.4 + 1.6 * (sc[i] / mx)).toFixed(2);
+    $('.ps', el).textContent = fmt(sc[i]); $('.ps', el).style.fontSize = size + 'vw';
+    $('.lv', el).textContent = '❤'.repeat(lives[i]) + '♡'.repeat(Math.max(0, 3 - lives[i]));
+    $('.stat', el).innerHTML = `淨化 ${hits[i]} 隻`;
+    el.classList.toggle('lead', mode === 'ffa' && r === 0 && sc[i] > 0); el.classList.toggle('dim', mode === 'ffa' && r >= 2);
+    $('.rank', el).textContent = mode === 'ffa' ? ['🥇', '🥈', '🥉', ''][r] : '';
+    const rb = $('#r' + i); $('i', rb).style.width = (sc[i] / mx * 100) + '%'; $('.v', rb).textContent = fmt(sc[i]);
+    rb.style.order = r;
+  });
+  if (mode === 'ffa') { const top = order[0]; if (sc[top] > 0 && lead !== top) { if (lead !== null && lead !== 'r' && lead !== 'b') flash(`${PL[top].av} ${PL[top].n} 衝到第一！`, PL[top].c); lead = top; } }
+}
+// ---- 2 對 2 合作 ----
+const K = Object.keys(SY);
+function newMon(t) { const k = [1, 2, 2, 3, 3][Math.floor(rnd() * 5)], keys = []; while (keys.length < k) { const y = K[Math.floor(rnd() * K.length)]; if (!keys.includes(y)) keys.push(y); }
+  t.k = k; t.keys = keys; t.step = 0; t.done = []; t.sw = false; t.mon = MONS[Math.floor(rnd() * MONS.length)]; t.mc = (t.mc || 0) + 1; }
+// 這一招輪到誰：單招輪流；2 招＝①隊友一、②隊友二；3 招＝最後一招兩人一起
+const who = t => t.k === 3 && t.step === 2 ? [0, 1] : t.k === 1 ? [t.mc % 2] : [t.step % 2];
+function buildCoop() {
+  const pl = (i, j) => { const q = PL[TEAMS[i].p[j]]; return `<div class="pl" id="pl${i}${j}"><div class="face">${q.av}</div><b>${q.n}</b><span class="st">&nbsp;</span><em>貢獻 0</em></div>`; };
+  $('#coop').innerHTML = TEAMS.map((tm, i) => `<div class="tp" id="tp${i}" style="--c:${tm.c}"><div class="toast" id="to${i}"></div>
+    <div class="row">${pl(i, 0)}<div class="mon" id="mn${i}"><span class="mm"></span><svg viewBox="0 0 100 100"></svg><span class="cue" id="cu${i}"></span></div>${pl(i, 1)}</div>
+    <div class="steps" id="sp${i}"></div><div class="lives" id="lv${i}"></div></div>`).join('');
+}
+function stepTeam() {
+  TEAMS.forEach((tm, i) => { const t = T[i];
+    if (!t.sw) { t.sw = true; return; }
+    t.sw = false;
+    const late = tick >= 30, win = i === 0 ? (late ? .66 : .93) : (late ? .96 : .74);   // 劇本：前半紅隊順、後半藍隊爆發
+    if (rnd() < win) {
+      t.done[t.step] = true; t.step++;
+      if (t.step >= t.k) { const pts = 100 + 50 * (t.k - 1); tsc[i] += pts; tm.p.forEach(p => { contrib[p] += Math.round(pts / 2); }); t.fin = t.k === 3 ? '三才連拂！ +' + pts : t.k === 2 ? '連擊！ +' + pts : '淨化！ +' + pts; t.pop = true; }
+    } else { t.lives = Math.max(1, t.lives - 1); t.bad = true; }
+  });
+}
+function renderCoop() {
+  TEAMS.forEach((tm, i) => { const t = T[i], w = who(t), tp = $('#tp' + i);
+    tm.p.forEach((pid, j) => { const el = $('#pl' + i + j); el.classList.toggle('on', w.includes(j)); $('.st', el).textContent = w.includes(j) ? (w.length > 1 ? '一起揮！' : (t.sw ? '揮！' : '輪到你')) : '準備'; $('em', el).textContent = '貢獻 ' + fmt(contrib[pid]); });
+    const mn = $('#mn' + i); $('.mm', mn).textContent = t.mon; mn.classList.toggle('pop', !!t.pop);
+    const cur = t.keys[t.step]; $('svg', mn).innerHTML = (cur ? `<path class="ghost" d="${SY[cur][2]}"/>` : '') + (t.sw && cur ? `<path class="go" d="${SY[cur][2]}"/>` : '');
+    const cu = $('#cu' + i); cu.textContent = w.length > 1 ? '🔔 兩人同時揮！' : '👉 ' + PL[tm.p[w[0]]].n; cu.classList.toggle('show', !t.pop);
+    $('#sp' + i).innerHTML = t.keys.map((y, s) => { const ww = t.k === 3 && s === 2 ? [0, 1] : t.k === 1 ? [t.mc % 2] : [s % 2]; const who2 = ww.length > 1 ? PL[tm.p[0]].av + PL[tm.p[1]].av + ' 一起' : PL[tm.p[ww[0]]].av + ' ' + PL[tm.p[ww[0]]].n;
+      return `<div class="stp${t.done[s] ? ' done' : s === t.step ? ' act' : ''}${ww.length > 1 ? ' both' : ''}"><span class="sy">${t.done[s] ? '✅' : SY[y][0]}</span><small>${s + 1}. ${SY[y][1]}</small><small>${who2}</small></div>`; }).join('');
+    $('#lv' + i).innerHTML = '❤'.repeat(t.lives) + '<span style="opacity:.25">' + '♡'.repeat(4 - t.lives) + '</span><small>全隊共用心燈</small>';
+    const to = $('#to' + i); if (t.fin) { to.textContent = t.fin; to.className = 'toast show'; t.fin = null; } else if (t.bad) { to.textContent = '失誤！ −1 ❤'; to.className = 'toast show bad'; t.bad = false; }
+    if (t.pop) { t.pop = false; const keep = t; setTimeout(() => {}, 0); newMon(t); mn.classList.add('pop'); setTimeout(() => mn.classList.remove('pop'), 350); }
+  });
+}
+function flash(t, c) { const f = $('#flash'); f.textContent = t; f.style.color = c; f.classList.remove('show'); void f.offsetWidth; f.classList.add('show'); }
+function step() {
+  tick++; if (mode === 'team') { if (secs > 0) secs--; stepTeam(); render(); renderCoop(); return; }
+  if (secs > 0 && tick % 2 === 0) secs--;
+  // 劇本：前半紅隊領先，後半藍隊爆發反超（打樣用）
+  PL.forEach((p, i) => { const f = mode === 'team' ? (tick < 26 ? (p.team === 'r' ? 1.5 : .7) : (p.team === 'b' ? 2.4 : .5)) : [1.6, 1.2, .9, .7][i] * (tick > 28 && i === 3 ? 3 : 1);
+    if (rnd() < .55 * f) { const g = Math.round((60 + rnd() * 120) * (f > 1.4 ? 1.2 : 1) / 10) * 10; sc[i] += g; hits[i]++; } });
+  render();
+}
+function reset(m) { mode = m; tick = 0; sc = [0, 0, 0, 0]; hits = [0, 0, 0, 0]; lives = [3, 3, 3, 3]; lead = null; secs = 120; seed = 7; tsc = [0, 0]; contrib = [0, 0, 0, 0]; $('#play').className = 'on mode-' + m;
+  if (m === 'team') { buildCoop(); T = TEAMS.map(() => ({ lives: 4 })); T.forEach(newMon); renderCoop(); } render(); }
+function show(v) {
+  document.querySelectorAll('.demo [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  $('#lobby').classList.toggle('on', v === 'lobby'); $('#play').classList.toggle('on', v !== 'lobby');
+  $('#topmode').textContent = v === 'team' ? '2 對 2 合作・修行' : v === 'ffa' ? '4 人混戰・修行' : '大廳';
+  const nt = v === 'team' ? '字越大＝這隊分數越高；每隊一隻怪，兩人輪流揮，最後一招一起揮' : v === 'ffa' ? '字越大＝個人分數越高；名次條在最下面' : '';
+  $('#topmode').textContent += nt ? ' ｜ ' + nt : ''; if (v !== 'lobby') reset(v); if (v === 'lobby') { joined = 0; seats.forEach(s => { s.classList.remove('in'); $('.nm', s).textContent = '等待加入…'; $('small', s).textContent = '掃 QR code 就會坐進來'; $('.rd', s).textContent = ''; }); $('#startbtn').classList.remove('ok'); $('#startbtn').textContent = '等 4 位玩家都準備好'; }
+}
+document.querySelectorAll('.demo [data-v]').forEach(b => b.onclick = () => show(b.dataset.v));
+$('#sim').onclick = () => { for (let k = 0; k < 24; k++) step(); };
+const Q = new URLSearchParams(location.search); const v0 = Q.get('v') || 'lobby'; show(v0);
+const seek = +Q.get('seek') || 0; if (v0 === 'lobby') for (let k = 0; k < (+Q.get('join') || 0); k++) lobbyStep(); else for (let k = 0; k < seek; k++) step();
+if (!Q.get('still')) setInterval(() => { if (mode === 'lobby' && !$('#lobby').classList.contains('on')) return; if ($('#lobby').classList.contains('on')) lobbyStep(); else step(); }, 1100);
+</script>
+</body>
+</html>

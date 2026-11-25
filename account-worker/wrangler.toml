@@ -1,0 +1,29 @@
+# 全真群島・帳號伺服器（LINE 登入＋紀錄同步）：Cloudflare Worker + Durable Objects（一個帳號一個 Durable Object）
+# 本機測試：npx wrangler dev --port 8788 --local   部署：npx wrangler deploy（說明見 README.md）
+name = "islands-account"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+LINE_CHANNEL_ID = "2012742687"
+PUBLIC_URL = "https://islands-account.yiguandao2027.workers.dev"
+# 登入完可以回去的網頁、可以呼叫 API 的網頁來源（逗號分隔）
+ALLOWED_ORIGINS = "https://steven4dev.github.io,http://localhost:8765,http://127.0.0.1:8765"
+# 機密（不寫在這裡）：LINE_CHANNEL_SECRET（LINE 後台的 Channel secret，本人在 Cloudflare 後台填）、
+# SESSION_KEY（簽登入憑證，可更換，換了大家要重新登入）、UID_KEY（把 LINE 代號轉成匿名編號，永遠不要換，換了紀錄就對不上）
+
+[[durable_objects.bindings]]
+name = "VAULT"
+class_name = "Vault"
+
+[[durable_objects.bindings]]
+name = "PAIR"
+class_name = "Pair"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Vault"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Pair"]

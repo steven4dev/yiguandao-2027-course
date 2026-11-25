@@ -2,6 +2,10 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
+<script>
+  // LINE 登入回來時網址 # 後面帶著登入憑證：最先把它收起來並清掉網址，避免被造訪統計或島嶼連結讀到（account.js 會接手）
+  if (/(^#|&)(acct|acct_err)=/.test(location.hash)) { window.__acctHash = location.hash; history.replaceState(null, '', location.href.split('#')[0]); }
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex, nofollow">
@@ -76,6 +80,7 @@
   .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; }
   .status > span { min-width: 0; }
   .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); flex: none; }
+  .status[data-state="error"] i { background: var(--brick); }
   .status[data-state="live"] i { background: var(--jade); box-shadow: 0 0 0 3px color-mix(in srgb, var(--jade) 25%, transparent); }
 
   /* 介面原則：資訊卡和時光捲軸一次只展開一個，收起來時都只剩一行 */
@@ -257,6 +262,21 @@
   .btile.new::after { content: ""; position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: #fff; }
   .bdetail { margin: 0; min-height: 3.2em; padding: 10px 12px; border-radius: 12px; background: var(--chip); font-size: 13.5px; line-height: 1.6; }
   .bdetail b { font-size: 15px; }
+  /* LINE 登入・保存紀錄（徽章牆最下面） */
+  .acct { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--chip); font-size: 13px; line-height: 1.6; }
+  .acct p { margin: 0; }
+  .acct-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .acct-line { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 10px; padding: 9px 14px; background: #06c755; color: #fff; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .acct-line span { font-size: 10.5px; font-weight: 900; letter-spacing: .02em; background: #fff; color: #06c755; border-radius: 5px; padding: 1px 4px; }
+  .acct-line:disabled, .acct-sub:disabled { opacity: .55; cursor: default; }
+  .acct-sub { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; background: transparent; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; }
+  .acct-msg { color: var(--muted); font-size: 12px; min-height: 0; }
+  .acct-msg:empty { display: none; }
+  .acct-pair { margin-top: 8px; } .acct-pair small { display: block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+  .acct-code { margin: 8px 0 0; font: 800 28px/1.2 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .18em; color: var(--brick); user-select: all; }
+  .acct-code small { display: block; letter-spacing: 0; font: 400 12px/1.5 system-ui, sans-serif; color: var(--muted); }
+  .acct-row { display: flex; gap: 8px; } .acct-row input { flex: 1; min-width: 0; box-sizing: border-box; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font: inherit; font-size: 16px; letter-spacing: .1em; background: var(--card); color: var(--ink); }
+  .acct-pv { display: inline-block; margin-top: 6px; color: var(--muted); font-size: 12px; }
   .bclaim { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 8px; }
   .bclaim small { grid-column: 1 / -1; }
   .bclaim input { min-width: 0; box-sizing: border-box; border: 1px solid rgba(160, 120, 60, 0.35); border-radius: 10px; padding: 8px 10px; font: inherit; font-size: 16px; background: #fff8e6; color: #3f2c22; }
@@ -690,6 +710,16 @@ body.fcShake #cv,body.fcShake canvas:not(.rain):not(.bolt){animation:fcShake 1s 
 .ckT .cover .chef{position:absolute;left:0;right:0;bottom:5%;text-align:center;font-weight:900;font-size:clamp(15px,5vw,22px);letter-spacing:.1em;text-shadow:0 2px 8px rgba(0,0,0,.45)}
 .ckT .cover .chef small{display:block;font-size:.6em;color:#ffd38a;letter-spacing:.2em;margin-bottom:4px}
 body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag,body.fcT-hide .topbtns,body.fcT-hide .mapctl{transition:opacity .6s ease;opacity:0!important;pointer-events:none!important}
+  /* —— 尋寶圖（導覽地圖）—— */
+  .mapov { position: fixed; inset: 0; z-index: 80; background: rgba(30,20,12,.97); touch-action: none; overflow: hidden; user-select: none; -webkit-user-select: none; }
+  .mapov[hidden] { display: none; }
+  .mapov .mapbar { position: absolute; left: 0; right: 0; top: 0; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px calc(0px) 16px; color: #f6e7c8; z-index: 2; pointer-events: none; padding-top: env(safe-area-inset-top, 0px); }
+  .mapov .mapbar b { font: 900 17px/1 'Noto Serif TC','Songti TC',serif; letter-spacing: .12em; }
+  .mapov #mapClose { pointer-events: auto; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,248,238,.92); color: #3f2c22; font-size: 20px; cursor: pointer; }
+  .mapov #mapStage { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+  .mapov .maphint { position: absolute; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); padding: 6px 14px; border-radius: 99px; background: rgba(255,248,238,.9); color: #3f2c22; font-size: 13px; font-weight: 700; pointer-events: none; white-space: nowrap; z-index: 2; }
+  .mapbtn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 6px 0 4px; padding: 11px 14px; border-radius: 12px; border: 1.5px solid #c9a566; background: linear-gradient(180deg, #f6e7c4, #ead3a0); color: #5a3a1c; font: inherit; font-weight: 900; cursor: pointer; box-shadow: 0 2px 0 #c9a566; }
+  .mapbtn:active { transform: translateY(1px); box-shadow: none; }
 </style>
 <style>
   body { margin: 0; }
@@ -714,9 +744,9 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count bottle-count wish-count" id="wishChip" role="button" tabindex="0" aria-label="前往希望島，看祈福卡或寫一張"><span id="wishChipText">祈福卡</span></p>
   <p class="count bottle-count" id="bottleChip" role="button" tabindex="0" aria-label="前往漂流瓶島，看瓶中信或寫一封"><span id="bottleChipText">瓶中信</span></p>
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
-  <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a><button class="board board-visit" id="visitBtn" type="button">👀 我要觀摩</button></div>
-  <span class="status" id="status" data-state="backup" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取資料中…</span></span>
-  <span class="ver">v261125.01</span>
+  <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a></div>
+  <span class="status" id="status" data-state="loading" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取即時報名資料中…</span></span>
+  <span class="ver">v261125.04</span>
   </div></div>
 </div>
 
@@ -731,6 +761,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
 </div>
 
 <nav class="card navpop" id="navPop" aria-label="島嶼目錄" hidden></nav>
+<div class="mapov" id="mapOv" hidden role="dialog" aria-label="全真群島尋寶圖"><div class="mapbar"><b>🗺️ 全真群島・尋寶圖</b><button id="mapClose" type="button" aria-label="關閉地圖">✕</button></div><div id="mapStage"></div><div class="maphint" id="mapHint"></div></div>
 
 <div class="card navpop searchpop" id="searchPop" role="search" hidden>
   <label class="sbox"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg>
@@ -785,7 +816,19 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
     <div class="bstats"><div><small>完成度</small><b id="bPct">0%</b></div><div><small>等級</small><b id="bStars">☆☆☆</b><span id="bRank"></span></div><div><small>已解鎖</small><b id="bCount">0 / 48</b></div></div>
     <div class="bgrid" id="bGrid"></div>
     <p class="bdetail" id="bDetail">點一格看看怎麼解鎖 👆</p>
-    <p class="wsub">徽章先存在這支手機上；換手機或清除瀏覽資料會不見，之後會開放用 Google 帳號保存。</p>
+    <div class="acct" id="acct">
+      <p class="acct-txt" id="acctTxt">徽章先存在這支手機上；換手機或清除瀏覽資料會不見，之後會開放用 LINE 帳號保存。</p>
+      <div class="acct-btns"><button type="button" class="acct-line" id="acctLogin" hidden><span aria-hidden="true">LINE</span>用 LINE 登入・保存紀錄</button>
+        <button type="button" class="acct-sub" id="acctSync" hidden>☁️ 立即同步</button><button type="button" class="acct-sub" id="acctOut" hidden>登出</button></div>
+      <p class="acct-msg" id="acctMsg" aria-live="polite"></p>
+      <div class="acct-pair" id="acctPair" hidden>
+        <div id="pairMake" hidden><button type="button" class="acct-sub" id="pairBtn">📲 取得配對碼（給桌面圖示或另一支手機）</button>
+          <p class="acct-code" id="pairCode" hidden></p></div>
+        <div id="pairUse" hidden><small>已經在 Safari 或別支手機登入了？在那邊按「取得配對碼」，把 8 位數代碼輸入這裡：</small>
+          <div class="acct-row"><input id="pairInput" inputmode="numeric" autocomplete="one-time-code" maxlength="9" placeholder="輸入 8 位數配對碼" aria-label="配對碼"><button type="button" class="acct-sub" id="pairGo">登入</button></div></div>
+      </div>
+      <a class="acct-pv" href="privacy.html" hidden>🔒 隱私說明・刪除雲端紀錄</a>
+    </div>
   </div>
 </div>
 <div class="bpop" id="bPop" role="status" aria-live="polite" hidden><canvas class="bconfetti" id="bConfetti" aria-hidden="true"></canvas><div class="card bpop-card"><small>🏅 解鎖新徽章</small><span class="bpe" id="bPopE"></span><b id="bPopN"></b><p id="bPopC"></p><em id="bPopNext"></em></div></div>
@@ -949,19 +992,10 @@ function cadreUidsOf(masked, groups) {
   return CADRE_NAMES.map((n, u) => [n, u]).filter(([n]) => mask(n) === masked && CADRE_OF.get(n).some((g) => groups.includes(g))).map(([, u]) => u);
 }
 
-// 報名資料備份（signup/data.json 2026/10/24 版本，只保留畫面需要的欄位，不含姓名）
-const SNAPSHOT = {
-  updated: '2026-10-25T01:06:27.952Z',
-  people: [
-    { g: '坤道', city: '桃園市', unit: '天選區', isCadre: true, cadre: ['公關禮節組'], m: '林○涵', date: '2026-10-24' },
-    { g: '乾道', city: '桃園市', unit: '至善區', isCadre: false, cadre: [], m: '李○賢', date: '2026-10-24' },
-    { g: '乾道', city: '新北市', unit: '天選區', isCadre: true, cadre: ['班務團隊'], m: '周○翔', date: '2026-10-24' },
-    { g: '坤道', city: '新北市', unit: '天選區', isCadre: true, cadre: ['班務團隊'], m: '何○貞', date: '2026-10-24' },
-  ],
-};
-SNAPSHOT.people.forEach((p) => { p.uids = p.isCadre ? cadreUidsOf(p.m, p.cadre) : []; });
-
-let realPeople = SNAPSHOT.people, dataStamp = SNAPSHOT.updated;
+// 登島人數只用報名表的即時資料，不內建備份：還沒讀到就寫「讀取中」，讀不到就明說原因
+let realPeople = [], dataStamp = '';
+let dataState = 'loading', dataErr = '';   // loading 讀取中｜live 即時｜stale 連線中斷（顯示上次讀到的）｜error 從沒讀到
+const peopleReady = () => dataState === 'live' || dataState === 'stale';
 // 報名表「所屬單位」選「我只想先登島逛逛而已」的是來逛逛的旅人：不算進登島人數，人偶戴草帽、揹背包，站在渡口島上看風景
 const isVisit = (p) => /逛逛/.test(p.unit || '');
 const peopleNow = () => realPeople.filter((p) => !isVisit(p));
@@ -1000,8 +1034,17 @@ controls.screenSpacePanning = false;
 
 const HOME = { target: new THREE.Vector3(0, 2, 6), pos: new THREE.Vector3(118, 112, 168) };
 if (innerWidth < innerHeight) HOME.pos.multiplyScalar(1.55);
-camera.position.copy(HOME.pos);
-controls.target.copy(HOME.target);
+/* 手機直立的起始視角：以全真島為中心（視線中心不動），改用「低一點、遠一點、幾乎正對前方」的視角，
+   讓畫面（又高又窄）上下方向多裝一些：後方的濟世靈山、清淨菩提到前方的投壺島、渡口、漂流瓶都在畫面內，投壺島落在正中偏下、不被時間軸擋住。
+   方位 5°、仰角 24°、距離 450（手機另外把 maxDistance 放寬到 520）。HOME 本身不動（許多島的朝向、島上物件都是依 HOME.pos 算的），只有「相機起點與回家鍵」用 HOME_VIEW。電腦（橫向）完全不變。 */
+const HOME_VIEW = { target: HOME.target.clone(), pos: HOME.pos.clone() };
+if (innerWidth < innerHeight) {
+  const az = (5 * Math.PI) / 180, el = (24 * Math.PI) / 180, d = 450;
+  HOME_VIEW.pos.set(HOME.target.x + Math.sin(az) * Math.cos(el) * d, HOME.target.y + Math.sin(el) * d, HOME.target.z + Math.cos(az) * Math.cos(el) * d);
+  controls.maxDistance = 520;
+}
+camera.position.copy(HOME_VIEW.pos);
+controls.target.copy(HOME_VIEW.target);
 
 const hemi = new THREE.HemisphereLight('#fff6e6', '#b9a27f', 1.6);
 scene.add(hemi);
@@ -1699,6 +1742,20 @@ MASTERS.forEach((m, i) => {
   m.fig = fig;
   m.phase = i * 2.1;
 });
+
+// 尋寶圖看板：全真島前庭左前方立一塊木框看板，畫著全真群島的藏寶圖；點它開啟全螢幕地圖（圖會在載入後畫上去）
+const mapBoardHit = [], mapBoardTex = canvasTex(512, 480, (c) => { c.fillStyle = '#ecd9a8'; c.fillRect(0, 0, 512, 480); c.fillStyle = '#8c3b2b'; c.font = '900 64px "Noto Serif TC","Songti TC",serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('尋寶圖', 256, 210); c.font = 'bold 30px "Noto Sans TC",sans-serif'; c.fillStyle = '#5a3a1c'; c.fillText('點一下看全真群島', 256, 290); }), mapBoard = new THREE.Group();
+{
+  const bx = -8.6, bz = 9.0, wood = lam('#8a5a32'), woodD = lam('#5b3a22');
+  mapBoard.position.set(bx, 0, bz); mapBoard.rotation.y = Math.atan2(HOME.pos.x - bx, HOME.pos.z - bz); mapBoard.scale.setScalar(0.63); /* 原本 1.9，縮成約三分之一：不擋住後面的建築 */ TEMPLE.group.add(mapBoard);
+  for (const x of [-1.4, 1.4]) mesh(new THREE.CylinderGeometry(0.09, 0.11, 2.9, 8), woodD, x, 1.45, 0, mapBoard);
+  const fr = mesh(new THREE.BoxGeometry(3.2, 2.6, 0.14), wood, 0, 1.9, 0, mapBoard); mapBoardHit.push(fr);
+  const face = mesh(new THREE.PlaneGeometry(2.9, 2.7 * 0.9), new THREE.MeshLambertMaterial({ map: mapBoardTex }), 0, 1.9, 0.075, mapBoard, false); mapBoardHit.push(face);
+  mesh(new THREE.BoxGeometry(3.6, 0.12, 0.7), woodD, 0, 3.3, 0, mapBoard).rotation.x = -0.12; mesh(new THREE.SphereGeometry(0.1, 8, 6), lam('#e3b44f'), 0, 3.45, 0, mapBoard, false);
+  const tag = mesh(new THREE.ConeGeometry(0.2, 0.42, 4), lam('#c23b2e', { emissive: '#661a12', emissiveIntensity: 0.4 }), 0, 4.0, 0, mapBoard, false); tag.rotation.x = Math.PI; tag.scale.setScalar(1.7); tag.userData.noMerge = true; mapBoard.userData.tag = tag; mapBoardHit.push(tag);
+  { const hb = new THREE.Mesh(new THREE.BoxGeometry(4.6, 4.8, 1.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); hb.position.set(0, 2.2, 0); mapBoard.add(hb); mapBoardHit.push(hb); }   // 看板變小後點起來不好中：加一個看不見的大感應區
+  addObst(TEMPLE.group, { x0: bx - 1.3, x1: bx + 1.3, z0: bz - 0.8, z1: bz + 0.8 });
+}
 
 // 來逛逛的旅人：渡口島上，戴草帽、揹背包，不時舉起相機拍拍風景
 const visitorPeople = [], visitorHit = [];
@@ -5320,6 +5377,8 @@ const fcTester = (() => {
   } catch (e) { return false; }
 })();
 const fcOpen = FC_LIVE || fcTester;
+const FC_VS = (() => { try { return new URLSearchParams(location.search).get('vs') === '1'; } catch (e) { return false; } })();   // 雙人對戰測試模式：把 vs=1 轉給遊戲
+const FC_ROOM = (() => { try { const r = new URLSearchParams(location.search).get('room'); return r && /^[A-Za-z0-9]{5}$/.test(r) ? r.toUpperCase() : ''; } catch (e) { return ''; } })();   // 雙人對戰的邀請連結 ?room=房號：入口按鈕改成「加入對戰房間」
 const FC_ANG = (135 * Math.PI) / 180, FC_R = 13;
 const fcIsl = makeIsland('fuchen', FC_R, Math.sin(FC_ANG) * 108, Math.cos(FC_ANG) * 108, 'fuchen');
 {
@@ -5708,6 +5767,255 @@ const ckIsl = (() => {
     mesh(new THREE.BoxGeometry(5.2, 2, 0.1), [signY, signY, signY, signY, new THREE.MeshLambertMaterial({ map: sTex }), signY], 0, 1.75, edgeR + 0.25, sy);
     for (const x of [-2.2, 2.2]) mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.8, 6), postM, x, 1.4, edgeR + 0.18, sy);
   }
+}
+
+/* ---------- 投壺島：全真島前方外海（方位 5°、離中心 116）----------
+   位置：漂流瓶島（-12, 66）和渡口島（43, 66）的外面，是從渡口進來第一眼看到的島；跟最近的島空隙約 36（外海島之間大多 45 左右）。
+   島中央是遊戲裡那張紅邊草蓆：後面石墩上一只青銅雙耳壺、壺口斜插著一支矢；前面一條站位線、右前一個箭筒架。
+   四周：後方一圈竹林、左邊石燈和茶几、右後風旗、兩根立柱間一串紅燈籠、左後一座石砌水池＋竹筏（第三輪「浮筏」）、右前一塊「投壺島」立牌。
+   還沒開放前整座島圍施工圍籬（TH_LIVE = false）；測試的人在網址加 ?touhu=測試碼（islands/?touhu=thq-8w4n#touhu）打開測試模式，?touhu=off 關掉。
+   互動：資訊卡 →「進入投壺島」→ islands/touhu-game/（單人三輪十二矢；多人對戰一對一／二對二）。 */
+const TH_LIVE = false;   // 正式開放時改成 true，圍籬就拆掉、大家都能玩
+const TH_TEST_TOKEN = 'thq-8w4n', TH_TEST_KEY = 'islands-touhu-test';
+const thTester = (() => {
+  try {
+    const q = new URLSearchParams(location.search), v = q.get('touhu');
+    if (v === TH_TEST_TOKEN) localStorage.setItem(TH_TEST_KEY, '1');
+    else if (v === 'off') localStorage.removeItem(TH_TEST_KEY);
+    if (v !== null) { q.delete('touhu'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }   // 測試碼不留在網址上
+    return localStorage.getItem(TH_TEST_KEY) === '1';
+  } catch (e) { return false; }
+})();
+const thOpen = TH_LIVE || thTester;
+const TH_ANG = (5 * Math.PI) / 180, TH_R = 13;
+const thIsl = makeIsland('touhu', TH_R, Math.sin(TH_ANG) * 108, Math.cos(TH_ANG) * 108, 'touhu');
+{
+  const g = thIsl.group;
+  const mark = new THREE.Group(); mark.rotation.y = faceCam(thIsl.x, thIsl.z); g.add(mark); thIsl.mark = mark;   // 本地 +z 朝向預設鏡頭
+  const bronze = new THREE.MeshStandardMaterial({ color: '#b7793a', roughness: 0.5, metalness: 0.25, side: THREE.DoubleSide }), goldM = new THREE.MeshStandardMaterial({ color: '#e3b44f', roughness: 0.35, metalness: 0.4 });
+  const wood = lam('#c08a52'), woodD = lam('#8a5a32'), stone = lam('#b9b1a2'), stoneD = lam('#8f887a'), cream = lam('#f6efe2');
+  // —— 草蓆：深紅布邊＋草席紋 ——
+  const strawT = canvasTex(256, 256, (c) => { c.fillStyle = '#e4cd86'; c.fillRect(0, 0, 256, 256); for (let i = 0; i < 64; i++) { c.fillStyle = i % 2 ? 'rgba(160,120,50,.28)' : 'rgba(255,240,180,.35)'; c.fillRect(i * 4, 0, 2, 256); } for (let j = 0; j < 8; j++) { c.fillStyle = 'rgba(120,85,30,.25)'; c.fillRect(0, j * 32, 256, 2); } }, true);
+  strawT.repeat.set(2, 4);
+  mesh(new THREE.BoxGeometry(5.6, 0.06, 10.4), lam('#8c3b2b'), 0, 0.03, 0.8, mark, false);
+  mesh(new THREE.BoxGeometry(5.0, 0.08, 9.8), new THREE.MeshLambertMaterial({ map: strawT }), 0, 0.04, 0.8, mark, false);
+  mesh(new THREE.BoxGeometry(1.5, 0.05, 0.22), lam('#5b3a22'), 0, 0.09, 4.6, mark, false);   // 站位線
+  // —— 青銅雙耳壺（跟遊戲裡同一個剖面，放大 2.6 倍）放在石墩上 ——
+  const PED = new THREE.Group(); PED.position.set(0, 0, -2.6); mark.add(PED);
+  mesh(new THREE.CylinderGeometry(1.0, 1.2, 0.5, 36), lam('#cdbfa4'), 0, 0.25, 0, PED);
+  const POT = new THREE.Group(); POT.position.set(0, 0.5, 0); POT.scale.setScalar(2.6); PED.add(POT); thIsl.pot = POT;
+  const prof = [[0.001, 0], [0.10, 0], [0.17, 0.04], [0.215, 0.16], [0.22, 0.26], [0.19, 0.36], [0.135, 0.45], [0.13, 0.5], [0.16, 0.545], [0.17, 0.55], [0.15, 0.55], [0.125, 0.5], [0.12, 0.45], [0.1, 0.2], [0.08, 0.08], [0.001, 0.08]].map(([r, y]) => new THREE.Vector2(r, y));
+  mesh(new THREE.LatheGeometry(prof, 36), bronze, 0, 0, 0, POT);
+  mesh(new THREE.TorusGeometry(0.221, 0.011, 8, 36), goldM, 0, 0.26, 0, POT, false).rotation.x = Math.PI / 2;
+  mesh(new THREE.TorusGeometry(0.133, 0.009, 8, 30), goldM, 0, 0.47, 0, POT, false).rotation.x = Math.PI / 2;
+  mesh(new THREE.CircleGeometry(0.146, 30), new THREE.MeshBasicMaterial({ color: 0x1b120a }), 0, 0.52, 0, POT, false).rotation.x = -Math.PI / 2;
+  for (const s of [-1, 1]) {   // 兩耳
+    mesh(new THREE.CylinderGeometry(0.062, 0.062, 0.4, 16, 1, true), bronze, s * 0.27, 0.35, 0, POT);
+    mesh(new THREE.TorusGeometry(0.062, 0.01, 8, 18), goldM, s * 0.27, 0.55, 0, POT, false).rotation.x = Math.PI / 2;
+    const br = mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.12, 8), bronze, s * 0.2, 0.43, 0, POT, false); br.rotation.z = Math.PI / 2;
+  }
+  // —— 矢：一支斜插在壺口、一支落在草蓆上、一組插在箭筒架裡 ——
+  const arrow = (parent, len = 1.5) => {
+    const A = new THREE.Group(); parent.add(A);
+    mesh(new THREE.CylinderGeometry(0.03, 0.03, len, 6), lam('#d8a65c'), 0, 0, 0, A, false);
+    mesh(new THREE.ConeGeometry(0.06, 0.18, 6), lam('#7a4b1e'), 0, len / 2 + 0.09, 0, A, false);
+    mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.16, 6), lam('#c23b2e'), 0, -len / 2 + 0.14, 0, A, false);
+    return A;
+  };
+  { const A = arrow(mark, 1.6); A.position.set(0.18, 2.85, -2.45); A.rotation.set(0.2, 0, -0.16); }   // 壺口那支
+  { const A = arrow(mark, 1.5); A.position.set(-1.4, 0.12, 2.2); A.rotation.set(Math.PI / 2, 0, 1.2); }   // 躺在草蓆上
+  // 箭筒架（右前）：木桶＋幾支矢
+  { const R = new THREE.Group(); R.position.set(3.7, 0, 3.6); mark.add(R);
+    mesh(new THREE.CylinderGeometry(0.42, 0.5, 1.0, 14), wood, 0, 0.5, 0, R); mesh(new THREE.TorusGeometry(0.46, 0.04, 6, 16), woodD, 0, 0.78, 0, R, false).rotation.x = Math.PI / 2;
+    [[-0.15, 0.05, 0.1], [0.12, -0.1, -0.15], [0.0, 0.12, 0.05], [-0.08, -0.12, 0.2], [0.18, 0.1, 0.0]].forEach(([x, z, rz], i) => { const A = arrow(R, 1.4 + (i % 2) * 0.15); A.position.set(x, 1.45, z); A.rotation.z = rz; }); }
+  // —— 石燈（左）——
+  { const L = new THREE.Group(); L.position.set(-4.9, 0, -2.6); L.scale.setScalar(1.8); mark.add(L);
+    mesh(new THREE.BoxGeometry(0.42, 0.1, 0.42), stone, 0, 0.05, 0, L); mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.55, 8), stone, 0, 0.37, 0, L); mesh(new THREE.BoxGeometry(0.36, 0.1, 0.36), stone, 0, 0.69, 0, L);
+    mesh(new THREE.BoxGeometry(0.22, 0.2, 0.22), new THREE.MeshStandardMaterial({ color: '#fff0c4', emissive: '#ffc060', emissiveIntensity: 0.3, roughness: 0.6 }), 0, 0.84, 0, L, false);
+    mesh(new THREE.ConeGeometry(0.34, 0.2, 4), stone, 0, 1.04, 0, L).rotation.y = Math.PI / 4; mesh(new THREE.SphereGeometry(0.05, 8, 6), stone, 0, 1.17, 0, L); }
+  // —— 茶几與茶具（左前）——
+  { const T = new THREE.Group(); T.position.set(-4.5, 0, 3.4); mark.add(T);
+    mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.1, 20), lam('#7a5a33'), 0, 0.5, 0, T);
+    for (const [x, z] of [[-0.38, -0.38], [0.38, -0.38], [-0.38, 0.38], [0.38, 0.38]]) mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.46, 6), lam('#5b3a22'), x, 0.23, z, T);
+    mesh(new THREE.SphereGeometry(0.17, 14, 10), lam('#3f7f78'), -0.1, 0.72, 0, T).scale.y = 0.85; mesh(new THREE.CylinderGeometry(0.03, 0.045, 0.22, 6), lam('#3f7f78'), 0.1, 0.76, 0, T).rotation.z = -1.0;
+    for (const x of [0.2, 0.38]) mesh(new THREE.CylinderGeometry(0.065, 0.05, 0.09, 12), cream, x, 0.6, 0.2, T); }
+  // —— 風旗（右後）——
+  const flagG = new THREE.Group(); flagG.position.set(2.9, 0, -4.4); flagG.userData.noMerge = true; mark.add(flagG);
+  mesh(new THREE.CylinderGeometry(0.05, 0.07, 3.6, 8), lam('#5b3a22'), 0, 1.8, 0, flagG); mesh(new THREE.SphereGeometry(0.1, 8, 6), goldM, 0, 3.64, 0, flagG, false);
+  const flagP = new THREE.Group(); flagP.position.set(0, 3.2, 0); flagG.add(flagP);
+  { const geo = new THREE.PlaneGeometry(1.2, 0.58, 12, 1); geo.translate(0.6, 0, 0); const f = mesh(geo, new THREE.MeshLambertMaterial({ color: '#c23b2e', side: THREE.DoubleSide }), 0, 0, 0, flagP); f.userData.noMerge = true; thIsl.flagGeo = geo; thIsl.flagBase = geo.attributes.position.array.slice(); }
+  // —— 兩根立柱間一串紅燈籠 ——
+  const lanternM = new THREE.MeshStandardMaterial({ color: '#d4402a', emissive: '#ff7a3a', emissiveIntensity: 0.25, roughness: 0.55 });
+  { const y0 = 3.6, x0 = -5.4, x1 = 5.4, zL = 0.6;
+    for (const x of [x0, x1]) mesh(new THREE.CylinderGeometry(0.08, 0.1, y0 + 0.2, 8), lam('#5b3a22'), x, (y0 + 0.2) / 2, zL, mark);
+    const N = 8, pts = []; for (let i = 0; i <= N; i++) { const u = i / N; pts.push(new THREE.Vector3(x0 + (x1 - x0) * u, y0 - 0.9 * Math.sin(Math.PI * u), zL)); }
+    mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.025, 4, false), lam('#3a2a1c'), 0, 0, 0, mark, false);
+    for (let i = 1; i < N; i++) { const p = pts[i]; const L = mesh(new THREE.SphereGeometry(0.3, 14, 10), lanternM, p.x, p.y - 0.34, p.z, mark, false); L.scale.y = 1.2; mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.06, 8), goldM, p.x, p.y - 0.02, p.z, mark, false); mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.06, 8), goldM, p.x, p.y - 0.66, p.z, mark, false); } }
+  // —— 竹林：後方與兩側三層（外圈密排、中圈成叢、前角點綴），高矮粗細參差，避開涼亭、水池、櫻花樹與草蓆 ——
+  { const bm = lam('#6fae5c'), bm2 = lam('#8cc06a'), bm3 = lam('#5e9a4d'), lfM = lam('#79b857', { side: THREE.DoubleSide }), lfM2 = lam('#68a94c', { side: THREE.DoubleSide });
+    const blocked = (x, z) => Math.hypot(x - 6.4, z + 5.6) < 3.3 || Math.hypot(x + 5.2, z + 5.4) < 3.0 || Math.hypot(x + 8.0, z - 1.6) < 2.2 || (Math.abs(x) < 3.4 && z > -5.0 && z < 6.8);
+    const stalk = (x, z, h, w) => {
+      const P = new THREE.Group(); P.position.set(x, 0, z); mark.add(P);
+      mesh(new THREE.CylinderGeometry(0.075 * w, 0.1 * w, h, 7), [bm, bm2, bm3][Math.floor(Math.random() * 3)], 0, h / 2, 0, P);
+      for (let k = 1; k < 5; k++) mesh(new THREE.CylinderGeometry(0.11 * w, 0.11 * w, 0.04, 7), bm, 0, k * h / 5, 0, P, false);
+      for (let k = 0; k < 4; k++) { const lf = mesh(new THREE.PlaneGeometry(1.0, 0.17), k % 2 ? lfM : lfM2, 0, h - 0.2 - k * 0.38, 0, P, false); lf.geometry.translate(0.5, 0, 0); lf.rotation.set(0, Math.random() * 6.28, -0.5 + Math.random() * 0.45); lf.scale.setScalar(0.8 + Math.random() * 0.5); }
+      P.rotation.set((Math.random() - 0.5) * 0.08, 0, (Math.random() - 0.5) * 0.08);
+    };
+    // 外圈：後方與兩側 ±105°，每隔幾度一根，帶一點前後錯位（兩排）
+    for (let i = 0; i < 38; i++) { const a = (-105 + i * (210 / 37) + (Math.random() - 0.5) * 3) * Math.PI / 180, r = (i % 2 ? 10.3 : 9.6) + Math.random() * 0.9, x = Math.sin(a) * r, z = -Math.cos(a) * r; if (blocked(x, z) && Math.hypot(x, z) < 9.9) continue; stalk(x, z, (4.8 + Math.random() * 3.2) * Math.max(0.5, Math.cos(a) * 0.6 + 0.55), 0.9 + Math.random() * 0.45); }   // 兩側的竹子比較矮（依角度縮），不擋住從側面看過來的視線
+    // 中圈：後半部成叢（每叢 3～5 根）
+    for (let c = 0, tries = 0; c < 9 && tries < 80; tries++) { const a = (-65 + Math.random() * 130) * Math.PI / 180, r = 6.8 + Math.random() * 2.2, cx = Math.sin(a) * r, cz = -Math.cos(a) * r; if (blocked(cx, cz)) continue; c++; const n = 3 + Math.floor(Math.random() * 3); for (let k = 0; k < n; k++) { const x = cx + (Math.random() - 0.5) * 1.3, z = cz + (Math.random() - 0.5) * 1.3; if (blocked(x, z)) continue; stalk(x, z, 3.8 + Math.random() * 3.0, 0.8 + Math.random() * 0.4); } }
+    // 前角：左前、右前各一小叢，矮一點，不擋視線
+    for (const [cx, cz] of [[-8.3, 6.2], [8.4, 5.6]]) for (let k = 0; k < 3; k++) { const x = cx + (Math.random() - 0.5) * 1.2, z = cz + (Math.random() - 0.5) * 1.2; if (!blocked(x, z)) stalk(x, z, 3.0 + Math.random() * 1.6, 0.75 + Math.random() * 0.3); } }
+  // —— 石砌水池＋竹筏（左後）：第三輪「浮筏」——
+  { const P = new THREE.Group(); P.position.set(-5.2, 0, -5.4); mark.add(P);
+    mesh(new THREE.LatheGeometry([[1.9, 0], [2.3, 0], [2.3, 0.36], [2.18, 0.43], [2.04, 0.43], [1.9, 0.36], [1.9, 0]].map(([r, y]) => new THREE.Vector2(r, y)), 40), new THREE.MeshLambertMaterial({ color: '#b9b1a2', side: THREE.DoubleSide }), 0, 0, 0, P);
+    mesh(new THREE.CylinderGeometry(1.9, 1.9, 0.18, 40), new THREE.MeshStandardMaterial({ color: '#4a9fc0', roughness: 0.25, transparent: true, opacity: 0.92 }), 0, 0.09, 0, P, false);
+    const RF = new THREE.Group(); RF.position.set(0.1, 0.18, 0); RF.rotation.y = 0.25; P.add(RF);
+    for (let i = 0; i < 7; i++) { const lg = mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.0, 10), lam(i % 2 ? '#c7a463' : '#d2b274'), -0.84 + i * 0.28, 0.02, 0, RF); lg.rotation.x = Math.PI / 2; }
+    for (const z of [-0.55, 0.55]) mesh(new THREE.BoxGeometry(2.1, 0.06, 0.1), lam('#7a5a33'), 0, 0.12, z, RF, false); }
+  // —— 「投壺島」立牌（右前）——
+  { const S = new THREE.Group(); S.position.set(4.9, 0, 6.2); S.rotation.y = -0.3; mark.add(S);
+    const tx = canvasTex(512, 200, (c) => { c.fillStyle = '#f3e3c1'; c.fillRect(0, 0, 512, 200); c.strokeStyle = '#8c3b2b'; c.lineWidth = 8; c.strokeRect(8, 8, 496, 184); c.fillStyle = '#2b1d14'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '900 92px "Noto Serif TC", "Noto Sans TC", serif'; c.fillText('投壺島', 256, 84); c.font = 'bold 34px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillStyle = '#8c3b2b'; c.fillText('矢直在心・以禮會友', 256, 150); });
+    for (const x of [-1.5, 1.5]) mesh(new THREE.CylinderGeometry(0.08, 0.1, 2.2, 8), lam('#5b3a22'), x, 1.1, 0, S);
+    mesh(new THREE.BoxGeometry(3.6, 1.4, 0.1), [woodD, woodD, woodD, woodD, new THREE.MeshLambertMaterial({ map: tx }), woodD], 0, 1.55, 0, S); }
+  // —— 動起來：風旗飄、燈籠微微呼吸 ——
+  animators.push((t) => {
+    const ps = thIsl.flagGeo.attributes.position, b = thIsl.flagBase;
+    for (let i = 0; i < ps.count; i++) { const x = b[i * 3]; ps.setZ(i, Math.sin(t * 4 - x * 4) * 0.12 * x); ps.setY(i, b[i * 3 + 1] + Math.sin(t * 3 - x * 3) * 0.04 * x); }
+    ps.needsUpdate = true; flagP.rotation.y = Math.sin(t * 1.1) * 0.25;
+    lanternM.emissiveIntensity = 0.25 + 0.08 * Math.sin(t * 2.2);
+  });
+  // 還沒開放：施工圍籬＋「施工中」告示牌（跟其他新島一樣；測試模式看不到圍籬）
+  if (!thOpen) {
+    const FN = new THREE.Group(); FN.userData.noMerge = true; g.add(FN);
+    const fTex = canvasTex(256, 64, (c) => {
+      c.fillStyle = '#f4f1ea'; c.fillRect(0, 0, 256, 64);
+      c.fillStyle = '#e0602a'; for (let i = -1; i < 9; i++) { c.beginPath(); c.moveTo(i * 32, 64); c.lineTo(i * 32 + 16, 64); c.lineTo(i * 32 + 40, 0); c.lineTo(i * 32 + 24, 0); c.fill(); }
+      c.fillStyle = '#2f6b45'; c.fillRect(0, 0, 256, 6); c.fillRect(0, 58, 256, 6);
+    }, true);
+    const postM = lam('#5f6b73'), RF = TH_R * 0.97;
+    for (let k = 0; k < 6; k++) {
+      const a0 = Math.PI / 6 + (k * Math.PI) / 3, a1 = a0 + Math.PI / 3;
+      const p0 = new THREE.Vector3(Math.sin(a0) * RF, 0, Math.cos(a0) * RF), p1 = new THREE.Vector3(Math.sin(a1) * RF, 0, Math.cos(a1) * RF);
+      const len = p0.distanceTo(p1), mid = p0.clone().add(p1).multiplyScalar(0.5);
+      const m = new THREE.MeshLambertMaterial({ map: fTex.clone(), side: THREE.DoubleSide }); m.map.repeat.set(len / 4, 1); m.map.needsUpdate = true;
+      const panel = mesh(new THREE.PlaneGeometry(len, 1.6), m, mid.x, 0.8, mid.z, FN, false);
+      panel.rotation.y = Math.atan2(p1.x - p0.x, p1.z - p0.z) + Math.PI / 2;
+      for (let i = 0; i <= Math.round(len / 3); i++) { const q = p0.clone().lerp(p1, i / Math.round(len / 3)); mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.8, 6), postM, q.x, 0.9, q.z, FN, false); }
+    }
+    const sTex = canvasTex(512, 200, (c) => {
+      c.fillStyle = '#f2b632'; c.fillRect(0, 0, 512, 200);
+      c.fillStyle = '#1f1a1a'; c.font = 'bold 50px "Noto Sans TC", "PingFang TC", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText('🚧 投壺島 施工中', 256, 80); c.font = 'bold 40px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText('即將開放・敬請期待', 256, 154);
+    });
+    const sy = new THREE.Group(); sy.rotation.y = Math.round(mark.rotation.y / (Math.PI / 3)) * (Math.PI / 3); FN.add(sy);   // 告示牌對齊最靠近鏡頭的那一面圍籬（圍籬的邊在 60° 的倍數上），不然牌子斜著插進圍籬
+    const edgeR = RF * Math.cos(Math.PI / 6), signY = lam('#f2b632');
+    mesh(new THREE.BoxGeometry(5.2, 2, 0.1), [signY, signY, signY, signY, new THREE.MeshLambertMaterial({ map: sTex }), signY], 0, 2.85, edgeR + 0.25, sy);   // 牌子抬高到圍籬（高 1.6）上方，不跟圍籬疊在一起
+    for (const x of [-2.2, 2.2]) mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.4, 6), postM, x, 1.7, edgeR + 0.18, sy);
+  }
+}
+
+/* ---------- 投壺島・豐富版：庭院石板、涼亭、櫻花樹與落花、計分石碑、長椅、岩石與草叢、錦鯉，
+     還有一個「示範小人」每隔幾秒投一矢：多半入壺（壺「叮」一下、冒出 +2／貫耳 +3），偶爾投歪落在草蓆上，讓人一看就知道這是投壺的島 ---------- */
+{
+  const mark = thIsl.mark, POT = thIsl.pot;
+  const AN = new THREE.Group(); AN.userData.noMerge = true; mark.add(AN);   // 會動的東西都放這組，不被合併
+  const goldM = new THREE.MeshStandardMaterial({ color: '#e3b44f', roughness: 0.35, metalness: 0.4 });
+  const stone = lam('#b9b1a2'), stoneD = lam('#8f887a'), woodD = lam('#8a5a32'), red = lam('#b8372a'), roofM = lam('#4b4a52');
+  // —— 庭院石板：整圈米色石板鋪在草地上，邊緣一圈深色石條，把草蓆圍成一個「場」——
+  mesh(new THREE.CylinderGeometry(9.7, 9.9, 0.05, 6), lam('#a89a78'), 0, 0.02, 0, mark, false).rotation.y = Math.PI / 6;
+  mesh(new THREE.CylinderGeometry(9.45, 9.45, 0.07, 6), lam('#e9dcc0'), 0, 0.03, 0, mark, false).rotation.y = Math.PI / 6;
+  { const m = lam('#d6c8a6'); for (let i = 0; i < 34; i++) { const a = Math.random() * 6.28, r = 3.4 + Math.random() * 5.6; const x = Math.sin(a) * r, z = Math.cos(a) * r; if (Math.abs(x) < 3.0 && z > -4.8 && z < 6.4) continue; mesh(new THREE.BoxGeometry(0.9 + Math.random() * 0.6, 0.02, 0.9 + Math.random() * 0.6), m, x, 0.075, z, mark, false).rotation.y = Math.random() * 3; } }   // 石板縫
+  // 前方踏石小徑：從島邊走向草蓆
+  for (let i = 0; i < 4; i++) mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.06, 10), stoneD, (i % 2 ? 0.25 : -0.25), 0.09, 7.0 + i * 1.0, mark, false);
+  // —— 涼亭（右後）：四根紅柱、方錐黑瓦頂、紅欄杆，跟遊戲場景左邊那座同款 ——
+  { const P = new THREE.Group(); P.position.set(6.4, 0, -5.6); P.rotation.y = -0.5; mark.add(P);
+    mesh(new THREE.BoxGeometry(3.6, 0.22, 3.6), stone, 0, 0.11, 0, P);
+    for (const [x, z] of [[-1.5, -1.5], [1.5, -1.5], [-1.5, 1.5], [1.5, 1.5]]) mesh(new THREE.CylinderGeometry(0.12, 0.14, 2.7, 10), red, x, 1.57, z, P);
+    mesh(new THREE.BoxGeometry(3.5, 0.18, 0.18), red, 0, 2.8, 1.5, P); mesh(new THREE.BoxGeometry(3.5, 0.18, 0.18), red, 0, 2.8, -1.5, P);
+    mesh(new THREE.BoxGeometry(0.18, 0.18, 3.5), red, 1.5, 2.8, 0, P); mesh(new THREE.BoxGeometry(0.18, 0.18, 3.5), red, -1.5, 2.8, 0, P);
+    mesh(new THREE.ConeGeometry(3.1, 1.2, 4), roofM, 0, 3.5, 0, P).rotation.y = Math.PI / 4; mesh(new THREE.SphereGeometry(0.14, 8, 6), goldM, 0, 4.2, 0, P);
+    for (const x of [-1.2, 0, 1.2]) mesh(new THREE.BoxGeometry(0.08, 0.5, 0.08), red, x, 0.5, 1.5, P, false);
+    mesh(new THREE.BoxGeometry(3.2, 0.08, 0.1), red, 0, 0.78, 1.5, P, false);
+    mesh(new THREE.BoxGeometry(2.4, 0.1, 0.7), woodD, 0, 0.5, -1.0, P);   // 亭裡一條長凳
+    const hang = mesh(new THREE.SphereGeometry(0.22, 12, 8), new THREE.MeshStandardMaterial({ color: '#d4402a', emissive: '#ff7a3a', emissiveIntensity: 0.3 }), 0, 2.45, 1.45, P, false); hang.scale.y = 1.25; thIsl.pavilionLamp = hang; }
+  // —— 計分石碑（左側）：寫著規則 ——
+  { const S = new THREE.Group(); S.position.set(-4.3, 0, 1.4); S.rotation.y = 0.55; mark.add(S);
+    const tx = canvasTex(256, 384, (c) => { c.fillStyle = '#d9d2c2'; c.fillRect(0, 0, 256, 384); c.strokeStyle = '#8c3b2b'; c.lineWidth = 6; c.strokeRect(10, 10, 236, 364); c.fillStyle = '#2b1d14'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '900 50px "Noto Serif TC","Noto Sans TC",serif'; c.fillText('投壺', 128, 56); c.font = 'bold 30px "Noto Sans TC","PingFang TC",sans-serif'; c.fillText('入壺', 128, 130); c.fillStyle = '#b8372a'; c.fillText('2 分', 128, 168); c.fillStyle = '#2b1d14'; c.fillText('貫耳', 128, 230); c.fillStyle = '#b8372a'; c.fillText('3 分', 128, 268); c.fillStyle = '#2f7f78'; c.font = 'bold 24px "Noto Sans TC",sans-serif'; c.fillText('快投 +0.5', 128, 330); });
+    mesh(new THREE.BoxGeometry(1.5, 0.3, 0.7), stoneD, 0, 0.15, 0, S); mesh(new THREE.BoxGeometry(1.1, 2.0, 0.22), [stone, stone, stone, stone, new THREE.MeshLambertMaterial({ map: tx }), stone], 0, 1.3, 0, S); mesh(new THREE.ConeGeometry(0.85, 0.3, 4), stoneD, 0, 2.45, 0, S).rotation.y = Math.PI / 4; }
+  // —— 櫻花樹（左側）＋落花 ——
+  { const T = new THREE.Group(); T.position.set(-8.0, 0, 1.6); T.scale.setScalar(0.78); mark.add(T);
+    mesh(new THREE.CylinderGeometry(0.2, 0.32, 2.6, 8), lam('#6b4a2f'), 0, 1.3, 0, T);
+    mesh(new THREE.CylinderGeometry(0.09, 0.14, 1.3, 6), lam('#6b4a2f'), 0.5, 2.5, 0.1, T).rotation.z = -0.8;
+    mesh(new THREE.CylinderGeometry(0.09, 0.14, 1.2, 6), lam('#6b4a2f'), -0.45, 2.55, -0.1, T).rotation.z = 0.8;
+    const pk = ['#f6bfd0', '#f2a9c0', '#f9d2de', '#eea0b8']; [[0, 3.5, 0, 1.55], [0.95, 3.1, 0.2, 1.1], [-1.0, 3.2, -0.2, 1.15], [0.1, 4.2, 0.3, 1.0], [-0.3, 3.0, 0.9, 1.0]].forEach(([x, y, z, r], i) => { const c = mesh(new THREE.IcosahedronGeometry(r, 1), lam(pk[i % 4], { flatShading: true }), x, y, z, T); c.scale.y = 0.82; });
+    // 落花：17 片小花瓣慢慢飄下來，落地就回到樹上重來
+    const petalM = new THREE.MeshBasicMaterial({ color: '#f9c4d4', side: THREE.DoubleSide }), petalG = new THREE.PlaneGeometry(0.14, 0.1), petals = [];
+    for (let i = 0; i < 17; i++) { const p = new THREE.Mesh(petalG, petalM); p.userData = { x: (Math.random() - 0.5) * 3.4, z: (Math.random() - 0.5) * 3.4, y: Math.random() * 3.6, v: 0.25 + Math.random() * 0.25, ph: Math.random() * 6.28 }; AN.add(p); petals.push(p); }
+    animators.push((t) => { const dt = 1 / 60; for (const p of petals) { const u = p.userData; u.y -= u.v * dt; if (u.y < 0.05) { u.y = 3.8; u.x = (Math.random() - 0.5) * 3; u.z = (Math.random() - 0.5) * 3; } p.position.set(T.position.x + u.x + Math.sin(t * 0.8 + u.ph) * 0.45, u.y, T.position.z + u.z + Math.cos(t * 0.6 + u.ph) * 0.3); p.rotation.set(t * 1.3 + u.ph, t * 0.9, 0); } }); }
+  // —— 長椅（右側）——
+  { const B = new THREE.Group(); B.position.set(6.8, 0, 1.6); B.rotation.y = -1.25; mark.add(B);
+    mesh(new THREE.BoxGeometry(1.9, 0.1, 0.6), woodD, 0, 0.5, 0, B); mesh(new THREE.BoxGeometry(1.9, 0.5, 0.08), woodD, 0, 0.85, -0.28, B);
+    for (const x of [-0.8, 0.8]) mesh(new THREE.BoxGeometry(0.1, 0.5, 0.5), lam('#5b3a22'), x, 0.25, 0, B); }
+  // —— 岩石與草叢、小花 ——
+  { const rm = [lam('#9a9a92', { flatShading: true }), lam('#7fae6a', { flatShading: true }), lam('#b0aba0', { flatShading: true })];
+    [[-8.2, -3.8, 0.7], [8.4, -1.8, 0.6], [7.6, 4.4, 0.55], [-7.9, 5.2, 0.5], [2.4, -8.6, 0.6], [-2.8, 9.0, 0.45]].forEach(([x, z, r], i) => { const m = mesh(new THREE.DodecahedronGeometry(r, 0), rm[i % 3], x, r * 0.5, z, mark); m.scale.y = 0.7; m.rotation.set(Math.random(), Math.random() * 6, 0); });
+    const gm = lam('#7fbf5f'), fl = ['#ffd45a', '#ffffff', '#f6a0b8', '#ffb347'].map((c) => lam(c));
+    for (let i = 0; i < 44; i++) { const a = Math.random() * 6.28, r = 9.4 + Math.random() * 1.7, x = Math.sin(a) * r, z = Math.cos(a) * r; if (Math.hypot(x, z) > 11.0) continue; for (let k = 0; k < 3; k++) { const tf = mesh(new THREE.ConeGeometry(0.06, 0.4 + Math.random() * 0.25, 4), gm, x + (k - 1) * 0.07, 0.22, z + (k % 2) * 0.06, mark, false); tf.rotation.z = (k - 1) * 0.25; } if (i % 3 === 0) mesh(new THREE.SphereGeometry(0.07, 6, 5), fl[i % 4], x, 0.42, z, mark, false); } }
+  // —— 池裡兩尾錦鯉、幾片荷葉 ——
+  { const P = new THREE.Group(); P.position.set(-5.2, 0.2, -5.4); mark.add(P);
+    for (const [x, z] of [[0.9, 0.9], [-1.0, 0.7], [0.5, -1.3]]) mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.02, 12), lam('#4f9a4a'), x, 0.02, z, P, false);
+    const koi = [0, 1].map((i) => { const k = new THREE.Group(); const b = mesh(new THREE.SphereGeometry(0.2, 10, 8), lam(i ? '#fff3e0' : '#ee7a2a'), 0, 0, 0, k, false); b.scale.set(1.6, 0.4, 0.55); const tl = mesh(new THREE.ConeGeometry(0.12, 0.28, 4), lam(i ? '#ffd8b0' : '#ee7a2a'), -0.36, 0, 0, k, false); tl.rotation.z = Math.PI / 2; tl.scale.z = 0.4; if (i === 1) mesh(new THREE.SphereGeometry(0.1, 8, 6), lam('#ee7a2a'), 0.05, 0.05, 0, k, false); P.add(k); k.userData.noMerge = true; return k; });
+    animators.push((t) => { koi.forEach((k, i) => { const a = t * (0.5 + i * 0.18) + i * 3, r = 1.25 - i * 0.4; k.position.set(Math.cos(a) * r, 0.05, Math.sin(a) * r); k.rotation.y = -a - Math.PI / 2; }); }); }
+  // —— 示範小人：站在站位線上，每隔幾秒投一矢 ——
+  // 骨架用跟學員、旅人同一個 figure()（蛋形身體、點狀眼睛、腮紅、微笑、肩膀樞紐的手臂），衣服是投壺島自己的設計：
+  // 青玉色短褂（下擺金邊）、紅色腰帶、短袖袖口、紅色髮帶垂兩條飄帶。
+  const hero = figure(qianMat, '', false); hero.position.set(-1.2, 0, 5.4); hero.rotation.y = Math.PI; hero.scale.setScalar(1.7); hero.userData.noMerge = true; mark.add(hero);   // 面向壺（-z）
+  { const gB = hero.children[0], coat = lam('#2f7f78'), trim = lam('#e3b44f'), sash = lam('#c23b2e'), put = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); gB.add(o); return o; };
+    put(new THREE.LatheGeometry([[0, 0.1], [0.42, 0.1], [0.44, 0.15], [0.39, 0.34], [0.34, 0.5], [0.35, 0.6], [0, 0.62]].map(([r, y]) => new THREE.Vector2(r, y)), 28), coat, 0, 0, 0);   // 短褂
+    put(new THREE.TorusGeometry(0.43, 0.022, 6, 28), trim, 0, 0.13, 0).rotation.x = Math.PI / 2;      // 下擺金邊
+    put(new THREE.TorusGeometry(0.385, 0.05, 8, 28), sash, 0, 0.42, 0).rotation.x = Math.PI / 2;      // 紅腰帶
+    put(new THREE.BoxGeometry(0.1, 0.24, 0.04), sash, 0.1, 0.3, 0.4).rotation.z = 0.25;               // 腰帶垂尾
+    for (const sx of [-1, 1]) put(new THREE.BoxGeometry(0.05, 0.28, 0.03), trim, sx * 0.07, 0.47, 0.34).rotation.z = sx * 0.5;   // 交領金線
+    hero.userData.arms.forEach((sh) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.135, 0.2, 12), coat); c.position.set(0, -0.06, 0); sh.add(c); const t = new THREE.Mesh(new THREE.TorusGeometry(0.135, 0.016, 6, 16), trim); t.position.set(0, -0.16, 0); t.rotation.x = Math.PI / 2; sh.add(t); });   // 短袖＋金袖口
+    put(new THREE.TorusGeometry(0.455, 0.04, 8, 32), sash, 0, 1.2, 0).rotation.x = Math.PI / 2 + 0.1;    // 紅髮帶（圍在頭的額頭那圈）
+    for (const sx of [-1, 1]) { const rb = put(new THREE.BoxGeometry(0.08, 0.4, 0.02), sash, sx * 0.1, 1.0, -0.47); rb.rotation.set(0.3, 0, sx * 0.3); } }   // 腦後兩條飄帶   // 兩條飄帶
+  const armL = hero.userData.arms[0], armR = hero.userData.arms[1];
+  // 要投的矢（飛行時顯示）
+  const fly = new THREE.Group(); fly.visible = false; AN.add(fly);
+  mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.2, 6), lam('#d8a65c'), 0, 0, 0, fly, false); mesh(new THREE.ConeGeometry(0.06, 0.18, 6), lam('#7a4b1e'), 0, 0.69, 0, fly, false); mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.16, 6), lam('#c23b2e'), 0, -0.5, 0, fly, false);
+  // 軌跡小點
+  const dotM = new THREE.MeshBasicMaterial({ color: '#fff1b8', transparent: true, opacity: 0.8 }), dots = []; for (let i = 0; i < 14; i++) { const d = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 4), dotM); d.visible = false; AN.add(d); dots.push(d); }
+  // 命中時的金色擴散圈與分數
+  const ringG = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.28, 32), new THREE.MeshBasicMaterial({ color: '#ffd45a', transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false })); ringG.rotation.x = -Math.PI / 2; ringG.position.set(0, 1.9, -2.6); AN.add(ringG);
+  const scoreSprite = (txt, col) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: canvasTex(256, 96, (c) => { c.font = '900 64px "Noto Sans TC","PingFang TC",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 10; c.strokeStyle = 'rgba(43,29,20,.85)'; c.strokeText(txt, 128, 52); c.fillStyle = col; c.fillText(txt, 128, 52); }), transparent: true, opacity: 0, depthWrite: false })); sp.scale.set(2.0, 0.75, 1); AN.add(sp); return sp; };
+  const spIn = scoreSprite('入壺 +2', '#ffd45a'), spEar = scoreSprite('貫耳 +3', '#ff8a5a'), spMiss = scoreSprite('差一點', '#cfe3ff');
+  thIsl.dbg = { fly, hero, spIn, spEar, spMiss, POT };
+  const CYC = 8.0, hand = new THREE.Vector3(-1.45, 1.25, 4.7), mouth = new THREE.Vector3(0, 1.88, -2.6); let cyc = -1, outcome = 'in', tgt = mouth.clone(), spCur = spIn;
+  animators.push((t) => {
+    const n = Math.floor(t / CYC), u = t % CYC;
+    if (n !== cyc) { cyc = n; const r = Math.random(); outcome = r < 0.62 ? 'in' : r < 0.82 ? 'ear' : 'miss'; tgt = outcome === 'ear' ? new THREE.Vector3(0.7, 1.9, -2.6) : outcome === 'miss' ? new THREE.Vector3((Math.random() < 0.5 ? -1 : 1) * 1.1, 0.12, -1.6) : mouth.clone(); spCur = outcome === 'ear' ? spEar : outcome === 'miss' ? spMiss : spIn; }
+    // 小人：投之前舉臂、投出時前送，之後歡呼或搖頭
+    const wind = u < 0.9 ? u / 0.9 : u < 1.2 ? 1 - (u - 0.9) / 0.3 * 1.6 : 0;
+    armR.rotation.x = -2.2 * wind + 0.05 * Math.sin(t * 2); armL.rotation.z = -(ARM_REST + 0.04 * Math.sin(t * 2 + 1)); armL.rotation.x = 0;
+    const cheer = u > 2.6 && u < 3.8 && outcome !== 'miss'; if (cheer) { armL.rotation.z = -2.6; armR.rotation.z = 2.6; armR.rotation.x = 0; } else armR.rotation.z = ARM_REST;
+    hero.position.y = cheer ? Math.abs(Math.sin((u - 2.6) * 7)) * 0.14 : 0.004 * Math.sin(t * 2);
+    // 矢：1.2～2.7 秒拋物線飛向目標
+    const f = (u - 1.2) / 1.5;
+    if (f >= 0 && f <= 1) { fly.visible = true; const x = hand.x + (tgt.x - hand.x) * f, z = hand.z + (tgt.z - hand.z) * f, y = hand.y + (tgt.y - hand.y) * f + 1.6 * 4 * f * (1 - f); const nx = hand.x + (tgt.x - hand.x) * Math.min(1, f + 0.02), nz = hand.z + (tgt.z - hand.z) * Math.min(1, f + 0.02), ny = hand.y + (tgt.y - hand.y) * Math.min(1, f + 0.02) + 1.6 * 4 * Math.min(1, f + 0.02) * (1 - Math.min(1, f + 0.02)); fly.position.set(x, y, z); fly.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(nx - x, ny - y, nz - z).normalize()); const di = Math.min(dots.length - 1, Math.floor(f * dots.length)); dots[di].position.set(x, y, z); dots[di].visible = true; }
+    else if (u > 2.7 && u < 5.4) { fly.visible = true; if (outcome === 'miss') { fly.position.set(tgt.x, 0.1, tgt.z); fly.rotation.set(Math.PI / 2, 0, 0.5); fly.quaternion.setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0.5)); } else { fly.position.set(tgt.x, 1.9, tgt.z); fly.quaternion.setFromEuler(new THREE.Euler(0.12, 0, -0.1)); } }
+    else { fly.visible = false; }
+    if (u < 1.0 || u > 5.6) dots.forEach((d) => { d.visible = false; });
+    dots.forEach((d) => { if (d.visible) d.scale.setScalar(Math.max(0.2, d.scale.x * 0.985)); });
+    if (u < 1.2) dots.forEach((d) => d.scale.setScalar(1));
+    // 命中：壺「叮」一下、金圈擴散、分數往上飄
+    const h = u - 2.7;
+    if (outcome !== 'miss' && h > 0 && h < 1.4) { const k = h / 1.4; POT.scale.setScalar(2.6 * (1 + 0.05 * Math.sin(Math.min(1, h * 4) * Math.PI) * (1 - k))); ringG.position.set(tgt.x, 1.92, tgt.z); ringG.scale.setScalar(1 + k * 4); ringG.material.opacity = 0.85 * (1 - k); } else { POT.scale.setScalar(2.6); ringG.material.opacity = 0; }
+    for (const sp of [spIn, spEar, spMiss]) sp.material.opacity = 0;
+    if (h > 0.1 && h < 2.2) { const k = (h - 0.1) / 2.1; spCur.position.set(outcome === 'miss' ? tgt.x : 0, (outcome === 'miss' ? 1.2 : 2.7) + k * 0.9, outcome === 'miss' ? tgt.z : -2.6); spCur.material.opacity = Math.sin(Math.min(1, k * 1.15) * Math.PI) ** 0.5; }
+    if (thIsl.pavilionLamp) thIsl.pavilionLamp.material.emissiveIntensity = 0.3 + 0.1 * Math.sin(t * 2);
+  });
 }
 
 /* ---------- 清淨菩提島：吹散無明 ----------
@@ -6636,6 +6944,7 @@ addTag(jsIsl, jsOpen ? '⛰️ 濟世靈山島・抽籤' : '🚧 濟世靈山島
 addTag(ptIsl, ptOpen ? '清淨菩提島 🎮' : '🚧 清淨菩提島・施工中', 'main', 12);   // 跟有小遊戲的課程島一樣，名字後面加 🎮
 addTag(fcIsl, fcOpen ? '拂塵淨心島 🎮' : '🚧 拂塵淨心島・施工中', 'main', 12);
 addTag(ckIsl, ckOpen ? '廚神養成島 🎮' : '🚧 廚神養成島・施工中', 'main', 7.5);
+addTag(thIsl, thOpen ? '投壺島 🎮' : '🚧 投壺島・施工中', 'main', 8);
 // 登島是重要入口：渡口島的標籤排在全真島和課程島之後、其他小標籤之前
 tags.splice(1 + COURSES.length, 0, tags.pop());
 // 瞭望氣球的小標籤跟著氣球飄，點了就是搜尋
@@ -6774,7 +7083,7 @@ function applyDate() {
   // 登島人數、倒數天數、瓶中信各一行；數字都用同一種大字（登島紅、倒數金、瓶中信藍）
   const countdown = next && left > 0 ? `距離「${esc(next.name)}」還有 <b class="n-gold">${left}</b> 天` : esc(nextText);
   const nv = visitorsNow().filter((p) => p.date <= now).length;
-  document.getElementById('brandCount').innerHTML = `<b>${list.length}</b> 位夥伴已登島${nv ? `<span class="visit-n">・另有 <b class="n-green">${nv}</b> 位旅人來逛逛</span>` : ''}`;
+  document.getElementById('brandCount').innerHTML = peopleReady() ? `<b>${list.length}</b> 位夥伴已登島${nv ? `<span class="visit-n">・另有 <b class="n-green">${nv}</b> 位旅人來逛逛</span>` : ''}` : (dataState === 'error' ? '登島人數暫時讀不到' : '登島人數讀取中…');
   document.getElementById('brandNext').innerHTML = countdown;
   renderWelcome(list.filter((p) => p.date === now), now === todayISO);
   const view = now + '|' + dataStamp + '|' + (selected || '');
@@ -6932,9 +7241,22 @@ function renderPanel() {
   } else if (isl && isl.kind === 'fuchen') {
     title = '拂塵淨心島'; info = '拂塵試煉・體感打怪';
     html = `<header><span class="eyebrow">外海・${FC_LIVE ? '拂塵試煉' : '測試中'}</span><h2>🪶 拂塵淨心島</h2><p class="sub">時時勤拂拭，勿使惹塵埃——手機就是拂塵柄，大揮一拂，把六塵精淨化收進淨心錄</p></header>
-      <div class="cta"><p>${fcTester && !FC_LIVE ? '🔧 測試中：只有這支手機看得到入口，其他人看到的是施工圍籬。<br>' : ''}看清符印、等倒數、聽到「揮！」就整隻手臂揮出去；塵精一揮、塵妖要兩連擊，最後收服無明塵王。收服的塵靈會收進「淨心錄」。</p><a href="fuchen-game/" id="fcGo">🎮 進入拂塵試煉</a></div>
+      <div class="cta"><p>${fcTester && !FC_LIVE ? '🔧 測試中：只有這支手機看得到入口，其他人看到的是施工圍籬。<br>' : ''}看清符印、等倒數、聽到「揮！」就整隻手臂揮出去；塵精一揮、塵妖要兩連擊，最後收服無明塵王。收服的塵靈會收進「淨心錄」。</p><a href="fuchen-game/${FC_ROOM ? '?room=' + FC_ROOM + (FC_VS ? '&vs=1' : '') : (FC_VS ? '?vs=1' : '')}" id="fcGo">${FC_ROOM ? '⚔️ 加入對戰房間 ' + FC_ROOM : '🎮 進入拂塵試煉'}</a></div>
       <p class="note">島中央是一座岩石堆成的石丘，一支巨大的拂塵像石中劍一樣插在頂上的岩縫裡，岩縫透出金光：黑色握把、竹節木柄、網罩圓頭、紅色綁繩，白色馬尾從頂上垂下來。外圈一圈踏石步道，十二尊塵靈石雕面向拂塵：六系各一尊原版——色（蛋形＋手鏡）、聲（鐘形＋喇叭）、香（雲朵＋一炷香）、味（糰子串）、觸（枕頭＋z）、法（腦袋雲＋念環），旁邊各站一尊「異相」代表，台座石牌寫著名字和心性。</p>
       ${fcTester && !FC_LIVE ? '<p class="note"><a class="cta-link" href="fuchen-lab/">🧪 揮符實驗室（測感測器）</a>　<a class="cta-link" href="?fuchen=off#fuchen">結束測試</a></p>' : ''}
+      <button class="back" data-go="temple">← 回到全真島</button>`;
+  } else if (isl && isl.kind === 'touhu' && !thOpen) {
+    title = '投壺島'; info = '施工中・敬請期待';
+    html = `<header><span class="eyebrow">全真島前方外海・施工中</span><h2>🚧 投壺島</h2><p class="sub">新島正在整地施工，整座島用施工圍籬圍起來，完工後開放</p></header>
+      <p class="note">圍籬裡面隱約看得到一張紅邊草蓆，後面石墩上立著一只青銅雙耳壺，四周是竹林、石燈和一串紅燈籠。聽說完工後可以在這裡投壺，還能找朋友對戰，敬請期待。</p>
+      <button class="back" data-go="temple">← 回到全真島</button>`;
+  } else if (isl && isl.kind === 'touhu') {
+    let best = 0; try { const o = JSON.parse(localStorage.getItem('islands-touhu') || 'null'); best = (o && o.best) || 0; } catch (e) {}
+    title = '投壺島'; info = best ? `最高 ${Math.round(best * 10) / 10} 分` : '投壺・一對一二對二對戰';
+    html = `<header><span class="eyebrow">全真島前方外海・${TH_LIVE ? '投壺' : '測試中'}</span><h2>🏺 投壺島</h2><p class="sub">矢直在心・以禮會友——三輪十二矢，把矢投進壺口得 2 分、貫耳得 3 分，投得越快加成越多</p></header>
+      <div class="cta"><p>${thTester && !TH_LIVE ? '🔧 測試中：只有這支手機看得到入口，其他人看到的是施工圍籬。<br>' : ''}點三下、手指拖曳或傾斜手機都能玩；第一輪晨光無風、第二輪風起、第三輪浮筏壺在水上搖。也可以建房間找朋友對戰（一對一、二對二），電腦還能投影觀戰。</p><a href="touhu-game/" id="thGo">🎮 進入投壺島</a></div>
+      <p class="note">島中央是一張紅邊草蓆，後面石墩上一只青銅雙耳壺、壺口斜插著一支矢；右前一個箭筒架，後方一圈竹林，左邊石燈和茶几，兩根立柱間掛著一串紅燈籠，左後一座石砌水池載著竹筏。</p>
+      ${thTester && !TH_LIVE ? '<p class="note"><a class="cta-link" href="?touhu=off#touhu">結束測試</a></p>' : ''}
       <button class="back" data-go="temple">← 回到全真島</button>`;
   } else if (isl && isl.kind === 'chef' && !ckOpen) {
     title = '廚神養成島'; info = '施工中・敬請期待';
@@ -6971,12 +7293,19 @@ function renderPanel() {
     title = '全真道院'; info = `已登島 ${list.length} 人・學員 ${students.length}・幹部 ${cadres}`;
     html = `<header><span class="eyebrow">全真島・第四期報名</span><h2>全真道院</h2>
       <p class="sub">廣場上每個小人偶就是一位已登島的夥伴：乾道是淡藍色、坤道是淡粉色，幹部另外圍著自己這一組顏色的圍巾。</p></header>
+      <button class="mapbtn" data-map type="button">🗺️ 打開尋寶圖・點島飛過去</button>
       <div class="stats"><div class="stat"><b>${list.length}</b><span>總登島</span></div><div class="stat"><b>${students.length}</b><span>學員</span></div><div class="stat"><b>${cadres}<small style="font-size:12px;color:var(--muted)">/${cadreTotal}</small></b><span>幹部</span></div></div>
       ${bars('乾坤比例', [['乾道', q], ['坤道', list.length - q]], list.length)}
       ${bars('所屬單位', countBy(list, (p) => p.unit), list.length)}
       ${bars('居住縣市', countBy(list, (p) => p.city), list.length)}
       <div class="cta"><p>還沒登島嗎？填好報名表，你的小人偶就會出現在廣場上，跟大家一起度過 2027。</p><a href="${SIGNUP_URL}" target="_blank" rel="noopener">🛶 我要登島</a></div>
-      <p class="note">資料來源：${liveOk ? '報名表即時資料' : '報名資料備份'}（${stampText()} 更新）。點廣場上的小人偶可以看是誰：拿小旗的是班長、斜背彩帶的是副班長、戴金色小帽的是組長。</p>`;
+      <p class="note">資料來源：報名表即時資料（${liveOk ? stampText() + ' 更新' : '連線中斷，這是 ' + stampText() + ' 讀到的'}）。點廣場上的小人偶可以看是誰：拿小旗的是班長、斜背彩帶的是副班長、戴金色小帽的是組長。</p>`;
+    if (!peopleReady()) {
+      info = dataState === 'error' ? '登島人數暫時讀不到' : '登島人數讀取中…';
+      html = `<header><span class="eyebrow">全真島・第四期報名</span><h2>全真道院</h2></header>
+        <button class="mapbtn" data-map type="button">🗺️ 打開尋寶圖・點島飛過去</button>
+        <p class="note">${dataState === 'error' ? `即時報名資料讀不到（${esc(dataErr)}），所以現在沒有人數可以顯示。點左上角的連線狀態可以重試。` : '正在讀取報名表的即時資料⋯'}</p>`;
+    }
   } else if (isl.kind === 'course') {
     const c = isl.course, s = courseStatus(c, now), diff = dayIndex(c.date) - dayIndex(now);
     const d = new Date(c.date + 'T00:00:00+08:00');
@@ -7186,9 +7515,10 @@ function select(key, sel = key) {
   lastView = '';
   applyDate();
 }
-function goHome() { flyTo(HOME.target.clone(), HOME.pos.clone()); }
+function goHome() { flyTo(HOME_VIEW.target.clone(), HOME_VIEW.pos.clone()); }
 const selectMember = (id) => select(SLOTS[id].key, 'm:' + id);
 document.getElementById('panelBody').addEventListener('click', (e) => {
+  if (e.target.closest('[data-map]')) { openMap(); return; }
   if (e.target.closest('.cta-wish')) { openWrite(true); return; }
   if (e.target.closest('.cta-write')) { openWrite(); return; }
   if (e.target.closest('.bottle-more')) { bottleAll = !bottleAll; lastView = ''; renderPanel(); return; }
@@ -7211,7 +7541,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
     hoverQueued = false;
     ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit, kintoHit, partyHit, lookoutHit, teacherHit, masterHit, bottleHit, visitorHit), false).length ? 'pointer' : '';
+    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(mapBoardHit, plazaHit, raftHit, kintoHit, partyHit, lookoutHit, teacherHit, masterHit, bottleHit, visitorHit), false).length ? 'pointer' : '';
   });
 });
 renderer.domElement.addEventListener('pointerup', (e) => {
@@ -7220,6 +7550,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   ray.setFromCamera(ndc, camera);
   // 先打到任何物件，再往上找它屬於哪座島
   if (ray.intersectObjects(raftHit, false).length) { openSignup(); return; }
+  if (ray.intersectObjects(mapBoardHit, false).length) { openMap(); return; }   // 尋寶圖看板
   if (kinto.visible && ray.intersectObjects(kintoHit, false).length) { ptGc('動作/筋斗雲'); select('puti'); return; }   // 筋斗雲：飛到清淨菩提島
   // 中一島的涼亭＝凝聚晚會報名處：報名期間點了開報名表，截止後就打開中一島的介紹
   if (ray.intersectObjects(partyHit, false).length) { if (zyIsl.formOpen) window.open(PARTY_FORM, '_blank', 'noopener'); else select('zhongyi'); return; }
@@ -7308,13 +7639,141 @@ function renderNav() {
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島</span></a>
     <button class="home" data-howto><span aria-hidden="true">👆</span><span>操作說明：旋轉、平移、縮放</span></button>
-    <h3>中央</h3>${navItem('temple', '全真島・全真道院', `${peopleNow().filter((p) => p.date <= curISO()).length} 人`)}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('hope', '🍎 希望島・祈福樹與噴泉')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${jsOpen ? navItem('jishi', '⛰️ 濟世靈山島・濟公活佛體感抽籤', JS_DAILY && jsTodayFortune() ? '今日已抽' : '') : navItem('jishi', '🚧 濟世靈山島・施工中')}${ptOpen ? navItem('puti', '🪷 清淨菩提島・吹散無明、雲開見日', ptToday() ? '今日已雲開' : '') : navItem('puti', '🚧 清淨菩提島・施工中')}${fcOpen ? navItem('fuchen', '🪶 拂塵淨心島・拂塵試煉（體感打怪）') : navItem('fuchen', '🚧 拂塵淨心島・施工中')}${ckOpen ? navItem('chef', '🍳 廚神養成島・體感料理＋雜誌封面') : navItem('chef', '🚧 廚神養成島・施工中')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
+    <button class="home" data-map><span aria-hidden="true">🗺️</span><span>尋寶圖：整片群島一眼看完</span></button>
+    <h3>中央</h3>${navItem('temple', '全真島・全真道院', peopleReady() ? `${peopleNow().filter((p) => p.date <= curISO()).length} 人` : (dataState === 'error' ? '讀不到' : '讀取中'))}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('hope', '🍎 希望島・祈福樹與噴泉')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${jsOpen ? navItem('jishi', '⛰️ 濟世靈山島・濟公活佛體感抽籤', JS_DAILY && jsTodayFortune() ? '今日已抽' : '') : navItem('jishi', '🚧 濟世靈山島・施工中')}${ptOpen ? navItem('puti', '🪷 清淨菩提島・吹散無明、雲開見日', ptToday() ? '今日已雲開' : '') : navItem('puti', '🚧 清淨菩提島・施工中')}${fcOpen ? navItem('fuchen', '🪶 拂塵淨心島・拂塵試煉（體感打怪）') : navItem('fuchen', '🚧 拂塵淨心島・施工中')}${ckOpen ? navItem('chef', '🍳 廚神養成島・體感料理＋雜誌封面') : navItem('chef', '🚧 廚神養成島・施工中')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
     <h3>幹部島</h3>${CADRE.map((o) => navItem(o.key, o === GATE ? `${o.isle}・迎賓` : o.isle, `已登島 ${islands[o.key].joined}/${o.size}`)).join('')}
     <h3>小遊戲</h3>${navItem('c5', '法會小天使 🎮', '法會島')}${navItem('c9', '褪下仙衣 🎮', '歡樂島')}
     ${standalone ? '' : '<p class="tip">📱 加到手機桌面：iPhone 用 Safari 打開，點下方「分享」→「加入主畫面」；Android 用 Chrome 打開，點右上角選單 →「加到主畫面」。</p>'}`;
 }
+/* ---------- 尋寶圖：全真群島俯視圖（導覽地圖）----------
+   由目前的島嶼座標即時畫成羊皮紙藏寶圖（SVG → 點陣圖，平移縮放很順），方向跟目前的預設視角一致（上＝前方）；
+   入口三個：全真島前庭的 3D 看板、全真道院資訊卡、導覽選單。點圖上的島 → 關掉地圖、鏡頭飛過去。
+   「你在這裡」＝目前選到的那座島（沒選就是全真島）。施工中的島畫成淡色虛線輪廓，跟 3D 裡的施工圍籬對應。 */
+const MAP_NAMES = {
+  temple: ['全真島', '⛩️'], c1: ['好玩島', '1'], c2: ['好賺島', '2'], c3: ['春遊島', '3'], c4: ['好愛島', '4'], c5: ['法會島', '5'], c6: ['重啟島', '6'], c7: ['秋遊島', '7'], c8: ['走走島', '8'], c9: ['歡樂島', '9'],
+  g1: ['班務', ''], g2: ['人事', ''], g3: ['迎賓', ''], g4: ['學術', ''], g5: ['輔導', ''], g6: ['總務', ''], g7: ['影音', ''], g8: ['活動', ''],
+  dock: ['渡口', '🛶'], p2: ['氣球', '🎈'], p4: ['靈數', '🔮'], p6: ['翻轉', '🎲'], p8: ['料理', '🥗'], hope: ['希望', '🍎'], yoga: ['瑜伽', '🧘'], bottle: ['漂流瓶', '🍾'],
+  newisle: ['忠恕島', '🚧'], zhongyi: ['中一島', '🏮'], jishi: ['濟世靈山', '⛰️'], puti: ['清淨菩提', '🪷'], fuchen: ['拂塵淨心', '🪶'], chef: ['廚神', '🍳'], touhu: ['投壺島', '🏺'],
+};
+const mapIsWip = (k) => k === 'newisle' || (k === 'touhu' && !thOpen) || (k === 'chef' && !ckOpen) || (k === 'fuchen' && !fcOpen) || (k === 'puti' && !ptOpen) || (k === 'jishi' && !jsOpen);
+const MAP_GAMES = new Set(['c5', 'c9', 'fuchen', 'puti', 'jishi', 'chef', 'touhu']);
+const MAP_W = 900, MAP_H = 940;
+function treasureMapSvg(phi, here) {
+  const S = 2.35, CX = 450, CY = 470, hits = [];
+  const rot = (x, z) => [CX + S * (x * Math.cos(phi) - z * Math.sin(phi)), CY + S * (x * Math.sin(phi) + z * Math.cos(phi))];
+  const hexPts = (cx, cy, r) => [0, 1, 2, 3, 4, 5].map((k) => { const a = Math.PI / 6 + k * Math.PI / 3, ax = Math.sin(a) * r, az = Math.cos(a) * r; return [cx + ax * Math.cos(phi) - az * Math.sin(phi), cy + ax * Math.sin(phi) + az * Math.cos(phi)]; });
+  const pts = (a) => a.map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  const C = (k) => { const i = islands[k]; return i ? rot(i.x, i.z) : [CX, CY]; };
+  let g = '';
+  const ring = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9'].filter((k) => islands[k]).map(C);
+  if (ring.length) g += `<path d="M${ring.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L')} Z" fill="none" stroke="#a8432f" stroke-width="2.2" stroke-dasharray="2 7" stroke-linecap="round" opacity=".85"/>`;
+  if (islands.dock && islands.temple) { const a = C('dock'), b = C('temple'); g += `<path d="M${a[0]} ${a[1]} Q ${(a[0] + b[0]) / 2 + 30} ${(a[1] + b[1]) / 2 - 10} ${b[0]} ${b[1]}" fill="none" stroke="#a8432f" stroke-width="3" stroke-dasharray="1 8" stroke-linecap="round"/>`; }
+  const order = Object.values(islands).filter((i) => MAP_NAMES[i.key]).sort((a, b) => (a.x * Math.sin(phi) + a.z * Math.cos(phi)) - (b.x * Math.sin(phi) + b.z * Math.cos(phi)));
+  for (const isl of order) {
+    const [name, ic] = MAP_NAMES[isl.key], wip = mapIsWip(isl.key), ty = isl.key === 'temple' ? 'main' : /^c\d$/.test(isl.key) ? 'course' : /^g\d$/.test(isl.key) ? 'cadre' : 'pm';
+    const [cx, cy] = rot(isl.x, isl.z), r = isl.R * S, d = Math.max(4, r * 0.2), top = hexPts(cx, cy, r), foam = hexPts(cx, cy, r + 7);
+    hits.push([isl.key, cx, cy + d * 0.5, r * 1.15]);
+    g += `<polygon points="${pts(foam.map(([a, b]) => [a, b + d]))}" fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="5 5" opacity=".8"/>`;
+    g += `<polygon points="${pts(top.map(([a, b]) => [a, b + d]))}" fill="${wip ? '#cdbd98' : '#a07a4c'}" stroke="#3f2c22" stroke-width="1.6" stroke-linejoin="round" filter="url(#ink)"/>`;
+    const fill = wip ? '#e6dcc0' : ty === 'main' ? '#e8d28a' : ty === 'cadre' ? '#b9d89c' : isl.key === 'bottle' || isl.key === 'dock' ? '#a8d08e' : ty === 'course' ? '#95c47f' : '#a8d08e';
+    g += `<polygon points="${pts(top)}" fill="${fill}" stroke="#3f2c22" stroke-width="1.8" stroke-linejoin="round" ${wip ? 'stroke-dasharray="7 4"' : ''} filter="url(#ink)"/>`;
+    if (!wip) for (let i = 0; i < Math.round(r / 5); i++) { const a = (i * 2.4) % 6.28, rr = r * (0.3 + ((i * 37) % 50) / 100), gx = cx + Math.cos(a) * rr * 0.6, gy = cy + Math.sin(a) * rr * 0.6; g += `<path d="M${gx - 2} ${gy + 2} l2 -4 l2 4" stroke="#4f7a3c" stroke-width="1" fill="none" opacity=".7"/>`; }
+    const icon = wip && isl.key !== 'newisle' ? '🚧' : ic;
+    if (icon) g += ty === 'course' ? `<circle cx="${cx}" cy="${cy}" r="${r * 0.42}" fill="#f6ead0" stroke="#3f2c22" stroke-width="1.5"/><text x="${cx}" y="${cy + 1}" text-anchor="middle" dominant-baseline="middle" font-size="${r * 0.6}" font-weight="900" fill="#8f2a20" font-family="serif">${icon}</text>` : `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" font-size="${Math.max(13, r * 0.9)}">${icon}</text>`;
+    if (MAP_GAMES.has(isl.key) && !wip) g += `<text x="${cx + r * 0.55}" y="${cy - r * 0.45}" font-size="14">🎮</text>`;
+    const big = r > 20 || ty === 'main', fs = big ? 16 : ty === 'cadre' ? 11 : 13;
+    g += `<text x="${cx}" y="${cy + r + d + fs - 1}" text-anchor="middle" font-size="${fs}" font-weight="900" font-family="'Noto Serif TC','Songti TC','STSong','Noto Serif CJK TC',serif" fill="${wip ? '#6b5a44' : '#3f2c22'}" stroke="#f3e4c0" stroke-width="3.4" paint-order="stroke" stroke-linejoin="round">${name}${wip ? '（施工中）' : ''}</text>`;
+  }
+  { const [x, y] = C('temple'); g += `<g transform="translate(${x + 4} ${y - 4})" stroke="#b3261e" stroke-width="5" stroke-linecap="round"><path d="M-9 -9 L9 9 M9 -9 L-9 9"/></g>`; }   // 寶藏 ✕：全真道院
+  { const h = islands[here] ? here : 'temple', [x, y] = C(h), R = (islands[h] || islands.temple).R * S; g += `<g transform="translate(${x} ${y - R - 14})"><path d="M0 0 C-10 -14 -12 -22 0 -30 C12 -22 10 -14 0 0Z" fill="#c23b2e" stroke="#3f2c22" stroke-width="1.6"/><circle cx="0" cy="-20" r="4" fill="#f6ead0"/><text y="-36" text-anchor="middle" font-size="13" font-weight="900" fill="#b3261e" stroke="#f3e4c0" stroke-width="3" paint-order="stroke" font-family="serif">你在這裡</text></g>`; }
+  const ship = (x, y, s = 1) => `<g transform="translate(${x} ${y}) scale(${s})" fill="#f6ead0" stroke="#3f2c22" stroke-width="1.6" stroke-linejoin="round"><path d="M-22 6 L22 6 L14 18 L-14 18 Z" fill="#a07a4c"/><path d="M0 4 L0 -34"/><path d="M2 -32 L24 2 L2 2 Z"/><path d="M-2 -26 L-18 2 L-2 2 Z"/></g>`;
+  g += ship(118, 700, 1.15) + ship(790, 250, 0.85);
+  g += `<g transform="translate(770 740)" fill="none" stroke="#2f6f78" stroke-width="2.4" stroke-linecap="round"><path d="M-40 0 q10 -26 22 0 q10 -26 22 0 q10 -26 22 0 q10 -26 22 0"/><circle cx="46" cy="-8" r="4" fill="#2f6f78"/><path d="M50 -10 l12 -6"/></g>`;
+  const rose = (x, y) => `<g transform="translate(${x} ${y})" stroke="#3f2c22" stroke-width="1.5" stroke-linejoin="round"><circle r="34" fill="none" stroke-dasharray="2 4"/><path d="M0 -44 L8 -8 L44 0 L8 8 L0 44 L-8 8 L-44 0 L-8 -8 Z" fill="#f6ead0"/><path d="M0 -44 L8 -8 L0 0 Z M44 0 L8 8 L0 0 Z M0 44 L-8 8 L0 0 Z M-44 0 L-8 -8 L0 0 Z" fill="#b3261e" opacity=".85"/><text y="-52" text-anchor="middle" font-size="15" font-weight="900" fill="#3f2c22" stroke="none" font-family="serif">前</text></g>`;
+  g += rose(98, 118);
+  let waves = ''; for (let i = 0; i < 70; i++) { const x = 70 + ((i * 197) % 760), y = 90 + ((i * 331) % 780); waves += `<path d="M${x} ${y} q5 -6 10 0 q5 6 10 0" fill="none" stroke="#3b7e86" stroke-width="1.5" stroke-linecap="round" opacity="${0.35 + (i % 3) * 0.12}"/>`; }
+  const outline = 'M52 70 L180 52 L330 66 L520 50 L700 64 L846 58 L852 220 L838 420 L856 640 L840 880 L690 868 L520 884 L350 868 L180 884 L56 870 L44 700 L58 480 L40 280 Z';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${MAP_W} ${MAP_H}" width="${MAP_W}" height="${MAP_H}" style="font-family:'Noto Serif TC','Songti TC','STSong','Noto Serif CJK TC','Noto Sans CJK TC',serif">
+<defs>
+ <filter id="rough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="26"/></filter>
+ <filter id="ink"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.2"/></filter>
+ <filter id="paper"><feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" seed="2" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 .45  0 0 0 0 .32  0 0 0 0 .15  0 0 0 .55 0"/></filter>
+ <filter id="stain"><feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="4" seed="11"/><feColorMatrix type="matrix" values="0 0 0 0 .55  0 0 0 0 .38  0 0 0 0 .18  0 0 0 1.6 -.55"/></filter>
+ <radialGradient id="vg" cx="50%" cy="48%" r="75%"><stop offset="55%" stop-color="#f4e6c4"/><stop offset="85%" stop-color="#e7cf9c"/><stop offset="100%" stop-color="#c79c5e"/></radialGradient>
+ <radialGradient id="sea" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#a9d3cf" stop-opacity=".62"/><stop offset="100%" stop-color="#7fb8b8" stop-opacity=".38"/></radialGradient>
+ <clipPath id="pclip"><path d="${outline}"/></clipPath>
+</defs>
+<g filter="url(#rough)"><path d="${outline}" fill="url(#vg)" stroke="#8a5f30" stroke-width="3"/></g>
+<g clip-path="url(#pclip)" filter="url(#rough)"><rect width="${MAP_W}" height="${MAP_H}" filter="url(#paper)" opacity=".55"/><rect x="120" y="560" width="400" height="360" filter="url(#stain)" opacity=".55"/><rect x="520" y="60" width="330" height="300" filter="url(#stain)" opacity=".4"/>
+ <ellipse cx="${CX}" cy="${CY}" rx="385" ry="395" fill="url(#sea)" filter="url(#ink)"/>${waves}
+ <rect x="62" y="82" width="776" height="786" fill="none" stroke="#6b4a2c" stroke-width="2.4" stroke-dasharray="14 5 2 5" opacity=".7" filter="url(#ink)"/></g>
+<g filter="url(#ink)" fill="none" stroke="#6b4a2c" stroke-width="2"><path d="M74 94 q16 0 16 16 M826 94 q-16 0 -16 16 M74 856 q16 0 16 -16 M826 856 q-16 0 -16 -16"/></g>
+${g}
+<g transform="translate(450 70)"><path d="M-190 -4 Q-170 -32 -140 -26 L140 -26 Q170 -32 190 -4 Q170 30 140 24 L-140 24 Q-170 30 -190 -4Z" fill="#b8372a" stroke="#3f2c22" stroke-width="2.4" filter="url(#ink)"/><text y="9" text-anchor="middle" font-size="30" font-weight="900" fill="#fbeed0" letter-spacing="8" font-family="'Noto Serif TC','Songti TC','STSong','Noto Serif CJK TC',serif">全真群島・尋寶圖</text></g>
+<g transform="translate(450 846)" font-size="14" font-weight="900" fill="#3f2c22" text-anchor="middle"><text x="-250" fill="#b3261e">✕ 全真道院（寶藏）</text><text x="-60">┈ 課程路線</text><text x="90">🎮 小遊戲</text><text x="230">🚧 施工中（虛線）</text></g>
+</svg>`;
+  return { svg, hits };
+}
+// 把 SVG 畫成點陣圖（只畫一次，之後平移縮放都是 GPU 在動，不會卡）；同一個視角與「你在這裡」不重畫
+let mapCache = { key: '', canvas: null, hits: [] };
+function mapRaster(here) {
+  const phi = ((innerWidth < innerHeight ? 5 : 35) * Math.PI) / 180, key = here + '|' + Math.round(phi * 100);
+  if (mapCache.key === key && mapCache.canvas) return Promise.resolve(mapCache);
+  const { svg, hits } = treasureMapSvg(phi, here);
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => { const c = document.createElement('canvas'), k = Math.min(2, Math.max(1, (window.devicePixelRatio || 1))); c.width = MAP_W * k; c.height = MAP_H * k; c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); mapCache = { key, canvas: c, hits }; resolve(mapCache); };
+    img.onerror = reject; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  });
+}
+const mapOv = document.getElementById('mapOv'), mapStage = document.getElementById('mapStage');
+const MV = { x: 0, y: 0, k: 1, k0: 1, ptrs: new Map(), pinch: 0, down: null, hits: [] };
+function mapApply() { mapStage.style.transform = `translate(${MV.x}px,${MV.y}px) scale(${MV.k})`; }
+function mapClamp() {
+  const w = MAP_W * MV.k, h = MAP_H * MV.k, vw = innerWidth, vh = innerHeight - 56;
+  MV.x = w <= vw ? (vw - w) / 2 : Math.min(40, Math.max(vw - w - 40, MV.x)); MV.y = h <= vh ? 56 + (vh - h) / 2 : Math.min(56 + 40, Math.max(vh + 56 - h - 40, MV.y));
+}
+function mapZoomAt(px, py, nk) { nk = Math.min(MV.k0 * 5, Math.max(MV.k0, nk)); const r = nk / MV.k; MV.x = px - (px - MV.x) * r; MV.y = py - (py - MV.y) * r; MV.k = nk; mapClamp(); mapApply(); }
+async function openMap() {
+  showNavPop(false); mapOv.hidden = false; document.body.classList.add('map-open');
+  const here = islandOf2(selected) || 'temple', hint = document.getElementById('mapHint'); hint.textContent = '地圖畫著…';
+  try {
+    const m = await mapRaster(here); mapStage.innerHTML = ''; m.canvas.style.cssText = `width:${MAP_W}px;height:${MAP_H}px;display:block`; mapStage.appendChild(m.canvas); MV.hits = m.hits;
+    MV.k0 = MV.k = Math.min(innerWidth / MAP_W, (innerHeight - 56) / MAP_H); MV.x = 0; MV.y = 0; mapClamp(); mapApply();
+    hint.textContent = '兩指放大、拖曳移動，點島飛過去';
+  } catch (e) { hint.textContent = '地圖畫不出來，請重新整理再試'; }
+}
+function closeMap() { mapOv.hidden = true; document.body.classList.remove('map-open'); }
+mapOv.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('#mapClose')) return; mapOv.setPointerCapture && mapOv.setPointerCapture(e.pointerId);
+  MV.ptrs.set(e.pointerId, [e.clientX, e.clientY]); MV.down = { x: e.clientX, y: e.clientY, t: performance.now(), moved: false };
+  if (MV.ptrs.size === 2) { const [a, b] = [...MV.ptrs.values()]; MV.pinch = Math.hypot(a[0] - b[0], a[1] - b[1]); MV.down = null; }
+});
+mapOv.addEventListener('pointermove', (e) => {
+  if (!MV.ptrs.has(e.pointerId)) return; const prev = MV.ptrs.get(e.pointerId); MV.ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+  if (MV.ptrs.size === 2) { const [a, b] = [...MV.ptrs.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (MV.pinch) mapZoomAt((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, MV.k * d / MV.pinch); MV.pinch = d; return; }
+  if (MV.down && Math.hypot(e.clientX - MV.down.x, e.clientY - MV.down.y) > 6) MV.down.moved = true;
+  if (MV.down && MV.down.moved) { MV.x += e.clientX - prev[0]; MV.y += e.clientY - prev[1]; mapClamp(); mapApply(); }
+});
+const mapPtrEnd = (e) => {
+  const d = MV.down; MV.ptrs.delete(e.pointerId); if (MV.ptrs.size < 2) MV.pinch = 0;
+  if (e.type === 'pointerup' && d && !d.moved && performance.now() - d.t < 500) {   // 輕點：找點到的島
+    const mx = (e.clientX - MV.x) / MV.k, my = (e.clientY - MV.y) / MV.k;
+    const hit = MV.hits.map(([k, cx, cy, r]) => [k, Math.hypot(mx - cx, my - cy) / r]).filter(([, q]) => q <= 1).sort((a, b) => a[1] - b[1])[0];
+    if (hit) { closeMap(); const key = hit[0]; if (TOUR.includes(key)) goTo(key); else select(key); }
+  }
+  MV.down = null;
+};
+mapOv.addEventListener('pointerup', mapPtrEnd); mapOv.addEventListener('pointercancel', mapPtrEnd);
+mapOv.addEventListener('wheel', (e) => { e.preventDefault(); mapZoomAt(e.clientX, e.clientY, MV.k * Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+document.getElementById('mapClose').addEventListener('click', closeMap);
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && !mapOv.hidden) closeMap(); });
+
+// 看板上的小圖：地圖畫好後縮小貼到 3D 看板；看板頂上的紅色箭頭上下浮動，提醒「這裡可以點」
+setTimeout(() => { mapRaster('temple').then((m) => { const cv = mapBoardTex.image, c = cv.getContext('2d'); c.fillStyle = '#ecd9a8'; c.fillRect(0, 0, 512, 480); c.drawImage(m.canvas, 0, 0, m.canvas.width, m.canvas.height, 512 / 2 - 480 * MAP_W / MAP_H / 2, 0, 480 * MAP_W / MAP_H, 480); mapBoardTex.needsUpdate = true; }).catch(() => {}); }, 2500);
+animators.push((t) => { const tg = mapBoard.userData.tag; if (tg) tg.position.y = 4.0 + 0.2 * Math.sin(t * 2.4); });
 function showNavPop(open) {
   if (open) { renderNav(); showSoundPop(false); showSearchPop(false); }
   navPop.hidden = !open;
@@ -7327,6 +7786,7 @@ navPop.addEventListener('click', (e) => {
   showNavPop(false);
   if (b.hasAttribute('data-home')) { setUI({ panel: 'closed', dock: false }); goHome(); return; }
   if (b.hasAttribute('data-howto')) { showHowto(); return; }
+  if (b.hasAttribute('data-map')) { openMap(); return; }
   const key = b.dataset.go;
   if (TOUR.includes(key)) goTo(key); else select(key);
 });
@@ -7349,6 +7809,8 @@ const PLACES = [
     : { key: 'fuchen', icon: '🚧', title: '拂塵淨心島', sub: '施工中・敬請期待', words: ['拂塵淨心島', '拂塵島', '拂塵', '淨心', '施工', '建置中'] },
   ckOpen ? { key: 'chef', icon: '🍳', title: '廚神養成島', sub: '體感料理・南瓜濃湯，拍成雜誌封面', words: ['廚神養成島', '廚神', '料理', '煮菜', '南瓜', '濃湯', '雜誌', '封面', '拍照', '體感', 'VEGGIE', '素食', '蔬食'] }
     : { key: 'chef', icon: '🚧', title: '廚神養成島', sub: '施工中・敬請期待', words: ['廚神養成島', '廚神', '料理', '施工', '建置中'] },
+  thOpen ? { key: 'touhu', icon: '🏺', title: '投壺島', sub: '投壺・三輪十二矢，一對一二對二對戰', words: ['投壺島', '投壺', '壺', '矢', '貫耳', '對戰', '禮樂', '射禮'] }
+    : { key: 'touhu', icon: '🚧', title: '投壺島', sub: '施工中・敬請期待', words: ['投壺島', '投壺', '施工', '建置中'] },
   { key: 'newisle', icon: '🚧', title: '忠恕島', sub: '忠恕道院・施工中', words: ['忠恕島', '忠恕道院', '忠恕', '大殿', '施工', '建置中'] },
   { key: 'zhongyi', icon: '🏮', title: '中一島', sub: '中一堂・全真青年凝聚晚會 11/28', words: ['中一島', '中一堂', '中一', '忠恕道場', '凝聚晚會', '晚會', '烤肉', '烤盤', '住宿', '青年'] },
   { key: 'hope', icon: '🍎', title: '希望島', sub: '祈福樹與噴泉', words: ['希望島', '希望', '祈福樹', '祈福', '蘋果', '噴泉', '許願'] },
@@ -7530,6 +7992,8 @@ try { seenHowto = localStorage.getItem('islands-howto') === '1'; } catch (e) {}
 if (!seenHowto && !location.hash) setTimeout(showHowto, 900);
 // 懶人包連結（islands/guide/ → #guide）：不管看過沒有，都再秀一次操作說明
 if (location.hash === '#guide') setTimeout(showHowto, 900);
+// 徽章牆連結（islands/badges/ → #badges）：進來直接打開徽章牆（最下面是 LINE 登入・保存紀錄）；openBadges 在後面宣告，等頁面跑起來再呼叫
+if (location.hash === '#badges') setTimeout(() => { try { openBadges(); } catch (e) {} }, 2800);
 
 // 晝夜跟著台灣時間：日出、白天、夕陽、黃昏、夜晚；右上角按鈕可以切換「自動／固定白天／固定夜晚」，選擇會記在這台裝置上
 const root = document.documentElement;
@@ -7790,7 +8254,8 @@ function openJoin(visit = false) {
 }
 function closeJoin() { joinEl.classList.remove('on'); setTimeout(() => { joinEl.hidden = true; joinEl.classList.remove('toss'); }, 320); }
 $('jCancel').addEventListener('click', closeJoin);
-$('visitBtn').addEventListener('click', (e) => { e.stopPropagation(); openJoin(true); });
+// 「👀 我要觀摩」按鈕先拿掉（觀摩票只送姓名、乾坤，報名表那三題還是必填，送不進去）；表單改好後把按鈕加回品牌卡就能用
+if ($('visitBtn')) $('visitBtn').addEventListener('click', (e) => { e.stopPropagation(); openJoin(true); });
 joinEl.addEventListener('click', (e) => { if (e.target === joinEl) closeJoin(); });
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && !joinEl.hidden) closeJoin(); });
 $('joinForm').addEventListener('input', () => { jErr.hidden = true; });
@@ -7928,7 +8393,7 @@ const BADGES = [
   { id: 'puti_clear', e: '🪷', n: '雲開見日', c: '在清淨菩提島吹散雲霧，看見蓮花綻放', bc: '#c86a8a', hidden: !ptOpen },
   { id: 'puti_all', e: '📿', n: '菩提冊集滿', c: '清淨菩提島的每一句金句都收進菩提冊（每天一句）', bc: '#b07a2a', hidden: !ptOpen },
   { id: 'joined', e: '🛶', n: '登島成功', c: '用「我要登島」報名，並確認已登島', bc: '#c0503f' },
-  { id: 'visitor', e: '👀', n: '先來看看', c: '用「我要觀摩」上岸當旅人', bc: '#1d8a5f' },
+  { id: 'visitor', e: '👀', n: '先來看看', c: '登島船票的所屬單位選「我只想先登島逛逛而已」，上岸當旅人', bc: '#1d8a5f' },
   // 🌙 時間與日常
   { id: 'morning', e: '🌅', n: '早安群島', c: '早上 6～9 點來逛群島', bc: '#e0954a' },
   { id: 'night', e: '🌙', n: '夜遊群島', c: '晚上 8 點以後來逛，看火把點亮', bc: '#3a3f7a' },
@@ -8191,37 +8656,37 @@ function summarize(table) {
 }
 
 let liveOk = false, lastLive = null, busy = false;
-const stampText = () => new Date(dataStamp).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+const stampText = () => dataStamp ? new Date(dataStamp).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : '—';
 function setStatus() {
   const st = $('status'), tx = $('statusText');
-  st.dataset.state = liveOk ? 'live' : 'backup';
-  tx.textContent = liveOk ? `已連線即時報名資料・${stampText()} 更新` : `即時資料連線失敗，顯示 ${stampText()} 的備份`;
+  st.dataset.state = dataState;
+  tx.textContent = {
+    loading: '讀取即時報名資料中…',
+    live: `已連線即時報名資料・${stampText()} 更新`,
+    stale: `連線中斷（${dataErr}），顯示 ${stampText()} 讀到的資料`,
+    error: `即時報名資料讀不到（${dataErr}）・點一下重試`,
+  }[dataState];
 }
+// 只讀報名表的即時資料；讀不到不再用備份，已經讀過就保留上次的即時資料並標明連線中斷
 async function loadPeople() {
   try {
     const r = await fetch(`${SHEET_URL}&t=${Date.now()}`, { cache: 'no-store' });
+    if (!r.ok) throw new Error(`試算表回應 ${r.status}`);
     const text = await r.text();
-    const json = JSON.parse(text.replace(/^[\s\S]*?setResponse\(/, '').replace(/\);?\s*$/, ''));
+    let json;
+    try { json = JSON.parse(text.replace(/^[\s\S]*?setResponse\(/, '').replace(/\);?\s*$/, '')); }
+    catch (x) { throw new Error('試算表回傳的內容不對，可能沒有開放檢視'); }
     const people = summarize(json.table);
-    if (!people.length) throw new Error('沒有資料');
+    if (!people.length) throw new Error('試算表目前沒有報名資料');
     realPeople = people;
     dataStamp = new Date().toISOString();
-    liveOk = true;
+    liveOk = true; dataState = 'live'; dataErr = '';
     lastLive = new Date();
-    return;
   } catch (e) {
-    // 已經連上過就保留上次的即時資料，只是狀態改成備份
-    if (lastLive) { liveOk = false; return; }
+    dataErr = e instanceof TypeError ? '網路連不上' : (e.message || '原因不明');
+    liveOk = false;
+    dataState = lastLive ? 'stale' : 'error';
   }
-  try {
-    const r = await fetch('../signup/data.json', { cache: 'no-store' });
-    if (!r.ok) throw new Error();
-    const d = await r.json();
-    realPeople = d.people.map((p) => ({ g: p.gender, city: p.city, unit: p.unit, isCadre: !!p.isCadre, cadre: p.cadreGroups || [],
-      uids: p.cadreGroups && p.cadreGroups.length ? cadreUidsOf(p.name, p.cadreGroups) : [], m: p.name, date: p.last }));
-    dataStamp = d.updated;
-  } catch (e) {}
-  liveOk = false;
 }
 // 漂流瓶：讀公開用試算表（只有審核通過的留言），欄位依標題找，順序換了也沒關係
 // 祈福卡：新表單的試算表＋瓶中信表單裡的舊祈福卡，新的排前面；自己剛寫、還沒讀到的先放進來
@@ -8970,6 +9435,133 @@ renderer.shadowMap.autoUpdate = false;
 let frameN = 0;
 // 平移的範圍：最外圍那座島再往外留一點海
 const PAN_LIMIT = Math.max(...Object.values(islands).map((i) => Math.hypot(i.x, i.z))) + 30;
+/* ---------- 海面的小巧思：遠遠看海不要太平淡——不時冒出一小簇白浪花，偶爾有飛魚躍出水面滑翔一段再落水 ----------
+   全部重複使用一小組物件（浪花 26 簇、飛魚 3 條），不會越積越多；只在鏡頭看得到的海面附近出現，避開每座島 */
+{
+  const SEA_Y = -3.36, foamM = [], crests = [];
+  const foamGeo = new THREE.CircleGeometry(1, 10).rotateX(-Math.PI / 2);
+  const onIsland = (x, z, pad) => Object.values(islands).some((i) => Math.hypot(i.x - x, i.z - z) < i.R + pad);
+  const seaSpot = (r0, r1, pad) => {
+    for (let k = 0; k < 8; k++) {
+      const a = Math.random() * Math.PI * 2, r = r0 + Math.random() * (r1 - r0);
+      const x = controls.target.x + Math.cos(a) * r, z = controls.target.z + Math.sin(a) * r;
+      if (!onIsland(x, z, pad) && Math.hypot(x, z) < PAN_LIMIT + 60) return [x, z];
+    }
+    return null;
+  };
+  for (let i = 0; i < 26; i++) {
+    const g = new THREE.Group(); g.visible = false; scene.add(g);
+    const m = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false });
+    foamM.push(m);
+    // 一簇浪花＝一長條白浪＋兩三個小泡泡
+    const main = new THREE.Mesh(foamGeo, m); main.scale.set(1.6, 1, 0.35); g.add(main);
+    for (let k = 0; k < 3; k++) { const b = new THREE.Mesh(foamGeo, m); b.scale.setScalar(0.22 + Math.random() * 0.18); b.position.set((Math.random() - 0.5) * 2.4, 0.01, (Math.random() - 0.5) * 0.9); g.add(b); }
+    crests.push({ g, m, t0: -99, life: 2.4 });
+  }
+  const spawnCrest = (t, x, z, size = 1, life = 2.2 + Math.random() * 1.2) => {
+    const c = crests.find((q) => t - q.t0 > q.life); if (!c) return;
+    c.t0 = t; c.life = life; c.size = size * (0.7 + Math.random() * 0.8);
+    c.g.position.set(x, SEA_Y, z); c.g.rotation.y = Math.random() * Math.PI; c.g.visible = true;
+  };
+  // 飛魚：銀藍色的小身體＋一對透明的長胸鰭，從水裡躍出、張開翅膀滑翔、拍兩下尾巴再落水，起落都濺一小簇浪花
+  const fishBody = lam('#7fa8c9'), fishWing = new THREE.MeshLambertMaterial({ color: '#d8eaf6', transparent: true, opacity: 0.85, side: THREE.DoubleSide });
+  const fish = [0, 1, 2].map(() => {
+    const g = new THREE.Group(); g.visible = false; scene.add(g);
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.5, 4, 8).rotateZ(Math.PI / 2), fishBody); g.add(body);
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.22, 4).rotateZ(Math.PI / 2), fishBody); tail.position.x = -0.42; g.add(tail);
+    const wings = [-1, 1].map((sz) => { const w = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.26).translate(0, 0, 0), fishWing); w.position.set(0.05, 0.03, sz * 0.2); w.rotation.x = Math.PI / 2; g.add(w); return w; });
+    g.scale.setScalar(2.2);   // 比真實大一點，遠遠看才找得到
+    return { g, wings, t0: -99, dur: 1.6 };
+  });
+  // 島邊拍岸的浪：照洋流的方向拍——迎著浪的那幾個邊（通常兩三個邊）同時被拍，背著浪的邊很少有浪；
+  // 浪從上游往下游一波一波掃過整片群島，所以相鄰的島也會先後被拍到。洋流的方向會很慢很慢地轉
+  // 每座島 6 條沿著邊的白色浪條，背著浪的那幾條直接藏起來不畫
+  const stripGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+  const shores = [];
+  for (const isl of Object.values(islands)) {
+    const Rs = isl.R * 0.95;   // 島往下收窄，碰到海面的那一圈大約是島頂的 94%
+    for (let k = 0; k < 6; k++) {
+      const phi = ((k + 1) * Math.PI) / 3, n = new THREE.Vector2(Math.sin(phi), Math.cos(phi));   // 這條邊朝外的方向（跟六角島的邊對齊）
+      const m = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false });
+      const strip = new THREE.Mesh(stripGeo, m); strip.rotation.y = phi; strip.userData.noMerge = true; strip.visible = false;
+      scene.add(strip);
+      const mx = isl.x + n.x * Rs * COS30, mz = isl.z + n.y * Rs * COS30;
+      shores.push({ strip, m, n, mx, mz, len: Rs, jit: Math.random() * 0.15, sp: 0.85 + Math.random() * 0.3, id: shores.length });
+    }
+  }
+  const SWELL = 3.4, WAVE_LEN = 40;   // 一波約 3.4 秒；浪頭之間約 40 個單位
+  let nextShore = 0;
+  let nextCrest = 0, nextFish = 6;
+  animators.push((t) => {
+    // 浪花：每 0.15 秒左右冒一簇；鏡頭拉得越遠，範圍越大
+    const far = camera.position.distanceTo(controls.target), r1 = Math.min(220, far * 1.1);
+    if (t > nextCrest) { nextCrest = t + 0.12 + Math.random() * 0.12; const sp = seaSpot(6, r1, 4); if (sp) spawnCrest(t, sp[0], sp[1], 1 + far / 70); }   // 遠看浪花放大，才看得出來
+    const dim = 1 - nightT * 0.45;
+    // 洋流：浪往 cur 的方向走（很慢地轉向）；迎著浪的邊（朝外方向和浪來的方向相反）才被拍，越正對越大浪
+    // 浪從鏡頭預設那一側（東南外海）往群島推過來，這樣迎浪拍岸的那幾個邊大多看得到
+    const ca = 0.8 + Math.PI + Math.sin(t * 0.01) * 0.9, cx = Math.sin(ca), cz = Math.cos(ca);
+    for (const sh of shores) {
+      const face = -(sh.n.x * cx + sh.n.y * cz);
+      if (face < 0.2) { if (sh.strip.visible) sh.strip.visible = false; continue; }
+      sh.strip.visible = true;
+      // 浪頭沿著洋流方向推進：同一條浪頭先打到上游的邊、再打到下游的邊
+      // 不規則：每條邊的節奏快慢不同；每一波大小、長短、拍在邊上的位置都不一樣，有些波直接沒拍上岸；
+      // 整片海還有「一陣大、一陣小」的湧浪（大浪成群來）
+      const ph = t / (SWELL * sh.sp) - (sh.mx * cx + sh.mz * cz) / WAVE_LEN + sh.jit, cyc = Math.floor(ph), k = ph - cyc;
+      const h = (q) => { const x = Math.sin((sh.id * 12.9898 + cyc * 78.233 + q * 37.719)) * 43758.5453; return x - Math.floor(x); };
+      const sets = 0.55 + 0.45 * Math.sin(t * 0.11 + sh.mx * 0.02) * Math.sin(t * 0.047 + sh.mz * 0.02);
+      const amp = h(1) < 0.25 ? 0 : (0.45 + h(2) * 0.55) * (0.6 + sets * 0.6);
+      if (amp <= 0) { sh.m.opacity = 0; continue; }
+      const L = sh.len * (0.45 + h(3) * 0.6), slide = (h(4) - 0.5) * (sh.len - L);   // 這一波拍到的那一段
+      const out = 0.15 + k * (0.7 + amp * 0.8), w = 0.3 + k * (0.3 + amp * 0.5);
+      sh.strip.position.set(sh.mx + sh.n.x * out + sh.n.y * slide, SEA_Y + 0.01, sh.mz + sh.n.y * out - sh.n.x * slide);
+      sh.strip.scale.set(L * (1 + k * 0.12), 1, w);
+      sh.m.opacity = Math.min(0.95, 0.85 * dim * face * amp * Math.min(1, k * 5) * (1 - k));
+    }
+    // 島邊濺浪：每 0.25 秒挑一座鏡頭附近的島，在迎浪那一側濺一小簇
+    if (t > nextShore) {
+      nextShore = t + 0.2 + Math.random() * 0.15;
+      const near = Object.values(islands).filter((i) => Math.hypot(i.x - controls.target.x, i.z - controls.target.z) < r1);
+      const isl = near[(Math.random() * near.length) | 0];
+      if (isl) { const a = ca + Math.PI + (Math.random() - 0.5) * 2, d = hexEdge(isl.R, a) * 0.96;   // 濺浪也只在迎浪那一側
+        spawnCrest(t, isl.x + Math.sin(a) * d, isl.z + Math.cos(a) * d, 0.5 + isl.R / 14, 1.4 + Math.random() * 0.8); }
+    }
+    for (const c of crests) {
+      if (!c.g.visible) continue;
+      const k = (t - c.t0) / c.life;
+      if (k >= 1) { c.g.visible = false; continue; }
+      c.g.scale.setScalar(c.size * (0.4 + k * 0.9));
+      c.m.opacity = 0.85 * dim * Math.min(1, k * 5) * (1 - k);
+    }
+    // 飛魚：每 5～12 秒一條（同時最多三條）
+    if (t > nextFish) {
+      nextFish = t + 5 + Math.random() * 7;
+      const f = fish.find((q) => t - q.t0 > q.dur), sp = seaSpot(10, Math.min(120, far * 0.8), 8);
+      if (f && sp) {
+        const a = Math.random() * Math.PI * 2, len = 14 + Math.random() * 12;
+        f.t0 = t; f.dur = 1.6 + Math.random() * 0.8; f.h = 2.5 + Math.random() * 2;
+        f.p0 = new THREE.Vector3(sp[0], SEA_Y, sp[1]); f.dir = new THREE.Vector3(Math.cos(a), 0, Math.sin(a)); f.len = len;
+        f.g.rotation.y = -a; f.g.visible = true; f.splashOut = false;
+        spawnCrest(t, sp[0], sp[1], 0.6, 1.2);
+      }
+    }
+    for (const f of fish) {
+      if (!f.g.visible) continue;
+      const k = (t - f.t0) / f.dur;
+      if (k >= 1) {
+        f.g.visible = false;
+        const e = f.p0.clone().addScaledVector(f.dir, f.len); spawnCrest(t, e.x, e.z, 0.6, 1.2);
+        continue;
+      }
+      // 拋物線：躍出→滑翔（中段比較平）→落水
+      const y = f.h * Math.sin(k * Math.PI) * (1 - 0.25 * Math.sin(k * Math.PI * 2) ** 2);
+      f.g.position.copy(f.p0).addScaledVector(f.dir, f.len * k); f.g.position.y = SEA_Y + 0.05 + y;
+      f.g.rotation.z = Math.cos(k * Math.PI) * 0.45;   // 起飛抬頭、落水低頭
+      const open = Math.min(1, k * 6, (1 - k) * 6), flap = k < 0.2 || k > 0.8 ? Math.sin(t * 40) * 0.4 : 0;
+      f.wings.forEach((w, i) => { w.rotation.x = Math.PI / 2 + (i ? 1 : -1) * ((1 - open) * 1.2 + flap); });
+    }
+  });
+}
 function tick() {
   // 遊戲開在上面時，群島先不畫（遊戲要用 3D 和感測器，兩個 WebGL 同時跑手機會吃力）；時鐘照走，回島時不會跳
   if (typeof fcT !== 'undefined' && fcT.rafStop) { clock.getDelta(); requestAnimationFrame(tick); return; }
@@ -9478,6 +10070,53 @@ window.addEventListener('message', (e) => {
 });
 if (FC_TRANS) document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('#ckGo'); if (!a) return; e.preventDefault(); ckEnter(a.href); }, true);
 window.__ckTrans = () => ({ busy: ckT.busy, open: !!(ckT.el && ckT.el.classList.contains('open')), glow: ckIsl.boxGlow ? +ckIsl.boxGlow.material.opacity.toFixed(2) : -1, lockSky: fcT.lockSky, rafStop: fcT.rafStop });   // 測試用，唯讀
+</script>
+<script type="module">
+// LINE 登入・保存紀錄（account.js）：徽章牆最下面的那一塊
+import { initAccount, onAccount, loginLine, logout, syncNow, createPairCode, redeemPairCode } from './account.js';
+const $a = (id) => document.getElementById(id);
+// 2026/11/22 正式開放（LINE Channel 已 Publish）。要暫時收起登入，改回 false：已登入的人不受影響，網址帶 ?acct=1 的手機仍看得到
+const ACCT_LIVE = true;
+const STANDALONE = (() => { try { return navigator.standalone === true || matchMedia('(display-mode: standalone)').matches; } catch (e) { return false; } })();
+const acctTest = (() => { try { const q = new URLSearchParams(location.search), v = q.get('acct'); if (v !== null) { v === '0' ? localStorage.removeItem('islands-acct-test') : localStorage.setItem('islands-acct-test', '1'); q.delete('acct'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } return localStorage.getItem('islands-acct-test') === '1'; } catch (e) { return false; } })();
+const hhmm = (t) => { const d = new Date(t); return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); };
+onAccount((st) => {
+  const a = st.acct, show = ACCT_LIVE || acctTest || !!a;
+  $a('acctLogin').hidden = !!a || !show; $a('acct').querySelector('.acct-pv').hidden = !show; $a('acctSync').hidden = $a('acctOut').hidden = !a; $a('acctSync').disabled = st.busy;
+  $a('acctTxt').innerHTML = a ? `✅ 已用 LINE 登入${a.nm ? '：<b>' + a.nm.replace(/[<>&"]/g, '') + '</b>' : ''}。徽章、籤冊、菩提冊和遊戲成績會自動存到雲端，換手機登入同一個 LINE 就接得回來。${a.at ? `<br><small>上次同步 ${hhmm(a.at)}</small>` : ''}`
+    : show ? '徽章和遊戲紀錄先存在這支手機上；換手機或清除瀏覽資料會不見。<b>用 LINE 登入</b>，就能存一份在雲端、換手機也接得回來。'
+    : '徽章先存在這支手機上；換手機或清除瀏覽資料會不見，之後會開放用 LINE 帳號保存。';
+  $a('acctMsg').textContent = st.msg || '';
+  // 配對碼：登入的人可以產生；沒登入的人（正式開放後所有人、測試階段的桌面圖示）可以輸入
+  $a('acctPair').hidden = !(a || show || STANDALONE); $a('pairMake').hidden = !a; $a('pairUse').hidden = !!a;
+  if (!a) $a('pairCode').hidden = true;
+  if (STANDALONE && !a && !show) $a('acctTxt').innerHTML = '在 Safari 或別支手機登入 LINE 後，按「取得配對碼」，就能把紀錄接到這個桌面圖示。';
+  // 從 LINE 登入回來：自動打開徽章牆，讓人看到登入結果
+});
+$a('acctLogin').addEventListener('click', () => { $a('acctLogin').disabled = true; $a('acctMsg').textContent = '前往 LINE 登入…'; loginLine(); });
+let pairT = 0;
+$a('pairBtn').addEventListener('click', async () => {
+  $a('pairBtn').disabled = true; clearInterval(pairT);
+  try {
+    const r = await createPairCode(), el = $a('pairCode'); el.hidden = false;
+    const tick = () => { const left = Math.max(0, Math.round((r.exp - Date.now()) / 1000)); el.innerHTML = r.code.slice(0, 4) + ' ' + r.code.slice(4) + `<small>${left ? `到另一個裝置輸入（還剩 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}，只能用一次）` : '已過期，請再按一次取得新的代碼'}</small>`; if (!left) clearInterval(pairT); };
+    tick(); pairT = setInterval(tick, 1000);
+  } catch (e) { $a('acctMsg').textContent = e.message === 'auth' ? '請先登入' : e.message === 'rate' ? '產生太頻繁，請等幾分鐘再試' : '⚠️ 沒有產生成功，請稍後再試'; }
+  $a('pairBtn').disabled = false;
+});
+$a('pairGo').addEventListener('click', async () => {
+  const v = $a('pairInput').value.replace(/\D/g, ''); if (v.length !== 8) { $a('acctMsg').textContent = '配對碼是 8 位數字'; return; }
+  $a('pairGo').disabled = true; $a('acctMsg').textContent = '登入中…';
+  try { await redeemPairCode(v); } catch (e) { $a('acctMsg').textContent = e.message === 'rate' ? '試太多次了，請 10 分鐘後再試' : e.message === 'bad_code' ? '代碼不對、已過期或已經用過，請在登入的那邊重新取得' : '⚠️ 沒有連上，請稍後再試'; }
+  $a('pairGo').disabled = false;
+});
+$a('pairInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $a('pairGo').click(); });
+$a('acctSync').addEventListener('click', () => syncNow({ apply: true }));
+$a('acctOut').addEventListener('click', () => { if (confirm('要登出嗎？\n這支手機上的紀錄會留著；之後再登入同一個 LINE，就會再接上雲端的紀錄。')) logout(); });
+const back = !!window.__acctHash;
+initAccount();
+if (back) setTimeout(() => { const b = document.getElementById('badgeBtn'); if (b) b.click(); }, 1500);
+addEventListener('pageshow', (e) => { if (e.persisted) $a('acctLogin').disabled = false; });
 </script>
 </body>
 </html>
