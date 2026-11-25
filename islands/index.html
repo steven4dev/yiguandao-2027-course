@@ -746,7 +746,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a></div>
   <span class="status" id="status" data-state="loading" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取即時報名資料中…</span></span>
-  <span class="ver">v261125.02</span>
+  <span class="ver">v261125.03</span>
   </div></div>
 </div>
 
@@ -5909,10 +5909,10 @@ const thIsl = makeIsland('touhu', TH_R, Math.sin(TH_ANG) * 108, Math.cos(TH_ANG)
       c.fillStyle = '#1f1a1a'; c.font = 'bold 50px "Noto Sans TC", "PingFang TC", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
       c.fillText('🚧 投壺島 施工中', 256, 80); c.font = 'bold 40px "Noto Sans TC", "PingFang TC", sans-serif'; c.fillText('即將開放・敬請期待', 256, 154);
     });
-    const sy = new THREE.Group(); sy.rotation.y = mark.rotation.y; FN.add(sy);
+    const sy = new THREE.Group(); sy.rotation.y = Math.round(mark.rotation.y / (Math.PI / 3)) * (Math.PI / 3); FN.add(sy);   // 告示牌對齊最靠近鏡頭的那一面圍籬（圍籬的邊在 60° 的倍數上），不然牌子斜著插進圍籬
     const edgeR = RF * Math.cos(Math.PI / 6), signY = lam('#f2b632');
-    mesh(new THREE.BoxGeometry(5.2, 2, 0.1), [signY, signY, signY, signY, new THREE.MeshLambertMaterial({ map: sTex }), signY], 0, 1.75, edgeR + 0.25, sy);
-    for (const x of [-2.2, 2.2]) mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.8, 6), postM, x, 1.4, edgeR + 0.18, sy);
+    mesh(new THREE.BoxGeometry(5.2, 2, 0.1), [signY, signY, signY, signY, new THREE.MeshLambertMaterial({ map: sTex }), signY], 0, 2.85, edgeR + 0.25, sy);   // 牌子抬高到圍籬（高 1.6）上方，不跟圍籬疊在一起
+    for (const x of [-2.2, 2.2]) mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.4, 6), postM, x, 1.7, edgeR + 0.18, sy);
   }
 }
 
