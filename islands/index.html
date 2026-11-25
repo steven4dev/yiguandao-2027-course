@@ -746,7 +746,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a></div>
   <span class="status" id="status" data-state="loading" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取即時報名資料中…</span></span>
-  <span class="ver">v261125.01</span>
+  <span class="ver">v261125.02</span>
   </div></div>
 </div>
 
@@ -1747,13 +1747,14 @@ MASTERS.forEach((m, i) => {
 const mapBoardHit = [], mapBoardTex = canvasTex(512, 480, (c) => { c.fillStyle = '#ecd9a8'; c.fillRect(0, 0, 512, 480); c.fillStyle = '#8c3b2b'; c.font = '900 64px "Noto Serif TC","Songti TC",serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('尋寶圖', 256, 210); c.font = 'bold 30px "Noto Sans TC",sans-serif'; c.fillStyle = '#5a3a1c'; c.fillText('點一下看全真群島', 256, 290); }), mapBoard = new THREE.Group();
 {
   const bx = -8.6, bz = 9.0, wood = lam('#8a5a32'), woodD = lam('#5b3a22');
-  mapBoard.position.set(bx, 0, bz); mapBoard.rotation.y = Math.atan2(HOME.pos.x - bx, HOME.pos.z - bz); mapBoard.scale.setScalar(1.9); TEMPLE.group.add(mapBoard);
+  mapBoard.position.set(bx, 0, bz); mapBoard.rotation.y = Math.atan2(HOME.pos.x - bx, HOME.pos.z - bz); mapBoard.scale.setScalar(0.63); /* 原本 1.9，縮成約三分之一：不擋住後面的建築 */ TEMPLE.group.add(mapBoard);
   for (const x of [-1.4, 1.4]) mesh(new THREE.CylinderGeometry(0.09, 0.11, 2.9, 8), woodD, x, 1.45, 0, mapBoard);
   const fr = mesh(new THREE.BoxGeometry(3.2, 2.6, 0.14), wood, 0, 1.9, 0, mapBoard); mapBoardHit.push(fr);
   const face = mesh(new THREE.PlaneGeometry(2.9, 2.7 * 0.9), new THREE.MeshLambertMaterial({ map: mapBoardTex }), 0, 1.9, 0.075, mapBoard, false); mapBoardHit.push(face);
   mesh(new THREE.BoxGeometry(3.6, 0.12, 0.7), woodD, 0, 3.3, 0, mapBoard).rotation.x = -0.12; mesh(new THREE.SphereGeometry(0.1, 8, 6), lam('#e3b44f'), 0, 3.45, 0, mapBoard, false);
-  const tag = mesh(new THREE.ConeGeometry(0.2, 0.42, 4), lam('#c23b2e', { emissive: '#661a12', emissiveIntensity: 0.4 }), 0, 4.0, 0, mapBoard, false); tag.rotation.x = Math.PI; tag.userData.noMerge = true; mapBoard.userData.tag = tag; mapBoardHit.push(tag);
-  addObst(TEMPLE.group, { x0: bx - 2.3, x1: bx + 2.3, z0: bz - 1.2, z1: bz + 1.2 });
+  const tag = mesh(new THREE.ConeGeometry(0.2, 0.42, 4), lam('#c23b2e', { emissive: '#661a12', emissiveIntensity: 0.4 }), 0, 4.0, 0, mapBoard, false); tag.rotation.x = Math.PI; tag.scale.setScalar(1.7); tag.userData.noMerge = true; mapBoard.userData.tag = tag; mapBoardHit.push(tag);
+  { const hb = new THREE.Mesh(new THREE.BoxGeometry(4.6, 4.8, 1.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); hb.position.set(0, 2.2, 0); mapBoard.add(hb); mapBoardHit.push(hb); }   // 看板變小後點起來不好中：加一個看不見的大感應區
+  addObst(TEMPLE.group, { x0: bx - 1.3, x1: bx + 1.3, z0: bz - 0.8, z1: bz + 0.8 });
 }
 
 // 來逛逛的旅人：渡口島上，戴草帽、揹背包，不時舉起相機拍拍風景
@@ -7772,7 +7773,7 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape' && !mapOv.hidden) cl
 
 // 看板上的小圖：地圖畫好後縮小貼到 3D 看板；看板頂上的紅色箭頭上下浮動，提醒「這裡可以點」
 setTimeout(() => { mapRaster('temple').then((m) => { const cv = mapBoardTex.image, c = cv.getContext('2d'); c.fillStyle = '#ecd9a8'; c.fillRect(0, 0, 512, 480); c.drawImage(m.canvas, 0, 0, m.canvas.width, m.canvas.height, 512 / 2 - 480 * MAP_W / MAP_H / 2, 0, 480 * MAP_W / MAP_H, 480); mapBoardTex.needsUpdate = true; }).catch(() => {}); }, 2500);
-animators.push((t) => { const tg = mapBoard.userData.tag; if (tg) tg.position.y = 4.0 + 0.14 * Math.sin(t * 2.4); });
+animators.push((t) => { const tg = mapBoard.userData.tag; if (tg) tg.position.y = 4.0 + 0.2 * Math.sin(t * 2.4); });
 function showNavPop(open) {
   if (open) { renderNav(); showSoundPop(false); showSearchPop(false); }
   navPop.hidden = !open;
