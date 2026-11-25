@@ -710,6 +710,16 @@ body.fcShake #cv,body.fcShake canvas:not(.rain):not(.bolt){animation:fcShake 1s 
 .ckT .cover .chef{position:absolute;left:0;right:0;bottom:5%;text-align:center;font-weight:900;font-size:clamp(15px,5vw,22px);letter-spacing:.1em;text-shadow:0 2px 8px rgba(0,0,0,.45)}
 .ckT .cover .chef small{display:block;font-size:.6em;color:#ffd38a;letter-spacing:.2em;margin-bottom:4px}
 body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag,body.fcT-hide .topbtns,body.fcT-hide .mapctl{transition:opacity .6s ease;opacity:0!important;pointer-events:none!important}
+  /* —— 尋寶圖（導覽地圖）—— */
+  .mapov { position: fixed; inset: 0; z-index: 80; background: rgba(30,20,12,.97); touch-action: none; overflow: hidden; user-select: none; -webkit-user-select: none; }
+  .mapov[hidden] { display: none; }
+  .mapov .mapbar { position: absolute; left: 0; right: 0; top: 0; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px calc(0px) 16px; color: #f6e7c8; z-index: 2; pointer-events: none; padding-top: env(safe-area-inset-top, 0px); }
+  .mapov .mapbar b { font: 900 17px/1 'Noto Serif TC','Songti TC',serif; letter-spacing: .12em; }
+  .mapov #mapClose { pointer-events: auto; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,248,238,.92); color: #3f2c22; font-size: 20px; cursor: pointer; }
+  .mapov #mapStage { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+  .mapov .maphint { position: absolute; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); padding: 6px 14px; border-radius: 99px; background: rgba(255,248,238,.9); color: #3f2c22; font-size: 13px; font-weight: 700; pointer-events: none; white-space: nowrap; z-index: 2; }
+  .mapbtn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 6px 0 4px; padding: 11px 14px; border-radius: 12px; border: 1.5px solid #c9a566; background: linear-gradient(180deg, #f6e7c4, #ead3a0); color: #5a3a1c; font: inherit; font-weight: 900; cursor: pointer; box-shadow: 0 2px 0 #c9a566; }
+  .mapbtn:active { transform: translateY(1px); box-shadow: none; }
 </style>
 <style>
   body { margin: 0; }
@@ -736,7 +746,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a></div>
   <span class="status" id="status" data-state="loading" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取即時報名資料中…</span></span>
-  <span class="ver">v261124.06</span>
+  <span class="ver">v261125.01</span>
   </div></div>
 </div>
 
@@ -751,6 +761,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
 </div>
 
 <nav class="card navpop" id="navPop" aria-label="島嶼目錄" hidden></nav>
+<div class="mapov" id="mapOv" hidden role="dialog" aria-label="全真群島尋寶圖"><div class="mapbar"><b>🗺️ 全真群島・尋寶圖</b><button id="mapClose" type="button" aria-label="關閉地圖">✕</button></div><div id="mapStage"></div><div class="maphint" id="mapHint"></div></div>
 
 <div class="card navpop searchpop" id="searchPop" role="search" hidden>
   <label class="sbox"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg>
@@ -1731,6 +1742,19 @@ MASTERS.forEach((m, i) => {
   m.fig = fig;
   m.phase = i * 2.1;
 });
+
+// 尋寶圖看板：全真島前庭左前方立一塊木框看板，畫著全真群島的藏寶圖；點它開啟全螢幕地圖（圖會在載入後畫上去）
+const mapBoardHit = [], mapBoardTex = canvasTex(512, 480, (c) => { c.fillStyle = '#ecd9a8'; c.fillRect(0, 0, 512, 480); c.fillStyle = '#8c3b2b'; c.font = '900 64px "Noto Serif TC","Songti TC",serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('尋寶圖', 256, 210); c.font = 'bold 30px "Noto Sans TC",sans-serif'; c.fillStyle = '#5a3a1c'; c.fillText('點一下看全真群島', 256, 290); }), mapBoard = new THREE.Group();
+{
+  const bx = -8.6, bz = 9.0, wood = lam('#8a5a32'), woodD = lam('#5b3a22');
+  mapBoard.position.set(bx, 0, bz); mapBoard.rotation.y = Math.atan2(HOME.pos.x - bx, HOME.pos.z - bz); mapBoard.scale.setScalar(1.9); TEMPLE.group.add(mapBoard);
+  for (const x of [-1.4, 1.4]) mesh(new THREE.CylinderGeometry(0.09, 0.11, 2.9, 8), woodD, x, 1.45, 0, mapBoard);
+  const fr = mesh(new THREE.BoxGeometry(3.2, 2.6, 0.14), wood, 0, 1.9, 0, mapBoard); mapBoardHit.push(fr);
+  const face = mesh(new THREE.PlaneGeometry(2.9, 2.7 * 0.9), new THREE.MeshLambertMaterial({ map: mapBoardTex }), 0, 1.9, 0.075, mapBoard, false); mapBoardHit.push(face);
+  mesh(new THREE.BoxGeometry(3.6, 0.12, 0.7), woodD, 0, 3.3, 0, mapBoard).rotation.x = -0.12; mesh(new THREE.SphereGeometry(0.1, 8, 6), lam('#e3b44f'), 0, 3.45, 0, mapBoard, false);
+  const tag = mesh(new THREE.ConeGeometry(0.2, 0.42, 4), lam('#c23b2e', { emissive: '#661a12', emissiveIntensity: 0.4 }), 0, 4.0, 0, mapBoard, false); tag.rotation.x = Math.PI; tag.userData.noMerge = true; mapBoard.userData.tag = tag; mapBoardHit.push(tag);
+  addObst(TEMPLE.group, { x0: bx - 2.3, x1: bx + 2.3, z0: bz - 1.2, z1: bz + 1.2 });
+}
 
 // 來逛逛的旅人：渡口島上，戴草帽、揹背包，不時舉起相機拍拍風景
 const visitorPeople = [], visitorHit = [];
@@ -7268,6 +7292,7 @@ function renderPanel() {
     title = '全真道院'; info = `已登島 ${list.length} 人・學員 ${students.length}・幹部 ${cadres}`;
     html = `<header><span class="eyebrow">全真島・第四期報名</span><h2>全真道院</h2>
       <p class="sub">廣場上每個小人偶就是一位已登島的夥伴：乾道是淡藍色、坤道是淡粉色，幹部另外圍著自己這一組顏色的圍巾。</p></header>
+      <button class="mapbtn" data-map type="button">🗺️ 打開尋寶圖・點島飛過去</button>
       <div class="stats"><div class="stat"><b>${list.length}</b><span>總登島</span></div><div class="stat"><b>${students.length}</b><span>學員</span></div><div class="stat"><b>${cadres}<small style="font-size:12px;color:var(--muted)">/${cadreTotal}</small></b><span>幹部</span></div></div>
       ${bars('乾坤比例', [['乾道', q], ['坤道', list.length - q]], list.length)}
       ${bars('所屬單位', countBy(list, (p) => p.unit), list.length)}
@@ -7277,6 +7302,7 @@ function renderPanel() {
     if (!peopleReady()) {
       info = dataState === 'error' ? '登島人數暫時讀不到' : '登島人數讀取中…';
       html = `<header><span class="eyebrow">全真島・第四期報名</span><h2>全真道院</h2></header>
+        <button class="mapbtn" data-map type="button">🗺️ 打開尋寶圖・點島飛過去</button>
         <p class="note">${dataState === 'error' ? `即時報名資料讀不到（${esc(dataErr)}），所以現在沒有人數可以顯示。點左上角的連線狀態可以重試。` : '正在讀取報名表的即時資料⋯'}</p>`;
     }
   } else if (isl.kind === 'course') {
@@ -7491,6 +7517,7 @@ function select(key, sel = key) {
 function goHome() { flyTo(HOME_VIEW.target.clone(), HOME_VIEW.pos.clone()); }
 const selectMember = (id) => select(SLOTS[id].key, 'm:' + id);
 document.getElementById('panelBody').addEventListener('click', (e) => {
+  if (e.target.closest('[data-map]')) { openMap(); return; }
   if (e.target.closest('.cta-wish')) { openWrite(true); return; }
   if (e.target.closest('.cta-write')) { openWrite(); return; }
   if (e.target.closest('.bottle-more')) { bottleAll = !bottleAll; lastView = ''; renderPanel(); return; }
@@ -7513,7 +7540,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
     hoverQueued = false;
     ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(plazaHit, raftHit, kintoHit, partyHit, lookoutHit, teacherHit, masterHit, bottleHit, visitorHit), false).length ? 'pointer' : '';
+    renderer.domElement.style.cursor = ray.intersectObjects(cadreHit.concat(mapBoardHit, plazaHit, raftHit, kintoHit, partyHit, lookoutHit, teacherHit, masterHit, bottleHit, visitorHit), false).length ? 'pointer' : '';
   });
 });
 renderer.domElement.addEventListener('pointerup', (e) => {
@@ -7522,6 +7549,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   ray.setFromCamera(ndc, camera);
   // 先打到任何物件，再往上找它屬於哪座島
   if (ray.intersectObjects(raftHit, false).length) { openSignup(); return; }
+  if (ray.intersectObjects(mapBoardHit, false).length) { openMap(); return; }   // 尋寶圖看板
   if (kinto.visible && ray.intersectObjects(kintoHit, false).length) { ptGc('動作/筋斗雲'); select('puti'); return; }   // 筋斗雲：飛到清淨菩提島
   // 中一島的涼亭＝凝聚晚會報名處：報名期間點了開報名表，截止後就打開中一島的介紹
   if (ray.intersectObjects(partyHit, false).length) { if (zyIsl.formOpen) window.open(PARTY_FORM, '_blank', 'noopener'); else select('zhongyi'); return; }
@@ -7610,6 +7638,7 @@ function renderNav() {
   navPop.innerHTML = `<button class="home" data-home><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg><span>回到初始視角</span></button>
     <a class="board-item" href="${SIGNUP_URL}" target="_blank" rel="noopener"><span>🛶</span><span>我要登島</span></a>
     <button class="home" data-howto><span aria-hidden="true">👆</span><span>操作說明：旋轉、平移、縮放</span></button>
+    <button class="home" data-map><span aria-hidden="true">🗺️</span><span>尋寶圖：整片群島一眼看完</span></button>
     <h3>中央</h3>${navItem('temple', '全真島・全真道院', peopleReady() ? `${peopleNow().filter((p) => p.date <= curISO()).length} 人` : (dataState === 'error' ? '讀不到' : '讀取中'))}${navItem('yoga', '🧘 瑜伽島・每堂課早上的第一堂')}${navItem('hope', '🍎 希望島・祈福樹與噴泉')}${navItem('bottle', '🍾 漂流瓶島・匿名留言', bottles.length ? `${bottles.length} 瓶` : '')}${jsOpen ? navItem('jishi', '⛰️ 濟世靈山島・濟公活佛體感抽籤', JS_DAILY && jsTodayFortune() ? '今日已抽' : '') : navItem('jishi', '🚧 濟世靈山島・施工中')}${ptOpen ? navItem('puti', '🪷 清淨菩提島・吹散無明、雲開見日', ptToday() ? '今日已雲開' : '') : navItem('puti', '🚧 清淨菩提島・施工中')}${fcOpen ? navItem('fuchen', '🪶 拂塵淨心島・拂塵試煉（體感打怪）') : navItem('fuchen', '🚧 拂塵淨心島・施工中')}${ckOpen ? navItem('chef', '🍳 廚神養成島・體感料理＋雜誌封面') : navItem('chef', '🚧 廚神養成島・施工中')}${navItem('newisle', '🚧 忠恕島・施工中')}${navItem('zhongyi', '🏮 中一島・凝聚晚會 11/28')}${navItem('dock', '🛶 渡口島・登島報名處')}
     <h3>一年的課程路線</h3>${COURSES.map((c) => navItem(c.key, `${c.isle}${c.game ? ' 🎮' : ''}`, `${md(c.date)} ${c.name}`) +
       (c.pm ? navItem(c.pm.key, `${c.pm.emoji} ${c.pm.isle}`, c.pm.name, 'sub') : '')).join('')}
@@ -7617,6 +7646,133 @@ function renderNav() {
     <h3>小遊戲</h3>${navItem('c5', '法會小天使 🎮', '法會島')}${navItem('c9', '褪下仙衣 🎮', '歡樂島')}
     ${standalone ? '' : '<p class="tip">📱 加到手機桌面：iPhone 用 Safari 打開，點下方「分享」→「加入主畫面」；Android 用 Chrome 打開，點右上角選單 →「加到主畫面」。</p>'}`;
 }
+/* ---------- 尋寶圖：全真群島俯視圖（導覽地圖）----------
+   由目前的島嶼座標即時畫成羊皮紙藏寶圖（SVG → 點陣圖，平移縮放很順），方向跟目前的預設視角一致（上＝前方）；
+   入口三個：全真島前庭的 3D 看板、全真道院資訊卡、導覽選單。點圖上的島 → 關掉地圖、鏡頭飛過去。
+   「你在這裡」＝目前選到的那座島（沒選就是全真島）。施工中的島畫成淡色虛線輪廓，跟 3D 裡的施工圍籬對應。 */
+const MAP_NAMES = {
+  temple: ['全真島', '⛩️'], c1: ['好玩島', '1'], c2: ['好賺島', '2'], c3: ['春遊島', '3'], c4: ['好愛島', '4'], c5: ['法會島', '5'], c6: ['重啟島', '6'], c7: ['秋遊島', '7'], c8: ['走走島', '8'], c9: ['歡樂島', '9'],
+  g1: ['班務', ''], g2: ['人事', ''], g3: ['迎賓', ''], g4: ['學術', ''], g5: ['輔導', ''], g6: ['總務', ''], g7: ['影音', ''], g8: ['活動', ''],
+  dock: ['渡口', '🛶'], p2: ['氣球', '🎈'], p4: ['靈數', '🔮'], p6: ['翻轉', '🎲'], p8: ['料理', '🥗'], hope: ['希望', '🍎'], yoga: ['瑜伽', '🧘'], bottle: ['漂流瓶', '🍾'],
+  newisle: ['忠恕島', '🚧'], zhongyi: ['中一島', '🏮'], jishi: ['濟世靈山', '⛰️'], puti: ['清淨菩提', '🪷'], fuchen: ['拂塵淨心', '🪶'], chef: ['廚神', '🍳'], touhu: ['投壺島', '🏺'],
+};
+const mapIsWip = (k) => k === 'newisle' || (k === 'touhu' && !thOpen) || (k === 'chef' && !ckOpen) || (k === 'fuchen' && !fcOpen) || (k === 'puti' && !ptOpen) || (k === 'jishi' && !jsOpen);
+const MAP_GAMES = new Set(['c5', 'c9', 'fuchen', 'puti', 'jishi', 'chef', 'touhu']);
+const MAP_W = 900, MAP_H = 940;
+function treasureMapSvg(phi, here) {
+  const S = 2.35, CX = 450, CY = 470, hits = [];
+  const rot = (x, z) => [CX + S * (x * Math.cos(phi) - z * Math.sin(phi)), CY + S * (x * Math.sin(phi) + z * Math.cos(phi))];
+  const hexPts = (cx, cy, r) => [0, 1, 2, 3, 4, 5].map((k) => { const a = Math.PI / 6 + k * Math.PI / 3, ax = Math.sin(a) * r, az = Math.cos(a) * r; return [cx + ax * Math.cos(phi) - az * Math.sin(phi), cy + ax * Math.sin(phi) + az * Math.cos(phi)]; });
+  const pts = (a) => a.map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  const C = (k) => { const i = islands[k]; return i ? rot(i.x, i.z) : [CX, CY]; };
+  let g = '';
+  const ring = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9'].filter((k) => islands[k]).map(C);
+  if (ring.length) g += `<path d="M${ring.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L')} Z" fill="none" stroke="#a8432f" stroke-width="2.2" stroke-dasharray="2 7" stroke-linecap="round" opacity=".85"/>`;
+  if (islands.dock && islands.temple) { const a = C('dock'), b = C('temple'); g += `<path d="M${a[0]} ${a[1]} Q ${(a[0] + b[0]) / 2 + 30} ${(a[1] + b[1]) / 2 - 10} ${b[0]} ${b[1]}" fill="none" stroke="#a8432f" stroke-width="3" stroke-dasharray="1 8" stroke-linecap="round"/>`; }
+  const order = Object.values(islands).filter((i) => MAP_NAMES[i.key]).sort((a, b) => (a.x * Math.sin(phi) + a.z * Math.cos(phi)) - (b.x * Math.sin(phi) + b.z * Math.cos(phi)));
+  for (const isl of order) {
+    const [name, ic] = MAP_NAMES[isl.key], wip = mapIsWip(isl.key), ty = isl.key === 'temple' ? 'main' : /^c\d$/.test(isl.key) ? 'course' : /^g\d$/.test(isl.key) ? 'cadre' : 'pm';
+    const [cx, cy] = rot(isl.x, isl.z), r = isl.R * S, d = Math.max(4, r * 0.2), top = hexPts(cx, cy, r), foam = hexPts(cx, cy, r + 7);
+    hits.push([isl.key, cx, cy + d * 0.5, r * 1.15]);
+    g += `<polygon points="${pts(foam.map(([a, b]) => [a, b + d]))}" fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="5 5" opacity=".8"/>`;
+    g += `<polygon points="${pts(top.map(([a, b]) => [a, b + d]))}" fill="${wip ? '#cdbd98' : '#a07a4c'}" stroke="#3f2c22" stroke-width="1.6" stroke-linejoin="round" filter="url(#ink)"/>`;
+    const fill = wip ? '#e6dcc0' : ty === 'main' ? '#e8d28a' : ty === 'cadre' ? '#b9d89c' : isl.key === 'bottle' || isl.key === 'dock' ? '#a8d08e' : ty === 'course' ? '#95c47f' : '#a8d08e';
+    g += `<polygon points="${pts(top)}" fill="${fill}" stroke="#3f2c22" stroke-width="1.8" stroke-linejoin="round" ${wip ? 'stroke-dasharray="7 4"' : ''} filter="url(#ink)"/>`;
+    if (!wip) for (let i = 0; i < Math.round(r / 5); i++) { const a = (i * 2.4) % 6.28, rr = r * (0.3 + ((i * 37) % 50) / 100), gx = cx + Math.cos(a) * rr * 0.6, gy = cy + Math.sin(a) * rr * 0.6; g += `<path d="M${gx - 2} ${gy + 2} l2 -4 l2 4" stroke="#4f7a3c" stroke-width="1" fill="none" opacity=".7"/>`; }
+    const icon = wip && isl.key !== 'newisle' ? '🚧' : ic;
+    if (icon) g += ty === 'course' ? `<circle cx="${cx}" cy="${cy}" r="${r * 0.42}" fill="#f6ead0" stroke="#3f2c22" stroke-width="1.5"/><text x="${cx}" y="${cy + 1}" text-anchor="middle" dominant-baseline="middle" font-size="${r * 0.6}" font-weight="900" fill="#8f2a20" font-family="serif">${icon}</text>` : `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" font-size="${Math.max(13, r * 0.9)}">${icon}</text>`;
+    if (MAP_GAMES.has(isl.key) && !wip) g += `<text x="${cx + r * 0.55}" y="${cy - r * 0.45}" font-size="14">🎮</text>`;
+    const big = r > 20 || ty === 'main', fs = big ? 16 : ty === 'cadre' ? 11 : 13;
+    g += `<text x="${cx}" y="${cy + r + d + fs - 1}" text-anchor="middle" font-size="${fs}" font-weight="900" font-family="'Noto Serif TC','Songti TC','STSong','Noto Serif CJK TC',serif" fill="${wip ? '#6b5a44' : '#3f2c22'}" stroke="#f3e4c0" stroke-width="3.4" paint-order="stroke" stroke-linejoin="round">${name}${wip ? '（施工中）' : ''}</text>`;
+  }
+  { const [x, y] = C('temple'); g += `<g transform="translate(${x + 4} ${y - 4})" stroke="#b3261e" stroke-width="5" stroke-linecap="round"><path d="M-9 -9 L9 9 M9 -9 L-9 9"/></g>`; }   // 寶藏 ✕：全真道院
+  { const h = islands[here] ? here : 'temple', [x, y] = C(h), R = (islands[h] || islands.temple).R * S; g += `<g transform="translate(${x} ${y - R - 14})"><path d="M0 0 C-10 -14 -12 -22 0 -30 C12 -22 10 -14 0 0Z" fill="#c23b2e" stroke="#3f2c22" stroke-width="1.6"/><circle cx="0" cy="-20" r="4" fill="#f6ead0"/><text y="-36" text-anchor="middle" font-size="13" font-weight="900" fill="#b3261e" stroke="#f3e4c0" stroke-width="3" paint-order="stroke" font-family="serif">你在這裡</text></g>`; }
+  const ship = (x, y, s = 1) => `<g transform="translate(${x} ${y}) scale(${s})" fill="#f6ead0" stroke="#3f2c22" stroke-width="1.6" stroke-linejoin="round"><path d="M-22 6 L22 6 L14 18 L-14 18 Z" fill="#a07a4c"/><path d="M0 4 L0 -34"/><path d="M2 -32 L24 2 L2 2 Z"/><path d="M-2 -26 L-18 2 L-2 2 Z"/></g>`;
+  g += ship(118, 700, 1.15) + ship(790, 250, 0.85);
+  g += `<g transform="translate(770 740)" fill="none" stroke="#2f6f78" stroke-width="2.4" stroke-linecap="round"><path d="M-40 0 q10 -26 22 0 q10 -26 22 0 q10 -26 22 0 q10 -26 22 0"/><circle cx="46" cy="-8" r="4" fill="#2f6f78"/><path d="M50 -10 l12 -6"/></g>`;
+  const rose = (x, y) => `<g transform="translate(${x} ${y})" stroke="#3f2c22" stroke-width="1.5" stroke-linejoin="round"><circle r="34" fill="none" stroke-dasharray="2 4"/><path d="M0 -44 L8 -8 L44 0 L8 8 L0 44 L-8 8 L-44 0 L-8 -8 Z" fill="#f6ead0"/><path d="M0 -44 L8 -8 L0 0 Z M44 0 L8 8 L0 0 Z M0 44 L-8 8 L0 0 Z M-44 0 L-8 -8 L0 0 Z" fill="#b3261e" opacity=".85"/><text y="-52" text-anchor="middle" font-size="15" font-weight="900" fill="#3f2c22" stroke="none" font-family="serif">前</text></g>`;
+  g += rose(98, 118);
+  let waves = ''; for (let i = 0; i < 70; i++) { const x = 70 + ((i * 197) % 760), y = 90 + ((i * 331) % 780); waves += `<path d="M${x} ${y} q5 -6 10 0 q5 6 10 0" fill="none" stroke="#3b7e86" stroke-width="1.5" stroke-linecap="round" opacity="${0.35 + (i % 3) * 0.12}"/>`; }
+  const outline = 'M52 70 L180 52 L330 66 L520 50 L700 64 L846 58 L852 220 L838 420 L856 640 L840 880 L690 868 L520 884 L350 868 L180 884 L56 870 L44 700 L58 480 L40 280 Z';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${MAP_W} ${MAP_H}" width="${MAP_W}" height="${MAP_H}" style="font-family:'Noto Serif TC','Songti TC','STSong','Noto Serif CJK TC','Noto Sans CJK TC',serif">
+<defs>
+ <filter id="rough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="26"/></filter>
+ <filter id="ink"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.2"/></filter>
+ <filter id="paper"><feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" seed="2" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 .45  0 0 0 0 .32  0 0 0 0 .15  0 0 0 .55 0"/></filter>
+ <filter id="stain"><feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="4" seed="11"/><feColorMatrix type="matrix" values="0 0 0 0 .55  0 0 0 0 .38  0 0 0 0 .18  0 0 0 1.6 -.55"/></filter>
+ <radialGradient id="vg" cx="50%" cy="48%" r="75%"><stop offset="55%" stop-color="#f4e6c4"/><stop offset="85%" stop-color="#e7cf9c"/><stop offset="100%" stop-color="#c79c5e"/></radialGradient>
+ <radialGradient id="sea" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#a9d3cf" stop-opacity=".62"/><stop offset="100%" stop-color="#7fb8b8" stop-opacity=".38"/></radialGradient>
+ <clipPath id="pclip"><path d="${outline}"/></clipPath>
+</defs>
+<g filter="url(#rough)"><path d="${outline}" fill="url(#vg)" stroke="#8a5f30" stroke-width="3"/></g>
+<g clip-path="url(#pclip)" filter="url(#rough)"><rect width="${MAP_W}" height="${MAP_H}" filter="url(#paper)" opacity=".55"/><rect x="120" y="560" width="400" height="360" filter="url(#stain)" opacity=".55"/><rect x="520" y="60" width="330" height="300" filter="url(#stain)" opacity=".4"/>
+ <ellipse cx="${CX}" cy="${CY}" rx="385" ry="395" fill="url(#sea)" filter="url(#ink)"/>${waves}
+ <rect x="62" y="82" width="776" height="786" fill="none" stroke="#6b4a2c" stroke-width="2.4" stroke-dasharray="14 5 2 5" opacity=".7" filter="url(#ink)"/></g>
+<g filter="url(#ink)" fill="none" stroke="#6b4a2c" stroke-width="2"><path d="M74 94 q16 0 16 16 M826 94 q-16 0 -16 16 M74 856 q16 0 16 -16 M826 856 q-16 0 -16 -16"/></g>
+${g}
+<g transform="translate(450 70)"><path d="M-190 -4 Q-170 -32 -140 -26 L140 -26 Q170 -32 190 -4 Q170 30 140 24 L-140 24 Q-170 30 -190 -4Z" fill="#b8372a" stroke="#3f2c22" stroke-width="2.4" filter="url(#ink)"/><text y="9" text-anchor="middle" font-size="30" font-weight="900" fill="#fbeed0" letter-spacing="8" font-family="'Noto Serif TC','Songti TC','STSong','Noto Serif CJK TC',serif">全真群島・尋寶圖</text></g>
+<g transform="translate(450 846)" font-size="14" font-weight="900" fill="#3f2c22" text-anchor="middle"><text x="-250" fill="#b3261e">✕ 全真道院（寶藏）</text><text x="-60">┈ 課程路線</text><text x="90">🎮 小遊戲</text><text x="230">🚧 施工中（虛線）</text></g>
+</svg>`;
+  return { svg, hits };
+}
+// 把 SVG 畫成點陣圖（只畫一次，之後平移縮放都是 GPU 在動，不會卡）；同一個視角與「你在這裡」不重畫
+let mapCache = { key: '', canvas: null, hits: [] };
+function mapRaster(here) {
+  const phi = ((innerWidth < innerHeight ? 5 : 35) * Math.PI) / 180, key = here + '|' + Math.round(phi * 100);
+  if (mapCache.key === key && mapCache.canvas) return Promise.resolve(mapCache);
+  const { svg, hits } = treasureMapSvg(phi, here);
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => { const c = document.createElement('canvas'), k = Math.min(2, Math.max(1, (window.devicePixelRatio || 1))); c.width = MAP_W * k; c.height = MAP_H * k; c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); mapCache = { key, canvas: c, hits }; resolve(mapCache); };
+    img.onerror = reject; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  });
+}
+const mapOv = document.getElementById('mapOv'), mapStage = document.getElementById('mapStage');
+const MV = { x: 0, y: 0, k: 1, k0: 1, ptrs: new Map(), pinch: 0, down: null, hits: [] };
+function mapApply() { mapStage.style.transform = `translate(${MV.x}px,${MV.y}px) scale(${MV.k})`; }
+function mapClamp() {
+  const w = MAP_W * MV.k, h = MAP_H * MV.k, vw = innerWidth, vh = innerHeight - 56;
+  MV.x = w <= vw ? (vw - w) / 2 : Math.min(40, Math.max(vw - w - 40, MV.x)); MV.y = h <= vh ? 56 + (vh - h) / 2 : Math.min(56 + 40, Math.max(vh + 56 - h - 40, MV.y));
+}
+function mapZoomAt(px, py, nk) { nk = Math.min(MV.k0 * 5, Math.max(MV.k0, nk)); const r = nk / MV.k; MV.x = px - (px - MV.x) * r; MV.y = py - (py - MV.y) * r; MV.k = nk; mapClamp(); mapApply(); }
+async function openMap() {
+  showNavPop(false); mapOv.hidden = false; document.body.classList.add('map-open');
+  const here = islandOf2(selected) || 'temple', hint = document.getElementById('mapHint'); hint.textContent = '地圖畫著…';
+  try {
+    const m = await mapRaster(here); mapStage.innerHTML = ''; m.canvas.style.cssText = `width:${MAP_W}px;height:${MAP_H}px;display:block`; mapStage.appendChild(m.canvas); MV.hits = m.hits;
+    MV.k0 = MV.k = Math.min(innerWidth / MAP_W, (innerHeight - 56) / MAP_H); MV.x = 0; MV.y = 0; mapClamp(); mapApply();
+    hint.textContent = '兩指放大、拖曳移動，點島飛過去';
+  } catch (e) { hint.textContent = '地圖畫不出來，請重新整理再試'; }
+}
+function closeMap() { mapOv.hidden = true; document.body.classList.remove('map-open'); }
+mapOv.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('#mapClose')) return; mapOv.setPointerCapture && mapOv.setPointerCapture(e.pointerId);
+  MV.ptrs.set(e.pointerId, [e.clientX, e.clientY]); MV.down = { x: e.clientX, y: e.clientY, t: performance.now(), moved: false };
+  if (MV.ptrs.size === 2) { const [a, b] = [...MV.ptrs.values()]; MV.pinch = Math.hypot(a[0] - b[0], a[1] - b[1]); MV.down = null; }
+});
+mapOv.addEventListener('pointermove', (e) => {
+  if (!MV.ptrs.has(e.pointerId)) return; const prev = MV.ptrs.get(e.pointerId); MV.ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+  if (MV.ptrs.size === 2) { const [a, b] = [...MV.ptrs.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (MV.pinch) mapZoomAt((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, MV.k * d / MV.pinch); MV.pinch = d; return; }
+  if (MV.down && Math.hypot(e.clientX - MV.down.x, e.clientY - MV.down.y) > 6) MV.down.moved = true;
+  if (MV.down && MV.down.moved) { MV.x += e.clientX - prev[0]; MV.y += e.clientY - prev[1]; mapClamp(); mapApply(); }
+});
+const mapPtrEnd = (e) => {
+  const d = MV.down; MV.ptrs.delete(e.pointerId); if (MV.ptrs.size < 2) MV.pinch = 0;
+  if (e.type === 'pointerup' && d && !d.moved && performance.now() - d.t < 500) {   // 輕點：找點到的島
+    const mx = (e.clientX - MV.x) / MV.k, my = (e.clientY - MV.y) / MV.k;
+    const hit = MV.hits.map(([k, cx, cy, r]) => [k, Math.hypot(mx - cx, my - cy) / r]).filter(([, q]) => q <= 1).sort((a, b) => a[1] - b[1])[0];
+    if (hit) { closeMap(); const key = hit[0]; if (TOUR.includes(key)) goTo(key); else select(key); }
+  }
+  MV.down = null;
+};
+mapOv.addEventListener('pointerup', mapPtrEnd); mapOv.addEventListener('pointercancel', mapPtrEnd);
+mapOv.addEventListener('wheel', (e) => { e.preventDefault(); mapZoomAt(e.clientX, e.clientY, MV.k * Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+document.getElementById('mapClose').addEventListener('click', closeMap);
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && !mapOv.hidden) closeMap(); });
+
+// 看板上的小圖：地圖畫好後縮小貼到 3D 看板；看板頂上的紅色箭頭上下浮動，提醒「這裡可以點」
+setTimeout(() => { mapRaster('temple').then((m) => { const cv = mapBoardTex.image, c = cv.getContext('2d'); c.fillStyle = '#ecd9a8'; c.fillRect(0, 0, 512, 480); c.drawImage(m.canvas, 0, 0, m.canvas.width, m.canvas.height, 512 / 2 - 480 * MAP_W / MAP_H / 2, 0, 480 * MAP_W / MAP_H, 480); mapBoardTex.needsUpdate = true; }).catch(() => {}); }, 2500);
+animators.push((t) => { const tg = mapBoard.userData.tag; if (tg) tg.position.y = 4.0 + 0.14 * Math.sin(t * 2.4); });
 function showNavPop(open) {
   if (open) { renderNav(); showSoundPop(false); showSearchPop(false); }
   navPop.hidden = !open;
@@ -7629,6 +7785,7 @@ navPop.addEventListener('click', (e) => {
   showNavPop(false);
   if (b.hasAttribute('data-home')) { setUI({ panel: 'closed', dock: false }); goHome(); return; }
   if (b.hasAttribute('data-howto')) { showHowto(); return; }
+  if (b.hasAttribute('data-map')) { openMap(); return; }
   const key = b.dataset.go;
   if (TOUR.includes(key)) goTo(key); else select(key);
 });
