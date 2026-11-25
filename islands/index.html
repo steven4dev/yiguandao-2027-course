@@ -746,7 +746,7 @@ body.fcT-hide .card,body.fcT-hide .dock,body.fcT-hide #navPop,body.fcT-hide .tag
   <p class="count hits-count" id="hitsLine">👣 已經有 <img id="hitsImg" alt="累計造訪人次" height="18" src="https://hits.sh/steven4dev.github.io/yiguandao-2027-course/islands.svg?style=flat-square&amp;label=%E4%BA%BA%E6%AC%A1&amp;color=d9a43a&amp;labelColor=3a3f5a" onerror="this.parentNode.hidden = true"> 來逛過群島</p>
   <div class="boards"><a class="board" href="https://forms.gle/PG7yAsyz1r4unXXZ8" target="_blank" rel="noopener">🛶 我要登島</a></div>
   <span class="status" id="status" data-state="loading" role="button" tabindex="0" title="點一下重新讀取"><i></i><span id="statusText">讀取即時報名資料中…</span></span>
-  <span class="ver">v261125.04</span>
+  <span class="ver">v261125.05</span>
   </div></div>
 </div>
 
@@ -7268,7 +7268,7 @@ function renderPanel() {
     let best = 0; try { const o = JSON.parse(localStorage.getItem('islands-chef') || 'null'); best = (o && o.best && o.best.pumpkin) || 0; } catch (e) {}
     title = '廚神養成島'; info = best ? `南瓜濃湯最高 ${best} 分` : '體感料理・拍成雜誌封面';
     html = `<header><span class="eyebrow">料理島旁・${CK_LIVE ? '體感料理小遊戲' : '測試中'}</span><h2>🍳 廚神養成島</h2><p class="sub">手機就是菜刀、鍋鏟和攪拌棒：做一道素食料理，自己擺盤、取景拍照，登上《全真蔬食 VEGGIE》雜誌封面</p></header>
-      <div class="cta"><p>${ckTester && !CK_LIVE ? '🔧 測試中：只有這支手機看得到入口，其他人看到的是施工圍籬。<br>' : ''}第一道菜：🎃 南瓜濃湯——手指劃過切南瓜、按住顧火候、手機畫圈打成泥、對麥克風吹涼，再擺盤、拍照、套上雜誌封面分享。三杯杏鮑菇、彩虹潤餅捲研發中。</p><a href="chef-game/" id="ckGo">🎮 進入廚神養成島</a></div>
+      <div class="cta"><p>${ckTester && !CK_LIVE ? '🔧 測試中：只有這支手機看得到入口，其他人看到的是施工圍籬。<br>' : ''}兩道菜可以選：🎃 南瓜濃湯——沿虛線切南瓜、按住顧火候、帶著攪拌棒打成泥、對麥克風吹涼；🍄 三杯杏鮑菇——跟著節拍滾刀切、爆香薑片、手機甩鍋翻炒、抖一抖撒九層塔。做完再擺盤、拍照、套上雜誌封面分享。彩虹潤餅捲研發中。</p><a href="chef-game/" id="ckGo">🎮 進入廚神養成島</a></div>
       <p class="note">島上是一座開放式的攝影棚廚房：後面一排料理台，爐子上一鍋南瓜濃湯冒著煙；中間紅格桌巾小圓桌上擺著一大碗南瓜濃湯，前面一台三腳架相機正對著它拍，旁邊一盞柔光燈箱；左邊立著《全真蔬食 VEGGIE》封面看板，右邊一顆大南瓜。</p>
       ${ckTester && !CK_LIVE ? '<p class="note"><a class="cta-link" href="?chef=off#chef">結束測試</a></p>' : ''}
       <button class="back" data-go="p8">→ 看隔壁的料理島 🥗</button>
