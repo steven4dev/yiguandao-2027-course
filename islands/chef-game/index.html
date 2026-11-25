@@ -316,7 +316,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-const VER = 'v261116.01';
+const VER = 'v261125.01';
 const $ = (q) => document.querySelector(q);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -347,7 +347,7 @@ const DISHES = [
 const STEPS = [
   { id: 'cut', icon: '🔪', title: '切南瓜', how: '手指<b>沿著南瓜上的虛線</b>劃過去：先對半切、挖籽，再切瓣、切段、切丁。越貼近虛線，刀工分數越高！', alt: '電腦：用滑鼠沿著虛線拖過去', tip: '沿著虛線切！' },
   { id: 'boil', icon: '🔥', title: '煮軟南瓜', how: '<b>按住</b>加大火、放開就轉小火，讓右邊的指針停在<b>綠色區</b>裡，把南瓜煮軟。', alt: '綠色區會慢慢移動，跟著它調火', tip: '按住加火、放開轉小，停在綠區！' },
-  { id: 'blend', icon: '🌀', title: '打成南瓜泥', how: '手機就是攪拌棒！拿穩手機，<b>整隻手畫大圓圈</b>，把南瓜打成綿密的泥。', alt: '也可以用手指在畫面上畫圈', tip: '整隻手畫大圓圈！' },
+  { id: 'blend', icon: '🌀', title: '打成南瓜泥', how: '<b>按住「⚡ 啟動」</b>讓攪拌棒轉起來，再<b>慢慢帶著它在鍋裡繞</b>，把每一塊南瓜都打碎。移太快湯會濺出來喔！', alt: '', tip: '按住「⚡ 啟動」，帶著攪拌棒慢慢繞～' },
   { id: 'cool', icon: '🌬️', title: '吹涼上桌', how: '對著手機下方的麥克風<b>長長吹一口氣</b>，把濃湯從 92° 吹到 60°。', alt: '不能用麥克風時，改成按住「吹氣」按鈕', tip: '對麥克風長長吹氣～' },
 ];
 const STEP_N = STEPS.length;
@@ -409,6 +409,7 @@ const sfx = {
   ok() { [0, 4, 7].forEach((s, i) => tone(440 * Math.pow(2, s / 12), 0.35, 'triangle', 0.12, i * 0.09)); },
   click() { tone(1200, 0.05, 'square', 0.04); },
   shutter() { noise(0.04, 4000, 1, 0.4, 'highpass'); noise(0.08, 1800, 2, 0.3, 'bandpass', 0.07); tone(90, 0.06, 'square', 0.08, 0.07); },
+  splash() { noise(0.25, 1800, 0.8, 0.28, 'bandpass'); tone(500, 0.12, 'sine', 0.1, 0, 0.5); },
   bubble() { tone(300 + Math.random() * 500, 0.08, 'sine', 0.06, 0, 1.8); },
   crack() { noise(0.12, 900, 0.8, 0.45, 'lowpass'); tone(90, 0.25, 'sine', 0.4, 0, 0.6); noise(0.05, 3000, 2, 0.25, 'bandpass', 0.02); },
   scoop() { noise(0.18, 1200, 1.5, 0.2, 'bandpass'); [0, 0.08, 0.15].forEach((d) => tone(700 + Math.random() * 300, 0.06, 'triangle', 0.06, 0.25 + d)); },
@@ -589,10 +590,13 @@ function makeCube() { const c = new THREE.Group(); M(cubeGeo, cubeMat, 0, 0, 0, 
 
 /* —— 第 1 步：砧板、裝籽的小碟、菜刀 —— */
 const cutSet = new THREE.Group(); scene.add(cutSet);
-const board = M(new THREE.BoxGeometry(5.6, 0.28, 3.8), std('#fff', { map: woodTex('#e2b47e', '120,78,38') }), 0, 0.14, 0, cutSet);
+const board = M(new THREE.BoxGeometry(5.6, 0.28, 4.4), std('#fff', { map: woodTex('#e2b47e', '120,78,38') }), 0, 0.14, 0, cutSet);
 const BT = 0.28, PR = 1.05;   // 砧板表面高度、南瓜半徑
 const seedDish = new THREE.Group(); seedDish.position.set(2.25, BT, -1.45); cutSet.add(seedDish);
 M(new THREE.LatheGeometry([[0.001, 0], [0.22, 0], [0.26, 0.03], [0.4, 0.16], [0.43, 0.2], [0.39, 0.2], [0.24, 0.07], [0.001, 0.06]].map(([x, y]) => new THREE.Vector2(x, y)), 28), std('#f2e9db', { roughness: 0.35 }), 0, 0, 0, seedDish);
+const cutBowl = new THREE.Group(); cutBowl.position.set(0, BT, 1.5); cutSet.add(cutBowl); cutBowl.visible = false;   // 切好之後才出現，南瓜塊會刮進來
+M(new THREE.LatheGeometry([[0.001, 0], [0.2, 0], [0.25, 0.04], [0.46, 0.2], [0.52, 0.34], [0.5, 0.36], [0.45, 0.24], [0.22, 0.09], [0.001, 0.07]].map(([x, y]) => new THREE.Vector2(x, y)), 32), new THREE.MeshStandardMaterial({ color: '#efe5d6', roughness: 0.35, envMapIntensity: 0.4, side: THREE.DoubleSide }), 0, 0, 0, cutBowl);
+cutBowl.userData.fill = []; for (let i = 0; i < 26; i++) { const c = makeCube(), layer = Math.floor(i / 9), k = i % 9, a = (k - 1) / 8 * Math.PI * 2 + layer * 0.5; c.scale.setScalar(0.5); c.position.set(k ? Math.cos(a) * 0.27 : 0, 0.13 + layer * 0.17, k ? Math.sin(a) * 0.27 : 0); c.rotation.y = i * 1.3; c.visible = false; cutBowl.add(c); cutBowl.userData.fill.push(c); }
 const knife = new THREE.Group(); cutSet.add(knife); knife.visible = false;
 { const bs = new THREE.Shape(); bs.moveTo(0, 0); bs.lineTo(2.0, 0); bs.quadraticCurveTo(2.3, 0.04, 2.45, 0.42); bs.lineTo(0, 0.62); bs.closePath();
   M(new THREE.ExtrudeGeometry(bs, { depth: 0.024, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.008, bevelSegments: 1 }), std('#dfe3e6', { metalness: 0.9, roughness: 0.22 }), 0, 0, -0.012, knife);
@@ -910,7 +914,7 @@ function nextStep() {
   $('#inStep').textContent = `STEP ${G.step + 1}／${STEP_N}`; $('#inTitle').textContent = s.icon + ' ' + s.title; $('#inIcon').textContent = s.icon; $('#inHow').innerHTML = s.how; $('#inAlt').textContent = s.alt;
   let btns = `<button class="btn" data-go="start" type="button">開始！</button>`;
   if (s.id === 'cool') btns = `<button class="btn" data-go="mic" type="button">🎤 開麥克風吹氣</button><button class="btn ghost sm" data-go="touch" type="button">👆 改用按住吹氣</button>`;
-  if (s.id === 'blend' && !(motionOK && isTouch)) $('#inAlt').textContent = isTouch ? '沒有取得動作感應權限，改用手指在畫面上畫圈' : '電腦：用滑鼠在畫面上畫圈（手機玩更好玩）';
+  if (s.id === 'blend') $('#inAlt').textContent = (motionOK && isTouch) ? '手機：一手拿穩、輕輕傾斜帶著它走，拇指按住「啟動」；也可以改用另一隻手指在鍋裡拖' : isTouch ? '一隻手指按住「啟動」，另一隻手指在鍋裡慢慢拖' : '電腦：滑鼠在鍋裡移動，按住空白鍵（或按鈕）啟動';
   $('#inBtns').innerHTML = btns; only('#scrIntro'); show('#hud', false); show('#ctl', false);
   // 先把場景準備好、鏡頭飛過去
   if (s.id === 'cut') { setSets('cut'); camTo(new THREE.Vector3(0, 9.2, 5.6), new THREE.Vector3(0, 0.5, 0.35)); }
@@ -925,7 +929,7 @@ function setProg(p) { G.prog = clamp(p, 0, 1); $('#hudBar').style.width = (G.pro
 let stepTimer = 0;
 function beginStep(mode) {
   const s = STEPS[G.step]; G.phase = 'play'; G.mode = mode; only(null); show('#hud'); hud(`${s.icon} ${s.title}`, s.tip); setProg(0);
-  G.limit = { cut: 35, boil: 16, blend: 15, cool: 15 }[s.id]; G.stepT0 = performance.now(); G.done = false;
+  G.limit = { cut: 45, boil: 16, blend: 22, cool: 15 }[s.id]; G.stepT0 = performance.now(); G.done = false;
   $('#ctl').innerHTML = ''; show('#ctl', false);
   ({ cut: startCut, boil: startBoil, blend: startBlend, cool: startCool })[s.id](mode);
 }
@@ -945,16 +949,18 @@ function tickTimer() { const left = Math.max(0, G.limit - elapsed()); $('#hudTim
 /* —— 第 1 步：切南瓜 ——
    形狀一路變：整顆 → 對半（露出一窩籽）→ 挖籽 → 四瓣 → 橫切成段 → 切丁。
    每一刀在南瓜上有一條會流動的虛線，沿著虛線劃過去才切得下去；劃得越貼近、越平行，刀工分數越高（劃歪了只是分數低，不會卡關） */
+const GY = BT + PR, DICE_X = [-1.945, -0.555, 0.555, 1.945];   // GY：切面的高度；DICE_X：四瓣南瓜各自的正中間
 const STAGES = [
   { kind: 'cut', tip: '第 1 刀：沿著虛線，把南瓜對半切開！', g: [[0, BT + PR * 1.32, -PR * 0.95], [0, BT + PR * 1.32, PR * 0.95]] },
   { kind: 'scoop', tip: '挖籽：在南瓜上畫圈，把籽挖出來' },
-  { kind: 'cut', tip: '第 2 刀：左邊這半顆，再沿著虛線對切', g: [[-1.25, BT + PR, -0.95], [-1.25, BT + PR, 0.95]] },
-  { kind: 'cut', tip: '第 3 刀：右邊這半顆也對切', g: [[1.25, BT + PR, -0.95], [1.25, BT + PR, 0.95]] },
-  { kind: 'cut', tip: '第 4 刀：橫著切段', g: [[-2.55, BT + PR, -0.36], [2.55, BT + PR, -0.36]], c: -0.36 },
-  { kind: 'cut', tip: '第 5 刀：再切一段', g: [[-2.55, BT + PR, 0.02], [2.55, BT + PR, 0.02]], c: 0.02 },
-  { kind: 'cut', tip: '第 6 刀：最後一段', g: [[-2.55, BT + PR, 0.38], [2.55, BT + PR, 0.38]], c: 0.38 },
-  { kind: 'cut', tip: '第 7 刀：左邊切丁！', g: [[-1.25, BT + PR * 0.8, -1.05], [-1.25, BT + PR * 0.8, 1.05]], side: 0 },
-  { kind: 'cut', tip: '第 8 刀：右邊切丁，完成！', g: [[1.25, BT + PR * 0.8, -1.05], [1.25, BT + PR * 0.8, 1.05]], side: 1 },
+  { kind: 'cut', tip: '第 2 刀：左邊這半顆，再沿著虛線對切', g: [[-1.25, GY, -0.95], [-1.25, GY, 0.95]] },
+  { kind: 'cut', tip: '第 3 刀：右邊這半顆也對切', g: [[1.25, GY, -0.95], [1.25, GY, 0.95]] },
+  { kind: 'cut', tip: '第 4 刀：橫著切，先切上面這一刀', g: [[-2.55, GY, -0.27], [2.55, GY, -0.27]], c: -0.27 },
+  { kind: 'cut', tip: '第 5 刀：再橫切一刀，每瓣變成三段', g: [[-2.55, GY, 0.27], [2.55, GY, 0.27]], c: 0.27 },
+  { kind: 'cut', tip: '第 6 刀：切丁！從最左邊那瓣的正中間切下去', g: [[DICE_X[0], GY, -1.05], [DICE_X[0], GY, 1.05]] },
+  { kind: 'cut', tip: '第 7 刀：這一瓣也從正中間切開', g: [[DICE_X[1], GY, -1.05], [DICE_X[1], GY, 1.05]] },
+  { kind: 'cut', tip: '第 8 刀：右邊這一瓣', g: [[DICE_X[2], GY, -1.05], [DICE_X[2], GY, 1.05]] },
+  { kind: 'cut', tip: '第 9 刀：最後一瓣，切完就能下鍋了！', g: [[DICE_X[3], GY, -1.05], [DICE_X[3], GY, 1.05]] },
 ];
 const CUT = { stage: 0, acc: [], whole: null, halves: [], segs: [], cubes: [], seeds: [], scoop: 0, scoopAng: null };
 const Q_UP = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));   // 切面朝上、蒂朝後
@@ -966,7 +972,7 @@ function clearPieces() {
   CUT.halves = []; CUT.segs = []; CUT.cubes = []; CUT.seeds = []; TW.length = 0;
 }
 function resetCut() {
-  clearPieces(); CUT.stage = 0; CUT.acc = []; CUT.scoop = 0;
+  clearPieces(); CUT.stage = 0; CUT.acc = []; CUT.scoop = 0; CUT.scraping = false; cutBowl.visible = false; cutBowl.userData.fill.forEach((c) => { c.visible = false; }); knife.visible = false;
   CUT.whole = makePumpkin(PR); CUT.whole.position.set(0, BT + PR * 0.645, 0); cutSet.add(CUT.whole);
 }
 function startCut() { resetCut(); CUT.whole.rotation.y = 0; $('#hudTip').textContent = STAGES[0].tip; setProg(0); }
@@ -983,7 +989,7 @@ function judgeSwipe(s0, s1) {
   return { ok: ang < 32 && d < Math.max(48, gl * 0.2) && cover > 0.45, full: cover > 0.85, acc: clamp(100 - ang * 1.4 - d * 0.5, 40, 100) };
 }
 function trySwipe(final) {
-  if (!swipe || swipe.pts.length < 2 || STAGES[CUT.stage].kind !== 'cut') return;
+  if (!swipe || swipe.pts.length < 2 || !STAGES[CUT.stage] || STAGES[CUT.stage].kind !== 'cut') return;
   const r = judgeSwipe(swipe.pts[0], swipe.pts[swipe.pts.length - 1]); if (!r) return;
   if (r.ok && (final || r.full)) { doCut(r.acc); swipe = null; }
   else if (final && !r.ok) { $('#hudTip').textContent = '沿著虛線劃過去喔！'; setTimeout(() => { if (STAGES[CUT.stage]) $('#hudTip').textContent = STAGES[CUT.stage].tip; }, 1200); }
@@ -997,12 +1003,12 @@ function knifeSwing(g) {
 function doCut(acc = 100) {
   const st = CUT.stage, g = curGuide(); CUT.acc.push(acc);
   sfx.chop(); if (st === 0) sfx.crack(); buzz(st === 0 ? [35, 25, 50] : 20); shake = st === 0 ? 0.35 : 0.18; knifeSwing(g);
-  ({ 0: splitWhole, 2: () => splitHalf(0), 3: () => splitHalf(1), 4: () => crossCut(STAGES[4].c), 5: () => crossCut(STAGES[5].c), 6: () => crossCut(STAGES[6].c), 7: () => dice(0), 8: () => dice(1) })[st]();
+  ({ 0: splitWhole, 2: () => splitHalf(0), 3: () => splitHalf(1), 4: () => crossCut(STAGES[4].c), 5: () => crossCut(STAGES[5].c), 6: () => diceQuarter(0), 7: () => diceQuarter(1), 8: () => diceQuarter(2), 9: () => diceQuarter(3) })[st]();
   nextCutStage();
 }
 function nextCutStage() {
   CUT.stage++; setProg(CUT.stage / STAGES.length);
-  if (CUT.stage >= STAGES.length) { const t = elapsed(), a = CUT.acc.reduce((x, y) => x + y, 0) / Math.max(1, CUT.acc.length); setTimeout(() => finishStep(a * 0.7 + (100 - Math.max(0, t - 14) * 4) * 0.3, `刀工準度 ${Math.round(a)}%・${t.toFixed(1)} 秒`), 450); return; }
+  if (CUT.stage >= STAGES.length) { const t = elapsed(), a = CUT.acc.reduce((x, y) => x + y, 0) / Math.max(1, CUT.acc.length); CUT.scraping = true; $('#hudTip').textContent = '切好了！把南瓜刮進碗裡～'; setTimeout(() => scrapeToBowl(() => finishStep(a * 0.7 + (100 - Math.max(0, t - 16) * 3) * 0.3, `刀工準度 ${Math.round(a)}%・${t.toFixed(1)} 秒`)), 550); return; }
   $('#hudTip').textContent = STAGES[CUT.stage].tip;
 }
 // 第 1 刀：整顆裂成兩半，各自往外倒、切面朝上，露出一窩籽
@@ -1040,9 +1046,9 @@ function splitHalf(i) {
 }
 // 一段（四分之一瓣被橫切後的其中一截）：用兩片裁切平面夾出 z 的範圍 [lo, hi]
 function newSeg(sd, qi, lo, hi, x) {
-  const planes = [new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), new THREE.Plane(new THREE.Vector3(0, 0, -1), 0)];
+  const planes = [new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), new THREE.Plane(new THREE.Vector3(0, 0, -1), 0), new THREE.Plane(new THREE.Vector3(1, 0, 0), 0), new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0)];
   const g = new THREE.Group(), inner = makeQuarter(PR, sd, planes); inner.quaternion.copy(Q_UP); g.add(inner);
-  g.position.set(x, BT + PR, 0); cutSet.add(g); const seg = { g, sd, qi, lo, hi, planes }; CUT.segs.push(seg); return seg;
+  g.position.set(x, BT + PR, 0); cutSet.add(g); const seg = { g, sd, qi, lo, hi, xlo: -99, xhi: 99, planes }; CUT.segs.push(seg); return seg;
 }
 // 橫切：每一瓣在 c 這條線切開，同一瓣的各段之間拉開一點縫
 function crossCut(c) {
@@ -1057,20 +1063,31 @@ function crossCut(c) {
     list.forEach((q, k) => { const z0 = q.g.position.z, z1 = (k - (list.length - 1) / 2) * 0.1; tween(0.25, (e) => { q.g.position.z = lerp(z0, z1, ease(e)); }); });
   }
 }
-// 切丁：這一邊的每一段散成兩三顆帶皮的南瓜丁
-function dice(side) {
-  seed = 11 + side;
-  for (const seg of CUT.segs.filter((q) => Math.floor(q.qi / 2) === side)) {
-    const lo = Math.max(seg.lo, -0.66), hi = Math.min(seg.hi, 0.66), zc = (lo + hi) / 2 + seg.g.position.z, xc = seg.g.position.x + seg.sd * PR * 0.4, n = hi - lo > 0.3 ? 3 : 2;
-    for (let k = 0; k < n; k++) {
-      const c = makeCube(); cutSet.add(c); CUT.cubes.push(c);
-      const p1 = new THREE.Vector3(xc + (k - (n - 1) / 2) * 0.36 * seg.sd + (rnd() - 0.5) * 0.1, BT + 0.16, zc + (rnd() - 0.5) * 0.12), p0 = p1.clone().setY(BT + 0.7);
-      c.rotation.y = (rnd() - 0.5) * 0.6; c.position.copy(p0);
-      tween(0.4 + rnd() * 0.15, (e) => { c.position.lerpVectors(p0, p1, e * e); const s = lerp(0.6, 1, Math.min(1, e * 1.5)); c.scale.setScalar(s); });
-    }
-    seg.g.parent.remove(seg.g);
+// 切丁：沿著這一瓣的正中間縱切下去，這一瓣的每一段各自被切成兩塊（還是同一塊南瓜切開，不會換成別的形狀）
+function diceQuarter(qi) {
+  for (const seg of CUT.segs.filter((q) => q.qi === qi)) {
+    const sd = seg.sd, xc = sd * PR * 0.5, inner = newSeg(sd, qi, seg.lo, seg.hi, seg.g.position.x), outer = newSeg(sd, qi, seg.lo, seg.hi, seg.g.position.x);
+    if (sd > 0) { inner.xlo = -99; inner.xhi = xc; outer.xlo = xc; outer.xhi = 99; } else { inner.xlo = xc; inner.xhi = 99; outer.xlo = -99; outer.xhi = xc; }
+    for (const n of [inner, outer]) { n.g.rotation.copy(seg.g.rotation); n.g.position.z = seg.g.position.z; }
+    const x0 = seg.g.position.x; tween(0.3, (k) => { const e = ease(k); inner.g.position.x = x0 - sd * 0.07 * e; outer.g.position.x = x0 + sd * 0.07 * e; });
+    seg.g.parent.remove(seg.g); CUT.segs.splice(CUT.segs.indexOf(seg), 1);
   }
-  CUT.segs = CUT.segs.filter((q) => Math.floor(q.qi / 2) !== side);
+}
+// 收尾：切好的南瓜塊一塊一塊被刮進旁邊的碗裡（每塊縮小、飛過去，碗裡堆起來）
+function scrapeToBowl(done) {
+  cutBowl.visible = true; cutBowl.scale.setScalar(0.01); tween(0.3, (k) => cutBowl.scale.setScalar(Math.max(0.01, ease(k)))); sfx.click();
+  const end = new THREE.Vector3(0, BT + 0.42, 1.5), list = CUT.segs.slice().sort((a, b) => (a.g.position.x - b.g.position.x) || (a.g.position.z - b.g.position.z)), n = list.length; let arrived = 0;
+  list.forEach((q, i) => {
+    const sd = q.sd, xa = sd > 0 ? Math.max(0, q.xlo) : Math.max(-PR, q.xlo), xb = sd > 0 ? Math.min(PR, q.xhi) : Math.min(0, q.xhi), za = Math.max(q.lo, -0.76), zb = Math.min(q.hi, 0.76);
+    const off = new THREE.Vector3((xa + xb) / 2, -0.5, (za + zb) / 2), start = q.g.position.clone().add(off), e2 = end.clone().add(new THREE.Vector3((Math.random() - 0.5) * 0.2, 0, (Math.random() - 0.5) * 0.2));
+    setTimeout(() => {
+      if (!CUT.scraping) return; sfx.whoosh();
+      tween(0.5, (k) => { const e = ease(k), s = lerp(1, 0.36, e), c = start.clone().lerp(e2, e); c.y += Math.sin(k * Math.PI) * 0.9; q.g.scale.setScalar(s); q.g.position.copy(c).addScaledVector(off, -s); }, () => {
+        q.g.visible = false; const f = cutBowl.userData.fill[arrived++]; if (f) f.visible = true; tone(700 + (arrived % 6) * 60, 0.06, 'triangle', 0.05);
+        if (arrived >= n) setTimeout(() => { sfx.ding(2); done(); }, 350);
+      });
+    }, 40 * i);
+  });
 }
 // 畫虛線（會流動）或挖籽的圓圈
 function drawGuide(ctx, now) {
@@ -1097,10 +1114,10 @@ function resetPot() { cooked = 0; heat = 0.2; heatV = 0; potChunks.clear(); draw
 function fillPotChunks() { potChunks.clear(); seed = 5; for (let i = 0; i < 14; i++) { const c = makeCube(); const a = rnd() * 6.28, r = rnd() * 1.1; c.position.set(Math.cos(a) * r, 1.05 + rnd() * 0.15, Math.sin(a) * r); c.rotation.set(rnd() * 0.6, rnd() * 3, rnd() * 0.6); c.userData.base = c.position.clone(); potChunks.add(c); } }
 function holdButton(label, onDown, onUp) {
   $('#ctl').innerHTML = `<button class="hold" id="holdBtn" type="button">${label}</button>`; show('#ctl');
-  const b = $('#holdBtn'); const dn = (e) => { e.preventDefault(); holdOn = true; b.classList.add('on'); onDown && onDown(); }; const up = (e) => { holdOn = false; b.classList.remove('on'); onUp && onUp(); };
+  const b = $('#holdBtn'); let held = false; const dn = (e) => { e.preventDefault(); held = true; holdOn = true; b.classList.add('on'); onDown && onDown(); }; const up = (e) => { if (!held) return; held = false; holdOn = false; b.classList.remove('on'); onUp && onUp(); };   // 只有按鈕自己按下的才由按鈕放開（空白鍵啟動時，滑鼠移出按鈕不會把它關掉）
   b.addEventListener('pointerdown', dn); ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => b.addEventListener(t, up));
 }
-addEventListener('keydown', (e) => { if (e.code === 'Space' && G.phase === 'play' && (STEPS[G.step].id === 'boil' || STEPS[G.step].id === 'cool')) { holdOn = true; e.preventDefault(); } });
+addEventListener('keydown', (e) => { if (e.code === 'Space' && G.phase === 'play' && (STEPS[G.step].id === 'boil' || STEPS[G.step].id === 'cool' || STEPS[G.step].id === 'blend')) { holdOn = true; e.preventDefault(); } });
 addEventListener('keyup', (e) => { if (e.code === 'Space') holdOn = false; });
 function startBoil() {
   resetPot(); fillPotChunks(); potSoup.position.y = 1.0; heat = 0.25; inZone = outZone = 0; cooked = 0;
@@ -1109,24 +1126,20 @@ function startBoil() {
 const zoneAt = (t) => 0.56 + 0.17 * Math.sin(t * 0.85) + 0.05 * Math.sin(t * 2.3);
 const ZW = 0.22;
 
-/* —— 第 3 步：打成泥（手機畫圈，或手指畫圈） —— */
-let mash = 0, spinV = 0, lastAng = null, accLP = { x: 0, y: 0 }, lastFinger = null;
-const TURNS = 7;   // 轉滿 7 圈完成
-function addTurn(d) { if (G.phase !== 'play' || STEPS[G.step].id !== 'blend' || G.done) return; mash += Math.abs(d) / (Math.PI * 2 * TURNS); spinV = Math.min(1, spinV + Math.abs(d) * 0.6); setProg(mash);
-  if (mash >= 1) { const t = elapsed(); finishStep(100 - Math.max(0, t - 6) * 6, `${t.toFixed(1)} 秒打得又細又綿`); } }
-addEventListener('devicemotion', (e) => {
-  if (G.phase !== 'play' || STEPS[G.step] && STEPS[G.step].id !== 'blend') return;
-  let a = e.acceleration; let x, y;
-  if (a && a.x !== null) { x = a.x; y = a.y; } else { const g = e.accelerationIncludingGravity; if (!g || g.x === null) return; accLP.gx = lerp(accLP.gx ?? g.x, g.x, 0.08); accLP.gy = lerp(accLP.gy ?? g.y, g.y, 0.08); x = g.x - accLP.gx; y = g.y - accLP.gy; }
-  accLP.x = lerp(accLP.x, x, 0.35); accLP.y = lerp(accLP.y, y, 0.35);
-  const mag = Math.hypot(accLP.x, accLP.y);
-  if (mag < 1.3) { lastAng = null; return; }   // 動作太小：不算
-  const ang = Math.atan2(accLP.y, accLP.x);
-  if (lastAng !== null) { let d = ang - lastAng; d = Math.atan2(Math.sin(d), Math.cos(d)); if (Math.abs(d) < 1.1) addTurn(d * 0.9); }   // 一下跳太多（前後甩）不算畫圈
-  lastAng = ang;
-});
-function startBlend() { blender.visible = true; mash = 0; spinV = 0; lastAng = null; show('#ring'); loopStart('blender');
-  if (!(motionOK && isTouch)) hud('🌀 打成南瓜泥', isTouch ? '用手指在圓圈上畫圈！' : '用滑鼠在圓圈上畫圈！'); }
+/* —— 第 3 步：打成泥 ——
+   電動攪拌棒：馬達轉速是固定的（按住「⚡ 啟動」才轉、放開就停），玩家要做的是「帶著它在鍋裡慢慢移動」：
+   攪拌棒經過的地方，南瓜塊才會被打碎；停在同一處只打得碎那一處；移太快湯會濺出來（扣分）。
+   位置來源：手指在鍋裡拖（優先）＞手機傾斜（一手拿穩手機輕輕傾斜，拇指按住啟動）＞電腦滑鼠 */
+let mash = 0, motor = 0, swirl = 0, speed = 0, splashN = 0, splashCd = 0;
+const STIR = { x: 0, z: 0, tx: 0, tz: 0, touching: false, base: null };   // 攪拌棒在鍋裡的位置、目標位置（鍋的區域座標）
+const POT_R = 1.25, BLEND_R = 0.62;
+const rayC = new THREE.Raycaster(), ndc = new THREE.Vector2(), soupPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -1.15), rayHit = new THREE.Vector3();
+function stirFromScreen(cx, cy) { ndc.set(cx / VW * 2 - 1, -(cy / VH) * 2 + 1); rayC.setFromCamera(ndc, camera); if (rayC.ray.intersectPlane(soupPlane, rayHit)) { STIR.tx = rayHit.x; STIR.tz = rayHit.z; } }
+function startBlend() {
+  blender.visible = true; mash = 0; motor = 0; swirl = 0; speed = 0; splashN = 0; splashCd = 0; potChunks.children.forEach((c) => { c.userData.hit = 0; });
+  Object.assign(STIR, { x: 0, z: 0, tx: 0, tz: 0, touching: false, base: (motionOK && ori && isTouch) ? { g: ori.g, b: ori.b } : null });
+  holdButton('⚡ 按住啟動'); loopStart('blender'); G.tipUntil = 0;
+}
 
 /* —— 第 4 步：吹涼（麥克風吹氣，或按住吹氣） —— */
 let temp = 92, blowing = false; const MIC = { stream: null, an: null, floor: -70, calib: [], until: 0, cand: 0, rel: 0, td: null, fd: null };
@@ -1172,12 +1185,13 @@ canvas.addEventListener('pointerdown', onDown); addEventListener('pointermove', 
 function onDown(e) {
   ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (G.phase === 'play' && STEPS[G.step].id === 'cut') { swipe = { pts: [{ x: e.clientX, y: e.clientY, t: performance.now() }] }; CUT.scoopAng = null; }
-  if (G.phase === 'play' && STEPS[G.step].id === 'blend') lastFinger = null;
+  if (G.phase === 'play' && STEPS[G.step].id === 'blend') { STIR.touching = true; stirFromScreen(e.clientX, e.clientY); }
   if (G.phase === 'shoot') shootDrag = { x: e.clientX, y: e.clientY, d: pinchDist() };
 }
 // 劃動、畫圈也可以從 HUD 外面的任何地方開始（觸控層蓋在畫面上）
 document.addEventListener('pointerdown', (e) => { if (e.target === canvas || G.phase !== 'play') return; if (e.target.closest('button,a,input')) return; onDown(e); });
 function onMove(e) {
+  if (G.phase === 'play' && STEPS[G.step] && STEPS[G.step].id === 'blend' && !G.done && (e.pointerType === 'mouse' || ptrs.has(e.pointerId))) { stirFromScreen(e.clientX, e.clientY); trail.push({ x: e.clientX, y: e.clientY, t: performance.now(), soft: true }); }   // 手指在鍋裡拖；電腦滑鼠不用按下，移動就算
   if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (G.phase === 'play' && STEPS[G.step].id === 'cut' && !G.done) {
     const p = { x: e.clientX, y: e.clientY, t: performance.now() };
@@ -1187,18 +1201,13 @@ function onMove(e) {
       trail.push({ x: p.x, y: p.y, t: p.t, soft: true });
     } else if (swipe) { swipe.pts.push(p); trail.push({ x: p.x, y: p.y, t: p.t }); trySwipe(false); }
   }
-  if (G.phase === 'play' && STEPS[G.step].id === 'blend') {
-    const r = $('#ring').getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2; const ang = Math.atan2(e.clientY - cy, e.clientX - cx);
-    if (Math.hypot(e.clientX - cx, e.clientY - cy) > 30) { if (lastFinger !== null) { let d = ang - lastFinger; d = Math.atan2(Math.sin(d), Math.cos(d)); if (Math.abs(d) < 1) addTurn(d * 0.8); } lastFinger = ang; }
-    trail.push({ x: e.clientX, y: e.clientY, t: performance.now(), soft: true });
-  }
   if (G.phase === 'shoot' && shootDrag) {
     if (ptrs.size >= 2) { const d = pinchDist(); if (shootDrag.d) orbit.dist = clamp(orbit.dist * shootDrag.d / d, 5, 17); shootDrag.d = d; }
     else { orbit.az -= (e.clientX - shootDrag.x) * 0.0085; orbit.pol = clamp(orbit.pol - (e.clientY - shootDrag.y) * 0.006, 0.05, 1.32); handMode(false); }
     shootDrag.x = e.clientX; shootDrag.y = e.clientY;
   }
 }
-function onUp(e) { ptrs.delete(e.pointerId); if (G.phase === 'play' && STEPS[G.step] && STEPS[G.step].id === 'cut') trySwipe(true); if (!ptrs.size) { swipe = null; shootDrag = null; lastFinger = null; } else if (shootDrag) shootDrag.d = pinchDist(); }
+function onUp(e) { ptrs.delete(e.pointerId); if (G.phase === 'play' && STEPS[G.step] && STEPS[G.step].id === 'cut') trySwipe(true); if (!ptrs.size) { swipe = null; shootDrag = null; STIR.touching = false; } else if (shootDrag) shootDrag.d = pinchDist(); }
 function pinchDist() { const a = [...ptrs.values()]; return a.length >= 2 ? Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) : 0; }
 canvas.addEventListener('wheel', (e) => { if (G.phase === 'shoot') { e.preventDefault(); orbit.dist = clamp(orbit.dist * (1 + e.deltaY * 0.001), 5, 17); } }, { passive: false });
 
@@ -1467,7 +1476,7 @@ function frame(now) {
 
   // 補間動畫；切段的裁切平面跟著那一段移動
   for (let i = TW.length - 1; i >= 0; i--) { const w = TW[i], k = Math.min(1, (now - w.t0) / w.dur); w.fn(k); if (k >= 1) { TW.splice(i, 1); w.done && w.done(); } }
-  for (const q of CUT.segs) { q.planes[0].constant = -(q.lo + q.g.position.z); q.planes[1].constant = q.hi + q.g.position.z; }
+  for (const q of CUT.segs) { const sc = q.g.scale.x, gx = q.g.position.x, gz = q.g.position.z; q.planes[0].constant = -(q.lo * sc + gz); q.planes[1].constant = q.hi * sc + gz; q.planes[2].constant = -(gx + q.xlo * sc); q.planes[3].constant = gx + q.xhi * sc; }
   if (G.phase === 'title' && CUT.whole) CUT.whole.rotation.y += dt * 0.35;
 
   const sid = G.step >= 0 && STEPS[G.step] ? STEPS[G.step].id : '';
@@ -1491,10 +1500,28 @@ function frame(now) {
   // 鍋裡的南瓜塊：煮的時候上下浮動，打泥的時候慢慢變小、湯變濃
   if (potSet.visible) {
     const boilK = sid === 'boil' ? heat : 0.3;
-    potChunks.children.forEach((c, i) => { const b = c.userData.base; c.position.y = b.y + Math.sin(tAll * (3 + boilK * 6) + i) * 0.05 * (0.4 + boilK); const shrink = sid === 'blend' ? Math.max(0, 1 - mash * 1.25) : 1; c.scale.setScalar(Math.max(0.001, shrink)); c.visible = shrink > 0.02; if (sid === 'blend') { const a = Math.atan2(b.z, b.x) + tAll * spinV * 3, r = Math.hypot(b.x, b.z); c.position.x = Math.cos(a) * r; c.position.z = Math.sin(a) * r; } });
+    potChunks.children.forEach((c, i) => { const b = c.userData.base; c.position.y = b.y + Math.sin(tAll * (3 + boilK * 6) + i) * 0.05 * (0.4 + boilK);
+      if (sid === 'blend') { const hit = c.userData.hit || 0, sh = Math.max(0, 1 - hit * 1.2), a = Math.atan2(b.z, b.x) + swirl, r = Math.hypot(b.x, b.z); c.position.x = Math.cos(a) * r; c.position.z = Math.sin(a) * r; c.scale.setScalar(Math.max(0.001, sh)); c.visible = sh > 0.02; }
+      else { c.scale.setScalar(1); c.visible = true; } });
     if (sid === 'boil') { potSoup.position.y = 1.0 + cooked * 0.1; }
-    if (sid === 'blend') { spinV = Math.max(0, spinV - dt * 0.9); blender.rotation.y += spinV * dt * 30; bHead.rotation.y += spinV * dt * 40; blender.position.x = Math.cos(tAll * 2) * 0.3 * spinV; blender.position.z = Math.sin(tAll * 2) * 0.3 * spinV;
-      if (playing || mash > 0) { drawSoup(Math.min(1, mash * 1.1), tAll * spinV * 2 + mash * 6); soupTex.needsUpdate = true; potSoup.position.y = 1.1 + mash * 0.15; } loopVol('blender', 0.02 + spinV * 0.25); if (SND.blender) SND.blender.o.frequency.value = 80 + spinV * 80; }
+    if (sid === 'blend') {
+      const on = holdOn && playing; motor = lerp(motor, on ? 1 : 0, 1 - Math.pow(0.0008, dt));
+      if (playing && !STIR.touching && STIR.base && ori && isTouch) { STIR.tx = clamp((ori.g - STIR.base.g) / 28, -1, 1) * POT_R; STIR.tz = clamp((ori.b - STIR.base.b) / 28, -1, 1) * POT_R; }   // 手機傾斜帶著走
+      { const r = Math.hypot(STIR.tx, STIR.tz); if (r > POT_R) { STIR.tx *= POT_R / r; STIR.tz *= POT_R / r; } }
+      const px = STIR.x, pz = STIR.z, kf = 1 - Math.pow(0.0004, dt); STIR.x = lerp(STIR.x, STIR.tx, kf); STIR.z = lerp(STIR.z, STIR.tz, kf);
+      speed = lerp(speed, Math.hypot(STIR.x - px, STIR.z - pz) / Math.max(dt, 0.001), 0.2);
+      blender.position.set(STIR.x, 1.2, STIR.z); bHead.rotation.y += motor * dt * 45; swirl += dt * motor * 1.1; splashCd = Math.max(0, splashCd - dt);
+      if (playing) {
+        // 移太快（speed > 3.6）刀片來不及打碎，只算 25%
+        let sum = 0; for (const c of potChunks.children) { const d = Math.hypot(c.position.x - STIR.x, c.position.z - STIR.z); if (motor > 0.5 && d < BLEND_R) c.userData.hit = Math.min(1, (c.userData.hit || 0) + dt * 1.0 * (1 - d / BLEND_R * 0.4) * (speed > 3.6 ? 0.25 : 1)); sum += c.userData.hit || 0; }
+        mash = sum / potChunks.children.length; setProg(mash);
+        if (motor > 0.7 && speed > 3.6 && splashCd <= 0) { splashN++; splashCd = 1; sfx.splash(); buzz(15); shake = 0.15; G.tipUntil = performance.now() + 1100; $('#hudTip').textContent = '太快了，湯濺出來了！'; }
+        else if (performance.now() > (G.tipUntil || 0)) $('#hudTip').textContent = !on ? '按住「⚡ 啟動」，攪拌棒才會轉！' : speed > 2.8 ? '慢一點，穩穩地繞～' : speed < 0.12 ? '帶著它移動，別停在同一處' : '很好，慢慢繞～';
+        if (mash >= 0.96) { const t = elapsed(); finishStep(100 - Math.max(0, t - 8) * 5 - splashN * 6, `${t.toFixed(1)} 秒・濺出 ${splashN} 次`); }
+      }
+      drawSoup(Math.min(1, mash * 1.1), swirl * 2 + mash * 6); soupTex.needsUpdate = true; potSoup.position.y = 1.1 + mash * 0.15;
+      loopVol('blender', 0.02 + motor * 0.22); if (SND.blender) SND.blender.o.frequency.value = 80 + motor * 70 + Math.min(40, speed * 6);
+    }
     potSteam.forEach((s) => { const u = s.userData; u.t += dt * u.sp * 0.5; if (u.t > 1) u.t = 0; s.position.set(u.x * (1 + u.t), u.y0 + u.t * 2.2, u.z * (1 + u.t)); const k = sid === 'boil' ? 0.25 + heat * 0.6 : 0.45; s.material.opacity = Math.sin(u.t * Math.PI) * k; s.scale.setScalar(0.7 + u.t * 1.4); });
   }
   // 第 4 步：吹涼
@@ -1527,15 +1554,16 @@ function frame(now) {
     for (let i = 1; i < trail.length; i++) { const a = trail[i - 1], b = trail[i]; if (b.t - a.t > 80) continue; const k = 1 - (now - b.t) / 220; fxc.strokeStyle = b.soft ? `rgba(255,255,255,${k * 0.6})` : `rgba(255,255,255,${k * 0.95})`; fxc.lineWidth = (b.soft ? 6 : 10) * k + 1; fxc.beginPath(); fxc.moveTo(a.x, a.y); fxc.lineTo(b.x, b.y); fxc.stroke(); } }
 }
 function timeUp(sid) {
-  if (sid === 'cut') { const a = CUT.acc.length ? CUT.acc.reduce((x, y) => x + y, 0) / CUT.acc.length : 50; finishStep(CUT.stage / STAGES.length * 60 + a * 0.1, `時間到！切到第 ${CUT.stage} 步`); }
+  if (sid === 'cut') { if (CUT.scraping) return; const a = CUT.acc.length ? CUT.acc.reduce((x, y) => x + y, 0) / CUT.acc.length : 50; finishStep(CUT.stage / STAGES.length * 60 + a * 0.1, `時間到！切到第 ${CUT.stage} 步`); }
   else if (sid === 'boil') { const r = inZone / Math.max(0.1, inZone + outZone); finishStep(Math.min(70, cooked * 50 + r * 30), '時間到，南瓜也差不多軟了'); }
-  else if (sid === 'blend') finishStep(mash * 70, '時間到，留一點口感也不錯');
+  else if (sid === 'blend') finishStep(Math.max(10, mash * 70 - splashN * 5), '時間到，留一點口感也不錯');
   else if (sid === 'cool') finishStep(30 + (92 - temp) / 32 * 40, '時間到，湯也溫了');
 }
 
 // 測試用（唯讀）
-window.__chef = () => ({ phase: G.phase, step: G.step, scores: G.scores.slice(), prog: +G.prog.toFixed(2), heat: +heat.toFixed(2), mash: +mash.toFixed(2), temp: Math.round(temp), cutStage: CUT.stage, segs: CUT.segs.length, cubes: CUT.cubes.length, motionOK, audio: SND.ctx ? SND.ctx.state : 'none', left: Math.round(G.limit - elapsed()) });
+window.__chef = () => ({ phase: G.phase, step: G.step, scores: G.scores.slice(), prog: +G.prog.toFixed(2), heat: +heat.toFixed(2), mash: +mash.toFixed(2), temp: Math.round(temp), cutStage: CUT.stage, segs: CUT.segs.length, cubes: cutBowl.userData.fill.filter((c) => c.visible).length, scraping: !!CUT.scraping, splash: splashN, motor: +motor.toFixed(2), speed: +speed.toFixed(2), motionOK, audio: SND.ctx ? SND.ctx.state : 'none', left: Math.round(G.limit - elapsed()) });
 window.__chefCut = () => { if (G.phase !== 'play' || STEPS[G.step].id !== 'cut' || !STAGES[CUT.stage]) return; STAGES[CUT.stage].kind === 'scoop' ? finishScoop() : doCut(100); };   // 測試用：直接完成目前這一刀
+window.__chefTime = (n) => { G.limit += n; };   // 測試用：加時（模擬器比真手機慢很多）
 window.__chefGuide = () => { const g = curGuide(); return g ? g.map((v) => toScreen(v)) : CUT.halves.map((h) => toScreen(h.position)); };   // 測試用：目前虛線（挖籽時是兩個半顆）的螢幕座標
 window.__chefDemo = (arr) => { G.scores = arr.slice(0, STEP_N); };   // 測試用：做宣傳圖時指定四步的分數
 
